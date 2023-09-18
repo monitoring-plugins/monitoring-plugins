@@ -5,7 +5,7 @@
 # usage:
 #    check_rpc host service
 #
-# Check if an rpc serice is registered and running
+# Check if an rpc service is registered and running
 # using rpcinfo - $proto $host $prognum 2>&1 |";
 #
 # Use these hosts.cfg entries as examples

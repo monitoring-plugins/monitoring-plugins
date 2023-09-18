@@ -222,7 +222,7 @@ main (int argc, char *argv[])
 	/* reset the alarm handler */
 	alarm (0);
 
-	/* calcutate the elapsed time and compare to thresholds */
+	/* calculate the elapsed time and compare to thresholds */
 
 	microsec = deltime (tv);
 	elapsed_time = (double)microsec / 1.0e6;
@@ -432,6 +432,9 @@ validate_arguments ()
 		set_thresholds(&entries_thresholds,
 			warn_entries, crit_entries);
 	}
+	if (ld_passwd==NULL)
+		ld_passwd = getenv("LDAP_PASSWORD");
+
 	return OK;
 }
 
@@ -465,7 +468,7 @@ print_help (void)
   printf (" %s\n", "-D [--bind]");
   printf ("    %s\n", _("ldap bind DN (if required)"));
   printf (" %s\n", "-P [--pass]");
-  printf ("    %s\n", _("ldap password (if required)"));
+  printf ("    %s\n", _("ldap password (if required, or set the password through environment variable 'LDAP_PASSWORD')"));
   printf (" %s\n", "-T [--starttls]");
   printf ("    %s\n", _("use starttls mechanism introduced in protocol version 3"));
   printf (" %s\n", "-S [--ssl]");

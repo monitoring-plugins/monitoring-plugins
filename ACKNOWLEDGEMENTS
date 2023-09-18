@@ -20,7 +20,7 @@ Using the DLPI support on SysV systems to get the host MAC address in check_dhcp
 Stenberg, Daniel
 Copyright (c) 1996 - 2004, Daniel Stenberg, <daniel@haxx.se>
 http://curl.haxx.se/
-Use of duplication of macros in m4/np_curl.m4 (slighly adapted for m4/uriparser.m4 too)
+Use of duplication of macros in m4/np_curl.m4 (slightly adapted for m4/uriparser.m4 too)
 
 Coreutils team
 Copyright (C) 91, 1995-2004 Free Software Foundation, Inc.

@@ -21,7 +21,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 72;
+my $common_tests = 73;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -200,6 +200,14 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_crlf;
 				$c->send_response(HTTP::Response->new( 200, 'OK', undef, $r->header ('Host')));
+			} elsif ($r->url->path eq "/chunked") {
+				my $chunks = ["chunked", "encoding", "test\n"];
+				$c->send_response(HTTP::Response->new( 200, 'OK', undef, sub {
+					my $chunk = shift @{$chunks};
+					return unless $chunk;
+					sleep(1);
+					return($chunk);
+				}));
 			} else {
 				$c->send_error(HTTP::Status->RC_FORBIDDEN);
 			}
@@ -228,23 +236,25 @@ SKIP: {
 	skip "HTTP::Daemon::SSL not installed", $common_tests + $ssl_only_tests if ! exists $servers->{https};
 	run_common_tests( { command => "$command -p $port_https", ssl => 1 } );
 
+	my $expiry = "Thu Nov 28 21:02:11 2030 +0000";
+
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on Fri Feb 16 15:31:44 2029 +0000.", "output ok" );
+	is( $result->output, "OK - Certificate 'Monitoring Plugins' will expire on $expiry.", "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
-	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
+	like( $result->output, '/WARNING - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
 	# Expired cert tests
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 13960,14000" );
 	is( $result->return_code, 2, "$command -p $port_https -S -C 13960,14000" );
-	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(Fri Feb 16 15:31:44 2029 \+0000\)./', "output ok" );
+	like( $result->output, '/CRITICAL - Certificate \'Monitoring Plugins\' expires in \d+ day\(s\) \(' . quotemeta($expiry) . '\)./', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	is( $result->output,
-		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 11:00:26 2008 +0000.',
+		'CRITICAL - Certificate \'Monitoring Plugins\' expired on Wed Jan  2 12:00:00 2008 +0000.',
 		"output ok" );
 
 }
@@ -470,7 +480,8 @@ sub run_common_tests {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0);	};
+	};
+	alarm(0);
 	isnt( $@, "alarm\n", $cmd );
 	is( $result->return_code, 0, $cmd );
 
@@ -480,7 +491,8 @@ sub run_common_tests {
 		local $SIG{ALRM} = sub { die "alarm\n" };
 		alarm(2);
 		$result = NPTest->testCmd( $cmd );
-		alarm(0); };
+	};
+	alarm(0);
 	isnt( $@, "alarm\n", $cmd );
 	isnt( $result->return_code, 0, $cmd );
 
@@ -506,4 +518,9 @@ sub run_common_tests {
 	};
 	is( $@, "", $cmd );
 
+	$cmd = "$command -u /chunked -s 'chunkedencodingtest' -d 'Transfer-Encoding: chunked'";
+	eval {
+		$result = NPTest->testCmd( $cmd, 5 );
+	};
+	is( $@, "", $cmd );
 }

@@ -78,7 +78,7 @@ static char *default_file_in_path(void);
 /*
  * Parse_locator decomposes a string of the form
  * 	[stanza][@filename]
- * into its seperate parts.
+ * into its separate parts.
  */
 static void
 parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
@@ -169,7 +169,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 		if (isspace(c))
 			continue;
 		switch (c) {
-			/* globble up coment lines */
+			/* globble up comment lines */
 		case ';':
 		case '#':
 			GOBBLE_TO(f, c, '\n');

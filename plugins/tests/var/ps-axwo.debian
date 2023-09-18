@@ -1,0 +1,219 @@
+STAT   UID     PID    PPID    VSZ   RSS %CPU     ELAPSED COMMAND         COMMAND
+Ss       0       1       0 167244  7144  0.1 26-03:07:26 systemd         /lib/systemd/systemd --system --deserialize 17
+S        0       2       0      0     0  0.0 26-03:07:26 kthreadd        [kthreadd]
+I<       0       3       2      0     0  0.0 26-03:07:26 rcu_gp          [rcu_gp]
+I<       0       4       2      0     0  0.0 26-03:07:26 rcu_par_gp      [rcu_par_gp]
+I<       0       6       2      0     0  0.0 26-03:07:26 kworker/0:0H-ev [kworker/0:0H-events_highpri]
+I<       0       9       2      0     0  0.0 26-03:07:26 mm_percpu_wq    [mm_percpu_wq]
+S        0      10       2      0     0  0.0 26-03:07:26 rcu_tasks_rude_ [rcu_tasks_rude_]
+S        0      11       2      0     0  0.0 26-03:07:26 rcu_tasks_trace [rcu_tasks_trace]
+S        0      12       2      0     0  0.0 26-03:07:26 ksoftirqd/0     [ksoftirqd/0]
+I        0      13       2      0     0  0.0 26-03:07:26 rcu_sched       [rcu_sched]
+S        0      14       2      0     0  0.0 26-03:07:26 migration/0     [migration/0]
+S        0      15       2      0     0  0.0 26-03:07:26 cpuhp/0         [cpuhp/0]
+S        0      16       2      0     0  0.0 26-03:07:26 cpuhp/1         [cpuhp/1]
+S        0      17       2      0     0  0.0 26-03:07:26 migration/1     [migration/1]
+S        0      18       2      0     0  0.0 26-03:07:26 ksoftirqd/1     [ksoftirqd/1]
+I<       0      20       2      0     0  0.0 26-03:07:26 kworker/1:0H-ev [kworker/1:0H-events_highpri]
+S        0      21       2      0     0  0.0 26-03:07:26 cpuhp/2         [cpuhp/2]
+S        0      22       2      0     0  0.0 26-03:07:26 migration/2     [migration/2]
+S        0      23       2      0     0  0.0 26-03:07:26 ksoftirqd/2     [ksoftirqd/2]
+I<       0      25       2      0     0  0.0 26-03:07:26 kworker/2:0H-ev [kworker/2:0H-events_highpri]
+S        0      26       2      0     0  0.0 26-03:07:26 cpuhp/3         [cpuhp/3]
+S        0      27       2      0     0  0.0 26-03:07:26 migration/3     [migration/3]
+S        0      28       2      0     0  0.0 26-03:07:26 ksoftirqd/3     [ksoftirqd/3]
+I<       0      30       2      0     0  0.0 26-03:07:26 kworker/3:0H-ev [kworker/3:0H-events_highpri]
+S        0      35       2      0     0  0.0 26-03:07:26 kdevtmpfs       [kdevtmpfs]
+I<       0      36       2      0     0  0.0 26-03:07:26 netns           [netns]
+S        0      37       2      0     0  0.0 26-03:07:26 kauditd         [kauditd]
+S        0      38       2      0     0  0.0 26-03:07:26 khungtaskd      [khungtaskd]
+S        0      39       2      0     0  0.0 26-03:07:26 oom_reaper      [oom_reaper]
+I<       0      40       2      0     0  0.0 26-03:07:26 writeback       [writeback]
+S        0      41       2      0     0  0.0 26-03:07:26 kcompactd0      [kcompactd0]
+SN       0      42       2      0     0  0.0 26-03:07:26 ksmd            [ksmd]
+SN       0      43       2      0     0  0.0 26-03:07:26 khugepaged      [khugepaged]
+I<       0      62       2      0     0  0.0 26-03:07:26 kintegrityd     [kintegrityd]
+I<       0      63       2      0     0  0.0 26-03:07:26 kblockd         [kblockd]
+I<       0      64       2      0     0  0.0 26-03:07:26 blkcg_punt_bio  [blkcg_punt_bio]
+I<       0      65       2      0     0  0.0 26-03:07:26 edac-poller     [edac-poller]
+I<       0      66       2      0     0  0.0 26-03:07:26 devfreq_wq      [devfreq_wq]
+I<       0      67       2      0     0  0.0 26-03:07:26 kworker/2:1H-ev [kworker/2:1H-events_highpri]
+S        0      70       2      0     0  0.3 26-03:07:25 kswapd0         [kswapd0]
+I<       0      71       2      0     0  0.0 26-03:07:25 kthrotld        [kthrotld]
+I<       0      72       2      0     0  0.0 26-03:07:25 acpi_thermal_pm [acpi_thermal_pm]
+I<       0      74       2      0     0  0.0 26-03:07:25 ipv6_addrconf   [ipv6_addrconf]
+I<       0      80       2      0     0  0.0 26-03:07:25 kworker/3:1H-ev [kworker/3:1H-events_highpri]
+I<       0      84       2      0     0  0.0 26-03:07:25 kstrp           [kstrp]
+I<       0      87       2      0     0  0.0 26-03:07:25 zswap-shrink    [zswap-shrink]
+I<       0     110       2      0     0  0.0 26-03:07:25 kworker/0:1H-ev [kworker/0:1H-events_highpri]
+I<       0     141       2      0     0  0.0 26-03:07:25 ata_sff         [ata_sff]
+S        0     143       2      0     0  0.0 26-03:07:25 scsi_eh_0       [scsi_eh_0]
+I<       0     144       2      0     0  0.0 26-03:07:25 scsi_tmf_0      [scsi_tmf_0]
+S        0     145       2      0     0  0.0 26-03:07:25 scsi_eh_1       [scsi_eh_1]
+I<       0     146       2      0     0  0.0 26-03:07:25 scsi_tmf_1      [scsi_tmf_1]
+S        0     147       2      0     0  0.0 26-03:07:25 scsi_eh_2       [scsi_eh_2]
+I<       0     148       2      0     0  0.0 26-03:07:25 scsi_tmf_2      [scsi_tmf_2]
+S        0     149       2      0     0  0.0 26-03:07:25 scsi_eh_3       [scsi_eh_3]
+I<       0     150       2      0     0  0.0 26-03:07:25 scsi_tmf_3      [scsi_tmf_3]
+S        0     151       2      0     0  0.0 26-03:07:25 scsi_eh_4       [scsi_eh_4]
+I<       0     152       2      0     0  0.0 26-03:07:25 scsi_tmf_4      [scsi_tmf_4]
+S        0     153       2      0     0  0.0 26-03:07:25 scsi_eh_5       [scsi_eh_5]
+I<       0     154       2      0     0  0.0 26-03:07:25 scsi_tmf_5      [scsi_tmf_5]
+S        0     158       2      0     0  0.0 26-03:07:25 card0-crtc0     [card0-crtc0]
+S        0     159       2      0     0  0.0 26-03:07:25 card0-crtc1     [card0-crtc1]
+S        0     160       2      0     0  0.0 26-03:07:25 card0-crtc2     [card0-crtc2]
+I<       0     162       2      0     0  0.0 26-03:07:25 kworker/1:1H-ev [kworker/1:1H-events_highpri]
+S        0     163       2      0     0  0.0 26-03:07:25 scsi_eh_6       [scsi_eh_6]
+I<       0     164       2      0     0  0.0 26-03:07:25 scsi_tmf_6      [scsi_tmf_6]
+S        0     165       2      0     0  0.0 26-03:07:25 usb-storage     [usb-storage]
+I<       0     167       2      0     0  0.0 26-03:07:25 uas             [uas]
+I<       0     176       2      0     0  0.0 26-03:07:25 kdmflush        [kdmflush]
+I<       0     177       2      0     0  0.0 26-03:07:25 kdmflush        [kdmflush]
+S        0     202       2      0     0  0.0 26-03:07:24 scsi_eh_7       [scsi_eh_7]
+I<       0     203       2      0     0  0.0 26-03:07:24 scsi_tmf_7      [scsi_tmf_7]
+S        0     204       2      0     0  0.0 26-03:07:24 usb-storage     [usb-storage]
+I<       0     232       2      0     0  0.0 26-03:07:23 btrfs-worker    [btrfs-worker]
+I<       0     233       2      0     0  0.0 26-03:07:23 btrfs-worker-hi [btrfs-worker-hi]
+I<       0     234       2      0     0  0.0 26-03:07:23 btrfs-delalloc  [btrfs-delalloc]
+I<       0     235       2      0     0  0.0 26-03:07:23 btrfs-flush_del [btrfs-flush_del]
+I<       0     236       2      0     0  0.0 26-03:07:23 btrfs-cache     [btrfs-cache]
+I<       0     237       2      0     0  0.0 26-03:07:23 btrfs-fixup     [btrfs-fixup]
+I<       0     238       2      0     0  0.0 26-03:07:23 btrfs-endio     [btrfs-endio]
+I<       0     239       2      0     0  0.0 26-03:07:23 btrfs-endio-met [btrfs-endio-met]
+I<       0     240       2      0     0  0.0 26-03:07:23 btrfs-endio-met [btrfs-endio-met]
+I<       0     241       2      0     0  0.0 26-03:07:23 btrfs-endio-rai [btrfs-endio-rai]
+I<       0     242       2      0     0  0.0 26-03:07:23 btrfs-rmw       [btrfs-rmw]
+I<       0     243       2      0     0  0.0 26-03:07:23 btrfs-endio-wri [btrfs-endio-wri]
+I<       0     244       2      0     0  0.0 26-03:07:23 btrfs-freespace [btrfs-freespace]
+I<       0     245       2      0     0  0.0 26-03:07:23 btrfs-delayed-m [btrfs-delayed-m]
+I<       0     246       2      0     0  0.0 26-03:07:23 btrfs-readahead [btrfs-readahead]
+I<       0     247       2      0     0  0.0 26-03:07:23 btrfs-qgroup-re [btrfs-qgroup-re]
+S        0     248       2      0     0  0.0 26-03:07:23 btrfs-cleaner   [btrfs-cleaner]
+S        0     249       2      0     0  0.2 26-03:07:23 btrfs-transacti [btrfs-transacti]
+I<       0     317       2      0     0  0.0 26-03:07:22 rpciod          [rpciod]
+I<       0     322       2      0     0  0.0 26-03:07:22 xprtiod         [xprtiod]
+S        0     381       2      0     0  0.0 26-03:07:22 irq/133-mei_me  [irq/133-mei_me]
+S        0     422       2      0     0  0.0 26-03:07:22 watchdogd       [watchdogd]
+I<       0     523       2      0     0  0.0 26-03:07:22 led_workqueue   [led_workqueue]
+I<       0     583       2      0     0  0.0 26-03:07:22 cryptd          [cryptd]
+I<       0     590       2      0     0  0.0 26-03:07:22 ext4-rsv-conver [ext4-rsv-conver]
+Ss     104     693       1  12324  4292  0.5 26-03:07:21 dbus-daemon     /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+Ss       0     731       1 575120  1368  0.0 26-03:07:21 systemd-logind  /lib/systemd/systemd-logind
+Ssl      0    1111       1 121248   732  0.0 26-03:07:18 unattended-upgr /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+S        0    1141       2      0     0  0.0 26-03:07:18 lockd           [lockd]
+I<       0    1459       2      0     0  0.0 26-03:07:16 nfsiod          [nfsiod]
+S        0    1621       2      0     0  0.0 26-03:07:15 NFSv4 callback  [NFSv4 callback]
+Ssl      0    1771       1 1548340  676  0.0 26-03:07:13 libvirtd        /usr/sbin/libvirtd
+I<       0   24315       2      0     0  0.0 26-02:49:02 cifsiod         [cifsiod]
+I<       0   24316       2      0     0  0.0 26-02:49:02 smb3decryptd    [smb3decryptd]
+I<       0   24317       2      0     0  0.0 26-02:49:02 cifsfileinfoput [cifsfileinfoput]
+I<       0   24318       2      0     0  0.0 26-02:49:02 cifsoplockd     [cifsoplockd]
+I<       0   24319       2      0     0  0.0 26-02:49:02 cifs-dfscache   [cifs-dfscache]
+S        0   24322       2      0     0  0.0 26-02:49:02 cifsd           [cifsd]
+I<       0   24413       2      0     0  0.0 26-02:48:57 btrfs-worker    [btrfs-worker]
+I<       0   24414       2      0     0  0.0 26-02:48:57 btrfs-worker-hi [btrfs-worker-hi]
+I<       0   24415       2      0     0  0.0 26-02:48:57 btrfs-delalloc  [btrfs-delalloc]
+I<       0   24416       2      0     0  0.0 26-02:48:57 btrfs-flush_del [btrfs-flush_del]
+I<       0   24418       2      0     0  0.0 26-02:48:57 btrfs-cache     [btrfs-cache]
+I<       0   24419       2      0     0  0.0 26-02:48:57 btrfs-fixup     [btrfs-fixup]
+I<       0   24420       2      0     0  0.0 26-02:48:57 btrfs-endio     [btrfs-endio]
+I<       0   24421       2      0     0  0.0 26-02:48:57 btrfs-endio-met [btrfs-endio-met]
+I<       0   24422       2      0     0  0.0 26-02:48:57 btrfs-endio-met [btrfs-endio-met]
+I<       0   24423       2      0     0  0.0 26-02:48:57 btrfs-endio-rai [btrfs-endio-rai]
+I<       0   24424       2      0     0  0.0 26-02:48:57 btrfs-rmw       [btrfs-rmw]
+I<       0   24425       2      0     0  0.0 26-02:48:57 btrfs-endio-wri [btrfs-endio-wri]
+I<       0   24426       2      0     0  0.0 26-02:48:57 btrfs-freespace [btrfs-freespace]
+I<       0   24427       2      0     0  0.0 26-02:48:57 btrfs-delayed-m [btrfs-delayed-m]
+I<       0   24428       2      0     0  0.0 26-02:48:57 btrfs-readahead [btrfs-readahead]
+I<       0   24429       2      0     0  0.0 26-02:48:57 btrfs-qgroup-re [btrfs-qgroup-re]
+S        0   24450       2      0     0  0.0 26-02:48:53 btrfs-cleaner   [btrfs-cleaner]
+S        0   24451       2      0     0  0.0 26-02:48:53 btrfs-transacti [btrfs-transacti]
+I<       0  747708       2      0     0  0.0 16-21:06:20 xfsalloc        [xfsalloc]
+I<       0  747709       2      0     0  0.0 16-21:06:20 xfs_mru_cache   [xfs_mru_cache]
+S        0  747713       2      0     0  0.0 16-21:06:20 jfsIO           [jfsIO]
+S        0  747714       2      0     0  0.0 16-21:06:20 jfsCommit       [jfsCommit]
+S        0  747715       2      0     0  0.0 16-21:06:20 jfsCommit       [jfsCommit]
+S        0  747716       2      0     0  0.0 16-21:06:20 jfsCommit       [jfsCommit]
+S        0  747717       2      0     0  0.0 16-21:06:20 jfsCommit       [jfsCommit]
+S        0  747718       2      0     0  0.0 16-21:06:20 jfsSync         [jfsSync]
+Ss       0 1071687       1 105976 28304  0.0  3-03:12:31 systemd-journal /lib/systemd/systemd-journald
+Ss       0 1934146       1  25672  4704  0.0    11:19:31 cupsd           /usr/sbin/cupsd -l
+Ssl      0 1934148       1 182868  8540  0.0    11:19:31 cups-browsed    /usr/sbin/cups-browsed
+S       13 1934155 3392655   5752    88  0.0    11:19:31 pinger          (pinger)
+S<      33 1934166 3393034  57996  5460  0.0    11:19:31 apache2         /usr/sbin/apache2 -k start
+S<      33 1934167 3393034 216944 13892  0.0    11:19:30 apache2         /usr/sbin/apache2 -k start
+S<      33 1934168 3393034 216944 13756  0.0    11:19:30 apache2         /usr/sbin/apache2 -k start
+S<      33 1934169 3393034 216936 13732  0.0    11:19:30 apache2         /usr/sbin/apache2 -k start
+S<      33 1934170 3393034 216944 13888  0.0    11:19:30 apache2         /usr/sbin/apache2 -k start
+S<      33 1934172 3393034 216944 15388  0.0    11:19:30 apache2         /usr/sbin/apache2 -k start
+S<      33 1934701 3393034 216936 13736  0.0    11:19:29 apache2         /usr/sbin/apache2 -k start
+S<      33 1935056 3393034 216920 13724  0.0    11:19:28 apache2         /usr/sbin/apache2 -k start
+S        7 1936834 1934146  16652   832  0.0    11:18:12 dbus            /usr/lib/cups/notifier/dbus dbus://
+S<      33 1955909 3393034 216928 13792  0.0    11:00:25 apache2         /usr/sbin/apache2 -k start
+I<       0 2531464       2      0     0  0.0    06:35:47 kworker/u9:0-i9 [kworker/u9:0-i915_flip]
+I        0 2570506       2      0     0  0.0    06:27:41 kworker/1:0-cgr [kworker/1:0-cgroup_destroy]
+I        0 2596195       2      0     0  0.0    06:21:52 kworker/1:1-eve [kworker/1:1-events]
+I        0 2785341       2      0     0  0.0    03:34:16 kworker/u8:8-bt [kworker/u8:8-btrfs-endio-write]
+I        0 2785520       2      0     0  0.0    03:33:50 kworker/3:0-eve [kworker/3:0-events]
+I        0 2798669       2      0     0  0.0    03:21:09 kworker/u8:5-bt [kworker/u8:5-btrfs-endio-write]
+Ss       0 2803015       1   5616  3108  0.0    03:17:54 cron            /usr/sbin/cron -f
+I        0 2845483       2      0     0  0.0    02:38:11 kworker/0:3-eve [kworker/0:3-events]
+I        0 2939490       2      0     0  0.1    01:10:32 kworker/0:0-eve [kworker/0:0-events]
+I        0 2939754       2      0     0  0.0    01:10:26 kworker/u8:1-i9 [kworker/u8:1-i915]
+I        0 2942040       2      0     0  0.0    01:08:02 kworker/u8:7-bt [kworker/u8:7-btrfs-endio-meta]
+S      117 2954268 3392551  40044  5772  0.0       56:37 pickup          pickup -l -t unix -u -c
+I        0 2965195       2      0     0  0.0       46:00 kworker/u8:0-bt [kworker/u8:0-btrfs-worker]
+I        0 2977972       2      0     0  0.0       33:54 kworker/u8:2-bt [kworker/u8:2-btrfs-endio-write]
+I        0 2985488       2      0     0  0.0       27:02 kworker/u8:3-bl [kworker/u8:3-blkcg_punt_bio]
+I        0 2987519       2      0     0  1.0       25:15 kworker/2:1-eve [kworker/2:1-events]
+I        0 2987601       2      0     0  0.0       25:03 kworker/u8:9-i9 [kworker/u8:9-i915]
+I<       0 2995218       2      0     0  0.0       18:41 kworker/u9:2-xp [kworker/u9:2-xprtiod]
+I        0 2997170       2      0     0  0.0       16:41 kworker/3:1-rcu [kworker/3:1-rcu_gp]
+I        0 3001264       2      0     0  0.0       13:01 kworker/u8:4-bt [kworker/u8:4-btrfs-endio-write]
+I        0 3004697       2      0     0  0.7       09:41 kworker/2:0-eve [kworker/2:0-events]
+I        0 3010619       2      0     0  1.0       04:29 kworker/2:2-eve [kworker/2:2-events]
+I        0 3014612       2      0     0  0.0       00:41 kworker/3:2-eve [kworker/3:2-events]
+S        0 3015082 2803015   6716  3028  0.0       00:30 cron            /usr/sbin/CRON -f
+I        0 3015382       2      0     0  0.0       00:00 kworker/u8:6-bt [kworker/u8:6-btrfs-endio-meta]
+Ss       1 3392068       1   5592   504  0.0 15-02:34:39 atd             /usr/sbin/atd -f
+Ssl      0 3392072       1 235796  1740  0.0 15-02:34:39 accounts-daemon /usr/libexec/accounts-daemon
+Ssl    106 3392076       1 315708  6128  0.0 15-02:34:39 colord          /usr/libexec/colord
+Ss       0 3392083       1   8120   720  0.0 15-02:34:39 haveged         /usr/sbin/haveged --Foreground --verbose=1
+Ss       0 3392090       1   5168   132  0.0 15-02:34:39 blkmapd         /usr/sbin/blkmapd
+SNsl   111 3392094       1 155648   440  0.0 15-02:34:39 rtkit-daemon    /usr/libexec/rtkit-daemon
+Ssl      0 3392097       1 290168  1352  0.0 15-02:34:39 packagekitd     /usr/libexec/packagekitd
+Ss     128 3392100       1   7960   448  0.0 15-02:34:39 rpcbind         /sbin/rpcbind -f -w
+Ss       0 3392114       1  13432   616  0.0 15-02:34:39 systemd-machine /lib/systemd/systemd-machined
+Ss       0 3392118       1  13316   848  0.0 15-02:34:39 sshd            sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+Ssl      0 3392124       1 244072  2456  0.0 15-02:34:39 upowerd         /usr/libexec/upowerd
+Ssl      0 3392138       1 1634748 10684 0.0 15-02:34:39 containerd      /usr/bin/containerd
+Ssl      0 3392139       1 222768  1784  0.0 15-02:34:39 rsyslogd        /usr/sbin/rsyslogd -n -iNONE
+Ss      13 3392140       1   3344   152  0.0 15-02:34:39 polipo          /usr/bin/polipo -c /etc/polipo/config pidFile=/var/run/polipo/polipo.pid daemonise=true
+Ssl    119 3392156       1  76472  1688  0.0 15-02:34:39 ntpd            /usr/sbin/ntpd -p /var/run/ntpd.pid -g -u 119:126
+Ss     120 3392168       1   4656   276  0.0 15-02:34:39 rpc.statd       /sbin/rpc.statd --no-notify
+Ss       0 3392171       1   5072   432  0.0 15-02:34:39 rpc.mountd      /usr/sbin/rpc.mountd --manage-gids
+Ss       0 3392176       1   5008   288  0.0 15-02:34:39 rpc.idmapd      /usr/sbin/rpc.idmapd
+Ss     105 3392184       1  15544  6816  3.5 15-02:34:39 avahi-daemon    avahi-daemon: running [tsui.local]
+Ss       0 3392186       1  25288  3860  0.0 15-02:34:39 systemd-udevd   /lib/systemd/systemd-udevd
+S      105 3392190 3392184   8788    52  0.0 15-02:34:39 avahi-daemon    avahi-daemon: chroot helper
+Ssl      0 3392197       1 396120  4188  0.0 15-02:34:39 udisksd         /usr/libexec/udisks2/udisksd
+Ssl      0 3392214       1 237504  6632  0.0 15-02:34:39 polkitd         /usr/libexec/polkitd --no-debug
+Ss       0 3392284       1   9684   560  0.0 15-02:34:38 xinetd          /usr/sbin/xinetd -pidfile /run/xinetd.pid -stayalive -inetd_compat -inetd_ipv6
+Ssl      0 3392285       1 314840  1352  0.0 15-02:34:38 ModemManager    /usr/sbin/ModemManager
+Ss       0 3392317       1   2352   140  0.0 15-02:34:38 acpid           /usr/sbin/acpid
+S        0 3392400       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392401       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392402       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392403       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392404       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392405       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392407       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+S        0 3392410       2      0     0  0.0 15-02:34:38 nfsd            [nfsd]
+Ss       0 3392551       1  40092  1304  0.0 15-02:34:37 master          /usr/lib/postfix/sbin/master -w
+S      117 3392553 3392551  40156   568  0.0 15-02:34:37 qmgr            qmgr -l -t unix -u
+Ss       0 3392650       1  63652     4  0.0 15-02:34:36 squid           /usr/sbin/squid --foreground -sYC
+Ssl    116 3392652       1 1675196 93848 0.0 15-02:34:36 mariadbd        /usr/sbin/mariadbd
+S       13 3392655 3392650  81776 21232  0.0 15-02:34:36 squid           (squid-1) --kid squid-1 --foreground -sYC
+S       13 3392657 3392655   5572    68  0.0 15-02:34:36 log_file_daemon (logfile-daemon) /var/log/squid/access.log
+S<s      0 3393034       1 216648  7560  0.0 15-02:34:34 apache2         /usr/sbin/apache2 -k start
+Ss      33 3393037       1   3432   180  0.0 15-02:34:34 htcacheclean    /usr/bin/htcacheclean -d 120 -p /var/cache/apache2/mod_cache_disk -l 300M -n

@@ -9,7 +9,7 @@ $pkgtrans = "/usr/bin/pkgtrans";
 $prototype = "prototype";
 $pkginfo = "pkginfo";
 $preinstall = "preinstall";
-$egrep = "/usr/bin/egrep";
+$egrep = "/usr/bin/grep -E";
 
 # Sanity check
 

@@ -1,30 +1,30 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_swap plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_swap plugin
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_swap";
@@ -34,9 +34,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
-#include <string.h>
-#include <math.h>
-#include <libintl.h>
 
 #ifdef HAVE_DECL_SWAPCTL
 # ifdef HAVE_SYS_PARAM_H
@@ -142,14 +139,15 @@ main (int argc, char **argv)
 					percent = 100 * (((double) dskused_mb) / ((double) dsktotal_mb));
 				result = max_state (result, check_swap (dskfree_mb, dsktotal_mb));
 				if (verbose)
-					xasprintf (&status, "%s [%.0f (%d%%)]", status, dskfree_mb, 100 - percent);
+					xasprintf (&status, "%s [%lu (%d%%)]", status, dskfree_mb, 100 - percent);
 			}
 		}
+
 		/*
 		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
 		 * This format exists at least on Debian Linux with a 5.* kernel
 		 */
-		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFre]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
+		else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
@@ -158,7 +156,10 @@ main (int argc, char **argv)
 				dsktotal_mb = tmp_KB / 1024;
 			}
 			else if (strcmp ("Free", str) == 0) {
-				dskfree_mb = tmp_KB / 1024;
+				dskfree_mb = dskfree_mb + tmp_KB / 1024;
+			}
+			else if (strcmp ("Cached", str) == 0) {
+				dskfree_mb = dskfree_mb + tmp_KB / 1024;
 			}
 		}
 	}
@@ -177,7 +178,7 @@ main (int argc, char **argv)
 #  ifdef _AIX
 	if (!allswaps) {
 		xasprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		xasprintf(&swap_format, "%s", "%f%*s %f");
+		xasprintf(&swap_format, "%s", "%lu%*s %lu");
 		conv_factor = 1;
 	}
 #  endif
@@ -204,9 +205,9 @@ main (int argc, char **argv)
 		temp_buffer = strtok (input_buffer, " \n");
 		while (temp_buffer) {
 			if (strstr (temp_buffer, "blocks"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else if (strstr (temp_buffer, "dskfree"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else
 				sprintf (str, "%s %s", str, "%*s");
 			temp_buffer = strtok (NULL, " \n");
@@ -385,7 +386,7 @@ main (int argc, char **argv)
 	                TRUE, warn_print,
 	                TRUE, crit_print,
 	                TRUE, 0,
-	                TRUE, (long) total_swap_mb));
+	                TRUE, (long) total_swap_mb * 1024 * 1024));
 
 	return result;
 }
@@ -406,7 +407,6 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	uint64_t usage_percentage = ((total_swap_mb - free_swap_mb) / total_swap_mb) * 100;
 
 	if (crit.is_percentage &&
-			usage_percentage >= 0 &&
 			crit.value != 0 &&
 			usage_percentage >= (100 - crit.value))
 	{
@@ -414,7 +414,6 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	}
 
 	if (warn.is_percentage &&
-			usage_percentage >= 0 &&
 			warn.value != 0 &&
 			usage_percentage >= (100 - warn.value))
 	{
@@ -471,10 +470,9 @@ process_arguments (int argc, char **argv)
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
 							usage4 (_("Warning threshold percentage must be <= 100!"));
-						} else {
-							break;
 						}
 					}
+					break;
 				} else {
 					/* It's Bytes */
 					warn.is_percentage = 0;
@@ -502,10 +500,9 @@ process_arguments (int argc, char **argv)
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
 							usage4 (_("Critical threshold percentage must be <= 100!"));
-						} else {
-							break;
 						}
 					}
+					break;
 				} else {
 					/* It's Bytes */
 					crit.is_percentage = 0;
@@ -523,6 +520,7 @@ process_arguments (int argc, char **argv)
 			if ((no_swap_state = mp_translate_state(optarg)) == ERROR) {
 				usage4 (_("no-swap result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
+			break;
 		case 'v':									/* verbose */
 			verbose++;
 			break;
@@ -552,9 +550,12 @@ validate_arguments (void)
 	if (warn.value == 0 && crit.value == 0) {
 		return ERROR;
 	}
-	else if (warn.value < crit.value) {
-		usage4
-			(_("Warning should be more than critical"));
+	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
+		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
+		 * and crit is absolute. We cannot determine the condition at this point since we
+		 * dont know the value of total swap yet
+		 */
+		usage4(_("Warning should be more than critical"));
 	}
 	return OK;
 }
@@ -570,7 +571,7 @@ print_help (void)
 
 	printf ("%s\n", _("Check swap space on local machine."));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -578,23 +579,23 @@ print_help (void)
 	printf (UT_EXTRA_OPTS);
 
 	printf (" %s\n", "-w, --warning=INTEGER");
-  printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
-  printf (" %s\n", "-w, --warning=PERCENT%%");
-  printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of swap space is free"));
-  printf (" %s\n", "-c, --critical=INTEGER");
-  printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER bytes of swap space are free"));
-  printf (" %s\n", "-c, --critical=PERCENT%%");
-  printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of swap space is free"));
-  printf (" %s\n", "-a, --allswaps");
-  printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
-  printf (" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
-  printf ("    %s %s\n", _("Resulting state when there is no swap regardless of thresholds. Default:"), state_text(no_swap_state));
+	printf ("    %s\n", _("Exit with WARNING status if less than INTEGER bytes of swap space are free"));
+	printf (" %s\n", "-w, --warning=PERCENT%");
+	printf ("    %s\n", _("Exit with WARNING status if less than PERCENT of swap space is free"));
+	printf (" %s\n", "-c, --critical=INTEGER");
+	printf ("    %s\n", _("Exit with CRITICAL status if less than INTEGER bytes of swap space are free"));
+	printf (" %s\n", "-c, --critical=PERCENT%");
+	printf ("    %s\n", _("Exit with CRITICAL status if less than PERCENT of swap space is free"));
+	printf (" %s\n", "-a, --allswaps");
+	printf ("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
+	printf (" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
+	printf ("    %s %s\n", _("Resulting state when there is no swap regardless of thresholds. Default:"), state_text(no_swap_state));
 	printf (UT_VERBOSE);
 
 	printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, they are all checked."));
-  printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, they are all checked."));
+	printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
 
 	printf (UT_SUPPORT);
 }
@@ -604,6 +605,6 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-  printf (" %s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
-  printf ("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
+	printf (" %s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
+	printf ("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
 }

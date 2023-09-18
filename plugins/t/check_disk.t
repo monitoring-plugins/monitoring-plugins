@@ -23,7 +23,7 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 78;
+	plan tests => 88;
 }
 
 $result = NPTest->testCmd( 
@@ -326,19 +326,19 @@ cmp_ok( $result->return_code, '==', 0, "grouping: exit ok if the sum of free meg
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -p $mountpoint_valid -g group -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 3, "Invalid options: -p must come after groupname");
 
-# regex: exit unknown if given regex is not compileable
+# regex: exit unknown if given regex is not compilable
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -r '('" );
-cmp_ok( $result->return_code, '==', 3, "Exit UNKNOWN if regex is not compileable");
+cmp_ok( $result->return_code, '==', 3, "Exit UNKNOWN if regex is not compilable");
 
-# ignore: exit unknown, if all pathes are deselected using -i
+# ignore: exit unknown, if all paths are deselected using -i
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '$mountpoint_valid' -i '$mountpoint2_valid'" );
 cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored (case sensitive)");
 
-# ignore: exit unknown, if all pathes are deselected using -I
+# ignore: exit unknown, if all paths are deselected using -I
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -I '".uc($mountpoint_valid)."' -I '".uc($mountpoint2_valid)."'" );
 cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored (case insensitive)");
 
-# ignore: exit unknown, if all pathes are deselected using -i
+# ignore: exit unknown, if all paths are deselected using -i
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '.*'" );
 cmp_ok( $result->return_code, '==', 3, "ignore-ereg: Unknown if all fs are ignored using -i '.*'");
 
@@ -347,7 +347,32 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mo
 like( $result->output, qr/$mountpoint_valid/, "output data does have $mountpoint_valid in it");
 unlike( $result->output, qr/$mountpoint2_valid/, "output data does not have $mountpoint2_valid in it");
 
-# ignore: test if all pathes are listed when ignore regex doesn't match
+# ignore: test if all paths are listed when ignore regex doesn't match
 $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -p $mountpoint_valid -p $mountpoint2_valid -i '^barbazJodsf\$'");
 like( $result->output, qr/$mountpoint_valid/, "ignore: output data does have $mountpoint_valid when regex doesn't match");
 like( $result->output, qr/$mountpoint2_valid/,"ignore: output data does have $mountpoint2_valid when regex doesn't match");
+
+# ignore-missing: exit okay, when fs is not accessible
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p /bob");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for not existing filesystem /bob");
+like( $result->output, '/^DISK OK - No disks were found for provided parameters; - ignored paths: /bob;.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when regex does not match
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r /bob");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - No disks were found for provided parameters;.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when fs with exact match (-E) is not found
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -E -p /etc");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay when exact match does not find fs");
+like( $result->output, '/^DISK OK - No disks were found for provided parameters; - ignored paths: /etc;.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when checking one existing fs and one non-existing fs (regex)
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r '/bob' -r '^/\$'");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - free space: \/ .*$/', 'Output OK');
+
+# ignore-missing: exit okay, when checking one existing fs and one non-existing fs (path)
+$result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p '/bob' -p '/'");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - free space: / .*; - ignored paths: /bob;.*$/', 'Output OK');

@@ -1,0 +1,2 @@
+[ client_ca ]
+basicConstraints = critical, CA:true

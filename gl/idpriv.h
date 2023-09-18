@@ -1,9 +1,9 @@
 /* Dropping uid/gid privileges of the current process.
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -12,7 +12,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _IDPRIV_H
 #define _IDPRIV_H
@@ -74,11 +74,11 @@ extern "C" {
 
 /* For more in-depth discussion of these topics, see the papers/articles
    * Hao Chen, David Wagner, Drew Dean: Setuid Demystified
-     <http://www.usenix.org/events/sec02/full_papers/chen/chen.pdf>
+     <https://www.usenix.org/legacy/publications/library/proceedings/sec02/full_papers/chen/chen.pdf>
    * Dan Tsafrir, Dilma da Silva, David Wagner: The Murky Issue of Changing
      Process Identity: Revising "Setuid Demystified"
-     <http://www.eecs.berkeley.edu/~daw/papers/setuid-login08b.pdf>
-     <http://code.google.com/p/change-process-identity/>
+     <https://people.eecs.berkeley.edu/~daw/papers/setuid-login08b.pdf>
+     <https://code.google.com/archive/p/change-process-identity/>
    * Dhruv Mohindra: Observe correct revocation order while relinquishing
      privileges
      <https://www.securecoding.cert.org/confluence/display/seccode/POS36-C.+Observe+correct+revocation+order+while+relinquishing+privileges>

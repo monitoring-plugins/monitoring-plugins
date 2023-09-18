@@ -9,7 +9,7 @@ use Test::More;
 use POSIX qw/mktime strftime/;
 use NPTest;
 
-plan tests => 50;
+plan tests => 49;
 
 my $successOutput = '/OK.*HTTP.*second/';
 
@@ -103,7 +103,7 @@ SKIP: {
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
 }
 SKIP: {
-        skip "No internet access", 23 if $internet_access eq "no";
+        skip "No internet access", 22 if $internet_access eq "no";
 
         $res = NPTest->testCmd(
                 "./$plugin --ssl $host_tls_http"
@@ -166,12 +166,6 @@ SKIP: {
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
-        $res = NPTest->testCmd(
-                "./$plugin --ssl -H www.e-paycobalt.com"
-                );
-        cmp_ok( $res->return_code, "==", 0, "Can read https for www.e-paycobalt.com (uses AES certificate)" );
-
-
         $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
@@ -184,13 +178,13 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -u http://$host_tcp_http -e 200,301,302");
         is( $res->return_code, 0, "Proxy HTTP works");
-        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficent");
+        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficient");
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT");
         is( $res->return_code, 0, "Proxy HTTP CONNECT works");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficient");
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT:HEAD");
         is( $res->return_code, 0, "Proxy HTTP CONNECT works with override method");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficient");
 }

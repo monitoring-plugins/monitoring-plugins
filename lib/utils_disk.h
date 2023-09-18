@@ -24,6 +24,7 @@ struct parameter_list
   char *group;
   struct mount_entry *best_match;
   struct parameter_list *name_next;
+  struct parameter_list *name_prev;
   uintmax_t total, available, available_to_root, used,
     inodes_free, inodes_free_to_root, inodes_used, inodes_total;
   double dfree_pct, dused_pct;

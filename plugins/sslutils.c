@@ -134,7 +134,16 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		return STATE_CRITICAL;
 	}
 	if (cert && privkey) {
-		SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM);
+#ifdef USE_OPENSSL
+		if (!SSL_CTX_use_certificate_chain_file(c, cert)) {
+#elif  USE_GNUTLS
+		if (!SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM)) {
+#else
+#error Unported for unknown SSL library
+#endif
+			printf ("%s\n", _("CRITICAL - Unable to open certificate chain file!\n"));
+			return STATE_CRITICAL;
+		}
 		SSL_CTX_use_PrivateKey_file(c, privkey, SSL_FILETYPE_PEM);
 #ifdef USE_OPENSSL
 		if (!SSL_CTX_check_private_key(c)) {
@@ -189,17 +198,6 @@ int np_net_ssl_write(const void *buf, int num) {
 
 int np_net_ssl_read(void *buf, int num) {
 	return SSL_read(s, buf, num);
-}
-
-int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
-#  ifdef USE_OPENSSL
-	X509 *certificate = NULL;
-	certificate=SSL_get_peer_certificate(s);
-	return(np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
-#  else /* ifndef USE_OPENSSL */
-	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
-	return STATE_WARNING;
-#  endif /* USE_OPENSSL */
 }
 
 int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit){
@@ -327,5 +325,17 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 	return STATE_WARNING;
 #  endif /* USE_OPENSSL */
 }
+
+int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
+#  ifdef USE_OPENSSL
+	X509 *certificate = NULL;
+	certificate=SSL_get_peer_certificate(s);
+	return(np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
+#  else /* ifndef USE_OPENSSL */
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	return STATE_WARNING;
+#  endif /* USE_OPENSSL */
+}
+
 
 #endif /* HAVE_SSL */

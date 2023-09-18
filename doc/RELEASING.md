@@ -2,23 +2,23 @@ Releasing a New Monitoring Plugins Version
 ==========================================
 
 Throughout this document, it is assumed that the current Monitoring
-Plugins version is 2.2.1, and that we're about to publish version 2.3.
+Plugins version is 2.3.3, and that we're about to publish version 2.4.
 It is also assumed that the official repository on GitHub is tracked
 using the remote name `monitoring-plugins` (rather than `origin`).
 
 Before you start
 ----------------
 
-- Check Travis CI status.
+- Check Github Actions status.
 - Update local Git repository to the current `master` tip.  For a
-  maintenance release (e.g., version 2.3.2), update to the current
+  maintenance release (e.g., version 2.3.4), update to the current
   `maint-2.3` tip, instead.
 
 Prepare and commit files
 ------------------------
 
 - Update `configure.ac` and `NP-VERSION-GEN` with new version.
-- Update `NEWS` from `git log --reverse v2.3.1..` output, and specify
+- Update `NEWS` from `git log --reverse v2.3.3..` output, and specify
   the release version/date.
 - Update `AUTHORS` if there are new team members.
 - Update `THANKS.in` using `tools/update-thanks`.
@@ -55,7 +55,7 @@ Build the tarball
 -----------------
 
     cd /tmp/plugins
-    tools/setup
+    tools/setup     # requires docbook to be installed
     ./configure
     make dist
 
@@ -93,6 +93,6 @@ Announce new release
 
 If you want to mention the number of contributors in the announcement:
 
-    git shortlog -s v2.3.1..v2.4 | wc -l
+    git shortlog -s v2.3.3..v2.4 | wc -l
 
 <!-- vim:set filetype=markdown textwidth=72: -->
