@@ -294,6 +294,7 @@ main (int argc, char **argv)
 						/* free the result */
 						mysql_free_result (res_mysqldump);
 					}
+					mysql_close (&mysql);
 				}
 				if (mysqldump_threads == 0) {
 					die (STATE_CRITICAL, "%s\n", slaveresult);
