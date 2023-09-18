@@ -110,7 +110,7 @@ main (int argc, char **argv)
 
 	char *result = NULL;
 	char *error = NULL;
-	char slaveresult[SLAVERESULTSIZE];
+	char slaveresult[SLAVERESULTSIZE] = { 0 };
 	char* perf;
 
         perf = strdup ("");
@@ -299,7 +299,7 @@ main (int argc, char **argv)
 				if (mysqldump_threads == 0) {
 					die (STATE_CRITICAL, "%s\n", slaveresult);
 				} else {
-					strlcat (slaveresult, " Mysqldump: in progress", SLAVERESULTSIZE);
+					strncat(slaveresult, " Mysqldump: in progress", SLAVERESULTSIZE-1);
 				}
 			}
 
