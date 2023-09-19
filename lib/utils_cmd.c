@@ -118,10 +118,6 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 
 	int i = 0;
 
-	/* if no command was passed, return with no error */
-	if (argv == NULL)
-		return -1;
-
 	if (!_cmd_pids)
 		CMD_INIT;
 
@@ -161,7 +157,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 	}
 
 	/* parent picks up execution here */
-	/* close childs descriptors in our address space */
+	/* close children descriptors in our address space */
 	close (pfd[1]);
 	close (pfderr[1]);
 

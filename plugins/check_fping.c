@@ -73,7 +73,7 @@ int wrta_p = FALSE;
 int
 main (int argc, char **argv)
 {
-/* normaly should be  int result = STATE_UNKNOWN; */
+/* normally should be  int result = STATE_UNKNOWN; */
 
   int status = STATE_UNKNOWN;
   int result = 0;
@@ -354,6 +354,7 @@ process_arguments (int argc, char **argv)
       break;
     case 'I':                 /* sourceip */
       sourceif = strscpy (sourceif, optarg);
+			break;
     case '4':                 /* IPv4 only */
       address_family = AF_INET;
       break;
@@ -492,7 +493,7 @@ void print_help (void) {
   printf (" %s\n", "-c, --critical=THRESHOLD");
   printf ("    %s\n", _("critical threshold pair"));
   printf (" %s\n", "-a, --alive");
-  printf ("    %s\n", _("Return OK after first successfull reply"));
+  printf ("    %s\n", _("Return OK after first successful reply"));
   printf (" %s\n", "-b, --bytes=INTEGER");
   printf ("    %s (default: %d)\n", _("size of ICMP packet"),PACKET_SIZE);
   printf (" %s\n", "-n, --number=INTEGER");

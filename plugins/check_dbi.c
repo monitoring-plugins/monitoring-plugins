@@ -141,21 +141,28 @@ main (int argc, char **argv)
 	if (verbose > 2)
 		printf ("Initializing DBI\n");
 
-	if (dbi_initialize (NULL) < 0) {
+	dbi_inst *instance_p;
+
+	if (dbi_initialize_r(NULL, instance_p) < 0) {
 		printf ("UNKNOWN - failed to initialize DBI; possibly you don't have any drivers installed.\n");
+		return STATE_UNKNOWN;
+	}
+
+	if (instance_p == NULL) {
+		printf ("UNKNOWN - failed to initialize DBI.\n");
 		return STATE_UNKNOWN;
 	}
 
 	if (verbose)
 		printf ("Opening DBI driver '%s'\n", np_dbi_driver);
 
-	driver = dbi_driver_open (np_dbi_driver);
+	driver = dbi_driver_open_r(np_dbi_driver, instance_p);
 	if (! driver) {
 		printf ("UNKNOWN - failed to open DBI driver '%s'; possibly it's not installed.\n",
 				np_dbi_driver);
 
 		printf ("Known drivers:\n");
-		for (driver = dbi_driver_list (NULL); driver; driver = dbi_driver_list (driver)) {
+		for (driver = dbi_driver_list_r(NULL, instance_p); driver; driver = dbi_driver_list_r(driver, instance_p)) {
 			printf (" - %s\n", dbi_driver_get_name (driver));
 		}
 		return STATE_UNKNOWN;
@@ -426,6 +433,7 @@ process_arguments (int argc, char **argv)
 			else
 				timeout_interval = atoi (optarg);
 
+			break;
 		case 'H':     /* host */
 			if (!is_host (optarg))
 				usage2 (_("Invalid hostname/address"), optarg);

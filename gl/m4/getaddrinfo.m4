@@ -1,14 +1,13 @@
-# getaddrinfo.m4 serial 30
-dnl Copyright (C) 2004-2013 Free Software Foundation, Inc.
+# getaddrinfo.m4 serial 34
+dnl Copyright (C) 2004-2023 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_GETADDRINFO],
 [
-  AC_REQUIRE([gl_HEADER_SYS_SOCKET])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
-  AC_REQUIRE([gl_HEADER_NETDB])dnl for HAVE_NETDB_H
-  AC_MSG_NOTICE([checking how to do getaddrinfo, freeaddrinfo and getnameinfo])
+  AC_REQUIRE([gl_SYS_SOCKET_H])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
+  AC_REQUIRE([gl_NETDB_H])dnl for HAVE_NETDB_H
   GETADDRINFO_LIB=
   gai_saved_LIBS="$LIBS"
 
@@ -55,10 +54,40 @@ AC_DEFUN([gl_GETADDRINFO],
     if test "$gl_cv_w32_getaddrinfo" = "yes"; then
       GETADDRINFO_LIB="-lws2_32"
       LIBS="$gai_saved_LIBS $GETADDRINFO_LIB"
+      dnl Check for correct signature, in particular for a cdecl-compatible
+      dnl calling convention.
+      AC_CACHE_CHECK([for getaddrinfo with POSIX signature],
+        [gl_cv_func_getaddrinfo_posix_signature],
+        [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#include <stddef.h>
+extern
+#ifdef __cplusplus
+"C"
+#endif
+int getaddrinfo (const char *, const char *, const struct addrinfo *, struct addrinfo **);
+]])],
+           [gl_cv_func_getaddrinfo_posix_signature=yes],
+           [gl_cv_func_getaddrinfo_posix_signature=no])
+        ])
+      if test $gl_cv_func_getaddrinfo_posix_signature = no; then
+        REPLACE_GETADDRINFO=1
+      fi
     else
       HAVE_GETADDRINFO=0
     fi
   fi
+  AC_DEFINE_UNQUOTED([HAVE_GETADDRINFO], [$HAVE_GETADDRINFO],
+    [Define to 1 if getaddrinfo exists, or to 0 otherwise.])
 
   # We can't use AC_REPLACE_FUNCS here because gai_strerror may be an
   # inline function declared in ws2tcpip.h, so we need to get that
@@ -127,13 +156,13 @@ const char *gai_strerror(int);]])],
 # Prerequisites of lib/netdb.in.h and lib/getaddrinfo.c.
 AC_DEFUN([gl_PREREQ_GETADDRINFO], [
   AC_REQUIRE([gl_NETDB_H_DEFAULTS])
-  AC_REQUIRE([gl_HEADER_SYS_SOCKET])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
+  AC_REQUIRE([gl_SYS_SOCKET_H])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
   AC_REQUIRE([gl_HOSTENT]) dnl for HOSTENT_LIB
   AC_REQUIRE([gl_SERVENT]) dnl for SERVENT_LIB
   AC_REQUIRE([gl_FUNC_INET_NTOP]) dnl for INET_NTOP_LIB
   AC_REQUIRE([AC_C_RESTRICT])
   AC_REQUIRE([gl_SOCKET_FAMILIES])
-  AC_REQUIRE([gl_HEADER_SYS_SOCKET])
+  AC_REQUIRE([gl_SYS_SOCKET_H])
   AC_REQUIRE([AC_USE_SYSTEM_EXTENSIONS])
 
   dnl Including sys/socket.h is wrong for Windows, but Windows does not
