@@ -798,7 +798,7 @@ process_arguments (int argc, char **argv)
              crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
              warn_usedspace_percent || crit_usedspace_percent || warn_usedinodes_percent ||
              crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
-        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -r/-R\n"));
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--all)\n"));
       }
 
       err = regcomp(&re, optarg, cflags);
