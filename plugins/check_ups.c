@@ -89,7 +89,7 @@ char *ups_status;
 int temp_output_c = 0;
 
 int determine_status (void);
-int get_ups_variable (const char *, char *, size_t);
+int get_ups_variable (const char *, char *);
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -189,7 +189,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups utility voltage if possible */
-	res=get_ups_variable ("input.voltage", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("input.voltage", temp_buffer);
 	if (res == NOSUCHVAR) supported_options &= ~UPS_UTILITY;
 	else if (res != OK)
 		return STATE_CRITICAL;
@@ -224,7 +224,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups battery percent if possible */
-	res=get_ups_variable ("battery.charge", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("battery.charge", temp_buffer);
 	if (res == NOSUCHVAR) supported_options &= ~UPS_BATTPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -253,7 +253,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups load percent if possible */
-	res=get_ups_variable ("ups.load", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("ups.load", temp_buffer);
 	if ( res == NOSUCHVAR ) supported_options &= ~UPS_LOADPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -282,7 +282,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups temperature if possible */
-	res=get_ups_variable ("ups.temperature", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("ups.temperature", temp_buffer);
 	if ( res == NOSUCHVAR ) supported_options &= ~UPS_TEMP;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -342,7 +342,7 @@ determine_status (void)
 	char *ptr;
 	int res;
 
-	res=get_ups_variable ("ups.status", recv_buffer, sizeof (recv_buffer));
+	res=get_ups_variable ("ups.status", recv_buffer);
 	if (res == NOSUCHVAR) return OK;
 	if (res != STATE_OK) {
 		printf ("%s\n", _("Invalid response received from host"));
@@ -388,7 +388,7 @@ determine_status (void)
 
 /* gets a variable value for a specific UPS  */
 int
-get_ups_variable (const char *varname, char *buf, size_t buflen)
+get_ups_variable (const char *varname, char *buf)
 {
 	/*  char command[MAX_INPUT_BUFFER]; */
 	char temp_buffer[MAX_INPUT_BUFFER];
@@ -507,7 +507,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
-		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */
+		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Fahrenheit) */
 			temp_output_c = 1;
 			break;
 		case 'u':									/* ups name */

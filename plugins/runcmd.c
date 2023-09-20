@@ -44,6 +44,8 @@
 # include <sys/wait.h>
 #endif
 
+#include "./utils.h"
+
 /** macros **/
 #ifndef WEXITSTATUS
 # define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
@@ -113,10 +115,6 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 
 	env[0] = strdup("LC_ALL=C");
 	env[1] = '\0';
-
-	/* if no command was passed, return with no error */
-	if (cmdstring == NULL)
-		return -1;
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
@@ -203,7 +201,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	}
 
 	/* parent picks up execution here */
-	/* close childs descriptors in our address space */
+	/* close children descriptors in our address space */
 	close(pfd[1]);
 	close(pfderr[1]);
 

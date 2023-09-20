@@ -92,5 +92,5 @@ like( $res->output, $successOutput, "Output OK" );
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -b 65507"
 	);
-is( $res->return_code, 0, "Try max paket size" );
+is( $res->return_code, 0, "Try max packet size" );
 like( $res->output, $successOutput, "Output OK - Didn't overflow" );

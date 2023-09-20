@@ -31,7 +31,7 @@ $result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver $
 cmp_ok( $result->return_code, '==', 0, "Can run query");
 
 $result = NPTest->testCmd("./check_mysql_query -H $mysqlserver $mysql_login_details");
-cmp_ok( $result->return_code, '==', 3, "Missing query parmeter");
+cmp_ok( $result->return_code, '==', 3, "Missing query parameter");
 like( $result->output, "/Must specify a SQL query to run/", "Missing query error message");
 
 $result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy -d mysql");

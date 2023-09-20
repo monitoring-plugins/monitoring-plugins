@@ -86,20 +86,20 @@ esac
 # Information options
 case "$cmd" in
 --help)
-		print_help
-    exit "$STATE_OK"
+    print_help
+    exit "$STATE_UNKNOWN"
     ;;
 -h)
-		print_help
-    exit "$STATE_OK"
+    print_help
+    exit "$STATE_UNKNOWN"
     ;;
 --version)
-		print_revision "$PROGNAME" "$REVISION"
-    exit "$STATE_OK"
+    print_revision "$PROGNAME" "$REVISION"
+    exit "$STATE_UNKNOWN"
     ;;
 -V)
-		print_revision "$PROGNAME" "$REVISION"
-    exit "$STATE_OK"
+    print_revision "$PROGNAME" "$REVISION"
+    exit "$STATE_UNKNOWN"
     ;;
 esac
 

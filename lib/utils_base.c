@@ -24,7 +24,7 @@
 *
 *****************************************************************************/
 
-#include "common.h"
+#include "../plugins/common.h"
 #include <stdarg.h>
 #include "utils_base.h"
 #include <ctype.h>
@@ -319,18 +319,18 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 
 	while (1) {
 		/* Strip any leading space */
-		for (varlist; isspace(varlist[0]); varlist++);
+		for (; isspace(varlist[0]); varlist++);
 
 		if (strncmp(name, varlist, strlen(name)) == 0) {
 			varlist += strlen(name);
 			/* strip trailing spaces */
-			for (varlist; isspace(varlist[0]); varlist++);
+			for (; isspace(varlist[0]); varlist++);
 
 			if (varlist[0] == '=') {
 				/* We matched the key, go past the = sign */
 				varlist++;
 				/* strip leading spaces */
-				for (varlist; isspace(varlist[0]); varlist++);
+				for (; isspace(varlist[0]); varlist++);
 
 				if (tmp = index(varlist, sep)) {
 					/* Value is delimited by a comma */

@@ -28,7 +28,7 @@ use FindBin;
 use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
-# make us session leader which makes all childs exit if we do
+# make us session leader which makes all children exit if we do
 setsid;
 
 sub print_help ();

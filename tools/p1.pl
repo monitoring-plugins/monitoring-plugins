@@ -2,7 +2,7 @@
 #
 # Hacked version of the sample code from the perlembedded doco.
 #
-# Only major changes are to separate the compiling and cacheing from 
+# Only major changes are to separate the compiling and caching from 
 # the execution so that the cache can be kept in "non-volatile" parent
 # process while the execution is done from "volatile" child processes
 # and that STDOUT is redirected to a file by means of a tied filehandle

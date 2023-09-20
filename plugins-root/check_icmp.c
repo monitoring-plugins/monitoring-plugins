@@ -274,7 +274,7 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 		break;
 
 	case ICMP_TIMXCEED:
-		/* really 'out of reach', or non-existant host behind a router serving
+		/* really 'out of reach', or non-existent host behind a router serving
 		 * two different subnets */
 		switch(icmp_code) {
 		case ICMP_TIMXCEED_INTRANS: msg = "Time to live exceeded in transit"; break;
@@ -1432,15 +1432,20 @@ get_ip_address(const char *ifname)
 {
   // TODO: Rewrite this so the function return an error and we exit somewhere else
 	struct sockaddr_in ip;
+	ip.sin_addr.s_addr = 0; // Fake initialization to make compiler happy
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+
 	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
 		crash("Cannot determine IP address of interface %s", ifname);
+
 	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
 #else
+	(void) ifname;
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
 #endif
