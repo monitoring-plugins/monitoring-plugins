@@ -798,7 +798,7 @@ process_arguments (int argc, char **argv)
              crit_freespace_percent || warn_usedspace_units || crit_usedspace_units ||
              warn_usedspace_percent || crit_usedspace_percent || warn_usedinodes_percent ||
              crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent )) {
-        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -r/-R\n"));
+        die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--all)\n"));
       }
 
       err = regcomp(&re, optarg, cflags);
@@ -1009,12 +1009,20 @@ print_help (void)
   printf ("    %s\n", _("Check only filesystems of indicated type (may be repeated)"));
 
   printf ("\n");
+  printf ("%s\n", _("General usage hints:"));
+  printf (" %s\n", _("- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the same as"));
+  printf ("   %s\n", _("\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."));
+  printf (" %s\n", _("- The syntax is broadly: \"{thresholds a} {paths a} -C {thresholds b} {thresholds b} ...\""));
+
+
+
+  printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
-  printf ("    %s\n", _("Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"));
+  printf ("    %s\n\n", _("Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"));
   printf (" %s\n", "check_disk -w 100 -c 50 -C -w 1000 -c 500 -g sidDATA -r '^/oracle/SID/data.*$'");
   printf ("    %s\n", _("Checks all filesystems not matching -r at 100M and 50M. The fs matching the -r regex"));
-  printf ("    %s\n", _("are grouped which means the freespace thresholds are applied to all disks together"));
+  printf ("    %s\n\n", _("are grouped which means the freespace thresholds are applied to all disks together"));
   printf (" %s\n", "check_disk -w 100 -c 50 -C -w 1000 -c 500 -p /foo -C -w 5% -c 3% -p /bar");
   printf ("    %s\n", _("Checks /foo for 1000M/500M and /bar for 5/3%. All remaining volumes use 100M/50M"));
 
@@ -1027,7 +1035,7 @@ void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-  printf (" %s {-w absolute_limit |-w  percentage_limit% | -W inode_percentage_limit } {-c absolute_limit|-c percentage_limit% | -K inode_percentage_limit } {-p path | -x device}\n", progname);
+  printf (" %s {-w absolute_limit |-w  percentage_limit%% | -W inode_percentage_limit } {-c absolute_limit|-c percentage_limit%% | -K inode_percentage_limit } {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-f] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
   printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
 }
