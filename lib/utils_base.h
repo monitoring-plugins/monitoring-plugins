@@ -2,7 +2,9 @@
 #define _UTILS_BASE_
 /* Header file for Monitoring Plugins utils_base.c */
 
-#include "sha256.h"
+#ifndef USE_OPENSSL
+# include "sha256.h"
+#endif
 
 /* This file holds header information for thresholds - use this in preference to 
    individual plugin logic */
