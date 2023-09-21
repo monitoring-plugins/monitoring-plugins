@@ -1012,7 +1012,7 @@ print_help (void)
   printf ("%s\n", _("General usage hints:"));
   printf (" %s\n", _("- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the same as"));
   printf ("   %s\n", _("\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."));
-  printf (" %s\n", _("- The syntax is broadly: \"{thresholds a} {paths a} {thresholds b} {thresholds b} ...\""));
+  printf (" %s\n", _("- The syntax is broadly: \"{thresholds a} {paths a} -C {thresholds b} {thresholds b} ...\""));
 
 
 
