@@ -1009,6 +1009,14 @@ print_help (void)
   printf ("    %s\n", _("Check only filesystems of indicated type (may be repeated)"));
 
   printf ("\n");
+  printf ("%s\n", _("General usage hints:"));
+  printf (" %s\n", _("- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the same as"));
+  printf ("   %s\n", _("\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."));
+  printf (" %s\n", _("- The syntax is broadly: \"{thresholds a} {paths a} {thresholds b} {thresholds b} ...\""));
+
+
+
+  printf ("\n");
   printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /");
   printf ("    %s\n\n", _("Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"));
