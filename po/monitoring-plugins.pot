@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-12 01:33+0200\n"
+"POT-Creation-Date: 2023-09-21 12:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,7 +305,9 @@ msgstr ""
 msgid "Could not compile regular expression"
 msgstr ""
 
-msgid "Must set a threshold value before using -r/-R\n"
+msgid ""
+"Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--"
+"all)\n"
 msgstr ""
 
 msgid "Regular expression did not match any path or disk"
@@ -425,6 +427,22 @@ msgid "Ignore all filesystems of indicated type (may be repeated)"
 msgstr ""
 
 msgid "Check only filesystems of indicated type (may be repeated)"
+msgstr ""
+
+msgid "General usage hints:"
+msgstr ""
+
+msgid ""
+"- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the "
+"same as"
+msgstr ""
+
+msgid "\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."
+msgstr ""
+
+msgid ""
+"- The syntax is broadly: \"{thresholds a} {paths a} -C {thresholds b} "
+"{thresholds b} ...\""
 msgstr ""
 
 msgid "Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"
