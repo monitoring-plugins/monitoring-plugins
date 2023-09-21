@@ -159,6 +159,7 @@ int perf_labels = 1;
 char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
+bool fmtstr_set = false;
 char buffer[DEFAULT_BUFFER_SIZE];
 bool ignore_mib_parsing_errors = false;
 
@@ -437,7 +438,8 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = multiply (strstr (response, "INTEGER: ") + 9);
-			if (fmtstr != "") {
+
+			if (fmtstr_set) {
 				conv = fmtstr;
 			}
 		}
@@ -611,8 +613,9 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
-			if (type)
+			if (strcmp(type, "") != 0) {
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
@@ -988,6 +991,7 @@ process_arguments (int argc, char **argv)
 		case 'f':
 			if (multiplier != 1.0) {
 				fmtstr=optarg;
+				fmtstr_set = true;
 			}
 			break;
 		case L_IGNORE_MIB_PARSING_ERRORS:
@@ -1204,7 +1208,7 @@ multiply (char *str)
 	if(verbose>2)
 		printf("    multiply extracted double: %f\n", val);
 	val *= multiplier;
-	if (fmtstr != "") {
+	if (fmtstr_set) {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {

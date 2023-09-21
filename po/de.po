@@ -1,23 +1,24 @@
-# translation of de.po to 
+# translation of de.po to
 # German Language Translation File.
 # This file is distributed under the same license as the nagios-plugins package.
-# Copyright (C) 2004 Nagios Plugin Development Group.
+# Copyright (C) 2023 Nagios Plugin Development Group.
 # Karl DeBisschop <kdebisschop@users.sourceforge.net>, 2003, 2004.
 #
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: nagiosplug\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
 "POT-Creation-Date: 2023-09-05 00:31+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
-"Last-Translator:  <>\n"
-"Language-Team: English <en@li.org>\n"
-"Language: en\n"
+"Last-Translator:  \n"
+"Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins.org>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms:  nplurals=2; plural=(n > 1);X-Generator: KBabel 1.3.1\n"
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
+"X-Generator: KBabel 1.3.1\n"
 
 msgid "Could not parse arguments"
 msgstr "Argumente konnten nicht ausgewertet werden"
@@ -39,7 +40,7 @@ msgstr ""
 
 #, c-format
 msgid "SSH WARNING: could not open %s\n"
-msgstr "SSH WARNING: Konnte %s nicht öffnen\n"
+msgstr "SSH WARNING: Konnte %s nicht Ã¶ffnen\n"
 
 #, c-format
 msgid "%s: Error parsing output\n"
@@ -72,13 +73,13 @@ msgstr ""
 
 #, fuzzy
 msgid "Can not (re)allocate 'commargv' buffer\n"
-msgstr "Konnte·url·nicht·zuweisen\n"
+msgstr "KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, c-format
 msgid ""
 "%s: In passive mode, you must provide a service name for each command.\n"
 msgstr ""
-"%s: Im passive mode muss ein Servicename für jeden Befehl angegeben werden.\n"
+"%s: Im passive mode muss ein Servicename fÃ¼r jeden Befehl angegeben werden.\n"
 
 #, fuzzy, c-format
 msgid ""
@@ -91,7 +92,7 @@ msgstr ""
 #, fuzzy, c-format
 msgid "This plugin uses SSH to execute commands on a remote host"
 msgstr ""
-"Dieses Plugin nutzt SSH um Befehle auf dem entfernten Rechner auszuführen\n"
+"Dieses Plugin nutzt SSH um Befehle auf dem entfernten Rechner auszufÃ¼hren\n"
 "\n"
 
 msgid "tell ssh to use Protocol 1 [optional]"
@@ -224,7 +225,7 @@ msgid "Looking for: '%s'\n"
 msgstr ""
 
 msgid "dig returned an error status"
-msgstr "dig hat einen Fehler zurückgegeben"
+msgstr "dig hat einen Fehler zurÃ¼ckgegeben"
 
 msgid "Server not found in ANSWER SECTION"
 msgstr "Server nicht gefunden in ANSWER SECTION"
@@ -264,7 +265,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Machine name to lookup"
-msgstr "zu prüfender Hostname"
+msgstr "zu prÃ¼fender Hostname"
 
 #, fuzzy
 msgid "Record type to lookup (default: A)"
@@ -297,7 +298,7 @@ msgstr "unbekannter unit type: %s\n"
 
 #, c-format
 msgid "failed allocating storage for '%s'\n"
-msgstr "konnte keinen Speicher für '%s' reservieren\n"
+msgstr "konnte keinen Speicher fÃ¼r '%s' reservieren\n"
 
 #, c-format
 msgid "UNKNOWN"
@@ -338,7 +339,7 @@ msgstr ""
 msgid ""
 "This plugin checks the amount of used disk space on a mounted file system"
 msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem"
+"Dieses Plugin prÃ¼ft den freien Speicher auf einem gemounteten Filesystem"
 
 #, fuzzy
 msgid ""
@@ -475,14 +476,14 @@ msgstr ""
 
 #, fuzzy
 msgid "nslookup returned an error status"
-msgstr "nslookup hat einen Fehler zurückgegeben"
+msgstr "nslookup hat einen Fehler zurÃ¼ckgegeben"
 
 msgid "Warning plugin error"
 msgstr "Warnung Plugin Fehler"
 
 #, fuzzy, c-format
 msgid "DNS CRITICAL - '%s' returned empty server string\n"
-msgstr "DNS CRITICAL - '%s'  hat einen leeren Hostnamen zurückgegeben\n"
+msgstr "DNS CRITICAL - '%s'  hat einen leeren Hostnamen zurÃ¼ckgegeben\n"
 
 #, fuzzy, c-format
 msgid "DNS CRITICAL - No response from DNS %s\n"
@@ -490,14 +491,14 @@ msgstr "Keine Antwort von DNS %s\n"
 
 #, c-format
 msgid "DNS CRITICAL - '%s' returned empty host name string\n"
-msgstr "DNS CRITICAL - '%s'  hat einen leeren Hostnamen zurückgegeben\n"
+msgstr "DNS CRITICAL - '%s'  hat einen leeren Hostnamen zurÃ¼ckgegeben\n"
 
 msgid "Non-authoritative answer:"
 msgstr ""
 
 #, fuzzy, c-format
 msgid "Domain '%s' was not found by the server\n"
-msgstr "Domäne %s wurde vom Server nicht gefunden\n"
+msgstr "DomÃ¤ne %s wurde vom Server nicht gefunden\n"
 
 #, fuzzy, c-format
 msgid "DNS CRITICAL - '%s' msg parsing exited with no address\n"
@@ -509,11 +510,11 @@ msgstr "Erwartet: %s aber: %s erhalten"
 
 #, fuzzy, c-format
 msgid "Domain '%s' was found by the server: '%s'\n"
-msgstr "Domäne %s wurde vom Server nicht gefunden\n"
+msgstr "DomÃ¤ne %s wurde vom Server nicht gefunden\n"
 
 #, c-format
 msgid "server %s is not authoritative for %s"
-msgstr "Server %s ist nicht autoritativ für %s"
+msgstr "Server %s ist nicht autoritativ fÃ¼r %s"
 
 #, c-format
 msgid "OK"
@@ -531,7 +532,7 @@ msgstr[1] "%.3f Sekunden Antwortzeit "
 
 #, fuzzy, c-format
 msgid ". %s returns %s"
-msgstr "%s hat %s zurückgegeben"
+msgstr "%s hat %s zurÃ¼ckgegeben"
 
 #, c-format
 msgid "DNS WARNING - %s\n"
@@ -563,7 +564,7 @@ msgstr "Keine Antwort von DNS %s\n"
 
 #, c-format
 msgid "DNS %s has no records\n"
-msgstr "Nameserver %s hat keine Datensätze\n"
+msgstr "Nameserver %s hat keine DatensÃ¤tze\n"
 
 #, c-format
 msgid "Connection to DNS %s was refused\n"
@@ -582,10 +583,10 @@ msgstr "Netzwerk nicht erreichbar\n"
 
 #, c-format
 msgid "DNS failure for %s\n"
-msgstr "DNS Fehler für %s\n"
+msgstr "DNS Fehler fÃ¼r %s\n"
 
 msgid "Input buffer overflow\n"
-msgstr "Eingabe-Pufferüberlauf\n"
+msgstr "Eingabe-PufferÃ¼berlauf\n"
 
 msgid ""
 "This plugin uses the nslookup program to obtain the IP address for the given "
@@ -642,7 +643,7 @@ msgid "returned. Default off"
 msgstr ""
 
 msgid "Arguments to check_dummy must be an integer"
-msgstr "Argument für check_dummy muss ein Integer sein"
+msgstr "Argument fÃ¼r check_dummy muss ein Integer sein"
 
 #, c-format
 msgid "Status %d is not a supported error state\n"
@@ -657,11 +658,11 @@ msgstr ""
 
 #, c-format
 msgid "Could not open pipe: %s\n"
-msgstr "Pipe: %s konnte nicht geöffnet werden\n"
+msgstr "Pipe: %s konnte nicht geÃ¶ffnet werden\n"
 
 #, c-format
 msgid "Could not open stderr for %s\n"
-msgstr "Konnte stderr nicht öffnen für: %s\n"
+msgstr "Konnte stderr nicht Ã¶ffnen fÃ¼r: %s\n"
 
 #, fuzzy
 msgid "FPING UNKNOWN - IP address not found\n"
@@ -703,13 +704,13 @@ msgid "FPING %s - %s (loss=%.0f%% )|%s\n"
 msgstr "FPING %s - %s (verloren=%.0f%% )|%s\n"
 
 msgid "Invalid hostname/address"
-msgstr "Ungültige(r) Hostname/Adresse"
+msgstr "UngÃ¼ltige(r) Hostname/Adresse"
 
 msgid "IPv6 support not available\n"
 msgstr ""
 
 msgid "Packet size must be a positive integer"
-msgstr "Paketgröße muss ein positiver Integer sein"
+msgstr "PaketgrÃ¶ÃŸe muss ein positiver Integer sein"
 
 msgid "Packet count must be a positive integer"
 msgstr "Paketanzahl muss ein positiver Integer sein"
@@ -727,11 +728,11 @@ msgstr ""
 
 #, c-format
 msgid "%s: Only one threshold may be packet loss (%s)\n"
-msgstr "%s: Nur ein Wert darf für packet loss angegeben werden (%s)\n"
+msgstr "%s: Nur ein Wert darf fÃ¼r packet loss angegeben werden (%s)\n"
 
 #, c-format
 msgid "%s: Only one threshold must be packet loss (%s)\n"
-msgstr "%s: Nur ein Wert darf für packet loss angegeben werden (%s)\n"
+msgstr "%s: Nur ein Wert darf fÃ¼r packet loss angegeben werden (%s)\n"
 
 msgid ""
 "This plugin will use the fping command to ping the specified host for a fast "
@@ -849,13 +850,13 @@ msgid "Peripheral Error"
 msgstr "Peripheriefehler"
 
 msgid "Intervention Required"
-msgstr "Eingriff benötigt"
+msgstr "Eingriff benÃ¶tigt"
 
 msgid "Toner Low"
 msgstr "Wenig Toner"
 
 msgid "Insufficient Memory"
-msgstr "Nicht genügend Speicher"
+msgstr "Nicht genÃ¼gend Speicher"
 
 msgid "A Door is Open"
 msgstr "Eine Abdeckung ist offen"
@@ -882,7 +883,7 @@ msgid "This plugin tests the STATUS of an HP printer with a JetDirect card."
 msgstr ""
 "Dieses Plugin testet den STATUS eines HP Druckers mit einer JetDirect "
 "Karte.\n"
-"Net-snmp muss auf dem ausführenden Computer installiert sein.\n"
+"Net-snmp muss auf dem ausfÃ¼hrenden Computer installiert sein.\n"
 "\n"
 
 #, fuzzy
@@ -890,7 +891,7 @@ msgid "Net-snmp must be installed on the computer running the plugin."
 msgstr ""
 "Dieses Plugin testet den STATUS eines HP Druckers mit einer JetDirect "
 "Karte.\n"
-"Net-snmp muss auf dem ausführenden Computer installiert sein.\n"
+"Net-snmp muss auf dem ausfÃ¼hrenden Computer installiert sein.\n"
 "\n"
 
 msgid "The SNMP community name "
@@ -910,7 +911,7 @@ msgid "file does not exist or is not readable"
 msgstr ""
 
 msgid "Invalid certificate expiration period"
-msgstr "Ungültiger Zertifikatsablauftermin"
+msgstr "UngÃ¼ltiger Zertifikatsablauftermin"
 
 msgid ""
 "Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with optional "
@@ -919,7 +920,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Invalid option - SSL is not available"
-msgstr "Ungültige Option - SSL ist nicht verfügbar\n"
+msgstr "UngÃ¼ltige Option - SSL ist nicht verfÃ¼gbar\n"
 
 msgid "Invalid max_redirs count"
 msgstr ""
@@ -932,14 +933,14 @@ msgid "option f:%d \n"
 msgstr "Option f:%d \n"
 
 msgid "Invalid port number"
-msgstr "Ungültige Portnummer"
+msgstr "UngÃ¼ltige Portnummer"
 
 #, c-format
 msgid "Could Not Compile Regular Expression: %s"
 msgstr ""
 
 msgid "IPv6 support not available"
-msgstr "IPv6 Unterstützung nicht vorhanden"
+msgstr "IPv6 UnterstÃ¼tzung nicht vorhanden"
 
 msgid "You must specify a server address or host name"
 msgstr "Hostname oder Serveradresse muss angegeben werden"
@@ -950,7 +951,7 @@ msgstr ""
 
 #, fuzzy
 msgid "HTTP UNKNOWN - Memory allocation error\n"
-msgstr "HTTP UNKNOWN - Konnte·url·nicht·zuweisen\n"
+msgstr "HTTP UNKNOWN - KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, fuzzy, c-format
 msgid "%sServer date unknown, "
@@ -958,7 +959,7 @@ msgstr "HTTP UNKNOWN - Serverdatum unbekannt\n"
 
 #, fuzzy, c-format
 msgid "%sDocument modification date unknown, "
-msgstr "HTTP CRITICAL - Datum der letzten Änderung unbekannt\n"
+msgstr "HTTP CRITICAL - Datum der letzten Ã„nderung unbekannt\n"
 
 #, fuzzy, c-format
 msgid "%sServer date \"%100s\" unparsable, "
@@ -975,18 +976,18 @@ msgstr "HTTP CRITICAL - Dokumentendatum ist %d Sekunden in der Zukunft\n"
 
 #, fuzzy, c-format
 msgid "%sLast modified %.1f days ago, "
-msgstr "HTTP CRITICAL - Letzte Änderung vor %.1f Tagen\n"
+msgstr "HTTP CRITICAL - Letzte Ã„nderung vor %.1f Tagen\n"
 
 #, fuzzy, c-format
 msgid "%sLast modified %d:%02d:%02d ago, "
-msgstr "HTTP CRITICAL - Letzte Änderung vor %d:%02d:%02d \n"
+msgstr "HTTP CRITICAL - Letzte Ã„nderung vor %d:%02d:%02d \n"
 
 msgid "HTTP CRITICAL - Unable to open TCP socket\n"
-msgstr "HTTP CRITICAL - Konnte TCP socket nicht öffnen\n"
+msgstr "HTTP CRITICAL - Konnte TCP socket nicht Ã¶ffnen\n"
 
 #, fuzzy
 msgid "HTTP UNKNOWN - Could not allocate memory for full_page\n"
-msgstr "HTTP UNKNOWN - Konnte·url·nicht·zuweisen\n"
+msgstr "HTTP UNKNOWN - KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 msgid "HTTP CRITICAL - Error on receive\n"
 msgstr "HTTP CRITICAL - Fehler beim Empfangen\n"
@@ -997,11 +998,11 @@ msgstr "HTTP CRITICAL - Keine Daten empfangen\n"
 
 #, fuzzy, c-format
 msgid "Invalid HTTP response received from host: %s\n"
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #, fuzzy, c-format
 msgid "Invalid HTTP response received from host on port %d: %s\n"
-msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host erhalten auf Port %d\n"
 
 #, c-format
 msgid ""
@@ -1015,11 +1016,11 @@ msgstr "HTTP OK: Statusausgabe passt auf \"%s\"\n"
 
 #, c-format
 msgid "HTTP CRITICAL: Invalid Status Line (%s)\n"
-msgstr "HTTP CRITICAL: Ungültige Statusmeldung (%s)\n"
+msgstr "HTTP CRITICAL: UngÃ¼ltige Statusmeldung (%s)\n"
 
 #, c-format
 msgid "HTTP CRITICAL: Invalid Status (%s)\n"
-msgstr "HTTP CRITICAL: Ungültiger Status (%s)\n"
+msgstr "HTTP CRITICAL: UngÃ¼ltiger Status (%s)\n"
 
 #, c-format
 msgid "%s - "
@@ -1047,11 +1048,11 @@ msgstr "HTTP CRITICAL - Fehler: %s\n"
 
 #, fuzzy, c-format
 msgid "%spage size %d too large, "
-msgstr "HTTP WARNING: Seitengröße %d zu klein%s|%s\n"
+msgstr "HTTP WARNING: SeitengrÃ¶ÃŸe %d zu klein%s|%s\n"
 
 #, fuzzy, c-format
 msgid "%spage size %d too small, "
-msgstr "HTTP WARNING: Seitengröße %d zu klein%s|%s\n"
+msgstr "HTTP WARNING: SeitengrÃ¶ÃŸe %d zu klein%s|%s\n"
 
 #, fuzzy, c-format
 msgid "%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"
@@ -1066,7 +1067,7 @@ msgstr "HTTP UNKNOWN - Konnte addr nicht zuweisen\n"
 
 #, fuzzy
 msgid "HTTP UNKNOWN - Could not allocate URL\n"
-msgstr "HTTP UNKNOWN - Konnte·url·nicht·zuweisen\n"
+msgstr "HTTP UNKNOWN - KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, c-format
 msgid "HTTP UNKNOWN - Could not find redirect location - %s%s\n"
@@ -1110,7 +1111,7 @@ msgstr ""
 
 #, fuzzy
 msgid "certificate expiration times."
-msgstr "Clientzertifikat benötigt\n"
+msgstr "Clientzertifikat benÃ¶tigt\n"
 
 #, c-format
 msgid "In the first form, make an HTTP request."
@@ -1264,7 +1265,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Maximal number of redirects (default: "
-msgstr "Ungültige Portnummer"
+msgstr "UngÃ¼ltige Portnummer"
 
 msgid "Minimum page size required (bytes) : Maximum page size required (bytes)"
 msgstr ""
@@ -1346,7 +1347,7 @@ msgstr ""
 
 #, fuzzy
 msgid "the certificate is expired."
-msgstr "Clientzertifikat benötigt\n"
+msgstr "Clientzertifikat benÃ¶tigt\n"
 
 msgid ""
 "When the certificate of 'www.verisign.com' is valid for more than 30 days,"
@@ -1388,7 +1389,7 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "Could not init TLS at port %i!\n"
-msgstr "Konnte stderr nicht öffnen für: %s\n"
+msgstr "Konnte stderr nicht Ã¶ffnen fÃ¼r: %s\n"
 
 #, c-format
 msgid "TLS not supported by the libraries!\n"
@@ -1396,7 +1397,7 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "Could not init startTLS at port %i!\n"
-msgstr "Konnte stderr nicht öffnen für: %s\n"
+msgstr "Konnte stderr nicht Ã¶ffnen fÃ¼r: %s\n"
 
 #, c-format
 msgid "startTLS not supported by the library, needs LDAPv3!\n"
@@ -1599,7 +1600,7 @@ msgstr ""
 
 #, fuzzy
 msgid "two variables recorded in an MRTG log file."
-msgstr "Konnte MRTG Logfile nicht öffnen"
+msgstr "Konnte MRTG Logfile nicht Ã¶ffnen"
 
 msgid "The MRTG log file containing the data you want to monitor"
 msgstr ""
@@ -1685,7 +1686,7 @@ msgid ""
 msgstr ""
 
 msgid "Unable to open MRTG log file"
-msgstr "Konnte MRTG Logfile nicht öffnen"
+msgstr "Konnte MRTG Logfile nicht Ã¶ffnen"
 
 msgid "Unable to process MRTG log file"
 msgstr ""
@@ -1902,7 +1903,7 @@ msgstr "%s: Hostname muss angegeben werden\n"
 msgid ""
 "This plugin checks the status of the Nagios process on the local machine"
 msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem\n"
+"Dieses Plugin prÃ¼ft den freien Speicher auf einem gemounteten Filesystem\n"
 "und erzeugt einen Alarm wenn einer der angegebenen Schwellwerte "
 "unterschritten wird.\n"
 "\n"
@@ -2024,7 +2025,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Optional port number (default: "
-msgstr "Ungültige Portnummer"
+msgstr "UngÃ¼ltige Portnummer"
 
 msgid "Password needed for the request"
 msgstr ""
@@ -2339,7 +2340,7 @@ msgstr ""
 #, fuzzy
 msgid "This plugin checks the clock offset between the local host and a"
 msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem\n"
+"Dieses Plugin prÃ¼ft den freien Speicher auf einem gemounteten Filesystem\n"
 "und erzeugt einen Alarm wenn einer der angegebenen Schwellwerte "
 "unterschritten wird.\n"
 "\n"
@@ -2967,11 +2968,11 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "%s returned %f"
-msgstr "%s hat %s zurückgegeben"
+msgstr "%s hat %s zurÃ¼ckgegeben"
 
 #, fuzzy, c-format
 msgid "'%s' returned %f"
-msgstr "%s hat %s zurückgegeben"
+msgstr "%s hat %s zurÃ¼ckgegeben"
 
 msgid "CRITICAL - Could not interpret output from ping command\n"
 msgstr ""
@@ -3159,7 +3160,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Parent Process ID must be an integer!"
-msgstr "Argument für check_dummy muss ein Integer sein"
+msgstr "Argument fÃ¼r check_dummy muss ein Integer sein"
 
 #, c-format
 msgid "%s%sSTATE = %s"
@@ -3333,7 +3334,7 @@ msgstr "Kein Papier"
 
 #, fuzzy
 msgid "Invalid NAS-Identifier\n"
-msgstr "Ungültige(r) Hostname/Adresse"
+msgstr "UngÃ¼ltige(r) Hostname/Adresse"
 
 #, c-format
 msgid "gethostname() failed!\n"
@@ -3341,7 +3342,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Invalid NAS-IP-Address\n"
-msgstr "Ungültige(r) Hostname/Adresse"
+msgstr "UngÃ¼ltige(r) Hostname/Adresse"
 
 msgid "Timeout\n"
 msgstr ""
@@ -3443,7 +3444,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Invalid REAL response received from host"
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #, c-format
 msgid "Invalid REAL response received from host on port %d\n"
@@ -3530,11 +3531,11 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "Invalid SMTP response received from host: %s\n"
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #, fuzzy, c-format
 msgid "Invalid SMTP response received from host on port %d: %s\n"
-msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host erhalten auf Port %d\n"
 
 #, c-format
 msgid "Could Not Compile Regular Expression"
@@ -3560,7 +3561,7 @@ msgstr ""
 
 #, fuzzy
 msgid "recv() failed after AUTH LOGIN, "
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #, fuzzy, c-format
 msgid "received %s\n"
@@ -3568,21 +3569,21 @@ msgstr "Keine Daten empfangen %s\n"
 
 #, fuzzy
 msgid "invalid response received after AUTH LOGIN, "
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 msgid "recv() failed after sending authuser, "
 msgstr ""
 
 #, fuzzy
 msgid "invalid response received after authuser, "
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 msgid "recv() failed after sending authpass, "
 msgstr ""
 
 #, fuzzy
 msgid "invalid response received after authpass, "
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 msgid "only authtype LOGIN is supported, "
 msgstr ""
@@ -3615,7 +3616,7 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "recv() failed after QUIT."
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #, c-format
 msgid "Connection reset by peer."
@@ -3642,21 +3643,21 @@ msgid "FQDN used for HELO"
 msgstr ""
 
 msgid "Use PROXY protocol prefix for the connection."
-msgstr "Benutze PROXY-Protokoll-Präfix für die Verbindung."
+msgstr "Benutze PROXY-Protokoll-PrÃ¤fix fÃ¼r die Verbindung."
 
 msgid "Minimum number of days a certificate has to be valid."
 msgstr ""
 
 #, fuzzy
 msgid "Use SSL/TLS for the connection."
-msgstr "Benutze SSL/TLS für die Verbindung."
+msgstr "Benutze SSL/TLS fÃ¼r die Verbindung."
 
 #, c-format
 msgid "    Sets default port to %d.\n"
 msgstr "    Setze den Default-Port auf %d.\n"
 
 msgid "Use STARTTLS for the connection."
-msgstr "Benutze STARTTLS für die Verbindung."
+msgstr "Benutze STARTTLS fÃ¼r die Verbindung."
 
 msgid "SMTP AUTH type to check (default none, only LOGIN supported)"
 msgstr ""
@@ -3723,18 +3724,18 @@ msgstr "Konnte addr nicht zuweisen\n"
 
 #, fuzzy
 msgid "Could not reallocate labels\n"
-msgstr "Konnte·url·nicht·zuweisen\n"
+msgstr "KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, fuzzy, c-format
 msgid "Could not reallocate units [%d]\n"
-msgstr "Konnte·url·nicht·zuweisen\n"
+msgstr "KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 msgid "Could not realloc() units\n"
 msgstr ""
 
 #, fuzzy
 msgid "Rate multiplier must be a positive integer"
-msgstr "Paketgröße muss ein positiver Integer sein"
+msgstr "PaketgrÃ¶ÃŸe muss ein positiver Integer sein"
 
 #, fuzzy
 msgid "No host specified\n"
@@ -4109,7 +4110,7 @@ msgstr "%s: Hostname muss angegeben werden\n"
 
 #, fuzzy
 msgid "Invalid hostname, address or socket"
-msgstr "Ungültige(r) Hostname/Adresse"
+msgstr "UngÃ¼ltige(r) Hostname/Adresse"
 
 #, fuzzy, c-format
 msgid ""
@@ -4149,7 +4150,7 @@ msgstr ""
 
 #, fuzzy
 msgid "Hide output from TCP socket"
-msgstr "Konnte TCP socket nicht öffnen\n"
+msgstr "Konnte TCP socket nicht Ã¶ffnen\n"
 
 msgid "Close connection once more than this number of bytes are received"
 msgstr ""
@@ -4254,11 +4255,11 @@ msgstr ""
 
 #, fuzzy
 msgid "UPS does not support any available options\n"
-msgstr "IPv6 Unterstützung nicht vorhanden"
+msgstr "IPv6 UnterstÃ¼tzung nicht vorhanden"
 
 #, fuzzy
 msgid "Invalid response received from host"
-msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 msgid "UPS name to long for buffer"
 msgstr ""
@@ -4353,7 +4354,7 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "Could not enumerate RD sessions: %d\n"
-msgstr "Konnte·url·nicht·zuweisen\n"
+msgstr "KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, c-format
 msgid "# users=%d"
@@ -4369,7 +4370,7 @@ msgstr ""
 #, fuzzy
 msgid "This plugin checks the number of users currently logged in on the local"
 msgstr ""
-"Dieses Plugin prüft den freien Speicher auf einem gemounteten Filesystem\n"
+"Dieses Plugin prÃ¼ft den freien Speicher auf einem gemounteten Filesystem\n"
 "und erzeugt einen Alarm wenn einer der angegebenen Schwellwerte "
 "unterschritten wird.\n"
 "\n"
@@ -4403,7 +4404,7 @@ msgstr ""
 
 #, fuzzy, c-format
 msgid "CRITICAL - Couldn't open device %s: %s\n"
-msgstr "CRITICAL - Device konnte nicht geöffnet werden: %s\n"
+msgstr "CRITICAL - Device konnte nicht geÃ¶ffnet werden: %s\n"
 
 #, c-format
 msgid "CRITICAL - SMART_CMD_ENABLE\n"
@@ -4609,7 +4610,7 @@ msgstr ""
 #, fuzzy, c-format
 msgid "Invalid hostname/address - %s"
 msgstr ""
-"Ungültige(r) Name/Adresse: %s\n"
+"UngÃ¼ltige(r) Name/Adresse: %s\n"
 "\n"
 
 #, fuzzy
@@ -4675,15 +4676,15 @@ msgstr ""
 
 #, fuzzy
 msgid "failed realloc in strpcpy\n"
-msgstr "konnte keinen Speicher für '%s' reservieren\n"
+msgstr "konnte keinen Speicher fÃ¼r '%s' reservieren\n"
 
 #, fuzzy
 msgid "failed malloc in strscat\n"
-msgstr "konnte keinen Speicher für '%s' reservieren\n"
+msgstr "konnte keinen Speicher fÃ¼r '%s' reservieren\n"
 
 #, fuzzy
 msgid "failed malloc in xvasprintf\n"
-msgstr "konnte keinen Speicher für '%s' reservieren\n"
+msgstr "konnte keinen Speicher fÃ¼r '%s' reservieren\n"
 
 msgid "sysconf error for _SC_OPEN_MAX\n"
 msgstr ""
@@ -5122,10 +5123,10 @@ msgstr ""
 #~ msgstr "CRITICAL - Konnte kein Serverzertifikat erhalten\n"
 
 #~ msgid "Invalid HTTP response received from host\n"
-#~ msgstr "Ungültige HTTP Antwort von Host empfangen\n"
+#~ msgstr "UngÃ¼ltige HTTP Antwort von Host empfangen\n"
 
 #~ msgid "Invalid HTTP response received from host on port %d\n"
-#~ msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
+#~ msgstr "UngÃ¼ltige HTTP Antwort von Host erhalten auf Port %d\n"
 
 #~ msgid "HTTP CRITICAL: %s\n"
 #~ msgstr "HTTP CRITICAL: %s\n"
@@ -5154,11 +5155,11 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "HTTP UNKNOWN - could not allocate url\n"
-#~ msgstr "HTTP UNKNOWN - Konnte·url·nicht·zuweisen\n"
+#~ msgstr "HTTP UNKNOWN - KonnteÂ·urlÂ·nichtÂ·zuweisen\n"
 
 #, fuzzy
 #~ msgid "snmpget returned an error status"
-#~ msgstr "dig hat einen Fehler zurückgegeben"
+#~ msgstr "dig hat einen Fehler zurÃ¼ckgegeben"
 
 #, fuzzy
 #~ msgid "Invalid critical threshold"
@@ -5202,7 +5203,7 @@ msgstr ""
 #~ "    ssh anweisen Protokoll 2 zu verwenden\n"
 #~ " -S, --skiplines=n\n"
 #~ "    Ignoriere die ersten n Zeilen auf STDERR (um Logon Banner zu "
-#~ "unterdrücken)\n"
+#~ "unterdrÃ¼cken)\n"
 #~ " -f\n"
 #~ "    ssh anweisen fork zu nutzen statt ein tty zu erzeugen\n"
 
@@ -5221,13 +5222,13 @@ msgstr ""
 #~ "    short name of host in nagios configuration [optional]\n"
 #~ msgstr ""
 #~ " -C, --command='COMMAND STRING'\n"
-#~ "    Befehl der auf der entfernten Maschine ausgeführt werden soll\n"
+#~ "    Befehl der auf der entfernten Maschine ausgefÃ¼hrt werden soll\n"
 #~ " -l, --logname=USERNAME\n"
 #~ "    SSH user name auf dem entfernten Host [optional]\n"
 #~ " -i, --identity=KEYFILE\n"
-#~ "    zu verwendende Schlüsseldatei [optional]\n"
+#~ "    zu verwendende SchlÃ¼sseldatei [optional]\n"
 #~ " -O, --output=FILE\n"
-#~ "    externe Befehlsdatei für nagios [optional]\n"
+#~ "    externe Befehlsdatei fÃ¼r nagios [optional]\n"
 #~ " -s, --services=LIST\n"
 #~ "    Liste von nagios Servicenamen, getrennt durch ':' [optional]\n"
 #~ " -n, --name=NAME\n"
@@ -5264,15 +5265,15 @@ msgstr ""
 #~ "greater than zero"
 #~ msgstr ""
 #~ "INPUT ERROR: C_DF (%lu) sollte kleiner sein als W_DF (%lu) und beide "
-#~ "sollten größer als 0 sein"
+#~ "sollten grÃ¶ÃŸer als 0 sein"
 
 #, fuzzy
 #~ msgid "No response from host on port %d\n"
-#~ msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
+#~ msgstr "UngÃ¼ltige HTTP Antwort von Host erhalten auf Port %d\n"
 
 #, fuzzy
 #~ msgid "Invalid response received from host on port %d\n"
-#~ msgstr "Ungültige HTTP Antwort von Host erhalten auf Port %d\n"
+#~ msgstr "UngÃ¼ltige HTTP Antwort von Host erhalten auf Port %d\n"
 
 #~ msgid "%.3f seconds response time (%s)"
 #~ msgstr "%.3f Sekunden Antwortzeit (%s)"
@@ -5300,7 +5301,7 @@ msgstr ""
 #~ " -c, --critical=PERCENT%%\n"
 #~ "  meldet Status CRITICAL, wenn weniger als PERCENT --Plattenplatz frei\n"
 #~ " -C, --clear\n"
-#~ "    Schwellwerte löschen\n"
+#~ "    Schwellwerte lÃ¶schen\n"
 
 #~ msgid ""
 #~ "Examples:\n"
@@ -5309,7 +5310,7 @@ msgstr ""
 #~ msgstr ""
 #~ "Beispiel:\n"
 #~ " check_disk -w 10% -c 5% -p /tmp -p /var -C -w 100000 -c 50000 -p /\n"
-#~ "   Prüft /tmp und /var mit 10%,5% und / mit 100MB, 50MB\n"
+#~ "   PrÃ¼ft /tmp und /var mit 10%,5% und / mit 100MB, 50MB\n"
 
 #~ msgid ""
 #~ "This plugin uses the nslookup program to obtain the IP address\n"
@@ -5328,7 +5329,7 @@ msgstr ""
 #~ msgstr "HTTP CRITICAL - Konnte keine SSL Verbindung herstellen\n"
 
 #~ msgid "Client Certificate Required\n"
-#~ msgstr "Clientzertifikat benötigt\n"
+#~ msgstr "Clientzertifikat benÃ¶tigt\n"
 
 #~ msgid "CRITICAL -  Cannot create SSL context.\n"
 #~ msgstr "CRITICAL -  Konnte SSL Kontext nicht erzeugen.\n"
@@ -5338,7 +5339,7 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "Failed to allocate memory for hostname"
-#~ msgstr "konnte keinen Speicher für '%s' reservieren\n"
+#~ msgstr "konnte keinen Speicher fÃ¼r '%s' reservieren\n"
 
 #, fuzzy
 #~ msgid "CRITICAL - %d of %d hosts are alive\n"
@@ -5346,7 +5347,7 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "%s has no address data\n"
-#~ msgstr "Nameserver %s hat keine Datensätze\n"
+#~ msgstr "Nameserver %s hat keine DatensÃ¤tze\n"
 
 #, fuzzy
 #~ msgid "CRITICAL - Could not make SSL connection\n"
@@ -5358,7 +5359,7 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "Certificate expires today (%s).\n"
-#~ msgstr "Clientzertifikat benötigt\n"
+#~ msgstr "Clientzertifikat benÃ¶tigt\n"
 
 #, fuzzy
 #~ msgid "ERROR: Cannot create SSL context.\n"
@@ -5386,7 +5387,7 @@ msgstr ""
 #~ msgstr "Time interval muss ein positiver Integer sein"
 
 #~ msgid "check_http: invalid option - SSL is not available\n"
-#~ msgstr "check_http: ungültige Option - SSL ist nicht verfügbar\n"
+#~ msgstr "check_http: ungÃ¼ltige Option - SSL ist nicht verfÃ¼gbar\n"
 
 #~ msgid "invalid hostname/address"
-#~ msgstr "Ungültige(r) Hostname/Adresse"
+#~ msgstr "UngÃ¼ltige(r) Hostname/Adresse"
