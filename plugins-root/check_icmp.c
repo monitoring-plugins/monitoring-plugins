@@ -524,7 +524,6 @@ main(int argc, char **argv)
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
-		while((arg = getopt(argc, argv, "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O")) != EOF) {
 			switch(arg) {
 			case 'v':
 				debug++;
