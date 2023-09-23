@@ -645,12 +645,16 @@ AC_TRY_COMPILE([#include <sys/time.h>],
                [struct timeval *tv;
                 struct timezone *tz;],
                AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])
-               AC_TRY_COMPILE([#include <sys/time.h>],
-                              [struct timeval *tv;
-                               struct timezone *tz;
-                               gettimeofday(tv, tz);],
-                              AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
-                              AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed])))
+			   FOUND_STRUCT_TIMEVAL="yes")
+
+if test x$FOUND_STRUCT_TIMEVAL = x"yes"; then
+	AC_TRY_COMPILE([#include <sys/time.h>],
+			  [struct timeval *tv;
+			   struct timezone *tz;
+			   gettimeofday(tv, tz);],
+			  AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
+			  AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed]))
+fi
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtol strtoul floor)
