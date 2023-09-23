@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-21 12:09+0200\n"
+"POT-Creation-Date: 2023-09-22 15:36+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -4704,9 +4704,6 @@ msgstr "konnte keinen Speicher für '%s' reservieren\n"
 #, fuzzy
 msgid "failed malloc in xvasprintf\n"
 msgstr "konnte keinen Speicher für '%s' reservieren\n"
-
-msgid "sysconf error for _SC_OPEN_MAX\n"
-msgstr ""
 
 #, c-format
 msgid ""

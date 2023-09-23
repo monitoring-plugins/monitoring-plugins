@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-21 12:09+0200\n"
+"POT-Creation-Date: 2023-09-22 15:36+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -4838,9 +4838,6 @@ msgstr "La fonction malloc à échoué dans strscat\n"
 #, fuzzy
 msgid "failed malloc in xvasprintf\n"
 msgstr "La fonction malloc à échoué dans strscat\n"
-
-msgid "sysconf error for _SC_OPEN_MAX\n"
-msgstr ""
 
 #, c-format
 msgid ""
