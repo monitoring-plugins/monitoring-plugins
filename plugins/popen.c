@@ -178,7 +178,7 @@ spopen (const char *cmdstring)
 	}
 	argv[i] = NULL;
 
-	long maxfd = open_max();
+	long maxfd = mp_open_max();
 
 	if (childpid == NULL) {				/* first time through */
 		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)

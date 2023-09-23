@@ -89,7 +89,7 @@ extern void die (int, const char *, ...)
 void
 cmd_init (void)
 {
-	long maxfd = open_max();
+	long maxfd = mp_open_max();
 
 	/* if maxfd is unnaturally high, we force it to a lower value
 	 * ( e.g. on SunOS, when ulimit is set to unlimited: 2147483647 this would cause
@@ -145,7 +145,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 		/* close all descriptors in _cmd_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
-		long maxfd = open_max();
+		long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++)
 			if (_cmd_pids[i] > 0)
 				close (i);
@@ -172,7 +172,7 @@ _cmd_close (int fd)
 	pid_t pid;
 
 	/* make sure the provided fd was opened */
-	long maxfd = open_max();
+	long maxfd = mp_open_max();
 	if (fd < 0 || fd > maxfd || !_cmd_pids || (pid = _cmd_pids[fd]) == 0)
 		return -1;
 
@@ -385,7 +385,7 @@ timeout_alarm_handler (int signo)
 		printf (_("%s - Plugin timed out after %d seconds\n"),
 						state_text(timeout_state), timeout_interval);
 
-		long maxfd = open_max();
+		long maxfd = mp_open_max();
 		if(_cmd_pids) for(i = 0; i < maxfd; i++) {
 			if(_cmd_pids[i] != 0) kill(_cmd_pids[i], SIGKILL);
 		}

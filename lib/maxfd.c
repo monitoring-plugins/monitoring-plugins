@@ -1,7 +1,7 @@
 #include "./maxfd.h"
 #include <errno.h>
 
-long open_max (void) {
+long mp_open_max (void) {
 	long maxfd = 0L;
 	/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
 	 * If that fails and the macro isn't defined, we fall back to an educated
