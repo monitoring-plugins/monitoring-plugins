@@ -33,7 +33,7 @@ void cmd_init (void);
 #define CMD_NO_ASSOC 0x02    /* output.line won't point to buf */
 
 
-RETSIGTYPE timeout_alarm_handler (int);
+void timeout_alarm_handler (int);
 
 
 #endif /* _UTILS_CMD_ */
