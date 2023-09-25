@@ -991,17 +991,17 @@ wait_for_reply(int sock, u_int t)
 				if (jitter_tmp > host->jitter_max)
 					host->jitter_max=jitter_tmp;
 			}
-			
+
 			/* Check if packets in order */
-			if (host->last_icmp_seq >= icp.icmp_seq)
+			if (host->last_icmp_seq >= packet.icp->icmp_seq)
 				host->order_status=STATE_CRITICAL;
 		}
 		host->last_tdiff=tdiff;
-		
-		host->last_icmp_seq=icp.icmp_seq;
-		
+
+		host->last_icmp_seq=packet.icp->icmp_seq;
+
 		//printf("%d tdiff %d host->jitter %u  host->last_tdiff %u\n", icp.icmp_seq, tdiff, host->jitter, host->last_tdiff);
-		
+
 		host->time_waited += tdiff;
 		host->icmp_recv++;
 		icmp_recv++;
@@ -1596,8 +1596,6 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 	}
 
 	/* fill out the sockaddr_in struct */
-	host->saddr_in.sin_family = AF_INET;
-	host->saddr_in.sin_addr.s_addr = in->s_addr;
 	host->rtmin = INFINITY;
 	host->rtmax = 0;
 	host->jitter=0;
