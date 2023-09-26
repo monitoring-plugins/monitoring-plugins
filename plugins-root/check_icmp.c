@@ -592,7 +592,7 @@ main(int argc, char **argv)
 				get_threshold2(optarg, &warn, &crit,2);
 				pl_mode=1;
 				break;
-			case 'J': /* packet loss mode */
+			case 'J': /* jitter mode */
 				get_threshold2(optarg, &warn, &crit,3);
 				jitter_mode=1;
 				break;
