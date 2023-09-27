@@ -42,6 +42,7 @@ char *progname;
 const char *copyright = "2005-2008";
 const char *email = "devel@monitoring-plugins.org";
 
+/* what does that do? */
 #ifdef __sun
 #define _XPG4_2
 #endif
@@ -761,11 +762,7 @@ main(int argc, char **argv)
 	}
 
 	host = list;
-//<<<<<<< HEAD FIXME
-	table = (struct rta_host**)malloc(sizeof(struct rta_host **) * targets);
-//=======
-//	table = malloc(sizeof(struct rta_host *) * targets);
-//>>>>>>> jitter-orig
+	table = malloc(sizeof(struct rta_host *) * targets);
 	i = 0;
 	while(host) {
 		host->id = i*packets;
@@ -1473,11 +1470,9 @@ finish(int sig)
 	while(host) {
 		if(debug) puts("");
 		if (rta_mode && host->pl<100) {
-			// FIXME printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",(targets > 1) ? host->name : "", (float)host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000, (targets > 1) ? host->name : "", (float)host->rtmax / 1000, (targets > 1) ? host->name : "", (float)host->rtmin / 1000);
-			printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
+			printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
 			   (targets > 1) ? host->name : "",
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
-			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
 			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 		}
