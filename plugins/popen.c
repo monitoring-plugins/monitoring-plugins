@@ -50,9 +50,9 @@ extern FILE *child_process;
 FILE *spopen (const char *);
 int spclose (FILE *);
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE popen_sigchld_handler (int);
+void popen_sigchld_handler (int);
 #endif
-RETSIGTYPE popen_timeout_alarm_handler (int);
+void popen_timeout_alarm_handler (int);
 
 #include <stdarg.h>							/* ANSI C header file */
 #include <fcntl.h>
@@ -266,7 +266,7 @@ spclose (FILE * fp)
 }
 
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE
+void
 popen_sigchld_handler (int signo)
 {
 	if (signo == SIGCHLD)
@@ -274,7 +274,7 @@ popen_sigchld_handler (int signo)
 }
 #endif
 
-RETSIGTYPE
+void
 popen_timeout_alarm_handler (int signo)
 {
 	int fh;
