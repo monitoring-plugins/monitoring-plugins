@@ -1943,7 +1943,7 @@ print_help(void)
   printf ("    %s\n", _("verbose"));
   printf ("\n");
   printf ("%s\n", _("Notes:"));
-  printf ("%s\n", _("If not mode R,P,J,M,S or O is informed, default icmp behavior, RTA and packet loss"));
+  printf (" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
   printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
   printf ("\n");
   printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));

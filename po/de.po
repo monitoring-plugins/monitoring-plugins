@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-22 15:36+0200\n"
+"POT-Creation-Date: 2023-09-27 12:16+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -5067,6 +5067,25 @@ msgstr "Warning threshold  Integer sein"
 msgid "critical threshold (currently "
 msgstr "Critical threshold muss ein Integer sein"
 
+msgid ""
+"RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"
+msgstr ""
+
+msgid "packet loss mode, ex. 40%,50% , unit in %"
+msgstr ""
+
+msgid "jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "
+msgstr ""
+
+msgid "MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"
+msgstr ""
+
+msgid "score  mode, max value 100  warning,critical, ex. 80,70 "
+msgstr ""
+
+msgid "detect out of order ICMP packts "
+msgstr ""
+
 #, fuzzy
 msgid "specify a source IP address or device name"
 msgstr "Hostname oder Serveradresse muss angegeben werden"
@@ -5096,6 +5115,9 @@ msgid "Packet size will be data bytes + icmp header (currently"
 msgstr ""
 
 msgid "verbose"
+msgstr ""
+
+msgid "If none of R,P,J,M,S or O is specified, default behavior is -R -P"
 msgstr ""
 
 msgid "The -H switch is optional. Naming a host (or several) to check is not."
