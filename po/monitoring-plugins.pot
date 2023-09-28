@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-22 15:36+0200\n"
+"POT-Creation-Date: 2023-09-28 12:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -291,6 +291,9 @@ msgstr ""
 msgid "Must set a threshold value before using -p\n"
 msgstr ""
 
+msgid "Could not compile regular expression"
+msgstr ""
+
 msgid "Must set -E before selecting paths\n"
 msgstr ""
 
@@ -300,9 +303,6 @@ msgstr ""
 msgid ""
 "Paths need to be selected before using -i/-I. Use -A to select all paths "
 "explicitly"
-msgstr ""
-
-msgid "Could not compile regular expression"
 msgstr ""
 
 msgid ""
@@ -423,7 +423,8 @@ msgstr ""
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
 msgstr ""
 
-msgid "Ignore all filesystems of indicated type (may be repeated)"
+msgid ""
+"Ignore all filesystems of types matching given regex(7) (may be repeated)"
 msgstr ""
 
 msgid "Check only filesystems of indicated type (may be repeated)"
