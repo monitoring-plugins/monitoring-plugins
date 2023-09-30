@@ -41,15 +41,40 @@ np_add_name (struct name_list **list, const char *name)
   *list = new_entry;
 }
 
-/* Initialises a new regex at the begin of list via regcomp(3) */
+/* @brief Initialises a new regex at the begin of list via regcomp(3)
+ *
+ * @details if the regex fails to compile the error code of regcomp(3) is returned
+ * 					and list is not modified, otherwise list is modified to point to the new
+ * 					element
+ * @param list Pointer to a linked list of regex_list elements
+ * @param regex the string containing the regex which should be inserted into the list
+ * @param clags the cflags parameter for regcomp(3)
+ */
 int
 np_add_regex (struct regex_list **list, const char *regex, int cflags)
 {
   struct regex_list *new_entry = (struct regex_list *) malloc (sizeof *new_entry);
-  new_entry->next = *list;
-  *list = new_entry;
 
-  return regcomp(&new_entry->regex, regex, cflags);
+	if (new_entry == NULL) {
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+				strerror(errno));
+	}
+
+  int regcomp_result = regcomp(&new_entry->regex, regex, cflags);
+
+	if (!regcomp_result) {
+		// regcomp succeded
+		new_entry->next = *list;
+		*list = new_entry;
+
+		return 0;
+	} else {
+		// regcomp failed
+		free(new_entry);
+
+		return regcomp_result;
+	}
+
 }
 
 /* Initialises a new parameter at the end of list */
