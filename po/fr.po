@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-28 12:40+0200\n"
+"POT-Creation-Date: 2023-10-01 00:46+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -469,7 +469,9 @@ msgstr ""
 "(peut être utilisé plusieurs fois)"
 
 #, fuzzy
-msgid "Check only filesystems of indicated type (may be repeated)"
+msgid ""
+"Check only filesystems where the type matches this given regex(7) (may be "
+"repeated)"
 msgstr ""
 "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
 "(peut être utilisé plusieurs fois)"
@@ -5338,6 +5340,12 @@ msgstr ""
 
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Check only filesystems of indicated type (may be repeated)"
+#~ msgstr ""
+#~ "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
+#~ "(peut être utilisé plusieurs fois)"
 
 #~ msgid "Path or partition (may be repeated)"
 #~ msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
