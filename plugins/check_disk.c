@@ -97,7 +97,7 @@ static struct regex_list *fs_exclude_list = NULL;
 
 /* Linked list of filesystem types to check.
    If the list is empty, include all types.  */
-static struct name_list *fs_include_list;
+static struct regex_list *fs_include_list;
 
 static struct name_list *dp_exclude_list;
 
@@ -308,7 +308,7 @@ main (int argc, char **argv)
                 np_find_name (dp_exclude_list, me->me_mountdir))) {
         continue;
       /* Skip not included fstypes */
-      } else if (fs_include_list && !np_find_name (fs_include_list, me->me_type)) {
+      } else if (fs_include_list && !np_find_regmatch(fs_include_list, me->me_type)) {
         continue;
       }
     }
@@ -723,7 +723,11 @@ process_arguments (int argc, char **argv)
       }
       break;
     case 'N':                 /* include file system type */
-      np_add_name(&fs_include_list, optarg);
+      err = np_add_regex(&fs_include_list, optarg, REG_EXTENDED);
+      if (err != 0) {
+        regerror (err, &fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+      }
       break;
     case 'v':                 /* verbose */
       verbose++;
