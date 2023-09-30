@@ -63,7 +63,7 @@ np_add_regex (struct regex_list **list, const char *regex, int cflags)
   int regcomp_result = regcomp(&new_entry->regex, regex, cflags);
 
 	if (!regcomp_result) {
-		// regcomp succeded
+		// regcomp succeeded
 		new_entry->next = *list;
 		*list = new_entry;
 
