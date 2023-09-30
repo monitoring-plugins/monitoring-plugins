@@ -1013,8 +1013,8 @@ print_help (void)
   printf (UT_VERBOSE);
   printf (" %s\n", "-X, --exclude-type=TYPE_REGEX");
   printf ("    %s\n", _("Ignore all filesystems of types matching given regex(7) (may be repeated)"));
-  printf (" %s\n", "-N, --include-type=TYPE");
-  printf ("    %s\n", _("Check only filesystems of indicated type (may be repeated)"));
+  printf (" %s\n", "-N, --include-type=TYPE_REGEX");
+  printf ("    %s\n", _("Check only filesystems where the type matches this given regex(7) (may be repeated)"));
 
   printf ("\n");
   printf ("%s\n", _("General usage hints:"));
