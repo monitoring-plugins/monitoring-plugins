@@ -150,7 +150,7 @@ typedef struct dhcp_offer_struct{
 	uint32_t lease_time;            /* lease time in seconds */
 	uint32_t renewal_time;          /* renewal time in seconds */
 	uint32_t rebinding_time;        /* rebinding time in seconds */
-	u_int8_t desired;                 /* is this offer desired (necessary in exclusive mode) */
+	bool desired;                 /* is this offer desired (necessary in exclusive mode) */
 	struct dhcp_offer_struct *next;
 }dhcp_offer;
 
@@ -193,8 +193,8 @@ typedef struct requested_server_struct{
 #define ETHERNET_HARDWARE_ADDRESS            1     /* used in htype field of dhcp packet */
 #define ETHERNET_HARDWARE_ADDRESS_LENGTH     6     /* length of Ethernet hardware addresses */
 
-uint8_t unicast = 0;        /* unicast mode: mimic a DHCP relay */
-u_int8_t exclusive = 0;      /* exclusive mode aka "rogue DHCP server detection" */
+bool unicast = 0;        /* unicast mode: mimic a DHCP relay */
+bool exclusive = 0;      /* exclusive mode aka "rogue DHCP server detection" */
 struct in_addr my_ip;        /* our address (required for relay) */
 struct in_addr dhcp_ip;      /* server to query (if in unicast mode) */
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
@@ -896,7 +896,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	new_offer->lease_time=dhcp_lease_time;
 	new_offer->renewal_time=dhcp_renewal_time;
 	new_offer->rebinding_time=dhcp_rebinding_time;
-	new_offer->desired=FALSE; /* exclusive mode: we'll check that in get_results */
+	new_offer->desired=false; /* exclusive mode: we'll check that in get_results */
 
 
 	if(verbose){
@@ -977,6 +977,7 @@ int get_results(void){
 					if(!temp_server->answered){
 						requested_responses++;
 						temp_server->answered=true;
+						temp_offer->desired=true;
 					}
 				}
 			}
@@ -984,7 +985,7 @@ int get_results(void){
 
 		/* exclusive mode: check for undesired offers */
 		for(temp_offer=dhcp_offer_list;temp_offer!=NULL;temp_offer=temp_offer->next) {
-			if (temp_offer->desired == FALSE) {
+			if (!temp_offer->desired) {
 				undesired_offer=temp_offer; /* Checks only for the first undesired offer */
 				break; /* no further checks needed */
 			}
@@ -1141,10 +1142,10 @@ int call_getopt(int argc, char **argv){
 				break;
 
 		case 'u': /* unicast testing */
-			unicast=1;
+			unicast=true;
 			break;
 		case 'x': /* exclusive testing aka "rogue DHCP server detection" */
-			exclusive=1;
+			exclusive=true;
 			break;
 
 			case 'V': /* version */
