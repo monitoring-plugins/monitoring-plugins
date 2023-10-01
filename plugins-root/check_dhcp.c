@@ -1387,6 +1387,3 @@ print_usage(void){
 
 	return;
 }
-
-
-
