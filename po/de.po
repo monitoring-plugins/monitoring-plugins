@@ -4993,18 +4993,12 @@ msgstr ""
 msgid ", requested address (%s) was %soffered"
 msgstr ""
 
-msgid "not "
-msgstr ""
-
 #, c-format
 msgid ", max lease time = "
 msgstr ""
 
 #, c-format
 msgid "Infinity"
-msgstr ""
-
-msgid "Got unexpected non-option argument"
 msgstr ""
 
 #, c-format
