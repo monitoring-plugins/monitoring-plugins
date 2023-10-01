@@ -115,9 +115,6 @@ long mac_addr_dlpi( const char *, int, u_char *);
 #define OK                0
 #define ERROR             -1
 
-#define FALSE             0
-#define TRUE              1
-
 
 /**** DHCP definitions ****/
 
@@ -158,7 +155,7 @@ typedef struct dhcp_offer_struct{
 
 typedef struct requested_server_struct{
 	struct in_addr server_address;
-	int answered;
+	bool answered;
 	struct requested_server_struct *next;
 }requested_server;
 
@@ -217,8 +214,8 @@ int valid_responses=0;     /* number of valid DHCPOFFERs we received */
 int requested_servers=0;
 int requested_responses=0;
 
-int request_specific_address=FALSE;
-int received_requested_address=FALSE;
+bool request_specific_address=false;
+bool received_requested_address=false;
 int verbose=0;
 struct in_addr requested_address;
 
@@ -491,7 +488,7 @@ int send_dhcp_discover(int sock){
 	discover_packet.options[opts++]=DHCPDISCOVER;
 
 	/* the IP address we're requesting */
-	if(request_specific_address==TRUE){
+	if(request_specific_address){
 		discover_packet.options[opts++]=DHCP_OPTION_REQUESTED_ADDRESS;
 		discover_packet.options[opts++]='\x04';
 		memcpy(&discover_packet.options[opts],&requested_address,sizeof(requested_address));
@@ -792,7 +789,7 @@ int add_requested_server(struct in_addr server_address){
 		return ERROR;
 
 	new_server->server_address=server_address;
-	new_server->answered=FALSE;
+	new_server->answered=false;
 
 	new_server->next=requested_server_list;
 	requested_server_list=new_server;
@@ -946,7 +943,7 @@ int get_results(void){
 	int result;
 	uint32_t max_lease_time=0;
 
-	received_requested_address=FALSE;
+	received_requested_address=false;
 
 	/* checks responses from requested servers */
 	requested_responses=0;
@@ -962,7 +959,7 @@ int get_results(void){
 
 				/* see if we got the address we requested */
 				if(!memcmp(&requested_address,&temp_offer->offered_address,sizeof(requested_address)))
-					received_requested_address=TRUE;
+					received_requested_address=true;
 
 				/* see if the servers we wanted a response from talked to us or not */
 				if(!memcmp(&temp_offer->server_address,&temp_server->server_address,sizeof(temp_server->server_address))){
@@ -973,9 +970,9 @@ int get_results(void){
 							printf(_(" (duplicate)"));
 						printf(_("\n"));
 					}
-					if(temp_server->answered == FALSE){
+					if(!temp_server->answered){
 						requested_responses++;
-						temp_server->answered=TRUE;
+						temp_server->answered=true;
 					}
 				}
 			}
@@ -994,7 +991,7 @@ int get_results(void){
 
 			/* see if we got the address we requested */
 			if(!memcmp(&requested_address,&temp_offer->offered_address,sizeof(requested_address)))
-				received_requested_address=TRUE;
+				received_requested_address=true;
 		}
 	}
 
@@ -1005,7 +1002,7 @@ int get_results(void){
 		result=STATE_CRITICAL;
 	else if(requested_responses<requested_servers)
 		result=STATE_WARNING;
-	else if(request_specific_address==TRUE && received_requested_address==FALSE)
+	else if(request_specific_address && !received_requested_address)
 		result=STATE_WARNING;
 
 	if(result==0)               /* garrett honeycutt 2005 */
@@ -1028,8 +1025,8 @@ int get_results(void){
 	if(requested_servers>0)
 		printf(_(", %s%d of %d requested servers responded"),((requested_responses<requested_servers) && requested_responses>0)?"only ":"",requested_responses,requested_servers);
 
-	if(request_specific_address==TRUE)
-		printf(_(", requested address (%s) was %soffered"),inet_ntoa(requested_address),(received_requested_address==TRUE)?"":_("not "));
+	if(request_specific_address)
+		printf(_(", requested address (%s) was %soffered"),inet_ntoa(requested_address),(received_requested_address)?"":_("not "));
 
 	printf(_(", max lease time = "));
 	if(max_lease_time==DHCP_INFINITE_TIME)
@@ -1090,7 +1087,7 @@ int call_getopt(int argc, char **argv){
 
 			case 'r': /* address we are requested from DHCP servers */
 				resolve_host(optarg,&requested_address);
-				request_specific_address=TRUE;
+				request_specific_address=true;
 				break;
 
 			case 't': /* timeout */
