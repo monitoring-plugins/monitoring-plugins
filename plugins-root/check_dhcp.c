@@ -57,9 +57,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+
 #if HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
-#endif
+#endif // HAVE_SYS_SOCKIO_H
 
 #if defined( __linux__ )
 
@@ -106,7 +107,7 @@ static int dl_open(const char *, int, int *);
 static int dl_bind(int, int, u_char *);
 long mac_addr_dlpi( const char *, int, u_char *);
 
-#endif
+#endif // __sun__ || __solaris__ || __hpux
 
 
 
