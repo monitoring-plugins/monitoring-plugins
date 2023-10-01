@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 const char *progname = "check_dhcp";
-const char *copyright = "2001-2007";
+const char *copyright = "2001-2023";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
