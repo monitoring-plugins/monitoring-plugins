@@ -98,10 +98,6 @@ static struct strbuf dat = {AREA_SZ, 0, (char *)dat_area};
 #define GOT_INTR 4
 #define GOT_ERR 128
 
-#define u_int8_t	 uint8_t
-#define u_int16_t	uint16_t
-#define u_int32_t	uint32_t
-
 static int get_msg(int);
 static int check_ctrl(int);
 static int put_ctrl(int, int, int);
@@ -132,13 +128,13 @@ long mac_addr_dlpi( const char *, int, u_char *);
 
 
 typedef struct dhcp_packet_struct{
-        u_int8_t  op;                   /* packet type */
-        u_int8_t  htype;                /* type of hardware address for this machine (Ethernet, etc) */
-        u_int8_t  hlen;                 /* length of hardware address (of this machine) */
-        u_int8_t  hops;                 /* hops */
-        u_int32_t xid;                  /* random transaction id number - chosen by this machine */
-        u_int16_t secs;                 /* seconds used in timing */
-        u_int16_t flags;                /* flags */
+        uint8_t  op;                   /* packet type */
+        uint8_t  htype;                /* type of hardware address for this machine (Ethernet, etc) */
+        uint8_t  hlen;                 /* length of hardware address (of this machine) */
+        uint8_t  hops;                 /* hops */
+        uint32_t xid;                  /* random transaction id number - chosen by this machine */
+        uint16_t secs;                 /* seconds used in timing */
+        uint16_t flags;                /* flags */
         struct in_addr ciaddr;          /* IP address of this machine (if we already have one) */
         struct in_addr yiaddr;          /* IP address of this machine (offered by the DHCP server) */
         struct in_addr siaddr;          /* IP address of next server */
@@ -153,9 +149,9 @@ typedef struct dhcp_packet_struct{
 typedef struct dhcp_offer_struct{
 	struct in_addr server_address;   /* address of DHCP server that sent this offer */
 	struct in_addr offered_address;  /* the IP address that was offered to us */
-	u_int32_t lease_time;            /* lease time in seconds */
-	u_int32_t renewal_time;          /* renewal time in seconds */
-	u_int32_t rebinding_time;        /* rebinding time in seconds */
+	uint32_t lease_time;            /* lease time in seconds */
+	uint32_t renewal_time;          /* renewal time in seconds */
+	uint32_t rebinding_time;        /* rebinding time in seconds */
 	struct dhcp_offer_struct *next;
         }dhcp_offer;
 
@@ -198,7 +194,7 @@ typedef struct requested_server_struct{
 #define ETHERNET_HARDWARE_ADDRESS            1     /* used in htype field of dhcp packet */
 #define ETHERNET_HARDWARE_ADDRESS_LENGTH     6     /* length of Ethernet hardware addresses */
 
-u_int8_t unicast = 0;        /* unicast mode: mimic a DHCP relay */
+uint8_t unicast = 0;        /* unicast mode: mimic a DHCP relay */
 struct in_addr my_ip;        /* our address (required for relay) */
 struct in_addr dhcp_ip;      /* server to query (if in unicast mode) */
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
@@ -206,11 +202,11 @@ unsigned char *user_specified_mac=NULL;
 
 char network_interface_name[IFNAMSIZ]="eth0";
 
-u_int32_t packet_xid=0;
+uint32_t packet_xid=0;
 
-u_int32_t dhcp_lease_time=0;
-u_int32_t dhcp_renewal_time=0;
-u_int32_t dhcp_rebinding_time=0;
+uint32_t dhcp_lease_time=0;
+uint32_t dhcp_renewal_time=0;
+uint32_t dhcp_rebinding_time=0;
 
 int dhcpoffer_timeout=2;
 
@@ -948,7 +944,7 @@ int get_results(void){
 	dhcp_offer *temp_offer;
 	requested_server *temp_server;
 	int result;
-	u_int32_t max_lease_time=0;
+	uint32_t max_lease_time=0;
 
 	received_requested_address=FALSE;
 
