@@ -25,7 +25,7 @@ $t = NPTest->testCmd( "./check_imap $host_tcp_imap -p 143 -wt 9 -ct 9 -to 10 -e 
 cmp_ok( $t->return_code, '==', 0, "Check old parameter options" );
 
 $t = NPTest->testCmd( "./check_imap $host_nonresponsive" );
-cmp_ok( $t->return_code, '==', 2, "Get error with non reponsive host" );
+cmp_ok( $t->return_code, '==', 2, "Get error with non responsive host" );
 
 $t = NPTest->testCmd( "./check_imap $hostname_invalid" );
 cmp_ok( $t->return_code, '==', 2, "Invalid hostname" );

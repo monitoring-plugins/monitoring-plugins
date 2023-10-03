@@ -2,7 +2,7 @@
 #
 # Logged in Users Tests via check_users
 #
-# Trick: This ckeck requires at least 1 user logged in. These commands should
+# Trick: This check requires at least 1 user logged in. These commands should
 #        leave a session open forever in the background:
 #
 #   $ ssh -tt localhost </dev/null >/dev/null 2>/dev/null &
