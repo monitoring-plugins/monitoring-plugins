@@ -1141,12 +1141,12 @@ int call_getopt(int argc, char **argv){
 
 				break;
 
-		case 'u': /* unicast testing */
-			unicast=true;
-			break;
-		case 'x': /* exclusive testing aka "rogue DHCP server detection" */
-			exclusive=true;
-			break;
+			case 'u': /* unicast testing */
+				unicast=true;
+				break;
+			case 'x': /* exclusive testing aka "rogue DHCP server detection" */
+				exclusive=true;
+				break;
 
 			case 'V': /* version */
 				print_revision(progname, NP_VERSION);
@@ -1411,4 +1411,4 @@ print_usage(void){
 	printf ("                  [-i interface] [-m mac]\n");
 
 	return;
-	}
+}
