@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-22 15:36+0200\n"
+"POT-Creation-Date: 2023-10-01 15:10+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -4986,11 +4986,22 @@ msgid "Received %d DHCPOFFER(s)"
 msgstr ""
 
 #, c-format
+msgid ", Rogue DHCP Server detected! Server %s"
+msgstr ""
+
+#, c-format
+msgid " offered %s \n"
+msgstr ""
+
+#, c-format
 msgid ", %s%d of %d requested servers responded"
 msgstr ""
 
 #, c-format
 msgid ", requested address (%s) was %soffered"
+msgstr ""
+
+msgid "not "
 msgstr ""
 
 #, c-format
@@ -4999,6 +5010,9 @@ msgstr ""
 
 #, c-format
 msgid "Infinity"
+msgstr ""
+
+msgid "Got unexpected non-option argument"
 msgstr ""
 
 #, c-format
@@ -5045,6 +5059,11 @@ msgid "MAC address to use in the DHCP request"
 msgstr ""
 
 msgid "Unicast testing: mimic a DHCP relay, requires -s"
+msgstr ""
+
+msgid ""
+"Only requested DHCP server may response (rogue DHCP server detection), "
+"requires -s"
 msgstr ""
 
 msgid "specify a target"
