@@ -193,8 +193,8 @@ typedef struct requested_server_struct{
 #define ETHERNET_HARDWARE_ADDRESS            1     /* used in htype field of dhcp packet */
 #define ETHERNET_HARDWARE_ADDRESS_LENGTH     6     /* length of Ethernet hardware addresses */
 
-bool unicast = 0;        /* unicast mode: mimic a DHCP relay */
-bool exclusive = 0;      /* exclusive mode aka "rogue DHCP server detection" */
+bool unicast = false;        /* unicast mode: mimic a DHCP relay */
+bool exclusive = false;      /* exclusive mode aka "rogue DHCP server detection" */
 struct in_addr my_ip;        /* our address (required for relay) */
 struct in_addr dhcp_ip;      /* server to query (if in unicast mode) */
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
@@ -1094,7 +1094,7 @@ int call_getopt(int argc, char **argv){
 	};
 
 	int c=0;
-	while(1){
+	while(true){
 		c=getopt_long(argc,argv,"+hVvxt:s:r:t:i:m:u",long_options,&option_index);
 
 		if(c==-1||c==EOF||c==1)
