@@ -1781,7 +1781,7 @@ get_timevar(const char *str)
 	else if(u == 's') factor = 1000000;	/* seconds */
 	if(debug > 2) printf("factor is %u\n", factor);
 
-	i =  strtoul(str, &ptr, 0);
+	i = strtoul(str, &ptr, 0);
 	if(!ptr || *ptr != '.' || strlen(ptr) < 2 || factor == 1)
 		return i * factor;
 
