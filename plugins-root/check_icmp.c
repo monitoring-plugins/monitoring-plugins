@@ -42,11 +42,6 @@ char *progname;
 const char *copyright = "2005-2008";
 const char *email = "devel@monitoring-plugins.org";
 
-/* what does that do? */
-#ifdef __sun
-#define _XPG4_2
-#endif
-
 /** Monitoring Plugins basic includes */
 #include "common.h"
 #include "netutils.h"
