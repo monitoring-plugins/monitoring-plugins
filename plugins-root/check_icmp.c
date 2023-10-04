@@ -1236,6 +1236,7 @@ finish(int sig)
 	{"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
 	int hosts_ok = 0;
 	int hosts_warn = 0;
+	int this_status;
 	double R;
 
 	alarm(0);
@@ -1256,6 +1257,7 @@ finish(int sig)
 	host = list;
 
 	while(host) {
+		this_status = STATE_OK;
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
 			 * conspicuously as missing entries in perfparse and cacti */
@@ -1296,79 +1298,80 @@ finish(int sig)
 			pl_mode=1;
 		}
 
+#define THIS_STATUS_WARNING this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 		/* Check which mode is on and do the warn / Crit stuff */
 		if (rta_mode) {
 			if(rta >= crit.rta) {
+				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->rta_status=STATE_CRITICAL;
 			}
 			else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
+				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
-				hosts_warn++;
 				host->rta_status=STATE_WARNING;
-			}
-			else {
-				hosts_ok++;
 			}
 		}
 		if (pl_mode) {
 			if(pl >= crit.pl) {
+				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->pl_status=STATE_CRITICAL;
 			}
 			else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
+				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
-				hosts_warn++;
 				host->pl_status=STATE_WARNING;
-			}
-			else {
-				hosts_ok++;
 			}
 		}
 		if (jitter_mode) {
 			if(host->jitter >= crit.jitter) {
+				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->jitter_status=STATE_CRITICAL;
 			}
 			else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
+				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
-				hosts_warn++;
 				host->jitter_status=STATE_WARNING;
-			}
-			else {
-				hosts_ok++;
 			}
 		}
 		if (mos_mode) {
 			if(host->mos <= crit.mos) {
+				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->mos_status=STATE_CRITICAL;
 			}
 			else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
+				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
-				hosts_warn++;
 				host->mos_status=STATE_WARNING;
-			}
-			else {
-				hosts_ok++;
 			}
 		}
 		if (score_mode) {
 			if(host->score <= crit.score) {
+				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->score_status=STATE_CRITICAL;
 			}
 			else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
+				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
-				score_mode++;
 				host->score_status=STATE_WARNING;
 			}
-			else {
-				hosts_ok++;
-			}
 		}
+
+		if (this_status == STATE_WARNING) {
+			hosts_warn++;
+		}
+		else if (this_status == STATE_OK) {
+			hosts_ok++;
+		}
+
 		host = host->next;
 	}
+
+
 	/* this is inevitable */
 	if(!targets_alive) status = STATE_CRITICAL;
 	if(min_hosts_alive > -1) {
@@ -1404,7 +1407,7 @@ finish(int sig)
 			}
 		}
 		else {	/* !icmp_recv */
-			printf("%s:", host->name);
+			printf("%s", host->name);
 			/* rta text output */
 			if (rta_mode) {
 				if (status == STATE_OK)
