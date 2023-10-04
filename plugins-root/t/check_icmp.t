@@ -12,7 +12,7 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-	plan tests => 20;
+	plan tests => 39;
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
@@ -94,3 +94,49 @@ $res = NPTest->testCmd(
 	);
 is( $res->return_code, 0, "Try max packet size" );
 like( $res->output, $successOutput, "Output OK - Didn't overflow" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -R 100,100 -n 1 -t 2"
+	);
+is( $res->return_code, 0, "rta works" );
+like( $res->output, $successOutput, "Output OK" );
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -P 80,90 -n 1 -t 2"
+	);
+is( $res->return_code, 0, "pl works" );
+like( $res->output, '/lost 0%/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -J 80,90 -t 2"
+	);
+is( $res->return_code, 0, "jitter works" );
+like( $res->output, '/jitter \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -M 4,3 -t 2"
+	);
+is( $res->return_code, 0, "mos works" );
+like( $res->output, '/MOS \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -S 80,70 -t 2"
+	);
+is( $res->return_code, 0, "score works" );
+like( $res->output, '/Score \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -O -t 2"
+	);
+is( $res->return_code, 0, "order works" );
+like( $res->output, '/Packets in order/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -O -S 80,70 -M 4,3 -J 80,90 -P 80,90 -R 100,100 -t 2"
+	);
+is( $res->return_code, 0, "order works" );
+like( $res->output, '/Packets in order/', "Output OK" );
+like( $res->output, '/Score \d/', "Output OK" );
+like( $res->output, '/MOS \d/', "Output OK" );
+like( $res->output, '/jitter \d/', "Output OK" );
+like( $res->output, '/lost 0%/', "Output OK" );
+like( $res->output, $successOutput, "Output OK" );
