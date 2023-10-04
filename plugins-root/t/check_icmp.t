@@ -19,7 +19,7 @@ if ($allow_sudo eq "yes" or $> == 0) {
 my $sudo = $> == 0 ? '' : 'sudo';
 
 my $successOutput = '/OK - .*? rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
-my $failureOutput = '/(WARNING|CRITICAL) - .*? rta [\d\.]+ms > [\d\.]+ms/';
+my $failureOutput = '/(WARNING|CRITICAL) - .*? rta (?:[\d\.]+ms > [\d\.]+ms|nan)/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
 				"The hostname of system responsive to network requests",
