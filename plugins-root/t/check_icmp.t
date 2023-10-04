@@ -18,8 +18,8 @@ if ($allow_sudo eq "yes" or $> == 0) {
 }
 my $sudo = $> == 0 ? '' : 'sudo';
 
-my $successOutput = '/OK - .*?: rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
-my $failureOutput = '/(WARNING|CRITICAL) - .*?: rta [\d\.]+ms, lost \d%/';
+my $successOutput = '/OK - .*? rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
+my $failureOutput = '/(WARNING|CRITICAL) - .*? rta [\d\.]+ms > [\d\.]+ms/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
 				"The hostname of system responsive to network requests",
@@ -54,7 +54,7 @@ is( $res->return_code, 2, "Syntax ok, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100%"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -t 2"
 	);
 is( $res->return_code, 2, "Timeout - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
@@ -66,13 +66,13 @@ is( $res->return_code, 3, "No hostname" );
 like( $res->output, '/No hosts to check/', "Output with appropriate error message");
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0 -t 2"
 	);
 is( $res->return_code, 0, "One host nonresponsive - zero required" );
 like( $res->output, $successOutput, "Output OK" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1"
+	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1 -t 2"
 	);
 is( $res->return_code, 0, "One of two host nonresponsive - one required" );
 like( $res->output, $successOutput, "Output OK" );
