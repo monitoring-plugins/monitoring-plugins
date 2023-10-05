@@ -29,6 +29,7 @@
 #include "common.h"
 #include "utils_disk.h"
 #include "gl/fsusage.h"
+#include <string.h>
 
 void
 np_add_name (struct name_list **list, const char *name)
@@ -38,6 +39,42 @@ np_add_name (struct name_list **list, const char *name)
   new_entry->name = (char *) name;
   new_entry->next = *list;
   *list = new_entry;
+}
+
+/* @brief Initialises a new regex at the begin of list via regcomp(3)
+ *
+ * @details if the regex fails to compile the error code of regcomp(3) is returned
+ * 					and list is not modified, otherwise list is modified to point to the new
+ * 					element
+ * @param list Pointer to a linked list of regex_list elements
+ * @param regex the string containing the regex which should be inserted into the list
+ * @param clags the cflags parameter for regcomp(3)
+ */
+int
+np_add_regex (struct regex_list **list, const char *regex, int cflags)
+{
+  struct regex_list *new_entry = (struct regex_list *) malloc (sizeof *new_entry);
+
+	if (new_entry == NULL) {
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+				strerror(errno));
+	}
+
+  int regcomp_result = regcomp(&new_entry->regex, regex, cflags);
+
+	if (!regcomp_result) {
+		// regcomp succeeded
+		new_entry->next = *list;
+		*list = new_entry;
+
+		return 0;
+	} else {
+		// regcomp failed
+		free(new_entry);
+
+		return regcomp_result;
+	}
+
 }
 
 /* Initialises a new parameter at the end of list */
@@ -194,6 +231,30 @@ np_find_name (struct name_list *list, const char *name)
     }
   }
   return FALSE;
+}
+
+/* Returns TRUE if name is in list */
+bool
+np_find_regmatch (struct regex_list *list, const char *name)
+{
+  int len;
+  regmatch_t m;
+
+  if (name == NULL) {
+    return false;
+  }
+
+  len = strlen(name);
+
+  for (; list; list = list->next) {
+    /* Emulate a full match as if surrounded with ^( )$
+       by checking whether the match spans the whole name */
+    if (!regexec(&list->regex, name, 1, &m, 0) && m.rm_so == 0 && m.rm_eo == len) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 int
