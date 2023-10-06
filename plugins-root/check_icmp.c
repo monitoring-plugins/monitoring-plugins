@@ -176,6 +176,16 @@ typedef union icmp_packet {
 #define MODE_ALL 2
 #define MODE_ICMP 3
 
+enum enum_threshold_mode {
+	const_rta_mode,
+	const_packet_loss_mode,
+	const_jitter_mode,
+	const_mos_mode,
+	const_score_mode
+};
+
+typedef enum enum_threshold_mode threshold_mode;
+
 /* the different ping types we can do
  * TODO: investigate ARP ping as well */
 #define HAVE_ICMP 1
@@ -205,7 +215,7 @@ static int wait_for_reply(int, u_int);
 static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, struct timeval*);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
-static int get_threshold2(char *str, threshold *, threshold *, int type);
+static int get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
 static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
@@ -581,23 +591,23 @@ main(int argc, char **argv)
 				exit (STATE_UNKNOWN);
 				break;
 			case 'R': /* RTA mode */
-				get_threshold2(optarg, &warn, &crit,1);
+				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_rta_mode);
 				rta_mode=true;
 				break;
 			case 'P': /* packet loss mode */
-				get_threshold2(optarg, &warn, &crit,2);
+				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_packet_loss_mode);
 				pl_mode=true;
 				break;
 			case 'J': /* jitter mode */
-				get_threshold2(optarg, &warn, &crit,3);
+				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_jitter_mode);
 				jitter_mode=true;
 				break;
 			case 'M': /* MOS mode */
-				get_threshold2(optarg, &warn, &crit,4);
+				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_mos_mode);
 				mos_mode=true;
 				break;
 			case 'S': /* score mode */
-				get_threshold2(optarg, &warn, &crit,5);
+				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_score_mode);
 				score_mode=true;
 				break;
 			case 'O': /* out of order mode */
@@ -1834,43 +1844,63 @@ get_threshold(char *str, threshold *th)
 
 /* not too good at checking errors, but it'll do (main() should barfe on -1) */
 static int
-get_threshold2(char *str, threshold *warn, threshold *crit, int type)
+get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode)
 {
-	char *p = NULL;
-	bool i = false;
+	if (!str || !length || !warn || !crit) return -1;
 
-	if(!str || !strlen(str) || !warn || !crit) return -1;
-	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
-	p = &str[strlen(str) - 1];
+	char *p = NULL;
+	bool first_iteration = true;
+
+	// pointer magic slims code by 10 lines. i is bof-stop on stupid libc's
+	// p points to the last char in str
+	p = &str[length - 1];
+
 	while(p != &str[0]) {
-		if( (*p == 'm') || (*p == '%') ) *p = '\0';
-		else if(*p == ',' && i) {
+		if( (*p == 'm') || (*p == '%') ) {
+			*p = '\0';
+		} else if(*p == ',' && !first_iteration) {
 			*p = '\0';	/* reset it so get_timevar(str) works nicely later */
-			if (type==1)
-				crit->rta = atof(p+1)*1000;
-			else if  (type==2)
-				crit->pl = (unsigned char)strtoul(p+1, NULL, 0);
-			else if  (type==3)
-				crit->jitter = atof(p+1);
-			else if (type==4)
-				crit->mos = atof(p+1);
-			else if (type==5)
-				crit->score = atof(p+1);
+
+			switch (mode) {
+				case const_rta_mode:
+					crit->rta = atof(p+1)*1000;
+					break;
+				case  const_packet_loss_mode:
+					crit->pl = (unsigned char)strtoul(p+1, NULL, 0);
+					break;
+				case const_jitter_mode:
+					crit->jitter = atof(p+1);
+					break;
+				case const_mos_mode:
+					crit->mos = atof(p+1);
+					break;
+				case const_score_mode:
+					crit->score = atof(p+1);
+					break;
+			}
 		}
-		i = true;
+		first_iteration = false;
 		p--;
 	}
-	if (type==1)
-		warn->rta = atof(p)*1000;
-	else if (type==2)
-		warn->pl = (unsigned char)strtoul(p, NULL, 0);
-	if (type==3)
-		warn->jitter = atof(p);
-	else if (type==4)
-		warn->mos = atof(p);
-	else if (type==5)
-		warn->score = atof(p);
-	return 0;
+
+		switch (mode) {
+			case const_rta_mode:
+				warn->rta = atof(p)*1000;
+				break;
+			case const_packet_loss_mode:
+				warn->pl = (unsigned char)strtoul(p, NULL, 0);
+				break;
+			case const_jitter_mode:
+				warn->jitter = atof(p);
+				break;
+			case const_mos_mode:
+				warn->mos = atof(p);
+				break;
+			case const_score_mode:
+				warn->score = atof(p);
+				break;
+		}
+		return 0;
 }
 
 unsigned short
