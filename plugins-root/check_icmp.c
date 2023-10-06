@@ -758,6 +758,10 @@ main(int argc, char **argv)
 
 	host = list;
 	table = malloc(sizeof(struct rta_host *) * targets);
+	if(!table) {
+		crash("main(): malloc failed for host table");
+		return 3;
+	}
 
 	i = 0;
 	while(host) {
