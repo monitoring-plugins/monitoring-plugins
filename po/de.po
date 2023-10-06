@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-10-01 00:46+0200\n"
+"POT-Creation-Date: 2023-10-06 10:55+0000\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -2438,6 +2438,12 @@ msgstr ""
 
 #, c-format
 msgid ""
+"%lu MB (%lu%%) used on volume %s - total %lu MB|Used space in percent on "
+"%s=%lu;%lu;%lu;0;100"
+msgstr ""
+
+#, c-format
+msgid ""
 "%lu MB (%lu%%) free on volume %s - total %lu MB|FreeMB%s=%lu;%lu;%lu;0;100"
 msgstr ""
 
@@ -2607,6 +2613,9 @@ msgid "    VMF<vol>  = MB of free space on Volume <vol>"
 msgstr ""
 
 msgid "    VMU<vol>  = MB used space on Volume <vol>"
+msgstr ""
+
+msgid "    VPU<vol>  = percent used space on Volume <vol>"
 msgstr ""
 
 msgid "    VMP<vol>  = MB of purgeable space on Volume <vol>"
