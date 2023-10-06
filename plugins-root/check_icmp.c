@@ -43,7 +43,7 @@ const char *copyright = "2005-2008";
 const char *email = "devel@monitoring-plugins.org";
 
 /** Monitoring Plugins basic includes */
-#include "common.h"
+#include "../plugins/common.h"
 #include "netutils.h"
 #include "utils.h"
 
@@ -1851,10 +1851,10 @@ get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, thres
 	char *p = NULL;
 	bool first_iteration = true;
 
-	// pointer magic slims code by 10 lines. i is bof-stop on stupid libc's
 	// p points to the last char in str
 	p = &str[length - 1];
 
+	// first_iteration is bof-stop on stupid libc's
 	while(p != &str[0]) {
 		if( (*p == 'm') || (*p == '%') ) {
 			*p = '\0';
