@@ -215,7 +215,7 @@ static int wait_for_reply(int, u_int);
 static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, struct timeval*);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
-static int get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
+static bool get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
 static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
@@ -1842,11 +1842,18 @@ get_threshold(char *str, threshold *th)
 	return 0;
 }
 
-/* not too good at checking errors, but it'll do (main() should barfe on -1) */
-static int
-get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode)
-{
-	if (!str || !length || !warn || !crit) return -1;
+/*
+ * This functions receives a pointer to a string which should contain a threshold for the
+ * rta, packet_loss, jitter, mos or score mode in the form number,number[m|%]* assigns the
+ * parsed number to the corresponding threshold variable.
+ * @param[in,out] str String containing the given threshold values
+ * @param[in] length strlen(str)
+ * @param[out] warn Pointer to the warn threshold struct to which the values should be assigned
+ * @param[out] crit Pointer to the crit threshold struct to which the values should be assigned
+ * @param[in] mode Determines whether this a threshold vor rta, packet_loss, jitter, mos or score (exclusively)
+ */
+static bool get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode) {
+	if (!str || !length || !warn || !crit) return false;
 
 	char *p = NULL;
 	bool first_iteration = true;
@@ -1900,7 +1907,7 @@ get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, thres
 				warn->score = atof(p);
 				break;
 		}
-		return 0;
+		return true;
 }
 
 unsigned short
