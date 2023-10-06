@@ -242,12 +242,12 @@ static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values 
 static int min_hosts_alive = -1;
 float pkt_backoff_factor = 1.5;
 float target_backoff_factor = 1.5;
-int	rta_mode=0;
-int	pl_mode=0;
-int	jitter_mode=0;
-int	score_mode=0;
-int	mos_mode=0;
-int	order_mode=0;
+bool rta_mode=false;
+bool pl_mode=false;
+bool jitter_mode=false;
+bool score_mode=false;
+bool mos_mode=false;
+bool order_mode=false;
 
 /** code start **/
 static void
@@ -582,26 +582,26 @@ main(int argc, char **argv)
 				break;
 			case 'R': /* RTA mode */
 				get_threshold2(optarg, &warn, &crit,1);
-				rta_mode=1;
+				rta_mode=true;
 				break;
 			case 'P': /* packet loss mode */
 				get_threshold2(optarg, &warn, &crit,2);
-				pl_mode=1;
+				pl_mode=true;
 				break;
 			case 'J': /* jitter mode */
 				get_threshold2(optarg, &warn, &crit,3);
-				jitter_mode=1;
+				jitter_mode=true;
 				break;
 			case 'M': /* MOS mode */
 				get_threshold2(optarg, &warn, &crit,4);
-				mos_mode=1;
+				mos_mode=true;
 				break;
 			case 'S': /* score mode */
 				get_threshold2(optarg, &warn, &crit,5);
-				score_mode=1;
+				score_mode=true;
 				break;
 			case 'O': /* out of order mode */
-				order_mode=1;
+				order_mode=true;
 				break;
 			}
 		}
@@ -758,6 +758,7 @@ main(int argc, char **argv)
 
 	host = list;
 	table = malloc(sizeof(struct rta_host *) * targets);
+
 	i = 0;
 	while(host) {
 		host->id = i*packets;
@@ -1831,7 +1832,8 @@ get_threshold(char *str, threshold *th)
 static int
 get_threshold2(char *str, threshold *warn, threshold *crit, int type)
 {
-	char *p = NULL, i = 0;
+	char *p = NULL;
+	bool i = false;
 
 	if(!str || !strlen(str) || !warn || !crit) return -1;
 	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
@@ -1851,7 +1853,7 @@ get_threshold2(char *str, threshold *warn, threshold *crit, int type)
 			else if (type==5)
 				crit->score = atof(p+1);
 		}
-		i = 1;
+		i = true;
 		p--;
 	}
 	if (type==1)
