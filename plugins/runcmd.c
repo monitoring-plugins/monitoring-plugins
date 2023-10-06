@@ -88,8 +88,7 @@ extern void die (int, const char *, ...)
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void)
 {
-	if(maxfd == 0)
-		maxfd = open_max();
+  long maxfd = mp_open_max();
 	if(!np_pids) np_pids = calloc(maxfd, sizeof(pid_t));
 }
 
@@ -115,10 +114,6 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 
 	env[0] = strdup("LC_ALL=C");
 	env[1] = '\0';
-
-	/* if no command was passed, return with no error */
-	if (cmdstring == NULL)
-		return -1;
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
@@ -196,6 +191,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 		/* close all descriptors in np_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
+    long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++)
 			if(np_pids[i] > 0)
 				close (i);
@@ -223,6 +219,7 @@ np_runcmd_close(int fd)
 	pid_t pid;
 
 	/* make sure this fd was opened by popen() */
+  long maxfd = mp_open_max();
 	if(fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0)
 		return -1;
 
@@ -246,6 +243,7 @@ runcmd_timeout_alarm_handler (int signo)
 	if (signo == SIGALRM)
 		puts(_("CRITICAL - Plugin timed out while executing system call"));
 
+  long maxfd = mp_open_max();
 	if(np_pids) for(i = 0; i < maxfd; i++) {
 		if(np_pids[i] != 0) kill(np_pids[i], SIGKILL);
 	}

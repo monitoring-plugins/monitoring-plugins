@@ -92,7 +92,7 @@ extern int econn_refuse_state;
 extern int was_refused;
 extern int address_family;
 
-RETSIGTYPE socket_timeout_alarm_handler (int) __attribute__((noreturn));
+void socket_timeout_alarm_handler (int) __attribute__((noreturn));
 
 /* SSL-Related functionality */
 #ifdef HAVE_SSL
