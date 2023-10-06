@@ -93,11 +93,11 @@ static int stat_remote_fs = 0;
 
 /* Linked list of filesystem types to omit.
    If the list is empty, don't exclude any types.  */
-static struct name_list *fs_exclude_list;
+static struct regex_list *fs_exclude_list = NULL;
 
 /* Linked list of filesystem types to check.
    If the list is empty, include all types.  */
-static struct name_list *fs_include_list;
+static struct regex_list *fs_include_list;
 
 static struct name_list *dp_exclude_list;
 
@@ -300,7 +300,7 @@ main (int argc, char **argv)
       } else if (me->me_dummy && !show_all_fs) {
         continue;
       /* Skip excluded fstypes */
-      } else if (fs_exclude_list && np_find_name (fs_exclude_list, me->me_type)) {
+      } else if (fs_exclude_list && np_find_regmatch (fs_exclude_list, me->me_type)) {
         continue;
       /* Skip excluded fs's */
       } else if (dp_exclude_list &&
@@ -308,7 +308,7 @@ main (int argc, char **argv)
                 np_find_name (dp_exclude_list, me->me_mountdir))) {
         continue;
       /* Skip not included fstypes */
-      } else if (fs_include_list && !np_find_name (fs_include_list, me->me_type)) {
+      } else if (fs_include_list && !np_find_regmatch(fs_include_list, me->me_type)) {
         continue;
       }
     }
@@ -543,7 +543,7 @@ process_arguments (int argc, char **argv)
   if (argc < 2)
     return ERROR;
 
-  np_add_name(&fs_exclude_list, "iso9660");
+  np_add_regex(&fs_exclude_list, "iso9660", REG_EXTENDED);
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
@@ -716,10 +716,18 @@ process_arguments (int argc, char **argv)
       np_add_name(&dp_exclude_list, optarg);
       break;
     case 'X':                 /* exclude file system type */
-      np_add_name(&fs_exclude_list, optarg);
+      err = np_add_regex(&fs_exclude_list, optarg, REG_EXTENDED);
+      if (err != 0) {
+        regerror (err, &fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+      }
       break;
     case 'N':                 /* include file system type */
-      np_add_name(&fs_include_list, optarg);
+      err = np_add_regex(&fs_include_list, optarg, REG_EXTENDED);
+      if (err != 0) {
+        regerror (err, &fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
+        die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+      }
       break;
     case 'v':                 /* verbose */
       verbose++;
@@ -1003,10 +1011,10 @@ print_help (void)
   printf (" %s\n", "-u, --units=STRING");
   printf ("    %s\n", _("Choose bytes, kB, MB, GB, TB (default: MB)"));
   printf (UT_VERBOSE);
-  printf (" %s\n", "-X, --exclude-type=TYPE");
-  printf ("    %s\n", _("Ignore all filesystems of indicated type (may be repeated)"));
-  printf (" %s\n", "-N, --include-type=TYPE");
-  printf ("    %s\n", _("Check only filesystems of indicated type (may be repeated)"));
+  printf (" %s\n", "-X, --exclude-type=TYPE_REGEX");
+  printf ("    %s\n", _("Ignore all filesystems of types matching given regex(7) (may be repeated)"));
+  printf (" %s\n", "-N, --include-type=TYPE_REGEX");
+  printf ("    %s\n", _("Check only filesystems where the type matches this given regex(7) (may be repeated)"));
 
   printf ("\n");
   printf ("%s\n", _("General usage hints:"));
@@ -1037,7 +1045,7 @@ print_usage (void)
   printf ("%s\n", _("Usage:"));
   printf (" %s {-w absolute_limit |-w  percentage_limit%% | -W inode_percentage_limit } {-c absolute_limit|-c percentage_limit%% | -K inode_percentage_limit } {-p path | -x device}\n", progname);
   printf ("[-C] [-E] [-e] [-f] [-g group ] [-k] [-l] [-M] [-m] [-R path ] [-r path ]\n");
-  printf ("[-t timeout] [-u unit] [-v] [-X type] [-N type]\n");
+  printf ("[-t timeout] [-u unit] [-v] [-X type_regex] [-N type]\n");
 }
 
 bool
