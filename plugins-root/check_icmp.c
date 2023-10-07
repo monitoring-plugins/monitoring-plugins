@@ -1876,7 +1876,7 @@ get_threshold(char *str, threshold *th)
  * @param[in] length strlen(str)
  * @param[out] warn Pointer to the warn threshold struct to which the values should be assigned
  * @param[out] crit Pointer to the crit threshold struct to which the values should be assigned
- * @param[in] mode Determines whether this a threshold vor rta, packet_loss, jitter, mos or score (exclusively)
+ * @param[in] mode Determines whether this a threshold for rta, packet_loss, jitter, mos or score (exclusively)
  */
 static bool get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode) {
 	if (!str || !length || !warn || !crit) return false;
