@@ -526,7 +526,8 @@ main(int argc, char **argv)
 	/* Reset argument scanning */
 	optind = 1;
 
-        unsigned long size;
+	unsigned long size;
+	bool err;
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
@@ -591,23 +592,48 @@ main(int argc, char **argv)
 				exit (STATE_UNKNOWN);
 				break;
 			case 'R': /* RTA mode */
-				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_rta_mode);
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_rta_mode);
+
+				if (!err) {
+						crash("Failed to parse RTA threshold");
+				}
+
 				rta_mode=true;
 				break;
 			case 'P': /* packet loss mode */
-				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_packet_loss_mode);
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_packet_loss_mode);
+
+				if (!err) {
+						crash("Failed to parse packet loss threshold");
+				}
+
 				pl_mode=true;
 				break;
 			case 'J': /* jitter mode */
-				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_jitter_mode);
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_jitter_mode);
+
+				if (!err) {
+						crash("Failed to parse jitter threshold");
+				}
+
 				jitter_mode=true;
 				break;
 			case 'M': /* MOS mode */
-				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_mos_mode);
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_mos_mode);
+
+				if (!err) {
+						crash("Failed to parse MOS threshold");
+				}
+
 				mos_mode=true;
 				break;
 			case 'S': /* score mode */
-				get_threshold2(optarg, strlen(optarg), &warn, &crit, const_score_mode);
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_score_mode);
+
+				if (!err) {
+						crash("Failed to parse score threshold");
+				}
+
 				score_mode=true;
 				break;
 			case 'O': /* out of order mode */
