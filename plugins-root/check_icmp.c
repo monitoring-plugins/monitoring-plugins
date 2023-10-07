@@ -216,6 +216,7 @@ static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, s
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
 static bool get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
+static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, threshold_mode mode);
 static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
@@ -1880,59 +1881,66 @@ get_threshold(char *str, threshold *th)
 static bool get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode) {
 	if (!str || !length || !warn || !crit) return false;
 
-	char *p = NULL;
-	bool first_iteration = true;
 
 	// p points to the last char in str
-	p = &str[length - 1];
+	char *p = &str[length - 1];
 
 	// first_iteration is bof-stop on stupid libc's
+	bool first_iteration = true;
+
 	while(p != &str[0]) {
 		if( (*p == 'm') || (*p == '%') ) {
 			*p = '\0';
 		} else if(*p == ',' && !first_iteration) {
 			*p = '\0';	/* reset it so get_timevar(str) works nicely later */
 
-			switch (mode) {
-				case const_rta_mode:
-					crit->rta = atof(p+1)*1000;
-					break;
-				case  const_packet_loss_mode:
-					crit->pl = (unsigned char)strtoul(p+1, NULL, 0);
-					break;
-				case const_jitter_mode:
-					crit->jitter = atof(p+1);
-					break;
-				case const_mos_mode:
-					crit->mos = atof(p+1);
-					break;
-				case const_score_mode:
-					crit->score = atof(p+1);
-					break;
+			char *start_of_value = p + 1;
+
+			if (!parse_threshold2_helper(start_of_value, strlen(start_of_value), crit, mode)){
+				return false;
 			}
+
 		}
 		first_iteration = false;
 		p--;
 	}
 
-		switch (mode) {
-			case const_rta_mode:
-				warn->rta = atof(p)*1000;
-				break;
-			case const_packet_loss_mode:
-				warn->pl = (unsigned char)strtoul(p, NULL, 0);
-				break;
-			case const_jitter_mode:
-				warn->jitter = atof(p);
-				break;
-			case const_mos_mode:
-				warn->mos = atof(p);
-				break;
-			case const_score_mode:
-				warn->score = atof(p);
-				break;
-		}
-		return true;
+	return parse_threshold2_helper(p, strlen(p), warn, mode);
+}
+
+static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, threshold_mode mode) {
+	char *resultChecker = {0};
+
+	switch (mode) {
+		case const_rta_mode:
+			thr->rta = strtod(s, &resultChecker) * 1000;
+			break;
+		case const_packet_loss_mode:
+			thr->pl = (unsigned char)strtoul(s, &resultChecker, 0);
+			break;
+		case const_jitter_mode:
+			thr->jitter = strtod(s, &resultChecker);
+
+			break;
+		case const_mos_mode:
+			thr->mos = strtod(s, &resultChecker);
+			break;
+		case const_score_mode:
+			thr->score = strtod(s, &resultChecker);
+			break;
+	}
+
+	if (resultChecker == s) {
+		// Failed to parse
+		return false;
+	}
+
+	if (resultChecker != (s + length)) {
+		// Trailing symbols
+		return false;
+	}
+
+	return true;
 }
 
 unsigned short
