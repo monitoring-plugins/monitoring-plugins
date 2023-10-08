@@ -109,24 +109,24 @@ typedef struct rta_host {
 	unsigned char icmp_type, icmp_code; /* type and code from errors */
 	unsigned short flags;        /* control/status flags */
 	double rta;                  /* measured RTA */
-	int			rta_status;
+	int rta_status;              // check result for RTA checks
 	double rtmax;                /* max rtt */
 	double rtmin;                /* min rtt */
-	double jitter;                  /* measured jitter */
-	int			jitter_status;
-	double jitter_max;                /* jitter rtt */
-	double jitter_min;                /* jitter rtt */
+	double jitter;               /* measured jitter */
+	int jitter_status;           // check result for Jitter checks
+	double jitter_max;           /* jitter rtt maximum */
+	double jitter_min;           /* jitter rtt minimum */
 	double EffectiveLatency;
-	double mos;									/* Mean opnion score */
-	int			mos_status;
-	double	score;							/* score */
-	int			score_status;
+	double mos;                  /* Mean opnion score */
+	int mos_status;              // check result for MOS checks
+	double  score;               /* score */
+	int score_status;            // check result for score checks
 	u_int last_tdiff;
-	u_int	last_icmp_seq;        /* Last ICMP_SEQ to check out of order pkts */
+	u_int last_icmp_seq;         /* Last ICMP_SEQ to check out of order pkts */
 	unsigned char pl;            /* measured packet loss */
-	int			pl_status;
+	int pl_status;               // check result for packet loss checks
 	struct rta_host *next;       /* linked list */
-	int	order_status;
+	int order_status;            // check result for packet order checks
 } rta_host;
 
 #define FLAG_LOST_CAUSE 0x01  /* decidedly dead target. */
@@ -228,7 +228,7 @@ static void finish(int);
 static void crash(const char *, ...);
 
 /** external **/
-extern int optind, opterr, optopt;
+extern int optind;
 extern char *optarg;
 extern char **environ;
 
@@ -459,7 +459,7 @@ main(int argc, char **argv)
 	 * that before pointer magic (esp. on network data) */
 	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;
 
-        address_family = -1;
+	address_family = -1;
 	int icmp_proto = IPPROTO_ICMP;
 
 	/* get calling name the old-fashioned way for portability instead
@@ -1361,7 +1361,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->rta_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
 				status = STATE_WARNING;
 				host->rta_status=STATE_WARNING;
 			}
@@ -1373,7 +1373,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->pl_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
 				status = STATE_WARNING;
 				host->pl_status=STATE_WARNING;
 			}
@@ -1385,7 +1385,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->jitter_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
 				status = STATE_WARNING;
 				host->jitter_status=STATE_WARNING;
 			}
@@ -1397,7 +1397,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->mos_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
 				status = STATE_WARNING;
 				host->mos_status=STATE_WARNING;
 			}
@@ -1409,7 +1409,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->score_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
 				status = STATE_WARNING;
 				host->score_status=STATE_WARNING;
 			}
@@ -1763,7 +1763,7 @@ add_target(char *arg)
 		}
 		break;
 	}
-        freeaddrinfo(res);
+	freeaddrinfo(res);
 
 	return 0;
 }
@@ -1985,91 +1985,91 @@ icmp_checksum(uint16_t *p, size_t n)
 void
 print_help(void)
 {
-  /*print_revision (progname);*/ /* FIXME: Why? */
-  printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
+	/*print_revision (progname);*/ /* FIXME: Why? */
+	printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
 
-  printf (COPYRIGHT, copyright, email);
+	printf (COPYRIGHT, copyright, email);
 
-  printf ("\n\n");
+	printf ("\n\n");
 
-  print_usage ();
+	print_usage ();
 
-  printf (UT_HELP_VRSN);
-  printf (UT_EXTRA_OPTS);
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-  printf (" %s\n", "-H");
-  printf ("    %s\n", _("specify a target"));
-  printf (" %s\n", "[-4|-6]");
-  printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
-  printf (" %s\n", "-w");
-  printf ("    %s", _("warning threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
-  printf (" %s\n", "-c");
-  printf ("    %s", _("critical threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
+	printf (" %s\n", "-H");
+	printf ("    %s\n", _("specify a target"));
+	printf (" %s\n", "[-4|-6]");
+	printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
+	printf (" %s\n", "-w");
+	printf ("    %s", _("warning threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
+	printf (" %s\n", "-c");
+	printf ("    %s", _("critical threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
 
-  printf (" %s\n", "-R");
-  printf ("    %s\n", _("RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"));
-  printf (" %s\n", "-P");
-  printf ("    %s\n", _("packet loss mode, ex. 40%,50% , unit in %"));
-  printf (" %s\n", "-J");
-  printf ("    %s\n", _("jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "));
-  printf (" %s\n", "-M");
-  printf ("    %s\n", _("MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"));
-  printf (" %s\n", "-S");
-  printf ("    %s\n", _("score  mode, max value 100  warning,critical, ex. 80,70 "));
-  printf (" %s\n", "-O");
-  printf ("    %s\n", _("detect out of order ICMP packts "));
-  printf (" %s\n", "-H");
-  printf ("    %s\n", _("specify a target"));
-  printf (" %s\n", "-s");
-  printf ("    %s\n", _("specify a source IP address or device name"));
-  printf (" %s\n", "-n");
-  printf ("    %s", _("number of packets to send (currently "));
-  printf ("%u)\n",packets);
-  printf (" %s\n", "-p");
-  printf ("    %s", _("number of packets to send (currently "));
-  printf ("%u)\n",packets);
-  printf (" %s\n", "-i");
-  printf ("    %s", _("max packet interval (currently "));
-  printf ("%0.3fms)\n",(float)pkt_interval / 1000);
-  printf (" %s\n", "-I");
-  printf ("    %s", _("max target interval (currently "));
-  printf ("%0.3fms)\n", (float)target_interval / 1000);
-  printf (" %s\n", "-m");
-  printf ("    %s",_("number of alive hosts required for success"));
-  printf ("\n");
-  printf (" %s\n", "-l");
-  printf ("    %s", _("TTL on outgoing packets (currently "));
-  printf ("%u)\n", ttl);
-  printf (" %s\n", "-t");
-  printf ("    %s",_("timeout value (seconds, currently  "));
-  printf ("%u)\n", timeout);
-  printf (" %s\n", "-b");
-  printf ("    %s\n", _("Number of icmp data bytes to send"));
-  printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
-  printf (" %s\n", "-v");
-  printf ("    %s\n", _("verbose"));
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
-  printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
-  printf ("\n");
-  printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
-  printf (" %s\n", _("packet loss.  The default values should work well for most users."));
-  printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
-  printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
-/* -d not yet implemented */
-/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
-  printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
-  printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
-  printf ("\n");
-  printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
-/*  printf ("%s\n", _("Long options are currently unsupported."));
-  printf ("%s\n", _("Options marked with * require an argument"));
-*/
+	printf (" %s\n", "-R");
+	printf ("    %s\n", _("RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"));
+	printf (" %s\n", "-P");
+	printf ("    %s\n", _("packet loss mode, ex. 40%,50% , unit in %"));
+	printf (" %s\n", "-J");
+	printf ("    %s\n", _("jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "));
+	printf (" %s\n", "-M");
+	printf ("    %s\n", _("MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"));
+	printf (" %s\n", "-S");
+	printf ("    %s\n", _("score  mode, max value 100  warning,critical, ex. 80,70 "));
+	printf (" %s\n", "-O");
+	printf ("    %s\n", _("detect out of order ICMP packts "));
+	printf (" %s\n", "-H");
+	printf ("    %s\n", _("specify a target"));
+	printf (" %s\n", "-s");
+	printf ("    %s\n", _("specify a source IP address or device name"));
+	printf (" %s\n", "-n");
+	printf ("    %s", _("number of packets to send (currently "));
+	printf ("%u)\n",packets);
+	printf (" %s\n", "-p");
+	printf ("    %s", _("number of packets to send (currently "));
+	printf ("%u)\n",packets);
+	printf (" %s\n", "-i");
+	printf ("    %s", _("max packet interval (currently "));
+	printf ("%0.3fms)\n",(float)pkt_interval / 1000);
+	printf (" %s\n", "-I");
+	printf ("    %s", _("max target interval (currently "));
+	printf ("%0.3fms)\n", (float)target_interval / 1000);
+	printf (" %s\n", "-m");
+	printf ("    %s",_("number of alive hosts required for success"));
+	printf ("\n");
+	printf (" %s\n", "-l");
+	printf ("    %s", _("TTL on outgoing packets (currently "));
+	printf ("%u)\n", ttl);
+	printf (" %s\n", "-t");
+	printf ("    %s",_("timeout value (seconds, currently  "));
+	printf ("%u)\n", timeout);
+	printf (" %s\n", "-b");
+	printf ("    %s\n", _("Number of icmp data bytes to send"));
+	printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
+	printf (" %s\n", "-v");
+	printf ("    %s\n", _("verbose"));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
+	printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+	printf ("\n");
+	printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
+	printf (" %s\n", _("packet loss.  The default values should work well for most users."));
+	printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
+	printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
+	/* -d not yet implemented */
+	/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
+			printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
+			printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
+	printf ("\n");
+	printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
+	/*  printf ("%s\n", _("Long options are currently unsupported."));
+			printf ("%s\n", _("Options marked with * require an argument"));
+			*/
 
-  printf (UT_SUPPORT);
+	printf (UT_SUPPORT);
 }
 
 
@@ -2077,6 +2077,6 @@ print_help(void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
-  printf(" %s [options] [-H] host1 host2 hostN\n", progname);
+	printf ("%s\n", _("Usage:"));
+	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }
