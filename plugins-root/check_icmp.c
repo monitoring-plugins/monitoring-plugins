@@ -1216,7 +1216,9 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 	int n, ret;
 	struct timeval to, then, now;
 	fd_set rd, wr;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
 	char ans_data[4096];
+#endif // HAVE_MSGHDR_MSG_CONTROL
 	struct msghdr hdr;
 	struct iovec iov;
 #ifdef SO_TIMESTAMP
