@@ -1327,21 +1327,24 @@ finish(int sig)
 		if (host->icmp_recv>1) {
 			host->jitter=(host->jitter / (host->icmp_recv - 1)/1000);
 			host->EffectiveLatency = (rta/1000) + host->jitter * 2 + 10;
-			if (host->EffectiveLatency < 160)
+
+			if (host->EffectiveLatency < 160) {
 			   R = 93.2 - (host->EffectiveLatency / 40);
-			else
+			} else {
 			   R = 93.2 - ((host->EffectiveLatency - 120) / 10);
+			}
+
 			R = R - (pl * 2.5);
 			if (R<0) R=0;
 			host->score = R;
 			host->mos= 1 + ((0.035) * R) + ((.000007) * R * (R-60) * (100-R));
-		}
-		else {
+		} else {
 			host->jitter=0;
 			host->jitter_min=0;
 			host->jitter_max=0;
 			host->mos=0;
 		}
+
 		host->pl = pl;
 		host->rta = rta;
 
@@ -1358,56 +1361,55 @@ finish(int sig)
 				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->rta_status=STATE_CRITICAL;
-			}
-			else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
+			} else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
 				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
 				host->rta_status=STATE_WARNING;
 			}
 		}
+
 		if (pl_mode) {
 			if(pl >= crit.pl) {
 				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->pl_status=STATE_CRITICAL;
-			}
-			else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
+			} else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
 				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
 				host->pl_status=STATE_WARNING;
 			}
 		}
+
 		if (jitter_mode) {
 			if(host->jitter >= crit.jitter) {
 				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->jitter_status=STATE_CRITICAL;
-			}
-			else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
+			} else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
 				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
 				host->jitter_status=STATE_WARNING;
 			}
 		}
+
 		if (mos_mode) {
 			if(host->mos <= crit.mos) {
 				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->mos_status=STATE_CRITICAL;
-			}
-			else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
+			} else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
 				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
 				host->mos_status=STATE_WARNING;
 			}
 		}
+
 		if (score_mode) {
 			if(host->score <= crit.score) {
 				this_status = STATE_CRITICAL;
 				status = STATE_CRITICAL;
 				host->score_status=STATE_CRITICAL;
-			}
-			else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
+			} else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
 				THIS_STATUS_WARNING;
 				status = STATE_WARNING;
 				host->score_status=STATE_WARNING;
@@ -1416,8 +1418,7 @@ finish(int sig)
 
 		if (this_status == STATE_WARNING) {
 			hosts_warn++;
-		}
-		else if (this_status == STATE_OK) {
+		} else if (this_status == STATE_OK) {
 			hosts_ok++;
 		}
 
