@@ -234,7 +234,22 @@ extern char **environ;
 
 /** global variables **/
 static struct rta_host **table, *cursor, *list;
-static threshold crit = {80, 500000}, warn = {40, 200000};
+
+static threshold crit = {
+	.pl = 80,
+	.rta = 500000,
+	.jitter = 0.0,
+	.mos = 0.0,
+	.score = 0.0
+};
+static threshold warn = {
+	.pl = 40,
+	.rta = 200000,
+	.jitter = 0.0,
+	.mos = 0.0,
+	.score = 0.0
+};
+
 static int mode, protocols, sockets, debug = 0, timeout = 10;
 static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
 static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
