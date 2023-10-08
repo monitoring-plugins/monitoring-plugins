@@ -1347,8 +1347,8 @@ finish(int sig)
 
 		/* if no new mode selected, use old schema */
 		if (!rta_mode && !pl_mode && !jitter_mode && !score_mode && !mos_mode && !order_mode) {
-			rta_mode=1;
-			pl_mode=1;
+			rta_mode = true;
+			pl_mode = true;
 		}
 
 #define THIS_STATUS_WARNING this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
