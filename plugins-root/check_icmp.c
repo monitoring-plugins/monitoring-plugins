@@ -1354,7 +1354,6 @@ finish(int sig)
 			pl_mode = true;
 		}
 
-#define THIS_STATUS_WARNING this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 		/* Check which mode is on and do the warn / Crit stuff */
 		if (rta_mode) {
 			if(rta >= crit.rta) {
@@ -1362,7 +1361,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->rta_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
-				THIS_STATUS_WARNING;
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 				status = STATE_WARNING;
 				host->rta_status=STATE_WARNING;
 			}
@@ -1374,7 +1373,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->pl_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
-				THIS_STATUS_WARNING;
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 				status = STATE_WARNING;
 				host->pl_status=STATE_WARNING;
 			}
@@ -1386,7 +1385,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->jitter_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
-				THIS_STATUS_WARNING;
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 				status = STATE_WARNING;
 				host->jitter_status=STATE_WARNING;
 			}
@@ -1398,7 +1397,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->mos_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
-				THIS_STATUS_WARNING;
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 				status = STATE_WARNING;
 				host->mos_status=STATE_WARNING;
 			}
@@ -1410,7 +1409,7 @@ finish(int sig)
 				status = STATE_CRITICAL;
 				host->score_status=STATE_CRITICAL;
 			} else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
-				THIS_STATUS_WARNING;
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status)
 				status = STATE_WARNING;
 				host->score_status=STATE_WARNING;
 			}
