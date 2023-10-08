@@ -1053,9 +1053,9 @@ wait_for_reply(int sock, u_int t)
 		host->time_waited += tdiff;
 		host->icmp_recv++;
 		icmp_recv++;
-		if (tdiff > (int)host->rtmax)
+		if (tdiff > (unsigned int)host->rtmax)
 			host->rtmax = tdiff;
-		if (tdiff < (int)host->rtmin)
+		if (tdiff < (unsigned int)host->rtmin)
 			host->rtmin = tdiff;
 
 		if(debug) {
