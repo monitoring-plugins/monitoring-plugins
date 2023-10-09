@@ -47,6 +47,7 @@ int is_positive (char *);
 int is_negative (char *);
 int is_nonnegative (char *);
 int is_percentage (char *);
+bool is_percentage_expression (const char[]);
 
 int is_option (char *);
 

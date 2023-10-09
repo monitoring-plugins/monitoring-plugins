@@ -23,12 +23,14 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "utils.h"
+#include "./utils.h"
 #include "utils_base.h"
 #include <stdarg.h>
 #include <limits.h>
 #include <string.h>
 #include <errno.h>
+
+#include <stdbool.h>
 
 #include <arpa/inet.h>
 
@@ -196,6 +198,29 @@ is_percentage (char *number)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+bool is_percentage_expression (const char str[]) {
+	if (!str) {
+		return false;
+	}
+
+	size_t len = strlen(str);
+
+	if (str[len-1] != '%') {
+		return false;
+	}
+
+	char *foo = calloc(sizeof(char), len + 1);
+
+	if (!foo) {
+		die (STATE_UNKNOWN, _("calloc failed \n"));
+	}
+
+	strcpy(foo, str);
+	foo[len-1] = '\0';
+
+	return is_numeric(foo);
 }
 
 int

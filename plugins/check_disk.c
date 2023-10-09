@@ -567,8 +567,8 @@ process_arguments (int argc, char **argv)
 
     /* See comments for 'c' */
     case 'w':                 /* warning threshold */
-			if (!is_numeric(optarg)) {
-					die(STATE_UNKNOWN, "Argument for --warning must be a valid range expression\n");
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --warning invalid or missing\n");
 			}
 
       if (strstr(optarg, "%")) {
@@ -592,8 +592,8 @@ process_arguments (int argc, char **argv)
        force @ at the beginning of the range, so that it is backwards compatible
     */
     case 'c':                 /* critical threshold */
-			if (!is_numeric(optarg)) {
-					die(STATE_UNKNOWN, "Argument for --critical must be a valid range expression\n");
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --critical invalid or missing\n");
 			}
 
       if (strstr(optarg, "%")) {
