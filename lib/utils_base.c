@@ -726,3 +726,48 @@ void np_state_write_string(time_t data_time, char *data_string) {
 
 	np_free(temp_file);
 }
+
+char *fperfdatarange (const char *label,
+		double val,
+		const char *uom,
+		const char *warn,
+		const char *crit,
+		int minp,
+		double minv,
+		int maxp,
+		double maxv) {
+
+	char *data = NULL;
+
+	if (strpbrk (label, "'= ")) {
+		asprintf (&data, "'%s'=", label);
+	} else {
+		asprintf (&data, "%s=", label);
+	}
+
+	asprintf (&data, "%s%f", data, val);
+	asprintf (&data, "%s%s;", data, uom);
+
+	if (warn) {
+		asprintf (&data, "%s%s", data, warn);
+	}
+
+	asprintf (&data, "%s;", data);
+
+	if (crit) {
+		asprintf (&data, "%s%s", data, crit);
+	}
+
+	asprintf (&data, "%s;", data);
+
+	if (minp) {
+		asprintf (&data, "%s%f", data, minv);
+	}
+
+	if (maxp) {
+		asprintf (&data, "%s;", data);
+		asprintf (&data, "%s%f", data, maxv);
+	}
+
+	return data;
+}
