@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-10-01 00:46+0200\n"
+"POT-Creation-Date: 2023-10-09 20:27+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -4694,6 +4694,9 @@ msgid "You probably want:"
 msgstr ""
 
 msgid "urlize http://example.com/ \"check_http -H example.com -r 'two words'\""
+msgstr ""
+
+msgid "calloc failed \n"
 msgstr ""
 
 #, fuzzy

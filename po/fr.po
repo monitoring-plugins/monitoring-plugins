@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-10-01 00:46+0200\n"
+"POT-Creation-Date: 2023-10-09 20:27+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -4832,6 +4832,10 @@ msgstr ""
 
 msgid "urlize http://example.com/ \"check_http -H example.com -r 'two words'\""
 msgstr ""
+
+#, fuzzy
+msgid "calloc failed \n"
+msgstr "l'allocation mémoire à échoué!\n"
 
 msgid "failed realloc in strpcpy\n"
 msgstr "La fonction realloc à échoué dans strpcpy\n"
