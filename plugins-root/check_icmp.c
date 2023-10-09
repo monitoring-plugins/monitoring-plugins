@@ -609,7 +609,6 @@ main(int argc, char **argv)
 				break;
 			case 'R': /* RTA mode */
 				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_rta_mode);
-
 				if (!err) {
 						crash("Failed to parse RTA threshold");
 				}
@@ -618,7 +617,6 @@ main(int argc, char **argv)
 				break;
 			case 'P': /* packet loss mode */
 				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_packet_loss_mode);
-
 				if (!err) {
 						crash("Failed to parse packet loss threshold");
 				}
@@ -627,7 +625,6 @@ main(int argc, char **argv)
 				break;
 			case 'J': /* jitter mode */
 				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_jitter_mode);
-
 				if (!err) {
 						crash("Failed to parse jitter threshold");
 				}
@@ -636,7 +633,6 @@ main(int argc, char **argv)
 				break;
 			case 'M': /* MOS mode */
 				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_mos_mode);
-
 				if (!err) {
 						crash("Failed to parse MOS threshold");
 				}
@@ -645,7 +641,6 @@ main(int argc, char **argv)
 				break;
 			case 'S': /* score mode */
 				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_score_mode);
-
 				if (!err) {
 						crash("Failed to parse score threshold");
 				}
@@ -675,10 +670,10 @@ main(int argc, char **argv)
 		add_target(*argv);
 		argv++;
 	}
+
 	if(!targets) {
 		errno = 0;
 		crash("No hosts to check");
-		exit(3);
 	}
 
 	// add_target might change address_family
@@ -1023,21 +1018,24 @@ wait_for_reply(int sock, u_int t)
 			/* Calculate jitter */
 			if (host->last_tdiff > tdiff) {
 				jitter_tmp = host->last_tdiff - tdiff;
-			}
-			else {
+			} else {
 				jitter_tmp = tdiff - host->last_tdiff;
 			}
+
 			if (host->jitter==0) {
 				host->jitter=jitter_tmp;
 				host->jitter_max=jitter_tmp;
 				host->jitter_min=jitter_tmp;
-			}
-			else {
+			} else {
 				host->jitter+=jitter_tmp;
-				if (jitter_tmp < host->jitter_min)
+
+				if (jitter_tmp < host->jitter_min) {
 					host->jitter_min=jitter_tmp;
-				if (jitter_tmp > host->jitter_max)
+				}
+
+				if (jitter_tmp > host->jitter_max) {
 					host->jitter_max=jitter_tmp;
+				}
 			}
 
 			/* Check if packets in order */
@@ -1047,8 +1045,6 @@ wait_for_reply(int sock, u_int t)
 		host->last_tdiff=tdiff;
 
 		host->last_icmp_seq=packet.icp->icmp_seq;
-
-		//printf("%d tdiff %d host->jitter %u  host->last_tdiff %u\n", icp.icmp_seq, tdiff, host->jitter, host->last_tdiff);
 
 		host->time_waited += tdiff;
 		host->icmp_recv++;
@@ -1311,6 +1307,7 @@ finish(int sig)
 
 	while(host) {
 		this_status = STATE_OK;
+
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
 			 * conspicuously as missing entries in perfparse and cacti */
@@ -1319,11 +1316,11 @@ finish(int sig)
 			status = STATE_CRITICAL;
 			/* up the down counter if not already counted */
 			if(!(host->flags & FLAG_LOST_CAUSE) && targets_alive) targets_down++;
-		}
-		else {
+		} else {
 			pl = ((host->icmp_sent - host->icmp_recv) * 100) / host->icmp_sent;
 			rta = (double)host->time_waited / host->icmp_recv;
 		}
+
 		if (host->icmp_recv>1) {
 			host->jitter=(host->jitter / (host->icmp_recv - 1)/1000);
 			host->EffectiveLatency = (rta/1000) + host->jitter * 2 + 10;
@@ -1335,7 +1332,11 @@ finish(int sig)
 			}
 
 			R = R - (pl * 2.5);
-			if (R<0) R=0;
+
+			if (R < 0) {
+				R = 0;
+			}
+
 			host->score = R;
 			host->mos= 1 + ((0.035) * R) + ((.000007) * R * (R-60) * (100-R));
 		} else {
@@ -1454,12 +1455,10 @@ finish(int sig)
 					   get_icmp_error_msg(host->icmp_type, host->icmp_code),
 					   address,
 					   100);
-			}
-			else { /* not marked as lost cause, so we have no flags for it */
+			} else { /* not marked as lost cause, so we have no flags for it */
 				printf("%s: rta nan, lost 100%%", host->name);
 			}
-		}
-		else {	/* !icmp_recv */
+		} else {	/* !icmp_recv */
 			printf("%s", host->name);
 			/* rta text output */
 			if (rta_mode) {
@@ -1525,6 +1524,7 @@ finish(int sig)
 	host = list;
 	while(host) {
 		if(debug) puts("");
+
 		if (rta_mode && host->pl<100) {
 			printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
 			   (targets > 1) ? host->name : "",
@@ -1532,9 +1532,11 @@ finish(int sig)
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
 			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 		}
+
 		if (pl_mode) {
 			printf("%spl=%u%%;%u;%u;0;100 ", (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl);
 		}
+
 		if (jitter_mode && host->pl<100) {
 			printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ",
 				(targets > 1) ? host->name : "",
@@ -1546,6 +1548,7 @@ finish(int sig)
 				(float)host->jitter_min / 1000
 			);
 		}
+
 		if (mos_mode && host->pl<100) {
 			printf("%smos=%0.1f;%0.1f;%0.1f;0;5 ",
 				(targets > 1) ? host->name : "",
@@ -1554,6 +1557,7 @@ finish(int sig)
 				(float)crit.mos
 			);
 		}
+
 		if (score_mode && host->pl<100) {
 			printf("%sscore=%u;%u;%u;0;100 ",
 				(targets > 1) ? host->name : "",
@@ -1562,6 +1566,7 @@ finish(int sig)
 				(int)crit.score
 			);
 		}
+
 		host = host->next;
 	}
 
