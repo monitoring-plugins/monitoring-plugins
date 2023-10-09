@@ -220,7 +220,11 @@ bool is_percentage_expression (const char str[]) {
 	strcpy(foo, str);
 	foo[len-1] = '\0';
 
-	return is_numeric(foo);
+	bool result = is_numeric(foo);
+
+	free(foo);
+
+	return result;
 }
 
 int
