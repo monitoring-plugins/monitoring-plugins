@@ -1325,7 +1325,7 @@ finish(int sig)
 			/*
 			 * This algorithm is probably pretty much blindly copied from
 			 * locations like this one: https://www.slac.stanford.edu/comp/net/wan-mon/tutorial.html#mos
-			 * It calucates a MOS value (range of 1 to 5, where 1 is bad and 5 really good).
+			 * It calculates a MOS value (range of 1 to 5, where 1 is bad and 5 really good).
 			 * According to some quick research MOS originates from the Audio/Video transport network area.
 			 * Whether it can and should be computed from ICMP data, I can not say.
 			 *
