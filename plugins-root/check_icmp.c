@@ -1322,7 +1322,27 @@ finish(int sig)
 		}
 
 		if (host->icmp_recv>1) {
+			/*
+			 * This algorithm is probably pretty much blindly copied from
+			 * locations like this one: https://www.slac.stanford.edu/comp/net/wan-mon/tutorial.html#mos
+			 * It calucates a MOS value (range of 1 to 5, where 1 is bad and 5 really good).
+			 * According to some quick research MOS originates from the Audio/Video transport network area.
+			 * Whether it can and should be computed from ICMP data, I can not say.
+			 *
+			 * Anyway the basic idea is to map a value "R" with a range of 0-100 to the MOS value
+			 *
+			 * MOS stands likely for Mean Opinion Score ( https://en.wikipedia.org/wiki/Mean_Opinion_Score )
+			 *
+			 * More links:
+			 * - https://confluence.slac.stanford.edu/display/IEPM/MOS
+			 */
 			host->jitter=(host->jitter / (host->icmp_recv - 1)/1000);
+
+			/*
+			 * Take the average round trip latency (in milliseconds), add
+			 * round trip jitter, but double the impact to latency
+			 * then add 10 for protocol latencies (in milliseconds).
+			 */
 			host->EffectiveLatency = (rta/1000) + host->jitter * 2 + 10;
 
 			if (host->EffectiveLatency < 160) {
@@ -1331,6 +1351,8 @@ finish(int sig)
 			   R = 93.2 - ((host->EffectiveLatency - 120) / 10);
 			}
 
+			// Now, let us deduct 2.5 R values per percentage of packet loss (i.e. a
+			// loss of 5% will be entered as 5).
 			R = R - (pl * 2.5);
 
 			if (R < 0) {
