@@ -646,7 +646,7 @@ AC_TRY_COMPILE([#include <sys/time.h>],
                AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])
 			   FOUND_STRUCT_TIMEVAL="yes")
 
-if test x$FOUND_STRUCT_TIMEVAL = x"yes"; then
+if test x"$FOUND_STRUCT_TIMEVAL" = x"yes"; then
 	AC_TRY_COMPILE([#include <sys/time.h>],
 			  [struct timeval *tv;
 			   struct timezone *tz;
