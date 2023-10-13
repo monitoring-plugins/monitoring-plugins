@@ -150,6 +150,7 @@ typedef struct dhcp_offer_struct{
 	uint32_t lease_time;            /* lease time in seconds */
 	uint32_t renewal_time;          /* renewal time in seconds */
 	uint32_t rebinding_time;        /* rebinding time in seconds */
+	bool desired;                 /* is this offer desired (necessary in exclusive mode) */
 	struct dhcp_offer_struct *next;
 }dhcp_offer;
 
@@ -192,7 +193,8 @@ typedef struct requested_server_struct{
 #define ETHERNET_HARDWARE_ADDRESS            1     /* used in htype field of dhcp packet */
 #define ETHERNET_HARDWARE_ADDRESS_LENGTH     6     /* length of Ethernet hardware addresses */
 
-uint8_t unicast = 0;        /* unicast mode: mimic a DHCP relay */
+bool unicast = false;        /* unicast mode: mimic a DHCP relay */
+bool exclusive = false;      /* exclusive mode aka "rogue DHCP server detection" */
 struct in_addr my_ip;        /* our address (required for relay) */
 struct in_addr dhcp_ip;      /* server to query (if in unicast mode) */
 unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH]="";
@@ -894,6 +896,7 @@ int add_dhcp_offer(struct in_addr source,dhcp_packet *offer_packet){
 	new_offer->lease_time=dhcp_lease_time;
 	new_offer->renewal_time=dhcp_renewal_time;
 	new_offer->rebinding_time=dhcp_rebinding_time;
+	new_offer->desired=false; /* exclusive mode: we'll check that in get_results */
 
 
 	if(verbose){
@@ -939,7 +942,7 @@ int free_requested_server_list(void){
 
 /* gets state and plugin output to return */
 int get_results(void){
-	dhcp_offer *temp_offer;
+	dhcp_offer *temp_offer, *undesired_offer=NULL;
 	requested_server *temp_server;
 	int result;
 	uint32_t max_lease_time=0;
@@ -974,11 +977,19 @@ int get_results(void){
 					if(!temp_server->answered){
 						requested_responses++;
 						temp_server->answered=true;
+						temp_offer->desired=true;
 					}
 				}
 			}
 		}
 
+		/* exclusive mode: check for undesired offers */
+		for(temp_offer=dhcp_offer_list;temp_offer!=NULL;temp_offer=temp_offer->next) {
+			if (!temp_offer->desired) {
+				undesired_offer=temp_offer; /* Checks only for the first undesired offer */
+				break; /* no further checks needed */
+			}
+		}
 	}
 
 	/* else check and see if we got our requested address from any server */
@@ -1006,6 +1017,9 @@ int get_results(void){
 	else if(request_specific_address && !received_requested_address)
 		result=STATE_WARNING;
 
+	if(exclusive && undesired_offer)
+		result=STATE_CRITICAL;
+
 	if(result==0)               /* garrett honeycutt 2005 */
 		printf("OK: ");
 	else if(result==1)
@@ -1022,6 +1036,13 @@ int get_results(void){
 	}
 
 	printf(_("Received %d DHCPOFFER(s)"),valid_responses);
+
+
+	if(exclusive && undesired_offer){
+		printf(_(", Rogue DHCP Server detected! Server %s"),inet_ntoa(undesired_offer->server_address));
+		printf(_(" offered %s \n"),inet_ntoa(undesired_offer->offered_address));
+		return result;
+	}
 
 	if(requested_servers>0)
 		printf(_(", %s%d of %d requested servers responded"),((requested_responses<requested_servers) && requested_responses>0)?"only ":"",requested_responses,requested_servers);
@@ -1065,16 +1086,16 @@ int call_getopt(int argc, char **argv){
 		{"interface",      required_argument,0,'i'},
 		{"mac",            required_argument,0,'m'},
 		{"unicast",        no_argument,      0,'u'},
+		{"exclusive",      no_argument,      0,'x'},
 		{"verbose",        no_argument,      0,'v'},
 		{"version",        no_argument,      0,'V'},
 		{"help",           no_argument,      0,'h'},
 		{0,0,0,0}
 	};
 
-	while(1){
-		int c=0;
-
-		c=getopt_long(argc,argv,"+hVvt:s:r:t:i:m:u",long_options,&option_index);
+	int c=0;
+	while(true){
+		c=getopt_long(argc,argv,"+hVvxt:s:r:t:i:m:u",long_options,&option_index);
 
 		if(c==-1||c==EOF||c==1)
 			break;
@@ -1121,7 +1142,10 @@ int call_getopt(int argc, char **argv){
 				break;
 
 			case 'u': /* unicast testing */
-				unicast=1;
+				unicast=true;
+				break;
+			case 'x': /* exclusive testing aka "rogue DHCP server detection" */
+				exclusive=true;
 				break;
 
 			case 'V': /* version */
@@ -1135,7 +1159,6 @@ int call_getopt(int argc, char **argv){
 			case 'v': /* verbose */
 				verbose=1;
 				break;
-
 			case '?': /* help */
 				usage5 ();
 				break;
@@ -1372,6 +1395,8 @@ void print_help(void){
 	printf ("    %s\n", _("MAC address to use in the DHCP request"));
 	printf (" %s\n", "-u, --unicast");
 	printf ("    %s\n", _("Unicast testing: mimic a DHCP relay, requires -s"));
+	printf (" %s\n", "-x, --exclusive");
+	printf ("    %s\n", _("Only requested DHCP server may response (rogue DHCP server detection), requires -s"));
 
 	printf (UT_SUPPORT);
 	return;
@@ -1382,7 +1407,7 @@ void
 print_usage(void){
 
 	printf ("%s\n", _("Usage:"));
-	printf (" %s [-v] [-u] [-s serverip] [-r requestedip] [-t timeout]\n",progname);
+	printf (" %s [-v] [-u] [-x] [-s serverip] [-r requestedip] [-t timeout]\n",progname);
 	printf ("                  [-i interface] [-m mac]\n");
 
 	return;

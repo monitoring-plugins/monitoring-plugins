@@ -5210,9 +5210,6 @@ msgstr ", %s%d de %d serveurs ont répondus"
 msgid ", requested address (%s) was %soffered"
 msgstr ", l'adresse demandée (%s) %s été offerte"
 
-msgid "not "
-msgstr "n'as pas"
-
 #, c-format
 msgid ", max lease time = "
 msgstr ", bail maximum = "
@@ -5220,9 +5217,6 @@ msgstr ", bail maximum = "
 #, c-format
 msgid "Infinity"
 msgstr "Infini"
-
-msgid "Got unexpected non-option argument"
-msgstr ""
 
 #, c-format
 msgid "Error: DLPI stream API failed to get MAC in check_ctrl: %s.\n"
