@@ -308,6 +308,9 @@ msgstr "UNKNOWN"
 msgid "Must set a threshold value before using -p\n"
 msgstr ""
 
+msgid "Could not compile regular expression"
+msgstr ""
+
 msgid "Must set -E before selecting paths\n"
 msgstr ""
 
@@ -317,9 +320,6 @@ msgstr ""
 msgid ""
 "Paths need to be selected before using -i/-I. Use -A to select all paths "
 "explicitly"
-msgstr ""
-
-msgid "Could not compile regular expression"
 msgstr ""
 
 msgid ""
@@ -446,10 +446,13 @@ msgstr ""
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
 msgstr ""
 
-msgid "Ignore all filesystems of indicated type (may be repeated)"
+msgid ""
+"Ignore all filesystems of types matching given regex(7) (may be repeated)"
 msgstr ""
 
-msgid "Check only filesystems of indicated type (may be repeated)"
+msgid ""
+"Check only filesystems where the type matches this given regex(7) (may be "
+"repeated)"
 msgstr ""
 
 msgid "General usage hints:"
@@ -5080,6 +5083,25 @@ msgstr "Warning threshold  Integer sein"
 msgid "critical threshold (currently "
 msgstr "Critical threshold muss ein Integer sein"
 
+msgid ""
+"RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"
+msgstr ""
+
+msgid "packet loss mode, ex. 40%,50% , unit in %"
+msgstr ""
+
+msgid "jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "
+msgstr ""
+
+msgid "MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"
+msgstr ""
+
+msgid "score  mode, max value 100  warning,critical, ex. 80,70 "
+msgstr ""
+
+msgid "detect out of order ICMP packts "
+msgstr ""
+
 #, fuzzy
 msgid "specify a source IP address or device name"
 msgstr "Hostname oder Serveradresse muss angegeben werden"
@@ -5109,6 +5131,9 @@ msgid "Packet size will be data bytes + icmp header (currently"
 msgstr ""
 
 msgid "verbose"
+msgstr ""
+
+msgid "If none of R,P,J,M,S or O is specified, default behavior is -R -P"
 msgstr ""
 
 msgid "The -H switch is optional. Naming a host (or several) to check is not."

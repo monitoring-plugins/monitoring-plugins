@@ -60,6 +60,8 @@
 # define SIG_ERR ((Sigfunc *)-1)
 #endif
 
+#include "../lib/maxfd.h"
+
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
  * Multithreading apps and plugins can initialize it (via NP_RUNCMD_INIT)
