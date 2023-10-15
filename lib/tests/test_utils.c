@@ -1,19 +1,19 @@
 /*****************************************************************************
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -377,13 +377,13 @@ main (int argc, char **argv)
 
 /*
 	temp_fp = fopen("var/statefile", "r");
-	if (temp_fp==NULL) 
+	if (temp_fp==NULL)
 		printf("Error opening. errno=%d\n", errno);
 	printf("temp_fp=%s\n", temp_fp);
-	ok( _np_state_read_file(temp_fp) == TRUE, "Can read state file" );
+	ok( _np_state_read_file(temp_fp) == true, "Can read state file" );
 	fclose(temp_fp);
 */
-	
+
 	temp_state_key->_filename="var/statefile";
 	temp_state_data = np_state_read();
 	ok( this_monitoring_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
@@ -446,14 +446,14 @@ main (int argc, char **argv)
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
 	ok(this_monitoring_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
-	
+
 
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
 	/*
 	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
 	np_state_write_string(0, "Bad file");
 	*/
-	
+
 
 	np_cleanup();
 
@@ -508,4 +508,3 @@ main (int argc, char **argv)
 
 	return exit_status();
 }
-

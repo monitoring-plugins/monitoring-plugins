@@ -6,21 +6,21 @@
 * Copyright (c) 2006 Monitoring Plugins Development Team
 *
 * Library of useful functions for plugins
-* 
+*
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
+*
 *
 *****************************************************************************/
 
@@ -640,10 +640,10 @@ int _np_state_read_file(FILE *f) {
 }
 
 /*
- * If time=NULL, use current time. Create state file, with state format 
- * version, default text. Writes version, time, and data. Avoid locking 
- * problems - use mv to write and then swap. Possible loss of state data if 
- * two things writing to same key at same time. 
+ * If time=NULL, use current time. Create state file, with state format
+ * version, default text. Writes version, time, and data. Avoid locking
+ * problems - use mv to write and then swap. Possible loss of state data if
+ * two things writing to same key at same time.
  * Will die with UNKNOWN if errors
  */
 void np_state_write_string(time_t data_time, char *data_string) {
@@ -658,7 +658,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		time(&current_time);
 	else
 		current_time=data_time;
-	
+
 	/* If file doesn't currently exist, create directories */
 	if(access(this_monitoring_plugin->state->_filename,F_OK)!=0) {
 		result = asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
@@ -697,15 +697,15 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		np_free(temp_file);
 		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
 	}
-	
+
 	fprintf(fp,"# NP State file\n");
 	fprintf(fp,"%d\n",NP_STATE_FORMAT_VERSION);
 	fprintf(fp,"%d\n",this_monitoring_plugin->state->data_version);
 	fprintf(fp,"%lu\n",current_time);
 	fprintf(fp,"%s\n",data_string);
-	
+
 	fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP);
-	
+
 	fflush(fp);
 
 	result=fclose(fp);
