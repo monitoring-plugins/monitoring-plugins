@@ -485,7 +485,7 @@ check_http (void)
 
   /* register cleanup function to shut down libcurl properly */
   atexit (cleanup);
-  
+
   if (verbose >= 1)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_VERBOSE, 1), "CURLOPT_VERBOSE");
 
@@ -805,7 +805,7 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data)), "CURLOPT_INFILESIZE");
     }
   }
-  
+
   /* cookie handling */
   if (cookie_jar_file != NULL) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
@@ -1167,7 +1167,7 @@ GOT_FIRST_CERT:
       else
         msg[strlen(msg)-3] = '\0';
     }
-  
+
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
     state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
@@ -1694,7 +1694,7 @@ process_arguments (int argc, char **argv)
       else {
         max_depth = atoi (optarg);
       }
-      break;    
+      break;
     case 'f': /* onredirect */
       if (!strcmp (optarg, "ok"))
         onredirect = STATE_OK;
