@@ -5364,17 +5364,15 @@ msgstr ""
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
 
-<<<<<<< HEAD
 #, c-format
 #~ msgid "Server answer: %s"
 #~ msgstr "Réponse du serveur: %s"
-=======
+
 #, fuzzy
 #~ msgid "Check only filesystems of indicated type (may be repeated)"
 #~ msgstr ""
 #~ "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
 #~ "(peut être utilisé plusieurs fois)"
->>>>>>> master
 
 #~ msgid "Path or partition (may be repeated)"
 #~ msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"
