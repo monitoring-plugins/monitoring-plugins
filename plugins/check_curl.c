@@ -239,10 +239,10 @@ void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
 int curlhelp_initwritebuffer (curlhelp_write_curlbuf*);
-int curlhelp_buffer_write_callback (void*, size_t , size_t , void*);
+size_t curlhelp_buffer_write_callback(void*, size_t , size_t , void*);
 void curlhelp_freewritebuffer (curlhelp_write_curlbuf*);
 int curlhelp_initreadbuffer (curlhelp_read_curlbuf *, const char *, size_t);
-int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
+size_t curlhelp_buffer_read_callback(void *, size_t , size_t , void *);
 void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
 curlhelp_ssl_library curlhelp_get_ssl_library ();
 const char* curlhelp_get_ssl_library_string (curlhelp_ssl_library);
@@ -2171,8 +2171,7 @@ curlhelp_initwritebuffer (curlhelp_write_curlbuf *buf)
   return 0;
 }
 
-int
-curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+size_t curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *stream)
 {
   curlhelp_write_curlbuf *buf = (curlhelp_write_curlbuf *)stream;
 
@@ -2192,8 +2191,7 @@ curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *s
   return (int)(size * nmemb);
 }
 
-int
-curlhelp_buffer_read_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+size_t curlhelp_buffer_read_callback(void *buffer, size_t size, size_t nmemb, void *stream)
 {
   curlhelp_read_curlbuf *buf = (curlhelp_read_curlbuf *)stream;
 
