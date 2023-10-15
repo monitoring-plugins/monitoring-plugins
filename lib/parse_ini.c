@@ -131,7 +131,7 @@ np_get_defaults(const char *locator, const char *default_section)
 	if (inifile == NULL)
 		die(STATE_UNKNOWN, _("Can't read config file: %s\n"),
 		    strerror(errno));
-	if (read_defaults(inifile, i.stanza, &defaults) == FALSE)
+	if (!read_defaults(inifile, i.stanza, &defaults))
 		die(STATE_UNKNOWN,
 		    _("Invalid section '%s' in config file '%s'\n"), i.stanza,
 		    i.file);
@@ -157,7 +157,8 @@ np_get_defaults(const char *locator, const char *default_section)
 static int
 read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 {
-	int c, status = FALSE;
+	int c = 0;
+	bool status = false;
 	size_t i, stanza_len;
 	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate = NOSTANZA;
 
@@ -219,7 +220,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 					die(STATE_UNKNOWN, "%s\n",
 					    _("Config file error"));
 				}
-				status = TRUE;
+				status = true;
 				break;
 			}
 			break;

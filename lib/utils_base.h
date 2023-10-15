@@ -21,7 +21,7 @@
 
 typedef struct range_struct {
 	double	start;
-	int	start_infinity;		/* FALSE (default) or TRUE */
+	bool start_infinity;
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
@@ -61,7 +61,7 @@ range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
-int check_range(double, range *);
+bool check_range(double, range *);
 int get_status(double, thresholds *);
 
 /* Handle timeouts */

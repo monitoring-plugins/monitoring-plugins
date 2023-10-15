@@ -40,7 +40,7 @@ monitoring_plugin *this_monitoring_plugin=NULL;
 unsigned int timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-int _np_state_read_file(FILE *);
+bool _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_monitoring_plugin==NULL) {
@@ -105,12 +105,12 @@ die (int result, const char *fmt, ...)
 
 void set_range_start (range *this, double value) {
 	this->start = value;
-	this->start_infinity = FALSE;
+	this->start_infinity = false;
 }
 
 void set_range_end (range *this, double value) {
 	this->end = value;
-	this->end_infinity = FALSE;
+	this->end_infinity = false;
 }
 
 range
@@ -124,9 +124,9 @@ range
 
 	/* Set defaults */
 	temp_range->start = 0;
-	temp_range->start_infinity = FALSE;
+	temp_range->start_infinity = false;
 	temp_range->end = 0;
-	temp_range->end_infinity = TRUE;
+	temp_range->end_infinity = true;
 	temp_range->alert_on = OUTSIDE;
 	temp_range->text = strdup(str);
 
@@ -138,7 +138,7 @@ range
 	end_str = index(str, ':');
 	if (end_str != NULL) {
 		if (str[0] == '~') {
-			temp_range->start_infinity = TRUE;
+			temp_range->start_infinity = true;
 		} else {
 			start = strtod(str, NULL);	/* Will stop at the ':' */
 			set_range_start(temp_range, start);
@@ -152,8 +152,8 @@ range
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == TRUE ||
-		temp_range->end_infinity == TRUE ||
+	if (temp_range->start_infinity == true ||
+		temp_range->end_infinity == true ||
 		temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
@@ -223,31 +223,30 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("\n");
 }
 
-/* Returns TRUE if alert should be raised based on the range */
-int
-check_range(double value, range *my_range)
+/* Returns true if alert should be raised based on the range */
+bool check_range(double value, range *my_range)
 {
-	int no = FALSE;
-	int yes = TRUE;
+	bool no = false;
+	bool yes = true;
 
 	if (my_range->alert_on == INSIDE) {
-		no = TRUE;
-		yes = FALSE;
+		no = true;
+		yes = false;
 	}
 
-	if (my_range->end_infinity == FALSE && my_range->start_infinity == FALSE) {
+	if (my_range->end_infinity == false && my_range->start_infinity == false) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		} else {
 			return yes;
 		}
-	} else if (my_range->start_infinity == FALSE && my_range->end_infinity == TRUE) {
+	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
 		if (my_range->start <= value) {
 			return no;
 		} else {
 			return yes;
 		}
-	} else if (my_range->start_infinity == TRUE && my_range->end_infinity == FALSE) {
+	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
 		if (value <= my_range->end) {
 			return no;
 		} else {
@@ -263,12 +262,12 @@ int
 get_status(double value, thresholds *my_thresholds)
 {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical) == TRUE) {
+		if (check_range(value, my_thresholds->critical) == true) {
 			return STATE_CRITICAL;
 		}
 	}
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning) == TRUE) {
+		if (check_range(value, my_thresholds->warning) == true) {
 			return STATE_WARNING;
 		}
 	}
@@ -465,7 +464,7 @@ char* _np_state_calculate_location_prefix(){
 
 	/* Do not allow passing MP_STATE_PATH in setuid plugins
 	 * for security reasons */
-	if (mp_suid() == FALSE) {
+	if (!mp_suid()) {
 		env_dir = getenv("MP_STATE_PATH");
 		if(env_dir && env_dir[0] != '\0')
 			return env_dir;
@@ -541,7 +540,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 state_data *np_state_read() {
 	state_data *this_state_data=NULL;
 	FILE *statefile;
-	int rc = FALSE;
+	bool rc = false;
 
 	if(this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
@@ -563,7 +562,7 @@ state_data *np_state_read() {
 		fclose(statefile);
 	}
 
-	if(rc==FALSE) {
+	if(!rc) {
 		_cleanup_state_data();
 	}
 
@@ -573,8 +572,8 @@ state_data *np_state_read() {
 /*
  * Read the state file
  */
-int _np_state_read_file(FILE *f) {
-	int status=FALSE;
+bool _np_state_read_file(FILE *f) {
+	bool status = false;
 	size_t pos;
 	char *line;
 	int i;
@@ -628,7 +627,7 @@ int _np_state_read_file(FILE *f) {
 				if(this_monitoring_plugin->state->state_data->data==NULL)
 					die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 				expected=STATE_DATA_END;
-				status=TRUE;
+				status=true;
 				break;
 			case STATE_DATA_END:
 				;

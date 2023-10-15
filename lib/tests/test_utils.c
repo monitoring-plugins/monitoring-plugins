@@ -62,99 +62,99 @@ main (int argc, char **argv)
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 6, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("1:12%%");
 	ok( range != NULL, "'1:12%%' is valid - percentages are ignored");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 12, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("-7:23");
 	ok( range != NULL, "'-7:23' is valid range");
 	ok( range->start == -7, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 23, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string(":5.75");
 	ok( range != NULL, "':5.75' is valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 5.75, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("~:-95.99");
 	ok( range != NULL, "~:-95.99' is valid range");
-	ok( range->start_infinity == TRUE, "Using negative infinity");
+	ok( range->start_infinity == true, "Using negative infinity");
 	ok( range->end == -95.99, "End correct (with rounding errors)");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("12345678901234567890:");
 	temp = atof("12345678901234567890");		/* Can't just use this because number too large */
 	ok( range != NULL, "'12345678901234567890:' is valid range");
 	ok( range->start == temp, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
-	ok( range->end_infinity == TRUE, "Using infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
+	ok( range->end_infinity == true, "Using infinity");
 	/* Cannot do a "-1" on temp, as it appears to be same value */
-	ok( check_range(temp/1.1, range) == TRUE, "12345678901234567890/1.1 - alert");
-	ok( check_range(temp, range) == FALSE, "12345678901234567890 - no alert");
-	ok( check_range(temp*2, range) == FALSE, "12345678901234567890*2 - no alert");
+	ok( check_range(temp/1.1, range) == true, "12345678901234567890/1.1 - alert");
+	ok( check_range(temp, range) == false, "12345678901234567890 - no alert");
+	ok( check_range(temp*2, range) == false, "12345678901234567890*2 - no alert");
 	free(range);
 
 	range = parse_range_string("~:0");
 	ok( range != NULL, "'~:0' is valid range");
-	ok( range->start_infinity == TRUE, "Using negative infinity");
+	ok( range->start_infinity == true, "Using negative infinity");
 	ok( range->end == 0, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == OUTSIDE, "Will alert on outside of this range");
-	ok( check_range(0.5, range) == TRUE, "0.5 - alert");
-	ok( check_range(-10, range) == FALSE, "-10 - no alert");
-	ok( check_range(0, range)   == FALSE, "0 - no alert");
+	ok( check_range(0.5, range) == true, "0.5 - alert");
+	ok( check_range(-10, range) == false, "-10 - no alert");
+	ok( check_range(0, range)   == false, "0 - no alert");
 	free(range);
-	
+
 	range = parse_range_string("@0:657.8210567");
 	ok( range != 0, "@0:657.8210567' is a valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 657.8210567, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(32.88, range) == TRUE, "32.88 - alert");
-	ok( check_range(-2, range)    == FALSE, "-2 - no alert");
-	ok( check_range(657.8210567, range) == TRUE, "657.8210567 - alert");
-	ok( check_range(0, range)     == TRUE, "0 - alert");
+	ok( check_range(32.88, range) == true, "32.88 - alert");
+	ok( check_range(-2, range)    == false, "-2 - no alert");
+	ok( check_range(657.8210567, range) == true, "657.8210567 - alert");
+	ok( check_range(0, range)     == true, "0 - alert");
 	free(range);
 
 	range = parse_range_string("@1:1");
 	ok( range != NULL, "'@1:1' is a valid range");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(0.5, range) == FALSE, "0.5 - no alert");
-	ok( check_range(1, range) == TRUE, "1 - alert");
-	ok( check_range(5.2, range) == FALSE, "5.2 - no alert");
+	ok( check_range(0.5, range) == false, "0.5 - no alert");
+	ok( check_range(1, range) == true, "1 - alert");
+	ok( check_range(5.2, range) == false, "5.2 - no alert");
 	free(range);
 
 	range = parse_range_string("1:1");
 	ok( range != NULL, "'1:1' is a valid range");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	ok( check_range(0.5, range) == TRUE, "0.5 - alert");
-	ok( check_range(1, range) == FALSE, "1 - no alert");
-	ok( check_range(5.2, range) == TRUE, "5.2 - alert");
+	ok( range->end_infinity == false, "Not using infinity");
+	ok( check_range(0.5, range) == true, "0.5 - alert");
+	ok( check_range(1, range) == false, "1 - no alert");
+	ok( check_range(5.2, range) == true, "5.2 - alert");
 	free(range);
 
 	range = parse_range_string("2:1");
@@ -459,7 +459,7 @@ main (int argc, char **argv)
 
 	ok(this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin");
 
-	ok(mp_suid() == FALSE, "Test aren't suid");
+	ok(mp_suid() == false, "Test aren't suid");
 
 	/* base states with random case */
 	char *states[] = {

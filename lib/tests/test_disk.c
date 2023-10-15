@@ -44,19 +44,19 @@ main (int argc, char **argv)
 
 	plan_tests(33);
 
-	ok( np_find_name(exclude_filesystem, "/var/log") == FALSE, "/var/log not in list");
+	ok( np_find_name(exclude_filesystem, "/var/log") == false, "/var/log not in list");
 	np_add_name(&exclude_filesystem, "/var/log");
-	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "is in list now");
-	ok( np_find_name(exclude_filesystem, "/home") == FALSE, "/home not in list");
+	ok( np_find_name(exclude_filesystem, "/var/log") == true, "is in list now");
+	ok( np_find_name(exclude_filesystem, "/home") == false, "/home not in list");
 	np_add_name(&exclude_filesystem, "/home");
-	ok( np_find_name(exclude_filesystem, "/home") == TRUE, "is in list now");
-	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "/var/log still in list");
+	ok( np_find_name(exclude_filesystem, "/home") == true, "is in list now");
+	ok( np_find_name(exclude_filesystem, "/var/log") == true, "/var/log still in list");
 
-	ok( np_find_name(exclude_fstype, "iso9660") == FALSE, "iso9660 not in list");
+	ok( np_find_name(exclude_fstype, "iso9660") == false, "iso9660 not in list");
 	np_add_name(&exclude_fstype, "iso9660");
-	ok( np_find_name(exclude_fstype, "iso9660") == TRUE, "is in list now");
+	ok( np_find_name(exclude_fstype, "iso9660") == true, "is in list now");
 
-	ok( np_find_name(exclude_filesystem, "iso9660") == FALSE, "Make sure no clashing in variables");
+	ok( np_find_name(exclude_filesystem, "iso9660") == false, "Make sure no clashing in variables");
 
 	/*
 	for (temp_name = exclude_filesystem; temp_name; temp_name = temp_name->next) {
@@ -120,7 +120,7 @@ main (int argc, char **argv)
 	np_add_parameter(&paths, "/home/tonvoon");
 	np_add_parameter(&paths, "/dev/c2t0d0s0");
 
-	np_set_best_match(paths, dummy_mount_list, FALSE);
+	np_set_best_match(paths, dummy_mount_list, false);
 	for (p = paths; p; p = p->name_next) {
 		struct mount_entry *temp_me;
 		temp_me = p->best_match;
@@ -144,7 +144,7 @@ main (int argc, char **argv)
 	np_add_parameter(&paths, "/home/tonvoon");
 	np_add_parameter(&paths, "/home");
 
-	np_set_best_match(paths, dummy_mount_list, TRUE);
+	np_set_best_match(paths, dummy_mount_list, true);
 	for (p = paths; p; p = p->name_next) {
 		if (! strcmp(p->name, "/home/groups")) {
 			ok( ! p->best_match , "/home/groups correctly not found");

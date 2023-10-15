@@ -26,15 +26,14 @@
 #include "extra_opts.h"
 
 /* FIXME: copied from utils.h; we should move a bunch of libs! */
-int
-is_option2 (char *str)
+bool is_option2 (char *str)
 {
 	if (!str)
-		return FALSE;
+		return false;
 	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 /* this is the externally visible function used by plugins */
