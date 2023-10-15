@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-17 23:47+0200\n"
+"POT-Creation-Date: 2023-10-01 00:46+0200\n"
 "PO-Revision-Date: 2010-04-21 23:38-0400\n"
 "Last-Translator: \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -307,6 +307,9 @@ msgstr "INCONNU"
 msgid "Must set a threshold value before using -p\n"
 msgstr ""
 
+msgid "Could not compile regular expression"
+msgstr "Impossible de compiler l'expression rationnelle"
+
 msgid "Must set -E before selecting paths\n"
 msgstr ""
 
@@ -318,10 +321,9 @@ msgid ""
 "explicitly"
 msgstr ""
 
-msgid "Could not compile regular expression"
-msgstr "Impossible de compiler l'expression rationnelle"
-
-msgid "Must set a threshold value before using -r/-R\n"
+msgid ""
+"Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--"
+"all)\n"
 msgstr ""
 
 msgid "Regular expression did not match any path or disk"
@@ -459,16 +461,36 @@ msgstr ""
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
 msgstr "Choisissez octets, kb, MB, GB, TB (par défaut: MB)"
 
-msgid "Ignore all filesystems of indicated type (may be repeated)"
+#, fuzzy
+msgid ""
+"Ignore all filesystems of types matching given regex(7) (may be repeated)"
 msgstr ""
 "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
 "(peut être utilisé plusieurs fois)"
 
 #, fuzzy
-msgid "Check only filesystems of indicated type (may be repeated)"
+msgid ""
+"Check only filesystems where the type matches this given regex(7) (may be "
+"repeated)"
 msgstr ""
 "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
 "(peut être utilisé plusieurs fois)"
+
+msgid "General usage hints:"
+msgstr ""
+
+msgid ""
+"- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the "
+"same as"
+msgstr ""
+
+msgid "\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."
+msgstr ""
+
+msgid ""
+"- The syntax is broadly: \"{thresholds a} {paths a} -C {thresholds b} "
+"{thresholds b} ...\""
+msgstr ""
 
 msgid "Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"
 msgstr "Vérifie /tmp à 10% et /var à 5% et / à 100MB et 50MB"
@@ -4822,9 +4844,6 @@ msgstr "La fonction malloc à échoué dans strscat\n"
 msgid "failed malloc in xvasprintf\n"
 msgstr "La fonction malloc à échoué dans strscat\n"
 
-msgid "sysconf error for _SC_OPEN_MAX\n"
-msgstr ""
-
 #, c-format
 msgid ""
 "       %s (-h | --help) for detailed help\n"
@@ -5272,6 +5291,25 @@ msgstr "Valeurs pour le seuil d'avertissement (actuellement "
 msgid "critical threshold (currently "
 msgstr "Valeurs pour le seuil critique (actuellement "
 
+msgid ""
+"RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"
+msgstr ""
+
+msgid "packet loss mode, ex. 40%,50% , unit in %"
+msgstr ""
+
+msgid "jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "
+msgstr ""
+
+msgid "MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"
+msgstr ""
+
+msgid "score  mode, max value 100  warning,critical, ex. 80,70 "
+msgstr ""
+
+msgid "detect out of order ICMP packts "
+msgstr ""
+
 msgid "specify a source IP address or device name"
 msgstr "spécifiez une adresse ou un nom d'hôte"
 
@@ -5302,6 +5340,9 @@ msgstr ""
 msgid "verbose"
 msgstr ""
 
+msgid "If none of R,P,J,M,S or O is specified, default behavior is -R -P"
+msgstr ""
+
 msgid "The -H switch is optional. Naming a host (or several) to check is not."
 msgstr ""
 
@@ -5323,9 +5364,17 @@ msgstr ""
 msgid "The -v switch can be specified several times for increased verbosity."
 msgstr ""
 
+<<<<<<< HEAD
 #, c-format
 #~ msgid "Server answer: %s"
 #~ msgstr "Réponse du serveur: %s"
+=======
+#, fuzzy
+#~ msgid "Check only filesystems of indicated type (may be repeated)"
+#~ msgstr ""
+#~ "Ignorer tout les systèmes de fichiers qui correspondent au type indiqué "
+#~ "(peut être utilisé plusieurs fois)"
+>>>>>>> master
 
 #~ msgid "Path or partition (may be repeated)"
 #~ msgstr "Répertoire ou partition (peut être utilisé plusieurs fois)"

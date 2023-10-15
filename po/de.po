@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: devel@monitoring-plugins.org\n"
-"POT-Creation-Date: 2023-09-17 23:47+0200\n"
+"POT-Creation-Date: 2023-10-01 00:46+0200\n"
 "PO-Revision-Date: 2004-12-23 17:46+0100\n"
 "Last-Translator:  \n"
 "Language-Team: Monitoring Plugin Development Team <devel@monitoring-plugins."
@@ -308,6 +308,9 @@ msgstr "UNKNOWN"
 msgid "Must set a threshold value before using -p\n"
 msgstr ""
 
+msgid "Could not compile regular expression"
+msgstr ""
+
 msgid "Must set -E before selecting paths\n"
 msgstr ""
 
@@ -319,10 +322,9 @@ msgid ""
 "explicitly"
 msgstr ""
 
-msgid "Could not compile regular expression"
-msgstr ""
-
-msgid "Must set a threshold value before using -r/-R\n"
+msgid ""
+"Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--"
+"all)\n"
 msgstr ""
 
 msgid "Regular expression did not match any path or disk"
@@ -444,10 +446,29 @@ msgstr ""
 msgid "Choose bytes, kB, MB, GB, TB (default: MB)"
 msgstr ""
 
-msgid "Ignore all filesystems of indicated type (may be repeated)"
+msgid ""
+"Ignore all filesystems of types matching given regex(7) (may be repeated)"
 msgstr ""
 
-msgid "Check only filesystems of indicated type (may be repeated)"
+msgid ""
+"Check only filesystems where the type matches this given regex(7) (may be "
+"repeated)"
+msgstr ""
+
+msgid "General usage hints:"
+msgstr "Allgemeine Nutzungshinweise:"
+
+msgid ""
+"- Arguments are positional! \"-w 5 -c 1 -p /foo -w6 -c2 -p /bar\" is not the "
+"same as"
+msgstr ""
+
+msgid "\"-w 5 -c 1 -p /bar w6 -c2 -p /foo\"."
+msgstr ""
+
+msgid ""
+"- The syntax is broadly: \"{thresholds a} {paths a} -C {thresholds b} "
+"{thresholds b} ...\""
 msgstr ""
 
 msgid "Checks /tmp and /var at 10% and 5%, and / at 100MB and 50MB"
@@ -4687,9 +4708,6 @@ msgstr "konnte keinen Speicher für '%s' reservieren\n"
 msgid "failed malloc in xvasprintf\n"
 msgstr "konnte keinen Speicher für '%s' reservieren\n"
 
-msgid "sysconf error for _SC_OPEN_MAX\n"
-msgstr ""
-
 #, c-format
 msgid ""
 "       %s (-h | --help) for detailed help\n"
@@ -5052,6 +5070,25 @@ msgstr "Warning threshold  Integer sein"
 msgid "critical threshold (currently "
 msgstr "Critical threshold muss ein Integer sein"
 
+msgid ""
+"RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"
+msgstr ""
+
+msgid "packet loss mode, ex. 40%,50% , unit in %"
+msgstr ""
+
+msgid "jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "
+msgstr ""
+
+msgid "MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"
+msgstr ""
+
+msgid "score  mode, max value 100  warning,critical, ex. 80,70 "
+msgstr ""
+
+msgid "detect out of order ICMP packts "
+msgstr ""
+
 #, fuzzy
 msgid "specify a source IP address or device name"
 msgstr "Hostname oder Serveradresse muss angegeben werden"
@@ -5081,6 +5118,9 @@ msgid "Packet size will be data bytes + icmp header (currently"
 msgstr ""
 
 msgid "verbose"
+msgstr ""
+
+msgid "If none of R,P,J,M,S or O is specified, default behavior is -R -P"
 msgstr ""
 
 msgid "The -H switch is optional. Naming a host (or several) to check is not."

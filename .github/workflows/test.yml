@@ -21,7 +21,7 @@ jobs:
         uses: codespell-project/actions-codespell@v2
         with:
           skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh"
-          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners
+          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners,esponse,slac
           check_filenames: true
           check_hidden: true
 #  super-linter:
@@ -49,10 +49,10 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - 'debian:testing'
+          - 'debian:stable'
           #...
         include:
-          - distro: 'debian:testing'
+          - distro: 'debian:stable'
             prepare: .github/prepare_debian.sh
           #...
     steps:
