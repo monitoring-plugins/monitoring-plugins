@@ -1218,6 +1218,10 @@ redir (curlhelp_write_curlbuf* header_buf)
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
+
   location = get_header_value (headers, nof_headers, "location");
 
   if (verbose >= 2)
@@ -2388,6 +2392,10 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
+
   server_date = get_header_value (headers, nof_headers, "date");
   document_date = get_header_value (headers, nof_headers, "last-modified");
 
@@ -2463,9 +2471,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
 int
 get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf)
 {
-  const char *s;
   int content_length = 0;
-  char *copy;
   struct phr_header headers[255];
   size_t nof_headers = 255;
   size_t msglen;
@@ -2475,6 +2481,10 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
+
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
 
   content_length_s = get_header_value (headers, nof_headers, "content-length");
   if (!content_length_s) {
