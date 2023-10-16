@@ -4,7 +4,7 @@ name: Test
 on:
   push:
     branches:
-      - '*'
+    - 'master'
   # Run test for any PRs
   pull_request:
 
