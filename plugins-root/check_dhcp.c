@@ -1064,12 +1064,10 @@ int get_results(void){
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv){
-	int arg_index;
-
 	if(argc<1)
 		return ERROR;
 
-	arg_index = call_getopt(argc,argv);
+	call_getopt(argc,argv);
 	return validate_arguments(argc);
 }
 
