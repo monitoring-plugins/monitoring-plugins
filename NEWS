@@ -7,7 +7,7 @@ This file documents the major additions and syntax changes between releases.
 	 * check_dhcp: Add dhcp rogue detection
 	 * check_disk: add ignore-missing option to return OK for missing fs
 	 * check_disk_smb: allow checking 0-sized resource (ex. IPC$)
-	 * check_disk: The options to include or exlude specific file systems now allow the usage of regex(7)
+	 * check_disk: The options to include or exclude specific file systems now allow the usage of regex(7)
 	 * check_icmp: Add support to Jitter, MOS and Score
 	 * check_mysql: Detect running mysqldump and handle it more gracefully
 	 * check_procs: Implement --exclude-process to exclude specific processes
