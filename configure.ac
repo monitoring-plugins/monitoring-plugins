@@ -328,6 +328,25 @@ AS_IF([test "x$with_ldap" != "xno"], [
   LIBS="$_SAVEDLIBS"
 ])
 
+
+AC_ARG_WITH([systemd], [AS_HELP_STRING([--without-systemd], [Skips systemd support])])
+
+dnl Check for libsystemd
+AS_IF([test "x$with_systemd" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(systemd,sd_get_sessions,,,-lsystemd)
+  if test "$ac_cv_lib_systemd_sd_get_sessions" = "yes"; then
+    SYSTEMDLIBS="-lsystemd"
+    SYSTEMDINCLUDE=""
+    AC_SUBST(SYSTEMDLIBS)
+    AC_SUBST(SYSTEMDINCLUDE)
+  else
+    AC_MSG_WARN([Skipping systemd support])
+  fi
+  LIBS="$_SAVEDLIBS"
+])
+
+
 dnl Check for headers used by check_ide_smart
 case $host in
   *linux*)
@@ -602,7 +621,6 @@ AC_C_CONST
 AC_STRUCT_TM
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_TYPE_SIGNAL
 
 AC_CACHE_CHECK([for va_copy],ac_cv_HAVE_VA_COPY,[
 AC_TRY_LINK([#include <stdarg.h>
@@ -626,12 +644,16 @@ AC_TRY_COMPILE([#include <sys/time.h>],
                [struct timeval *tv;
                 struct timezone *tz;],
                AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])
-               AC_TRY_COMPILE([#include <sys/time.h>],
-                              [struct timeval *tv;
-                               struct timezone *tz;
-                               gettimeofday(tv, tz);],
-                              AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
-                              AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed])))
+			   FOUND_STRUCT_TIMEVAL="yes")
+
+if test x"$FOUND_STRUCT_TIMEVAL" = x"yes"; then
+	AC_TRY_COMPILE([#include <sys/time.h>],
+			  [struct timeval *tv;
+			   struct timezone *tz;
+			   gettimeofday(tv, tz);],
+			  AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
+			  AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed]))
+fi
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtol strtoul floor)

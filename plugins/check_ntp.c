@@ -486,7 +486,7 @@ double offset_request(const char *host, int *status){
 	}
 
 	/* cleanup */
-	/* FIXME: Not closing the socket to avoid re-use of the local port
+	/* FIXME: Not closing the socket to avoid reuse of the local port
 	 * which can cause old NTP packets to be read instead of NTP control
 	 * packets in jitter_request(). THERE MUST BE ANOTHER WAY...
 	 * for(j=0; j<num_hosts; j++){ close(socklist[j]); } */

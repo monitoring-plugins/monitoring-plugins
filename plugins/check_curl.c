@@ -239,10 +239,10 @@ void print_help (void);
 void print_usage (void);
 void print_curl_version (void);
 int curlhelp_initwritebuffer (curlhelp_write_curlbuf*);
-int curlhelp_buffer_write_callback (void*, size_t , size_t , void*);
+size_t curlhelp_buffer_write_callback(void*, size_t , size_t , void*);
 void curlhelp_freewritebuffer (curlhelp_write_curlbuf*);
 int curlhelp_initreadbuffer (curlhelp_read_curlbuf *, const char *, size_t);
-int curlhelp_buffer_read_callback (void *, size_t , size_t , void *);
+size_t curlhelp_buffer_read_callback(void *, size_t , size_t , void *);
 void curlhelp_freereadbuffer (curlhelp_read_curlbuf *);
 curlhelp_ssl_library curlhelp_get_ssl_library ();
 const char* curlhelp_get_ssl_library_string (curlhelp_ssl_library);
@@ -485,7 +485,7 @@ check_http (void)
 
   /* register cleanup function to shut down libcurl properly */
   atexit (cleanup);
-  
+
   if (verbose >= 1)
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_VERBOSE, 1), "CURLOPT_VERBOSE");
 
@@ -805,7 +805,7 @@ check_http (void)
       handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_INFILESIZE, (curl_off_t)strlen (http_post_data)), "CURLOPT_INFILESIZE");
     }
   }
-  
+
   /* cookie handling */
   if (cookie_jar_file != NULL) {
     handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
@@ -1167,7 +1167,7 @@ GOT_FIRST_CERT:
       else
         msg[strlen(msg)-3] = '\0';
     }
-  
+
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
   die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
     state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
@@ -1217,6 +1217,10 @@ redir (curlhelp_write_curlbuf* header_buf)
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
+
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
 
   location = get_header_value (headers, nof_headers, "location");
 
@@ -1694,7 +1698,7 @@ process_arguments (int argc, char **argv)
       else {
         max_depth = atoi (optarg);
       }
-      break;    
+      break;
     case 'f': /* onredirect */
       if (!strcmp (optarg, "ok"))
         onredirect = STATE_OK;
@@ -2171,8 +2175,7 @@ curlhelp_initwritebuffer (curlhelp_write_curlbuf *buf)
   return 0;
 }
 
-int
-curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+size_t curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *stream)
 {
   curlhelp_write_curlbuf *buf = (curlhelp_write_curlbuf *)stream;
 
@@ -2192,8 +2195,7 @@ curlhelp_buffer_write_callback (void *buffer, size_t size, size_t nmemb, void *s
   return (int)(size * nmemb);
 }
 
-int
-curlhelp_buffer_read_callback (void *buffer, size_t size, size_t nmemb, void *stream)
+size_t curlhelp_buffer_read_callback(void *buffer, size_t size, size_t nmemb, void *stream)
 {
   curlhelp_read_curlbuf *buf = (curlhelp_read_curlbuf *)stream;
 
@@ -2390,6 +2392,10 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
 
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
+
   server_date = get_header_value (headers, nof_headers, "date");
   document_date = get_header_value (headers, nof_headers, "last-modified");
 
@@ -2465,9 +2471,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
 int
 get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf)
 {
-  const char *s;
   int content_length = 0;
-  char *copy;
   struct phr_header headers[255];
   size_t nof_headers = 255;
   size_t msglen;
@@ -2477,6 +2481,10 @@ get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_wri
   int res = phr_parse_response (header_buf->buf, header_buf->buflen,
     &status_line.http_major, &status_line.http_minor, &status_line.http_code, &status_line.msg, &msglen,
     headers, &nof_headers, 0);
+
+	if (res == -1) {
+		die (STATE_UNKNOWN, _("HTTP UNKNOWN - Failed to parse Response\n"));
+	}
 
   content_length_s = get_header_value (headers, nof_headers, "content-length");
   if (!content_length_s) {

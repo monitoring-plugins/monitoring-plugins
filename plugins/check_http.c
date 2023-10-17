@@ -1094,7 +1094,7 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
-    while (pos = memchr(buffer, '\0', i)) {
+    while ((pos = memchr(buffer, '\0', i))) {
       /* replace nul character with a blank */
       *pos = ' ';
     }
@@ -1279,7 +1279,7 @@ check_http (void)
 
   regmatch_t chre_pmatch[1]; // We actually do not care about this, since we only want to know IF it was found
 
-  if (regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
+  if (!no_body && regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
     if (verbose) {
       printf("Found chunked content\n");
     }

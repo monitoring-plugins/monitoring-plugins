@@ -97,9 +97,6 @@ main (int argc, char *argv[])
 	int tls;
 	int version=3;
 
-	/* for entry counting */
-
-	LDAPMessage *next_entry;
 	int status_entries = STATE_OK;
 	int num_entries = 0;
 
