@@ -1,5 +1,180 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3.4 18th Oct 2023
+	ENHANCEMENTS
+	check_disk_smb: allow checking 0-sized resource (ex. IPC$)
+	check_icmp: Add support to Jitter, MOS and Score
+	check_icmp: Clean up plugin exit
+	check_mysql: Detect running mysqldump
+	check_disk: add ignore-missing option to return OK for missing fs
+	check_disk: add tests for new option --ignore-missing
+	check_icmp: Remove trailing whitespaces
+	check_icmp: Remove hardcoded DBL_MAX definition
+	check_icmp: Replace DBL_MAX with INFITY to check if value was set
+	check_mailq: separate submission queue
+	check_psql: add extra output
+	check_curl: using CURLOPT_REDIR_PROTOCOLS_STR instead of
+	CURLOPT_REDIR_PROTOCOLS for curl >= 7.85.0
+	check_http: Implement special case test for zero size chunk only
+	check_radius: cope with radcli-1.3.1 RC_BUFFER_LEN
+	check_curl: added --cookie-jar and doing proper cleanup of libcurl
+	check_disk: still allow check of available disks with ignore-missing
+	param used
+	check_disk: add new tests for new ignore-missing feature
+	check_disk: use cleaner code for ignore-missing option
+	check_curl: in SSL host caching mode try to connect and bind and take
+	the first getaddrinfo result which succeeds
+	check_curl: Include all IPs from getaddrinfo() in curl DNS cache
+	check_procs: Implement --exclude-process to exclude specific processes
+	check_procs: add a test for the newly added -X option
+	check_snmp: simplify code
+	check_smtp: Add option to prefix PROXY header
+	check_smtp: Add support for SNI
+	check_snmp: Detect if fmtstr was set in edge cases
+	check_snmp: Implement option to ignore mib file parsing errors
+	check_snmp: Enhance regex in test to be more tolerant to follow up text
+	check_users: prefer systemd-logind over utmp
+	check_smtp: Add support for SMTP over TLS
+	check_smtp: set default port to smtps (465) for TLS
+	check_smtp: remove restriction of --proxy with --ssl
+	check_smtp: add new longoption --tls
+	check_smtp: Let port option always take precedence
+	check_smtp: add tests for --ssl
+	check_mysql: Initialize slaveresult to 0 and use strncat instead of
+	bsd strlcat
+	check_disk: Mention -A and long options in error message about
+	missing thresholds
+	check_disk: More spacing to separate examples
+	check_disk: Add some general usage hints
+	check_disk: Add -C to general usage hints
+	check_icmp: remove root check
+	check_disk: make -X a regex list
+	check_disk: Change usage for --include-type to indicated regexes are 
+	now possible
+	check_dhcp: Add dhcp rogue detection
+
+	FIXES
+	check_disk: Remove weird code (workaround?) which broke with gnulib
+	update
+	check_http: Handle chunked encoding without actual content correctly
+	check_curl: fixed regerror is MAX_INPUT_BUFFER writing into too small
+	errbuf
+	check_curl: better cleanup of curl structures and buffers
+	check_curl: fixed double frees when doing old-style redirects
+	check_curl: changed #else/#if to #elif in libcurl library checks
+	check_curl: using real boolean
+	check_icmp: Fix compiler warning
+	check_disk: fix tests by setting correct test number and escaping line
+	end regex
+	check_disk: fix ugly output with -e option and adapt tests accordingly
+	check_curl: fixed a wrong compare and a wrong size in strncat
+	check_curl: removed a superfluous variable
+	check_snmp: disable multiplier when unused
+	check_swap: Remove unnecessary and problematic includes
+	check_curl: including netinet/in.h (for FreeBSD), fixed an ambiguous
+	compare warning
+	check_log/check_oracle/check_sensors: fixed the outputs of the
+	--versions options
+	check_nwstats: Fix 'requres' typo
+	Fix a lot of typos reported by codespell
+	check_http: Remove unused variable
+	check_curl: Avoid unnecessary malloc and use stack instead
+	check_nt: change encoding from latin1 to utf8
+	check_mysql: Fixed typo of encryption
+	check_disk: Display SI units correctly
+	check_mysql: handle ER_ACCESS_DENIED_NO_PASSWORD_ERROR if ignore_auth=1
+	check_smtp: add missing -r option in usage
+	check_http: Fix unchunking body fails when no body is present
+	check_snmp: Remove dead, commented code
+	check_radius: Change help to emphasize the necessity of a config file
+	check_wave: Use compile time determined path to snmpget
+	check_disk: Remove some dead variables
+	check_disk: Remove some dead variables
+	check_mysql: Add mysql_close to avoid spamming the server logs
+	check_disk: Fix printf format string
+	check_dhcp: Remove unnecessary type defines
+	check_dhcp: Homogenize whitespace usage
+	check_dhcp: Use real booleans
+	check_dhcp: Comment some endifs to make comprehension easier
+	check_dhcp: Remove trailing lines
+	check_dhcp: New variable is actually a boolean
+	check_dhcp: Make some booleans nicer
+	check_icmp: fix host count on when checking multiple hosts
+	check_icmp: remove sun ifdef
+	check_icmp: check malloc
+	check_ircd: use pack_sockaddr_in rather than hand-rolled
+	check_icmp: Refactor get_threshold2 to be barely understandable
+	check_icmp: Change function type of get_thresholds to better reflect the
+	options
+	check_icmp: Remove useless return after crash
+	check_icmp: Do some actual error checking on the threshold parser
+	check_icmp: Refactor new threshold parser
+	check_icmp: Initialise threshold variables properly
+	check_icmp: fix sign compare compiler warnings
+	check_icmp: fix unused variables compiler warning
+	check_icmp: More consequent booleans
+	check_icmp: Do some code formatting
+	check_icmp: Remove preprocessor macro
+	check_icmp: Add some more comments about the MOS score
+	check_curl: Fix -Wcast-function-type compiler warnings
+	check_http: Whitespace fixes
+	check_curl: fix compiler warnings for unused variables
+	check_ldap: fix compiler warnings for unused variables
+	check_http: Fixes for compiler warning -Wparentheses
+	check_procs: Fixes for compiler warning -Wparentheses
+	check_dhcp: Fix for -Wunused-but-set-variable
+	
+	GENERAL
+	Sync with the latest Gnulib code 668c0b8ffa
+	Set autoconf prerequisite version to 2.64
+	Remove sha1 and add sha256
+	Replace sha1 with sha256 in utils_base
+	remove gl/c++defs, replace gl/gettext with gl/gettext-h
+	Add gl/c++defs
+	Do not ignore /gl/warn-on-use.h and gl/arg-nonnull.h
+	sslutils.c: Move function after a function it uses to avoid forward
+	declarations
+	Link plugins against libcrypto to make hashes available
+	Also link LIB_CRYPTO against tests
+	Fix hashes in tests since we are using sha256 now
+	fallback to SSL_CTX_use_certificate_file for gnutls
+	Remove .deps files and folder
+	Ignore .dirstamp files in gnulib
+	Make preprocessor fallback for gnutls more readable
+	utils_disk: add name_prev pointer to struct parameter_list
+	Actually build check_mssql too
+	Implicit function declarations
+	Fixes for -Wunused
+	Fixes for -Wimplicit-fallthrough
+	Fixes for -Wunused-parameters
+	Fixes for -Wuninitialized
+	Fixes for -Wrestrict
+	Replace deprecated TLS client functions
+	Use default OPENSSL sha functions if available
+	Fix hash creation
+	Fixes for -Wnonnull-compare
+	Fixes for Waddress
+	Try fixing deprecated functions in libdbi
+	Refix spelling issues
+	Changing remaining sscanf format specifier to unsigned long
+	Avoid mounting when searching for matching mount points
+	Add xgettext option to not put file positions in translation files
+	Add dynamic path to snmpget to perl utils
+	Change encoding of german translation file to utf8
+	Remove note about comments, we will accept // comments
+	Switch guidelines to use bool instead of int for booleans
+	Rework maxfd/open_max to avoid unused variables
+	Place _cmd_pids in object not header to avoid unused variables
+	open_max is a library function now, it should be mp_open_max
+	Remove check for RETSIGTYPE in autoconf stuff
+	Document new np_add_regex more and add error handling
+	Fix some more typos
+	Fix missing include in plugins/runcmd.c
+	Fix spelling stuff
+	Update configure.ac
+	Whitespace fixes in lib
+	Replace all old school booleans in lib witch C99 ones
+
 2.3.3 2nd Feb 2023
         ENHANCEMENTS
 	using PRId64 and PRIu64 instead of %ld directly
