@@ -2,21 +2,21 @@ This file documents the major additions and syntax changes between releases.
 
 2.3.4 18th Oct 2023
 	ENHANCEMENTS
-	 * check_curl: added --cookie-jar and doing proper cleanup of libcurl
-	 * check_curl: Include all IPs from getaddrinfo() in curl DNS cache
-	 * check_dhcp: Add dhcp rogue detection
-	 * check_disk: add ignore-missing option to return OK for missing fs
-	 * check_disk_smb: allow checking 0-sized resource (ex. IPC$)
-	 * check_disk: The options to include or exclude specific file systems now allow the usage of regex(7)
-	 * check_icmp: Add support to Jitter, MOS and Score
-	 * check_mysql: Detect running mysqldump and handle it more gracefully
-	 * check_procs: Implement --exclude-process to exclude specific processes
-	 * check_smtp: add new longoption --tls
-	 * check_smtp: Add option to prefix PROXY header
-	 * check_smtp: Add support for SMTP over TLS
-	 * check_smtp: Add support for SNI
-	 * check_snmp: Implement option to ignore mib file parsing errors
-	 * check_users: prefer systemd-logind over utmp
+	* check_curl: added --cookie-jar and doing proper cleanup of libcurl
+	* check_curl: Include all IPs from getaddrinfo() in curl DNS cache
+	* check_dhcp: Add dhcp rogue detection
+	* check_disk: add ignore-missing option to return OK for missing fs
+	* check_disk_smb: allow checking 0-sized resource (ex. IPC$)
+	* check_disk: The options to include or exclude specific file systems now allow the usage of regex(7)
+	* check_icmp: Add support to Jitter, MOS and Score
+	* check_mysql: Detect running mysqldump and handle it more gracefully
+	* check_procs: Implement --exclude-process to exclude specific processes
+	* check_smtp: add new longoption --tls
+	* check_smtp: Add option to prefix PROXY header
+	* check_smtp: Add support for SMTP over TLS
+	* check_smtp: Add support for SNI
+	* check_snmp: Implement option to ignore mib file parsing errors
+	* check_users: prefer systemd-logind over utmp
 
 	FIXES
 	* check_disk: Display SI units correctly
