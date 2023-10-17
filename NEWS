@@ -1,5 +1,39 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3.4 18th Oct 2023
+	ENHANCEMENTS
+	* check_curl: added --cookie-jar and doing proper cleanup of libcurl
+	* check_curl: Include all IPs from getaddrinfo() in curl DNS cache
+	* check_dhcp: Add dhcp rogue detection
+	* check_disk: add ignore-missing option to return OK for missing fs
+	* check_disk_smb: allow checking 0-sized resource (ex. IPC$)
+	* check_disk: The options to include or exclude specific file systems now allow the usage of regex(7)
+	* check_icmp: Add support to Jitter, MOS and Score
+	* check_mysql: Detect running mysqldump and handle it more gracefully
+	* check_procs: Implement --exclude-process to exclude specific processes
+	* check_smtp: add new longoption --tls
+	* check_smtp: Add option to prefix PROXY header
+	* check_smtp: Add support for SMTP over TLS
+	* check_smtp: Add support for SNI
+	* check_snmp: Implement option to ignore mib file parsing errors
+	* check_users: prefer systemd-logind over utmp
+
+	FIXES
+	* check_disk: Display SI units correctly
+	* check_ircd: use pack_sockaddr_in rather than hand-rolled
+	* check_log/check_oracle/check_sensors: fixed the outputs of the help functionality
+	* check_mysql: Add mysql_close to avoid spamming the server logs
+	* check_smtp: add missing -r option in usage
+	* check_snmp: disable multiplier when unused
+	* check_wave: Use compile time determined path to snmpget
+	
+	GENERAL
+	* Sync with the Gnulib code 668c0b8ffa
+	* Set autoconf prerequisite version to 2.64
+	* Remove sha1 and use sha256 in some parts of the plugin structure
+	* A lot of compiler warnings were fixed
+	* Some code was refactored a little bit
+
 2.3.3 2nd Feb 2023
         ENHANCEMENTS
 	using PRId64 and PRIu64 instead of %ld directly

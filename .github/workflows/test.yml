@@ -20,7 +20,7 @@ jobs:
       - name: Codespell
         uses: codespell-project/actions-codespell@v2
         with:
-          skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh"
+          skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh,THANKS.in"
           ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners,esponse,slac
           check_filenames: true
           check_hidden: true
