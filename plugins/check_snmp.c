@@ -135,7 +135,7 @@ int numoids = 0;
 int numauthpriv = 0;
 int numcontext = 0;
 int verbose = 0;
-int usesnmpgetnext = FALSE;
+bool usesnmpgetnext = false;
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
 thresholds **thlds;
@@ -148,7 +148,7 @@ size_t eval_size = OID_COUNT_STEP;
 char *delimiter;
 char *output_delim;
 char *miblist = NULL;
-int needmibs = FALSE;
+bool needmibs = false;
 int calculate_rate = 0;
 double offset = 0.0;
 int rate_multiplier = 1;
@@ -302,7 +302,7 @@ main (int argc, char **argv)
 	}
 
 	/* Create the command array to execute */
-	if(usesnmpgetnext == TRUE) {
+	if(usesnmpgetnext) {
 		snmpcmd = strdup (PATH_TO_SNMPGETNEXT);
 	}else{
 		snmpcmd = strdup (PATH_TO_SNMPGET);
@@ -777,7 +777,7 @@ process_arguments (int argc, char **argv)
 			miblist = optarg;
 			break;
 		case 'n':	/* usesnmpgetnext */
-			usesnmpgetnext = TRUE;
+			usesnmpgetnext = true;
 			break;
 		case 'P':	/* SNMP protocol version */
 			proto = optarg;
@@ -831,7 +831,7 @@ process_arguments (int argc, char **argv)
 					 * so we have a mib variable, rather than just an SNMP OID,
 					 * so we have to actually read the mib files
 					 */
-					needmibs = TRUE;
+					needmibs = true;
 			}
 			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
 				while (j >= oids_size) {
@@ -1034,7 +1034,7 @@ validate_arguments ()
 {
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
 	if (miblist == NULL) {
-		if ( needmibs == TRUE ) {
+		if (needmibs) {
 			miblist = strdup (DEFAULT_MIBLIST);
 		}else{
 			miblist = "";			/* don't read any mib files for numeric oids */
