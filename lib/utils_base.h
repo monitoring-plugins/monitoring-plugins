@@ -116,4 +116,14 @@ void np_set_args(int argc, char **argv);
 void np_cleanup();
 const char *state_text (int);
 
+char *fperfdatarange (const char *,
+		double,
+		const char *,
+		const char *,
+		const char *,
+		int,
+		double,
+		int,
+		double);
+
 #endif /* _UTILS_BASE_ */
