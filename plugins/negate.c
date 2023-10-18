@@ -47,7 +47,7 @@ static const char **process_arguments (int, char **);
 void validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
-int subst_text = FALSE;
+bool subst_text = false;
 
 static int state[4] = {
 	STATE_OK,
@@ -122,7 +122,7 @@ static const char **
 process_arguments (int argc, char **argv)
 {
 	int c;
-	int permute = TRUE;
+	bool permute = true;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -168,26 +168,26 @@ process_arguments (int argc, char **argv)
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 
 		case 'w':     /* replacement for WARNING */
 			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 'c':     /* replacement for CRITICAL */
 			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 'u':     /* replacement for UNKNOWN */
 			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 's':     /* Substitute status text */
-			subst_text = TRUE;
+			subst_text = true;
 			break;
 		}
 	}
