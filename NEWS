@@ -1,5 +1,9 @@
 This file documents the major additions and syntax changes between releases.
 
+2.3.5 18th Oct 2023
+	FIXES
+	* Include maxfd.h in lib Makefile
+
 2.3.4 18th Oct 2023
 	ENHANCEMENTS
 	* check_curl: added --cookie-jar and doing proper cleanup of libcurl
