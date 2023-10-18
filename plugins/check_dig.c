@@ -56,7 +56,7 @@ char *expected_address = NULL;
 char *dns_server = NULL;
 char *dig_args = "";
 char *query_transport = "";
-int verbose = FALSE;
+bool verbose = false;
 int server_port = DEFAULT_PORT;
 int number_tries = DEFAULT_TRIES;
 double warning_interval = UNDEFINED;
@@ -176,11 +176,11 @@ main (int argc, char **argv)
           state_text (result), elapsed_time,
           msg ? msg : _("Probably a non-existent host/domain"),
           fperfdata("time", elapsed_time, "s",
-                    (warning_interval>UNDEFINED?TRUE:FALSE),
+                    (warning_interval>UNDEFINED ? true:false),
                     warning_interval,
-                    (critical_interval>UNDEFINED?TRUE:FALSE),
+                    (critical_interval>UNDEFINED ? true:false),
             critical_interval,
-            TRUE, 0, FALSE, 0));
+            true, 0, false, 0));
   return result;
 }
 
@@ -270,7 +270,7 @@ process_arguments (int argc, char **argv)
       dig_args = strdup(optarg);
       break;
     case 'v':                 /* verbose */
-      verbose = TRUE;
+      verbose = true;
       break;
     case 'T':
       record_type = optarg;
