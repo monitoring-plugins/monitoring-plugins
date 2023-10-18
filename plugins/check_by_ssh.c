@@ -50,7 +50,7 @@ unsigned int services = 0;
 int skip_stdout = 0;
 int skip_stderr = 0;
 int warn_on_stderr = 0;
-bool unknown_timeout = FALSE;
+bool unknown_timeout = false;
 char *remotecmd = NULL;
 char **commargv = NULL;
 int commargc = 0;
@@ -58,8 +58,8 @@ char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
 char **service;
-int passive = FALSE;
-int verbose = FALSE;
+bool passive = false;
+bool verbose = false;
 
 int
 main (int argc, char **argv)
@@ -235,7 +235,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'v':									/* help */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -244,7 +244,7 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'U':
-			unknown_timeout = TRUE;
+			unknown_timeout = true;
 			break;
 		case 'H':									/* host */
 			hostname = optarg;
@@ -257,7 +257,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'O':									/* output file */
 			outputfile = optarg;
-			passive = TRUE;
+			passive = true;
 			break;
 		case 's':									/* description of service to check */
 			p1 = optarg;
