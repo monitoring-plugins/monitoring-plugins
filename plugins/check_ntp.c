@@ -39,11 +39,11 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 
 static char *server_address=NULL;
-static bool verbose = false;
-static bool do_offset = false;
+static int verbose=0;
+static short do_offset=0;
 static char *owarn="60";
 static char *ocrit="120";
-static bool do_jitter = false;
+static short do_jitter=0;
 static char *jwarn="5000";
 static char *jcrit="10000";
 
@@ -696,26 +696,26 @@ int process_arguments(int argc, char **argv){
 			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
-			verbose = true;
+			verbose++;
 			break;
 		case 'w':
-			do_offset = true;
+			do_offset=1;
 			owarn = optarg;
 			break;
 		case 'c':
-			do_offset = true;
+			do_offset=1;
 			ocrit = optarg;
 			break;
 		case 'j':
-			do_jitter = true;
+			do_jitter=1;
 			jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter = true;
+			do_jitter=1;
 			jcrit = optarg;
 			break;
 		case 'H':
-			if(is_host(optarg) == false)
+			if(is_host(optarg) == FALSE)
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -749,9 +749,9 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		true, offset_thresholds->warning->end,
-		true, offset_thresholds->critical->end,
-		false, 0, false, 0);
+		TRUE, offset_thresholds->warning->end,
+		TRUE, offset_thresholds->critical->end,
+		FALSE, 0, FALSE, 0);
 }
 
 char *perfd_jitter (double jitter)
@@ -759,7 +759,7 @@ char *perfd_jitter (double jitter)
 	return fperfdata ("jitter", jitter, "s",
 		do_jitter, jitter_thresholds->warning->end,
 		do_jitter, jitter_thresholds->critical->end,
-		true, 0, false, 0);
+		TRUE, 0, FALSE, 0);
 }
 
 int main(int argc, char *argv[]){
