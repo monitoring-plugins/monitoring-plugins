@@ -63,7 +63,6 @@ main (int argc, char **argv)
 	char *sub;
 	char **command_line;
 	output chld_out, chld_err;
-	int i;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -86,7 +85,7 @@ main (int argc, char **argv)
 		result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 	}
 	if (chld_err.lines > 0) {
-		for (i = 0; i < chld_err.lines; i++) {
+		for (size_t i = 0; i < chld_err.lines; i++) {
 			fprintf (stderr, "%s\n", chld_err.line[i]);
 		}
 	}
@@ -95,7 +94,7 @@ main (int argc, char **argv)
 	if (chld_out.lines == 0)
 		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
 
-	for (i = 0; i < chld_out.lines; i++) {
+	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
 			/* Loop over each match found */
 			while ((sub = strstr (chld_out.line[i], state_text (result)))) {

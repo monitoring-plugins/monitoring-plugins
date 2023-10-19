@@ -102,7 +102,6 @@ int
 main (int argc, char **argv)
 {
 	int result = STATE_UNKNOWN;
-	int i;
 	char *status = NULL;
 	struct timeval tv;
 	struct timeval timeout;
@@ -124,7 +123,7 @@ main (int argc, char **argv)
 	len = strlen(progname);
 	if(len > 6 && !memcmp(progname, "check_", 6)) {
 		SERVICE = strdup(progname + 6);
-		for(i = 0; i < len - 6; i++)
+		for(size_t i = 0; i < len - 6; i++)
 			SERVICE[i] = toupper(SERVICE[i]);
 	}
 
@@ -275,7 +274,7 @@ main (int argc, char **argv)
 			printf("Quit string: %s\n", server_quit);
 		}
 		printf("server_expect_count: %d\n", (int)server_expect_count);
-		for(i = 0; i < server_expect_count; i++)
+		for(size_t i = 0; i < server_expect_count; i++)
 			printf("\t%d: %s\n", i, server_expect[i]);
 	}
 
@@ -284,10 +283,11 @@ main (int argc, char **argv)
 	if (server_expect_count) {
 
 		/* watch for the expect string */
-		while ((i = my_recv(buffer, sizeof(buffer))) > 0) {
-			status = realloc(status, len + i + 1);
-			memcpy(&status[len], buffer, i);
-			len += i;
+		size_t received = 0;
+		while ((received = my_recv(buffer, sizeof(buffer))) > 0) {
+			status = realloc(status, len + received + 1);
+			memcpy(&status[len], buffer, received);
+			len += received;
 			status[len] = '\0';
 
 			/* stop reading if user-forced */

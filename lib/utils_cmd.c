@@ -390,13 +390,12 @@ cmd_file_read ( char *filename, output *out, int flags)
 void
 timeout_alarm_handler (int signo)
 {
-	size_t i;
 	if (signo == SIGALRM) {
 		printf (_("%s - Plugin timed out after %d seconds\n"),
 						state_text(timeout_state), timeout_interval);
 
 		long maxfd = mp_open_max();
-		if(_cmd_pids) for(i = 0; i < maxfd; i++) {
+		if(_cmd_pids) for(long int i = 0; i < maxfd; i++) {
 			if(_cmd_pids[i] != 0) kill(_cmd_pids[i], SIGKILL);
 		}
 
