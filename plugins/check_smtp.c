@@ -615,7 +615,7 @@ process_arguments (int argc, char **argv)
 			verbose++;
 			break;
 		case 'q':
-			ignore_send_quit_failure++;             /* ignore problem sending QUIT */
+			ignore_send_quit_failure = true;             /* ignore problem sending QUIT */
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
