@@ -275,7 +275,7 @@ main (int argc, char **argv)
 		}
 		printf("server_expect_count: %d\n", (int)server_expect_count);
 		for(size_t i = 0; i < server_expect_count; i++)
-			printf("\t%d: %s\n", i, server_expect[i]);
+			printf("\t%zd: %s\n", i, server_expect[i]);
 	}
 
 	/* if(len) later on, we know we have a non-NULL response */

@@ -252,7 +252,7 @@ int process_arguments (int argc, char **argv) {
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist){
-	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
+	int result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
 	char *cmdline=NULL, rerrbuf[64];

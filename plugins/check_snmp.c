@@ -263,7 +263,7 @@ main (int argc, char **argv)
 			previous_string = strdup((char *) previous_state->data);
 			while((ap = strsep(&previous_string, ":")) != NULL) {
 				if(verbose>2)
-					printf("State for %d=%s\n", i, ap);
+					printf("State for %zd=%s\n", i, ap);
 				while (i >= previous_size) {
 					previous_size += OID_COUNT_STEP;
 					previous_value = realloc(previous_value, previous_size * sizeof(*previous_value));
@@ -415,7 +415,7 @@ main (int argc, char **argv)
 			break;
 
 		if (verbose > 2) {
-			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
+			printf("Processing oid %zi (line %zi)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
 		}
 
 		/* Clean up type array - Sol10 does not necessarily zero it out */
