@@ -113,7 +113,7 @@ main (int argc, char **argv)
 	char slaveresult[SLAVERESULTSIZE] = { 0 };
 	char* perf;
 
-        perf = strdup ("");
+	perf = strdup ("");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -193,14 +193,14 @@ main (int argc, char **argv)
 			for(i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i],
-						atol(row[1]), "", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+						atol(row[1]), "", false, 0, false, 0, false, 0, false, 0));
 					continue;
 				}
 			}
 			for(i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i],
-						atol(row[1]), "c", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+						atol(row[1]), "c", false, 0, false, 0, false, 0, false, 0));
 					continue;
 				}
 			}
@@ -322,10 +322,10 @@ main (int argc, char **argv)
 				status = get_status(value, my_threshold);
 
 				xasprintf (&perf, "%s %s", perf, fperfdata ("seconds behind master", value, "s",
-        	                        TRUE, (double) warning_time,
-                	                TRUE, (double) critical_time,
-                        	        FALSE, 0,
-                                	FALSE, 0));
+							true, (double) warning_time,
+							true, (double) critical_time,
+							false, 0,
+							false, 0));
 
 				if (status == STATE_WARNING) {
 					printf("SLOW_SLAVE %s: %s|%s\n", _("WARNING"), slaveresult, perf);

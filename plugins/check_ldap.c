@@ -71,9 +71,9 @@ thresholds *entries_thresholds = NULL;
 struct timeval tv;
 char* warn_entries = NULL;
 char* crit_entries = NULL;
-int starttls = FALSE;
-int ssl_on_connect = FALSE;
-int verbose = 0;
+bool starttls = false;
+bool ssl_on_connect = false;
+bool verbose = false;
 
 /* for ldap tls */
 
@@ -115,7 +115,7 @@ main (int argc, char *argv[])
 		usage4 (_("Could not parse arguments"));
 
 	if (strstr(argv[0],"check_ldaps") && ! starttls && ! ssl_on_connect)
-		starttls = TRUE;
+		starttls = true;
 
 	/* initialize alarm signal handling */
 	signal (SIGALRM, socket_timeout_alarm_handler);
@@ -253,11 +253,11 @@ main (int argc, char *argv[])
 			fperfdata ("time", elapsed_time, "s",
 				(int)warn_time, warn_time,
 				(int)crit_time, crit_time,
-				TRUE, 0, FALSE, 0),
+				true, 0, false, 0),
 			sperfdata ("entries", (double)num_entries, "",
 				warn_entries,
 				crit_entries,
-				TRUE, 0.0, FALSE, 0.0));
+				true, 0.0, false, 0.0));
 	} else {
 		printf (_("LDAP %s - %.3f seconds response time|%s\n"),
 			state_text (status),
@@ -265,7 +265,7 @@ main (int argc, char *argv[])
 			fperfdata ("time", elapsed_time, "s",
 				(int)warn_time, warn_time,
 				(int)crit_time, crit_time,
-				TRUE, 0, FALSE, 0));
+				true, 0, false, 0));
 	}
 
 	return status;
@@ -313,7 +313,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 	}
 
-	while (1) {
+	while (true) {
 		c = getopt_long (argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -374,17 +374,17 @@ process_arguments (int argc, char **argv)
 			address_family = AF_INET;
 			break;
 		case 'v':
-			verbose++;
+			verbose = true;
 			break;
 		case 'T':
 			if (! ssl_on_connect)
-				starttls = TRUE;
+				starttls = true;
 			else
 				usage_va(_("%s cannot be combined with %s"), "-T/--starttls", "-S/--ssl");
 			break;
 		case 'S':
 			if (! starttls) {
-				ssl_on_connect = TRUE;
+				ssl_on_connect = true;
 				if (ld_port == -1)
 					ld_port = LDAPS_PORT;
 			} else

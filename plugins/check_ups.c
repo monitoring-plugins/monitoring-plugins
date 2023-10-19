@@ -75,8 +75,8 @@ char *server_address;
 char *ups_name = NULL;
 double warning_value = 0.0;
 double critical_value = 0.0;
-int check_warn = FALSE;
-int check_crit = FALSE;
+bool check_warn = false;
+bool check_crit = false;
 int check_variable = UPS_NONE;
 int supported_options = UPS_NONE;
 int status = UPSSTATUS_NONE;
@@ -86,7 +86,7 @@ double ups_battery_percent = 0.0;
 double ups_load_percent = 0.0;
 double ups_temperature = 0.0;
 char *ups_status;
-int temp_output_c = 0;
+bool temp_output_c = false;
 
 int determine_status (void);
 int get_ups_variable (const char *, char *);
@@ -205,21 +205,21 @@ main (int argc, char **argv)
 			ups_utility_deviation = ups_utility_voltage - 120.0;
 
 		if (check_variable == UPS_UTILITY) {
-			if (check_crit==TRUE && ups_utility_deviation>=critical_value) {
+			if (check_crit && ups_utility_deviation>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_utility_deviation>=warning_value) {
+			else if (check_warn && ups_utility_deviation>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
-			                    TRUE, 0, FALSE, 0));
+			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+			                    false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -234,21 +234,21 @@ main (int argc, char **argv)
 		xasprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
 
 		if (check_variable == UPS_BATTPCT) {
-			if (check_crit==TRUE && ups_battery_percent <= critical_value) {
+			if (check_crit && ups_battery_percent <= critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_battery_percent<=warning_value) {
+			else if (check_warn && ups_battery_percent<=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, TRUE, 100));
+			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
+			                    false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
@@ -263,21 +263,21 @@ main (int argc, char **argv)
 		xasprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
 
 		if (check_variable == UPS_LOADPCT) {
-			if (check_crit==TRUE && ups_load_percent>=critical_value) {
+			if (check_crit && ups_load_percent>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_load_percent>=warning_value) {
+			else if (check_warn && ups_load_percent>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, TRUE, 100));
+			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
+			                    false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
@@ -300,21 +300,21 @@ main (int argc, char **argv)
 		}
 
 		if (check_variable == UPS_TEMP) {
-			if (check_crit==TRUE && ups_temperature>=critical_value) {
+			if (check_crit && ups_temperature>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn == TRUE && ups_temperature>=warning_value) {
+			else if (check_warn && ups_temperature>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, FALSE, 0));
+			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
-			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+			                    false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -508,7 +508,7 @@ process_arguments (int argc, char **argv)
 			}
 			break;
 		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Fahrenheit) */
-			temp_output_c = 1;
+			temp_output_c = true;
 			break;
 		case 'u':									/* ups name */
 			ups_name = optarg;
@@ -524,7 +524,7 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				critical_value = atoi (optarg);
-				check_crit = TRUE;
+				check_crit = true;
 			}
 			else {
 				usage2 (_("Critical time must be a positive integer"), optarg);
@@ -533,7 +533,7 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
 				warning_value = atoi (optarg);
-				check_warn = TRUE;
+				check_warn = true;
 			}
 			else {
 				usage2 (_("Warning time must be a positive integer"), optarg);
