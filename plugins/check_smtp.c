@@ -288,16 +288,17 @@ main (int argc, char **argv)
 			printf("%s", buffer);
 		}
 
-#  ifdef USE_OPENSSL
-		  if ( check_cert ) {
+		}
+#endif /* HAVE_SSL */
+
+#ifdef USE_OPENSSL
+		if ( (use_ssl || use_starttls) && check_cert ) {
                     result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		    smtp_quit();
 		    my_close();
 		    return result;
 		  }
-#  endif /* USE_OPENSSL */
-		}
-#endif
+#endif /* USE_OPENSSL */
 
 		if (verbose)
 			printf ("%s", buffer);
@@ -650,6 +651,7 @@ process_arguments (int argc, char **argv)
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+			break;
 		case 's':
 		/* ssl */
 			use_ssl = true;
