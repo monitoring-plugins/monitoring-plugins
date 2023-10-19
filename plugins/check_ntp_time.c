@@ -44,8 +44,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 static char *server_address=NULL;
 static char *port="123";
-static bool verbose = false;
-static bool quiet = false;
+static int verbose=0;
+static int quiet=0;
 static char *owarn="60";
 static char *ocrit="120";
 static int time_offset=0;
@@ -485,7 +485,7 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'q':
-			quiet = true;
+			quiet = 1;
 			break;
 		case 'w':
 			owarn = optarg;
@@ -494,7 +494,7 @@ int process_arguments(int argc, char **argv){
 			ocrit = optarg;
 			break;
 		case 'H':
-			if(!is_host(optarg))
+			if(is_host(optarg) == FALSE)
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -506,7 +506,7 @@ int process_arguments(int argc, char **argv){
 			break;
 		case 'o':
 			time_offset=atoi(optarg);
-			break;
+                        break;
 		case '4':
 			address_family = AF_INET;
 			break;
@@ -534,9 +534,9 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		true, offset_thresholds->warning->end,
-		true, offset_thresholds->critical->end,
-		false, 0, false, 0);
+		TRUE, offset_thresholds->warning->end,
+		TRUE, offset_thresholds->critical->end,
+		FALSE, 0, FALSE, 0);
 }
 
 int main(int argc, char *argv[]){
@@ -566,7 +566,7 @@ int main(int argc, char *argv[]){
 
 	offset = offset_request(server_address, &offset_result);
 	if (offset_result == STATE_UNKNOWN) {
-		result = (quiet ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		result = get_status(fabs(offset), offset_thresholds);
 	}
@@ -651,3 +651,4 @@ print_usage(void)
 	printf ("%s\n", _("Usage:"));
 	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n", progname);
 }
+
