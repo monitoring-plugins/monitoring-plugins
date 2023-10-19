@@ -480,6 +480,8 @@ process_arguments (int argc, char **argv)
 	int c;
 	char* temp;
 
+	bool implicit_tls = false;
+
 	enum {
 	  SNI_OPTION
 	};
@@ -650,6 +652,8 @@ process_arguments (int argc, char **argv)
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+			implicit_tls = true;
+			// fallthrough
 		case 's':
 		/* ssl */
 			use_ssl = true;
@@ -717,7 +721,12 @@ process_arguments (int argc, char **argv)
 		from_arg = strdup(" ");
 
 	if (use_starttls && use_ssl) {
-		usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
+		if (implicit_tls) {
+			use_ssl = false;
+			server_port = SMTP_PORT;
+		} else {
+			usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
+		}
 	}
 
 	if (server_port_option != 0) {
