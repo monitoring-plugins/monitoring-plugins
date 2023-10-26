@@ -83,20 +83,19 @@ alarm($opt_t);
 # switch based on MTA
 
 if ($mailq eq "sendmail") {
+    if( ! $utils::PATH_TO_MAILQ) {
+        print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( ! -x $utils::PATH_TO_MAILQ) {
+        print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
 
     ## open mailq
-    if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-        if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
-            print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    }elsif( defined $utils::PATH_TO_MAILQ){
-        unless (-x $utils::PATH_TO_MAILQ) {
-            print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    } else {
-        print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+        print "ERROR: could not open $sudo $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
 #  single queue empty
@@ -224,7 +223,6 @@ if ($mailq eq "sendmail") {
 
     }
 
-
     ## close mailq
     close (MAILQ);
 
@@ -235,8 +233,6 @@ if ($mailq eq "sendmail") {
 
     ## shut off the alarm
     alarm(0);
-
-
 
     ## now check the queue length(s)
 
@@ -335,40 +331,38 @@ if ($mailq eq "sendmail") {
 
 } # end of ($mailq eq "sendmail")
 elsif ( $mailq eq "postfix" ) {
-
-     ## open mailq
-    if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-        if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
-            print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    }elsif( defined $utils::PATH_TO_MAILQ){
-        unless (-x $utils::PATH_TO_MAILQ) {
-            print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    } else {
+    if( ! $utils::PATH_TO_MAILQ ) {
         print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
         exit $ERRORS{'UNKNOWN'};
     }
 
+    if ( ! -x $utils::PATH_TO_MAILQ) {
+        print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
 
-        @lines = reverse <MAILQ>;
+    ## open mailq
+    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
+        print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
+        exit $ERRORS{'UNKNOWN'};
+    }
 
-        # close qmail-qstat
-        close MAILQ;
+    @lines = reverse <MAILQ>;
 
-        if ( $? ) {
-        print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ$mailq_args",$/;
-        exit $ERRORS{CRITICAL};
-        }
+    # close qmail-qstat
+    close MAILQ;
 
-        ## shut off the alarm
-        alarm(0);
+    if ( $? ) {
+    print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ$mailq_args",$/;
+    exit $ERRORS{CRITICAL};
+    }
 
-        # check queue length
-        if ($lines[0]=~/Kbytes in (\d+)/) {
-                $msg_q = $1 ;
+    ## shut off the alarm
+    alarm(0);
+
+    # check queue length
+    if ($lines[0]=~/Kbytes in (\d+)/) {
+        $msg_q = $1 ;
     }elsif ($lines[0]=~/Mail queue is empty/) {
         $msg_q = 0;
         }else{
@@ -417,20 +411,19 @@ elsif ( $mailq eq "postfix" ) {
         }
 } # end of ($mailq eq "postfix")
 elsif ( $mailq eq "qmail" ) {
+    if ( ! $utils::PATH_TO_QMAIL_QSTAT ) {
+        print "ERROR: \$utils::PATH_TO_QMAIL_QSTAT is not defined\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( ! -x $utils::PATH_TO_QMAIL_QSTAT) {
+        print "ERROR: $utils::PATH_TO_QMAIL_QSTAT is not executable by (uid $>:gid($)))\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
 
     # open qmail-qstat
-    if ( defined $utils::PATH_TO_QMAIL_QSTAT && -x $utils::PATH_TO_QMAIL_QSTAT ) {
-        if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
-            print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    }elsif( defined $utils::PATH_TO_QMAIL_QSTAT){
-        unless (-x $utils::PATH_TO_QMAIL_QSTAT) {
-            print "ERROR: $utils::PATH_TO_QMAIL_QSTAT is not executable by (uid $>:gid($)))\n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    } else {
-        print "ERROR: \$utils::PATH_TO_QMAIL_QSTAT is not defined\n";
+    if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
+        print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
         exit $ERRORS{'UNKNOWN'};
     }
 
@@ -500,19 +493,19 @@ elsif ( $mailq eq "qmail" ) {
 
 } # end of ($mailq eq "qmail")
 elsif ( $mailq eq "exim" ) {
-    ## open mailq
-    if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-        if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
-            print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    }elsif( defined $utils::PATH_TO_MAILQ){
-        unless (-x $utils::PATH_TO_MAILQ) {
-            print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    } else {
+    if ( ! $utils::PATH_TO_MAILQ  ) {
         print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( ! -x $utils::PATH_TO_MAILQ) {
+        print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    ## open mailq
+    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+        print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
 
@@ -543,19 +536,19 @@ elsif ( $mailq eq "exim" ) {
 } # end of ($mailq eq "exim")
 
 elsif ( $mailq eq "nullmailer" ) {
-    ## open mailq
-    if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
-        if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
-            print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    }elsif( defined $utils::PATH_TO_MAILQ){
-        unless (-x $utils::PATH_TO_MAILQ) {
-            print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
-            exit $ERRORS{'UNKNOWN'};
-        }
-    } else {
+    if( ! $utils::PATH_TO_MAILQ) {
         print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    if ( ! -x $utils::PATH_TO_MAILQ) {
+        print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+        exit $ERRORS{'UNKNOWN'};
+    }
+
+    ## open mailq
+    if ( ! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+        print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
 
