@@ -65,7 +65,7 @@ bool check_range(double, range *);
 int get_status(double, thresholds *);
 
 /* Handle timeouts */
-extern unsigned int timeout_state;
+extern int timeout_state;
 extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */

@@ -131,7 +131,7 @@ size_t nlabels = 0;
 size_t labels_size = OID_COUNT_STEP;
 size_t nunits = 0;
 size_t unitv_size = OID_COUNT_STEP;
-int numoids = 0;
+size_t numoids = 0;
 int numauthpriv = 0;
 int numcontext = 0;
 int verbose = 0;
@@ -187,7 +187,8 @@ static char *fix_snmp_range(char *th)
 int
 main (int argc, char **argv)
 {
-	int i, len, line, total_oids;
+	int len, total_oids;
+	size_t line;
 	unsigned int bk_count = 0, dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
@@ -253,14 +254,16 @@ main (int argc, char **argv)
 	if(calculate_rate) {
 		if (!strcmp(label, "SNMP"))
 			label = strdup("SNMP RATE");
-		i=0;
+
+		size_t i = 0;
+
 		previous_state = np_state_read();
 		if(previous_state!=NULL) {
 			/* Split colon separated values */
 			previous_string = strdup((char *) previous_state->data);
 			while((ap = strsep(&previous_string, ":")) != NULL) {
 				if(verbose>2)
-					printf("State for %d=%s\n", i, ap);
+					printf("State for %zd=%s\n", i, ap);
 				while (i >= previous_size) {
 					previous_size += OID_COUNT_STEP;
 					previous_value = realloc(previous_value, previous_size * sizeof(*previous_value));
@@ -273,7 +276,7 @@ main (int argc, char **argv)
 	/* Populate the thresholds */
 	th_warn=warning_thresholds;
 	th_crit=critical_thresholds;
-	for (i=0; i<numoids; i++) {
+	for (size_t i = 0; i < numoids; i++) {
 		char *w = th_warn ? strndup(th_warn, strcspn(th_warn, ",")) : NULL;
 		char *c = th_crit ? strndup(th_crit, strcspn(th_crit, ",")) : NULL;
 		/* translate "2:1" to "@1:2" for backwards compatibility */
@@ -333,11 +336,11 @@ main (int argc, char **argv)
 	}
 
 
-	for (i = 0; i < numcontext; i++) {
+	for (int i = 0; i < numcontext; i++) {
 		command_line[index++] = contextargs[i];
 	}
 
-	for (i = 0; i < numauthpriv; i++) {
+	for (int i = 0; i < numauthpriv; i++) {
 		command_line[index++] = authpriv[i];
 	}
 
@@ -348,7 +351,7 @@ main (int argc, char **argv)
 	 server_address,
 	 port);
 
-	for (i = 0; i < numoids; i++) {
+	for (size_t i = 0; i < numoids; i++) {
 		command_line[index++] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
@@ -382,7 +385,7 @@ main (int argc, char **argv)
 	if (external_error) {
 		if (chld_err.lines > 0) {
 			printf (_("External command error: %s\n"), chld_err.line[0]);
-			for (i = 1; i < chld_err.lines; i++) {
+			for (size_t i = 1; i < chld_err.lines; i++) {
 				printf ("%s\n", chld_err.line[i]);
 			}
 		} else {
@@ -392,12 +395,14 @@ main (int argc, char **argv)
 	}
 
 	if (verbose) {
-		for (i = 0; i < chld_out.lines; i++) {
+		for (size_t i = 0; i < chld_out.lines; i++) {
 			printf ("%s\n", chld_out.line[i]);
 		}
 	}
 
-	for (line=0, i=0; line < chld_out.lines && i < numoids ; line++, i++) {
+	line = 0;
+	total_oids = 0;
+	for (size_t i = 0; line < chld_out.lines && i < numoids ; line++, i++, total_oids++) {
 		if(calculate_rate)
 			conv = "%.10g";
 		else
@@ -410,7 +415,7 @@ main (int argc, char **argv)
 			break;
 
 		if (verbose > 2) {
-			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
+			printf("Processing oid %zi (line %zi)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
 		}
 
 		/* Clean up type array - Sol10 does not necessarily zero it out */
@@ -634,7 +639,6 @@ main (int argc, char **argv)
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
-	total_oids=i;
 
 	/* Save state data, as all data collected now */
 	if(calculate_rate) {
@@ -644,7 +648,7 @@ main (int argc, char **argv)
 			die(STATE_UNKNOWN, _("Cannot malloc"));
 
 		current_length=0;
-		for(i=0; i<total_oids; i++) {
+		for(int i = 0; i < total_oids; i++) {
 			xasprintf(&temp_string,"%.0f",response_value[i]);
 			if(temp_string==NULL)
 				die(STATE_UNKNOWN,_("Cannot asprintf()"));
@@ -687,7 +691,8 @@ process_arguments (int argc, char **argv)
 {
 	char *ptr;
 	int c = 1;
-	int j = 0, jj = 0, ii = 0;
+	int ii = 0;
+	size_t j = 0, jj = 0;
 
 	int option = 0;
 	static struct option longopts[] = {

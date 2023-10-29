@@ -70,7 +70,7 @@ static char *server_send = NULL;
 static char *server_quit = NULL;
 static char **server_expect;
 static size_t server_expect_count = 0;
-static size_t maxbytes = 0;
+static ssize_t maxbytes = 0;
 static char **warn_codes = NULL;
 static size_t warn_codes_count = 0;
 static char **crit_codes = NULL;
@@ -102,11 +102,9 @@ int
 main (int argc, char **argv)
 {
 	int result = STATE_UNKNOWN;
-	int i;
 	char *status = NULL;
 	struct timeval tv;
 	struct timeval timeout;
-	size_t len;
 	int match = -1;
 	fd_set rfds;
 
@@ -121,10 +119,10 @@ main (int argc, char **argv)
 	if(progname != NULL) progname++;
 	else progname = argv[0];
 
-	len = strlen(progname);
-	if(len > 6 && !memcmp(progname, "check_", 6)) {
+	size_t prog_name_len = strlen(progname);
+	if(prog_name_len > 6 && !memcmp(progname, "check_", 6)) {
 		SERVICE = strdup(progname + 6);
-		for(i = 0; i < len - 6; i++)
+		for(size_t i = 0; i < prog_name_len - 6; i++)
 			SERVICE[i] = toupper(SERVICE[i]);
 	}
 
@@ -275,19 +273,21 @@ main (int argc, char **argv)
 			printf("Quit string: %s\n", server_quit);
 		}
 		printf("server_expect_count: %d\n", (int)server_expect_count);
-		for(i = 0; i < server_expect_count; i++)
-			printf("\t%d: %s\n", i, server_expect[i]);
+		for(size_t i = 0; i < server_expect_count; i++)
+			printf("\t%zd: %s\n", i, server_expect[i]);
 	}
 
 	/* if(len) later on, we know we have a non-NULL response */
-	len = 0;
+	ssize_t len = 0;
+
 	if (server_expect_count) {
+		ssize_t received = 0;
 
 		/* watch for the expect string */
-		while ((i = my_recv(buffer, sizeof(buffer))) > 0) {
-			status = realloc(status, len + i + 1);
-			memcpy(&status[len], buffer, i);
-			len += i;
+		while ((received = my_recv(buffer, sizeof(buffer))) > 0) {
+			status = realloc(status, len + received + 1);
+			memcpy(&status[len], buffer, received);
+			len += received;
 			status[len] = '\0';
 
 			/* stop reading if user-forced */
@@ -307,6 +307,7 @@ main (int argc, char **argv)
 			if(select(sd + 1, &rfds, NULL, NULL, &timeout) <= 0)
 				break;
 		}
+
 		if (match == NP_MATCH_RETRY)
 			match = NP_MATCH_FAILURE;
 

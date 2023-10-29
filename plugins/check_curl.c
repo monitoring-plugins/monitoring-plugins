@@ -1186,16 +1186,16 @@ int
 uri_strcmp (const UriTextRangeA range, const char* s)
 {
   if (!range.first) return -1;
-  if (range.afterLast - range.first < strlen (s)) return -1;
-  return strncmp (s, range.first, min( range.afterLast - range.first, strlen (s)));
+  if ( (size_t)(range.afterLast - range.first) < strlen (s) ) return -1;
+  return strncmp (s, range.first, min( (size_t)(range.afterLast - range.first), strlen (s)));
 }
 
 char*
 uri_string (const UriTextRangeA range, char* buf, size_t buflen)
 {
   if (!range.first) return "(null)";
-  strncpy (buf, range.first, max (buflen-1, range.afterLast - range.first));
-  buf[max (buflen-1, range.afterLast - range.first)] = '\0';
+  strncpy (buf, range.first, max (buflen-1, (size_t)(range.afterLast - range.first)));
+  buf[max (buflen-1, (size_t)(range.afterLast - range.first))] = '\0';
   buf[range.afterLast - range.first] = '\0';
   return buf;
 }
@@ -2368,8 +2368,7 @@ remove_newlines (char *s)
 char *
 get_header_value (const struct phr_header* headers, const size_t nof_headers, const char* header)
 {
-  int i;
-  for( i = 0; i < nof_headers; i++ ) {
+  for(size_t i = 0; i < nof_headers; i++ ) {
     if(headers[i].name != NULL && strncasecmp( header, headers[i].name, max( headers[i].name_len, 4 ) ) == 0 ) {
       return strndup( headers[i].value, headers[i].value_len );
     }
@@ -2471,7 +2470,7 @@ check_document_dates (const curlhelp_write_curlbuf *header_buf, char (*msg)[DEFA
 int
 get_content_length (const curlhelp_write_curlbuf* header_buf, const curlhelp_write_curlbuf* body_buf)
 {
-  int content_length = 0;
+  size_t content_length = 0;
   struct phr_header headers[255];
   size_t nof_headers = 255;
   size_t msglen;

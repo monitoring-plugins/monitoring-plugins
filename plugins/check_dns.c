@@ -122,7 +122,7 @@ main (int argc, char **argv)
   }
 
   /* scan stdout */
-  for(i = 0; i < chld_out.lines; i++) {
+  for(size_t i = 0; i < chld_out.lines; i++) {
     if (addresses == NULL)
       addresses = malloc(sizeof(*addresses)*10);
     else if (!(n_addresses % 10))
@@ -197,7 +197,7 @@ main (int argc, char **argv)
   }
 
   /* scan stderr */
-  for(i = 0; i < chld_err.lines; i++) {
+  for(size_t i = 0; i < chld_err.lines; i++) {
     if (verbose)
       puts(chld_err.line[i]);
 
@@ -241,7 +241,7 @@ main (int argc, char **argv)
     unsigned long expect_match = (1 << expected_address_cnt) - 1;
     unsigned long addr_match = (1 << n_addresses) - 1;
 
-    for (i=0; i<expected_address_cnt; i++) {
+    for (int i=0; i<expected_address_cnt; i++) {
       int j;
       /* check if we get a match on 'raw' ip or cidr */
       for (j=0; j<n_addresses; j++) {
