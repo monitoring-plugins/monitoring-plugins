@@ -227,18 +227,23 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
+
 	if (warning_range == NULL && argc > c)
 		warning_range = argv[c++];
+
 	if (critical_range == NULL && argc > c)
 		critical_range = argv[c++];
 
 	/* this will abort in case of invalid ranges */
 	set_thresholds (&thlds, warning_range, critical_range);
 
-	if (thlds->warning->end < 0)
-		usage4 (_("Warning threshold must be a positive integer"));
-	if (thlds->critical->end < 0)
-		usage4 (_("Critical threshold must be a positive integer"));
+	if (!thlds->warning) {
+		usage4 (_("Warning threshold must be a valid range expression"));
+	}
+
+	if (!thlds->critical) {
+		usage4 (_("Critical threshold must be a valid range expression"));
+	}
 
 	return OK;
 }
