@@ -266,10 +266,10 @@ print_help (void)
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
 
-	printf (" %s\n", "-w, --warning=INTEGER");
-	printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
-	printf (" %s\n", "-c, --critical=INTEGER");
-	printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
+	printf (" %s\n", "-w, --warning=RANGE_EXPRESSION");
+	printf ("    %s\n", _("Set WARNING status if number of logged in users violates RANGE_EXPRESSION"));
+	printf (" %s\n", "-c, --critical=RANGE_EXPRESSION");
+	printf ("    %s\n", _("Set CRITICAL status if number of logged in users violates RANGE_EXPRESSION"));
 
 	printf (UT_SUPPORT);
 }
