@@ -45,7 +45,7 @@ const char *email = "devel@monitoring-plugins.org";
 static char *server_address=NULL;
 static char *port="123";
 static int verbose=0;
-static int quiet=0;
+static bool quiet = false;
 static char *owarn="60";
 static char *ocrit="120";
 static int time_offset=0;
@@ -485,7 +485,7 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'q':
-			quiet = 1;
+			quiet = true;
 			break;
 		case 'w':
 			owarn = optarg;
@@ -494,7 +494,7 @@ int process_arguments(int argc, char **argv){
 			ocrit = optarg;
 			break;
 		case 'H':
-			if(is_host(optarg) == FALSE)
+			if(!is_host(optarg))
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -531,12 +531,11 @@ int process_arguments(int argc, char **argv){
 	return 0;
 }
 
-char *perfd_offset (double offset)
-{
+char *perfd_offset (double offset) {
 	return fperfdata ("offset", offset, "s",
-		TRUE, offset_thresholds->warning->end,
-		TRUE, offset_thresholds->critical->end,
-		FALSE, 0, FALSE, 0);
+		true, offset_thresholds->warning->end,
+		true, offset_thresholds->critical->end,
+		false, 0, false, 0);
 }
 
 int main(int argc, char *argv[]){
@@ -566,7 +565,7 @@ int main(int argc, char *argv[]){
 
 	offset = offset_request(server_address, &offset_result);
 	if (offset_result == STATE_UNKNOWN) {
-		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = ( (!quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		result = get_status(fabs(offset), offset_thresholds);
 	}

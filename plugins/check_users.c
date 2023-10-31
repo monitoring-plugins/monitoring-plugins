@@ -179,7 +179,7 @@ main (int argc, char **argv)
 		printf (_("USERS %s - %d users currently logged in |%s\n"),
 				state_text(result), users,
 				sperfdata_int("users", users, "", warning_range,
-							critical_range, TRUE, 0, FALSE, 0));
+							critical_range, true, 0, false, 0));
 	}
 
 	return result;
@@ -202,7 +202,7 @@ process_arguments (int argc, char **argv)
 	if (argc < 2)
 		usage ("\n");
 
-	while (1) {
+	while (true) {
 		c = getopt_long (argc, argv, "+hVvc:w:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)

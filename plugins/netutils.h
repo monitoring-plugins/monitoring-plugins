@@ -73,8 +73,8 @@ int send_request (int sd, int proto, const char *send_buffer, char *recv_buffer,
 
 
 /* "is_*" wrapper macros and functions */
-int is_host (const char *);
-int is_addr (const char *);
+bool is_host (const char *);
+bool is_addr (const char *);
 int dns_lookup (const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);
 #define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
@@ -89,7 +89,7 @@ void host_or_die(const char *str);
 extern unsigned int socket_timeout;
 extern unsigned int socket_timeout_state;
 extern int econn_refuse_state;
-extern int was_refused;
+extern bool was_refused;
 extern int address_family;
 
 void socket_timeout_alarm_handler (int) __attribute__((noreturn));

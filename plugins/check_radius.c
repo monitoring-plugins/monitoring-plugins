@@ -93,7 +93,7 @@ char *expect = NULL;
 char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
 int retries = 1;
-int verbose = FALSE;
+bool verbose = false;
 
 /******************************************************************************
 
@@ -272,10 +272,10 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, NP_VERSION);
 			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose mode */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 'H':									/* hostname */
-			if (is_host (optarg) == FALSE) {
+			if (!is_host (optarg)) {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			server = optarg;
