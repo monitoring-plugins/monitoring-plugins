@@ -1924,7 +1924,6 @@ AC_OUTPUT(
   perlmods/Makefile
   test.pl
   pkg/solaris/pkginfo
-  po/Makefile.in
 )
 
 
