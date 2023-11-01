@@ -462,11 +462,11 @@ main(int argc, char **argv) {
 
 		asprintf (&send_buffer,"VMU%s\r\n",volume_name);
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+
 		if (result!=STATE_OK)
 			return result;
 
 		if (!strcmp(recv_buffer,"-1\n")) {
-
 			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
 			result=STATE_CRITICAL;
 
@@ -494,10 +494,10 @@ main(int argc, char **argv) {
 				volume_name,
 				total_disk_space,
 				volume_name,
-	percent_used_disk_space,
-	warning_value,
-	critical_value
-	);
+				percent_used_disk_space,
+				warning_value,
+				critical_value
+				);
 		}
 
 		/* check % free space on volume */
