@@ -153,7 +153,7 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
-	int i = 0, j = 0;
+	int i = 0;
 	int result = STATE_UNKNOWN;
 	int ret = 0;
 	output chld_out, chld_err;
@@ -207,7 +207,7 @@ main (int argc, char **argv)
 	}
 
 	/* flush first line: j starts at 1 */
-	for (j = 1; j < chld_out.lines; j++) {
+	for (size_t j = 1; j < chld_out.lines; j++) {
 		input_line = chld_out.line[j];
 
 		if (verbose >= 3)

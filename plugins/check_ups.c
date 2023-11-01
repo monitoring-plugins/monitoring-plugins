@@ -402,7 +402,8 @@ get_ups_variable (const char *varname, char *buf)
 
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
-	if (snprintf (send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", ups_name, varname) >= sizeof(send_buffer)) {
+	int res = snprintf (send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
+	if ( (res > 0) && ((size_t)res >= sizeof(send_buffer))) {
 		printf("%s\n", _("UPS name to long for buffer"));
 		return ERROR;
 	}

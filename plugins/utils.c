@@ -230,13 +230,21 @@ bool is_intnonneg (char *number) {
  */
 bool is_int64(char *number, int64_t *target) {
 	errno = 0;
-	uint64_t tmp = strtoll(number, NULL, 10);
+	char *endptr = { 0 };
+
+	int64_t tmp = strtoll(number, &endptr, 10);
 	if (errno != 0) {
 		return false;
 	}
+
+	if (*endptr == '\0') {
+		return 0;
+	}
+
 	if (tmp < INT64_MIN || tmp > INT64_MAX) {
 		return false;
 	}
+
 	if (target != NULL) {
 		*target = tmp;
 	}
