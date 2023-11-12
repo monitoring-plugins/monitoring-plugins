@@ -42,8 +42,6 @@ const char *email = "devel@monitoring-plugins.org";
 
 enum { PORT = 3493 };
 
-#define CHECK_NONE 0
-
 #define UPS_NONE      0  /* no supported options */
 #define UPS_UTILITY   1  /* supports utility line    */
 #define UPS_BATTPCT   2  /* supports percent battery remaining */
