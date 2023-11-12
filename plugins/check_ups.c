@@ -71,7 +71,6 @@ enum {
 
 enum { NOSUCHVAR = ERROR-1 };
 
-
 typedef struct ups_config {
 	unsigned int server_port;
 	char *server_address;
@@ -108,26 +107,27 @@ void print_help (void);
 void print_usage (void);
 
 int main (int argc, char **argv) {
-	ups_config config = ups_config_init();
-	int result = STATE_UNKNOWN;
-	char *message;
-	char *data;
-	char *tunits;
-	char temp_buffer[MAX_INPUT_BUFFER];
-	double ups_utility_deviation = 0.0;
-	int res;
-
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
 	char *ups_status;
 	ups_status = strdup ("N/A");
+
+	char *data;
 	data = strdup ("");
+
+	char *message;
 	message = strdup ("");
+
+	// Exit result
+	int result = STATE_UNKNOWN;
 
 	/* Parse extra opts if any */
 	argv=np_extra_opts (&argc, argv, progname);
+
+	// Config from commandline
+	ups_config config = ups_config_init();
 
 	if (process_arguments (argc, argv, &config) == ERROR)
 		usage4 (_("Could not parse arguments"));
@@ -144,6 +144,7 @@ int main (int argc, char **argv) {
 	if (config.supported_options & UPS_STATUS) {
 
 		ups_status = strdup ("");
+
 		result = STATE_OK;
 
 		if (config.status & UPSSTATUS_OFF) {
@@ -199,6 +200,9 @@ int main (int argc, char **argv) {
 		xasprintf (&message, "%sStatus=%s ", message, ups_status);
 	}
 
+	int res;
+	char temp_buffer[MAX_INPUT_BUFFER];
+
 	/* get the ups utility voltage if possible */
 	res=get_ups_variable ("input.voltage", temp_buffer, config);
 	if (res == NOSUCHVAR) config.supported_options &= ~UPS_UTILITY;
@@ -210,6 +214,8 @@ int main (int argc, char **argv) {
 		double ups_utility_voltage = 0.0;
 		ups_utility_voltage = atof (temp_buffer);
 		xasprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
+
+		double ups_utility_deviation = 0.0;
 
 		if (ups_utility_voltage > 120.0)
 			ups_utility_deviation = 120.0 - ups_utility_voltage;
@@ -304,7 +310,10 @@ int main (int argc, char **argv) {
 		return STATE_CRITICAL;
 	else {
 		config.supported_options |= UPS_TEMP;
+
 		double ups_temperature = 0.0;
+		char *tunits;
+
 		if (config.temp_output_c) {
 		  tunits="degC";
 		  ups_temperature = atof (temp_buffer);
@@ -435,15 +444,8 @@ determine_status (ups_config *config)
 int
 get_ups_variable (const char *varname, char *buf, const ups_config config)
 {
-	/*  char command[MAX_INPUT_BUFFER]; */
-	char temp_buffer[MAX_INPUT_BUFFER];
 	char send_buffer[MAX_INPUT_BUFFER];
-	char *ptr;
-	char *logout = "OK Goodbye\n";
-	int logout_len = strlen(logout);
-	int len;
 
-	*buf=0;
 
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
@@ -453,6 +455,8 @@ get_ups_variable (const char *varname, char *buf, const ups_config config)
 		return ERROR;
 	}
 
+	char temp_buffer[MAX_INPUT_BUFFER];
+
 	/* send the command to the daemon and get a response back */
 	if (process_tcp_request
 			(config.server_address, config.server_port, send_buffer, temp_buffer,
@@ -461,8 +465,11 @@ get_ups_variable (const char *varname, char *buf, const ups_config config)
 		return ERROR;
 	}
 
-	ptr = temp_buffer;
-	len = strlen(ptr);
+	char *ptr = temp_buffer;
+	int len = strlen(ptr);
+	const char *logout = "OK Goodbye\n";
+	const int logout_len = strlen(logout);
+
 	if (len > logout_len && strcmp (ptr + len - logout_len, logout) == 0) len -= logout_len;
 	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
 	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
@@ -491,6 +498,8 @@ get_ups_variable (const char *varname, char *buf, const ups_config config)
 		printf ("%s\n", _("Error: unable to parse variable"));
 		return ERROR;
 	}
+
+	*buf=0;
 	strncpy (buf, ptr+1, len - 2);
 	buf[len - 2] = 0;
 
@@ -506,9 +515,7 @@ get_ups_variable (const char *varname, char *buf, const ups_config config)
 int
 process_arguments (int argc, char **argv, ups_config *config)
 {
-	int c;
 
-	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'},
 		{"ups", required_argument, 0, 'u'},
@@ -526,6 +533,7 @@ process_arguments (int argc, char **argv, ups_config *config)
 	if (argc < 2)
 		return ERROR;
 
+	int c;
 	for (c = 1; c < argc; c++) {
 		if (strcmp ("-to", argv[c]) == 0)
 			strcpy (argv[c], "-t");
@@ -535,6 +543,7 @@ process_arguments (int argc, char **argv, ups_config *config)
 			strcpy (argv[c], "-c");
 	}
 
+	int option = 0;
 	while (1) {
 		c = getopt_long (argc, argv, "hVTH:u:p:v:c:w:t:", longopts,
 									 &option);
@@ -641,12 +650,7 @@ validate_arguments (ups_config config)
 }
 
 
-void
-print_help (void)
-{
-	char *myport;
-	xasprintf (&myport, "%d", PORT);
-
+void print_help (void) {
 	print_revision (progname, NP_VERSION);
 
 	printf ("Copyright (c) 2000 Tom Shields\n");
@@ -664,6 +668,8 @@ print_help (void)
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
 
+	char *myport;
+	xasprintf (&myport, "%d", PORT);
 	printf (UT_HOST_PORT, 'p', myport);
 
 	printf (" %s\n", "-u, --ups=STRING");
