@@ -33,7 +33,7 @@
 *****************************************************************************/
 
 const char *progname = "check_ups";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2023";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
