@@ -71,36 +71,44 @@ enum {
 
 enum { NOSUCHVAR = ERROR-1 };
 
-int server_port = PORT;
-char *server_address;
-char *ups_name = NULL;
-double warning_value = 0.0;
-double critical_value = 0.0;
-bool check_warn = false;
-bool check_crit = false;
-int check_variable = UPS_NONE;
-int supported_options = UPS_NONE;
-int status = UPSSTATUS_NONE;
 
-double ups_utility_voltage = 0.0;
-double ups_battery_percent = 0.0;
-double ups_load_percent = 0.0;
-double ups_temperature = 0.0;
-double ups_realpower = 0.0;
-char *ups_status;
-bool temp_output_c = false;
+typedef struct ups_config {
+	unsigned int server_port;
+	char *server_address;
+	char *ups_name;
+	double warning_value;
+	double critical_value;
+	bool check_warn;
+	bool check_crit;
+	int check_variable;
+	int supported_options;
+	int status;
+	bool temp_output_c;
+} ups_config;
 
-int determine_status (void);
-int get_ups_variable (const char *, char *);
+ups_config ups_config_init(void) {
+	ups_config tmp = {0};
+	tmp.server_port = PORT;
+	tmp.server_address = NULL;
+	tmp.ups_name = NULL;
+	tmp.check_variable = UPS_NONE;
+	tmp.supported_options = UPS_NONE;
+	tmp.status = UPSSTATUS_NONE;
 
-int process_arguments (int, char **);
-int validate_arguments (void);
+	return tmp;
+}
+
+// Forward declarations
+int determine_status (ups_config*);
+int get_ups_variable (const char *, char *, const ups_config config);
+
+int process_arguments (int, char **, ups_config *);
+int validate_arguments (ups_config);
 void print_help (void);
 void print_usage (void);
 
-int
-main (int argc, char **argv)
-{
+int main (int argc, char **argv) {
+	ups_config config = ups_config_init();
 	int result = STATE_UNKNOWN;
 	char *message;
 	char *data;
@@ -113,6 +121,7 @@ main (int argc, char **argv)
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
+	char *ups_status;
 	ups_status = strdup ("N/A");
 	data = strdup ("");
 	message = strdup ("");
@@ -120,7 +129,7 @@ main (int argc, char **argv)
 	/* Parse extra opts if any */
 	argv=np_extra_opts (&argc, argv, progname);
 
-	if (process_arguments (argc, argv) == ERROR)
+	if (process_arguments (argc, argv, &config) == ERROR)
 		usage4 (_("Could not parse arguments"));
 
 	/* initialize alarm signal handling */
@@ -130,60 +139,60 @@ main (int argc, char **argv)
 	alarm (socket_timeout);
 
 	/* get the ups status if possible */
-	if (determine_status () != OK)
+	if (determine_status (&config) != OK)
 		return STATE_CRITICAL;
-	if (supported_options & UPS_STATUS) {
+	if (config.supported_options & UPS_STATUS) {
 
 		ups_status = strdup ("");
 		result = STATE_OK;
 
-		if (status & UPSSTATUS_OFF) {
+		if (config.status & UPSSTATUS_OFF) {
 			xasprintf (&ups_status, "Off");
 			result = STATE_CRITICAL;
 		}
-		else if ((status & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
+		else if ((config.status & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
 						 (UPSSTATUS_OB | UPSSTATUS_LB)) {
 			xasprintf (&ups_status, _("On Battery, Low Battery"));
 			result = STATE_CRITICAL;
 		}
 		else {
-			if (status & UPSSTATUS_OL) {
+			if (config.status & UPSSTATUS_OL) {
 				xasprintf (&ups_status, "%s%s", ups_status, _("Online"));
 			}
-			if (status & UPSSTATUS_OB) {
+			if (config.status & UPSSTATUS_OB) {
 				xasprintf (&ups_status, "%s%s", ups_status, _("On Battery"));
 				result = STATE_WARNING;
 			}
-			if (status & UPSSTATUS_LB) {
+			if (config.status & UPSSTATUS_LB) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Low Battery"));
 				result = STATE_WARNING;
 			}
-			if (status & UPSSTATUS_CAL) {
+			if (config.status & UPSSTATUS_CAL) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Calibrating"));
 			}
-			if (status & UPSSTATUS_RB) {
+			if (config.status & UPSSTATUS_RB) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Replace Battery"));
 				result = STATE_WARNING;
 			}
-			if (status & UPSSTATUS_BYPASS) {
+			if (config.status & UPSSTATUS_BYPASS) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", On Bypass"));
 			}
-			if (status & UPSSTATUS_OVER) {
+			if (config.status & UPSSTATUS_OVER) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Overload"));
 			}
-			if (status & UPSSTATUS_TRIM) {
+			if (config.status & UPSSTATUS_TRIM) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Trimming"));
 			}
-			if (status & UPSSTATUS_BOOST) {
+			if (config.status & UPSSTATUS_BOOST) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Boosting"));
 			}
-			if (status & UPSSTATUS_CHRG) {
+			if (config.status & UPSSTATUS_CHRG) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Charging"));
 			}
-			if (status & UPSSTATUS_DISCHRG) {
+			if (config.status & UPSSTATUS_DISCHRG) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Discharging"));
 			}
-			if (status & UPSSTATUS_UNKNOWN) {
+			if (config.status & UPSSTATUS_UNKNOWN) {
 				xasprintf (&ups_status, "%s%s", ups_status, _(", Unknown"));
 			}
 		}
@@ -191,13 +200,14 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups utility voltage if possible */
-	res=get_ups_variable ("input.voltage", temp_buffer);
-	if (res == NOSUCHVAR) supported_options &= ~UPS_UTILITY;
+	res=get_ups_variable ("input.voltage", temp_buffer, config);
+	if (res == NOSUCHVAR) config.supported_options &= ~UPS_UTILITY;
 	else if (res != OK)
 		return STATE_CRITICAL;
 	else {
-		supported_options |= UPS_UTILITY;
+		config.supported_options |= UPS_UTILITY;
 
+		double ups_utility_voltage = 0.0;
 		ups_utility_voltage = atof (temp_buffer);
 		xasprintf (&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
 
@@ -206,17 +216,17 @@ main (int argc, char **argv)
 		else
 			ups_utility_deviation = ups_utility_voltage - 120.0;
 
-		if (check_variable == UPS_UTILITY) {
-			if (check_crit && ups_utility_deviation>=critical_value) {
+		if (config.check_variable == UPS_UTILITY) {
+			if (config.check_crit && ups_utility_deviation >= config.critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn && ups_utility_deviation>=warning_value) {
+			else if (config.check_warn && ups_utility_deviation >= config.warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
-			                    check_warn, (long)(1000*warning_value),
-			                    check_crit, (long)(1000*critical_value),
+			                    config.check_warn, (long)(1000*config.warning_value),
+			                    config.check_crit, (long)(1000*config.critical_value),
 			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s",
@@ -226,26 +236,28 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups battery percent if possible */
-	res=get_ups_variable ("battery.charge", temp_buffer);
-	if (res == NOSUCHVAR) supported_options &= ~UPS_BATTPCT;
+	res=get_ups_variable ("battery.charge", temp_buffer, config);
+	if (res == NOSUCHVAR) config.supported_options &= ~UPS_BATTPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
 	else {
-		supported_options |= UPS_BATTPCT;
+		config.supported_options |= UPS_BATTPCT;
+
+		double ups_battery_percent = 0.0;
 		ups_battery_percent = atof (temp_buffer);
 		xasprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
 
-		if (check_variable == UPS_BATTPCT) {
-			if (check_crit && ups_battery_percent <= critical_value) {
+		if (config.check_variable == UPS_BATTPCT) {
+			if (config.check_crit && ups_battery_percent <= config.critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn && ups_battery_percent<=warning_value) {
+			else if (config.check_warn && ups_battery_percent<=config.warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
-			                    check_warn, (long)(warning_value),
-			                    check_crit, (long)(critical_value),
+			                    config.check_warn, (long)(config.warning_value),
+			                    config.check_crit, (long)(config.critical_value),
 			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -255,26 +267,28 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups load percent if possible */
-	res=get_ups_variable ("ups.load", temp_buffer);
-	if ( res == NOSUCHVAR ) supported_options &= ~UPS_LOADPCT;
+	res=get_ups_variable ("ups.load", temp_buffer, config);
+	if ( res == NOSUCHVAR ) config.supported_options &= ~UPS_LOADPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
 	else {
-		supported_options |= UPS_LOADPCT;
+		config.supported_options |= UPS_LOADPCT;
+
+		double ups_load_percent = 0.0;
 		ups_load_percent = atof (temp_buffer);
 		xasprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
 
-		if (check_variable == UPS_LOADPCT) {
-			if (check_crit && ups_load_percent>=critical_value) {
+		if (config.check_variable == UPS_LOADPCT) {
+			if (config.check_crit && ups_load_percent>=config.critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn && ups_load_percent>=warning_value) {
+			else if (config.check_warn && ups_load_percent>=config.warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
-			                    check_warn, (long)(warning_value),
-			                    check_crit, (long)(critical_value),
+			                    config.check_warn, (long)(config.warning_value),
+			                    config.check_crit, (long)(config.critical_value),
 			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -284,13 +298,14 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups temperature if possible */
-	res=get_ups_variable ("ups.temperature", temp_buffer);
-	if ( res == NOSUCHVAR ) supported_options &= ~UPS_TEMP;
+	res=get_ups_variable ("ups.temperature", temp_buffer, config);
+	if ( res == NOSUCHVAR ) config.supported_options &= ~UPS_TEMP;
 	else if ( res != OK)
 		return STATE_CRITICAL;
 	else {
- 		supported_options |= UPS_TEMP;
-		if (temp_output_c) {
+		config.supported_options |= UPS_TEMP;
+		double ups_temperature = 0.0;
+		if (config.temp_output_c) {
 		  tunits="degC";
 		  ups_temperature = atof (temp_buffer);
 		  xasprintf (&message, "%sTemp=%3.1fC", message, ups_temperature);
@@ -301,17 +316,16 @@ main (int argc, char **argv)
 		  xasprintf (&message, "%sTemp=%3.1fF", message, ups_temperature);
 		}
 
-		if (check_variable == UPS_TEMP) {
-			if (check_crit && ups_temperature>=critical_value) {
+		if (config.check_variable == UPS_TEMP) {
+			if (config.check_crit && ups_temperature>=config.critical_value) {
 				result = STATE_CRITICAL;
-			}
-			else if (check_warn && ups_temperature>=warning_value) {
+			} else if (config.check_warn && ups_temperature>=config.warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
-			                    check_warn, (long)(warning_value),
-			                    check_crit, (long)(critical_value),
+			                    config.check_warn, (long)(config.warning_value),
+			                    config.check_crit, (long)(config.critical_value),
 			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -321,26 +335,26 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups real power if possible */
-	res=get_ups_variable ("ups.realpower", temp_buffer);
-	if ( res == NOSUCHVAR ) supported_options &= ~UPS_REALPOWER;
+	res=get_ups_variable ("ups.realpower", temp_buffer, config);
+	if ( res == NOSUCHVAR ) config.supported_options &= ~UPS_REALPOWER;
 	else if ( res != OK)
 		return STATE_CRITICAL;
 	else {
-		supported_options |= UPS_REALPOWER;
+		config.supported_options |= UPS_REALPOWER;
+		double ups_realpower = 0.0;
 		ups_realpower = atof (temp_buffer);
 		xasprintf (&message, "%sReal power=%3.1fW ", message, ups_realpower);
 
-		if (check_variable == UPS_REALPOWER) {
-			if (check_crit && ups_realpower>=critical_value) {
+		if (config.check_variable == UPS_REALPOWER) {
+			if (config.check_crit && ups_realpower>=config.critical_value) {
 				result = STATE_CRITICAL;
-			}
-			else if (check_warn && ups_realpower>=warning_value) {
+			} else if (config.check_warn && ups_realpower>=config.warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 								perfdata ("realpower", (long)ups_realpower, "W",
-										check_warn, (long)(warning_value),
-										check_crit, (long)(critical_value),
+										config.check_warn, (long)(config.warning_value),
+										config.check_crit, (long)(config.critical_value),
 										true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,
@@ -350,7 +364,7 @@ main (int argc, char **argv)
 	}
 
 	/* if the UPS does not support any options we are looking for, report an error */
-	if (supported_options == UPS_NONE) {
+	if (config.supported_options == UPS_NONE) {
 		result = STATE_CRITICAL;
 		xasprintf (&message, _("UPS does not support any available options\n"));
 	}
@@ -366,51 +380,51 @@ main (int argc, char **argv)
 
 /* determines what options are supported by the UPS */
 int
-determine_status (void)
+determine_status (ups_config *config)
 {
 	char recv_buffer[MAX_INPUT_BUFFER];
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char *ptr;
 	int res;
 
-	res=get_ups_variable ("ups.status", recv_buffer);
+	res=get_ups_variable ("ups.status", recv_buffer, *config);
 	if (res == NOSUCHVAR) return OK;
 	if (res != STATE_OK) {
 		printf ("%s\n", _("Invalid response received from host"));
 		return ERROR;
 	}
 
-	supported_options |= UPS_STATUS;
+	config->supported_options |= UPS_STATUS;
 
 	strcpy (temp_buffer, recv_buffer);
 	for (ptr = (char *) strtok (temp_buffer, " "); ptr != NULL;
 			 ptr = (char *) strtok (NULL, " ")) {
 		if (!strcmp (ptr, "OFF"))
-			status |= UPSSTATUS_OFF;
+			config->status |= UPSSTATUS_OFF;
 		else if (!strcmp (ptr, "OL"))
-			status |= UPSSTATUS_OL;
+			config->status |= UPSSTATUS_OL;
 		else if (!strcmp (ptr, "OB"))
-			status |= UPSSTATUS_OB;
+			config->status |= UPSSTATUS_OB;
 		else if (!strcmp (ptr, "LB"))
-			status |= UPSSTATUS_LB;
+			config->status |= UPSSTATUS_LB;
 		else if (!strcmp (ptr, "CAL"))
-			status |= UPSSTATUS_CAL;
+			config->status |= UPSSTATUS_CAL;
 		else if (!strcmp (ptr, "RB"))
-			status |= UPSSTATUS_RB;
+			config->status |= UPSSTATUS_RB;
 		else if (!strcmp (ptr, "BYPASS"))
-			status |= UPSSTATUS_BYPASS;
+			config->status |= UPSSTATUS_BYPASS;
 		else if (!strcmp (ptr, "OVER"))
-			status |= UPSSTATUS_OVER;
+			config->status |= UPSSTATUS_OVER;
 		else if (!strcmp (ptr, "TRIM"))
-			status |= UPSSTATUS_TRIM;
+			config->status |= UPSSTATUS_TRIM;
 		else if (!strcmp (ptr, "BOOST"))
-			status |= UPSSTATUS_BOOST;
+			config->status |= UPSSTATUS_BOOST;
 		else if (!strcmp (ptr, "CHRG"))
-			status |= UPSSTATUS_CHRG;
+			config->status |= UPSSTATUS_CHRG;
 		else if (!strcmp (ptr, "DISCHRG"))
-			status |= UPSSTATUS_DISCHRG;
+			config->status |= UPSSTATUS_DISCHRG;
 		else
-			status |= UPSSTATUS_UNKNOWN;
+			config->status |= UPSSTATUS_UNKNOWN;
 	}
 
 	return OK;
@@ -419,7 +433,7 @@ determine_status (void)
 
 /* gets a variable value for a specific UPS  */
 int
-get_ups_variable (const char *varname, char *buf)
+get_ups_variable (const char *varname, char *buf, const ups_config config)
 {
 	/*  char command[MAX_INPUT_BUFFER]; */
 	char temp_buffer[MAX_INPUT_BUFFER];
@@ -433,7 +447,7 @@ get_ups_variable (const char *varname, char *buf)
 
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
-	int res = snprintf (send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
+	int res = snprintf (send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", config.ups_name, varname);
 	if ( (res > 0) && ((size_t)res >= sizeof(send_buffer))) {
 		printf("%s\n", _("UPS name to long for buffer"));
 		return ERROR;
@@ -441,7 +455,7 @@ get_ups_variable (const char *varname, char *buf)
 
 	/* send the command to the daemon and get a response back */
 	if (process_tcp_request
-			(server_address, server_port, send_buffer, temp_buffer,
+			(config.server_address, config.server_port, send_buffer, temp_buffer,
 			 sizeof (temp_buffer)) != STATE_OK) {
 		printf ("%s\n", _("Invalid response received from host"));
 		return ERROR;
@@ -452,7 +466,7 @@ get_ups_variable (const char *varname, char *buf)
 	if (len > logout_len && strcmp (ptr + len - logout_len, logout) == 0) len -= logout_len;
 	if (len > 0 && ptr[len-1] == '\n') ptr[len-1]=0;
 	if (strcmp (ptr, "ERR UNKNOWN-UPS") == 0) {
-		printf (_("CRITICAL - no such UPS '%s' on that host\n"), ups_name);
+		printf (_("CRITICAL - no such UPS '%s' on that host\n"), config.ups_name);
 		return ERROR;
 	}
 
@@ -471,7 +485,7 @@ get_ups_variable (const char *varname, char *buf)
 		return ERROR;
 	}
 
-	ptr = temp_buffer + strlen (varname) + strlen (ups_name) + 6;
+	ptr = temp_buffer + strlen (varname) + strlen (config.ups_name) + 6;
 	len = strlen(ptr);
 	if (len < 2 || ptr[0] != '"' || ptr[len-1] != '"') {
 		printf ("%s\n", _("Error: unable to parse variable"));
@@ -490,7 +504,7 @@ get_ups_variable (const char *varname, char *buf)
 
 /* process command-line arguments */
 int
-process_arguments (int argc, char **argv)
+process_arguments (int argc, char **argv, ups_config *config)
 {
 	int c;
 
@@ -533,30 +547,29 @@ process_arguments (int argc, char **argv)
 			usage5 ();
 		case 'H':									/* hostname */
 			if (is_host (optarg)) {
-				server_address = optarg;
+				config->server_address = optarg;
 			}
 			else {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Fahrenheit) */
-			temp_output_c = true;
+			config->temp_output_c = true;
 			break;
 		case 'u':									/* ups name */
-			ups_name = optarg;
+			config->ups_name = optarg;
 			break;
 		case 'p':									/* port */
 			if (is_intpos (optarg)) {
-				server_port = atoi (optarg);
-			}
-			else {
+				config->server_port = atoi (optarg);
+			} else {
 				usage2 (_("Port must be a positive integer"), optarg);
 			}
 			break;
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
-				critical_value = atoi (optarg);
-				check_crit = true;
+				config->critical_value = atoi (optarg);
+				config->check_crit = true;
 			}
 			else {
 				usage2 (_("Critical time must be a positive integer"), optarg);
@@ -564,8 +577,8 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
-				warning_value = atoi (optarg);
-				check_warn = true;
+				config->warning_value = atoi (optarg);
+				config->check_warn = true;
 			}
 			else {
 				usage2 (_("Warning time must be a positive integer"), optarg);
@@ -573,15 +586,15 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'v':									/* variable */
 			if (!strcmp (optarg, "LINE"))
-				check_variable = UPS_UTILITY;
+				config->check_variable = UPS_UTILITY;
 			else if (!strcmp (optarg, "TEMP"))
-				check_variable = UPS_TEMP;
+				config->check_variable = UPS_TEMP;
 			else if (!strcmp (optarg, "BATTPCT"))
-				check_variable = UPS_BATTPCT;
+				config->check_variable = UPS_BATTPCT;
 			else if (!strcmp (optarg, "LOADPCT"))
-				check_variable = UPS_LOADPCT;
+				config->check_variable = UPS_LOADPCT;
 			else if (!strcmp (optarg, "REALPOWER"))
-				check_variable = UPS_REALPOWER;
+				config->check_variable = UPS_REALPOWER;
 			else
 				usage2 (_("Unrecognized UPS variable"), optarg);
 			break;
@@ -603,24 +616,24 @@ process_arguments (int argc, char **argv)
 	}
 
 
-	if (server_address == NULL && argc > optind) {
+	if (config->server_address == NULL && argc > optind) {
 		if (is_host (argv[optind]))
-			server_address = argv[optind++];
+			config->server_address = argv[optind++];
 		else
 			usage2 (_("Invalid hostname/address"), optarg);
 	}
 
-	if (server_address == NULL)
-		server_address = strdup("127.0.0.1");
+	if (config->server_address == NULL)
+		config->server_address = strdup("127.0.0.1");
 
-	return validate_arguments();
+	return validate_arguments(*config);
 }
 
 
 int
-validate_arguments (void)
+validate_arguments (ups_config config)
 {
-	if (! ups_name) {
+	if (! config.ups_name) {
 		printf ("%s\n", _("Error : no UPS indicated"));
 		return ERROR;
 	}
