@@ -78,7 +78,6 @@ typedef struct ups_config {
 	bool check_warn;
 	bool check_crit;
 	int check_variable;
-	int supported_options;
 	int status;
 	bool temp_output_c;
 } ups_config;
@@ -89,14 +88,13 @@ ups_config ups_config_init(void) {
 	tmp.server_address = NULL;
 	tmp.ups_name = NULL;
 	tmp.check_variable = UPS_NONE;
-	tmp.supported_options = UPS_NONE;
 	tmp.status = UPSSTATUS_NONE;
 
 	return tmp;
 }
 
 // Forward declarations
-int determine_status(ups_config *);
+int determine_status(ups_config *, int *supported_options);
 int get_ups_variable(const char *, char *, const ups_config config);
 
 int process_arguments(int, char **, ups_config *);
@@ -137,11 +135,15 @@ int main(int argc, char **argv) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
+	int supported_options = UPS_NONE;
+
 	/* get the ups status if possible */
-	if (determine_status(&config) != OK) {
+	if (determine_status(&config, &supported_options) != OK) {
 		return STATE_CRITICAL;
 	}
-	if (config.supported_options & UPS_STATUS) {
+
+
+	if (supported_options & UPS_STATUS) {
 
 		ups_status = strdup("");
 
@@ -205,11 +207,11 @@ int main(int argc, char **argv) {
 	/* get the ups utility voltage if possible */
 	res = get_ups_variable("input.voltage", temp_buffer, config);
 	if (res == NOSUCHVAR) {
-		config.supported_options &= ~UPS_UTILITY;
+		supported_options &= ~UPS_UTILITY;
 	} else if (res != OK) {
 		return STATE_CRITICAL;
 	} else {
-		config.supported_options |= UPS_UTILITY;
+		supported_options |= UPS_UTILITY;
 
 		double ups_utility_voltage = 0.0;
 		ups_utility_voltage = atof(temp_buffer);
@@ -248,11 +250,11 @@ int main(int argc, char **argv) {
 	/* get the ups battery percent if possible */
 	res = get_ups_variable("battery.charge", temp_buffer, config);
 	if (res == NOSUCHVAR) {
-		config.supported_options &= ~UPS_BATTPCT;
+		supported_options &= ~UPS_BATTPCT;
 	} else if (res != OK) {
 		return STATE_CRITICAL;
 	} else {
-		config.supported_options |= UPS_BATTPCT;
+		supported_options |= UPS_BATTPCT;
 
 		double ups_battery_percent = 0.0;
 		ups_battery_percent = atof(temp_buffer);
@@ -281,11 +283,11 @@ int main(int argc, char **argv) {
 	/* get the ups load percent if possible */
 	res = get_ups_variable("ups.load", temp_buffer, config);
 	if (res == NOSUCHVAR) {
-		config.supported_options &= ~UPS_LOADPCT;
+		supported_options &= ~UPS_LOADPCT;
 	} else if (res != OK) {
 		return STATE_CRITICAL;
 	} else {
-		config.supported_options |= UPS_LOADPCT;
+		supported_options |= UPS_LOADPCT;
 
 		double ups_load_percent = 0.0;
 		ups_load_percent = atof(temp_buffer);
@@ -314,11 +316,11 @@ int main(int argc, char **argv) {
 	/* get the ups temperature if possible */
 	res = get_ups_variable("ups.temperature", temp_buffer, config);
 	if (res == NOSUCHVAR) {
-		config.supported_options &= ~UPS_TEMP;
+		supported_options &= ~UPS_TEMP;
 	} else if (res != OK) {
 		return STATE_CRITICAL;
 	} else {
-		config.supported_options |= UPS_TEMP;
+		supported_options |= UPS_TEMP;
 
 		double ups_temperature = 0.0;
 		char *tunits;
@@ -355,11 +357,11 @@ int main(int argc, char **argv) {
 	/* get the ups real power if possible */
 	res = get_ups_variable("ups.realpower", temp_buffer, config);
 	if (res == NOSUCHVAR) {
-		config.supported_options &= ~UPS_REALPOWER;
+		supported_options &= ~UPS_REALPOWER;
 	} else if (res != OK) {
 		return STATE_CRITICAL;
 	} else {
-		config.supported_options |= UPS_REALPOWER;
+		supported_options |= UPS_REALPOWER;
 		double ups_realpower = 0.0;
 		ups_realpower = atof(temp_buffer);
 		xasprintf(&message, "%sReal power=%3.1fW ", message, ups_realpower);
@@ -385,7 +387,7 @@ int main(int argc, char **argv) {
 
 	/* if the UPS does not support any options we are looking for, report an
 	 * error */
-	if (config.supported_options == UPS_NONE) {
+	if (supported_options == UPS_NONE) {
 		result = STATE_CRITICAL;
 		xasprintf(&message, _("UPS does not support any available options\n"));
 	}
@@ -398,7 +400,7 @@ int main(int argc, char **argv) {
 }
 
 /* determines what options are supported by the UPS */
-int determine_status(ups_config *config) {
+int determine_status(ups_config *config, int *supported_options) {
 	char recv_buffer[MAX_INPUT_BUFFER];
 
 	int res = get_ups_variable("ups.status", recv_buffer, *config);
@@ -411,7 +413,7 @@ int determine_status(ups_config *config) {
 		return ERROR;
 	}
 
-	config->supported_options |= UPS_STATUS;
+	*supported_options |= UPS_STATUS;
 
 	char temp_buffer[MAX_INPUT_BUFFER];
 
