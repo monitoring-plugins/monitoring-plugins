@@ -64,6 +64,7 @@ enum { PORT = 3493 };
 #define UPSSTATUS_CHRG    1024
 #define UPSSTATUS_DISCHRG 2048
 #define UPSSTATUS_UNKNOWN 4096
+#define UPSSTATUS_ALARM   8192
 
 enum { NOSUCHVAR = ERROR - 1 };
 
@@ -191,6 +192,10 @@ int main(int argc, char **argv) {
 			}
 			if (config.status & UPSSTATUS_DISCHRG) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Discharging"));
+			}
+			if (config.status & UPSSTATUS_ALARM) {
+				xasprintf(&ups_status, "%s%s", ups_status, _(", ALARM"));
+				result = STATE_CRITICAL;
 			}
 			if (config.status & UPSSTATUS_UNKNOWN) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Unknown"));
@@ -442,6 +447,8 @@ int determine_status(ups_config *config, int *supported_options) {
 			config->status |= UPSSTATUS_CHRG;
 		} else if (!strcmp(ptr, "DISCHRG")) {
 			config->status |= UPSSTATUS_DISCHRG;
+		} else if (!strcmp(ptr, "ALARM")) {
+			config->status |= UPSSTATUS_ALARM;
 		} else {
 			config->status |= UPSSTATUS_UNKNOWN;
 		}
