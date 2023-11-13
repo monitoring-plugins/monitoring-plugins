@@ -161,11 +161,11 @@ int main(int argc, char **argv) {
 			}
 			if (config.status & UPSSTATUS_OB) {
 				xasprintf(&ups_status, "%s%s", ups_status, _("On Battery"));
-				result = STATE_WARNING;
+				result = max_state(result, STATE_WARNING);
 			}
 			if (config.status & UPSSTATUS_LB) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Low Battery"));
-				result = STATE_WARNING;
+				result = max_state(result, STATE_WARNING);
 			}
 			if (config.status & UPSSTATUS_CAL) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Calibrating"));
@@ -173,13 +173,16 @@ int main(int argc, char **argv) {
 			if (config.status & UPSSTATUS_RB) {
 				xasprintf(&ups_status, "%s%s", ups_status,
 						  _(", Replace Battery"));
-				result = STATE_WARNING;
+				result = max_state(result, STATE_WARNING);
 			}
 			if (config.status & UPSSTATUS_BYPASS) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", On Bypass"));
+				// Bypassing the battery is likely a bad thing
+				result = STATE_CRITICAL;
 			}
 			if (config.status & UPSSTATUS_OVER) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Overload"));
+				result = max_state(result, STATE_WARNING);
 			}
 			if (config.status & UPSSTATUS_TRIM) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Trimming"));
@@ -192,6 +195,7 @@ int main(int argc, char **argv) {
 			}
 			if (config.status & UPSSTATUS_DISCHRG) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Discharging"));
+				result = max_state(result, STATE_WARNING);
 			}
 			if (config.status & UPSSTATUS_ALARM) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", ALARM"));
