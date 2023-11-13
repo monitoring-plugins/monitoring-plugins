@@ -6,7 +6,7 @@
  * Copyright (c) 2000 Tom Shields
  *               2004 Alain Richard <alain.richard@equation.fr>
  *               2004 Arnaud Quette <arnaud.quette@mgeups.com>
- * Copyright (c) 2002-2007 Monitoring Plugins Development Team
+ * Copyright (c) 2002-2023 Monitoring Plugins Development Team
  *
  * Description:
  *
