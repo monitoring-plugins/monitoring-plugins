@@ -49,10 +49,10 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - 'debian:stable'
+          - 'debian:testing'
           #...
         include:
-          - distro: 'debian:stable'
+          - distro: 'debian:testing'
             prepare: .github/prepare_debian.sh
           #...
     steps:
