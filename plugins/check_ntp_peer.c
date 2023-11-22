@@ -558,7 +558,6 @@ char *perfd_truechimers (int num_truechimers)
 
 int main(int argc, char *argv[]){
 	int result, offset_result, stratum, num_truechimers;
-	int oresult, jresult, sresult, tresult = STATE_UNKNOWN;
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
@@ -595,17 +594,27 @@ int main(int argc, char *argv[]){
 			result = STATE_UNKNOWN;
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
-	oresult = result;
+
+	int oresult = result;
+
+
+	int tresult = STATE_UNKNOWN;
 	
 	if(do_truechimers) {
 		tresult = get_status(num_truechimers, truechimer_thresholds);
 		result = max_state_alt(result, tresult);
 	}
 
+
+	int sresult = STATE_UNKNOWN;
+
 	if(do_stratum) {
 		sresult = get_status(stratum, stratum_thresholds);
 		result = max_state_alt(result, sresult);
 	}
+
+
+	int jresult = STATE_UNKNOWN;
 
 	if(do_jitter) {
 		jresult = get_status(jitter, jitter_thresholds);
