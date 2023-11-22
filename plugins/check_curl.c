@@ -395,7 +395,7 @@ lookup_host (const char *host, char *buf, size_t buflen)
   char addrstr[100];
   size_t addrstr_len;
   int errcode;
-  void *ptr;
+  void *ptr = { 0 };
   size_t buflen_remaining = buflen - 1;
 
   memset (&hints, 0, sizeof (hints));
