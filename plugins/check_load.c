@@ -68,7 +68,6 @@ double cload[3] = {0.0, 0.0, 0.0};
 #define la5  la[1]
 #define la15 la[2]
 
-char *status_line;
 bool take_into_account_cpus = false;
 
 static void get_threshold(char *arg, double *th) {
@@ -169,6 +168,7 @@ int main(int argc, char **argv) {
 	/* we got this far, so assume OK until we've measured */
 	result = STATE_OK;
 
+	char *status_line;
 	xasprintf(&status_line, _("load average: %.2f, %.2f, %.2f"), la1, la5,
 			  la15);
 	xasprintf(&status_line, ("total %s"), status_line);
