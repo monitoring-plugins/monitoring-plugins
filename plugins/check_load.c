@@ -276,7 +276,7 @@ static processed_load_config process_arguments(int argc, char **argv) {
 	}
 
 
-	while (1) {
+	while (true) {
 		c = getopt_long(argc, argv, "Vhrc:w:n:", longopts, &option);
 
 		if (c == -1 || c == EOF) {
