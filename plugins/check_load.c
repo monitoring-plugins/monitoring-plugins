@@ -105,16 +105,6 @@ static void get_threshold(char *arg, double *th) {
 }
 
 int main(int argc, char **argv) {
-	int result = -1;
-	int i;
-	long numcpus;
-
-	double la[3] = {0.0, 0.0,
-					0.0}; /* NetBSD complains about uninitialized arrays */
-#ifndef HAVE_GETLOADAVG
-	char input_buffer[MAX_INPUT_BUFFER];
-#endif
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -126,6 +116,9 @@ int main(int argc, char **argv) {
 	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	int result = -1;
+	double la[3] = {0.0, 0.0, 0.0};
 
 #ifdef HAVE_GETLOADAVG
 	result = getloadavg(la, 3);
@@ -143,6 +136,7 @@ int main(int argc, char **argv) {
 		printf(_("Could not open stderr for %s\n"), PATH_TO_UPTIME);
 	}
 
+	char input_buffer[MAX_INPUT_BUFFER];
 	fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 	if (strstr(input_buffer, "load average:")) {
 		sscanf(input_buffer, "%*[^l]load average: %lf, %lf, %lf", &la1, &la5,
@@ -182,6 +176,7 @@ int main(int argc, char **argv) {
 	double scaled_la[3] = {0.0, 0.0, 0.0};
 	bool is_using_scaled_load_values = false;
 
+	long numcpus;
 	if (take_into_account_cpus == true &&
 		(numcpus = GET_NUMBER_OF_CPUS()) > 0) {
 		is_using_scaled_load_values = true;
@@ -196,7 +191,7 @@ int main(int argc, char **argv) {
 		xasprintf(&status_line, "scaled %s - %s", tmp, status_line);
 	}
 
-	for (i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		if (is_using_scaled_load_values) {
 			if (scaled_la[i] > cload[i]) {
 				result = STATE_CRITICAL;
@@ -215,7 +210,7 @@ int main(int argc, char **argv) {
 	}
 
 	printf("LOAD %s - %s|", state_text(result), status_line);
-	for (i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		if (is_using_scaled_load_values) {
 			printf("load%d=%.3f;;;0; ", nums[i], la[i]);
 			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i],
@@ -227,9 +222,11 @@ int main(int argc, char **argv) {
 	}
 
 	putchar('\n');
+
 	if (n_procs_to_show > 0) {
 		print_top_consuming_processes();
 	}
+
 	return result;
 }
 
@@ -300,11 +297,9 @@ static int process_arguments(int argc, char **argv) {
 }
 
 static int validate_arguments(void) {
-	int i = 0;
-
 	/* match cload first, as it will give the most friendly error message
 	 * if user hasn't given the -c switch properly */
-	for (i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		if (cload[i] < 0) {
 			die(STATE_UNKNOWN,
 				_("Critical threshold for %d-minute load average is not "
@@ -394,24 +389,28 @@ int cmpstringp(const void *p1, const void *p2) {
 #endif /* PS_USES_PROCPCPU */
 
 static int print_top_consuming_processes() {
-	int i = 0;
 	struct output chld_out, chld_err;
 	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		return STATE_UNKNOWN;
 	}
+
 	if (chld_out.lines < 2) {
 		fprintf(stderr, _("some error occurred getting procs list.\n"));
 		return STATE_UNKNOWN;
 	}
+
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char *), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
+
 	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
 							? (int)chld_out.lines
 							: n_procs_to_show + 1;
-	for (i = 0; i < lines_to_show; i += 1) {
+
+	for (int i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
 	}
+
 	return OK;
 }
