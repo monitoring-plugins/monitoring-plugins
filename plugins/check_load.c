@@ -67,7 +67,7 @@ static processed_load_config process_arguments(int argc, char **argv);
 static int validate_arguments(const load_config);
 void print_help(void);
 void print_usage(void);
-static int print_top_consuming_processes(const load_config);
+static int print_top_consuming_processes(const int);
 
 /* strictly for pretty-print usage in loops */
 static const int nums[3] = {1, 5, 15};
@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
 	putchar('\n');
 
 	if (config.n_procs_to_show > 0) {
-		print_top_consuming_processes(config);
+		print_top_consuming_processes(config.n_procs_to_show);
 	}
 
 	return result;
@@ -426,7 +426,7 @@ int cmpstringp(const void *p1, const void *p2) {
 }
 #endif /* PS_USES_PROCPCPU */
 
-static int print_top_consuming_processes(const load_config config) {
+static int print_top_consuming_processes(const int n_procs_to_show) {
 	struct output chld_out, chld_err;
 	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
@@ -442,9 +442,9 @@ static int print_top_consuming_processes(const load_config config) {
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char *), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
 
-	int lines_to_show = chld_out.lines < (size_t)(config.n_procs_to_show + 1)
+	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
 							? (int)chld_out.lines
-							: config.n_procs_to_show + 1;
+							: n_procs_to_show + 1;
 
 	for (int i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
