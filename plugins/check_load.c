@@ -50,25 +50,43 @@ const char *email = "devel@monitoring-plugins.org";
 #define LOADAVG_15MIN 2
 #endif /* !defined LOADAVG_1MIN */
 
-static int process_arguments(int argc, char **argv);
-static int validate_arguments(void);
+typedef struct load_config_struct {
+	double wload[3];
+	double cload[3];
+	bool take_into_account_cpus;
+	int n_procs_to_show;
+} load_config;
+
+typedef struct processed_load_config_struct {
+	load_config config;
+	int errorcode;
+} processed_load_config;
+
+// forward declarations
+static processed_load_config process_arguments(int argc, char **argv);
+static int validate_arguments(const load_config);
 void print_help(void);
 void print_usage(void);
-static int print_top_consuming_processes();
-
-static int n_procs_to_show = 0;
+static int print_top_consuming_processes(const load_config);
 
 /* strictly for pretty-print usage in loops */
 static const int nums[3] = {1, 5, 15};
 
 /* provide some fairly sane defaults */
-double wload[3] = {0.0, 0.0, 0.0};
-double cload[3] = {0.0, 0.0, 0.0};
 #define la1  la[0]
 #define la5  la[1]
 #define la15 la[2]
 
-bool take_into_account_cpus = false;
+load_config init_config() {
+	load_config result = {
+		.wload = {0.0, 0.0, 0.0},
+		.cload = {0.0, 0.0, 0.0},
+		.take_into_account_cpus = false,
+		.n_procs_to_show = 0,
+	};
+
+	return result;
+}
 
 static void get_threshold(char *arg, double *th) {
 	size_t i, n;
@@ -112,9 +130,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	processed_load_config tmp = process_arguments(argc, argv);
+	if (tmp.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	load_config config = tmp.config;
 
 	int result = -1;
 	double la[3] = {0.0, 0.0, 0.0};
@@ -177,7 +198,7 @@ int main(int argc, char **argv) {
 	bool is_using_scaled_load_values = false;
 
 	long numcpus;
-	if (take_into_account_cpus == true &&
+	if (config.take_into_account_cpus == true &&
 		(numcpus = GET_NUMBER_OF_CPUS()) > 0) {
 		is_using_scaled_load_values = true;
 
@@ -193,17 +214,17 @@ int main(int argc, char **argv) {
 
 	for (int i = 0; i < 3; i++) {
 		if (is_using_scaled_load_values) {
-			if (scaled_la[i] > cload[i]) {
+			if (scaled_la[i] > config.cload[i]) {
 				result = STATE_CRITICAL;
 				break;
-			} else if (scaled_la[i] > wload[i]) {
+			} else if (scaled_la[i] > config.wload[i]) {
 				result = STATE_WARNING;
 			}
 		} else {
-			if (la[i] > cload[i]) {
+			if (la[i] > config.cload[i]) {
 				result = STATE_CRITICAL;
 				break;
-			} else if (la[i] > wload[i]) {
+			} else if (la[i] > config.wload[i]) {
 				result = STATE_WARNING;
 			}
 		}
@@ -214,24 +235,25 @@ int main(int argc, char **argv) {
 		if (is_using_scaled_load_values) {
 			printf("load%d=%.3f;;;0; ", nums[i], la[i]);
 			printf("scaled_load%d=%.3f;%.3f;%.3f;0; ", nums[i], scaled_la[i],
-				   wload[i], cload[i]);
+				   config.wload[i], config.cload[i]);
 		} else {
-			printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], wload[i],
-				   cload[i]);
+			printf("load%d=%.3f;%.3f;%.3f;0; ", nums[i], la[i], config.wload[i],
+				   config.cload[i]);
 		}
 	}
 
 	putchar('\n');
 
-	if (n_procs_to_show > 0) {
-		print_top_consuming_processes();
+	if (config.n_procs_to_show > 0) {
+		print_top_consuming_processes(config);
 	}
 
 	return result;
 }
 
+
 /* process command-line arguments */
-static int process_arguments(int argc, char **argv) {
+static processed_load_config process_arguments(int argc, char **argv) {
 	int c = 0;
 
 	int option = 0;
@@ -244,9 +266,15 @@ static int process_arguments(int argc, char **argv) {
 		{"procs-to-show", required_argument, 0, 'n'},
 		{0, 0, 0, 0}};
 
+	processed_load_config result = {
+		.config = init_config(),
+		.errorcode = ERROR,
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		return result;
 	}
+
 
 	while (1) {
 		c = getopt_long(argc, argv, "Vhrc:w:n:", longopts, &option);
@@ -257,13 +285,13 @@ static int process_arguments(int argc, char **argv) {
 
 		switch (c) {
 		case 'w': /* warning time threshold */
-			get_threshold(optarg, wload);
+			get_threshold(optarg, result.config.wload);
 			break;
 		case 'c': /* critical time threshold */
-			get_threshold(optarg, cload);
+			get_threshold(optarg, result.config.cload);
 			break;
 		case 'r': /* Divide load average by number of CPUs */
-			take_into_account_cpus = true;
+			result.config.take_into_account_cpus = true;
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -272,7 +300,7 @@ static int process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'n':
-			n_procs_to_show = atoi(optarg);
+			result.config.n_procs_to_show = atoi(optarg);
 			break;
 		case '?': /* help */
 			usage5();
@@ -281,38 +309,48 @@ static int process_arguments(int argc, char **argv) {
 
 	c = optind;
 	if (c == argc) {
-		return validate_arguments();
+		if (validate_arguments(result.config) == OK) {
+			result.errorcode = OK;
+			return result;
+		}
 	}
 
 	/* handle the case if both arguments are missing,
 	 * but not if only one is given without -c or -w flag */
 	if (c - argc == 2) {
-		get_threshold(argv[c++], wload);
-		get_threshold(argv[c++], cload);
+		get_threshold(argv[c++], result.config.wload);
+		get_threshold(argv[c++], result.config.cload);
 	} else if (c - argc == 1) {
-		get_threshold(argv[c++], cload);
+		get_threshold(argv[c++], result.config.cload);
 	}
 
-	return validate_arguments();
+	if (validate_arguments(result.config) == OK) {
+		result.errorcode = OK;
+		return result;
+	}
+
+	return result;
 }
 
-static int validate_arguments(void) {
+static int validate_arguments(const load_config config) {
 	/* match cload first, as it will give the most friendly error message
 	 * if user hasn't given the -c switch properly */
 	for (int i = 0; i < 3; i++) {
-		if (cload[i] < 0) {
+		if (config.cload[i] < 0) {
 			die(STATE_UNKNOWN,
 				_("Critical threshold for %d-minute load average is not "
 				  "specified\n"),
 				nums[i]);
 		}
-		if (wload[i] < 0) {
+
+		if (config.wload[i] < 0) {
 			die(STATE_UNKNOWN,
 				_("Warning threshold for %d-minute load average is not "
 				  "specified\n"),
 				nums[i]);
 		}
-		if (wload[i] > cload[i]) {
+
+		if (config.wload[i] > config.cload[i]) {
 			die(STATE_UNKNOWN,
 				_("Parameter inconsistency: %d-minute \"warning load\" is "
 				  "greater than \"critical load\"\n"),
@@ -388,7 +426,7 @@ int cmpstringp(const void *p1, const void *p2) {
 }
 #endif /* PS_USES_PROCPCPU */
 
-static int print_top_consuming_processes() {
+static int print_top_consuming_processes(const load_config config) {
 	struct output chld_out, chld_err;
 	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
@@ -404,9 +442,9 @@ static int print_top_consuming_processes() {
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char *), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
 
-	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1)
+	int lines_to_show = chld_out.lines < (size_t)(config.n_procs_to_show + 1)
 							? (int)chld_out.lines
-							: n_procs_to_show + 1;
+							: config.n_procs_to_show + 1;
 
 	for (int i = 0; i < lines_to_show; i += 1) {
 		printf("%s\n", chld_out.line[i]);
