@@ -79,24 +79,28 @@ static void get_threshold(char *arg, double *th) {
 	n = strlen(arg);
 	for (i = 0; i < 3; i++) {
 		th[i] = strtod(str, &p);
-		if (p == str)
+		if (p == str) {
 			break;
+		}
 
 		valid = 1;
 		str = p + 1;
-		if (n <= (size_t)(str - arg))
+		if (n <= (size_t)(str - arg)) {
 			break;
+		}
 	}
 
 	/* empty argument or non-floatish, so warn about it and die */
-	if (!i && !valid)
+	if (!i && !valid) {
 		usage(_("Warning threshold must be float or float triplet!\n"));
+	}
 
 	if (i != 2) {
 		/* one or more numbers were given, so fill array with last
 		 * we got (most likely to NOT produce the least expected result) */
-		for (n = i; n < 3; n++)
+		for (n = i; n < 3; n++) {
 			th[n] = th[i];
+		}
 	}
 }
 
@@ -119,8 +123,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 #ifdef HAVE_GETLOADAVG
 	result = getloadavg(la, 3);
@@ -132,10 +137,12 @@ int main(int argc, char **argv) {
 		printf(_("Error opening %s\n"), PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
 	}
+
 	child_stderr = fdopen(child_stderr_array[fileno(child_process)], "r");
 	if (child_stderr == NULL) {
 		printf(_("Could not open stderr for %s\n"), PATH_TO_UPTIME);
 	}
+
 	fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);
 	if (strstr(input_buffer, "load average:")) {
 		sscanf(input_buffer, "%*[^l]load average: %lf, %lf, %lf", &la1, &la5,
@@ -194,14 +201,16 @@ int main(int argc, char **argv) {
 			if (scaled_la[i] > cload[i]) {
 				result = STATE_CRITICAL;
 				break;
-			} else if (scaled_la[i] > wload[i])
+			} else if (scaled_la[i] > wload[i]) {
 				result = STATE_WARNING;
+			}
 		} else {
 			if (la[i] > cload[i]) {
 				result = STATE_CRITICAL;
 				break;
-			} else if (la[i] > wload[i])
+			} else if (la[i] > wload[i]) {
 				result = STATE_WARNING;
+			}
 		}
 	}
 
@@ -238,14 +247,16 @@ static int process_arguments(int argc, char **argv) {
 		{"procs-to-show", required_argument, 0, 'n'},
 		{0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "Vhrc:w:n:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 'w': /* warning time threshold */
@@ -272,8 +283,9 @@ static int process_arguments(int argc, char **argv) {
 	}
 
 	c = optind;
-	if (c == argc)
+	if (c == argc) {
 		return validate_arguments();
+	}
 
 	/* handle the case if both arguments are missing,
 	 * but not if only one is given without -c or -w flag */
@@ -293,21 +305,24 @@ static int validate_arguments(void) {
 	/* match cload first, as it will give the most friendly error message
 	 * if user hasn't given the -c switch properly */
 	for (i = 0; i < 3; i++) {
-		if (cload[i] < 0)
+		if (cload[i] < 0) {
 			die(STATE_UNKNOWN,
 				_("Critical threshold for %d-minute load average is not "
 				  "specified\n"),
 				nums[i]);
-		if (wload[i] < 0)
+		}
+		if (wload[i] < 0) {
 			die(STATE_UNKNOWN,
 				_("Warning threshold for %d-minute load average is not "
 				  "specified\n"),
 				nums[i]);
-		if (wload[i] > cload[i])
+		}
+		if (wload[i] > cload[i]) {
 			die(STATE_UNKNOWN,
 				_("Parameter inconsistency: %d-minute \"warning load\" is "
 				  "greater than \"critical load\"\n"),
 				nums[i]);
+		}
 	}
 
 	return OK;
