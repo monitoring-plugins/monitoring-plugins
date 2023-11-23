@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 	bool is_using_scaled_load_values = false;
 
 	long numcpus;
-	if (config.take_into_account_cpus == true &&
+	if (config.take_into_account_cpus &&
 		(numcpus = GET_NUMBER_OF_CPUS()) > 0) {
 		is_using_scaled_load_values = true;
 
