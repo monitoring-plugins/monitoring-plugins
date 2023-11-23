@@ -110,10 +110,6 @@ main (int argc, char **argv)
 	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about uninitialized arrays */
 #ifndef HAVE_GETLOADAVG
 	char input_buffer[MAX_INPUT_BUFFER];
-# ifdef HAVE_PROC_LOADAVG
-	FILE *fp;
-	char *str, *next;
-# endif
 #endif
 
 	setlocale (LC_ALL, "");
@@ -132,23 +128,6 @@ main (int argc, char **argv)
 	if (result != 3)
 		return STATE_UNKNOWN;
 #else
-# ifdef HAVE_PROC_LOADAVG
-	fp = fopen (PROC_LOADAVG, "r");
-	if (fp == NULL) {
-		printf (_("Error opening %s\n"), PROC_LOADAVG);
-		return STATE_UNKNOWN;
-	}
-
-	while (fgets (input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		str = (char *)input_buffer;
-		for(i = 0; i < 3; i++) {
-			la[i] = strtod(str, &next);
-			str = next;
-		}
-	}
-
-	fclose (fp);
-# else
 	child_process = spopen (PATH_TO_UPTIME);
 	if (child_process == NULL) {
 		printf (_("Error opening %s\n"), PATH_TO_UPTIME);
@@ -175,18 +154,13 @@ main (int argc, char **argv)
 		printf (_("Error code %d returned in %s\n"), result, PATH_TO_UPTIME);
 		return STATE_UNKNOWN;
 	}
-# endif
 #endif
 
 	if ((la[0] < 0.0) || (la[1] < 0.0) || (la[2] < 0.0)) {
 #ifdef HAVE_GETLOADAVG
 		printf (_("Error in getloadavg()\n"));
 #else
-# ifdef HAVE_PROC_LOADAVG
-		printf (_("Error processing %s\n"), PROC_LOADAVG);
-# else
 		printf (_("Error processing %s\n"), PATH_TO_UPTIME);
-# endif
 #endif
 		return STATE_UNKNOWN;
 	}
