@@ -72,7 +72,7 @@ char *get_subcheck_summary() {
 				unknown++;
 				break;
 			default:
-				die(STATE_UNKNOWN, "Unknow state in get_subcheck_summary");
+				die(STATE_UNKNOWN, "Unknown state in get_subcheck_summary");
 		}
 		subchecks = subchecks->next;
 	}
