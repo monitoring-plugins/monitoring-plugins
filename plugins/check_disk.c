@@ -135,12 +135,12 @@ char *exclude_device;
 char *units;
 uintmax_t mult = 1024 * 1024;
 int verbose = 0;
-int erronly = FALSE;
-int display_mntp = FALSE;
-int exact_match = FALSE;
+bool erronly = false;
+bool display_mntp = false;
+bool exact_match = false;
 bool ignore_missing = false;
-int freespace_ignore_reserved = FALSE;
-int display_inodes_perfdata = FALSE;
+bool freespace_ignore_reserved = false;
+bool display_inodes_perfdata = false;
 char *warn_freespace_units = NULL;
 char *crit_freespace_units = NULL;
 char *warn_freespace_percent = NULL;
@@ -153,7 +153,7 @@ char *warn_usedinodes_percent = NULL;
 char *crit_usedinodes_percent = NULL;
 char *warn_freeinodes_percent = NULL;
 char *crit_freeinodes_percent = NULL;
-int path_selected = FALSE;
+bool path_selected = false;
 bool path_ignored = false;
 char *group = NULL;
 struct stat *stat_buf;
@@ -205,7 +205,7 @@ main (int argc, char **argv)
   /* If a list of paths has not been selected, find entire
      mount list and create list of paths
    */
-  if (path_selected == FALSE && path_ignored == false) {
+  if (path_selected == false && path_ignored == false) {
     for (me = mount_list; me; me = me->me_next) {
       if (! (path = np_find_parameter(path_select_list, me->me_mountdir))) {
         path = np_add_parameter(&path_select_list, me->me_mountdir);
@@ -396,10 +396,10 @@ main (int argc, char **argv)
               perfdata_uint64 (
                   (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
                   path->dused_units * mult, "B",
-                  (warning_high_tide == UINT64_MAX ? FALSE : TRUE), warning_high_tide,
-                  (critical_high_tide == UINT64_MAX ? FALSE : TRUE), critical_high_tide,
-                  TRUE, 0,
-                  TRUE, path->dtotal_units * mult));
+                  (warning_high_tide == UINT64_MAX ? false : true), warning_high_tide,
+                  (critical_high_tide == UINT64_MAX ? false : true), critical_high_tide,
+                  true, 0,
+                  true, path->dtotal_units * mult));
 
       if (display_inodes_perfdata) {
         /* *_high_tide must be reinitialized at each run */
@@ -418,10 +418,10 @@ main (int argc, char **argv)
         xasprintf (&perf, "%s %s", perf,
                 perfdata_uint64 (perf_ilabel,
                     path->inodes_used, "",
-                    (warning_high_tide != UINT64_MAX ? TRUE : FALSE), warning_high_tide,
-                    (critical_high_tide != UINT64_MAX ? TRUE : FALSE), critical_high_tide,
-                    TRUE, 0,
-                    TRUE, path->inodes_total));
+                    (warning_high_tide != UINT64_MAX ? true : false), warning_high_tide,
+                    (critical_high_tide != UINT64_MAX ? true : false), critical_high_tide,
+                    true, 0,
+                    true, path->inodes_total));
       }
 
       if (disk_result==STATE_OK && erronly && !verbose)
@@ -718,7 +718,7 @@ process_arguments (int argc, char **argv)
       mount_list = read_file_system_list (0);
       np_set_best_match(se, mount_list, exact_match);
 
-      path_selected = TRUE;
+      path_selected = true;
       break;
     case 'x':                 /* exclude path or partition */
       np_add_name(&dp_exclude_list, optarg);
@@ -742,18 +742,18 @@ process_arguments (int argc, char **argv)
       break;
     case 'q':                 /* TODO: this function should eventually go away (removed 2007-09-20) */
       /* verbose--; **replaced by line below**. -q was only a broken way of implementing -e */
-      erronly = TRUE;
+      erronly = true;
       break;
     case 'e':
-      erronly = TRUE;
+      erronly = true;
       break;
     case 'E':
       if (path_selected)
         die (STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting paths\n"));
-      exact_match = TRUE;
+      exact_match = true;
       break;
     case 'f':
-      freespace_ignore_reserved = TRUE;
+      freespace_ignore_reserved = true;
       break;
     case 'g':
       if (path_selected)
@@ -825,7 +825,7 @@ process_arguments (int argc, char **argv)
 
       for (me = mount_list; me; me = me->me_next) {
         if (np_regex_match_mount_entry(me, &re)) {
-          fnd = TRUE;
+          fnd = true;
           if (verbose >= 3)
             printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
 
@@ -840,24 +840,24 @@ process_arguments (int argc, char **argv)
 
       if (!fnd && ignore_missing == true) {
         path_ignored = true;
-        /* path_selected = TRUE;*/
+        /* path_selected = true;*/
         break;
       } else if (!fnd)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
             _("Regular expression did not match any path or disk"), optarg);
 
-      fnd = FALSE;
-      path_selected = TRUE;
+      fnd = false;
+      path_selected = true;
       np_set_best_match(path_select_list, mount_list, exact_match);
       cflags = default_cflags;
 
       break;
     case 'M': /* display mountpoint */
-      display_mntp = TRUE;
+      display_mntp = true;
       break;
     case 'C':
        /* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
-       if (path_selected == FALSE) {
+       if (path_selected == false) {
          struct parameter_list *path;
          for (me = mount_list; me; me = me->me_next) {
            if (! (path = np_find_parameter(path_select_list, me->me_mountdir)))
@@ -880,7 +880,7 @@ process_arguments (int argc, char **argv)
       warn_freeinodes_percent = NULL;
       crit_freeinodes_percent = NULL;
 
-      path_selected = FALSE;
+      path_selected = false;
       group = NULL;
       break;
     case 'V':                 /* version */
@@ -904,7 +904,7 @@ process_arguments (int argc, char **argv)
 
   if (argc > c) {
     se = np_add_parameter(&path_select_list, strdup(argv[c++]));
-    path_selected = TRUE;
+    path_selected = true;
     set_all_thresholds(se);
   }
 
@@ -913,7 +913,7 @@ process_arguments (int argc, char **argv)
     mult = (uintmax_t)1024 * 1024;
   }
 
-  return TRUE;
+  return true;
 }
 
 

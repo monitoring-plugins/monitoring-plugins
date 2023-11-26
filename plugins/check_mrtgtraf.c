@@ -43,7 +43,7 @@ void print_usage(void);
 
 char *log_file = NULL;
 int expire_minutes = -1;
-int use_average = TRUE;
+bool use_average = true;
 unsigned long incoming_warning_threshold = 0L;
 unsigned long incoming_critical_threshold = 0L;
 unsigned long outgoing_warning_threshold = 0L;
@@ -137,7 +137,7 @@ main (int argc, char **argv)
 		     (int) ((current_time - timestamp) / 60));
 
 	/* else check the incoming/outgoing rates */
-	if (use_average == TRUE) {
+	if (use_average) {
 		incoming_rate = average_incoming_rate;
 		outgoing_rate = average_outgoing_rate;
 	}
@@ -192,17 +192,17 @@ main (int argc, char **argv)
 	}
 
 	xasprintf (&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"),
-	          (use_average == TRUE) ? _("Avg") : _("Max"), adjusted_incoming_rate,
-	          incoming_speed_rating, (use_average == TRUE) ? _("Avg") : _("Max"),
+	          (use_average) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+	          incoming_speed_rating, (use_average) ? _("Avg") : _("Max"),
 	          adjusted_outgoing_rate, outgoing_speed_rating,
 	          fperfdata("in", adjusted_incoming_rate, incoming_speed_rating,
 	                   (int)incoming_warning_threshold, incoming_warning_threshold,
 	                   (int)incoming_critical_threshold, incoming_critical_threshold,
-	                   TRUE, 0, FALSE, 0),
+	                   true, 0, false, 0),
 	          fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating,
 	                   (int)outgoing_warning_threshold, outgoing_warning_threshold,
 	                   (int)outgoing_critical_threshold, outgoing_critical_threshold,
-	                   TRUE, 0, FALSE, 0));
+	                   true, 0, false, 0));
 
 	printf (_("Traffic %s - %s\n"), state_text(result), error_message);
 
@@ -256,9 +256,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'a':									/* aggregation (AVE or MAX) */
 			if (!strcmp (optarg, "MAX"))
-				use_average = FALSE;
+				use_average = false;
 			else
-				use_average = TRUE;
+				use_average = true;
 			break;
 		case 'c':									/* warning threshold */
 			sscanf (optarg, "%lu,%lu", &incoming_critical_threshold,
@@ -289,11 +289,11 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (argc > c && strcmp (argv[c], "MAX") == 0) {
-		use_average = FALSE;
+		use_average = false;
 		c++;
 	}
 	else if (argc > c && strcmp (argv[c], "AVG") == 0) {
-		use_average = TRUE;
+		use_average = true;
 		c++;
 	}
 

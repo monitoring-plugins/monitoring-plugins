@@ -54,10 +54,10 @@ char *host_name;
 char *server_url = NULL;
 char *server_expect;
 int warning_time = 0;
-int check_warning_time = FALSE;
+bool check_warning_time = false;
 int critical_time = 0;
-int check_critical_time = FALSE;
-int verbose = FALSE;
+bool check_critical_time = false;
+bool verbose = false;
 
 
 
@@ -238,9 +238,9 @@ main (int argc, char **argv)
 	/* Return results */
 	if (result == STATE_OK) {
 
-		if (check_critical_time == TRUE
+		if (check_critical_time
 				&& (end_time - start_time) > critical_time) result = STATE_CRITICAL;
-		else if (check_warning_time == TRUE
+		else if (check_warning_time
 						 && (end_time - start_time) > warning_time) result =
 				STATE_WARNING;
 
@@ -331,7 +331,7 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
 				warning_time = atoi (optarg);
-				check_warning_time = TRUE;
+				check_warning_time = true;
 			}
 			else {
 				usage4 (_("Warning time must be a positive integer"));
@@ -340,14 +340,14 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				critical_time = atoi (optarg);
-				check_critical_time = TRUE;
+				check_critical_time = true;
 			}
 			else {
 				usage4 (_("Critical time must be a positive integer"));
 			}
 			break;
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {

@@ -73,10 +73,6 @@ void print_usage (void);
 	
 #define NR_ATTRIBUTES	30
 	
-#ifndef TRUE
-#define TRUE 1
-#endif	/*  */
-	
 #define PREFAILURE 2
 #define ADVISORY 1
 #define OPERATIONAL 0
@@ -169,9 +165,9 @@ int smart_read_values (int, values_t *);
 int nagios (values_t *, thresholds_t *);
 void print_value (value_t *, threshold_t *);
 void print_values (values_t *, thresholds_t *);
-int smart_cmd_simple (int, enum SmartCommand, __u8, char);
+int smart_cmd_simple (int, enum SmartCommand, __u8, bool);
 int smart_read_thresholds (int, thresholds_t *);
-int verbose = FALSE;
+bool verbose = false;
 
 int
 main (int argc, char *argv[]) 
@@ -203,7 +199,7 @@ main (int argc, char *argv[])
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	while (1) {
+	while (true) {
 		
 		o = getopt_long (argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
@@ -229,7 +225,7 @@ main (int argc, char *argv[])
 			fprintf (stderr, "%s\n", _("default and will be removed from future releases."));
 			break;
 		case 'v': /* verbose */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 'h':
 			print_help ();
@@ -258,7 +254,7 @@ main (int argc, char *argv[])
 		return STATE_CRITICAL;
 	}
 
-	if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, FALSE)) {
+	if (smart_cmd_simple (fd, SMART_CMD_ENABLE, 0, false)) {
 		printf (_("CRITICAL - SMART_CMD_ENABLE\n"));
 		return STATE_CRITICAL;
 	}
@@ -447,9 +443,7 @@ print_values (values_t * p, thresholds_t * t)
 }
 
 
-int
-smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, char show_error) 
-{
+int smart_cmd_simple (int fd, enum SmartCommand command, __u8 val0, bool show_error) {
 	int e = STATE_UNKNOWN;
 #ifdef __linux__
 	__u8 args[4];

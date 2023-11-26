@@ -45,16 +45,16 @@ enum {
 uint32_t raw_server_time;
 unsigned long server_time, diff_time;
 int warning_time = 0;
-int check_warning_time = FALSE;
+bool check_warning_time = false;
 int critical_time = 0;
-int check_critical_time = FALSE;
+bool check_critical_time = false;
 unsigned long warning_diff = 0;
-int check_warning_diff = FALSE;
+bool check_warning_diff = false;
 unsigned long critical_diff = 0;
-int check_critical_diff = FALSE;
+bool check_critical_diff = false;
 int server_port = TIME_PORT;
 char *server_address = NULL;
-int use_udp = FALSE;
+bool use_udp = false;
 
 int process_arguments (int, char **);
 void print_help (void);
@@ -92,9 +92,9 @@ main (int argc, char **argv)
 	}
 
 	if (result != STATE_OK) {
-		if (check_critical_time == TRUE)
+		if (check_critical_time)
 			result = STATE_CRITICAL;
-		else if (check_warning_time == TRUE)
+		else if (check_warning_time)
 			result = STATE_WARNING;
 		else
 			result = STATE_UNKNOWN;
@@ -105,9 +105,9 @@ main (int argc, char **argv)
 
 	if (use_udp) {
 		if (send (sd, "", 0, 0) < 0) {
-			if (check_critical_time == TRUE)
+			if (check_critical_time)
 				result = STATE_CRITICAL;
-			else if (check_warning_time == TRUE)
+			else if (check_warning_time)
 				result = STATE_WARNING;
 			else
 				result = STATE_UNKNOWN;
@@ -129,9 +129,9 @@ main (int argc, char **argv)
 
 	/* return a WARNING status if we couldn't read any data */
 	if (result <= 0) {
-		if (check_critical_time == TRUE)
+		if (check_critical_time)
 			result = STATE_CRITICAL;
-		else if (check_warning_time == TRUE)
+		else if (check_warning_time)
 			result = STATE_WARNING;
 		else
 			result = STATE_UNKNOWN;
@@ -143,9 +143,9 @@ main (int argc, char **argv)
 	result = STATE_OK;
 
 	conntime = (end_time - start_time);
-	if (check_critical_time == TRUE && conntime > critical_time)
+	if (check_critical_time&& conntime > critical_time)
 		result = STATE_CRITICAL;
-	else if (check_warning_time == TRUE && conntime > warning_time)
+	else if (check_warning_time && conntime > warning_time)
 		result = STATE_WARNING;
 
 	if (result != STATE_OK)
@@ -154,7 +154,7 @@ main (int argc, char **argv)
 		     perfdata ("time", (long)conntime, "s",
 		               check_warning_time, (long)warning_time,
 		               check_critical_time, (long)critical_time,
-		               TRUE, 0, FALSE, 0));
+		               true, 0, false, 0));
 
 	server_time = ntohl (raw_server_time) - UNIX_EPOCH;
 	if (server_time > (unsigned long)end_time)
@@ -162,9 +162,9 @@ main (int argc, char **argv)
 	else
 		diff_time = (unsigned long)end_time - server_time;
 
-	if (check_critical_diff == TRUE && diff_time > critical_diff)
+	if (check_critical_diff&& diff_time > critical_diff)
 		result = STATE_CRITICAL;
-	else if (check_warning_diff == TRUE && diff_time > warning_diff)
+	else if (check_warning_diff&& diff_time > warning_diff)
 		result = STATE_WARNING;
 
 	printf (_("TIME %s - %lu second time difference|%s %s\n"),
@@ -172,11 +172,11 @@ main (int argc, char **argv)
 	        perfdata ("time", (long)conntime, "s",
 	                  check_warning_time, (long)warning_time,
 	                  check_critical_time, (long)critical_time,
-	                  TRUE, 0, FALSE, 0),
+	                  true, 0, false, 0),
 	        perfdata ("offset", diff_time, "s",
 	                  check_warning_diff, warning_diff,
 	                  check_critical_diff, critical_diff,
-	                  TRUE, 0, FALSE, 0));
+	                  true, 0, false, 0));
 	return result;
 }
 
@@ -219,7 +219,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-C");
 	}
 
-	while (1) {
+	while (true) {
 		c = getopt_long (argc, argv, "hVH:w:c:W:C:p:t:u", longopts,
 									 &option);
 
@@ -236,19 +236,19 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, NP_VERSION);
 			exit (STATE_UNKNOWN);
 		case 'H':									/* hostname */
-			if (is_host (optarg) == FALSE)
+			if (!is_host (optarg))
 				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = optarg;
 			break;
 		case 'w':									/* warning-variance */
 			if (is_intnonneg (optarg)) {
 				warning_diff = strtoul (optarg, NULL, 10);
-				check_warning_diff = TRUE;
+				check_warning_diff = true;
 			}
 			else if (strspn (optarg, "0123456789:,") > 0) {
 				if (sscanf (optarg, "%lu%*[:,]%d", &warning_diff, &warning_time) == 2) {
-					check_warning_diff = TRUE;
-					check_warning_time = TRUE;
+					check_warning_diff = true;
+					check_warning_time = true;
 				}
 				else {
 					usage4 (_("Warning thresholds must be a positive integer"));
@@ -261,13 +261,13 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical-variance */
 			if (is_intnonneg (optarg)) {
 				critical_diff = strtoul (optarg, NULL, 10);
-				check_critical_diff = TRUE;
+				check_critical_diff = true;
 			}
 			else if (strspn (optarg, "0123456789:,") > 0) {
 				if (sscanf (optarg, "%lu%*[:,]%d", &critical_diff, &critical_time) ==
 						2) {
-					check_critical_diff = TRUE;
-					check_critical_time = TRUE;
+					check_critical_diff = true;
+					check_critical_time = true;
 				}
 				else {
 					usage4 (_("Critical thresholds must be a positive integer"));
@@ -282,14 +282,14 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Warning threshold must be a positive integer"));
 			else
 				warning_time = atoi (optarg);
-			check_warning_time = TRUE;
+			check_warning_time = true;
 			break;
 		case 'C':									/* critical-connect */
 			if (!is_intnonneg (optarg))
 				usage4 (_("Critical threshold must be a positive integer"));
 			else
 				critical_time = atoi (optarg);
-			check_critical_time = TRUE;
+			check_critical_time = true;
 			break;
 		case 'p':									/* port */
 			if (!is_intnonneg (optarg))
@@ -304,14 +304,14 @@ process_arguments (int argc, char **argv)
 				socket_timeout = atoi (optarg);
 			break;
 		case 'u':									/* udp */
-			use_udp = TRUE;
+			use_udp = true;
 		}
 	}
 
 	c = optind;
 	if (server_address == NULL) {
 		if (argc > c) {
-			if (is_host (argv[c]) == FALSE)
+			if (!is_host (argv[c]))
 				usage2 (_("Invalid hostname/address"), optarg);
 			server_address = argv[c];
 		}

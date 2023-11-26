@@ -47,7 +47,7 @@ print_help() {
   echo "--cache"
   echo "   Check local database for library and buffer cache hit ratios"
   echo "       --->  Requires Oracle user/password and SID specified."
-  echo "       		--->  Requires select on v_$sysstat and v_$librarycache"
+  echo "       		--->  Requires select on v_\$sysstat and v_\$librarycache"
   echo "--tablespace"
   echo "   Check local database for tablespace capacity in ORACLE_SID"
   echo "       --->  Requires Oracle user/password specified."
@@ -109,14 +109,14 @@ if [ -z "$ORACLE_HOME" ] ; then
     for oratab in /var/opt/oracle/oratab /etc/oratab
     do
     [ ! -f $oratab ] && continue
-    ORACLE_HOME=`IFS=:
-        while read -r SID ORACLE_HOME junk;
+    ORACLE_HOME=$(IFS=:
+        while read -r SID ORACLE_HOME _;
         do
             if [ "$SID" = "$2" ] || [ "$SID" = "*" ] ; then
                 echo "$ORACLE_HOME";
                 exit;
             fi;
-        done < $oratab`
+        done < $oratab)
     [ -n "$ORACLE_HOME" ] && break
     done
 fi
@@ -209,7 +209,7 @@ case "$cmd" in
         echo "UNKNOWN - Warning level is less then Crit"
         exit "$STATE_UNKNOWN"
     fi
-    result=`sqlplus -s "${3}"/"${4}"@"${2}" << EOF
+    result=$(sqlplus -s "${3}"/"${4}"@"${2}" << EOF
 set pagesize 0
 set numf '9999999.99'
 select (1-(pr.value/(dbg.value+cg.value)))*100
@@ -217,7 +217,8 @@ from v\\$sysstat pr, v\\$sysstat dbg, v\\$sysstat cg
 where pr.name='physical reads'
 and dbg.name='db block gets'
 and cg.name='consistent gets';
-EOF`
+EOF
+)
 
     if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)
@@ -227,12 +228,13 @@ EOF`
 
     buf_hr=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print int($1)}')
     buf_hrx=$(echo "$result" | awk '/^[0-9\. \t]+$/ {print $1}')
-    result=`sqlplus -s "${3}"/"${4}"@"${2}" << EOF
+    result=$(sqlplus -s "${3}"/"${4}"@"${2}" << EOF
 set pagesize 0
 set numf '9999999.99'
 select sum(lc.pins)/(sum(lc.pins)+sum(lc.reloads))*100
 from v\\$librarycache lc;
-EOF`
+EOF
+)
 
     if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)
@@ -260,7 +262,7 @@ EOF`
         echo "UNKNOWN - Warning level is more then Crit"
         exit "$STATE_UNKNOWN"
     fi
-    result=`sqlplus -s "${3}"/"${4}"@"${2}" << EOF
+    result=$(sqlplus -s "${3}"/"${4}"@"${2}" << EOF
 set pagesize 0
 set numf '9999999.99'
 select NVL(b.free,0.0),a.total,100 - trunc(NVL(b.free,0.0)/a.total * 1000) / 10 prc
@@ -271,7 +273,8 @@ LEFT OUTER JOIN
 ( select tablespace_name,sum(bytes)/1024/1024 free
 from dba_free_space group by tablespace_name) B
 ON a.tablespace_name=b.tablespace_name WHERE a.tablespace_name='${5}';
-EOF`
+EOF
+)
 
     if echo "$result" | grep -q 'ORA-' ; then
         error=$(echo "$result" | grep "ORA-" | head -1)

@@ -6,21 +6,21 @@
 * Copyright (c) 2006 Monitoring Plugins Development Team
 *
 * Library of useful functions for plugins
-* 
+*
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
+*
 *
 *****************************************************************************/
 
@@ -37,10 +37,10 @@
 
 monitoring_plugin *this_monitoring_plugin=NULL;
 
-unsigned int timeout_state = STATE_CRITICAL;
+int timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-int _np_state_read_file(FILE *);
+bool _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_monitoring_plugin==NULL) {
@@ -105,12 +105,12 @@ die (int result, const char *fmt, ...)
 
 void set_range_start (range *this, double value) {
 	this->start = value;
-	this->start_infinity = FALSE;
+	this->start_infinity = false;
 }
 
 void set_range_end (range *this, double value) {
 	this->end = value;
-	this->end_infinity = FALSE;
+	this->end_infinity = false;
 }
 
 range
@@ -124,9 +124,9 @@ range
 
 	/* Set defaults */
 	temp_range->start = 0;
-	temp_range->start_infinity = FALSE;
+	temp_range->start_infinity = false;
 	temp_range->end = 0;
-	temp_range->end_infinity = TRUE;
+	temp_range->end_infinity = true;
 	temp_range->alert_on = OUTSIDE;
 	temp_range->text = strdup(str);
 
@@ -138,7 +138,7 @@ range
 	end_str = index(str, ':');
 	if (end_str != NULL) {
 		if (str[0] == '~') {
-			temp_range->start_infinity = TRUE;
+			temp_range->start_infinity = true;
 		} else {
 			start = strtod(str, NULL);	/* Will stop at the ':' */
 			set_range_start(temp_range, start);
@@ -152,8 +152,8 @@ range
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == TRUE ||
-		temp_range->end_infinity == TRUE ||
+	if (temp_range->start_infinity == true ||
+		temp_range->end_infinity == true ||
 		temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
@@ -223,31 +223,30 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("\n");
 }
 
-/* Returns TRUE if alert should be raised based on the range */
-int
-check_range(double value, range *my_range)
+/* Returns true if alert should be raised based on the range */
+bool check_range(double value, range *my_range)
 {
-	int no = FALSE;
-	int yes = TRUE;
+	bool no = false;
+	bool yes = true;
 
 	if (my_range->alert_on == INSIDE) {
-		no = TRUE;
-		yes = FALSE;
+		no = true;
+		yes = false;
 	}
 
-	if (my_range->end_infinity == FALSE && my_range->start_infinity == FALSE) {
+	if (my_range->end_infinity == false && my_range->start_infinity == false) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		} else {
 			return yes;
 		}
-	} else if (my_range->start_infinity == FALSE && my_range->end_infinity == TRUE) {
+	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
 		if (my_range->start <= value) {
 			return no;
 		} else {
 			return yes;
 		}
-	} else if (my_range->start_infinity == TRUE && my_range->end_infinity == FALSE) {
+	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
 		if (value <= my_range->end) {
 			return no;
 		} else {
@@ -263,12 +262,12 @@ int
 get_status(double value, thresholds *my_thresholds)
 {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical) == TRUE) {
+		if (check_range(value, my_thresholds->critical) == true) {
 			return STATE_CRITICAL;
 		}
 	}
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning) == TRUE) {
+		if (check_range(value, my_thresholds->warning) == true) {
 			return STATE_WARNING;
 		}
 	}
@@ -332,7 +331,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 				/* strip leading spaces */
 				for (; isspace(varlist[0]); varlist++);
 
-				if (tmp = index(varlist, sep)) {
+				if ((tmp = index(varlist, sep))) {
 					/* Value is delimited by a comma */
 					if (tmp-varlist == 0) continue;
 					value = (char *)calloc(1, tmp-varlist+1);
@@ -348,7 +347,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 				break;
 			}
 		}
-		if (tmp = index(varlist, sep)) {
+		if ((tmp = index(varlist, sep))) {
 			/* More keys, keep going... */
 			varlist = tmp + 1;
 		} else {
@@ -465,7 +464,7 @@ char* _np_state_calculate_location_prefix(){
 
 	/* Do not allow passing MP_STATE_PATH in setuid plugins
 	 * for security reasons */
-	if (mp_suid() == FALSE) {
+	if (!mp_suid()) {
 		env_dir = getenv("MP_STATE_PATH");
 		if(env_dir && env_dir[0] != '\0')
 			return env_dir;
@@ -541,7 +540,7 @@ void np_enable_state(char *keyname, int expected_data_version) {
 state_data *np_state_read() {
 	state_data *this_state_data=NULL;
 	FILE *statefile;
-	int rc = FALSE;
+	bool rc = false;
 
 	if(this_monitoring_plugin==NULL)
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
@@ -563,7 +562,7 @@ state_data *np_state_read() {
 		fclose(statefile);
 	}
 
-	if(rc==FALSE) {
+	if(!rc) {
 		_cleanup_state_data();
 	}
 
@@ -573,8 +572,8 @@ state_data *np_state_read() {
 /*
  * Read the state file
  */
-int _np_state_read_file(FILE *f) {
-	int status=FALSE;
+bool _np_state_read_file(FILE *f) {
+	bool status = false;
 	size_t pos;
 	char *line;
 	int i;
@@ -628,7 +627,7 @@ int _np_state_read_file(FILE *f) {
 				if(this_monitoring_plugin->state->state_data->data==NULL)
 					die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 				expected=STATE_DATA_END;
-				status=TRUE;
+				status=true;
 				break;
 			case STATE_DATA_END:
 				;
@@ -640,10 +639,10 @@ int _np_state_read_file(FILE *f) {
 }
 
 /*
- * If time=NULL, use current time. Create state file, with state format 
- * version, default text. Writes version, time, and data. Avoid locking 
- * problems - use mv to write and then swap. Possible loss of state data if 
- * two things writing to same key at same time. 
+ * If time=NULL, use current time. Create state file, with state format
+ * version, default text. Writes version, time, and data. Avoid locking
+ * problems - use mv to write and then swap. Possible loss of state data if
+ * two things writing to same key at same time.
  * Will die with UNKNOWN if errors
  */
 void np_state_write_string(time_t data_time, char *data_string) {
@@ -658,7 +657,7 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		time(&current_time);
 	else
 		current_time=data_time;
-	
+
 	/* If file doesn't currently exist, create directories */
 	if(access(this_monitoring_plugin->state->_filename,F_OK)!=0) {
 		result = asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
@@ -697,15 +696,15 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		np_free(temp_file);
 		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
 	}
-	
+
 	fprintf(fp,"# NP State file\n");
 	fprintf(fp,"%d\n",NP_STATE_FORMAT_VERSION);
 	fprintf(fp,"%d\n",this_monitoring_plugin->state->data_version);
 	fprintf(fp,"%lu\n",current_time);
 	fprintf(fp,"%s\n",data_string);
-	
+
 	fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP);
-	
+
 	fflush(fp);
 
 	result=fclose(fp);

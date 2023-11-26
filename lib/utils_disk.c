@@ -1,29 +1,29 @@
 /*****************************************************************************
-* 
+*
 * Library for check_disk
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains utilities for check_disk. These are tested by libtap
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -98,7 +98,7 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->freeinodes_percent = NULL;
   new_path->group = NULL;
   new_path->dfree_pct = -1;
-  new_path->dused_pct = -1; 
+  new_path->dused_pct = -1;
   new_path->total = 0;
   new_path->available = 0;
   new_path->available_to_root = 0;
@@ -170,9 +170,7 @@ np_find_parameter(struct parameter_list *list, const char *name)
   return NULL;
 }
 
-void
-np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, int exact)
-{
+void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, bool exact) {
   struct parameter_list *d;
   for (d = desired; d; d= d->name_next) {
     if (! d->best_match) {
@@ -195,9 +193,9 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
           size_t len = strlen (me->me_mountdir);
-          if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
+          if ((!exact && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
-             || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
+             || (exact && strcmp(me->me_mountdir, d->name)==0))
           {
             if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
               best_match = me;
@@ -216,27 +214,23 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
   }
 }
 
-/* Returns TRUE if name is in list */
-int
-np_find_name (struct name_list *list, const char *name)
-{
+/* Returns true if name is in list */
+bool np_find_name (struct name_list *list, const char *name) {
   const struct name_list *n;
 
   if (list == NULL || name == NULL) {
-    return FALSE;
+    return false;
   }
   for (n = list; n; n = n->next) {
     if (!strcmp(name, n->name)) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
-/* Returns TRUE if name is in list */
-bool
-np_find_regmatch (struct regex_list *list, const char *name)
-{
+/* Returns true if name is in list */
+bool np_find_regmatch (struct regex_list *list, const char *name) {
   int len;
   regmatch_t m;
 
@@ -257,26 +251,20 @@ np_find_regmatch (struct regex_list *list, const char *name)
   return false;
 }
 
-int
-np_seen_name(struct name_list *list, const char *name)
-{
+bool np_seen_name(struct name_list *list, const char *name) {
   const struct name_list *s;
   for (s = list; s; s=s->next) {
     if (!strcmp(s->name, name)) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
-int
-np_regex_match_mount_entry (struct mount_entry* me, regex_t* re)
-{
+bool np_regex_match_mount_entry (struct mount_entry* me, regex_t* re) {
   if (regexec(re, me->me_devname, (size_t) 0, NULL, 0) == 0 ||
       regexec(re, me->me_mountdir, (size_t) 0, NULL, 0) == 0 ) {
-    return TRUE;
-  } else {
-    return FALSE;
+    return true;
   }
+	return false;
 }
-

@@ -40,10 +40,10 @@ const char *email = "devel@monitoring-plugins.org";
 
 static char *server_address=NULL;
 static int verbose=0;
-static short do_offset=0;
+static bool do_offset = false;
 static char *owarn="60";
 static char *ocrit="120";
-static short do_jitter=0;
+static bool do_jitter = false;
 static char *jwarn="5000";
 static char *jcrit="10000";
 
@@ -513,7 +513,8 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 
 /* XXX handle responses with the error bit set */
 double jitter_request(int *status){
-	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
+	int conn=-1, i, npeers=0, num_candidates=0;
+	bool syncsource_found = false;
 	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
 	int peers_size=0, peer_offset=0;
 	ntp_assoc_status_pair *peers=NULL;
@@ -570,7 +571,7 @@ double jitter_request(int *status){
 		if (PEER_SEL(peers[i].status) >= PEER_INCLUDED){
 			num_candidates++;
 			if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
-				syncsource_found=1;
+				syncsource_found = true;
 				min_peer_sel=PEER_SYNCSOURCE;
 			}
 		}
@@ -699,23 +700,23 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'w':
-			do_offset=1;
+			do_offset = true;
 			owarn = optarg;
 			break;
 		case 'c':
-			do_offset=1;
+			do_offset = true;
 			ocrit = optarg;
 			break;
 		case 'j':
-			do_jitter=1;
+			do_jitter = true;
 			jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter=1;
+			do_jitter = true;
 			jcrit = optarg;
 			break;
 		case 'H':
-			if(is_host(optarg) == FALSE)
+			if(!is_host(optarg))
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -749,9 +750,9 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		TRUE, offset_thresholds->warning->end,
-		TRUE, offset_thresholds->critical->end,
-		FALSE, 0, FALSE, 0);
+		true, offset_thresholds->warning->end,
+		true, offset_thresholds->critical->end,
+		false, 0, false, 0);
 }
 
 char *perfd_jitter (double jitter)
@@ -759,7 +760,7 @@ char *perfd_jitter (double jitter)
 	return fperfdata ("jitter", jitter, "s",
 		do_jitter, jitter_thresholds->warning->end,
 		do_jitter, jitter_thresholds->critical->end,
-		TRUE, 0, FALSE, 0);
+		true, 0, false, 0);
 }
 
 int main(int argc, char *argv[]){

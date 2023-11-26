@@ -184,14 +184,6 @@ enum {
 	ERROR = -1
 };
 
-/* AIX seems to have this defined somewhere else */
-#ifndef FALSE
-enum {
-	FALSE,
-	TRUE
-};
-#endif
-
 enum {
 	STATE_OK,
 	STATE_WARNING,
