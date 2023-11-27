@@ -333,6 +333,7 @@ deltime (struct timeval tv)
  *
  ******************************************************************************/
 
+/*
 char *perfdata (const char *label,
  long int val,
  const char *uom,
@@ -372,6 +373,7 @@ char *perfdata (const char *label,
 
 	return data;
 }
+*/
 
 
 char *perfdata_uint64 (const char *label,

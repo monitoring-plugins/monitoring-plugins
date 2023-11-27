@@ -107,11 +107,6 @@ die (int result, const char *fmt, ...)
 	exit (result);
 }
 
-void set_range_start_uint (range *r, uint64_t value) {
-	r->start.pd_uint = value;
-	r->start_infinity = false;
-}
-
 void set_range_start_int (range *r, int64_t value) {
 	r->start.pd_int = value;
 	r->start_infinity = false;
@@ -120,11 +115,6 @@ void set_range_start_int (range *r, int64_t value) {
 void set_range_start_double (range *r, double value) {
 	r->start.pd_double = value;
 	r->start_infinity = false;
-}
-
-void set_range_end_uint (range *r, uint64_t value) {
-	r->end.pd_uint = value;
-	r->end_infinity = false;
 }
 
 void set_range_end_int (range *r, int64_t value) {
@@ -161,30 +151,28 @@ range
 
 	end_str = index(str, ':');
 	perfdata_value tmp;
-	enum value_type_t tmp_type;
+
 	if (end_str != NULL) {
 		if (str[0] == '~') {
 			temp_range->start_infinity = true;
 		} else {
-			if (is_uint64(str, &tmp.pd_uint)) {
-				set_range_start_uint(temp_range, tmp.pd_uint);
-				tmp_type = UINT;
-			} else if (is_int64(str, &tmp.pd_int)) {
+			if (is_integer(str)) {
+				tmp.pd_int = strtoll(str, NULL, 0);
 				set_range_start_int(temp_range, tmp.pd_int);
-				tmp_type = INT;
+				tmp.type = PD_TYPE_INT;
 			} else {
 				set_range_start_double(temp_range, strtod(str, NULL));
-				tmp_type = DOUBLE;
+				tmp.type = PD_TYPE_DOUBLE;
 			}
 		}
 		end_str++;		/* Move past the ':' */
 	} else {
 		end_str = str;
 	}
+
 	if (strcmp(end_str, "") != 0) {
-		if (is_uint64(end_str, &tmp.pd_uint)) {
-			set_range_end_uint(temp_range, tmp.pd_uint);
-		} else if (is_int64(end_str, &tmp.pd_int)) {
+		if (is_integer(end_str)) {
+				tmp.pd_int = strtoll(str, NULL, 0);
 			set_range_end_int(temp_range, tmp.pd_int);
 		} else {
 			set_range_end_double(temp_range, strtod(end_str, NULL));
@@ -193,7 +181,7 @@ range
 
 	if (temp_range->start_infinity == true ||
 		temp_range->end_infinity == true ||
-		cmp_perfdata_value(&temp_range->start, &temp_range->end, tmp_type) != -1) {
+		cmp_perfdata_value(temp_range->start, temp_range->end) != -1) {
 		return temp_range;
 	}
 	free(temp_range);
@@ -243,60 +231,25 @@ set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_str
 	}
 }
 
-void print_thresholds(const char *threshold_name, thresholds *my_threshold, enum value_type_t type) {
+void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("%s - ", threshold_name);
 	if (! my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
-			switch (type) {
-				case UINT:
-					printf("Warning: start=%lu end=%lu; ",
-							my_threshold->warning->start.pd_uint,
-							my_threshold->warning->end.pd_uint
-							);
-					break;
-				case INT:
-					printf("Warning: start=%ld end=%ld; ",
-							my_threshold->warning->start.pd_int,
-							my_threshold->warning->end.pd_int
-							);
-					break;
-				case DOUBLE:
-					printf("Warning: start=%f end=%f; ",
-							my_threshold->warning->start.pd_double,
-							my_threshold->warning->end.pd_double
-							);
-					break;
-				default:
-					die(STATE_UNKNOWN, "Invalid data type");
-			}
+			printf("Warning: start=%s end=%s; ",
+					pd_value_to_string(my_threshold->warning->start),
+					pd_value_to_string(my_threshold->warning->end)
+				  );
 		} else {
 			printf("Warning not set; ");
 		}
+
 		if (my_threshold->critical) {
-			switch (type) {
-				case UINT:
-					printf("Critical: start=%lu end=%lu; ",
-							my_threshold->critical->start.pd_uint,
-							my_threshold->critical->end.pd_uint
-							);
-					break;
-				case INT:
-					printf("Critical: start=%ld end=%ld; ",
-							my_threshold->critical->start.pd_int,
-							my_threshold->critical->end.pd_int
-							);
-					break;
-				case DOUBLE:
-					printf("Critical: start=%f end=%f; ",
-							my_threshold->critical->start.pd_double,
-							my_threshold->critical->end.pd_double
-							);
-					break;
-				default:
-					die(STATE_UNKNOWN, "Invalid data type");
-			}
+			printf("Critical: start=%s end=%s; ",
+					pd_value_to_string(my_threshold->critical->start),
+					pd_value_to_string(my_threshold->critical->end)
+				  );
 		} else {
 			printf("Critical not set");
 		}
@@ -304,103 +257,66 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold, enum
 	printf("\n");
 }
 
-/* Returns TRUE if alert should be raised based on the range */
-bool check_range(perfdata_value value, range *my_range, enum value_type_t type)
-{
-	bool no = false;
-	bool yes = true;
+/* Returns true if alert should be raised based on the range, false otherwise */
+bool check_range(perfdata_value value, range *my_range) {
+	bool is_inside = false;
 
-	if (my_range->alert_on == INSIDE) {
-		no = true;
-		yes = false;
+	if (my_range->end_infinity == false && my_range->start_infinity == false) {
+		// range:  .........|---inside---|...........
+		// value
+		if (
+			(cmp_perfdata_value(my_range->start, value) < 1) &&
+			(cmp_perfdata_value(value, my_range->end) <= 0)) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+		// range:  .........|---inside---------
+		// value
+		if (cmp_perfdata_value(my_range->start, value) < 0) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+		// range:  -inside--------|....................
+		// value
+		if (cmp_perfdata_value(value, my_range->end) == -1) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else {
+		// range from -inf to inf, so always inside
+		is_inside = true;
 	}
 
-	switch (type) {
-		case UINT:
-			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_uint <= value.pd_uint) && (value.pd_uint <= my_range->end.pd_uint)) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_uint <= value.pd_uint) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value.pd_uint <= my_range->end.pd_uint) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else {
-				return no;
-			}
-			break;
-		case INT:
-			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_int <= value.pd_int) && (value.pd_int <= my_range->end.pd_int)) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_int <= value.pd_int) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value.pd_int <= my_range->end.pd_int) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else {
-				return no;
-			}
-			break;
-		case DOUBLE:
-			if (my_range->end_infinity == false && my_range->start_infinity == false) {
-				if ((my_range->start.pd_double <= value.pd_double) && (value.pd_double <= my_range->end.pd_double)) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
-				if (my_range->start.pd_double <= value.pd_double) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
-				if (value.pd_double <= my_range->end.pd_double) {
-					return no;
-				} else {
-					return yes;
-				}
-			} else {
-				return no;
-			}
-			break;
-		default:
-			die(STATE_UNKNOWN, "Some Error in range checking");
-	}
+	if ( (is_inside && my_range->alert_on == INSIDE) ||
+	   (!is_inside && my_range->alert_on == OUTSIDE) ) {
+		   return true;
+	   }
+
+	return false;
 }
 
 /* Returns status */
-int
-get_status(perfdata_value value, thresholds *my_thresholds, enum value_type_t type)
-{
+int get_status(double value, thresholds *my_thresholds) {
+	perfdata_value tmp = { 0 };
+	tmp.pd_double = value;
+
+	return get_status2(tmp, my_thresholds);
+}
+
+int get_status2(perfdata_value value, thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical, type)) {
+		if (check_range(value, my_thresholds->critical)) {
 			return STATE_CRITICAL;
 		}
 	}
+
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning, type)) {
+		if (check_range(value, my_thresholds->warning)) {
 			return STATE_WARNING;
 		}
 	}

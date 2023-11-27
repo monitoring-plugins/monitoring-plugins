@@ -88,6 +88,7 @@ void print_output() {
 			if (check.summary == NULL) {
 				check.summary = get_subcheck_summary();
 			}
+
 			printf("%s: %s", state_text(check.state), check.summary);
 			break;
 
@@ -101,9 +102,11 @@ void print_output() {
 			if (check.summary == NULL) {
 				check.summary = get_subcheck_summary();
 			}
+
 			printf("%s: %s", state_text(check.state), check.summary);
+
 			if (check.perfdata != NULL) {
-				printf("|%s\n", pd_list_to_string(check.perfdata));
+				printf("|%s\n", pd_list_to_string(*check.perfdata));
 			} else {
 				puts("");
 			}
@@ -111,11 +114,13 @@ void print_output() {
 			char * pd_string = NULL;
 			char * output_string = NULL;
 			subchecks = check.subchecks;
+
 			while (subchecks != NULL) {
 				xasprintf(&output_string, "%s", subchecks->subcheck.output);
-				xasprintf(&pd_string, "%s", pd_list_to_string(subchecks->subcheck.perfdata));
+				xasprintf(&pd_string, "%s", pd_list_to_string(*subchecks->subcheck.perfdata));
 				subchecks = subchecks->next;
 			}
+
 			printf("%s|%s\n", output_string, pd_string);
 			break;
 
@@ -124,18 +129,21 @@ void print_output() {
 			if (check.summary == NULL) {
 				check.summary = get_subcheck_summary();
 			}
+
 			printf("[%s]: %s", state_text(check.state), check.summary);
+
 			if (check.perfdata != NULL) {
-				printf("|%s\n", pd_list_to_string(check.perfdata));
+				printf("|%s\n", pd_list_to_string(*check.perfdata));
 			} else {
 				puts("");
 			}
 
 			subchecks = check.subchecks;
+
 			while (subchecks != NULL) {
 				printf("\\_[%s]: %s", state_text(subchecks->subcheck.state), subchecks->subcheck.output);
 				if (subchecks->subcheck.perfdata != NULL) {
-					printf("|%s\n", pd_list_to_string(subchecks->subcheck.perfdata));
+					printf("|%s\n", pd_list_to_string(*subchecks->subcheck.perfdata));
 				}
 				subchecks = subchecks->next;
 			}

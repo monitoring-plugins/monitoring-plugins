@@ -19,7 +19,7 @@
 #include "common.h"
 #include "utils_base.h"
 
-#include "tap.h"
+#include "../tap/tap.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -61,47 +61,47 @@ main (int argc, char **argv)
 
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
-	ok( range->start == 0, "Start correct");
+	ok( range->start.pd_uint == 0, "Start correct");
 	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 6, "End correct");
+	ok( range->end.pd_uint == 6, "End correct");
 	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("1:12%%");
 	ok( range != NULL, "'1:12%%' is valid - percentages are ignored");
-	ok( range->start == 1, "Start correct");
+	ok( range->start.pd_uint == 1, "Start correct");
 	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 12, "End correct");
+	ok( range->end.pd_uint == 12, "End correct");
 	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("-7:23");
 	ok( range != NULL, "'-7:23' is valid range");
-	ok( range->start == -7, "Start correct");
+	ok( range->start.pd_int == -7, "Start correct");
 	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 23, "End correct");
+	ok( range->end.pd_uint == 23, "End correct");
 	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string(":5.75");
 	ok( range != NULL, "':5.75' is valid range");
-	ok( range->start == 0, "Start correct");
+	ok( range->start.pd_uint == 0, "Start correct");
 	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 5.75, "End correct");
+	ok( range->end.pd_double == 5.75, "End correct");
 	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("~:-95.99");
 	ok( range != NULL, "~:-95.99' is valid range");
 	ok( range->start_infinity == true, "Using negative infinity");
-	ok( range->end == -95.99, "End correct (with rounding errors)");
+	ok( range->end.pd_double == -95.99, "End correct (with rounding errors)");
 	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("12345678901234567890:");
 	temp = atof("12345678901234567890");		/* Can't just use this because number too large */
 	ok( range != NULL, "'12345678901234567890:' is valid range");
-	ok( range->start == temp, "Start correct");
+	ok( range->start.pd_uint == temp, "Start correct");
 	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end_infinity == true, "Using infinity");
 	/* Cannot do a "-1" on temp, as it appears to be same value */

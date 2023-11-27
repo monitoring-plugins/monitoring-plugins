@@ -20,6 +20,7 @@
 
 
 #include "./perfdata.h"
+#include "./thresholds.h"
 #include "./output.h"
 #define NP_STATE_FORMAT_VERSION 1
 
@@ -47,9 +48,10 @@ typedef struct np_struct {
 range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
-void print_thresholds(const char *, thresholds *, enum value_type_t);
-bool check_range(perfdata_value, range *, enum value_type_t);
-int get_status(perfdata_value, thresholds *, enum value_type_t);
+void print_thresholds(const char *, thresholds *);
+bool check_range(perfdata_value, range *);
+int get_status(double, thresholds *);
+int get_status2(perfdata_value, thresholds *);
 
 /* Handle timeouts */
 extern int timeout_state;
