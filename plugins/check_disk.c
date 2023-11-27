@@ -451,7 +451,7 @@ main (int argc, char **argv)
 
   if (strcmp(output, "") == 0 && ! erronly) {
     preamble = "";
-    xasprintf (&output, " - No disks were found for provided parameters;");
+    xasprintf (&output, " - No disks were found for provided parameters");
   }
 
   printf ("DISK %s%s%s%s%s|%s\n", state_text (result), ((erronly && result==STATE_OK)) ? "" : preamble, output, (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
@@ -831,7 +831,7 @@ process_arguments (int argc, char **argv)
 
       if (!fnd && ignore_missing == true) {
         path_ignored = true;
-        /* path_selected = true;*/
+        path_selected = true;
         break;
       } else if (!fnd)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
