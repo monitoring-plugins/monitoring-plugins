@@ -112,8 +112,7 @@ enum
 {
   SYNC_OPTION = CHAR_MAX + 1,
   NO_SYNC_OPTION,
-  BLOCK_SIZE_OPTION,
-  IGNORE_MISSING
+  BLOCK_SIZE_OPTION
 };
 
 #ifdef _AIX
@@ -524,7 +523,7 @@ process_arguments (int argc, char **argv)
     {"ignore-ereg-partition", required_argument, 0, 'i'},
     {"ignore-eregi-path", required_argument, 0, 'I'},
     {"ignore-eregi-partition", required_argument, 0, 'I'},
-    {"ignore-missing", no_argument, 0, IGNORE_MISSING},
+    {"ignore-missing", no_argument, 0, 'n'},
     {"local", no_argument, 0, 'l'},
     {"stat-remote-fs", no_argument, 0, 'L'},
     {"iperfdata", no_argument, 0, 'P'},
@@ -550,7 +549,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEA", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEAn", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -792,7 +791,7 @@ process_arguments (int argc, char **argv)
       cflags = default_cflags;
       break;
 
-    case IGNORE_MISSING:
+    case 'n':
       ignore_missing = true;
       break;
     case 'A':
@@ -1004,7 +1003,7 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
   printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
-  printf (" %s\n", "--ignore-missing");
+  printf (" %s\n", "-n, --ignore-missing");
   printf ("    %s\n", _("Return OK if no filesystem matches, filesystem does not exist or is inaccessible."));
   printf ("    %s\n", _("(Provide this option before -p / -r / --ereg-path if used)"));
   printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
