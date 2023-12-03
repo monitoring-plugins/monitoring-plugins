@@ -255,6 +255,13 @@ main (int argc, char **argv)
 				continue;
 			}
 
+			/* Ignore our own children */
+			if (procppid == mypid) {
+				if (verbose >= 3)
+					 printf("not considering - is our child\n");
+				continue;
+			}
+
 			/* Ignore excluded processes by name */
 			if(options & EXCLUDE_PROGS) {
 			  int found = 0;
