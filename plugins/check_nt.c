@@ -148,376 +148,131 @@ int main(int argc, char **argv){
 	switch (vars_to_check) {
 
 		case CHECK_CLIENTVERSION:
-			{
-				xasprintf(&send_buffer, "%s&1", req_password);
-				fetch_data (server_address, server_port, send_buffer);
-				if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
-					xasprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
-					return_code = STATE_WARNING;
-				} else {
-					xasprintf (&output_message, "%s", recv_buffer);
-					return_code = STATE_OK;
-				}
-				break;
+			xasprintf(&send_buffer, "%s&1", req_password);
+			fetch_data (server_address, server_port, send_buffer);
+			if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
+				xasprintf (&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
+				return_code = STATE_WARNING;
+			} else {
+				xasprintf (&output_message, "%s", recv_buffer);
+				return_code = STATE_OK;
 			}
+			break;
 		case CHECK_CPULOAD:
-			{
-				if (value_list==NULL)
-					output_message = strdup (_("missing -l parameters"));
-				else if (strtoularray(lvalue_list,value_list,",")==FALSE)
-					output_message = strdup (_("wrong -l parameter."));
-				else {
-					/* -l parameters is present with only integers */
-					return_code=STATE_OK;
-					temp_string = strdup (_("CPU Load"));
-					temp_string_perf = strdup (" ");
+			if (value_list==NULL)
+				output_message = strdup (_("missing -l parameters"));
+			else if (strtoularray(lvalue_list,value_list,",")==FALSE)
+				output_message = strdup (_("wrong -l parameter."));
+			else {
+				/* -l parameters is present with only integers */
+				return_code=STATE_OK;
+				temp_string = strdup (_("CPU Load"));
+				temp_string_perf = strdup (" ");
 
-					/* loop until one of the parameters is wrong or not present */
-					while (lvalue_list[0+offset]> (unsigned long)0 &&
-							lvalue_list[0+offset]<=(unsigned long)17280 &&
-							lvalue_list[1+offset]> (unsigned long)0 &&
-							lvalue_list[1+offset]<=(unsigned long)100 &&
-							lvalue_list[2+offset]> (unsigned long)0 &&
-							lvalue_list[2+offset]<=(unsigned long)100) {
+				/* loop until one of the parameters is wrong or not present */
+				while (lvalue_list[0+offset]> (unsigned long)0 &&
+						lvalue_list[0+offset]<=(unsigned long)17280 &&
+						lvalue_list[1+offset]> (unsigned long)0 &&
+						lvalue_list[1+offset]<=(unsigned long)100 &&
+						lvalue_list[2+offset]> (unsigned long)0 &&
+						lvalue_list[2+offset]<=(unsigned long)100) {
 
-						/* Send request and retrieve data */
-						xasprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
-						fetch_data (server_address, server_port, send_buffer);
-
-						utilization=strtoul(recv_buffer,NULL,10);
-
-						/* Check if any of the request is in a warning or critical state */
-						if(utilization >= lvalue_list[2+offset])
-							return_code=STATE_CRITICAL;
-						else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
-							return_code=STATE_WARNING;
-
-						xasprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
-						xasprintf(&temp_string,"%s%s",temp_string,output_message);
-						xasprintf(&perfdata,_(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0+offset], utilization,
-								lvalue_list[1+offset], lvalue_list[2+offset]);
-						xasprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
-						offset+=3;	/* move across the array */
-					}
-
-					if (strlen(temp_string)>10) {  /* we had at least one loop */
-						output_message = strdup (temp_string);
-						perfdata = temp_string_perf;
-					} else
-						output_message = strdup (_("not enough values for -l parameters"));
-				}
-				break;
-			}
-		case CHECK_UPTIME:
-			{
-				if (value_list == NULL) {
-					value_list = "minutes";
-				}
-				if (strncmp(value_list, "seconds", strlen("seconds") + 1 ) &&
-						strncmp(value_list, "minutes", strlen("minutes") + 1) &&
-						strncmp(value_list, "hours", strlen("hours") + 1) &&
-						strncmp(value_list, "days", strlen("days") + 1)) {
-
-					output_message = strdup (_("wrong -l argument"));
-				} else {
-					xasprintf(&send_buffer, "%s&3", req_password);
+					/* Send request and retrieve data */
+					xasprintf(&send_buffer,"%s&2&%lu",req_password,lvalue_list[0+offset]);
 					fetch_data (server_address, server_port, send_buffer);
-					uptime=strtoul(recv_buffer,NULL,10);
-					updays = uptime / 86400;
-					uphours = (uptime % 86400) / 3600;
-					upminutes = ((uptime % 86400) % 3600) / 60;
 
-					if (!strncmp(value_list, "minutes", strlen("minutes")))
-						uptime = uptime / 60;
-					else if (!strncmp(value_list, "hours", strlen("hours")))
-						uptime = uptime / 3600;
-					else if (!strncmp(value_list, "days", strlen("days")))
-						uptime = uptime / 86400;
-					/* else uptime in seconds, nothing to do */
+					utilization=strtoul(recv_buffer,NULL,10);
 
-					xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
-
-					if (check_critical_value==TRUE && uptime <= critical_value)
+					/* Check if any of the request is in a warning or critical state */
+					if(utilization >= lvalue_list[2+offset])
 						return_code=STATE_CRITICAL;
-					else if (check_warning_value==TRUE && uptime <= warning_value)
+					else if(utilization >= lvalue_list[1+offset] && return_code<STATE_WARNING)
 						return_code=STATE_WARNING;
-					else
-						return_code=STATE_OK;
+
+					xasprintf(&output_message,_(" %lu%% (%lu min average)"), utilization, lvalue_list[0+offset]);
+					xasprintf(&temp_string,"%s%s",temp_string,output_message);
+					xasprintf(&perfdata,_(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0+offset], utilization,
+							lvalue_list[1+offset], lvalue_list[2+offset]);
+					xasprintf(&temp_string_perf,"%s%s",temp_string_perf,perfdata);
+					offset+=3;	/* move across the array */
 				}
-				break;
-			}
-		case CHECK_USEDDISKSPACE:
-			{
-				if (value_list==NULL)
-					output_message = strdup (_("missing -l parameters"));
-				else if (strlen(value_list)!=1)
-					output_message = strdup (_("wrong -l argument"));
-				else {
-					xasprintf(&send_buffer,"%s&4&%s", req_password, value_list);
-					fetch_data (server_address, server_port, send_buffer);
-					fds=strtok(recv_buffer,"&");
-					tds=strtok(NULL,"&");
-					if(fds!=NULL)
-						free_disk_space=atof(fds);
-					if(tds!=NULL)
-						total_disk_space=atof(tds);
 
-					if (total_disk_space>0 && free_disk_space>=0) {
-						percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
-						warning_used_space = ((float)(warning_value ? warning_value->end : 0) / 100) * total_disk_space;
-						critical_used_space = ((float)(critical_value ? critical_value->end : 0) / 100) * total_disk_space;
-
-						xasprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
-								value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824,
-								percent_used_space, free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100);
-						xasprintf(&temp_string_perf,_("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
-								(total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
-								critical_used_space / 1073741824, total_disk_space / 1073741824);
-
-						if(allnumeric(critical_value_string) && allnumeric(warning_value_string)) {
-							if (critical_value > warning_value) {
-								/* Normal thresholds */
-								if (check_critical_value == TRUE && percent_used_space >= critical_value->end) {
-									return_code = STATE_CRITICAL;
-								} else if (check_warning_value == TRUE && percent_used_space >= warning_value->end) {
-									return_code = STATE_WARNING;
-								} else {
-									return_code = STATE_OK;
-								}
-							} else {
-								/* inverse thresholds */
-								return_code = STATE_OK;
-								if (check_critical_value == TRUE && percent_used_space <= critical_value->end) {
-									return_code = STATE_CRITICAL;
-								} else if (check_warning_value == TRUE && percent_used_space <= warning_value->end) {
-									return_code = STATE_WARNING;
-								}
-							}
-						} else {
-							if(check_critical_value==TRUE && check_range(percent_used_space, critical_value)) {
-								return_code=STATE_CRITICAL;
-							} else if (check_warning_value==TRUE && check_range(percent_used_space, warning_value)) {
-								return_code=STATE_WARNING;
-							} else {
-								return_code=STATE_OK;
-							}
-						}
-
-						output_message = strdup (temp_string);
-						perfdata = temp_string_perf;
-					} else {
-						output_message = strdup (_("Free disk space : Invalid drive"));
-						return_code=STATE_UNKNOWN;
-					}
-				}
-				break;
-			}
-		case CHECK_SERVICESTATE:
-		case CHECK_PROCSTATE:
-			{
-				if (value_list==NULL)
-					output_message = strdup (_("No service/process specified"));
-				else {
-					preparelist(value_list);		/* replace , between services with & to send the request */
-					xasprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
-							(show_all==TRUE) ? "ShowAll" : "ShowFail",value_list);
-					fetch_data (server_address, server_port, send_buffer);
-					numstr = strtok(recv_buffer,"&");
-					if (numstr == NULL)
-						die(STATE_UNKNOWN, _("could not fetch information from server\n"));
-					return_code=atoi(numstr);
-					temp_string=strtok(NULL,"&");
+				if (strlen(temp_string)>10) {  /* we had at least one loop */
 					output_message = strdup (temp_string);
-				}
-				break;
+					perfdata = temp_string_perf;
+				} else
+					output_message = strdup (_("not enough values for -l parameters"));
 			}
-		case CHECK_MEMUSE:
-			{
-				xasprintf(&send_buffer,"%s&7", req_password);
+			break;
+		case CHECK_UPTIME:
+			if (value_list == NULL) {
+				value_list = "minutes";
+			}
+			if (strncmp(value_list, "seconds", strlen("seconds") + 1 ) &&
+					strncmp(value_list, "minutes", strlen("minutes") + 1) &&
+					strncmp(value_list, "hours", strlen("hours") + 1) &&
+					strncmp(value_list, "days", strlen("days") + 1)) {
+
+				output_message = strdup (_("wrong -l argument"));
+			} else {
+				xasprintf(&send_buffer, "%s&3", req_password);
 				fetch_data (server_address, server_port, send_buffer);
-				numstr = strtok(recv_buffer,"&");
-				if (numstr == NULL)
-					die(STATE_UNKNOWN, _("could not fetch information from server\n"));
-				mem_commitLimit=atof(numstr);
-				numstr = strtok(NULL,"&");
-				if (numstr == NULL)
-					die(STATE_UNKNOWN, _("could not fetch information from server\n"));
-				mem_commitByte=atof(numstr);
-				percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
-				warning_used_space = ((float)(warning_value?warning_value->end:0) / 100) * mem_commitLimit;
-				critical_used_space = ((float)(warning_value?critical_value->end:0) / 100) * mem_commitLimit;
+				uptime=strtoul(recv_buffer,NULL,10);
+				updays = uptime / 86400;
+				uphours = (uptime % 86400) / 3600;
+				upminutes = ((uptime % 86400) % 3600) / 60;
 
-				/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
-					 which equals RAM + Pagefiles. */
-				xasprintf(&output_message,_("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
-						mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
-						(mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-				xasprintf(&perfdata,_("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
-						warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
+				if (!strncmp(value_list, "minutes", strlen("minutes")))
+					uptime = uptime / 60;
+				else if (!strncmp(value_list, "hours", strlen("hours")))
+					uptime = uptime / 3600;
+				else if (!strncmp(value_list, "days", strlen("days")))
+					uptime = uptime / 86400;
+				/* else uptime in seconds, nothing to do */
 
-				if(allnumeric(critical_value_string)&&allnumeric(warning_value_string)) {
-					if (critical_value > warning_value) {
-						/* Normal thresholds */
-						if (check_critical_value == TRUE && percent_used_space >= critical_value->end) {
-							return_code = STATE_CRITICAL;
-						} else if (check_warning_value == TRUE && percent_used_space >= warning_value->end) {
-							return_code = STATE_WARNING;
-						} else {
-							return_code = STATE_OK;
-						}
-					} else {
-						/* inverse thresholds */
-						return_code = STATE_OK;
-						if (check_critical_value == TRUE && percent_used_space <= critical_value->end) {
-							return_code = STATE_CRITICAL;
-						} else if (check_warning_value == TRUE && percent_used_space <= warning_value->end) {
-							return_code = STATE_WARNING;
-						}
-					}
-				} else {
-					return_code=STATE_OK;
-					if(check_critical_value==TRUE && check_range(percent_used_space, critical_value)) {
-						return_code=STATE_CRITICAL;
-					} else if (check_warning_value==TRUE && check_range(percent_used_space, warning_value)) {
-						return_code=STATE_WARNING;
-					}
-				}
-				break;
-			}
-		case CHECK_COUNTER:
-			{
-				/*
-					 CHECK_COUNTER has been modified to provide extensive perfdata information.
-					 In order to do this, some modifications have been done to the code
-					 and some constraints have been introduced.
+				xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
 
-					 1) For the sake of simplicity of the code, perfdata information will only be
-					 provided when the "description" field is added.
-
-					 2) If the counter you're going to measure is percent-based, the code will detect
-					 the percent sign in its name and will attribute minimum (0%) and maximum (100%)
-					 values automagically, as well the "%" sign to graph units.
-
-					 3) OTOH, if the counter is "absolute", you'll have to provide the following
-					 the counter unit - that is, the dimensions of the counter you're getting. Examples:
-					 pages/s, packets transferred, etc.
-
-					 4) If you want, you may provide the minimum and maximum values to expect. They aren't mandatory,
-					 but once specified they MUST have the same order of magnitude and units of -w and -c; otherwise.
-					 strange things will happen when you make graphs of your data.
-					 */
-
-				if (value_list == NULL)
-					output_message = strdup (_("No counter specified"));
+				if (check_critical_value==TRUE && uptime <= critical_value)
+					return_code=STATE_CRITICAL;
+				else if (check_warning_value==TRUE && uptime <= warning_value)
+					return_code=STATE_WARNING;
 				else
-				{
-					preparelist (value_list);	/* replace , between services with & to send the request */
-					isPercent = (strchr (value_list, '%') != NULL);
-
-					strtok (value_list, "&");	/* burn the first parameters */
-					description = strtok (NULL, "&");
-					counter_unit = strtok (NULL, "&");
-					xasprintf (&send_buffer, "%s&8&%s", req_password, value_list);
-					fetch_data (server_address, server_port, send_buffer);
-					counter_value = atof (recv_buffer);
-
-					if (description == NULL)
-						xasprintf (&output_message, "%.f", counter_value);
-					else if (isPercent)
-					{
-						counter_unit = strdup ("%");
-						allRight = TRUE;
-					}
-
-					if ((counter_unit != NULL) && (!allRight))
-					{
-						minval = strtok (NULL, "&");
-						maxval = strtok (NULL, "&");
-
-						/* All parameters specified. Let's check the numbers */
-
-						fminval = (minval != NULL) ? strtod (minval, &errcvt) : -1;
-						fmaxval = (minval != NULL) ? strtod (maxval, &errcvt) : -1;
-
-						if ((fminval == 0) && (minval == errcvt))
-							output_message = strdup (_("Minimum value contains non-numbers"));
-						else
-						{
-							if ((fmaxval == 0) && (maxval == errcvt))
-								output_message = strdup (_("Maximum value contains non-numbers"));
-							else
-								allRight = TRUE;	/* Everything is OK. */
-
-						}
-					}
-					else if ((counter_unit == NULL) && (description != NULL))
-						output_message = strdup (_("No unit counter specified"));
-
-					if (allRight)
-					{
-						/* Let's format the output string, finally... */
-						if (strstr(description, "%") == NULL) {
-							xasprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
-						} else {
-							/* has formatting, will segv if wrong */
-							xasprintf (&output_message, description, counter_value);
-						}
-						xasprintf (&output_message, "%s |", output_message);
-						xasprintf (&output_message,"%s %s", output_message,
-								fperfdatarange (description, counter_value,
-									counter_unit, warning_value_string, critical_value_string,
-									(!(isPercent) && (minval != NULL)), fminval,
-									(!(isPercent) && (minval != NULL)), fmaxval));
-					}
-				}
-
-				if(allnumeric(critical_value_string)&&allnumeric(warning_value_string)) {
-					if (critical_value > warning_value) {
-						/* Normal thresholds */
-						if (check_critical_value == TRUE && counter_value >= critical_value->end) {
-							return_code = STATE_CRITICAL;
-						} else if (check_warning_value == TRUE && counter_value >= warning_value->end) {
-							return_code = STATE_WARNING;
-						} else {
-							return_code = STATE_OK;
-						}
-					} else {			/* inverse thresholds */
-						return_code = STATE_OK;
-						if (check_critical_value == TRUE && counter_value <= critical_value->end) {
-							return_code = STATE_CRITICAL;
-						} else if (check_warning_value == TRUE && counter_value <= warning_value->end) {
-							return_code = STATE_WARNING;
-						}
-					}
-				}else{
-					if(check_critical_value == TRUE && check_range(counter_value, critical_value)) {
-						return_code = STATE_CRITICAL;
-					}else if(check_warning_value == TRUE && check_range(counter_value, warning_value)) {
-						return_code = STATE_WARNING;
-					}else{
-						return_code = STATE_OK;
-					}
-				}
-				break;
+					return_code=STATE_OK;
 			}
-		case CHECK_FILEAGE:
-			{
-				if (value_list==NULL) {
-					output_message = strdup (_("No counter specified"));
-				} else {
-					preparelist(value_list);		/* replace , between services with & to send the request */
-					xasprintf(&send_buffer,"%s&9&%s", req_password,value_list);
-					fetch_data (server_address, server_port, send_buffer);
-					age_in_minutes = atoi(strtok(recv_buffer,"&"));
-					description = strtok(NULL,"&");
-					output_message = strdup (description);
+			break;
+		case CHECK_USEDDISKSPACE:
+			if (value_list==NULL)
+				output_message = strdup (_("missing -l parameters"));
+			else if (strlen(value_list)!=1)
+				output_message = strdup (_("wrong -l argument"));
+			else {
+				xasprintf(&send_buffer,"%s&4&%s", req_password, value_list);
+				fetch_data (server_address, server_port, send_buffer);
+				fds=strtok(recv_buffer,"&");
+				tds=strtok(NULL,"&");
+				if(fds!=NULL)
+					free_disk_space=atof(fds);
+				if(tds!=NULL)
+					total_disk_space=atof(tds);
 
-					if(allnumeric(critical_value_string)&&allnumeric(warning_value_string))	{
+				if (total_disk_space>0 && free_disk_space>=0) {
+					percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
+					warning_used_space = ((float)(warning_value ? warning_value->end : 0) / 100) * total_disk_space;
+					critical_used_space = ((float)(critical_value ? critical_value->end : 0) / 100) * total_disk_space;
+
+					xasprintf(&temp_string,_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
+							value_list, total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824,
+							percent_used_space, free_disk_space / 1073741824, (free_disk_space / total_disk_space)*100);
+					xasprintf(&temp_string_perf,_("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
+							(total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
+							critical_used_space / 1073741824, total_disk_space / 1073741824);
+
+					if(allnumeric(critical_value_string) && allnumeric(warning_value_string)) {
 						if (critical_value > warning_value) {
 							/* Normal thresholds */
-							if (check_critical_value == TRUE && age_in_minutes >= critical_value->end) {
+							if (check_critical_value == TRUE && percent_used_space >= critical_value->end) {
 								return_code = STATE_CRITICAL;
-							} else if (check_warning_value == TRUE && age_in_minutes >= warning_value->end) {
+							} else if (check_warning_value == TRUE && percent_used_space >= warning_value->end) {
 								return_code = STATE_WARNING;
 							} else {
 								return_code = STATE_OK;
@@ -525,40 +280,267 @@ int main(int argc, char **argv){
 						} else {
 							/* inverse thresholds */
 							return_code = STATE_OK;
-							if (check_critical_value == TRUE && age_in_minutes <= critical_value->end) {
+							if (check_critical_value == TRUE && percent_used_space <= critical_value->end) {
 								return_code = STATE_CRITICAL;
-							} else if (check_warning_value == TRUE && age_in_minutes <= warning_value->end) {
+							} else if (check_warning_value == TRUE && percent_used_space <= warning_value->end) {
 								return_code = STATE_WARNING;
 							}
 						}
 					} else {
-						if(check_critical_value == TRUE && check_range(age_in_minutes, critical_value)) {
+						if(check_critical_value==TRUE && check_range(percent_used_space, critical_value)) {
+							return_code=STATE_CRITICAL;
+						} else if (check_warning_value==TRUE && check_range(percent_used_space, warning_value)) {
+							return_code=STATE_WARNING;
+						} else {
+							return_code=STATE_OK;
+						}
+					}
+
+					output_message = strdup (temp_string);
+					perfdata = temp_string_perf;
+				} else {
+					output_message = strdup (_("Free disk space : Invalid drive"));
+					return_code=STATE_UNKNOWN;
+				}
+			}
+			break;
+		case CHECK_SERVICESTATE:
+		case CHECK_PROCSTATE:
+			if (value_list==NULL)
+				output_message = strdup (_("No service/process specified"));
+			else {
+				preparelist(value_list);		/* replace , between services with & to send the request */
+				xasprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
+						(show_all==TRUE) ? "ShowAll" : "ShowFail",value_list);
+				fetch_data (server_address, server_port, send_buffer);
+				numstr = strtok(recv_buffer,"&");
+				if (numstr == NULL)
+					die(STATE_UNKNOWN, _("could not fetch information from server\n"));
+				return_code=atoi(numstr);
+				temp_string=strtok(NULL,"&");
+				output_message = strdup (temp_string);
+			}
+			break;
+	case CHECK_MEMUSE:
+			xasprintf(&send_buffer,"%s&7", req_password);
+			fetch_data (server_address, server_port, send_buffer);
+			numstr = strtok(recv_buffer,"&");
+			if (numstr == NULL)
+				die(STATE_UNKNOWN, _("could not fetch information from server\n"));
+			mem_commitLimit=atof(numstr);
+			numstr = strtok(NULL,"&");
+			if (numstr == NULL)
+				die(STATE_UNKNOWN, _("could not fetch information from server\n"));
+			mem_commitByte=atof(numstr);
+			percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
+			warning_used_space = ((float)(warning_value?warning_value->end:0) / 100) * mem_commitLimit;
+			critical_used_space = ((float)(warning_value?critical_value->end:0) / 100) * mem_commitLimit;
+
+			/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
+				 which equals RAM + Pagefiles. */
+			xasprintf(&output_message,_("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
+					mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
+					(mem_commitLimit - mem_commitByte) / 1048567, (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
+			xasprintf(&perfdata,_("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567,
+					warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
+
+			if(allnumeric(critical_value_string)&&allnumeric(warning_value_string)) {
+				if (critical_value > warning_value) {
+					/* Normal thresholds */
+					if (check_critical_value == TRUE && percent_used_space >= critical_value->end) {
+						return_code = STATE_CRITICAL;
+					} else if (check_warning_value == TRUE && percent_used_space >= warning_value->end) {
+						return_code = STATE_WARNING;
+					} else {
+						return_code = STATE_OK;
+					}
+				} else {
+					/* inverse thresholds */
+					return_code = STATE_OK;
+					if (check_critical_value == TRUE && percent_used_space <= critical_value->end) {
+						return_code = STATE_CRITICAL;
+					} else if (check_warning_value == TRUE && percent_used_space <= warning_value->end) {
+						return_code = STATE_WARNING;
+					}
+				}
+			} else {
+				return_code=STATE_OK;
+				if(check_critical_value==TRUE && check_range(percent_used_space, critical_value)) {
+					return_code=STATE_CRITICAL;
+				} else if (check_warning_value==TRUE && check_range(percent_used_space, warning_value)) {
+					return_code=STATE_WARNING;
+				}
+			}
+			break;
+		case CHECK_COUNTER:
+			/*
+				 CHECK_COUNTER has been modified to provide extensive perfdata information.
+				 In order to do this, some modifications have been done to the code
+				 and some constraints have been introduced.
+
+				 1) For the sake of simplicity of the code, perfdata information will only be
+				 provided when the "description" field is added.
+
+				 2) If the counter you're going to measure is percent-based, the code will detect
+				 the percent sign in its name and will attribute minimum (0%) and maximum (100%)
+				 values automagically, as well the "%" sign to graph units.
+
+				 3) OTOH, if the counter is "absolute", you'll have to provide the following
+				 the counter unit - that is, the dimensions of the counter you're getting. Examples:
+				 pages/s, packets transferred, etc.
+
+				 4) If you want, you may provide the minimum and maximum values to expect. They aren't mandatory,
+				 but once specified they MUST have the same order of magnitude and units of -w and -c; otherwise.
+				 strange things will happen when you make graphs of your data.
+				 */
+
+			if (value_list == NULL)
+				output_message = strdup (_("No counter specified"));
+			else
+			{
+				preparelist (value_list);	/* replace , between services with & to send the request */
+				isPercent = (strchr (value_list, '%') != NULL);
+
+				strtok (value_list, "&");	/* burn the first parameters */
+				description = strtok (NULL, "&");
+				counter_unit = strtok (NULL, "&");
+				xasprintf (&send_buffer, "%s&8&%s", req_password, value_list);
+				fetch_data (server_address, server_port, send_buffer);
+				counter_value = atof (recv_buffer);
+
+				if (description == NULL)
+					xasprintf (&output_message, "%.f", counter_value);
+				else if (isPercent)
+				{
+					counter_unit = strdup ("%");
+					allRight = TRUE;
+				}
+
+				if ((counter_unit != NULL) && (!allRight))
+				{
+					minval = strtok (NULL, "&");
+					maxval = strtok (NULL, "&");
+
+					/* All parameters specified. Let's check the numbers */
+
+					fminval = (minval != NULL) ? strtod (minval, &errcvt) : -1;
+					fmaxval = (minval != NULL) ? strtod (maxval, &errcvt) : -1;
+
+					if ((fminval == 0) && (minval == errcvt))
+						output_message = strdup (_("Minimum value contains non-numbers"));
+					else
+					{
+						if ((fmaxval == 0) && (maxval == errcvt))
+							output_message = strdup (_("Maximum value contains non-numbers"));
+						else
+							allRight = TRUE;	/* Everything is OK. */
+
+					}
+				}
+				else if ((counter_unit == NULL) && (description != NULL))
+					output_message = strdup (_("No unit counter specified"));
+
+				if (allRight)
+				{
+					/* Let's format the output string, finally... */
+					if (strstr(description, "%") == NULL) {
+						xasprintf (&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+					} else {
+						/* has formatting, will segv if wrong */
+						xasprintf (&output_message, description, counter_value);
+					}
+					xasprintf (&output_message, "%s |", output_message);
+					xasprintf (&output_message,"%s %s", output_message,
+							fperfdatarange (description, counter_value,
+								counter_unit, warning_value_string, critical_value_string,
+								(!(isPercent) && (minval != NULL)), fminval,
+								(!(isPercent) && (minval != NULL)), fmaxval));
+				}
+			}
+
+			if(allnumeric(critical_value_string)&&allnumeric(warning_value_string)) {
+				if (critical_value > warning_value) {
+					/* Normal thresholds */
+					if (check_critical_value == TRUE && counter_value >= critical_value->end) {
+						return_code = STATE_CRITICAL;
+					} else if (check_warning_value == TRUE && counter_value >= warning_value->end) {
+						return_code = STATE_WARNING;
+					} else {
+						return_code = STATE_OK;
+					}
+				} else {			/* inverse thresholds */
+					return_code = STATE_OK;
+					if (check_critical_value == TRUE && counter_value <= critical_value->end) {
+						return_code = STATE_CRITICAL;
+					} else if (check_warning_value == TRUE && counter_value <= warning_value->end) {
+						return_code = STATE_WARNING;
+					}
+				}
+			}else{
+				if(check_critical_value == TRUE && check_range(counter_value, critical_value)) {
+					return_code = STATE_CRITICAL;
+				}else if(check_warning_value == TRUE && check_range(counter_value, warning_value)) {
+					return_code = STATE_WARNING;
+				}else{
+					return_code = STATE_OK;
+				}
+			}
+			break;
+		case CHECK_FILEAGE:
+			if (value_list==NULL) {
+				output_message = strdup (_("No counter specified"));
+			} else {
+				preparelist(value_list);		/* replace , between services with & to send the request */
+				xasprintf(&send_buffer,"%s&9&%s", req_password,value_list);
+				fetch_data (server_address, server_port, send_buffer);
+				age_in_minutes = atoi(strtok(recv_buffer,"&"));
+				description = strtok(NULL,"&");
+				output_message = strdup (description);
+
+				if(allnumeric(critical_value_string)&&allnumeric(warning_value_string))	{
+					if (critical_value > warning_value) {
+						/* Normal thresholds */
+						if (check_critical_value == TRUE && age_in_minutes >= critical_value->end) {
 							return_code = STATE_CRITICAL;
-						} else if(check_warning_value == TRUE && check_range(age_in_minutes, warning_value)) {
+						} else if (check_warning_value == TRUE && age_in_minutes >= warning_value->end) {
 							return_code = STATE_WARNING;
 						} else {
 							return_code = STATE_OK;
 						}
+					} else {
+						/* inverse thresholds */
+						return_code = STATE_OK;
+						if (check_critical_value == TRUE && age_in_minutes <= critical_value->end) {
+							return_code = STATE_CRITICAL;
+						} else if (check_warning_value == TRUE && age_in_minutes <= warning_value->end) {
+							return_code = STATE_WARNING;
+						}
+					}
+				} else {
+					if(check_critical_value == TRUE && check_range(age_in_minutes, critical_value)) {
+						return_code = STATE_CRITICAL;
+					} else if(check_warning_value == TRUE && check_range(age_in_minutes, warning_value)) {
+						return_code = STATE_WARNING;
+					} else {
+						return_code = STATE_OK;
 					}
 				}
-				break;
 			}
+			break;
 		case CHECK_INSTANCES:
-			{
-				if (value_list==NULL)
-					output_message = strdup (_("No counter specified"));
-				else {
-					xasprintf(&send_buffer,"%s&10&%s", req_password,value_list);
-					fetch_data (server_address, server_port, send_buffer);
-					if (!strncmp(recv_buffer,"ERROR",5)) {
-						printf("NSClient - %s\n",recv_buffer);
-						exit(STATE_UNKNOWN);
-					}
-					xasprintf(&output_message,"%s",recv_buffer);
-					return_code=STATE_OK;
+			if (value_list==NULL)
+				output_message = strdup (_("No counter specified"));
+			else {
+				xasprintf(&send_buffer,"%s&10&%s", req_password,value_list);
+				fetch_data (server_address, server_port, send_buffer);
+				if (!strncmp(recv_buffer,"ERROR",5)) {
+					printf("NSClient - %s\n",recv_buffer);
+					exit(STATE_UNKNOWN);
 				}
-				break;
+				xasprintf(&output_message,"%s",recv_buffer);
+				return_code=STATE_OK;
 			}
+			break;
 		case CHECK_NONE:
 		default:
 			usage4 (_("Please specify a variable to check"));
