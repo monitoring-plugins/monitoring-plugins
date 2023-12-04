@@ -14,9 +14,8 @@
 * defaults to number of processes.  Search filters can be applied to limit
 * the processes to check.
 *
-* The parent process (usually nrpe), check_procs itself and any child
-* process of check_procs (ps) are excluded from any checks to prevent
-* false positives.
+* The parent process, check_procs itself and any child process of 
+* check_procs (ps) are excluded from any checks to prevent false positives.
 *
 *
 * This program is free software: you can redistribute it and/or modify
@@ -750,8 +749,8 @@ print_help (void)
 
   printf ("\n\n");
 
-  printf ("%s\n", _("The parent process (usually nrpe), check_procs itself and any child process of"));
-  printf ("%s\n", _("check_procs (ps) are excluded from any checks to prevent false positives."));
+  printf ("%s\n", _("The parent process, check_procs itself and any child process of check_procs (ps)"));
+  printf ("%s\n", _("are excluded from any checks to prevent false positives."));
 
   printf ("\n\n");
 
