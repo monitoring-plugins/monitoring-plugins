@@ -34,7 +34,7 @@ const char *progname = "check_mysql";
 const char *copyright = "1999-2011";
 const char *email = "devel@monitoring-plugins.org";
 
-#define SLAVERESULTSIZE 70
+#define SLAVERESULTSIZE 96
 
 #include "common.h"
 #include "utils.h"
@@ -89,6 +89,8 @@ static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
 	"Uptime"
 };
 
+#define MYSQLDUMP_THREADS_QUERY "SELECT COUNT(1) mysqldumpThreads FROM information_schema.processlist WHERE info LIKE 'SELECT /*!40001 SQL_NO_CACHE */%'"
+
 thresholds *my_threshold = NULL;
 
 int process_arguments (int, char **);
@@ -108,10 +110,10 @@ main (int argc, char **argv)
 
 	char *result = NULL;
 	char *error = NULL;
-	char slaveresult[SLAVERESULTSIZE];
+	char slaveresult[SLAVERESULTSIZE] = { 0 };
 	char* perf;
 
-        perf = strdup ("");
+	perf = strdup ("");
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -191,14 +193,14 @@ main (int argc, char **argv)
 			for(i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i],
-						atol(row[1]), "", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+						atol(row[1]), "", false, 0, false, 0, false, 0, false, 0));
 					continue;
 				}
 			}
 			for(i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i],
-						atol(row[1]), "c", FALSE, 0, FALSE, 0, FALSE, 0, FALSE, 0));
+						atol(row[1]), "c", false, 0, false, 0, false, 0, false, 0));
 					continue;
 				}
 			}
@@ -278,11 +280,30 @@ main (int argc, char **argv)
 			/* Save slave status in slaveresult */
 			snprintf (slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field], row[slave_sql_field], seconds_behind_field!=-1?row[seconds_behind_field]:"Unknown");
 
-			/* Raise critical error if SQL THREAD or IO THREAD are stopped */
+			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no mysqldump threads running */
 			if (strcmp (row[slave_io_field], "Yes") != 0 || strcmp (row[slave_sql_field], "Yes") != 0) {
-				mysql_free_result (res);
-				mysql_close (&mysql);
-				die (STATE_CRITICAL, "%s\n", slaveresult);
+				MYSQL_RES *res_mysqldump;
+				MYSQL_ROW row_mysqldump;
+				unsigned int mysqldump_threads = 0;
+
+				if (mysql_query (&mysql, MYSQLDUMP_THREADS_QUERY) == 0) {
+					/* store the result */
+					if ( (res_mysqldump = mysql_store_result (&mysql)) != NULL) {
+						if (mysql_num_rows(res_mysqldump) == 1) {
+							if ( (row_mysqldump = mysql_fetch_row (res_mysqldump)) != NULL) {
+								mysqldump_threads = atoi(row_mysqldump[0]);
+							}
+						}
+						/* free the result */
+						mysql_free_result (res_mysqldump);
+					}
+					mysql_close (&mysql);
+				}
+				if (mysqldump_threads == 0) {
+					die (STATE_CRITICAL, "%s\n", slaveresult);
+				} else {
+					strncat(slaveresult, " Mysqldump: in progress", SLAVERESULTSIZE-1);
+				}
 			}
 
 			if (verbose >=3) {
@@ -294,17 +315,17 @@ main (int argc, char **argv)
 			}
 
 			/* Check Seconds Behind against threshold */
-			if ((seconds_behind_field != -1) && (strcmp (row[seconds_behind_field], "NULL") != 0)) {
+			if ((seconds_behind_field != -1) && (row[seconds_behind_field] != NULL && strcmp (row[seconds_behind_field], "NULL") != 0)) {
 				double value = atof(row[seconds_behind_field]);
 				int status;
 
 				status = get_status(value, my_threshold);
 
 				xasprintf (&perf, "%s %s", perf, fperfdata ("seconds behind master", value, "s",
-        	                        TRUE, (double) warning_time,
-                	                TRUE, (double) critical_time,
-                        	        FALSE, 0,
-                                	FALSE, 0));
+							true, (double) warning_time,
+							true, (double) critical_time,
+							false, 0,
+							false, 0));
 
 				if (status == STATE_WARNING) {
 					printf("SLOW_SLAVE %s: %s|%s\n", _("WARNING"), slaveresult, perf);

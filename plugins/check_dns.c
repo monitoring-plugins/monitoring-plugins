@@ -41,8 +41,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int error_scan (char *, int *);
-int ip_match_cidr(const char *, const char *);
+int error_scan (char *, bool *);
+bool ip_match_cidr(const char *, const char *);
 unsigned long ip2long(const char *);
 void print_help (void);
 void print_usage (void);
@@ -51,13 +51,13 @@ void print_usage (void);
 char query_address[ADDRESS_LENGTH] = "";
 char dns_server[ADDRESS_LENGTH] = "";
 char ptr_server[ADDRESS_LENGTH] = "";
-int verbose = FALSE;
+bool verbose = false;
 char **expected_address = NULL;
 int expected_address_cnt = 0;
-int expect_nxdomain = FALSE;
+bool expect_nxdomain = false;
 
-int expect_authority = FALSE;
-int all_match = FALSE;
+bool expect_authority = false;
+bool all_match = false;
 thresholds *time_thresholds = NULL;
 
 static int
@@ -80,15 +80,14 @@ main (int argc, char **argv)
   int n_addresses = 0;
   char *msg = NULL;
   char *temp_buffer = NULL;
-  int non_authoritative = FALSE;
+  bool non_authoritative = false;
   int result = STATE_UNKNOWN;
   double elapsed_time;
   long microsec;
   struct timeval tv;
-  int parse_address = FALSE; /* This flag scans for Address: but only after Name: */
+  bool parse_address = false; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
-  size_t i;
-  int is_nxdomain = FALSE;
+  bool is_nxdomain = false;
 
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
@@ -122,7 +121,7 @@ main (int argc, char **argv)
   }
 
   /* scan stdout */
-  for(i = 0; i < chld_out.lines; i++) {
+  for(size_t i = 0; i < chld_out.lines; i++) {
     if (addresses == NULL)
       addresses = malloc(sizeof(*addresses)*10);
     else if (!(n_addresses % 10))
@@ -164,8 +163,8 @@ main (int argc, char **argv)
 
     /* the server is responding, we just got the host name... */
     if (strstr (chld_out.line[i], "Name:"))
-      parse_address = TRUE;
-    else if (parse_address == TRUE && (strstr (chld_out.line[i], "Address:") ||
+      parse_address = true;
+    else if (parse_address && (strstr (chld_out.line[i], "Address:") ||
              strstr (chld_out.line[i], "Addresses:"))) {
       temp_buffer = index (chld_out.line[i], ':');
       temp_buffer++;
@@ -184,7 +183,7 @@ main (int argc, char **argv)
       addresses[n_addresses++] = strdup(temp_buffer);
     }
     else if (strstr (chld_out.line[i], _("Non-authoritative answer:"))) {
-      non_authoritative = TRUE;
+      non_authoritative = true;
     }
 
 
@@ -197,7 +196,7 @@ main (int argc, char **argv)
   }
 
   /* scan stderr */
-  for(i = 0; i < chld_err.lines; i++) {
+  for(size_t i = 0; i < chld_err.lines; i++) {
     if (verbose)
       puts(chld_err.line[i]);
 
@@ -241,7 +240,7 @@ main (int argc, char **argv)
     unsigned long expect_match = (1 << expected_address_cnt) - 1;
     unsigned long addr_match = (1 << n_addresses) - 1;
 
-    for (i=0; i<expected_address_cnt; i++) {
+    for (int i=0; i<expected_address_cnt; i++) {
       int j;
       /* check if we get a match on 'raw' ip or cidr */
       for (j=0; j<n_addresses; j++) {
@@ -298,21 +297,21 @@ main (int argc, char **argv)
     printf (_(". %s returns %s"), query_address, address);
     if ((time_thresholds->warning != NULL) && (time_thresholds->critical != NULL)) {
       printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
-                                  TRUE, time_thresholds->warning->end,
-                                  TRUE, time_thresholds->critical->end,
-                                  TRUE, 0, FALSE, 0));
+                                  true, time_thresholds->warning->end,
+                                  true, time_thresholds->critical->end,
+                                  true, 0, false, 0));
     } else if ((time_thresholds->warning == NULL) && (time_thresholds->critical != NULL)) {
       printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
-                                  FALSE, 0,
-                                  TRUE, time_thresholds->critical->end,
-                                  TRUE, 0, FALSE, 0));
+                                  false, 0,
+                                  true, time_thresholds->critical->end,
+                                  true, 0, false, 0));
     } else if ((time_thresholds->warning != NULL) && (time_thresholds->critical == NULL)) {
       printf ("|%s\n", fperfdata ("time", elapsed_time, "s",
-                                  TRUE, time_thresholds->warning->end,
-                                  FALSE, 0,
-                                  TRUE, 0, FALSE, 0));
+                                  true, time_thresholds->warning->end,
+                                  false, 0,
+                                  true, 0, false, 0));
     } else
-      printf ("|%s\n", fperfdata ("time", elapsed_time, "s", FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+      printf ("|%s\n", fperfdata ("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
   }
   else if (result == STATE_WARNING)
     printf (_("DNS WARNING - %s\n"),
@@ -327,15 +326,14 @@ main (int argc, char **argv)
   return result;
 }
 
-int
-ip_match_cidr(const char *addr, const char *cidr_ro)
-{
+bool ip_match_cidr(const char *addr, const char *cidr_ro) {
   char *subnet, *mask_c, *cidr = strdup(cidr_ro);
   int mask;
   subnet = strtok(cidr, "/");
   mask_c = strtok(NULL, "\0");
-  if (!subnet || !mask_c)
-    return FALSE;
+  if (!subnet || !mask_c) {
+    return false;
+	}
   mask = atoi(mask_c);
 
   /* https://www.cryptobells.com/verifying-ips-in-a-subnet-in-php/ */
@@ -355,14 +353,14 @@ ip2long(const char* src) {
 }
 
 int
-error_scan (char *input_buffer, int *is_nxdomain)
+error_scan (char *input_buffer, bool *is_nxdomain)
 {
 
   const int nxdomain = strstr (input_buffer, "Non-existent") ||
                        strstr (input_buffer, "** server can't find") ||
                        strstr (input_buffer, "** Can't find") ||
                        strstr (input_buffer, "NXDOMAIN");
-  if (nxdomain) *is_nxdomain = TRUE;
+  if (nxdomain) *is_nxdomain = true;
 
   /* the DNS lookup timed out */
   if (strstr (input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
@@ -461,7 +459,7 @@ process_arguments (int argc, char **argv)
       print_revision (progname, NP_VERSION);
       exit (STATE_UNKNOWN);
     case 'v': /* version */
-      verbose = TRUE;
+      verbose = true;
       break;
     case 't': /* timeout period */
       timeout_interval = atoi (optarg);
@@ -508,13 +506,13 @@ process_arguments (int argc, char **argv)
       }
       break;
     case 'n': /* expect NXDOMAIN */
-      expect_nxdomain = TRUE;
+      expect_nxdomain = true;
       break;
     case 'A': /* expect authority */
-      expect_authority = TRUE;
+      expect_authority = true;
       break;
     case 'L': /* all must match */
-      all_match = TRUE;
+      all_match = true;
       break;
     case 'w':
       warning = optarg;

@@ -19,6 +19,7 @@ sub print_usage ();
 $ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
+$ENV{'CDPATH'}='';
 
 Getopt::Long::Configure('bundling');
 GetOptions
@@ -50,34 +51,34 @@ my $critical = $1 if ($opt_c =~ /([0-9]+)/);
 ($opt_w) || ($opt_w = shift) || ($opt_w = 60);
 my $warning = $1 if ($opt_w =~ /([0-9]+)/);
 
-$low1 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.8.1`;
+$low1 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.8.1`;
 @test = split(/ /,$low1);
 $low1 = $test[2];
 
-$med1 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.9.1`;
+$med1 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.9.1`;
 @test = split(/ /,$med1);
 $med1 = $test[2];
 
-$high1 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.10.1`;
+$high1 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.10.1`;
 @test = split(/ /,$high1);
 $high1 = $test[2];
 
 sleep(2);
 
-$snr = `snmpget $host public .1.3.6.1.4.1.762.2.5.2.1.17.1`;
+$snr = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.762.2.5.2.1.17.1`;
 @test = split(/ /,$snr);
 $snr = $test[2];
 $snr = int($snr*25);
 
-$low2 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.8.1`;
+$low2 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.8.1`;
 @test = split(/ /,$low2);
 $low2 = $test[2];
 
-$med2 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.9.1`;
+$med2 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.9.1`;
 @test = split(/ /,$med2);
 $med2 = $test[2];
 
-$high2 = `snmpget $host public .1.3.6.1.4.1.74.2.21.1.2.1.10.1`;
+$high2 = `$utils::PATH_TO_SNMPGET $host public .1.3.6.1.4.1.74.2.21.1.2.1.10.1`;
 @test = split(/ /,$high2);
 $high2 = $test[2];
 

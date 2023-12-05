@@ -16,12 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Codespell
-        uses: codespell-project/actions-codespell@master
+        uses: codespell-project/actions-codespell@v2
         with:
-          skip: "./.git,./.gitignore,./ABOUT-NLS,*.po,./gl,./po,./tools/squid.conf,./build-aux/ltmain.sh"
-          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners
+          skip: "./.git,./.gitignore,./ABOUT-NLS,./gl,./tools/squid.conf,./build-aux/ltmain.sh,THANKS.in"
+          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners,esponse,slac
           check_filenames: true
           check_hidden: true
 #  super-linter:
@@ -31,7 +31,7 @@ jobs:
 #    runs-on: ubuntu-latest
 #    steps:
 #      - name: Checkout
-#        uses: actions/checkout@v3
+#        uses: actions/checkout@v4
 #      - name: Lint Code Base
 #        uses: github/super-linter@v5.0.0
 #        env:
@@ -57,7 +57,7 @@ jobs:
           #...
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       #- name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
       #  uses: mxschmitt/action-tmate@v3
       - name: Run the tests on ${{ matrix.distro }}
@@ -75,6 +75,11 @@ jobs:
                 tools/setup && \
                 ./configure --enable-libtap  --with-ipv6=no && \
                 make && \
-                make test'
+                make test && \
+                make dist && \
+                tar zxf monitoring-plugins-*.tar.gz && \
+                cd monitoring-plugins-*/ && \
+                ./configure && \
+                make'
           docker container prune -f
           docker volume prune -f

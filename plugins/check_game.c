@@ -53,7 +53,7 @@ char *server_ip;
 char *game_type;
 int port = 0;
 
-int verbose;
+bool verbose = false;
 
 int qstat_game_players_max = -1;
 int qstat_game_players = -1;
@@ -90,7 +90,7 @@ main (int argc, char **argv)
   if (port)
     xasprintf (&command_line, "%s:%-d", command_line, port);
 
-  if (verbose > 0)
+  if (verbose)
     printf ("%s\n", command_line);
 
   /* run the command. historically, this plugin ignores output on stderr,
@@ -142,11 +142,11 @@ main (int argc, char **argv)
             ret[qstat_map_field],
             ret[qstat_ping_field],
             perfdata ("players", atol(ret[qstat_game_players]), "",
-                      FALSE, 0, FALSE, 0,
-                      TRUE, 0, TRUE, atol(ret[qstat_game_players_max])),
+                      false, 0, false, 0,
+                      true, 0, true, atol(ret[qstat_game_players_max])),
             fperfdata ("ping", strtod(ret[qstat_ping_field], NULL), "",
-                      FALSE, 0, FALSE, 0,
-                      TRUE, 0, FALSE, 0));
+                      false, 0, false, 0,
+                      true, 0, false, 0));
   }
 
   return result;
@@ -201,7 +201,7 @@ process_arguments (int argc, char **argv)
       print_revision (progname, NP_VERSION);
       exit (STATE_UNKNOWN);
     case 'v': /* version */
-      verbose = TRUE;
+      verbose = true;
       break;
     case 't': /* timeout period */
       timeout_interval = atoi (optarg);
