@@ -35,6 +35,8 @@ static SSL_CTX *c=NULL;
 static SSL *s=NULL;
 static int initialized=0;
 
+int verify_ssl_hostname = 0;
+
 int np_net_ssl_init(int sd) {
 	return np_net_ssl_init_with_hostname(sd, NULL);
 }
@@ -44,10 +46,10 @@ int np_net_ssl_init_with_hostname(int sd, char *host_name) {
 }
 
 int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
-	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, NULL, NULL);
+	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, host_name != NULL, NULL, NULL);
 }
 
-int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
+int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, int sni, char *cert, char *privkey) {
 	const SSL_METHOD *method = NULL;
 	long options = 0;
 
@@ -159,11 +161,91 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	SSL_CTX_set_mode(c, SSL_MODE_AUTO_RETRY);
 	if ((s = SSL_new(c)) != NULL) {
 #ifdef SSL_set_tlsext_host_name
-		if (host_name != NULL)
+		if (sni && host_name != NULL)
 			SSL_set_tlsext_host_name(s, host_name);
 #endif
 		SSL_set_fd(s, sd);
 		if (SSL_connect(s) == 1) {
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+                        if (verify_ssl_hostname) {
+                            char cert_name[MAX_CN_LENGTH] = "";
+                            int ret;
+                            int i;
+
+                            // We need a hostname
+                            if (!host_name || !*host_name) {
+                                printf("%s\n", _("CRITICAL - No hostname provided for certificate validation."));
+                                return STATE_CRITICAL;
+                            }
+
+                            // Get server's certificate chain
+                            STACK_OF(X509) *chain;
+                            if ((chain = SSL_get_peer_cert_chain(s)) == NULL) {
+                                printf("%s\n", _("CRITICAL - Can't get server certificate chain."));
+                                return STATE_CRITICAL;
+                            }
+                            const int chain_len = sk_X509_num(chain);
+                            if (chain_len == 0) {
+                                printf("%s\n", _("CRITICAL - Server certificate chain is empty."));
+                                return STATE_CRITICAL;
+                            }
+
+                            // The first certificate in the chain is the server's certificate
+                            X509 *cert = sk_X509_value(chain, 0);
+                            if (np_net_ssl_get_certificate_cn(cert, cert_name, sizeof(cert_name)) == -1)
+                                strcpy(cert_name, "(Unknown)");
+
+                            // Verify the hostname matches
+                            if ((ret = X509_check_host(cert, host_name, 0, 0, NULL)) != 1) {
+                                printf(_("CRITICAL - Hostname mismatch: \"%s\" != \"%s\".\n"), cert_name, host_name);
+                                return STATE_CRITICAL;
+                            }
+
+                            // Initialize temporary certificate store, which contains certificates we trust
+                            X509_STORE* store = X509_STORE_new();
+                            if ((ret = X509_STORE_set_default_paths(store)) != 1) {
+                                printf("%s\n", _("CRITICAL - Can't set default certificate store paths"));
+                                return STATE_CRITICAL;
+                            }
+                            X509_STORE_set_flags(store, 0);             // is this needed?
+
+                            // Try to build a continuous verification chain starting from the top down
+                            bool verified = false;
+                            for (i = chain_len - 1; i >= 0; i--) {
+                                X509 *next = sk_X509_value(chain, i);
+
+                                // Get this certificate's name
+                                if (np_net_ssl_get_certificate_cn(next, cert_name, sizeof(cert_name)) == -1)
+                                    strcpy(cert_name, "(Unknown)");
+
+                                // Attempt to verify this certificate
+                                X509_STORE_CTX* ctx = X509_STORE_CTX_new();
+                                X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_ANY);              // is this needed?
+                                X509_STORE_CTX_init(ctx, store, next, NULL);
+                                ret = X509_verify_cert(ctx);
+                                X509_STORE_CTX_free(ctx);
+
+                                // Check result
+                                verified = ret == 1;
+                                //printf(_("DEBUG - chain[%d]: %s: \"%s\"\n"), i, verified ? "OK" : "FAILED", cert_name);
+
+                                // If this certificate verified, add it to our store so the chain can continue
+                                if (verified) {
+                                    if ((ret = X509_STORE_add_cert(store, next)) != 1) {
+                                        printf("%s\n", _("CRITICAL - Can't add certificate to store."));
+                                        return STATE_CRITICAL;
+                                    }
+                                }
+                            }
+                            X509_STORE_free(store);
+
+                            // Check result
+                            if (!verified) {
+                                printf(_("CRITICAL - Chain of trust failed for \"%s\".\n"), cert_name);
+                                return STATE_CRITICAL;
+                            }
+                        }
+#endif
 			return OK;
 		} else {
 			printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
@@ -202,7 +284,6 @@ int np_net_ssl_read(void *buf, int num) {
 
 int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit){
 #  ifdef USE_OPENSSL
-	X509_NAME *subj=NULL;
 	char timestamp[50] = "";
 	char cn[MAX_CN_LENGTH]= "";
 	char *tz;
@@ -218,20 +299,14 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 	int time_remaining;
 	time_t tm_t;
 
+    /* Verify we have a certificate */
 	if (!certificate) {
 		printf("%s\n",_("CRITICAL - Cannot retrieve server certificate."));
 		return STATE_CRITICAL;
 	}
 
-	/* Extract CN from certificate subject */
-	subj=X509_get_subject_name(certificate);
-
-	if (!subj) {
-		printf("%s\n",_("CRITICAL - Cannot retrieve certificate subject."));
-		return STATE_CRITICAL;
-	}
-	cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
-	if (cnlen == -1)
+    /* Get CN if possible - only used for display purposes in this function */
+	if (np_net_ssl_get_certificate_cn(certificate, cn, sizeof(cn)) == -1)
 		strcpy(cn, _("Unknown CN"));
 
 	/* Retrieve timestamp of certificate */
@@ -337,5 +412,22 @@ int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit){
 #  endif /* USE_OPENSSL */
 }
 
+// Returns the length of the name (not including '\0' byte) on success, or else -1 on failure.
+int np_net_ssl_get_certificate_cn(X509 *cert, char *buf, size_t buflen) {
+#  ifdef USE_OPENSSL
+	X509_NAME *subject;
+	int r;
 
+	/* Extract CN from certificate subject */
+	if (cert == NULL)
+		return -1;
+	if ((subject = X509_get_subject_name(cert)) == NULL)
+		return -1;
+	if ((r = X509_NAME_get_text_by_NID(subject, NID_commonName, buf, buflen)) == -1)
+		return -1;
+    return r;
+#  else /* ifndef USE_OPENSSL */
+	return -1;
+#  endif /* USE_OPENSSL */
+}
 #endif /* HAVE_SSL */

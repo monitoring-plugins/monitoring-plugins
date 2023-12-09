@@ -64,6 +64,7 @@ int ssl_version = 0;
 int days_till_exp_warn, days_till_exp_crit;
 char *randbuff;
 X509 *server_cert;
+extern bool verify_ssl_hostname;        // sslutils.c
 #  define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 #  define my_send(buf, len) ((use_ssl) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
@@ -210,7 +211,8 @@ bool process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     MAX_REDIRS_OPTION,
-    CONTINUE_AFTER_CHECK_CERT
+    CONTINUE_AFTER_CHECK_CERT,
+    VERIFY_SSL_HOSTNAME
   };
 
   int option = 0;
@@ -220,6 +222,7 @@ bool process_arguments (int argc, char **argv)
     {"nohtml", no_argument, 0, 'n'},
     {"ssl", optional_argument, 0, 'S'},
     {"sni", no_argument, 0, SNI_OPTION},
+    {"verify-host", no_argument, 0, VERIFY_SSL_HOSTNAME},
     {"post", required_argument, 0, 'P'},
     {"method", required_argument, 0, 'j'},
     {"IP-address", required_argument, 0, 'I'},
@@ -355,6 +358,15 @@ bool process_arguments (int argc, char **argv)
       client_privkey = optarg;
       goto enable_ssl;
 #endif
+    case VERIFY_SSL_HOSTNAME:
+#ifdef HAVE_SSL
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+      verify_ssl_hostname = true;
+      goto enable_ssl;
+#else
+      usage4 (_("Invalid option - SSL hostname verfication not available"));
+#endif
+#endif
     case 'S': /* use SSL */
 #ifdef HAVE_SSL
     enable_ssl:
@@ -380,7 +392,7 @@ bool process_arguments (int argc, char **argv)
       if (specify_port == false)
         server_port = HTTPS_PORT;
 #else
-      /* -C -J and -K fall through to here without SSL */
+      /* -C -J -K and --verify-host fall through to here without SSL */
       usage4 (_("Invalid option - SSL is not available"));
 #endif
       break;
@@ -590,6 +602,15 @@ bool process_arguments (int argc, char **argv)
     else
       server_address = strdup (host_name);
   }
+
+#ifdef HAVE_SSL
+  if (verify_ssl_hostname) {
+    if (!check_cert)
+      usage4 (_("Use of \"--verify-host\" requires specifying \"-C\" to check certificate"));
+    if (host_name == NULL || *host_name == '\0')
+      usage4 (_("Use of \"--verify-host\" requires specifying a host name"));
+  }
+#endif
 
   set_thresholds(&thlds, warning_thresholds, critical_thresholds);
 
@@ -984,7 +1005,7 @@ check_http (void)
   elapsed_time_connect = (double)microsec_connect / 1.0e6;
   if (use_ssl == true) {
     gettimeofday (&tv_temp, NULL);
-    result = np_net_ssl_init_with_hostname_version_and_cert(sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
+    result = np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, ssl_version, use_sni, client_cert, client_privkey);
     if (verbose) printf ("SSL initialized\n");
     if (result != STATE_OK)
       die (STATE_CRITICAL, NULL);
@@ -1713,18 +1734,21 @@ print_help (void)
   printf ("%s\n", _("This plugin tests the HTTP service on the specified host. It can test"));
   printf ("%s\n", _("normal (http) and secure (https) servers, follow redirects, search for"));
   printf ("%s\n", _("strings and regular expressions, check connection times, and report on"));
-  printf ("%s\n", _("certificate expiration times."));
+  printf ("%s\n", _("certificate expiration times and chain of trust validity."));
 
   printf ("\n\n");
 
   print_usage ();
 
-#ifdef HAVE_SSL
-  printf (_("In the first form, make an HTTP request."));
-  printf (_("In the second form, connect to the server and check the TLS certificate."));
-#endif
-  printf (_("NOTE: One or both of -H and -I must be specified"));
+  printf ("\n");
+  printf ("%s\n", _("NOTE: One or both of -H and -I must be specified."));
+  printf ("\n");
 
+  printf ("%s\n", _("In the first form, make an HTTP request, ignoring any SSL certificate issues."));
+  printf ("\n");
+  printf ("%s\n", _("In the second form, just connect to the server and verify that the TLS certificate"));
+  printf ("%s\n", _("has not expired. If \"--verify-host\" is given, also verify that the SSL certificate"));
+  printf ("%s\n", _("matches the -H hostname and has a valid chain of trust to a locally installed CA."));
   printf ("\n");
 
   printf (UT_HELP_VRSN);
@@ -1755,6 +1779,9 @@ print_help (void)
   printf (" %s\n", "--continue-after-certificate");
   printf ("    %s\n", _("Allows the HTTP check to continue after performing the certificate check."));
   printf ("    %s\n", _("Does nothing unless -C is used."));
+  printf (" %s\n", "--verify-host");
+  printf ("    %s\n", _("Verify that the SSL certificate matches the -H hostname and has a valid chain"));
+  printf ("    %s\n", _("of trust to a locally installed certificate authority. Requires \"-C\"."));
   printf (" %s\n", "-J, --client-cert=FILE");
   printf ("   %s\n", _("Name of file that contains the client certificate (PEM format)"));
   printf ("   %s\n", _("to be used in establishing the SSL session"));
@@ -1839,31 +1866,38 @@ print_help (void)
   printf (" %s\n", _("serve content (optionally within a specified time) or whether the X509 "));
   printf (" %s\n", _("certificate is still valid for the specified number of days."));
   printf ("\n");
-  printf (" %s\n", _("Please note that this plugin does not check if the presented server"));
-  printf (" %s\n", _("certificate matches the hostname of the server, or if the certificate"));
-  printf (" %s\n", _("has a valid chain of trust to one of the locally installed CAs."));
+  printf (" %s\n", _("Please note that by default this plugin does not check that the presented server"));
+  printf (" %s\n", _("certificate matches the hostname of the server, or that the certificate has a valid"));
+  printf (" %s\n", _("chain of trust to one of the locally installed CAs. Add \"--verify-host\" for that."));
   printf ("\n");
   printf ("%s\n", _("Examples:"));
-  printf (" %s\n\n", "CHECK CONTENT: check_http -w 5 -c 10 --ssl -H www.verisign.com");
+  printf ("\n");
+  printf (" %s\n\n", "CHECK CONTENT:");
+  printf ("   %s\n\n", "check_http -w 5 -c 10 --ssl -H www.verisign.com");
   printf (" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
   printf (" %s\n", _("a STATE_CRITICAL will be returned."));
   printf ("\n");
-  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 14");
+  printf (" %s\n\n", "CHECK CERTIFICATE EXPIRATION:");
+  printf ("   %s\n\n", "check_http -H www.verisign.com -C 14");
   printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
   printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
   printf (" %s\n", _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
-  printf (" %s\n\n", _("the certificate is expired."));
+  printf (" %s\n", _("the certificate is expired."));
   printf ("\n");
-  printf (" %s\n\n", "CHECK CERTIFICATE: check_http -H www.verisign.com -C 30,14");
-  printf (" %s\n", _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
-  printf (" %s\n", _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
-  printf (" %s\n", _("30 days, but more than 14 days, a STATE_WARNING is returned."));
-  printf (" %s\n", _("A STATE_CRITICAL will be returned when certificate expires in less than 14 days"));
+  printf (" %s\n\n", "CHECK CERTIFICATE VALIDITY:");
+  printf ("   %s\n\n", "check_http -H www.verisign.com -C 30,14 --verify-host");
+  printf (" %s\n", _("When the certificate of 'www.verisign.com' has a valid chain of trust and expires in 30"));
+  printf (" %s\n", _("or more days, a STATE_OK is returned. When the certificate is still valid, but for less"));
+  printf (" %s\n", _("than 30 days, but more than 14 days, a STATE_WARNING is returned."));
+  printf (" %s\n", _("A STATE_CRITICAL is returned when certificate expires in less than 14 days."));
+  printf (" %s\n", _("In all cases, STATE_CRITICAL is returned if the certificate does not match the hostname"));
+  printf (" %s\n", _("'www.verisign.com' or does not have a valid chain of trust to one of the locally installed CAs."));
+  printf ("\n");
 
-  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT: ");
-  printf (" %s\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
+  printf (" %s\n\n", "CHECK SSL WEBSERVER CONTENT VIA PROXY USING HTTP 1.1 CONNECT:");
+  printf ("   %s\n\n", _("check_http -I 192.168.100.35 -p 80 -u https://www.verisign.com/ -S -j CONNECT -H www.verisign.com "));
   printf (" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> -S(sl) -j CONNECT -H <webserver>"));
   printf (" %s\n", _("a STATE_OK will be returned. When the server returns its content but exceeds"));
   printf (" %s\n", _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
@@ -1885,11 +1919,12 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
+  printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
   printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
   printf ("       [-T <content-type>] [-j method]\n");
   printf (" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n",progname);
-  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni]\n");
+  printf ("       [-p <port>] [-t <timeout>] [-4|-6] [--sni] [--verify-host]\n");
 }
