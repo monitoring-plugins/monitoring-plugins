@@ -9,7 +9,7 @@
 # Country Name (2 letter code) [AU]:DE
 # State or Province Name (full name) [Some-State]:Bavaria
 # Locality Name (eg, city) []:Munich
-# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
+# Organization Name (eg, company) [Internet Widgets Pty Ltd]:Monitoring Plugins
 # Organizational Unit Name (eg, section) []:
 # Common Name (e.g. server FQDN or YOUR name) []:Monitoring Plugins
 # Email Address []:devel@monitoring-plugins.org

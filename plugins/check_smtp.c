@@ -40,7 +40,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <ctype.h>
 
 #ifdef HAVE_SSL
-int check_cert = FALSE;
+bool check_cert = false;
 int days_till_exp_warn, days_till_exp_crit;
 #  define my_recv(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 #  define my_send(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
@@ -100,17 +100,17 @@ char *authtype = NULL;
 char *authuser = NULL;
 char *authpass = NULL;
 double warning_time = 0;
-int check_warning_time = FALSE;
+bool check_warning_time = false;
 double critical_time = 0;
-int check_critical_time = FALSE;
+bool check_critical_time = false;
 int verbose = 0;
-int use_ssl = FALSE;
-int use_starttls = FALSE;
-int use_sni = FALSE;
-short use_proxy_prefix = FALSE;
-short use_ehlo = FALSE;
-short use_lhlo = FALSE;
-short ssl_established = 0;
+bool use_ssl = false;
+bool use_starttls = false;
+bool use_sni = false;
+bool use_proxy_prefix = false;
+bool use_ehlo = false;
+bool use_lhlo = false;
+bool ssl_established = false;
 char *localhostname = NULL;
 int sd;
 char buffer[MAX_INPUT_BUFFER];
@@ -118,13 +118,13 @@ enum {
   TCP_PROTOCOL = 1,
   UDP_PROTOCOL = 2,
 };
-int ignore_send_quit_failure = FALSE;
+bool ignore_send_quit_failure = false;
 
 
 int
 main (int argc, char **argv)
 {
-	short supports_tls=FALSE;
+	bool supports_tls = false;
 	int n = 0;
 	double elapsed_time;
 	long microsec;
@@ -230,7 +230,7 @@ main (int argc, char **argv)
 		} else if(use_ehlo || use_lhlo){
 			if(strstr(buffer, "250 STARTTLS") != NULL ||
 			   strstr(buffer, "250-STARTTLS") != NULL){
-				supports_tls=TRUE;
+				supports_tls=true;
 			}
 		}
 
@@ -466,7 +466,7 @@ main (int argc, char **argv)
 			fperfdata ("time", elapsed_time, "s",
 				(int)check_warning_time, warning_time,
 				(int)check_critical_time, critical_time,
-				TRUE, 0, FALSE, 0));
+				true, 0, false, 0));
 
 	return result;
 }
@@ -479,6 +479,8 @@ process_arguments (int argc, char **argv)
 {
 	int c;
 	char* temp;
+
+	bool implicit_tls = false;
 
 	enum {
 	  SNI_OPTION
@@ -560,7 +562,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'A':
 			authtype = optarg;
-			use_ehlo = TRUE;
+			use_ehlo = true;
 			break;
 		case 'U':
 			authuser = optarg;
@@ -600,7 +602,7 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Critical time must be a positive"));
 			else {
 				critical_time = strtod (optarg, NULL);
-				check_critical_time = TRUE;
+				check_critical_time = true;
 			}
 			break;
 		case 'w':									/* warning time threshold */
@@ -608,14 +610,14 @@ process_arguments (int argc, char **argv)
 				usage4 (_("Warning time must be a positive"));
 			else {
 				warning_time = strtod (optarg, NULL);
-				check_warning_time = TRUE;
+				check_warning_time = true;
 			}
 			break;
 		case 'v':									/* verbose */
 			verbose++;
 			break;
 		case 'q':
-			ignore_send_quit_failure++;             /* ignore problem sending QUIT */
+			ignore_send_quit_failure = true;             /* ignore problem sending QUIT */
 			break;
 		case 't':									/* timeout */
 			if (is_intnonneg (optarg)) {
@@ -645,33 +647,35 @@ process_arguments (int argc, char **argv)
                                 usage2 ("Invalid certificate expiration period", optarg);
                             days_till_exp_warn = atoi (optarg);
                         }
-			check_cert = TRUE;
-			ignore_send_quit_failure = TRUE;
+			check_cert = true;
+			ignore_send_quit_failure = true;
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
+			implicit_tls = true;
+			// fallthrough
 		case 's':
 		/* ssl */
-			use_ssl = TRUE;
+			use_ssl = true;
 			server_port = SMTPS_PORT;
 			break;
 		case 'S':
 		/* starttls */
-			use_starttls = TRUE;
-			use_ehlo = TRUE;
+			use_starttls = true;
+			use_ehlo = true;
 			break;
 		case SNI_OPTION:
 #ifdef HAVE_SSL
-			use_sni = TRUE;
+			use_sni = true;
 #else
 			usage (_("SSL support not available - install OpenSSL and recompile"));
 #endif
 			break;
 		case 'r':
-			use_proxy_prefix = TRUE;
+			use_proxy_prefix = true;
 			break;
 		case 'L':
-			use_lhlo = TRUE;
+			use_lhlo = true;
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -717,7 +721,12 @@ process_arguments (int argc, char **argv)
 		from_arg = strdup(" ");
 
 	if (use_starttls && use_ssl) {
-		usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
+		if (implicit_tls) {
+			use_ssl = false;
+			server_port = SMTP_PORT;
+		} else {
+			usage4 (_("Set either -s/--ssl/--tls or -S/--starttls"));
+		}
 	}
 
 	if (server_port_option != 0) {

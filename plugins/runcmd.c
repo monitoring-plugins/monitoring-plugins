@@ -60,6 +60,8 @@
 # define SIG_ERR ((Sigfunc *)-1)
 #endif
 
+#include "../lib/maxfd.h"
+
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
  * Multithreading apps and plugins can initialize it (via NP_RUNCMD_INIT)
@@ -88,8 +90,7 @@ extern void die (int, const char *, ...)
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void)
 {
-	if(maxfd == 0)
-		maxfd = open_max();
+  long maxfd = mp_open_max();
 	if(!np_pids) np_pids = calloc(maxfd, sizeof(pid_t));
 }
 
@@ -192,6 +193,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 		/* close all descriptors in np_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
+    long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++)
 			if(np_pids[i] > 0)
 				close (i);
@@ -219,6 +221,7 @@ np_runcmd_close(int fd)
 	pid_t pid;
 
 	/* make sure this fd was opened by popen() */
+  long maxfd = mp_open_max();
 	if(fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0)
 		return -1;
 
@@ -237,12 +240,12 @@ np_runcmd_close(int fd)
 void
 runcmd_timeout_alarm_handler (int signo)
 {
-	size_t i;
 
 	if (signo == SIGALRM)
 		puts(_("CRITICAL - Plugin timed out while executing system call"));
 
-	if(np_pids) for(i = 0; i < maxfd; i++) {
+  long maxfd = mp_open_max();
+	if(np_pids) for(long int i = 0; i < maxfd; i++) {
 		if(np_pids[i] != 0) kill(np_pids[i], SIGKILL);
 	}
 

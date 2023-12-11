@@ -13,7 +13,7 @@ dnl   np_mysql_libs    = flags for libs,    from mysql_config --libs
 dnl   np_mysql_cflags  = flags for cflags,  from mysql_config --cflags
 dnl Also sets in config.h:
 dnl   HAVE_MYSQLCLIENT
-dnl Copile your code with:
+dnl Compile your code with:
 dnl   $(CC) $(np_mysql_include) code.c $(np_mysql_libs)
 
 AC_DEFUN([np_mysqlclient],

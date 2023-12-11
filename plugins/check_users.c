@@ -179,7 +179,7 @@ main (int argc, char **argv)
 		printf (_("USERS %s - %d users currently logged in |%s\n"),
 				state_text(result), users,
 				sperfdata_int("users", users, "", warning_range,
-							critical_range, TRUE, 0, FALSE, 0));
+							critical_range, true, 0, false, 0));
 	}
 
 	return result;
@@ -202,7 +202,7 @@ process_arguments (int argc, char **argv)
 	if (argc < 2)
 		usage ("\n");
 
-	while (1) {
+	while (true) {
 		c = getopt_long (argc, argv, "+hVvc:w:", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
@@ -227,18 +227,23 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
+
 	if (warning_range == NULL && argc > c)
 		warning_range = argv[c++];
+
 	if (critical_range == NULL && argc > c)
 		critical_range = argv[c++];
 
 	/* this will abort in case of invalid ranges */
 	set_thresholds (&thlds, warning_range, critical_range);
 
-	if (thlds->warning->end < 0)
-		usage4 (_("Warning threshold must be a positive integer"));
-	if (thlds->critical->end < 0)
-		usage4 (_("Critical threshold must be a positive integer"));
+	if (!thlds->warning) {
+		usage4 (_("Warning threshold must be a valid range expression"));
+	}
+
+	if (!thlds->critical) {
+		usage4 (_("Critical threshold must be a valid range expression"));
+	}
 
 	return OK;
 }
@@ -261,10 +266,10 @@ print_help (void)
 	printf (UT_HELP_VRSN);
 	printf (UT_EXTRA_OPTS);
 
-	printf (" %s\n", "-w, --warning=INTEGER");
-	printf ("    %s\n", _("Set WARNING status if more than INTEGER users are logged in"));
-	printf (" %s\n", "-c, --critical=INTEGER");
-	printf ("    %s\n", _("Set CRITICAL status if more than INTEGER users are logged in"));
+	printf (" %s\n", "-w, --warning=RANGE_EXPRESSION");
+	printf ("    %s\n", _("Set WARNING status if number of logged in users violates RANGE_EXPRESSION"));
+	printf (" %s\n", "-c, --critical=RANGE_EXPRESSION");
+	printf ("    %s\n", _("Set CRITICAL status if number of logged in users violates RANGE_EXPRESSION"));
 
 	printf (UT_SUPPORT);
 }
