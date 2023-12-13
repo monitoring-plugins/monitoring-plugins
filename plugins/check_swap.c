@@ -610,10 +610,12 @@ swap_result getSwapFromSwapctl_BSD() {
 #endif // CHECK_SWAP_SWAPCTL_BSD
 
 #ifdef CHECK_SWAP_SWAPCTL_SVR4
-swap_result getSwapFromSwap_SRV4() {
+swap_result getSwapFromSwap_SRV4(swap_config config) {
 	int i = 0, nswaps = 0, swapctl_res = 0;
-	swaptbl_t *tbl = NULL;
-	swapent_t *ent = NULL;
+	//swaptbl_t *tbl = NULL;
+	void*tbl = NULL;
+	//swapent_t *ent = NULL;
+	void*ent = NULL;
 	/* get the number of active swap devices */
 	if ((nswaps = swapctl(SC_GETNSWP, NULL)) == -1)
 		die(STATE_UNKNOWN, _("Error getting swap devices\n"));
@@ -621,7 +623,7 @@ swap_result getSwapFromSwap_SRV4() {
 	if (nswaps == 0)
 		die(STATE_OK, _("SWAP OK: No swap devices defined\n"));
 
-	if (verbose >= 3)
+	if (config.verbose >= 3)
 		printf("Found %d swap device(s)\n", nswaps);
 
 	/* initialize swap table + entries */
@@ -645,21 +647,23 @@ swap_result getSwapFromSwap_SRV4() {
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
 	}
 
+	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
+	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
+
 	for (i = 0; i < nswaps; i++) {
 		dsktotal_mb = (float)tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
 		dskfree_mb = (float)tbl->swt_ent[i].ste_free / SWAP_CONVERSION;
 		dskused_mb = (dsktotal_mb - dskfree_mb);
 
-		if (verbose >= 3)
+		if (config.verbose >= 3)
 			printf("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n",
 				   dsktotal_mb, dskfree_mb, dskused_mb);
 
-		if (allswaps && dsktotal_mb > 0) {
-			percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
-			result = max_state(result, check_swap(dskfree_mb, dsktotal_mb));
-			if (verbose) {
-				xasprintf(&status, "%s [%.0f (%d%%)]", status, dskfree_mb,
-						  100 - percent);
+		if (config.allswaps && dsktotal_mb > 0) {
+			double percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
+
+			if (config.verbose) {
+				printf("[%.0f (%g%%)]", dskfree_mb, 100 - percent);
 			}
 		}
 
@@ -673,5 +677,13 @@ swap_result getSwapFromSwap_SRV4() {
 		free(tbl->swt_ent[i].ste_path);
 	}
 	free(tbl);
+
+	swap_result result = {0};
+	result.errorcode = OK;
+	result.metrics.total = total_swap_mb * 1024 * 1024;
+	result.metrics.free = free_swap_mb * 1024 * 1024;
+	result.metrics.used = used_swap_mb * 1024 * 1024;
+
+	return result;
 }
 #endif // CHECK_SWAP_SWAPCTL_SVR4
