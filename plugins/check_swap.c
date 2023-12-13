@@ -54,7 +54,7 @@ const char *email = "devel@monitoring-plugins.org";
 typedef struct {
 	bool is_percentage;
 	uint64_t value;
-} threshold_t;
+} threshold;
 
 int check_swap (float free_swap_mb, float total_swap_mb);
 int process_arguments (int argc, char **argv);
@@ -62,8 +62,8 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-threshold_t warn;
-threshold_t crit;
+threshold warn;
+threshold crit;
 int verbose;
 bool allswaps = false;
 int no_swap_state = STATE_CRITICAL;
