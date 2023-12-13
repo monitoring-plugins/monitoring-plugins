@@ -73,7 +73,7 @@ main (int argc, char **argv)
 {
 	unsigned int percent_used, percent;
 	uint64_t total_swap_mb = 0, used_swap_mb = 0, free_swap_mb = 0;
-	uint64_t dsktotal_mb = 0, dskused_mb = 0, dskfree_mb = 0;
+	uint64_t dsktotal_mb = 0, dskused_mb = 0, dskfree_mb = 0, dskcached_mb = 0;
 	uint64_t tmp_KB = 0;
 	int result = STATE_UNKNOWN;
 	char input_buffer[MAX_INPUT_BUFFER];
@@ -159,7 +159,7 @@ main (int argc, char **argv)
 				dskfree_mb = dskfree_mb + tmp_KB / 1024;
 			}
 			else if (strcmp ("Cached", str) == 0) {
-				dskfree_mb = dskfree_mb + tmp_KB / 1024;
+				dskcached_mb = tmp_KB / 1024;
 			}
 		}
 	}
