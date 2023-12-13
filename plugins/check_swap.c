@@ -52,7 +52,7 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 typedef struct {
-	int is_percentage;
+	bool is_percentage;
 	uint64_t value;
 } threshold_t;
 
@@ -465,7 +465,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					warn.is_percentage = 1;
+					warn.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
@@ -475,7 +475,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					warn.is_percentage = 0;
+					warn.is_percentage = false;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
 					} else {
@@ -495,7 +495,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					crit.is_percentage = 1;
+					crit.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
@@ -505,7 +505,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					crit.is_percentage = 0;
+					crit.is_percentage = false;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
 					} else {
