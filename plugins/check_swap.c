@@ -156,19 +156,28 @@ int main (int argc, char **argv) {
 
 	uint64_t warn_print = config.warn.value;
 	if (config.warn.is_percentage) {
-		warn_print = config.warn.value * (data.metrics.total*1024 *1024/100);
+		warn_print =
+			config.warn.value * (data.metrics.total / 100);
 	}
 
 	uint64_t crit_print = config.crit.value;
 	if (config.crit.is_percentage) {
-		crit_print = config.crit.value * (data.metrics.total*1024 *1024/100);
+		crit_print =
+			config.crit.value * (data.metrics.total  / 100);
 	}
 
-	char *perfdata = perfdata_uint64 ("swap", data.metrics.free *1024 *1024, "B",
-	                true, warn_print,
-	                true, crit_print,
-	                true, 0,
-	                true, (long) data.metrics.total* 1024 * 1024);
+	char *perfdata = perfdata_uint64(
+		"swap",
+		data.metrics.free,
+		"B",
+		true, warn_print,
+		true, crit_print,
+		true, 0,
+		true, (long)data.metrics.total);
+
+	if (config.verbose > 1) {
+		printf("Warn threshold value: %"PRIu64"\n", config.warn.value);
+	}
 
 	if ((config.warn.is_percentage && (percent_used >= (100 - config.warn.value))) ||
 			config.warn.value >= data.metrics.free) {
@@ -187,7 +196,6 @@ int main (int argc, char **argv) {
 
 	exit(data.statusCode);
 }
-
 
 /* process command-line arguments */
 swap_config_wrapper process_arguments (swap_config_wrapper conf_wrapper, int argc, char **argv) {
@@ -377,7 +385,7 @@ swap_result getSwapFromProcMeminfo(swap_config config) {
 	swap_result result  = { 0 };
 	result.statusCode = STATE_OK;
 
-	uint64_t dsktotal_mb = 0, dskused_mb = 0, dskfree_mb = 0;
+	uint64_t swap_total = 0, swap_used = 0, swap_free = 0;
 
 	char input_buffer[MAX_INPUT_BUFFER];
 	char str[32];
@@ -390,41 +398,41 @@ swap_result getSwapFromProcMeminfo(swap_config config) {
 		 * On which kind of system this format exists, I can not say, but I wanted to
 		 * document this for people who are not adapt with sscanf anymore, like me
 		 */
-		if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu", &dsktotal_mb, &dskused_mb, &dskfree_mb) == 3) {
-			dsktotal_mb = dsktotal_mb / (1024 * 1024);	/* Apply conversion */
-			dskused_mb = dskused_mb / (1024 * 1024);
-			dskfree_mb = dskfree_mb / (1024 * 1024);
+		if (sscanf(input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu",
+				   &swap_total, &swap_used, &swap_free) == 3) {
 
-			result.metrics.total += dsktotal_mb;
-			result.metrics.used+= dskused_mb;
-			result.metrics.free += dskfree_mb;
+			result.metrics.total += swap_total;
+			result.metrics.used += swap_used;
+			result.metrics.free += swap_free;
 
-
-
-		/*
-		 * The following sscanf call looks for lines looking like: "SwapTotal: 123" and "SwapFree: 123"
-		 * This format exists at least on Debian Linux with a 5.* kernel
-		 */
-		} else if (sscanf (input_buffer, "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu %*[k]%*[B]", str, &tmp_KB)) {
+			/*
+			 * The following sscanf call looks for lines looking like:
+			 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
+			 * on Debian Linux with a 5.* kernel
+			 */
+		} else if (sscanf(input_buffer,
+						  "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
+						  "%*[k]%*[B]",
+						  str, &tmp_KB)) {
 			if (config.verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
 			}
 			/* I think this part is always in Kb, so convert to mb */
-			if (strcmp ("Total", str) == 0) {
-				dsktotal_mb = tmp_KB / 1024;
-			} else if (strcmp ("Free", str) == 0) {
-				dskfree_mb = dskfree_mb + tmp_KB / 1024;
-			} else if (strcmp ("Cached", str) == 0) {
-				dskfree_mb = dskfree_mb + tmp_KB / 1024;
+			if (strcmp("Total", str) == 0) {
+				swap_total = tmp_KB * 1024;
+			} else if (strcmp("Free", str) == 0) {
+				swap_free = swap_free + tmp_KB * 1024;
+			} else if (strcmp("Cached", str) == 0) {
+				swap_free = swap_free + tmp_KB * 1024;
 			}
 		}
 	}
 
 	fclose(fp);
 
-	result.metrics.total = dsktotal_mb;
-	result.metrics.used = dsktotal_mb - dskfree_mb;
-	result.metrics.free = dskfree_mb;
+	result.metrics.total = swap_total;
+	result.metrics.used = swap_total - swap_free;
+	result.metrics.free = swap_free;
 
 	return result;
 }
