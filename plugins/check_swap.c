@@ -567,7 +567,7 @@ swap_result getSwapFromSwapCommand() {
 #endif // HAVE_SWAP
 
 #ifdef CHECK_SWAP_SWAPCTL_BSD
-swap_result getSwapFromSwapctl_BSD() {
+swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	int i = 0, nswaps = 0, swapctl_res = 0;
 	struct swapent *ent;
 	int conv_factor = SWAP_CONVERSION;
@@ -585,17 +585,20 @@ swap_result getSwapFromSwapctl_BSD() {
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
 	}
 
+
+	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
+	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
+
 	for (i = 0; i < nswaps; i++) {
 		dsktotal_mb = (float)ent[i].se_nblks / conv_factor;
 		dskused_mb = (float)ent[i].se_inuse / conv_factor;
 		dskfree_mb = (dsktotal_mb - dskused_mb);
 
-		if (allswaps && dsktotal_mb > 0) {
-			percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
-			result = max_state(result, check_swap(dskfree_mb, dsktotal_mb));
-			if (verbose) {
-				xasprintf(&status, "%s [%.0f (%d%%)]", status, dskfree_mb,
-						  100 - percent);
+		if (config.allswaps && dsktotal_mb > 0) {
+			double percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
+
+			if (config.verbose) {
+				printf("[%.0f (%g%%)]", dskfree_mb, 100 - percent);
 			}
 		}
 
@@ -606,6 +609,17 @@ swap_result getSwapFromSwapctl_BSD() {
 
 	/* and clean up after ourselves */
 	free(ent);
+
+	swap_result result = {0};
+
+	result.statusCode = OK;
+	result.errorcode = OK;
+
+	result.metrics.total =  total_swap_mb * 1024 * 1024;
+	result.metrics.free =  free_swap_mb * 1024 * 1024;
+	result.metrics.used =  used_swap_mb * 1024 * 1024;
+
+	return result;
 }
 #endif // CHECK_SWAP_SWAPCTL_BSD
 
