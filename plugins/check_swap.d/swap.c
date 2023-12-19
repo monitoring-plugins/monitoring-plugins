@@ -1,4 +1,6 @@
 #include "./check_swap.d/check_swap.h"
+#include "../popen.h"
+#include "../utils.h"
 
 swap_config swap_config_init() {
 	swap_config tmp = {0};
