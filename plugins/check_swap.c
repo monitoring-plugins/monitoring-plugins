@@ -31,9 +31,6 @@ const char *progname = "check_swap";
 const char *copyright = "2000-2023";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "popen.h"
-#include "utils.h"
 
 #ifdef HAVE_DECL_SWAPCTL
 #ifdef HAVE_SYS_PARAM_H
@@ -47,34 +44,8 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 #endif
 
-#ifndef SWAP_CONVERSION
-#define SWAP_CONVERSION 1
-#endif
-
-typedef struct {
-	bool is_percentage;
-	uint64_t value;
-} threshold;
-
-typedef struct {
-	unsigned long long free;  // Free swap in Bytes!
-	unsigned long long used;  // Used swap in Bytes!
-	unsigned long long total; // Total swap size, you guessed it, in Bytes!
-} swap_metrics;
-
-typedef struct {
-	int errorcode;
-	int statusCode;
-	swap_metrics metrics;
-} swap_result;
-
-typedef struct {
-	int verbose;
-	bool allswaps;
-	int no_swap_state;
-	threshold warn;
-	threshold crit;
-} swap_config;
+#include "./check_swap.d/check_swap.h"
+#include "./utils.h"
 
 typedef struct {
 	int errorcode;
@@ -86,19 +57,6 @@ swap_config_wrapper process_arguments(swap_config_wrapper config, int argc,
 void print_usage();
 void print_help(swap_config);
 
-swap_result getSwapFromProcMeminfo(swap_config config);
-swap_result getSwapFromSwapCommand(swap_config config);
-swap_result getSwapFromSwapctl_BSD(swap_config config);
-swap_result getSwapFromSwap_SRV4(swap_config config);
-
-swap_config swap_config_init() {
-	swap_config tmp = {0};
-	tmp.allswaps = false;
-	tmp.no_swap_state = STATE_CRITICAL;
-	tmp.verbose = 0;
-
-	return tmp;
-}
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -123,23 +81,7 @@ int main(int argc, char **argv) {
 
 	swap_config config = tmp.config;
 
-#ifdef HAVE_PROC_MEMINFO
-	swap_result data = getSwapFromProcMeminfo(config);
-#else
-#ifdef HAVE_SWAP
-	swap_result data = getSwapFromSwapCommand();
-#else
-#ifdef CHECK_SWAP_SWAPCTL_SVR4
-	swap_result data = getSwapFromSwapctl_SRV4();
-#else
-#ifdef CHECK_SWAP_SWAPCTL_BSD
-	swap_result data = getSwapFromSwapctl_BSD();
-#else
-#error No way found to retrieve swap
-#endif /* CHECK_SWAP_SWAPCTL_BSD */
-#endif /* CHECK_SWAP_SWAPCTL_SVR4 */
-#endif /* HAVE_SWAP */
-#endif /* HAVE_PROC_MEMINFO */
+	swap_result data = get_swap_data(config);
 
 	double percent_used;
 
@@ -323,7 +265,7 @@ swap_config_wrapper process_arguments(swap_config_wrapper conf_wrapper,
 		return conf_wrapper;
 	} else if ((conf_wrapper.config.warn.is_percentage ==
 				conf_wrapper.config.crit.is_percentage) &&
-			   (conf_wrapper.config.warn.value >=
+			   (conf_wrapper.config.warn.value <
 				conf_wrapper.config.crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn
 		 * is percentage and crit is absolute. We cannot determine the condition
@@ -387,317 +329,3 @@ void print_usage() {
 	printf(" %s [-av] -w <percent_free>%% -c <percent_free>%%\n", progname);
 	printf("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
 }
-
-#ifdef HAVE_PROC_MEMINFO
-swap_result getSwapFromProcMeminfo(swap_config config) {
-
-	if (config.verbose >= 3) {
-		printf("Reading PROC_MEMINFO at %s\n", PROC_MEMINFO);
-	}
-
-	FILE *fp;
-	fp = fopen(PROC_MEMINFO, "r");
-
-	swap_result result = {0};
-	result.statusCode = STATE_OK;
-
-	uint64_t swap_total = 0, swap_used = 0, swap_free = 0;
-
-	char input_buffer[MAX_INPUT_BUFFER];
-	char str[32];
-
-	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
-		uint64_t tmp_KB = 0;
-
-		/*
-		 * The following sscanf call looks for a line looking like: "Swap: 123
-		 * 123 123" On which kind of system this format exists, I can not say,
-		 * but I wanted to document this for people who are not adapt with
-		 * sscanf anymore, like me
-		 */
-		if (sscanf(input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu",
-				   &swap_total, &swap_used, &swap_free) == 3) {
-
-			result.metrics.total += swap_total;
-			result.metrics.used += swap_used;
-			result.metrics.free += swap_free;
-
-			/*
-			 * The following sscanf call looks for lines looking like:
-			 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
-			 * on Debian Linux with a 5.* kernel
-			 */
-		} else if (sscanf(input_buffer,
-						  "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
-						  "%*[k]%*[B]",
-						  str, &tmp_KB)) {
-			if (config.verbose >= 3) {
-				printf("Got %s with %lu\n", str, tmp_KB);
-			}
-			/* I think this part is always in Kb, so convert to mb */
-			if (strcmp("Total", str) == 0) {
-				swap_total = tmp_KB * 1024;
-			} else if (strcmp("Free", str) == 0) {
-				swap_free = swap_free + tmp_KB * 1024;
-			} else if (strcmp("Cached", str) == 0) {
-				swap_free = swap_free + tmp_KB * 1024;
-			}
-		}
-	}
-
-	fclose(fp);
-
-	result.metrics.total = swap_total;
-	result.metrics.used = swap_total - swap_free;
-	result.metrics.free = swap_free;
-
-	return result;
-}
-#endif
-
-#ifdef HAVE_SWAP
-swap_result getSwapFromSwapCommand() {
-	swap_result result = {0};
-
-	char *temp_buffer;
-	char *swap_command;
-	char *swap_format;
-	int conv_factor = SWAP_CONVERSION;
-
-	xasprintf(&swap_command, "%s", SWAP_COMMAND);
-	xasprintf(&swap_format, "%s", SWAP_FORMAT);
-
-/* These override the command used if a summary (and thus ! allswaps) is
- * required */
-/* The summary flag returns more accurate information about swap usage on these
- * OSes */
-#ifdef _AIX
-	if (!allswaps) {
-		xasprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		xasprintf(&swap_format, "%s", "%lu%*s %lu");
-		conv_factor = 1;
-	}
-#endif
-
-	if (verbose >= 2)
-		printf(_("Command: %s\n"), swap_command);
-	if (verbose >= 3)
-		printf(_("Format: %s\n"), swap_format);
-
-	child_process = spopen(swap_command);
-	if (child_process == NULL) {
-		printf(_("Could not open pipe: %s\n"), swap_command);
-		return STATE_UNKNOWN;
-	}
-
-	child_stderr = fdopen(child_stderr_array[fileno(child_process)], "r");
-	if (child_stderr == NULL)
-		printf(_("Could not open stderr for %s\n"), swap_command);
-
-	sprintf(str, "%s", "");
-	/* read 1st line */
-	fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process);
-	if (strcmp(swap_format, "") == 0) {
-		temp_buffer = strtok(input_buffer, " \n");
-		while (temp_buffer) {
-			if (strstr(temp_buffer, "blocks"))
-				sprintf(str, "%s %s", str, "%lu");
-			else if (strstr(temp_buffer, "dskfree"))
-				sprintf(str, "%s %s", str, "%lu");
-			else
-				sprintf(str, "%s %s", str, "%*s");
-			temp_buffer = strtok(NULL, " \n");
-		}
-	}
-
-/* If different swap command is used for summary switch, need to read format
- * differently */
-#ifdef _AIX
-	if (!allswaps) {
-		fgets(input_buffer, MAX_INPUT_BUFFER - 1,
-			  child_process); /* Ignore first line */
-		sscanf(input_buffer, swap_format, &total_swap_mb, &used_swap_mb);
-		free_swap_mb = total_swap_mb * (100 - used_swap_mb) / 100;
-		used_swap_mb = total_swap_mb - free_swap_mb;
-		if (verbose >= 3)
-			printf(_("total=%.0f, used=%.0f, free=%.0f\n"), total_swap_mb,
-				   used_swap_mb, free_swap_mb);
-	} else {
-#endif
-		while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-			sscanf(input_buffer, swap_format, &dsktotal_mb, &dskfree_mb);
-
-			dsktotal_mb = dsktotal_mb / conv_factor;
-			/* AIX lists percent used, so this converts to dskfree in MBs */
-#ifdef _AIX
-			dskfree_mb = dsktotal_mb * (100 - dskfree_mb) / 100;
-#else
-		dskfree_mb = dskfree_mb / conv_factor;
-#endif
-			if (verbose >= 3)
-				printf(_("total=%.0f, free=%.0f\n"), dsktotal_mb, dskfree_mb);
-
-			dskused_mb = dsktotal_mb - dskfree_mb;
-			total_swap_mb += dsktotal_mb;
-			used_swap_mb += dskused_mb;
-			free_swap_mb += dskfree_mb;
-			if (allswaps) {
-				percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
-				result = max_state(result, check_swap(dskfree_mb, dsktotal_mb));
-				if (verbose)
-					xasprintf(&status, "%s [%.0f (%d%%)]", status, dskfree_mb,
-							  100 - percent);
-			}
-		}
-#ifdef _AIX
-	}
-#endif
-
-	/* If we get anything on STDERR, at least set warning */
-	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
-		result = max_state(result, STATE_WARNING);
-
-	/* close stderr */
-	(void)fclose(child_stderr);
-
-	/* close the pipe */
-	if (spclose(child_process))
-		result = max_state(result, STATE_WARNING);
-}
-#endif // HAVE_SWAP
-
-#ifdef CHECK_SWAP_SWAPCTL_BSD
-swap_result getSwapFromSwapctl_BSD(swap_config config) {
-	int i = 0, nswaps = 0, swapctl_res = 0;
-	struct swapent *ent;
-	int conv_factor = SWAP_CONVERSION;
-
-	/* get the number of active swap devices */
-	nswaps = swapctl(SWAP_NSWAP, NULL, 0);
-
-	/* initialize swap table + entries */
-	ent = (struct swapent *)malloc(sizeof(struct swapent) * nswaps);
-
-	/* and now, tally 'em up */
-	swapctl_res = swapctl(SWAP_STATS, ent, nswaps);
-	if (swapctl_res < 0) {
-		perror(_("swapctl failed: "));
-		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
-	}
-
-
-	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
-	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
-
-	for (i = 0; i < nswaps; i++) {
-		dsktotal_mb = (float)ent[i].se_nblks / conv_factor;
-		dskused_mb = (float)ent[i].se_inuse / conv_factor;
-		dskfree_mb = (dsktotal_mb - dskused_mb);
-
-		if (config.allswaps && dsktotal_mb > 0) {
-			double percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
-
-			if (config.verbose) {
-				printf("[%.0f (%g%%)]", dskfree_mb, 100 - percent);
-			}
-		}
-
-		total_swap_mb += dsktotal_mb;
-		free_swap_mb += dskfree_mb;
-		used_swap_mb += dskused_mb;
-	}
-
-	/* and clean up after ourselves */
-	free(ent);
-
-	swap_result result = {0};
-
-	result.statusCode = OK;
-	result.errorcode = OK;
-
-	result.metrics.total =  total_swap_mb * 1024 * 1024;
-	result.metrics.free =  free_swap_mb * 1024 * 1024;
-	result.metrics.used =  used_swap_mb * 1024 * 1024;
-
-	return result;
-}
-#endif // CHECK_SWAP_SWAPCTL_BSD
-
-#ifdef CHECK_SWAP_SWAPCTL_SVR4
-swap_result getSwapFromSwap_SRV4(swap_config config) {
-	int i = 0, nswaps = 0, swapctl_res = 0;
-	//swaptbl_t *tbl = NULL;
-	void*tbl = NULL;
-	//swapent_t *ent = NULL;
-	void*ent = NULL;
-	/* get the number of active swap devices */
-	if ((nswaps = swapctl(SC_GETNSWP, NULL)) == -1)
-		die(STATE_UNKNOWN, _("Error getting swap devices\n"));
-
-	if (nswaps == 0)
-		die(STATE_OK, _("SWAP OK: No swap devices defined\n"));
-
-	if (config.verbose >= 3)
-		printf("Found %d swap device(s)\n", nswaps);
-
-	/* initialize swap table + entries */
-	tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
-
-	if (tbl == NULL)
-		die(STATE_UNKNOWN, _("malloc() failed!\n"));
-
-	memset(tbl, 0, sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
-	tbl->swt_n = nswaps;
-	for (i = 0; i < nswaps; i++) {
-		if ((tbl->swt_ent[i].ste_path =
-				 (char *)malloc(sizeof(char) * MAXPATHLEN)) == NULL)
-			die(STATE_UNKNOWN, _("malloc() failed!\n"));
-	}
-
-	/* and now, tally 'em up */
-	swapctl_res = swapctl(SC_LIST, tbl);
-	if (swapctl_res < 0) {
-		perror(_("swapctl failed: "));
-		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
-	}
-
-	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
-	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
-
-	for (i = 0; i < nswaps; i++) {
-		dsktotal_mb = (float)tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
-		dskfree_mb = (float)tbl->swt_ent[i].ste_free / SWAP_CONVERSION;
-		dskused_mb = (dsktotal_mb - dskfree_mb);
-
-		if (config.verbose >= 3)
-			printf("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n",
-				   dsktotal_mb, dskfree_mb, dskused_mb);
-
-		if (config.allswaps && dsktotal_mb > 0) {
-			double percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
-
-			if (config.verbose) {
-				printf("[%.0f (%g%%)]", dskfree_mb, 100 - percent);
-			}
-		}
-
-		total_swap_mb += dsktotal_mb;
-		free_swap_mb += dskfree_mb;
-		used_swap_mb += dskused_mb;
-	}
-
-	/* and clean up after ourselves */
-	for (i = 0; i < nswaps; i++) {
-		free(tbl->swt_ent[i].ste_path);
-	}
-	free(tbl);
-
-	swap_result result = {0};
-	result.errorcode = OK;
-	result.metrics.total = total_swap_mb * 1024 * 1024;
-	result.metrics.free = free_swap_mb * 1024 * 1024;
-	result.metrics.used = used_swap_mb * 1024 * 1024;
-
-	return result;
-}
-#endif // CHECK_SWAP_SWAPCTL_SVR4

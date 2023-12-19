@@ -223,6 +223,10 @@ NP-VERSION-FILE
 /plugins/tests/test_disk
 /plugins/tests/.deps
 
+# /plugins/check_swap.d
+/plugins/check_swap.d/.deps
+/plugins/check_swap.d/.dirstamp
+
 # /plugins-root/
 /plugins-root/.deps
 /plugins-root/.libs
