@@ -118,7 +118,8 @@ check_real_LDADD = $(NETLIBS)
 check_snmp_LDADD = $(BASEOBJS)
 check_smtp_LDADD = $(SSLOBJS)
 check_ssh_LDADD = $(NETLIBS)
-check_swap_LDADD = $(MATHLIBS) $(BASEOBJS) check_swap.d/swap.o
+check_swap_SOURCES = check_swap.c check_swap.d/swap.c
+check_swap_LDADD = $(MATHLIBS) $(BASEOBJS)
 check_tcp_LDADD = $(SSLOBJS)
 check_time_LDADD = $(NETLIBS)
 check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
@@ -133,7 +134,8 @@ if !HAVE_UTMPX
 check_users_LDADD += popen.o
 endif
 
-tests_test_check_swap_LDADD = $(BASEOBJS) check_swap.d/swap.o $(tap_ldflags) -ltap
+tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
+tests_test_check_swap_SOURCES = check_swap.c check_swap.d/swap.c
 
 ##############################################################################
 # secondary dependencies
