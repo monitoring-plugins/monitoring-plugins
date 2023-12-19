@@ -38,18 +38,26 @@ check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
-	check_procs check_mysql_query check_apt check_dbi check_curl
+	check_procs check_mysql_query check_apt check_dbi check_curl \
+	\
+	tests/test_check_swap
 
 SUBDIRS = picohttpparser
 
-EXTRA_DIST = t tests
+np_test_scripts = tests/test_check_swap.t
+
+EXTRA_DIST = t tests $(np_test_scripts)
 
 PLUGINHDRS = common.h
 
 noinst_LIBRARIES = libnpcommon.a
+noinst_PROGRAMS = @EXTRA_PLUGIN_TESTS@
+# These two lines support "make check", but we use "make test"
+check_PROGRAMS = @EXTRA_PLUGIN_TESTS@
 
 libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
+
 
 BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
@@ -58,7 +66,10 @@ SSLOBJS = $(BASEOBJS) $(NETLIBS) $(SSLLIBS) $(LIB_CRYPTO)
 
 TESTS_ENVIRONMENT = perl -I $(top_builddir) -I $(top_srcdir)
 
-TESTS = @PLUGIN_TEST@
+tap_ldflags = -L$(top_srcdir)/tap
+
+TESTS = @PLUGIN_TEST@ @EXTRA_PLUGIN_TESTS@
+
 
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
@@ -121,6 +132,8 @@ urlize_LDADD = $(BASEOBJS)
 if !HAVE_UTMPX
 check_users_LDADD += popen.o
 endif
+
+tests_test_check_swap_LDADD = $(BASEOBJS) check_swap.d/swap.o $(tap_ldflags) -ltap
 
 ##############################################################################
 # secondary dependencies

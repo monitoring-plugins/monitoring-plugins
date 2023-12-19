@@ -185,6 +185,9 @@ fi
 if test "$enable_libtap" = "yes" ; then
 	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
+
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap"
+	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
 dnl INI Parsing
