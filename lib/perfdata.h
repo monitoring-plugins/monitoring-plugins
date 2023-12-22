@@ -21,16 +21,26 @@ typedef struct {
 #define OUTSIDE false
 #define INSIDE  true
 
-typedef struct range_struct {
+typedef struct mp_range_struct {
 	perfdata_value start;
 	bool start_infinity;		/* false (default) or true */
+
 	perfdata_value end;
 	bool end_infinity;
+
 	bool alert_on;		/* OUTSIDE (default) or INSIDE */
+} mp_range;
+
+typedef struct range_struct {
+	double  start;
+	bool start_infinity;
+	double  end;
+	int end_infinity;
+	int alert_on;       /* OUTSIDE (default) or INSIDE */
 	char* text; /* original unparsed text input */
 } range;
 
-char *range_to_string(const range);
+char *mp_range_to_string(const mp_range);
 
 typedef struct perfdata_struct {
 	char *label;
@@ -41,26 +51,26 @@ typedef struct perfdata_struct {
 	bool min_present;
 	bool max_present;
 	perfdata_value value;
-	range warn;
-	range crit;
+	mp_range warn;
+	mp_range crit;
 	perfdata_value min;
 	perfdata_value max;
-} perfdata;
+} mp_perfdata;
 
 typedef struct pd_list_struct {
-	perfdata data;
+	mp_perfdata data;
 	struct pd_list_struct* next;
 } pd_list;
 
-char *pd_to_string(const perfdata);
+char *pd_to_string(const mp_perfdata);
 char *pd_value_to_string(const perfdata_value);
 
 char *pd_list_to_string(const pd_list);
 
-perfdata init_perfdata();
+mp_perfdata init_perfdata();
 pd_list *init_pd_list();
 
-void pd_list_append(pd_list[1], const perfdata);
+void pd_list_append(pd_list[1], const mp_perfdata);
 
 void pd_list_free(pd_list[1]);
 

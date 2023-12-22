@@ -253,10 +253,10 @@ main (int argc, char **argv)
   /* Process for every path in list */
   for (path = path_select_list; path; path=path->name_next) {
     if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
-      printf("Thresholds(pct) for %s warn: %s crit %s\n",
+      printf("Thresholds(pct) for %s warn: %f crit %f\n",
         path->name,
-        pd_value_to_string(path->freespace_percent->warning->end),
-        pd_value_to_string(path->freespace_percent->critical->end));
+        path->freespace_percent->warning->end,
+        path->freespace_percent->critical->end);
 
     if (verbose >= 3 && path->group != NULL)
       printf("Group of %s: %s\n",path->name,path->group);
@@ -417,8 +417,8 @@ main (int argc, char **argv)
         xasprintf (&perf, "%s %s", perf,
                 perfdata_uint64 (perf_ilabel,
                     path->inodes_used, "",
-                    (warning_high_tide != UINT64_MAX ? true: false), warning_high_tide,
-                    (critical_high_tide != UINT64_MAX ? true: false), critical_high_tide,
+                    (warning_high_tide != UINT64_MAX ? true : false), warning_high_tide,
+                    (critical_high_tide != UINT64_MAX ? true : false), critical_high_tide,
                     true, 0,
                     true, path->inodes_total));
       }

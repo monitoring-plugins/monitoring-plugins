@@ -46,12 +46,15 @@ typedef struct np_struct {
 	} monitoring_plugin;
 
 range *parse_range_string (char *);
+mp_range parse_mp_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
-bool check_range(perfdata_value, range *);
+void mp_print_thresholds(const char *, mp_thresholds *);
+bool check_range(double, range *);
+bool mp_check_range(perfdata_value, mp_range *);
 int get_status(double, thresholds *);
-int get_status2(perfdata_value, thresholds *);
+int get_status2(perfdata_value, mp_thresholds *);
 
 /* Handle timeouts */
 extern int timeout_state;

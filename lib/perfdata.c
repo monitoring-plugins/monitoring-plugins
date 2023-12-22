@@ -16,13 +16,13 @@ char *pd_value_to_string(const perfdata_value pd) {
 		break;
 	default:
 		// die here
-		die(STATE_UNKNOWN, "Invalid perfdata mode\n");
+		die(STATE_UNKNOWN, "Invalid mp_perfdata mode\n");
 	}
 
 	return result;
 }
 
-char *pd_to_string(perfdata pd) {
+char *pd_to_string(mp_perfdata pd) {
 	char *result = NULL;
 	xasprintf(&result, "%s=", pd.label);
 
@@ -33,13 +33,13 @@ char *pd_to_string(perfdata pd) {
 	}
 
 	if (pd.warn_present) {
-		xasprintf(&result, "%s;%s", result, range_to_string(pd.warn));
+		xasprintf(&result, "%s;%s", result, mp_range_to_string(pd.warn));
 	} else {
 		xasprintf(&result, "%s;", result);
 	}
 
 	if (pd.crit_present) {
-		xasprintf(&result, "%s;%lli", result, range_to_string(pd.crit));
+		xasprintf(&result, "%s;%lli", result, mp_range_to_string(pd.crit));
 	} else {
 		xasprintf(&result, "%s;", result);
 	}
@@ -71,9 +71,9 @@ char *pd_list_to_string(const pd_list pd) {
 	return result;
 }
 
-perfdata init_perfdata() {
-	perfdata pd;
-	memset(&pd, 0, sizeof(perfdata));
+mp_perfdata init_perfdata() {
+	mp_perfdata pd;
+	memset(&pd, 0, sizeof(mp_perfdata));
 	return pd;
 
 }
@@ -87,7 +87,7 @@ pd_list *new_pd_list() {
 	return tmp;
 }
 
-void pd_list_append(pd_list *pdl, const perfdata pd) {
+void pd_list_append(pd_list *pdl, const mp_perfdata pd) {
 	/* Find the end */
 	if (pdl == NULL) {
 		pd_list *tmp = new_pd_list();
@@ -100,7 +100,7 @@ void pd_list_append(pd_list *pdl, const perfdata pd) {
 		}
 	}
 	pd_list *tmp = new_pd_list();
-	memcpy(&tmp->data, (void *)&pd, sizeof(perfdata));
+	memcpy(&tmp->data, (void *)&pd, sizeof(mp_perfdata));
 	pdl->next = tmp;
 }
 
@@ -143,7 +143,7 @@ int cmp_perfdata_value(const perfdata_value a, const perfdata_value b) {
 	}
 }
 
-char *range_to_string(const range input) {
+char *mp_range_to_string(const mp_range input) {
 	char *result = NULL;
 	if (input.alert_on == INSIDE) {
 		xasprintf(&result, "@");

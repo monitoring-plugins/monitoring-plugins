@@ -107,28 +107,57 @@ die (int result, const char *fmt, ...)
 	exit (result);
 }
 
-void set_range_start_int (range *r, int64_t value) {
-	r->start.pd_int = value;
-	r->start_infinity = false;
+#define mp_set_range_start(R, V) \
+	_Generic(V, \
+	double: set_range_start_double \
+	long long: set_range_start_int \
+	) (R, V)
+
+#define mp_set_range_end(R, V) \
+	_Generic(V, \
+	double: set_range_end_double \
+	long long: set_range_end_int \
+	) (R, V)
+
+mp_range set_range_start_int (mp_range r, long long value) {
+	r.start.pd_int = value;
+	r.start.type = PD_TYPE_INT;
+	r.start_infinity = false;
+	return r;
 }
 
-void set_range_start_double (range *r, double value) {
-	r->start.pd_double = value;
-	r->start_infinity = false;
+mp_range set_range_start_double (mp_range r, double value) {
+	r.start.pd_double = value;
+	r.start.type = PD_TYPE_DOUBLE;
+	r.start_infinity = false;
+	return r;
 }
 
-void set_range_end_int (range *r, int64_t value) {
-	r->end.pd_int = value;
-	r->end_infinity = false;
+mp_range set_range_end_int (mp_range r, long long value) {
+	r.end.pd_int = value;
+	r.end.type = PD_TYPE_INT;
+	r.end_infinity = false;
+	return r;
 }
 
-void set_range_end_double (range *r, double value) {
-	r->end.pd_double = value;
-	r->end_infinity = false;
+mp_range set_range_end_double (mp_range r, double value) {
+	r.end.pd_double = value;
+	r.end.type = PD_TYPE_DOUBLE;
+	r.end_infinity = false;
+	return r;
 }
 
-range
-*parse_range_string (char *str) {
+void set_range_start (range *this, double value) {
+	this->start = value;
+	this->start_infinity = false;
+}
+
+void set_range_end (range *this, double value) {
+	this->end = value;
+	this->end_infinity = false;
+}
+
+range *parse_range_string (char *str) {
 	range *temp_range;
 	double start;
 	double end;
@@ -137,9 +166,9 @@ range
 	temp_range = (range *) calloc(1, sizeof(range));
 
 	/* Set defaults */
-	temp_range->start.pd_int = 0;
+	temp_range->start = 0;
 	temp_range->start_infinity = false;
-	temp_range->end.pd_int = 0;
+	temp_range->end = 0;
 	temp_range->end_infinity = true;
 	temp_range->alert_on = OUTSIDE;
 	temp_range->text = strdup(str);
@@ -150,11 +179,56 @@ range
 	}
 
 	end_str = index(str, ':');
+	if (end_str != NULL) {
+		if (str[0] == '~') {
+			temp_range->start_infinity = true;
+		} else {
+			start = strtod(str, NULL);      /* Will stop at the ':' */
+			set_range_start(temp_range, start);
+		}
+		end_str++;              /* Move past the ':' */
+	} else {
+		end_str = str;
+	}
+	end = strtod(end_str, NULL);
+	if (strcmp(end_str, "") != 0) {
+		set_range_end(temp_range, end);
+	}
+
+	if (temp_range->start_infinity == true ||
+			temp_range->end_infinity == true ||
+			temp_range->start <= temp_range->end) {
+		return temp_range;
+	}
+	free(temp_range);
+	return NULL;
+}
+
+mp_range parse_mp_range_string (char *str) {
+	mp_range temp_range = { 0 };
+	double start;
+	double end;
+	char *end_str;
+
+
+	/* Set defaults */
+	temp_range.start.pd_int = 0;
+	temp_range.start_infinity = false;
+	temp_range.end.pd_int = 0;
+	temp_range.end_infinity = true;
+	temp_range.alert_on = OUTSIDE;
+
+	if (str[0] == '@') {
+		temp_range.alert_on = INSIDE;
+		str++;
+	}
+
+	end_str = index(str, ':');
 	perfdata_value tmp;
 
 	if (end_str != NULL) {
 		if (str[0] == '~') {
-			temp_range->start_infinity = true;
+			temp_range.start_infinity = true;
 		} else {
 			if (is_integer(str)) {
 				tmp.pd_int = strtoll(str, NULL, 0);
@@ -179,13 +253,13 @@ range
 		}
 	}
 
-	if (temp_range->start_infinity == true ||
-		temp_range->end_infinity == true ||
-		cmp_perfdata_value(temp_range->start, temp_range->end) != -1) {
+	if (temp_range.start_infinity == true ||
+		temp_range.end_infinity == true ||
+		cmp_perfdata_value(temp_range.start, temp_range.end) != -1) {
 		return temp_range;
 	}
-	free(temp_range);
-	return NULL;
+
+	return temp_range;
 }
 
 /* returns 0 if okay, otherwise error codes */
@@ -237,6 +311,25 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
+			printf("Warning: start=%g end=%g; ", my_threshold->warning->start, my_threshold->warning->end);
+		} else {
+			printf("Warning not set; ");
+		}
+		if (my_threshold->critical) {
+			printf("Critical: start=%g end=%g", my_threshold->critical->start, my_threshold->critical->end);
+		} else {
+			printf("Critical not set");
+		}
+	}
+	printf("\n");
+}
+
+void mp_print_thresholds(const char *threshold_name, mp_thresholds *my_threshold) {
+	printf("%s - ", threshold_name);
+	if (! my_threshold) {
+		printf("Threshold not set");
+	} else {
+		if (my_threshold->warning) {
 			printf("Warning: start=%s end=%s; ",
 					pd_value_to_string(my_threshold->warning->start),
 					pd_value_to_string(my_threshold->warning->end)
@@ -257,8 +350,40 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("\n");
 }
 
+bool check_range(double value, range *my_range) {
+	bool no = false;
+	bool yes = true;
+
+	if (my_range->alert_on == INSIDE) {
+		no = true;
+		yes = false;
+	}
+
+	if (my_range->end_infinity == false && my_range->start_infinity == false) {
+		if ((my_range->start <= value) && (value <= my_range->end)) {
+			return no;
+		} else {
+			return yes;
+		}
+	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+		if (my_range->start <= value) {
+			return no;
+		} else {
+			return yes;
+		}
+	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+		if (value <= my_range->end) {
+			return no;
+		} else {
+			return yes;
+		}
+	} else {
+		return no;
+	}
+}
+
 /* Returns true if alert should be raised based on the range, false otherwise */
-bool check_range(perfdata_value value, range *my_range) {
+bool mp_check_range(perfdata_value value, mp_range *my_range) {
 	bool is_inside = false;
 
 	if (my_range->end_infinity == false && my_range->start_infinity == false) {
@@ -302,21 +427,28 @@ bool check_range(perfdata_value value, range *my_range) {
 
 /* Returns status */
 int get_status(double value, thresholds *my_thresholds) {
-	perfdata_value tmp = { 0 };
-	tmp.pd_double = value;
-
-	return get_status2(tmp, my_thresholds);
+	if (my_thresholds->critical != NULL) {
+		if (check_range(value, my_thresholds->critical) == true) {
+			return STATE_CRITICAL;
+		}
+	}
+	if (my_thresholds->warning != NULL) {
+		if (check_range(value, my_thresholds->warning) == true) {
+			return STATE_WARNING;
+		}
+	}
+	return STATE_OK;
 }
 
-int get_status2(perfdata_value value, thresholds *my_thresholds) {
+int get_status2(perfdata_value value, mp_thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical)) {
+		if (mp_check_range(value, my_thresholds->critical)) {
 			return STATE_CRITICAL;
 		}
 	}
 
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning)) {
+		if (mp_check_range(value, my_thresholds->warning)) {
 			return STATE_WARNING;
 		}
 	}

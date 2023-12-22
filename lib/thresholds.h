@@ -8,6 +8,11 @@ typedef struct thresholds_struct {
 	range	*critical;
 } thresholds;
 
+typedef struct mp_thresholds_struct {
+	mp_range	*warning;
+	mp_range	*critical;
+} mp_thresholds;
+
 char *fmt_threshold_warning(const thresholds th);
 char *fmt_threshold_critical(const thresholds th);
 
