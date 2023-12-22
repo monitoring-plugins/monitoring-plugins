@@ -81,8 +81,8 @@ void usage_va(const char *fmt, ...) __attribute__((noreturn));
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
-//char *perfdata (const char *, long int, const char *, int, long int,
-//               int, long int, int, long int, int, long int);
+char *perfdata (const char *, long int, const char *, int, long int,
+               int, long int, int, long int, int, long int);
 
 char *perfdata_uint64 (const char *, uint64_t , const char *, int, uint64_t,
                 int, uint64_t, int, uint64_t, int, uint64_t);
