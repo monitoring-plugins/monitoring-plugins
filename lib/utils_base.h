@@ -119,4 +119,6 @@ char *strpcat (char *, const char *, const char *);
 int xvasprintf (char **strp, const char *fmt, va_list ap);
 int xasprintf (char **strp, const char *fmt, ...);
 
+bool is_integer (char *);
+
 #endif /* _UTILS_BASE_ */

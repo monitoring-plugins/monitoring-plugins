@@ -189,20 +189,6 @@ bool is_percentage (char *number) {
 		return false;
 }
 
-bool is_integer (char *number) {
-	long int n;
-
-	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return false;
-
-	n = strtol (number, NULL, 10);
-
-	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return true;
-	else
-		return false;
-}
-
 bool is_intpos (char *number) {
 	if (is_integer (number) && atoi (number) > 0)
 		return true;

@@ -37,7 +37,6 @@ extern time_t start_time, end_time;
 
 /* Test input types */
 
-bool is_integer (char *);
 bool is_intpos (char *);
 bool is_intneg (char *);
 bool is_intnonneg (char *);
