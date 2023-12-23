@@ -1,10 +1,10 @@
 #ifndef _UTILS_CMD_
 #define _UTILS_CMD_
 
-/* 
+/*
  * Header file for Monitoring Plugins utils_cmd.c
- * 
- * 
+ *
+ *
  */
 
 /** types **/
@@ -32,17 +32,8 @@ void cmd_init (void);
 #define CMD_NO_ARRAYS 0x01   /* don't populate arrays at all */
 #define CMD_NO_ASSOC 0x02    /* output.line won't point to buf */
 
-/* This variable must be global, since there's no way the caller
- * can forcibly slay a dead or ungainly running program otherwise.
- * Multithreading apps and plugins can initialize it (via CMD_INIT)
- * in an async safe manner PRIOR to calling cmd_run() or cmd_run_array()
- * for the first time.
- *
- * The check for initialized values is atomic and can
- * occur in any number of threads simultaneously. */
-static pid_t *_cmd_pids = NULL;
 
-RETSIGTYPE timeout_alarm_handler (int);
+void timeout_alarm_handler (int);
 
 
 #endif /* _UTILS_CMD_ */

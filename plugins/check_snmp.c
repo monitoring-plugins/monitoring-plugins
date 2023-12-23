@@ -65,6 +65,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
 #define L_OFFSET CHAR_MAX+4
+#define L_IGNORE_MIB_PARSING_ERRORS CHAR_MAX+5
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -130,11 +131,11 @@ size_t nlabels = 0;
 size_t labels_size = OID_COUNT_STEP;
 size_t nunits = 0;
 size_t unitv_size = OID_COUNT_STEP;
-int numoids = 0;
+size_t numoids = 0;
 int numauthpriv = 0;
 int numcontext = 0;
 int verbose = 0;
-int usesnmpgetnext = FALSE;
+bool usesnmpgetnext = false;
 char *warning_thresholds = NULL;
 char *critical_thresholds = NULL;
 thresholds **thlds;
@@ -147,7 +148,7 @@ size_t eval_size = OID_COUNT_STEP;
 char *delimiter;
 char *output_delim;
 char *miblist = NULL;
-int needmibs = FALSE;
+bool needmibs = false;
 int calculate_rate = 0;
 double offset = 0.0;
 int rate_multiplier = 1;
@@ -158,7 +159,9 @@ int perf_labels = 1;
 char* ip_version = "";
 double multiplier = 1.0;
 char *fmtstr = "";
+bool fmtstr_set = false;
 char buffer[DEFAULT_BUFFER_SIZE];
+bool ignore_mib_parsing_errors = false;
 
 static char *fix_snmp_range(char *th)
 {
@@ -184,7 +187,8 @@ static char *fix_snmp_range(char *th)
 int
 main (int argc, char **argv)
 {
-	int i, len, line, total_oids;
+	int len, total_oids;
+	size_t line;
 	unsigned int bk_count = 0, dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
@@ -250,14 +254,16 @@ main (int argc, char **argv)
 	if(calculate_rate) {
 		if (!strcmp(label, "SNMP"))
 			label = strdup("SNMP RATE");
-		i=0;
+
+		size_t i = 0;
+
 		previous_state = np_state_read();
 		if(previous_state!=NULL) {
 			/* Split colon separated values */
 			previous_string = strdup((char *) previous_state->data);
 			while((ap = strsep(&previous_string, ":")) != NULL) {
 				if(verbose>2)
-					printf("State for %d=%s\n", i, ap);
+					printf("State for %zd=%s\n", i, ap);
 				while (i >= previous_size) {
 					previous_size += OID_COUNT_STEP;
 					previous_value = realloc(previous_value, previous_size * sizeof(*previous_value));
@@ -270,7 +276,7 @@ main (int argc, char **argv)
 	/* Populate the thresholds */
 	th_warn=warning_thresholds;
 	th_crit=critical_thresholds;
-	for (i=0; i<numoids; i++) {
+	for (size_t i = 0; i < numoids; i++) {
 		char *w = th_warn ? strndup(th_warn, strcspn(th_warn, ",")) : NULL;
 		char *c = th_crit ? strndup(th_crit, strcspn(th_crit, ",")) : NULL;
 		/* translate "2:1" to "@1:2" for backwards compatibility */
@@ -299,49 +305,62 @@ main (int argc, char **argv)
 	}
 
 	/* Create the command array to execute */
-	if(usesnmpgetnext == TRUE) {
+	if(usesnmpgetnext) {
 		snmpcmd = strdup (PATH_TO_SNMPGETNEXT);
 	}else{
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
 
 	/* 10 arguments to pass before context and authpriv options + 1 for host and numoids. Add one for terminating NULL */
-	command_line = calloc (10 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
-	command_line[0] = snmpcmd;
-	command_line[1] = strdup ("-Le");
-	command_line[2] = strdup ("-t");
-	xasprintf (&command_line[3], "%d", timeout_interval);
-	command_line[4] = strdup ("-r");
-	xasprintf (&command_line[5], "%d", retries);
-	command_line[6] = strdup ("-m");
-	command_line[7] = strdup (miblist);
-	command_line[8] = "-v";
-	command_line[9] = strdup (proto);
 
-	for (i = 0; i < numcontext; i++) {
-		command_line[10 + i] = contextargs[i];
+	unsigned index = 0;
+	command_line = calloc (11 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
+
+	command_line[index++] = snmpcmd;
+	command_line[index++] = strdup ("-Le");
+	command_line[index++] = strdup ("-t");
+	xasprintf (&command_line[index++], "%d", timeout_interval);
+	command_line[index++] = strdup ("-r");
+	xasprintf (&command_line[index++], "%d", retries);
+	command_line[index++] = strdup ("-m");
+	command_line[index++] = strdup (miblist);
+	command_line[index++] = "-v";
+	command_line[index++] = strdup (proto);
+
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s",
+		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto);
+
+	if (ignore_mib_parsing_errors) {
+		command_line[index++] = "-Pe";
+		xasprintf(&cl_hidden_auth, "%s -Pe", cl_hidden_auth);
 	}
 
-	for (i = 0; i < numauthpriv; i++) {
-		command_line[10 + numcontext + i] = authpriv[i];
+
+	for (int i = 0; i < numcontext; i++) {
+		command_line[index++] = contextargs[i];
 	}
 
-	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
+	for (int i = 0; i < numauthpriv; i++) {
+		command_line[index++] = authpriv[i];
+	}
 
-	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
+	xasprintf (&command_line[index++], "%s:%s", server_address, port);
 
-	for (i = 0; i < numoids; i++) {
-		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
+	xasprintf(&cl_hidden_auth, "%s [context] [authpriv] %s:%s",
+	 cl_hidden_auth,
+	 server_address,
+	 port);
+
+	for (size_t i = 0; i < numoids; i++) {
+		command_line[index++] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
 
-	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
+	command_line[index++] = NULL;
 
-	if (verbose)
+	if (verbose) {
 		printf ("%s\n", cl_hidden_auth);
+	}
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
@@ -366,7 +385,7 @@ main (int argc, char **argv)
 	if (external_error) {
 		if (chld_err.lines > 0) {
 			printf (_("External command error: %s\n"), chld_err.line[0]);
-			for (i = 1; i < chld_err.lines; i++) {
+			for (size_t i = 1; i < chld_err.lines; i++) {
 				printf ("%s\n", chld_err.line[i]);
 			}
 		} else {
@@ -376,12 +395,14 @@ main (int argc, char **argv)
 	}
 
 	if (verbose) {
-		for (i = 0; i < chld_out.lines; i++) {
+		for (size_t i = 0; i < chld_out.lines; i++) {
 			printf ("%s\n", chld_out.line[i]);
 		}
 	}
 
-	for (line=0, i=0; line < chld_out.lines && i < numoids ; line++, i++) {
+	line = 0;
+	total_oids = 0;
+	for (size_t i = 0; line < chld_out.lines && i < numoids ; line++, i++, total_oids++) {
 		if(calculate_rate)
 			conv = "%.10g";
 		else
@@ -394,7 +415,7 @@ main (int argc, char **argv)
 			break;
 
 		if (verbose > 2) {
-			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
+			printf("Processing oid %zi (line %zi)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
 		}
 
 		/* Clean up type array - Sol10 does not necessarily zero it out */
@@ -422,7 +443,8 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = multiply (strstr (response, "INTEGER: ") + 9);
-			if (fmtstr != "") {
+
+			if (fmtstr_set) {
 				conv = fmtstr;
 			}
 		}
@@ -596,8 +618,9 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
-			if (type)
+			if (strcmp(type, "") != 0) {
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
@@ -616,7 +639,6 @@ main (int argc, char **argv)
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
-	total_oids=i;
 
 	/* Save state data, as all data collected now */
 	if(calculate_rate) {
@@ -626,7 +648,7 @@ main (int argc, char **argv)
 			die(STATE_UNKNOWN, _("Cannot malloc"));
 
 		current_length=0;
-		for(i=0; i<total_oids; i++) {
+		for(int i = 0; i < total_oids; i++) {
 			xasprintf(&temp_string,"%.0f",response_value[i]);
 			if(temp_string==NULL)
 				die(STATE_UNKNOWN,_("Cannot asprintf()"));
@@ -669,7 +691,8 @@ process_arguments (int argc, char **argv)
 {
 	char *ptr;
 	int c = 1;
-	int j = 0, jj = 0, ii = 0;
+	int ii = 0;
+	size_t j = 0, jj = 0;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -708,6 +731,7 @@ process_arguments (int argc, char **argv)
 		{"ipv6", no_argument, 0, '6'},
 		{"multiplier", required_argument, 0, 'M'},
 		{"fmtstr", required_argument, 0, 'f'},
+		{"ignore-mib-parsing-errors", no_argument, false, L_IGNORE_MIB_PARSING_ERRORS},
 		{0, 0, 0, 0}
 	};
 
@@ -758,7 +782,7 @@ process_arguments (int argc, char **argv)
 			miblist = optarg;
 			break;
 		case 'n':	/* usesnmpgetnext */
-			usesnmpgetnext = TRUE;
+			usesnmpgetnext = true;
 			break;
 		case 'P':	/* SNMP protocol version */
 			proto = optarg;
@@ -812,7 +836,7 @@ process_arguments (int argc, char **argv)
 					 * so we have a mib variable, rather than just an SNMP OID,
 					 * so we have to actually read the mib files
 					 */
-					needmibs = TRUE;
+					needmibs = true;
 			}
 			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
 				while (j >= oids_size) {
@@ -972,8 +996,11 @@ process_arguments (int argc, char **argv)
 		case 'f':
 			if (multiplier != 1.0) {
 				fmtstr=optarg;
+				fmtstr_set = true;
 			}
 			break;
+		case L_IGNORE_MIB_PARSING_ERRORS:
+			ignore_mib_parsing_errors = true;
 		}
 	}
 
@@ -1012,7 +1039,7 @@ validate_arguments ()
 {
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
 	if (miblist == NULL) {
-		if ( needmibs == TRUE ) {
+		if (needmibs) {
 			miblist = strdup (DEFAULT_MIBLIST);
 		}else{
 			miblist = "";			/* don't read any mib files for numeric oids */
@@ -1186,7 +1213,7 @@ multiply (char *str)
 	if(verbose>2)
 		printf("    multiply extracted double: %f\n", val);
 	val *= multiplier;
-	if (fmtstr != "") {
+	if (fmtstr_set) {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
@@ -1306,6 +1333,9 @@ print_help (void)
 
 	printf (" %s\n", "-O, --perf-oids");
 	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
+
+	printf (" %s\n", "--ignore-mib-parsing-errors");
+	printf ("    %s\n", _("Tell snmpget to not print errors encountered when parsing MIB files"));
 
 	printf (UT_VERBOSE);
 

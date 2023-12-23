@@ -41,7 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <sys/select.h>
 
 #ifdef HAVE_SSL
-static int check_cert = FALSE;
+static bool check_cert = false;
 static int days_till_exp_warn, days_till_exp_crit;
 # define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 # define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
@@ -65,12 +65,12 @@ static int READ_TIMEOUT = 2;
 
 static int server_port = 0;
 static char *server_address = NULL;
-static int host_specified = FALSE;
+static bool host_specified = false;
 static char *server_send = NULL;
 static char *server_quit = NULL;
 static char **server_expect;
 static size_t server_expect_count = 0;
-static size_t maxbytes = 0;
+static ssize_t maxbytes = 0;
 static char **warn_codes = NULL;
 static size_t warn_codes_count = 0;
 static char **crit_codes = NULL;
@@ -88,7 +88,7 @@ static int match_flags = NP_MATCH_EXACT;
 
 #ifdef HAVE_SSL
 static char *sni = NULL;
-static int sni_specified = FALSE;
+static bool sni_specified = false;
 #endif
 
 #define FLAG_SSL 0x01
@@ -102,11 +102,9 @@ int
 main (int argc, char **argv)
 {
 	int result = STATE_UNKNOWN;
-	int i;
 	char *status = NULL;
 	struct timeval tv;
 	struct timeval timeout;
-	size_t len;
 	int match = -1;
 	fd_set rfds;
 
@@ -121,10 +119,10 @@ main (int argc, char **argv)
 	if(progname != NULL) progname++;
 	else progname = argv[0];
 
-	len = strlen(progname);
-	if(len > 6 && !memcmp(progname, "check_", 6)) {
+	size_t prog_name_len = strlen(progname);
+	if(prog_name_len > 6 && !memcmp(progname, "check_", 6)) {
 		SERVICE = strdup(progname + 6);
-		for(i = 0; i < len - 6; i++)
+		for(size_t i = 0; i < prog_name_len - 6; i++)
 			SERVICE[i] = toupper(SERVICE[i]);
 	}
 
@@ -247,7 +245,7 @@ main (int argc, char **argv)
 #ifdef HAVE_SSL
 	if (flags & FLAG_SSL){
 		result = np_net_ssl_init_with_hostname(sd, (sni_specified ? sni : NULL));
-		if (result == STATE_OK && check_cert == TRUE) {
+		if (result == STATE_OK && check_cert) {
 			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 		}
 	}
@@ -275,19 +273,21 @@ main (int argc, char **argv)
 			printf("Quit string: %s\n", server_quit);
 		}
 		printf("server_expect_count: %d\n", (int)server_expect_count);
-		for(i = 0; i < server_expect_count; i++)
-			printf("\t%d: %s\n", i, server_expect[i]);
+		for(size_t i = 0; i < server_expect_count; i++)
+			printf("\t%zd: %s\n", i, server_expect[i]);
 	}
 
 	/* if(len) later on, we know we have a non-NULL response */
-	len = 0;
+	ssize_t len = 0;
+
 	if (server_expect_count) {
+		ssize_t received = 0;
 
 		/* watch for the expect string */
-		while ((i = my_recv(buffer, sizeof(buffer))) > 0) {
-			status = realloc(status, len + i + 1);
-			memcpy(&status[len], buffer, i);
-			len += i;
+		while ((received = my_recv(buffer, sizeof(buffer))) > 0) {
+			status = realloc(status, len + received + 1);
+			memcpy(&status[len], buffer, received);
+			len += received;
 			status[len] = '\0';
 
 			/* stop reading if user-forced */
@@ -307,6 +307,7 @@ main (int argc, char **argv)
 			if(select(sd + 1, &rfds, NULL, NULL, &timeout) <= 0)
 				break;
 		}
+
 		if (match == NP_MATCH_RETRY)
 			match = NP_MATCH_FAILURE;
 
@@ -378,18 +379,18 @@ main (int argc, char **argv)
 	if(match == NP_MATCH_FAILURE)
 		printf ("|%s",
 				fperfdata ("time", elapsed_time, "s",
-				(flags & FLAG_TIME_WARN ? TRUE : FALSE), 0,
-				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), 0,
-				TRUE, 0,
-				TRUE, socket_timeout)
+				(flags & FLAG_TIME_WARN ? true : false), 0,
+				(flags & FLAG_TIME_CRIT ? true : false), 0,
+				true, 0,
+				true, socket_timeout)
 			);
 	else
 		printf("|%s",
 				fperfdata ("time", elapsed_time, "s",
-				(flags & FLAG_TIME_WARN ? TRUE : FALSE), warning_time,
-				(flags & FLAG_TIME_CRIT ? TRUE : FALSE), critical_time,
-				TRUE, 0,
-				TRUE, socket_timeout)
+				(flags & FLAG_TIME_WARN ? true : false), warning_time,
+				(flags & FLAG_TIME_CRIT ? true : false), critical_time,
+				true, 0,
+				true, socket_timeout)
 			);
 
 	putchar('\n');
@@ -399,11 +400,9 @@ main (int argc, char **argv)
 
 
 /* process command-line arguments */
-static int
-process_arguments (int argc, char **argv)
-{
+static int process_arguments (int argc, char **argv) {
 	int c;
-	int escape = 0;
+	bool escape = false;
 	char *temp;
 
 	enum {
@@ -492,7 +491,7 @@ process_arguments (int argc, char **argv)
 #endif
 			break;
 		case 'H':                 /* hostname */
-			host_specified = TRUE;
+			host_specified = true;
 			server_address = optarg;
 			break;
 		case 'c':                 /* critical */
@@ -527,7 +526,7 @@ process_arguments (int argc, char **argv)
 				server_port = atoi (optarg);
 			break;
 		case 'E':
-			escape = 1;
+			escape = true;
 			break;
 		case 's':
 			if (escape)
@@ -601,7 +600,7 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid certificate expiration period"), optarg);
 			    days_till_exp_warn = atoi (optarg);
 			}
-			check_cert = TRUE;
+			check_cert = true;
 			flags |= FLAG_SSL;
 			break;
 #  endif /* USE_OPENSSL */
@@ -617,7 +616,7 @@ process_arguments (int argc, char **argv)
 		case SNI_OPTION:
 #ifdef HAVE_SSL
 			flags |= FLAG_SSL;
-			sni_specified = TRUE;
+			sni_specified = true;
 			sni = optarg;
 #else
 			die (STATE_UNKNOWN, _("Invalid option - SSL is not available"));
@@ -630,15 +629,15 @@ process_arguments (int argc, char **argv)
 	}
 
 	c = optind;
-	if(host_specified == FALSE && c < argc)
+	if(!host_specified && c < argc)
 		server_address = strdup (argv[c++]);
 
 	if (server_address == NULL)
 		usage4 (_("You must provide a server address"));
-	else if (server_address[0] != '/' && is_host (server_address) == FALSE)
+	else if (server_address[0] != '/' && !is_host(server_address))
 		die (STATE_CRITICAL, "%s %s - %s: %s\n", SERVICE, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"), server_address);
 
-	return TRUE;
+	return OK;
 }
 
 

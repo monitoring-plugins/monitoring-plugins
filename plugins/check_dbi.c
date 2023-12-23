@@ -141,7 +141,7 @@ main (int argc, char **argv)
 	if (verbose > 2)
 		printf ("Initializing DBI\n");
 
-	dbi_inst *instance_p;
+	dbi_inst *instance_p = { 0 };
 
 	if (dbi_initialize_r(NULL, instance_p) < 0) {
 		printf ("UNKNOWN - failed to initialize DBI; possibly you don't have any drivers installed.\n");
