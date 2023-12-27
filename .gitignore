@@ -125,6 +125,7 @@ NP-VERSION-FILE
 /lib/tests/test_opts2
 /lib/tests/test_opts3
 /lib/tests/extra_opts.Po
+/lib/tests/test_generic_output
 
 # /m4/
 /m4/Makefile
