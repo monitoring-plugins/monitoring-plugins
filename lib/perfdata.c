@@ -4,8 +4,10 @@
 
 #include <assert.h>
 
-char *pd_value_to_string(const perfdata_value pd) {
+char *pd_value_to_string(const mp_perfdata_value pd) {
 	char *result = NULL;
+
+	assert(pd.type != PD_TYPE_NONE);
 
 	switch (pd.type) {
 	case PD_TYPE_INT:
@@ -29,7 +31,7 @@ char *pd_to_string(mp_perfdata pd) {
 	xasprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
 
 	if (pd.uom != NULL) {
-		xasprintf(&result, "%s", pd.uom);
+		xasprintf(&result, "%s%s", result, pd.uom);
 	}
 
 	if (pd.warn_present) {
@@ -58,27 +60,22 @@ char *pd_to_string(mp_perfdata pd) {
 }
 
 char *pd_list_to_string(const pd_list pd) {
-	char *result = NULL;
+	char *result = pd_to_string(pd.data);
 
-	for (const pd_list *elem = &pd; elem != NULL; elem = elem->next) {
-		if (result != NULL) {
-			xasprintf(&result, "%s %s", result, pd_to_string(elem->data));
-		} else {
-			xasprintf(&result, "%s", pd_to_string(elem->data));
-		}
+	for (pd_list *elem = pd.next; elem != NULL; elem = elem->next) {
+		xasprintf(&result, "%s %s", result, pd_to_string(elem->data));
 	}
 
 	return result;
 }
 
-mp_perfdata init_perfdata() {
-	mp_perfdata pd;
-	memset(&pd, 0, sizeof(mp_perfdata));
+mp_perfdata perfdata_init() {
+	mp_perfdata pd = { 0 };
 	return pd;
 
 }
 
-pd_list *new_pd_list() {
+pd_list *pd_list_init() {
 	pd_list *tmp = (pd_list *) calloc(sizeof(pd_list), 1);
 	if (tmp == NULL) {
 		die(STATE_UNKNOWN, "calloc failed\n");
@@ -88,20 +85,20 @@ pd_list *new_pd_list() {
 }
 
 void pd_list_append(pd_list *pdl, const mp_perfdata pd) {
-	/* Find the end */
-	if (pdl == NULL) {
-		pd_list *tmp = new_pd_list();
-		pdl = tmp;
+	assert(pdl != NULL);
+
+	if (pdl->data.value.type == PD_TYPE_NONE) {
+		// first entry is still empty
+		pdl->data = pd;
 	} else {
+		// find last element in the list
 		pd_list *curr = pdl->next;
 		while (curr != NULL) {
 			pdl = curr;
 			curr = pdl->next;
 		}
+		curr->data = pd;
 	}
-	pd_list *tmp = new_pd_list();
-	memcpy(&tmp->data, (void *)&pd, sizeof(mp_perfdata));
-	pdl->next = tmp;
 }
 
 void pd_list_free(pd_list *pdl) {
@@ -115,7 +112,7 @@ void pd_list_free(pd_list *pdl) {
 /*
  * returns -1 if a < b, 0 if a == b, 1 if a > b
  */
-int cmp_perfdata_value(const perfdata_value a, const perfdata_value b) {
+int cmp_perfdata_value(const mp_perfdata_value a, const mp_perfdata_value b) {
 	// Test if types are different
 	assert(a.type == b.type);
 

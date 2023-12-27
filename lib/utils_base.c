@@ -206,8 +206,6 @@ range *parse_range_string (char *str) {
 
 mp_range parse_mp_range_string (char *str) {
 	mp_range temp_range = { 0 };
-	double start;
-	double end;
 	char *end_str;
 
 
@@ -224,7 +222,7 @@ mp_range parse_mp_range_string (char *str) {
 	}
 
 	end_str = index(str, ':');
-	perfdata_value tmp;
+	mp_perfdata_value tmp;
 
 	if (end_str != NULL) {
 		if (str[0] == '~') {
@@ -383,7 +381,7 @@ bool check_range(double value, range *my_range) {
 }
 
 /* Returns true if alert should be raised based on the range, false otherwise */
-bool mp_check_range(perfdata_value value, mp_range *my_range) {
+bool mp_check_range(mp_perfdata_value value, mp_range *my_range) {
 	bool is_inside = false;
 
 	if (my_range->end_infinity == false && my_range->start_infinity == false) {
@@ -440,7 +438,7 @@ int get_status(double value, thresholds *my_thresholds) {
 	return STATE_OK;
 }
 
-int get_status2(perfdata_value value, mp_thresholds *my_thresholds) {
+int get_status2(mp_perfdata_value value, mp_thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
 		if (mp_check_range(value, my_thresholds->critical)) {
 			return STATE_CRITICAL;

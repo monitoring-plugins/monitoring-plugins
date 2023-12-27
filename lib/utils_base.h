@@ -52,9 +52,9 @@ void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
 void mp_print_thresholds(const char *, mp_thresholds *);
 bool check_range(double, range *);
-bool mp_check_range(perfdata_value, mp_range *);
+bool mp_check_range(mp_perfdata_value, mp_range *);
 int get_status(double, thresholds *);
-int get_status2(perfdata_value, mp_thresholds *);
+int get_status2(mp_perfdata_value, mp_thresholds *);
 
 /* Handle timeouts */
 extern int timeout_state;

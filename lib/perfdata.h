@@ -4,33 +4,40 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-enum pd_value_type_t {
+// Enum for the specific type of a perfdata_value
+typedef enum pd_value_type {
 	PD_TYPE_NONE = 0,
 	PD_TYPE_INT,
 	PD_TYPE_DOUBLE
-};
+} pd_value_type;
 
 typedef struct {
-	enum pd_value_type_t type;
+	enum pd_value_type type;
 	union {
 		long long pd_int;
 		double pd_double;
 	};
-} perfdata_value;
+} mp_perfdata_value;
 
 #define OUTSIDE false
 #define INSIDE  true
 
+/*
+ * New range type with generic numerical values
+ */
 typedef struct mp_range_struct {
-	perfdata_value start;
+	mp_perfdata_value start;
 	bool start_infinity;		/* false (default) or true */
 
-	perfdata_value end;
+	mp_perfdata_value end;
 	bool end_infinity;
 
 	bool alert_on;		/* OUTSIDE (default) or INSIDE */
 } mp_range;
 
+/*
+ * Old range type with floating point values
+ */
 typedef struct range_struct {
 	double  start;
 	bool start_infinity;
@@ -40,42 +47,77 @@ typedef struct range_struct {
 	char* text; /* original unparsed text input */
 } range;
 
-char *mp_range_to_string(const mp_range);
 
+/*
+ * Perfdata type for storing perfdata output
+ */
 typedef struct perfdata_struct {
 	char *label;
 	char *uom;
-	enum pd_value_type_t type;
 	bool warn_present;
 	bool crit_present;
 	bool min_present;
 	bool max_present;
-	perfdata_value value;
+	mp_perfdata_value value;
 	mp_range warn;
 	mp_range crit;
-	perfdata_value min;
-	perfdata_value max;
+	mp_perfdata_value min;
+	mp_perfdata_value max;
 } mp_perfdata;
 
+/*
+ * List of mp_perfdata values
+ */
 typedef struct pd_list_struct {
 	mp_perfdata data;
 	struct pd_list_struct* next;
 } pd_list;
 
-char *pd_to_string(const mp_perfdata);
-char *pd_value_to_string(const perfdata_value);
 
-char *pd_list_to_string(const pd_list);
+/*
+ * Initialize mp_perfdata value. Always use this to generate a new one
+ */
+mp_perfdata perfdata_init();
 
-mp_perfdata init_perfdata();
-pd_list *init_pd_list();
+/*
+ * Initialize pd_list value. Always use this to generate a new one
+ */
+pd_list *pd_list_init();
 
+/*
+ * Appends a mp_perfdata value to a pd_list
+ */
 void pd_list_append(pd_list[1], const mp_perfdata);
 
+/*
+ * Free the memory used by a pd_list
+ */
 void pd_list_free(pd_list[1]);
 
-char *fmt_range(const range);
+int cmp_perfdata_value(const mp_perfdata_value, const mp_perfdata_value);
 
-int cmp_perfdata_value(const perfdata_value, const perfdata_value);
+// =================
+// String formatters
+// =================
+/*
+ * Generate string from mp_perfdata value
+ */
+char *pd_to_string(const mp_perfdata);
+
+/*
+ * Generate string from perfdata_value value
+ */
+char *pd_value_to_string(const mp_perfdata_value);
+
+/*
+ * Generate string from pd_list value for the final output
+ */
+char *pd_list_to_string(const pd_list);
+
+/*
+ * Generate string from a mp_range value
+ */
+char *mp_range_to_string(const mp_range);
+char *fmt_range(const range);
 
 #endif /* _PERFDATA_ */

@@ -5,43 +5,45 @@
 #include "../plugins/common.h"
 
 typedef struct {
-	enum state_enum state;
+	mp_state_enum state;
 	char *output;
 	pd_list *perfdata;
-} subcheck_t;
+} mp_subcheck;
 
 typedef struct subcheck_list {
-	subcheck_t subcheck;
+	mp_subcheck subcheck;
 	struct subcheck_list *next;
 	pd_list *perfdata;
-} subcheck_list_t;
+} mp_subcheck_list;
 
-enum output_format_t {
+typedef enum output_format {
 	CLASSIC_FORMAT,
 	ICINGA2_FORMAT,
 	SUMMARY_ONLY
-};
+} mp_output_format;
 
 typedef struct {
-	enum state_enum state;
-	enum output_format_t format;
+	mp_state_enum state;
+	mp_output_format format;
 	char *summary;
 	pd_list* perfdata;
 	struct subcheck_list *subchecks;
-} check_t;
+} mp_check;
 
-extern check_t check;
+mp_check mp_check_init();
+mp_subcheck mp_subcheck_init();
 
-void init_check();
+void set_output_format(mp_output_format);
 
-void set_output_format(enum output_format_t);
+int mp_add_subcheck(mp_check check[static 1], mp_subcheck);
 
-int add_subcheck(enum state_enum, char *, pd_list *);
+void mp_add_summary(mp_check check[static 1], char *summary);
 
-void add_summary(char *summary);
+// TODO free and stuff
+//void cleanup_check(mp_check *);
 
-void cleanup_check();
+char *mp_fmt_output(mp_check);
 
-void print_output();
+static void print_output(mp_check);
 
 #endif /* _MP_OUTPUT_ */
