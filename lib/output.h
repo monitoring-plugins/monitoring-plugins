@@ -1,5 +1,5 @@
-#ifndef _OUTPUT_
-#define _OUTPUT_
+#ifndef _MP_OUTPUT_
+#define _MP_OUTPUT_
 
 #include "perfdata.h"
 #include "../plugins/common.h"
@@ -44,4 +44,4 @@ void cleanup_check();
 
 void print_output();
 
-#endif /* _OUTPUT_ */
+#endif /* _MP_OUTPUT_ */
