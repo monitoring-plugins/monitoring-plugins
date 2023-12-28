@@ -14,7 +14,7 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 		xasprintf(&result, "%lli", pd.pd_int);
 		break;
 	case PD_TYPE_DOUBLE:
-		xasprintf(&result, "%f", pd.pd_int);
+		xasprintf(&result, "%f", pd.pd_double);
 		break;
 	default:
 		// die here
@@ -92,12 +92,22 @@ void pd_list_append(pd_list *pdl, const mp_perfdata pd) {
 		pdl->data = pd;
 	} else {
 		// find last element in the list
-		pd_list *curr = pdl->next;
-		while (curr != NULL) {
-			pdl = curr;
-			curr = pdl->next;
+		pd_list *curr = pdl;
+		pd_list *next = pdl->next;
+
+		while (next != NULL) {
+			curr = next;
+			next = next->next;
 		}
-		curr->data = pd;
+
+		if (curr->data.value.type == PD_TYPE_NONE) {
+			// still empty
+			curr->data = pd;
+		} else {
+			// new a new one
+			curr->next = pd_list_init();
+			curr->next->data = pd;
+		}
 	}
 }
 
@@ -178,4 +188,24 @@ char *mp_range_to_string(const mp_range input) {
 		}
 	}
 	return result;
+}
+
+mp_perfdata mp_set_pd_value_double(mp_perfdata pd, double value) {
+	pd.value.pd_double = value;
+	pd.value.type = PD_TYPE_DOUBLE;
+	return pd;
+}
+
+mp_perfdata mp_set_pd_value_int(mp_perfdata pd, int value) {
+	return mp_set_pd_value_long_long(pd, (long long) value);
+}
+
+mp_perfdata mp_set_pd_value_long(mp_perfdata pd, long value) {
+	return mp_set_pd_value_long_long(pd, (long long) value);
+}
+
+mp_perfdata mp_set_pd_value_long_long(mp_perfdata pd, long long value) {
+	pd.value.pd_int = value;
+	pd.value.type = PD_TYPE_INT;
+	return pd;
 }

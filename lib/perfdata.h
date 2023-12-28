@@ -54,14 +54,18 @@ typedef struct range_struct {
 typedef struct perfdata_struct {
 	char *label;
 	char *uom;
-	bool warn_present;
-	bool crit_present;
-	bool min_present;
-	bool max_present;
 	mp_perfdata_value value;
+
+	bool warn_present;
 	mp_range warn;
+
+	bool crit_present;
 	mp_range crit;
+
+	bool min_present;
 	mp_perfdata_value min;
+
+	bool max_present;
 	mp_perfdata_value max;
 } mp_perfdata;
 
@@ -75,6 +79,11 @@ typedef struct pd_list_struct {
 
 
 /*
+ * ============
+ * Initializers
+ * ============
+*/
+/*
  * Initialize mp_perfdata value. Always use this to generate a new one
  */
 mp_perfdata perfdata_init();
@@ -84,10 +93,25 @@ mp_perfdata perfdata_init();
  */
 pd_list *pd_list_init();
 
+
 /*
  * Appends a mp_perfdata value to a pd_list
  */
 void pd_list_append(pd_list[1], const mp_perfdata);
+
+#define mp_set_pd_value(P, V) \
+	_Generic((V), \
+			double: mp_set_pd_value_double, \
+			int: mp_set_pd_value_int, \
+			long: mp_set_pd_value_long, \
+			long long: mp_set_pd_value_long_long \
+			) (P, V)
+
+mp_perfdata mp_set_pd_value_double(mp_perfdata, double);
+mp_perfdata mp_set_pd_value_int(mp_perfdata, int);
+mp_perfdata mp_set_pd_value_long(mp_perfdata, long);
+mp_perfdata mp_set_pd_value_long_long(mp_perfdata, long long);
+
 
 /*
  * Free the memory used by a pd_list
