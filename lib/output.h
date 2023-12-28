@@ -50,6 +50,9 @@ typedef struct {
 mp_check mp_check_init();
 mp_subcheck mp_subcheck_init();
 
+mp_subcheck mp_set_subcheck_state(mp_subcheck, mp_state_enum);
+mp_subcheck mp_set_subcheck_default_state(mp_subcheck, mp_state_enum);
+
 int mp_add_subcheck_to_check(mp_check check[static 1], mp_subcheck);
 int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck);
 
@@ -57,12 +60,15 @@ void mp_add_perfdata_to_subcheck(mp_subcheck check[static 1], const mp_perfdata)
 
 void mp_add_summary(mp_check check[static 1], char *summary);
 
+mp_state_enum mp_compute_check_state(const mp_check);
+mp_state_enum mp_compute_subcheck_state(const mp_subcheck);
+
 // TODO free and stuff
-//void cleanup_check(mp_check check[static 1]);
+//void mp_cleanup_check(mp_check check[static 1]);
 
 char *mp_fmt_output(mp_check);
 
-void print_output(mp_check);
+void mp_print_output(mp_check);
 
 /*
  * ==================

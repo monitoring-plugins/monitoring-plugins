@@ -11,9 +11,12 @@ void test_perfdata_formatting2();
 void test_deep_check_hierarchy();
 void test_deep_check_hierarchy2();
 
+void test_default_states1();
+void test_default_states2();
+
 int main(void) {
 
-	plan_tests(10);
+	plan_tests(14);
 
 	diag("Simple test with one subcheck");
 	test_one_subcheck();
@@ -33,6 +36,12 @@ int main(void) {
 	diag("Another test for deeper hierarchies");
 	test_deep_check_hierarchy2();
 
+	diag("Testing the default state logic");
+	test_default_states1();
+
+	diag("Testing the default state logic #2");
+	test_default_states2();
+
 	return exit_status();
 }
 
@@ -40,7 +49,7 @@ void test_one_subcheck() {
 	mp_subcheck sc1 = mp_subcheck_init();
 
 	sc1.output = "foobar";
-	sc1.state = STATE_WARNING;
+	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 
 	mp_check check = mp_check_init();
 	mp_add_subcheck_to_check(&check, sc1);
@@ -103,6 +112,7 @@ void test_two_subchecks() {
 
 	sc1.output = "foobar";
 	sc1.state = STATE_WARNING;
+	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 
 	mp_perfdata pd1 = perfdata_init();
 
@@ -116,7 +126,7 @@ void test_two_subchecks() {
 
 	mp_subcheck sc2 = mp_subcheck_init();
 	sc2.output = "baz";
-	sc2.state = STATE_OK;
+	sc2 = mp_set_subcheck_state(sc2, STATE_OK);
 
 	mp_add_subcheck_to_subcheck(&sc1, sc2);
 
@@ -145,26 +155,26 @@ void test_deep_check_hierarchy() {
 	// level 4
 	mp_subcheck sc4 = mp_subcheck_init();
 	sc4.output = "level4";
-	sc4.state = STATE_OK;
+	sc4 = mp_set_subcheck_state(sc4, STATE_OK);
 
 
 	// level 3
 	mp_subcheck sc3 = mp_subcheck_init();
 	sc3.output = "level3";
-	sc3.state = STATE_OK;
+	sc3 = mp_set_subcheck_state(sc3, STATE_OK);
 
 
 	// level 2
 	mp_subcheck sc2 = mp_subcheck_init();
 	sc2.output = "baz";
-	sc2.state = STATE_OK;
+	sc2 = mp_set_subcheck_state(sc2, STATE_OK);
 
 
 	// level 1
 	mp_subcheck sc1 = mp_subcheck_init();
 
 	sc1.output = "foobar";
-	sc1.state = STATE_WARNING;
+	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 
 	mp_perfdata pd1 = perfdata_init();
 
@@ -212,7 +222,7 @@ void test_deep_check_hierarchy2() {
 	mp_subcheck sc1 = mp_subcheck_init();
 
 	sc1.output = "foobar";
-	sc1.state = STATE_WARNING;
+	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 
 	mp_perfdata pd1 = perfdata_init();
 	pd1.uom = "s";
@@ -224,7 +234,7 @@ void test_deep_check_hierarchy2() {
 	// level 2
 	mp_subcheck sc2 = mp_subcheck_init();
 	sc2.output = "baz";
-	sc2.state = STATE_OK;
+	sc2 = mp_set_subcheck_state(sc2, STATE_OK);
 
 	mp_perfdata pd2 = perfdata_init();
 	pd2.uom = "B";
@@ -236,7 +246,7 @@ void test_deep_check_hierarchy2() {
 	// level 3
 	mp_subcheck sc3 = mp_subcheck_init();
 	sc3.output = "level3";
-	sc3.state = STATE_OK;
+	sc3 = mp_set_subcheck_state(sc3, STATE_OK);
 
 	mp_perfdata pd3 = perfdata_init();
 	pd3.label = "floatMe";
@@ -247,7 +257,7 @@ void test_deep_check_hierarchy2() {
 	// level 4
 	mp_subcheck sc4 = mp_subcheck_init();
 	sc4.output = "level4";
-	sc4.state = STATE_OK;
+	sc4 = mp_set_subcheck_state(sc4, STATE_OK);
 
 	mp_check check = mp_check_init();
 
@@ -274,4 +284,34 @@ void test_deep_check_hierarchy2() {
 	// diag(expected);
 
 	ok(strcmp(output, expected) == 0, "Output is as expected");
+}
+
+void test_default_states1() {
+	mp_subcheck sc = mp_subcheck_init();
+
+	mp_state_enum state1 = mp_compute_subcheck_state(sc);
+	ok(state1 == STATE_UNKNOWN, "Default default state is Unknown");
+
+	sc = mp_set_subcheck_default_state(sc, STATE_CRITICAL);
+
+	mp_state_enum state2 = mp_compute_subcheck_state(sc);
+	ok(state2 == STATE_CRITICAL, "Default state is Critical");
+
+	sc = mp_set_subcheck_state(sc, STATE_OK);
+
+	mp_state_enum state3 = mp_compute_subcheck_state(sc);
+	ok(state3 == STATE_OK, "Default state is Critical");
+}
+
+void test_default_states2() {
+	mp_check check = mp_check_init();
+
+	mp_subcheck sc = mp_subcheck_init();
+	sc.output = "placeholder";
+	sc = mp_set_subcheck_default_state(sc, STATE_CRITICAL);
+
+	mp_add_subcheck_to_check(&check, sc);
+
+	mp_state_enum result_state = mp_compute_check_state(check);
+	ok(result_state == STATE_CRITICAL, "Derived state is the proper default state");
 }

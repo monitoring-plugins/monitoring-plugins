@@ -43,11 +43,15 @@ mp_check mp_check_init() {
 
 mp_subcheck mp_subcheck_init() {
 	mp_subcheck tmp = { 0 };
+	tmp.default_state = STATE_UNKNOWN; // Default state is unknown
+	tmp.state_set_explicitly = false;
 	return tmp;
 }
 
 /* */
 int mp_add_subcheck_to_check(mp_check check[static 1], mp_subcheck sc) {
+	assert(sc.output != NULL); // There must be output in a subcheck
+	/*
 	if (sc.output == NULL ) {
 		die(STATE_UNKNOWN,
 			"%s - %s #%d: %s",
@@ -55,6 +59,7 @@ int mp_add_subcheck_to_check(mp_check check[static 1], mp_subcheck sc) {
 			"Sub check output is NULL"
 			);
 	}
+	*/
 
 	mp_subcheck_list *tmp = NULL;
 
@@ -177,26 +182,30 @@ char *get_subcheck_summary(mp_check check) {
 	return result;
 }
 
-mp_state_enum compute_subcheck_state(const mp_subcheck check) {
+mp_state_enum mp_compute_subcheck_state(const mp_subcheck check) {
 	mp_subcheck_list *scl = check.subchecks;
-	mp_state_enum result = check.state;
+
+	mp_state_enum result = check.default_state;
+	if (check.state_set_explicitly) {
+		result = check.state;
+	}
 
 	while (scl != NULL) {
-		result = max_state_alt(result, compute_subcheck_state(scl->subcheck));
+		result = max_state_alt(result, mp_compute_subcheck_state(scl->subcheck));
 		scl = scl->next;
 	}
 
 	return result;
 }
 
-mp_state_enum compute_check_state(const mp_check check) {
-	assert(check.subchecks != NULL);
+mp_state_enum mp_compute_check_state(const mp_check check) {
+	assert(check.subchecks != NULL); // a mp_check without subchecks is invalid, die here
 
 	mp_subcheck_list *scl = check.subchecks;
 	mp_state_enum result = STATE_OK;
 
 	while (scl != NULL) {
-		result = max_state_alt(result, compute_subcheck_state(scl->subcheck));
+		result = max_state_alt(result, mp_compute_subcheck_state(scl->subcheck));
 		scl = scl->next;
 	}
 
@@ -212,7 +221,7 @@ char *mp_fmt_output(mp_check check) {
 				check.summary = get_subcheck_summary(check);
 			}
 
-			xasprintf(&result,"%s: %s", state_text(compute_check_state(check)), check.summary);
+			xasprintf(&result,"%s: %s", state_text(mp_compute_check_state(check)), check.summary);
 			return result;
 
 		case CLASSIC_FORMAT:
@@ -226,7 +235,7 @@ char *mp_fmt_output(mp_check check) {
 					check.summary = get_subcheck_summary(check);
 				}
 
-				xasprintf(&result,"%s: %s", state_text(compute_check_state(check)), check.summary);
+				xasprintf(&result,"%s: %s", state_text(mp_compute_check_state(check)), check.summary);
 
 				mp_subcheck_list *subchecks = check.subchecks;
 
@@ -243,7 +252,7 @@ char *mp_fmt_output(mp_check check) {
 					check.summary = get_subcheck_summary(check);
 				}
 
-				xasprintf(&result,"[%s] - %s", state_text(compute_check_state(check)), check.summary);
+				xasprintf(&result,"[%s] - %s", state_text(mp_compute_check_state(check)), check.summary);
 
 				mp_subcheck_list *subchecks = check.subchecks;
 
@@ -311,11 +320,22 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 	}
 }
 
-void print_output(mp_check check) {
+void mp_print_output(mp_check check) {
 	puts(mp_fmt_output(check));
 }
 
 void mp_exit(mp_check check) {
-	print_output(check);
-	exit(compute_check_state(check));
+	mp_print_output(check);
+	exit(mp_compute_check_state(check));
+}
+
+mp_subcheck mp_set_subcheck_state(mp_subcheck check , mp_state_enum state) {
+	check.state = state;
+	check.state_set_explicitly = true;
+	return check;
+}
+
+mp_subcheck mp_set_subcheck_default_state(mp_subcheck check , mp_state_enum state) {
+	check.default_state = state;
+	return check;
 }
