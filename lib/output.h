@@ -3,6 +3,7 @@
 
 #include "perfdata.h"
 #include "../plugins/common.h"
+#include "states.h"
 
 typedef struct {
 	mp_state_enum state;

@@ -33,6 +33,8 @@
 
 #include "../config.h"
 
+#include "../lib/states.h"
+
 #ifdef HAVE_FEATURES_H
 #include <features.h>
 #endif
@@ -183,14 +185,6 @@ enum {
 	OK = 0,
 	ERROR = -1
 };
-
-typedef enum state_enum {
-	STATE_OK,
-	STATE_WARNING,
-	STATE_CRITICAL,
-	STATE_UNKNOWN,
-	STATE_DEPENDENT
-} mp_state_enum;
 
 enum {
 	DEFAULT_SOCKET_TIMEOUT = 10,	 /* timeout after 10 seconds */
