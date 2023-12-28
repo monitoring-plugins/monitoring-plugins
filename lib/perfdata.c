@@ -41,7 +41,7 @@ char *pd_to_string(mp_perfdata pd) {
 	}
 
 	if (pd.crit_present) {
-		xasprintf(&result, "%s;%lli", result, mp_range_to_string(pd.crit));
+		xasprintf(&result, "%s;%s", result, mp_range_to_string(pd.crit));
 	} else {
 		xasprintf(&result, "%s;", result);
 	}
@@ -162,7 +162,7 @@ char *mp_range_to_string(const mp_range input) {
 		switch (input.start.type) {
 			case PD_TYPE_INT:
 				if (input.start.pd_int != 0) {
-					xasprintf(&result, "%i:", input.start.pd_int);
+					xasprintf(&result, "%lli:", input.start.pd_int);
 				}
 				break;
 			case PD_TYPE_DOUBLE:
@@ -178,7 +178,7 @@ char *mp_range_to_string(const mp_range input) {
 	if (!input.end_infinity) {
 		switch (input.end.type) {
 			case PD_TYPE_INT:
-				xasprintf(&result, "%i:", input.end.pd_int);
+				xasprintf(&result, "%lli:", input.end.pd_int);
 				break;
 			case PD_TYPE_DOUBLE:
 				xasprintf(&result, "%f:", input.end.pd_double);
