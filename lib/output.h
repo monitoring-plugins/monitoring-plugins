@@ -9,9 +9,9 @@
  * A partial check result
  */
 typedef struct {
-	mp_state_enum state; // OK, Warning, Critical ... set explicitely
-	mp_state_enum default_state; // OK, Warning, Critical .. if not set explicitely
-	bool state_set_explicitely; // was the state set explicitely (or should it be derived from subchecks)
+	mp_state_enum state; // OK, Warning, Critical ... set explicitly
+	mp_state_enum default_state; // OK, Warning, Critical .. if not set explicitly
+	bool state_set_explicitly; // was the state set explicitly (or should it be derived from subchecks)
 
 	char *output; // Text output for humans ("Filesystem xyz is fine", "Could not create TCP connection to..")
 	pd_list *perfdata; // Performance data for this check
