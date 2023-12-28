@@ -50,8 +50,6 @@ typedef struct {
 mp_check mp_check_init();
 mp_subcheck mp_subcheck_init();
 
-void set_output_format(mp_output_format);
-
 int mp_add_subcheck_to_check(mp_check check[static 1], mp_subcheck);
 int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck);
 
