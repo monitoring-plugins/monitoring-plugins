@@ -93,11 +93,11 @@ char *expect = NULL;
 char *config_file = NULL;
 unsigned short port = PW_AUTH_UDP_PORT;
 int retries = 1;
-int verbose = FALSE;
+bool verbose = false;
 
 /******************************************************************************
 
-The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
+The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
 tags in the comments. With in the tags, the XML is assembled sequentially.
 You can define entities in tags. You also have all the #defines available as
 entities.
@@ -155,7 +155,11 @@ main (int argc, char **argv)
 {
 	struct sockaddr_storage ss;
 	char name[HOST_NAME_MAX];
+#ifdef RC_BUFFER_LEN
+	char msg[RC_BUFFER_LEN];
+#else
 	char msg[BUFFER_LEN];
+#endif
 	SEND_DATA data;
 	int result = STATE_UNKNOWN;
 	uint32_t client_id, service;
@@ -268,10 +272,10 @@ process_arguments (int argc, char **argv)
 			print_revision (progname, NP_VERSION);
 			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose mode */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 'H':									/* hostname */
-			if (is_host (optarg) == FALSE) {
+			if (!is_host (optarg)) {
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			server = optarg;
@@ -377,7 +381,7 @@ print_help (void)
   printf ("\n");
   printf ("%s\n", _("This plugin tests a RADIUS server to see if it is accepting connections."));
   printf ("%s\n", _("The server to test must be specified in the invocation, as well as a user"));
-  printf ("%s\n", _("name and password. A configuration file may also be present. The format of"));
+  printf ("%s\n", _("name and password. A configuration file must be present. The format of"));
   printf ("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf ("%s\n", _("The password option presents a substantial security issue because the"));
   printf ("%s\n", _("password can possibly be determined by careful watching of the command line"));

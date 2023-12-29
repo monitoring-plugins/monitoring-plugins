@@ -49,6 +49,8 @@ unsigned int commands = 0;
 unsigned int services = 0;
 int skip_stdout = 0;
 int skip_stderr = 0;
+int warn_on_stderr = 0;
+bool unknown_timeout = false;
 char *remotecmd = NULL;
 char **commargv = NULL;
 int commargc = 0;
@@ -56,8 +58,8 @@ char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
 char **service;
-int passive = FALSE;
-int verbose = FALSE;
+bool passive = false;
+bool verbose = false;
 
 int
 main (int argc, char **argv)
@@ -66,7 +68,6 @@ main (int argc, char **argv)
 	char *status_text;
 	int cresult;
 	int result = STATE_UNKNOWN;
-	int i;
 	time_t local_time;
 	FILE *fp = NULL;
 	output chld_out, chld_err;
@@ -94,16 +95,23 @@ main (int argc, char **argv)
 	/* run the command */
 	if (verbose) {
 		printf ("Command: %s\n", commargv[0]);
-		for (i=1; i<commargc; i++)
+		for (int i = 1; i < commargc; i++)
 			printf ("Argument %i: %s\n", i, commargv[i]);
 	}
 
 	result = cmd_run_array (commargv, &chld_out, &chld_err, 0);
 
+	/* SSH returns 255 if connection attempt fails; include the first line of error output */
+	if (result == 255 && unknown_timeout) {
+		printf (_("SSH connection failed: %s\n"),
+		        chld_err.lines > 0 ? chld_err.line[0] : "(no error output)");
+		return STATE_UNKNOWN;
+	}
+
 	if (verbose) {
-		for(i = 0; i < chld_out.lines; i++)
+		for(size_t i = 0; i < chld_out.lines; i++)
 			printf("stdout: %s\n", chld_out.line[i]);
-		for(i = 0; i < chld_err.lines; i++)
+		for(size_t i = 0; i < chld_err.lines; i++)
 			printf("stderr: %s\n", chld_err.line[i]);
 	}
 
@@ -113,17 +121,20 @@ main (int argc, char **argv)
 		skip_stderr = chld_err.lines;
 
 	/* UNKNOWN or worse if (non-skipped) output found on stderr */
-	if(chld_err.lines > skip_stderr) {
+	if(chld_err.lines > (size_t)skip_stderr) {
 		printf (_("Remote command execution failed: %s\n"),
 		        chld_err.line[skip_stderr]);
-		return max_state_alt(result, STATE_UNKNOWN);
+		if ( warn_on_stderr ) 
+			return max_state_alt(result, STATE_WARNING);
+		else
+			return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
 	 * Wrap up quickly and keep the tricks below */
 	if(!passive) {
-		if (chld_out.lines > skip_stdout)
-			for (i = skip_stdout; i < chld_out.lines; i++)
+		if (chld_out.lines > (size_t)skip_stdout)
+			for (size_t i = skip_stdout; i < chld_out.lines; i++)
 				puts (chld_out.line[i]);
 		else
 			printf (_("%s - check_by_ssh: Remote command '%s' returned status %d\n"),
@@ -144,7 +155,7 @@ main (int argc, char **argv)
 
 	local_time = time (NULL);
 	commands = 0;
-	for(i = skip_stdout; i < chld_out.lines; i++) {
+	for(size_t i = skip_stdout; i < chld_out.lines; i++) {
 		status_text = chld_out.line[i++];
 		if (i == chld_out.lines || strstr (chld_out.line[i], "STATUS CODE: ") == NULL)
 			die (STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
@@ -176,6 +187,7 @@ process_arguments (int argc, char **argv)
 		{"verbose", no_argument, 0, 'v'},
 		{"fork", no_argument, 0, 'f'},
 		{"timeout", required_argument, 0, 't'},
+		{"unknown-timeout", no_argument, 0, 'U'},
 		{"host", required_argument, 0, 'H'},    /* backward compatibility */
 		{"hostname", required_argument, 0, 'H'},
 		{"port", required_argument,0,'p'},
@@ -189,6 +201,7 @@ process_arguments (int argc, char **argv)
 		{"skip", optional_argument, 0, 'S'}, /* backwards compatibility */
 		{"skip-stdout", optional_argument, 0, 'S'},
 		{"skip-stderr", optional_argument, 0, 'E'},
+		{"warn-on-stderr", no_argument, 0, 'W'},
 		{"proto1", no_argument, 0, '1'},
 		{"proto2", no_argument, 0, '2'},
 		{"use-ipv4", no_argument, 0, '4'},
@@ -207,7 +220,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvh1246fqt:H:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
+		c = getopt_long (argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts,
 		                 &option);
 
 		if (c == -1 || c == EOF)
@@ -221,7 +234,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'v':									/* help */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -229,8 +242,10 @@ process_arguments (int argc, char **argv)
 			else
 				timeout_interval = atoi (optarg);
 			break;
+		case 'U':
+			unknown_timeout = true;
+			break;
 		case 'H':									/* host */
-			host_or_die(optarg);
 			hostname = optarg;
 			break;
 		case 'p': /* port number */
@@ -241,7 +256,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'O':									/* output file */
 			outputfile = optarg;
-			passive = TRUE;
+			passive = true;
 			break;
 		case 's':									/* description of service to check */
 			p1 = optarg;
@@ -308,6 +323,9 @@ process_arguments (int argc, char **argv)
 			else
 				skip_stderr = atoi (optarg);
 			break;
+		case 'W':									/* exit with warning if there is an output on stderr */
+			warn_on_stderr = 1;
+			break;
 		case 'o':									/* Extra options for the ssh command */
 			comm_append("-o");
 			comm_append(optarg);
@@ -329,7 +347,6 @@ process_arguments (int argc, char **argv)
 		if (c <= argc) {
 			die (STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		}
-		host_or_die(argv[c]);
 		hostname = argv[c++];
 	}
 
@@ -415,6 +432,8 @@ print_help (void)
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDOUT [optional]"));
   printf (" %s\n", "-E, --skip-stderr[=n]");
   printf ("    %s\n", _("Ignore all or (if specified) first n lines on STDERR [optional]"));
+  printf (" %s\n", "-W, --warn-on-stderr]");
+  printf ("    %s\n", _("Exit with an warning, if there is an output on STDERR"));
   printf (" %s\n", "-f");
   printf ("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always return OK if ssh is executed"));
   printf (" %s\n","-C, --command='COMMAND STRING'");
@@ -437,6 +456,8 @@ print_help (void)
   printf ("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
 	printf (UT_WARN_CRIT);
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+	printf (" %s\n","-U, --unknown-timeout");
+	printf ("    %s\n", _("Make connection problems return UNKNOWN instead of CRITICAL"));
 	printf (UT_VERBOSE);
 	printf("\n");
   printf (" %s\n", _("The most common mode of use is to refer to a local identity file with"));
@@ -466,8 +487,8 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf (" %s -H <host> -C <command> [-fqv] [-1|-2] [-4|-6]\n"
-	        "       [-S [lines]] [-E [lines]] [-t timeout] [-i identity]\n"
+	printf (" %s -H <host> -C <command> [-fqvU] [-1|-2] [-4|-6]\n"
+	        "       [-S [lines]] [-E [lines]] [-W] [-t timeout] [-i identity]\n"
 	        "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
 	        "       [-p port] [-o ssh-option] [-F configfile]\n",
 	        progname);

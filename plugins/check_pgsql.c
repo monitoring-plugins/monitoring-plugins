@@ -34,6 +34,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
+#include "utils_cmd.h"
 
 #include "netutils.h"
 #include <libpq-fe.h>
@@ -68,8 +69,7 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
-int is_pg_dbname (char *);
-int is_pg_logname (char *);
+bool is_pg_logname (char *);
 int do_query (PGconn *, char *);
 
 char *pghost = NULL;						/* host name of the backend server */
@@ -84,6 +84,8 @@ char *pgparams = NULL;
 double twarn = (double)DEFAULT_WARN;
 double tcrit = (double)DEFAULT_CRIT;
 char *pgquery = NULL;
+#define OPTID_QUERYNAME -1000
+char *pgqueryname = NULL;
 char *query_warning = NULL;
 char *query_critical = NULL;
 thresholds *qthresholds = NULL;
@@ -91,7 +93,7 @@ int verbose = 0;
 
 /******************************************************************************
 
-The (psuedo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
+The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
 tags in the comments. With in the tags, the XML is assembled sequentially.
 You can define entities in tags. You also have all the #defines available as
 entities.
@@ -250,7 +252,7 @@ main (int argc, char **argv)
 	printf (_(" %s - database %s (%f sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
-	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, TRUE, 0, FALSE,0));
+	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, true, 0, false,0));
 
 	if (pgquery)
 		query_status = do_query (conn, pgquery);
@@ -284,6 +286,7 @@ process_arguments (int argc, char **argv)
 		{"database", required_argument, 0, 'd'},
 		{"option", required_argument, 0, 'o'},
 		{"query", required_argument, 0, 'q'},
+		{"queryname", required_argument, 0, OPTID_QUERYNAME},
 		{"query_critical", required_argument, 0, 'C'},
 		{"query_warning", required_argument, 0, 'W'},
 		{"verbose", no_argument, 0, 'v'},
@@ -343,10 +346,10 @@ process_arguments (int argc, char **argv)
 				pgport = optarg;
 			break;
 		case 'd':     /* database name */
-			if (!is_pg_dbname (optarg)) /* checks length and valid chars */
-				usage2 (_("Database name is not valid"), optarg);
-			else /* we know length, and know optarg is terminated, so us strcpy */
-				strcpy (dbName, optarg);
+			if (strlen(optarg) >= NAMEDATALEN) {
+				usage2 (_("Database name exceeds the maximum length"), optarg);
+			}
+			snprintf(dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l':     /* login name */
 			if (!is_pg_logname (optarg))
@@ -366,6 +369,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'q':
 			pgquery = optarg;
+			break;
+		case OPTID_QUERYNAME:
+			pgqueryname = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -387,7 +393,7 @@ process_arguments (int argc, char **argv)
 
 <para>&PROTO_validate_arguments;</para>
 
-<para>Given a database name, this function returns TRUE if the string
+<para>Given a database name, this function returns true if the string
 is a valid PostgreSQL database name, and returns false if it is
 not.</para>
 
@@ -407,45 +413,6 @@ validate_arguments ()
 	return OK;
 }
 
-
-/******************************************************************************
-
-@@-
-<sect3>
-<title>is_pg_dbname</title>
-
-<para>&PROTO_is_pg_dbname;</para>
-
-<para>Given a database name, this function returns TRUE if the string
-is a valid PostgreSQL database name, and returns false if it is
-not.</para>
-
-<para>Valid PostgreSQL database names are less than &NAMEDATALEN;
-characters long and consist of letters, numbers, and underscores. The
-first character cannot be a number, however.</para>
-
-</sect3>
--@@
-******************************************************************************/
-
-
-
-int
-is_pg_dbname (char *dbname)
-{
-	char txt[NAMEDATALEN];
-	char tmp[NAMEDATALEN];
-	if (strlen (dbname) > NAMEDATALEN - 1)
-		return (FALSE);
-	strncpy (txt, dbname, NAMEDATALEN - 1);
-	txt[NAMEDATALEN - 1] = 0;
-	if (sscanf (txt, "%[_a-zA-Z]%[^_a-zA-Z0-9-]", tmp, tmp) == 1)
-		return (TRUE);
-	if (sscanf (txt, "%[_a-zA-Z]%[_a-zA-Z0-9-]%[^_a-zA-Z0-9-]", tmp, tmp, tmp) ==
-			2) return (TRUE);
-	return (FALSE);
-}
-
 /**
 
 the tango program should eventually create an entity here based on the
@@ -457,7 +424,7 @@ function prototype
 
 <para>&PROTO_is_pg_logname;</para>
 
-<para>Given a username, this function returns TRUE if the string is a
+<para>Given a username, this function returns true if the string is a
 valid PostgreSQL username, and returns false if it is not. Valid PostgreSQL
 usernames are less than &NAMEDATALEN; characters long and consist of
 letters, numbers, dashes, and underscores, plus possibly some other
@@ -472,12 +439,10 @@ should be added.</para>
 
 
 
-int
-is_pg_logname (char *username)
-{
+bool is_pg_logname (char *username) {
 	if (strlen (username) > NAMEDATALEN - 1)
-		return (FALSE);
-	return (TRUE);
+		return (false);
+	return (true);
 }
 
 /******************************************************************************
@@ -528,6 +493,9 @@ print_help (void)
 
 	printf (" %s\n", "-q, --query=STRING");
 	printf ("    %s\n", _("SQL query to run. Only first column in first row will be read"));
+	printf (" %s\n", "--queryname=STRING");
+	printf ("    %s\n", _("A name for the query, this string is used instead of the query"));
+	printf ("    %s\n", _("in the long output of the plugin"));
 	printf (" %s\n", "-W, --query-warning=RANGE");
 	printf ("    %s\n", _("SQL query value to result in warning status (double)"));
 	printf (" %s\n", "-C, --query-critical=RANGE");
@@ -547,7 +515,10 @@ print_help (void)
 	printf (" %s\n", _("connecting to the server. The result from the query has to be numeric."));
 	printf (" %s\n", _("Multiple SQL commands, separated by semicolon, are allowed but the result "));
 	printf (" %s\n", _("of the last command is taken into account only. The value of the first"));
-	printf (" %s\n\n", _("column in the first row is used as the check result."));
+	printf (" %s\n", _("column in the first row is used as the check result. If a second column is"));
+	printf (" %s\n", _("present in the result set, this is added to the plugin output with a"));
+	printf (" %s\n", _("prefix of \"Extra Info:\". This information can be displayed in the system"));
+	printf (" %s\n\n", _("executing the plugin."));
 
 	printf (" %s\n", _("See the chapter \"Monitoring Database Activity\" of the PostgreSQL manual"));
 	printf (" %s\n\n", _("for details about how to access internal statistics of the database server."));
@@ -587,6 +558,7 @@ do_query (PGconn *conn, char *query)
 	PGresult *res;
 
 	char *val_str;
+	char *extra_info;
 	double value;
 
 	char *endptr = NULL;
@@ -641,10 +613,22 @@ do_query (PGconn *conn, char *query)
 					: (my_status == STATE_CRITICAL)
 						? _("CRITICAL")
 						: _("UNKNOWN"));
-	printf (_("'%s' returned %f"), query, value);
+	if(pgqueryname) {
+		printf (_("%s returned %f"), pgqueryname, value);
+	}
+	else {
+		printf (_("'%s' returned %f"), query, value);
+	}
+
 	printf ("|query=%f;%s;%s;;\n", value,
 			query_warning ? query_warning : "",
 			query_critical ? query_critical : "");
+	if (PQnfields (res) > 1) {
+		extra_info = PQgetvalue (res, 0, 1);
+		if (extra_info != NULL) {
+			printf ("Extra Info: %s\n", extra_info);
+		}
+	}
 	return my_status;
 }
 

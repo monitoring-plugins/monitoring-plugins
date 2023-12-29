@@ -2,9 +2,11 @@
 #define _UTILS_BASE_
 /* Header file for Monitoring Plugins utils_base.c */
 
-#include "sha1.h"
+#ifndef USE_OPENSSL
+# include "sha256.h"
+#endif
 
-/* This file holds header information for thresholds - use this in preference to 
+/* This file holds header information for thresholds - use this in preference to
    individual plugin logic */
 
 /* This has not been merged with utils.h because of problems with
@@ -19,10 +21,11 @@
 
 typedef struct range_struct {
 	double	start;
-	int	start_infinity;		/* FALSE (default) or TRUE */
+	bool start_infinity;
 	double	end;
 	int	end_infinity;
 	int	alert_on;		/* OUTSIDE (default) or INSIDE */
+	char* text; /* original unparsed text input */
 	} range;
 
 typedef struct thresholds_struct {
@@ -58,8 +61,12 @@ range *parse_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
-int check_range(double, range *);
+bool check_range(double, range *);
 int get_status(double, thresholds *);
+
+/* Handle timeouts */
+extern int timeout_state;
+extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */
 #define NP_THRESHOLDS_CHARS "-0123456789.:@~"
@@ -72,7 +79,7 @@ void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)))
 #define NP_RANGE_UNPARSEABLE 1
 #define NP_WARN_WITHIN_CRIT 2
 
-/* a simple check to see if we're running as root.  
+/* a simple check to see if we're running as root.
  * returns zero on failure, nonzero on success */
 int np_check_if_root(void);
 
@@ -107,5 +114,6 @@ void np_state_write_string(time_t, char *);
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
+const char *state_text (int);
 
 #endif /* _UTILS_BASE_ */

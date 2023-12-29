@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gl tap lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
+SUBDIRS = gl tap lib plugins plugins-scripts plugins-root @PERLMODS_DIR@
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING ChangeLog FAQ NEWS \
@@ -34,6 +34,7 @@ test test-debug:
 	if test "$(PERLMODS_DIR)" != ""; then cd perlmods && $(MAKE) $@; fi
 	cd plugins && $(MAKE) $@
 	cd plugins-scripts && $(MAKE) $@
+	cd plugins-root && $(MAKE) $@
 
 # Solaris pkgmk
 BUILDDIR = build-solaris

@@ -27,6 +27,8 @@
 #include "utils_base.h"
 #include <stdarg.h>
 #include <limits.h>
+#include <string.h>
+#include <errno.h>
 
 #include <arpa/inet.h>
 
@@ -35,9 +37,6 @@ extern const char *progname;
 
 #define STRLEN 64
 #define TXTBLK 128
-
-unsigned int timeout_state = STATE_CRITICAL;
-unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
 time_t start_time, end_time;
 
@@ -148,146 +147,154 @@ print_revision (const char *command_name, const char *revision)
 	         command_name, revision, PACKAGE, VERSION);
 }
 
-const char *
-state_text (int result)
-{
-	switch (result) {
-	case STATE_OK:
-		return "OK";
-	case STATE_WARNING:
-		return "WARNING";
-	case STATE_CRITICAL:
-		return "CRITICAL";
-	case STATE_DEPENDENT:
-		return "DEPENDENT";
-	default:
-		return "UNKNOWN";
-	}
-}
-
-void
-timeout_alarm_handler (int signo)
-{
-	if (signo == SIGALRM) {
-		printf (_("%s - Plugin timed out after %d seconds\n"),
-						state_text(timeout_state), timeout_interval);
-		exit (timeout_state);
-	}
-}
-
-int
-is_numeric (char *number)
-{
+bool is_numeric (char *number) {
 	char tmp[1];
 	float x;
 
 	if (!number)
-		return FALSE;
+		return false;
 	else if (sscanf (number, "%f%c", &x, tmp) == 1)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_positive (char *number)
-{
+bool is_positive (char *number) {
 	if (is_numeric (number) && atof (number) > 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_negative (char *number)
-{
+bool is_negative (char *number) {
 	if (is_numeric (number) && atof (number) < 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_nonnegative (char *number)
-{
+bool is_nonnegative (char *number) {
 	if (is_numeric (number) && atof (number) >= 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_percentage (char *number)
-{
+bool is_percentage (char *number) {
 	int x;
 	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_integer (char *number)
-{
+bool is_integer (char *number) {
 	long int n;
 
 	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return FALSE;
+		return false;
 
 	n = strtol (number, NULL, 10);
 
 	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intpos (char *number)
-{
+bool is_intpos (char *number) {
 	if (is_integer (number) && atoi (number) > 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intneg (char *number)
-{
+bool is_intneg (char *number) {
 	if (is_integer (number) && atoi (number) < 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intnonneg (char *number)
-{
+bool is_intnonneg (char *number) {
 	if (is_integer (number) && atoi (number) >= 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intpercent (char *number)
-{
+/*
+ * Checks whether the number in the string _number_ can be put inside a int64_t
+ * On success the number will be written to the _target_ address, if _target_ is not set
+ * to NULL.
+ */
+bool is_int64(char *number, int64_t *target) {
+	errno = 0;
+	char *endptr = { 0 };
+
+	int64_t tmp = strtoll(number, &endptr, 10);
+	if (errno != 0) {
+		return false;
+	}
+
+	if (*endptr == '\0') {
+		return 0;
+	}
+
+	if (tmp < INT64_MIN || tmp > INT64_MAX) {
+		return false;
+	}
+
+	if (target != NULL) {
+		*target = tmp;
+	}
+	return true;
+}
+
+/*
+ * Checks whether the number in the string _number_ can be put inside a uint64_t
+ * On success the number will be written to the _target_ address, if _target_ is not set
+ * to NULL.
+ */
+bool is_uint64(char *number, uint64_t *target) {
+	errno = 0;
+	char *endptr = { 0 };
+	unsigned long long tmp = strtoull(number, &endptr, 10);
+
+	if (errno != 0) {
+		return false;
+	}
+
+	if (*endptr != '\0') {
+		return false;
+	}
+
+	if (tmp > UINT64_MAX) {
+		return false;
+	}
+
+	if (target != NULL) {
+		*target = (uint64_t)tmp;
+	}
+
+	return true;
+}
+
+bool is_intpercent (char *number) {
 	int i;
 	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_option (char *str)
-{
+bool is_option (char *str) {
 	if (!str)
-		return FALSE;
+		return false;
 	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 #ifdef NEED_GETTIMEOFDAY
@@ -577,10 +584,94 @@ char *perfdata (const char *label,
 		xasprintf (&data, "%s;", data);
 
 	if (minp)
-		xasprintf (&data, "%s%ld", data, minv);
+		xasprintf (&data, "%s%ld;", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
 
 	if (maxp)
-		xasprintf (&data, "%s;%ld", data, maxv);
+		xasprintf (&data, "%s%ld", data, maxv);
+
+	return data;
+}
+
+
+char *perfdata_uint64 (const char *label,
+ uint64_t val,
+ const char *uom,
+ int warnp, /* Warning present */
+ uint64_t warn,
+ int critp, /* Critical present */
+ uint64_t crit,
+ int minp, /* Minimum present */
+ uint64_t minv,
+ int maxp, /* Maximum present */
+ uint64_t maxv)
+{
+	char *data = NULL;
+
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
+	else
+		xasprintf (&data, "%s=%" PRIu64 "%s;", label, val, uom);
+
+	if (warnp)
+		xasprintf (&data, "%s%" PRIu64 ";", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (critp)
+		xasprintf (&data, "%s%" PRIu64 ";", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%" PRIu64 ";", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (maxp)
+		xasprintf (&data, "%s%" PRIu64, data, maxv);
+
+	return data;
+}
+
+
+char *perfdata_int64 (const char *label,
+ int64_t val,
+ const char *uom,
+ int warnp, /* Warning present */
+ int64_t warn,
+ int critp, /* Critical present */
+ int64_t crit,
+ int minp, /* Minimum present */
+ int64_t minv,
+ int maxp, /* Maximum present */
+ int64_t maxv)
+{
+	char *data = NULL;
+
+	if (strpbrk (label, "'= "))
+		xasprintf (&data, "'%s'=%" PRId64 "%s;", label, val, uom);
+	else
+		xasprintf (&data, "%s=%" PRId64 "%s;", label, val, uom);
+
+	if (warnp)
+		xasprintf (&data, "%s%" PRId64 ";", data, warn);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (critp)
+		xasprintf (&data, "%s%" PRId64 ";", data, crit);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (minp)
+		xasprintf (&data, "%s%" PRId64 ";", data, minv);
+	else
+		xasprintf (&data, "%s;", data);
+
+	if (maxp)
+		xasprintf (&data, "%s%" PRId64, data, maxv);
 
 	return data;
 }
@@ -708,4 +799,3 @@ char *sperfdata_int (const char *label,
 
 	return data;
 }
-

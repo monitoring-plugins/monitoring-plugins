@@ -37,6 +37,9 @@ TESTS = @PLUGIN_TEST@
 test:
 	perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
 
+test-debug:
+	NPTEST_DEBUG=1 HARNESS_VERBOSE=1 perl -I $(top_builddir) -I $(top_srcdir) ../test.pl
+
 setuid_root_mode = ug=rx,u+s
 
 # /* Author Coreutils team - see ACKNOWLEDGEMENTS */
@@ -77,8 +80,8 @@ install-exec-local: $(noinst_PROGRAMS)
 
 ##############################################################################
 # the actual targets
-check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS)
-check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS)
+check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS) $(LIB_CRYPTO)
+check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS) $(LIB_CRYPTO)
 
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@

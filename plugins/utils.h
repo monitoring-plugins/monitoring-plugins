@@ -7,7 +7,7 @@
 /* The purpose of this package is to provide safer alternatives to C
 functions that might otherwise be vulnerable to hacking. This
 currently includes a standard suite of validation routines to be sure
-that an string argument acually converts to its intended type and a
+that an string argument actually converts to its intended type and a
 suite of string handling routine that do their own memory management
 in order to resist overflow attacks. In addition, a few functions are
 provided to standardize version and error reporting across the entire
@@ -15,6 +15,9 @@ suite of plugins. */
 
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
+
+#include <stdbool.h>
+
 
 #ifdef NP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
@@ -29,30 +32,25 @@ suite of plugins. */
 void support (void);
 void print_revision (const char *, const char *);
 
-/* Handle timeouts */
-
-extern unsigned int timeout_state;
-extern unsigned int timeout_interval;
-
-RETSIGTYPE timeout_alarm_handler (int);
-
 extern time_t start_time, end_time;
 
 /* Test input types */
 
-int is_integer (char *);
-int is_intpos (char *);
-int is_intneg (char *);
-int is_intnonneg (char *);
-int is_intpercent (char *);
+bool is_integer (char *);
+bool is_intpos (char *);
+bool is_intneg (char *);
+bool is_intnonneg (char *);
+bool is_intpercent (char *);
+bool is_uint64(char *number, uint64_t *target);
+bool is_int64(char *number, int64_t *target);
 
-int is_numeric (char *);
-int is_positive (char *);
-int is_negative (char *);
-int is_nonnegative (char *);
-int is_percentage (char *);
+bool is_numeric (char *);
+bool is_positive (char *);
+bool is_negative (char *);
+bool is_nonnegative (char *);
+bool is_percentage (char *);
 
-int is_option (char *);
+bool is_option (char *);
 
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
@@ -89,13 +87,17 @@ void usage4(const char *) __attribute__((noreturn));
 void usage5(void) __attribute__((noreturn));
 void usage_va(const char *fmt, ...) __attribute__((noreturn));
 
-const char *state_text (int);
-
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
 
 char *perfdata (const char *, long int, const char *, int, long int,
                 int, long int, int, long int, int, long int);
+
+char *perfdata_uint64 (const char *, uint64_t , const char *, int, uint64_t,
+                int, uint64_t, int, uint64_t, int, uint64_t);
+
+char *perfdata_int64 (const char *, int64_t, const char *, int, int64_t,
+                int, int64_t, int, int64_t, int, int64_t);
 
 char *fperfdata (const char *, double, const char *, int, double,
                  int, double, int, double, int, double);

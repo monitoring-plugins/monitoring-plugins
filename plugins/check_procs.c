@@ -1,34 +1,37 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_procs plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2008 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_procs plugin
-* 
+*
 * Checks all processes and generates WARNING or CRITICAL states if the
 * specified metric is outside the required threshold ranges. The metric
 * defaults to number of processes.  Search filters can be applied to limit
 * the processes to check.
-* 
-* 
+*
+* The parent process, check_procs itself and any child process of 
+* check_procs (ps) are excluded from any checks to prevent false positives.
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_procs";
@@ -50,7 +53,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments (int, char **);
 int validate_arguments (void);
-int convert_to_seconds (char *); 
+int convert_to_seconds (char *);
 void print_help (void);
 void print_usage (void);
 
@@ -70,6 +73,7 @@ int options = 0; /* bitmask of filter criteria to test against */
 #define PCPU 256
 #define ELAPSED 512
 #define EREG_ARGS 1024
+#define EXCLUDE_PROGS 2048
 
 #define KTHREAD_PARENT "kthreadd" /* the parent process of kernel threads:
 							ppid of procs are compared to pid of this proc*/
@@ -93,6 +97,9 @@ int rss;
 float pcpu;
 char *statopts;
 char *prog;
+char *exclude_progs;
+char **exclude_progs_arr = NULL;
+char exclude_progs_counter = 0;
 char *args;
 char *input_filename = NULL;
 regex_t re_args;
@@ -149,7 +156,7 @@ main (int argc, char **argv)
 	int expected_cols = PS_COLS - 1;
 	int warn = 0; /* number of processes in warn state */
 	int crit = 0; /* number of processes in crit state */
-	int i = 0, j = 0;
+	int i = 0;
 	int result = STATE_UNKNOWN;
 	int ret = 0;
 	output chld_out, chld_err;
@@ -203,7 +210,7 @@ main (int argc, char **argv)
 	}
 
 	/* flush first line: j starts at 1 */
-	for (j = 1; j < chld_out.lines; j++) {
+	for (size_t j = 1; j < chld_out.lines; j++) {
 		input_line = chld_out.line[j];
 
 		if (verbose >= 3)
@@ -230,15 +237,16 @@ main (int argc, char **argv)
 			procseconds = convert_to_seconds(procetime);
 
 			if (verbose >= 3)
-				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+				printf ("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n",
 					procs, procuid, procvsz, procrss,
-					procpid, procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat,
 					procetime, procprog, procargs);
 
 			/* Ignore self */
 			if ((usepid && mypid == procpid) ||
-				(!usepid && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino) ||
-				 (ret == -1 && errno == ENOENT))) {
+				( ((!usepid) && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino)) ||
+				 (ret == -1 && errno == ENOENT))
+				) {
 				if (verbose >= 3)
 					 printf("not considering - is myself or gone\n");
 				continue;
@@ -250,7 +258,33 @@ main (int argc, char **argv)
 				continue;
 			}
 
-			/* filter kernel threads (childs of KTHREAD_PARENT)*/
+			/* Ignore our own children */
+			if (procppid == mypid) {
+				if (verbose >= 3)
+					 printf("not considering - is our child\n");
+				continue;
+			}
+
+			/* Ignore excluded processes by name */
+			if(options & EXCLUDE_PROGS) {
+			  int found = 0;
+			  int i = 0;
+
+			  for(i=0; i < (exclude_progs_counter); i++) {
+			    if(!strcmp(procprog, exclude_progs_arr[i])) {
+			      found = 1;
+			    }
+			  }
+			  if(found == 0) {
+			    resultsum |= EXCLUDE_PROGS;
+			  } else
+			  {
+			    if(verbose >= 3)
+			      printf("excluding - by ignorelist\n");
+			  }
+			}
+
+			/* filter kernel threads (children of KTHREAD_PARENT)*/
 			/* TODO adapt for other OSes than GNU/Linux
 					sorry for not doing that, but I've no other OSes to test :-( */
 			if (kthread_filter == 1) {
@@ -265,7 +299,7 @@ main (int argc, char **argv)
 				}
 			}
 
-			if ((options & STAT) && (strstr (statopts, procstat)))
+			if ((options & STAT) && (strstr (procstat, statopts)))
 				resultsum |= STAT;
 			if ((options & ARGS) && procargs && (strstr (procargs, args) != NULL))
 				resultsum |= ARGS;
@@ -292,9 +326,9 @@ main (int argc, char **argv)
 
 			procs++;
 			if (verbose >= 2) {
-				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", 
+				printf ("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n",
 					procuid, procvsz, procrss,
-					procpid, procppid, procpcpu, procstat, 
+					procpid, procppid, procpcpu, procstat,
 					procetime, procprog, procargs);
 			}
 
@@ -320,7 +354,7 @@ main (int argc, char **argv)
 					result = max_state (result, i);
 				}
 			}
-		} 
+		}
 		/* This should not happen */
 		else if (verbose) {
 			printf(_("Not parseable: %s"), input_buffer);
@@ -332,7 +366,7 @@ main (int argc, char **argv)
 		return STATE_UNKNOWN;
 	}
 
-	if ( result == STATE_UNKNOWN ) 
+	if ( result == STATE_UNKNOWN )
 		result = STATE_OK;
 
 	/* Needed if procs found, but none match filter */
@@ -352,9 +386,9 @@ main (int argc, char **argv)
 		if (metric != METRIC_PROCS) {
 			printf (_("%d crit, %d warn out of "), crit, warn);
 		}
-	} 
+	}
 	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
-	
+
 	if (strcmp(fmt,"") != 0) {
 		printf (_(" with %s"), fmt);
 	}
@@ -409,6 +443,7 @@ process_arguments (int argc, char **argv)
 		{"input-file", required_argument, 0, CHAR_MAX+2},
 		{"no-kthreads", required_argument, 0, 'k'},
 		{"traditional-filter", no_argument, 0, 'T'},
+		{"exclude-process", required_argument, 0, 'X'},
 		{0, 0, 0, 0}
 	};
 
@@ -417,7 +452,7 @@ process_arguments (int argc, char **argv)
 			strcpy (argv[c], "-t");
 
 	while (1) {
-		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T",
+		c = getopt_long (argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:",
 			longopts, &option);
 
 		if (c == -1 || c == EOF)
@@ -440,7 +475,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'c':									/* critical threshold */
 			critical_range = optarg;
-			break;							 
+			break;
 		case 'w':									/* warning threshold */
 			warning_range = optarg;
 			break;
@@ -489,6 +524,23 @@ process_arguments (int argc, char **argv)
 			xasprintf (&fmt, _("%s%scommand name '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
 			          prog);
 			options |= PROG;
+			break;
+		case 'X':
+			if(exclude_progs)
+			  break;
+			else
+			  exclude_progs = optarg;
+			xasprintf (&fmt, _("%s%sexclude progs '%s'"), (fmt ? fmt : ""), (options ? ", " : ""),
+				   exclude_progs);
+			char *p = strtok(exclude_progs, ",");
+
+			while(p){
+			  exclude_progs_arr = realloc(exclude_progs_arr, sizeof(char*) * ++exclude_progs_counter);
+			  exclude_progs_arr[exclude_progs_counter-1] = p;
+			  p = strtok(NULL, ",");
+			}
+
+			options |= EXCLUDE_PROGS;
 			break;
 		case 'a':									/* args (full path name with args) */
 			/* TODO: allow this to be passed in with --metric */
@@ -542,11 +594,11 @@ process_arguments (int argc, char **argv)
 			if ( strcmp(optarg, "PROCS") == 0) {
 				metric = METRIC_PROCS;
 				break;
-			} 
+			}
 			else if ( strcmp(optarg, "VSZ") == 0) {
 				metric = METRIC_VSZ;
 				break;
-			} 
+			}
 			else if ( strcmp(optarg, "RSS") == 0 ) {
 				metric = METRIC_RSS;
 				break;
@@ -559,7 +611,7 @@ process_arguments (int argc, char **argv)
 				metric = METRIC_ELAPSED;
 				break;
 			}
-				
+
 			usage4 (_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k':	/* linux kernel thread filter */
 			kthread_filter = 1;
@@ -642,7 +694,7 @@ convert_to_seconds(char *etime) {
 	seconds = 0;
 
 	for (ptr = etime; *ptr != '\0'; ptr++) {
-	
+
 		if (*ptr == '-') {
 			hyphcnt++;
 			continue;
@@ -686,18 +738,23 @@ convert_to_seconds(char *etime) {
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+  print_revision (progname, NP_VERSION);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-	printf (COPYRIGHT, copyright, email);
+  printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+  printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
+  printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
   printf ("%s\n", _("metric is outside the required threshold ranges. The metric defaults to number"));
   printf ("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
 
   printf ("\n\n");
 
-	print_usage ();
+  printf ("%s\n", _("The parent process, check_procs itself and any child process of check_procs (ps)"));
+  printf ("%s\n", _("are excluded from any checks to prevent false positives."));
+
+  printf ("\n\n");
+
+  print_usage ();
 
   printf (UT_HELP_VRSN);
   printf (UT_EXTRA_OPTS);
@@ -713,11 +770,11 @@ print_help (void)
   printf ("  %s\n", _("CPU     - percentage CPU"));
 /* only linux etime is support currently */
 #if defined( __linux__ )
-	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
+  printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
 #endif /* defined(__linux__) */
-	printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-	printf (" %s\n", "-v, --verbose");
+  printf (" %s\n", "-v, --verbose");
   printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));
 
   printf (" %s\n", "-T, --traditional");
@@ -735,7 +792,7 @@ print_help (void)
   printf ("   %s\n", _("Only scan for processes with VSZ higher than indicated."));
   printf (" %s\n", "-r, --rss=RSS");
   printf ("   %s\n", _("Only scan for processes with RSS higher than indicated."));
-	printf (" %s\n", "-P, --pcpu=PCPU");
+  printf (" %s\n", "-P, --pcpu=PCPU");
   printf ("   %s\n", _("Only scan for processes with PCPU higher than indicated."));
   printf (" %s\n", "-u, --user=USER");
   printf ("   %s\n", _("Only scan for processes with user name or ID indicated."));
@@ -745,41 +802,48 @@ print_help (void)
   printf ("   %s\n", _("Only scan for processes with args that contain the regex STRING."));
   printf (" %s\n", "-C, --command=COMMAND");
   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
+  printf (" %s\n", "-X, --exclude-process");
+  printf ("   %s\n", _("Exclude processes which match this comma separated list"));
   printf (" %s\n", "-k, --no-kthreads");
   printf ("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
 
-	printf(_("\n\
+  printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
 specified 'max:min', a warning status will be generated if the\n\
 count is inside the specified range\n\n"));
 
-	printf(_("\
+  printf(_("\
 This plugin checks the number of currently running processes and\n\
 generates WARNING or CRITICAL states if the process count is outside\n\
 the specified threshold ranges. The process count can be filtered by\n\
 process owner, parent process PID, current state (e.g., 'Z'), or may\n\
 be the total number of running processes\n\n"));
 
-	printf ("%s\n", _("Examples:"));
+  printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
   printf ("  %s\n", _("Warning if not two processes with command name portsentry."));
   printf ("  %s\n\n", _("Critical if < 2 or > 1024 processes"));
+  printf (" %s\n", "check_procs -c 1: -C sshd");
+  printf ("  %s\n", _("Critical if not at least 1 process with command sshd"));
+  printf (" %s\n", "check_procs -w 1024 -c 1: -C sshd");
+  printf ("  %s\n", _("Warning if > 1024 processes with command name sshd."));
+  printf ("  %s\n\n", _("Critical if < 1 processes with command name sshd."));
   printf (" %s\n", "check_procs -w 10 -a '/usr/local/bin/perl' -u root");
   printf ("  %s\n", _("Warning alert if > 10 processes with command arguments containing"));
   printf ("  %s\n\n", _("'/usr/local/bin/perl' and owned by root"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
   printf ("  %s\n\n", _("Alert if VSZ of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n", _("Alert if CPU of any processes over 10%% or 20%%"));
+  printf ("  %s\n", _("Alert if CPU of any processes over 10\% or 20\%"));
 
-	printf (UT_SUPPORT);
+  printf (UT_SUPPORT);
 }
 
 void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
+  printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
-  printf (" [-C command] [-k] [-t timeout] [-v]\n");
+  printf (" [-C command] [-X process_to_exclude] [-k] [-t timeout] [-v]\n");
 }

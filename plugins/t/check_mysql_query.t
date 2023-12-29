@@ -17,15 +17,8 @@ use vars qw($tests);
 
 plan skip_all => "check_mysql_query not compiled" unless (-x "check_mysql_query");
 
-my $mysqlserver = getTestParameter( 
-		"NP_MYSQL_SERVER", 
-		"A MySQL Server with no slaves setup"
-		);
-my $mysql_login_details = getTestParameter( 
-		"MYSQL_LOGIN_DETAILS", 
-		"Command line parameters to specify login access",
-		"-u user -ppw -d db",
-		);
+my $mysqlserver         = getTestParameter("NP_MYSQL_SERVER", "A MySQL Server with no slaves setup");
+my $mysql_login_details = getTestParameter("NP_MYSQL_LOGIN_DETAILS", "Command line parameters to specify login access", "-u user -ppw -d db");
 my $result;
 
 if (! $mysqlserver) {
@@ -38,7 +31,7 @@ $result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver $
 cmp_ok( $result->return_code, '==', 0, "Can run query");
 
 $result = NPTest->testCmd("./check_mysql_query -H $mysqlserver $mysql_login_details");
-cmp_ok( $result->return_code, '==', 3, "Missing query parmeter");
+cmp_ok( $result->return_code, '==', 3, "Missing query parameter");
 like( $result->output, "/Must specify a SQL query to run/", "Missing query error message");
 
 $result = NPTest->testCmd("./check_mysql_query -q 'SELECT 1+1' -H $mysqlserver -u dummy -d mysql");

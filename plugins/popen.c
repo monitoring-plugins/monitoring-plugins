@@ -14,7 +14,7 @@
 * FILE * spopen(const char *);
 * int spclose(FILE *);
 * 
-* Code taken with liitle modification from "Advanced Programming for the Unix
+* Code taken with little modification from "Advanced Programming for the Unix
 * Environment" by W. Richard Stevens
 * 
 * This is considered safe in that no shell is spawned, and the environment
@@ -38,10 +38,11 @@
 * 
 *****************************************************************************/
 
-#include "common.h"
+#include "./common.h"
+#include "./utils.h"
+#include "../lib/maxfd.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
-extern int timeout_interval;
 extern pid_t *childpid;
 extern int *child_stderr_array;
 extern FILE *child_process;
@@ -49,9 +50,9 @@ extern FILE *child_process;
 FILE *spopen (const char *);
 int spclose (FILE *);
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE popen_sigchld_handler (int);
+void popen_sigchld_handler (int);
 #endif
-RETSIGTYPE popen_timeout_alarm_handler (int);
+void popen_timeout_alarm_handler (int);
 
 #include <stdarg.h>							/* ANSI C header file */
 #include <fcntl.h>
@@ -76,17 +77,8 @@ RETSIGTYPE popen_timeout_alarm_handler (int);
 #define	SIG_ERR	((Sigfunc *)-1)
 #endif
 
-#define	min(a,b)	((a) < (b) ? (a) : (b))
-#define	max(a,b)	((a) > (b) ? (a) : (b))
-int open_max (void);						/* {Prog openmax} */
-static void err_sys (const char *, ...) __attribute__((noreturn,format(printf, 1, 2)));
-char *rtrim (char *, const char *);
 
 char *pname = NULL;							/* caller can set this from argv[0] */
-
-/*int *childerr = NULL;*//* ptr to array allocated at run-time */
-/*extern pid_t *childpid = NULL; *//* ptr to array allocated at run-time */
-static int maxfd;								/* from our open_max(), {Prog openmax} */
 
 #ifdef REDHAT_SPOPEN_ERROR
 static volatile int childtermd = 0;
@@ -186,14 +178,14 @@ spopen (const char *cmdstring)
 	}
 	argv[i] = NULL;
 
+	long maxfd = mp_open_max();
+
 	if (childpid == NULL) {				/* first time through */
-		maxfd = open_max ();				/* allocate zeroed out array for child pids */
 		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)
 			return (NULL);
 	}
 
 	if (child_stderr_array == NULL) {	/* first time through */
-		maxfd = open_max ();				/* allocate zeroed out array for child pids */
 		if ((child_stderr_array = calloc ((size_t)maxfd, sizeof (int))) == NULL)
 			return (NULL);
 	}
@@ -273,17 +265,8 @@ spclose (FILE * fp)
 	return (1);
 }
 
-#ifdef	OPEN_MAX
-static int openmax = OPEN_MAX;
-#else
-static int openmax = 0;
-#endif
-
-#define	OPEN_MAX_GUESS	256			/* if OPEN_MAX is indeterminate */
-				/* no guarantee this is adequate */
-
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE
+void
 popen_sigchld_handler (int signo)
 {
 	if (signo == SIGCHLD)
@@ -291,7 +274,7 @@ popen_sigchld_handler (int signo)
 }
 #endif
 
-RETSIGTYPE
+void
 popen_timeout_alarm_handler (int signo)
 {
 	int fh;
@@ -308,64 +291,4 @@ popen_timeout_alarm_handler (int signo)
 		}
 		exit (STATE_CRITICAL);
 	}
-}
-
-
-int
-open_max (void)
-{
-	if (openmax == 0) {						/* first time through */
-		errno = 0;
-		if ((openmax = sysconf (_SC_OPEN_MAX)) < 0) {
-			if (errno == 0)
-				openmax = OPEN_MAX_GUESS;	/* it's indeterminate */
-			else
-				err_sys (_("sysconf error for _SC_OPEN_MAX"));
-		}
-	}
-	return (openmax);
-}
-
-
-/* Fatal error related to a system call.
- * Print a message and die. */
-
-#define MAXLINE 2048
-static void
-err_sys (const char *fmt, ...)
-{
-	int errnoflag = 1;
-	int errno_save;
-	char buf[MAXLINE];
-
-	va_list ap;
-
-	va_start (ap, fmt);
-	/* err_doit (1, fmt, ap); */
-	errno_save = errno;						/* value caller might want printed */
-	vsprintf (buf, fmt, ap);
-	if (errnoflag)
-		sprintf (buf + strlen (buf), ": %s", strerror (errno_save));
-	strcat (buf, "\n");
-	fflush (stdout);							/* in case stdout and stderr are the same */
-	fputs (buf, stderr);
-	fflush (NULL);								/* flushes all stdio output streams */
-	va_end (ap);
-	exit (1);
-}
-
-char *
-rtrim (char *str, const char *tok)
-{
-	int i = 0;
-	int j = sizeof (str);
-
-	while (str != NULL && i < j) {
-		if (*(str + i) == *tok) {
-			sprintf (str + i, "%s", "\0");
-			return str;
-		}
-		i++;
-	}
-	return str;
 }

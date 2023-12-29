@@ -13,7 +13,7 @@ dnl   np_mysql_libs    = flags for libs,    from mysql_config --libs
 dnl   np_mysql_cflags  = flags for cflags,  from mysql_config --cflags
 dnl Also sets in config.h:
 dnl   HAVE_MYSQLCLIENT
-dnl Copile your code with:
+dnl Compile your code with:
 dnl   $(CC) $(np_mysql_include) code.c $(np_mysql_libs)
 
 AC_DEFUN([np_mysqlclient],
@@ -53,19 +53,35 @@ AC_DEFUN([np_mysqlclient],
       _savedcppflags="$CPPFLAGS"
       CPPFLAGS="$CPPFLAGS $np_mysql_include"
 
-      dnl Putting $np_mysql_libs as other libraries ensures that all mysql dependencies are linked in
-      dnl Although -lmysqlclient is duplicated, it is not a problem
-      AC_CHECK_LIB([mysqlclient], [mysql_init], [
-        with_mysql=$np_mysql_config
-        AC_DEFINE(HAVE_MYSQLCLIENT, 1, [Defined if mysqlclient is found and can compile]) 
-	], [with_mysql=no], [$np_mysql_libs])
+      np_check_lib_mysqlclient
+
       CPPFLAGS=$_savedcppflags
 
     fi
   fi
 ])
 
-dnl Will take $1, find last occurrance of -LDIR and add DIR to LD_RUN_PATH
+dnl Test mysql_init using mysqlclient
+AC_DEFUN([np_check_lib_mysqlclient],
+[
+  dnl Putting $np_mysql_libs as other libraries ensures that all mysql dependencies are linked in
+  dnl Although -lmysqlclient is duplicated, it is not a problem
+  AC_CHECK_LIB([mysqlclient], [mysql_init], [
+    with_mysql=$np_mysql_config
+    AC_DEFINE(HAVE_MYSQLCLIENT, 1, [Defined if mysqlclient is found and can compile])
+    ], [np_check_lib_mariadbclient], [$np_mysql_libs])
+])
+
+dnl Test mysql_init using mariadbclient
+AC_DEFUN([np_check_lib_mariadbclient],
+[
+  AC_CHECK_LIB([mariadbclient], [mysql_init], [
+    with_mysql=$np_mysql_config
+    AC_DEFINE(HAVE_MYSQLCLIENT, 1, [Defined if mariadbclient is found and can compile])
+    ], [with_mysql=no], [$np_mysql_libs])
+])
+
+dnl Will take $1, find last occurrence of -LDIR and add DIR to LD_RUN_PATH
 AC_DEFUN([np_add_to_runpath], 
 [
   dnl Need [[ ]] so autoconf gives us just one set

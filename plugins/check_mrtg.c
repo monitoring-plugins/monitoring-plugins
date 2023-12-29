@@ -43,7 +43,7 @@ void print_usage (void);
 
 char *log_file = NULL;
 int expire_minutes = 0;
-int use_average = TRUE;
+bool use_average = true;
 int variable_number = -1;
 unsigned long value_warning_threshold = 0L;
 unsigned long value_critical_threshold = 0L;
@@ -138,7 +138,7 @@ main (int argc, char **argv)
 	}
 
 	/* else check the incoming/outgoing rates */
-	if (use_average == TRUE)
+	if (use_average)
 		rate = average_value_rate;
 	else
 		rate = maximum_value_rate;
@@ -149,7 +149,7 @@ main (int argc, char **argv)
 		result = STATE_WARNING;
 
 	printf("%s. %s = %lu %s|%s\n",
-	       (use_average == TRUE) ? _("Avg") : _("Max"),
+	       (use_average) ? _("Avg") : _("Max"),
 	       label, rate, units,
 	       perfdata(label, (long) rate, units,
 		        (int) value_warning_threshold, (long) value_warning_threshold,
@@ -211,9 +211,9 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'a':									/* port */
 			if (!strcmp (optarg, "MAX"))
-				use_average = FALSE;
+				use_average = false;
 			else
-				use_average = TRUE;
+				use_average = true;
 			break;
 		case 'v':
 			variable_number = atoi (optarg);
@@ -258,11 +258,11 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (argc > c && strcmp (argv[c], "MAX") == 0) {
-		use_average = FALSE;
+		use_average = false;
 		c++;
 	}
 	else if (argc > c && strcmp (argv[c], "AVG") == 0) {
-		use_average = TRUE;
+		use_average = true;
 		c++;
 	}
 

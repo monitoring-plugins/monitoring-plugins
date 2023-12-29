@@ -1,10 +1,10 @@
 #ifndef _UTILS_CMD_
 #define _UTILS_CMD_
 
-/* 
+/*
  * Header file for Monitoring Plugins utils_cmd.c
- * 
- * 
+ *
+ *
  */
 
 /** types **/
@@ -31,5 +31,9 @@ void cmd_init (void);
 /* possible flags for cmd_run()'s fourth argument */
 #define CMD_NO_ARRAYS 0x01   /* don't populate arrays at all */
 #define CMD_NO_ASSOC 0x02    /* output.line won't point to buf */
+
+
+void timeout_alarm_handler (int);
+
 
 #endif /* _UTILS_CMD_ */

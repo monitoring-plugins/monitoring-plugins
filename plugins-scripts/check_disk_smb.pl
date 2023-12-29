@@ -22,13 +22,13 @@ require 5.004;
 use POSIX qw(setsid);
 use strict;
 use Getopt::Long;
-use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $verbose);
+use vars qw($opt_P $opt_V $opt_h $opt_H $opt_s $opt_W $opt_u $opt_p $opt_w $opt_c $opt_a $opt_C $opt_t $verbose);
 use vars qw($PROGNAME);
 use FindBin;
 use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
-# make us session leader which makes all childs exit if we do
+# make us session leader which makes all children exit if we do
 setsid;
 
 sub print_help ();
@@ -43,6 +43,7 @@ $ENV{'ENV'}='';
 Getopt::Long::Configure('bundling');
 GetOptions
 	("v"   => \$verbose, "verbose"    => \$verbose,
+   "t=i" => \$opt_t,  "timeout=i"  => \$opt_t,
 	 "P=s" => \$opt_P, "port=s"     => \$opt_P,
 	 "V"   => \$opt_V, "version"    => \$opt_V,
 	 "h"   => \$opt_h, "help"       => \$opt_h,
@@ -53,7 +54,8 @@ GetOptions
 	 "s=s" => \$opt_s, "share=s"    => \$opt_s,
 	 "W=s" => \$opt_W, "workgroup=s" => \$opt_W,
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H,
-	 "a=s" => \$opt_a, "address=s" => \$opt_a);
+	 "a=s" => \$opt_a, "address=s" => \$opt_a,
+	 "C=s" => \$opt_C, "configfile=s" => \$opt_C);
 
 if ($opt_V) {
 	print_revision($PROGNAME,'@NP_VERSION@'); #'
@@ -90,6 +92,12 @@ my $warn = $1 if ($opt_w =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($opt_c) || ($opt_c = shift @ARGV) || ($opt_c = 95);
 my $crit = $1 if ($opt_c =~ /^([0-9]{1,2}\%?|100\%?|[0-9]+[kMG])$/);
 ($crit) || usage("Invalid critical threshold: $opt_c\n");
+
+($opt_C) || ($opt_C = shift @ARGV) || ($opt_C = "");
+my $configfile = $opt_C if ($opt_C);
+usage("Unable to read config file $configfile\n") if ($configfile) && (! -r $configfile);
+
+if ($opt_t && $opt_t =~ /^([0-9]+)$/) { $TIMEOUT = $1; }
 
 # Execute the given command line and return anything it writes to STDOUT and/or
 # STDERR.  (This might be useful for other plugins, too, so it should possibly
@@ -193,6 +201,7 @@ my @cmd = (
 	defined($workgroup) ? ("-W", $workgroup) : (),
 	defined($address) ? ("-I", $address) : (),
 	defined($opt_P) ? ("-p", $opt_P) : (),
+	defined($configfile) ? ("-s", $configfile) : (),
 	"-c", "du"
 );
 
@@ -217,7 +226,8 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	my ($total_bytes) = $1 * $2;
 	my ($occupied_bytes) = $1 * $2 - $avail_bytes;
 	my ($avail) = $avail_bytes/1024;
-	my ($capper) = int(($3/$1)*100);
+	my ($capper);
+	if ($1!=0) { $capper = int(($3/$1)*100) } else { $capper=100 };
 	my ($mountpt) = "\\\\$host\\$share";
 
 	# TODO : why is the kB the standard unit for args ?
@@ -292,7 +302,8 @@ exit $ERRORS{$state};
 
 sub print_usage () {
 	print "Usage: $PROGNAME -H <host> -s <share> -u <user> -p <password> 
-      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>]\n";
+      -w <warn> -c <crit> [-W <workgroup>] [-P <port>] [-a <IP>] [-t timeout]
+      [-C <configfile>]\n";
 }
 
 sub print_help () {
@@ -318,11 +329,14 @@ Perl Check SMB Disk plugin for monitoring
    Password to log in to server. (Defaults to an empty password)
 -w, --warning=INTEGER or INTEGER[kMG]
    Percent of used space at which a warning will be generated (Default: 85%)
-      
 -c, --critical=INTEGER or INTEGER[kMG]
    Percent of used space at which a critical will be generated (Defaults: 95%)
+-t, --timeout=INTEGER
+   Seconds before connection times out (Default: 15)
 -P, --port=INTEGER
    Port to be used to connect to. Some Windows boxes use 139, others 445 (Defaults to smbclient default)
+-C, --configfile=STRING
+   Path to configfile which should be used by smbclient (Defaults to smb.conf of your smb installation)
    
    If thresholds are followed by either a k, M, or G then check to see if that
    much disk space is available (kilobytes, Megabytes, Gigabytes)

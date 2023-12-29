@@ -10,7 +10,7 @@ use NPTest;
 
 plan skip_all => "check_dns not compiled" unless (-x "check_dns");
 
-plan tests => 19;
+plan tests => 23;
 
 my $successOutput = '/DNS OK: [\.0-9]+ seconds? response time/';
 
@@ -105,3 +105,11 @@ cmp_ok( $res->return_code, '==', 0, "Got expected address");
 $res = NPTest->testCmd("./check_dns -H $hostname_valid -a $hostname_invalid_cidr -t 5");
 cmp_ok( $res->return_code, '==', 2, "Got wrong address");
 like  ( $res->output, "/^DNS CRITICAL.*expected '$hostname_invalid_cidr' but got '$hostname_valid_ip'".'$/', "Output OK");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_valid -n");
+cmp_ok( $res->return_code, '==', 2, "Found $hostname_valid");
+like  ( $res->output, "/^DNS CRITICAL.*Domain '$hostname_valid' was found by the server:/", "Output OK");
+
+$res = NPTest->testCmd("./check_dns -H $hostname_invalid -n");
+cmp_ok( $res->return_code, '==', 0, "Did not find $hostname_invalid");
+like  ( $res->output, $successOutput, "Output OK" );

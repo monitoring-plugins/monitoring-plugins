@@ -1,19 +1,19 @@
 /*****************************************************************************
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -44,19 +44,19 @@ main (int argc, char **argv)
 
 	plan_tests(33);
 
-	ok( np_find_name(exclude_filesystem, "/var/log") == FALSE, "/var/log not in list");
+	ok( np_find_name(exclude_filesystem, "/var/log") == false, "/var/log not in list");
 	np_add_name(&exclude_filesystem, "/var/log");
-	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "is in list now");
-	ok( np_find_name(exclude_filesystem, "/home") == FALSE, "/home not in list");
+	ok( np_find_name(exclude_filesystem, "/var/log") == true, "is in list now");
+	ok( np_find_name(exclude_filesystem, "/home") == false, "/home not in list");
 	np_add_name(&exclude_filesystem, "/home");
-	ok( np_find_name(exclude_filesystem, "/home") == TRUE, "is in list now");
-	ok( np_find_name(exclude_filesystem, "/var/log") == TRUE, "/var/log still in list");
+	ok( np_find_name(exclude_filesystem, "/home") == true, "is in list now");
+	ok( np_find_name(exclude_filesystem, "/var/log") == true, "/var/log still in list");
 
-	ok( np_find_name(exclude_fstype, "iso9660") == FALSE, "iso9660 not in list");
+	ok( np_find_name(exclude_fstype, "iso9660") == false, "iso9660 not in list");
 	np_add_name(&exclude_fstype, "iso9660");
-	ok( np_find_name(exclude_fstype, "iso9660") == TRUE, "is in list now");
+	ok( np_find_name(exclude_fstype, "iso9660") == true, "is in list now");
 
-	ok( np_find_name(exclude_filesystem, "iso9660") == FALSE, "Make sure no clashing in variables");
+	ok( np_find_name(exclude_filesystem, "iso9660") == false, "Make sure no clashing in variables");
 
 	/*
 	for (temp_name = exclude_filesystem; temp_name; temp_name = temp_name->next) {
@@ -88,10 +88,10 @@ main (int argc, char **argv)
 		                  cflags, 3,strdup("regex on dev names:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/foo"),
 		                  cflags, 0,
-			 	  strdup("regex on non existant dev/path:"));
+			 	  strdup("regex on non existent dev/path:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/Foo"),
 		                  cflags | REG_ICASE,0,
-			 	  strdup("regi on non existant dev/path:"));
+			 	  strdup("regi on non existent dev/path:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/c.t0"),
 		                  cflags, 3,
 			 	  strdup("partial devname regex match:"));
@@ -120,7 +120,7 @@ main (int argc, char **argv)
 	np_add_parameter(&paths, "/home/tonvoon");
 	np_add_parameter(&paths, "/dev/c2t0d0s0");
 
-	np_set_best_match(paths, dummy_mount_list, FALSE);
+	np_set_best_match(paths, dummy_mount_list, false);
 	for (p = paths; p; p = p->name_next) {
 		struct mount_entry *temp_me;
 		temp_me = p->best_match;
@@ -144,7 +144,7 @@ main (int argc, char **argv)
 	np_add_parameter(&paths, "/home/tonvoon");
 	np_add_parameter(&paths, "/home");
 
-	np_set_best_match(paths, dummy_mount_list, TRUE);
+	np_set_best_match(paths, dummy_mount_list, true);
 	for (p = paths; p; p = p->name_next) {
 		if (! strcmp(p->name, "/home/groups")) {
 			ok( ! p->best_match , "/home/groups correctly not found");
@@ -167,7 +167,7 @@ main (int argc, char **argv)
 	}
 	ok(found == 0, "first element successfully deleted");
 	found = 0;
-	
+
 	p=paths;
 	while (p) {
 		if (! strcmp(p->name, "/tmp"))
@@ -203,9 +203,9 @@ main (int argc, char **argv)
 }
 
 
-void 
+void
 np_test_mount_entry_regex (struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc)
-{	
+{
 	int matches = 0;
 	regex_t re;
 	struct mount_entry *me;
@@ -214,7 +214,7 @@ np_test_mount_entry_regex (struct mount_entry *dummy_mount_list, char *regstr, i
 			if(np_regex_match_mount_entry(me,&re))
 				matches++;
 		}
-		ok( matches == expect, 
+		ok( matches == expect,
 	    	    "%s '%s' matched %i/3 entries. ok: %i/3",
 		    desc, regstr, expect, matches);
 

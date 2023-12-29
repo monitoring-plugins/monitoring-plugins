@@ -53,10 +53,8 @@ NP-VERSION-FILE
 # /gl/
 /gl/.deps
 /gl/alloca.h
-/gl/arg-nonnull.h
 /gl/arpa
 /gl/arpa_inet.h
-/gl/c++defs.h
 /gl/charset.alias
 /gl/configmake.h
 /gl/errno.h
@@ -70,6 +68,8 @@ NP-VERSION-FILE
 /gl/locale.h
 /gl/Makefile
 /gl/Makefile.in
+/gl/malloc/.dirstamp
+/gl/malloc/.deps
 /gl/math.h
 /gl/netdb.h
 /gl/netinet_in.h
@@ -88,9 +88,13 @@ NP-VERSION-FILE
 /gl/sys
 /gl/time.h
 /gl/unistd.h
-/gl/warn-on-use.h
 /gl/wchar.h
 /gl/wctype.h
+/gl/inttypes.h
+/gl/limits.h
+/gl/malloc/dynarray-skeleton.gl.h
+/gl/malloc/dynarray.gl.h
+/gl/stdckdint.h
 
 # /lib/
 /lib/.deps
@@ -142,6 +146,7 @@ NP-VERSION-FILE
 /plugins/check_by_ssh
 /plugins/check_clamd
 /plugins/check_cluster
+/plugins/check_curl
 /plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
@@ -202,6 +207,12 @@ NP-VERSION-FILE
 /plugins/stamp-h*
 /plugins/urlize
 
+# /plugins/picohttpparser
+/plugins/picohttpparser/Makefile
+/plugins/picohttpparser/Makefile.in
+/plugins/picohttpparser/.deps
+/plugins/picohttpparser/libpicohttpparser.a
+
 # /plugins/t/
 /plugins/t/*.tmp
 
@@ -235,12 +246,14 @@ NP-VERSION-FILE
 /plugins-scripts/check_ircd
 /plugins-scripts/check_log
 /plugins-scripts/check_mailq
+/plugins-scripts/check_mssql
 /plugins-scripts/check_ntp
 /plugins-scripts/check_oracle
 /plugins-scripts/check_rpc
 /plugins-scripts/check_sensors
 /plugins-scripts/check_wave
 /plugins-scripts/check_file_age
+/plugins-scripts/check_uptime
 
 # /po/
 /po/Makefile

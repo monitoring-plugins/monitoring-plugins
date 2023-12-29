@@ -10,7 +10,7 @@
 * 
 * This file contains the check_ntp plugin
 * 
-* This plugin to check ntp servers independant of any commandline
+* This plugin to check ntp servers independent of any commandline
 * programs or external libraries.
 * 
 * 
@@ -40,10 +40,10 @@ const char *email = "devel@monitoring-plugins.org";
 
 static char *server_address=NULL;
 static int verbose=0;
-static short do_offset=0;
+static bool do_offset = false;
 static char *owarn="60";
 static char *ocrit="120";
-static short do_jitter=0;
+static bool do_jitter = false;
 static char *jwarn="5000";
 static char *jcrit="10000";
 
@@ -79,7 +79,7 @@ typedef struct {
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
 	time_t waiting;         /* ts set when we started waiting for a response */
-	int num_responses;      /* number of successfully recieved responses */
+	int num_responses;      /* number of successfully received responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
 	double rtdisp;          /* converted from the ntp_message */
@@ -100,7 +100,7 @@ typedef struct {
 	                        /* NB: not necessarily NULL terminated! */
 } ntp_control_message;
 
-/* this is an association/status-word pair found in control packet reponses */
+/* this is an association/status-word pair found in control packet responses */
 typedef struct {
 	uint16_t assoc;
 	uint16_t status;
@@ -355,7 +355,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers){
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status){
-	int i=0, j=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
+	int i=0, ga_result=0, num_hosts=0, *socklist=NULL, respnum=0;
 	int servers_completed=0, one_read=0, servers_readable=0, best_index=-1;
 	time_t now_time=0, start_ts=0;
 	ntp_message *req=NULL;
@@ -486,9 +486,9 @@ double offset_request(const char *host, int *status){
 	}
 
 	/* cleanup */
-	/* FIXME: Not closing the socket to avoid re-use of the local port
+	/* FIXME: Not closing the socket to avoid reuse of the local port
 	 * which can cause old NTP packets to be read instead of NTP control
-	 * pactets in jitter_request(). THERE MUST BE ANOTHER WAY...
+	 * packets in jitter_request(). THERE MUST BE ANOTHER WAY...
 	 * for(j=0; j<num_hosts; j++){ close(socklist[j]); } */
 	free(socklist);
 	free(ufds);
@@ -512,8 +512,9 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 }
 
 /* XXX handle responses with the error bit set */
-double jitter_request(const char *host, int *status){
-	int conn=-1, i, npeers=0, num_candidates=0, syncsource_found=0;
+double jitter_request(int *status){
+	int conn=-1, i, npeers=0, num_candidates=0;
+	bool syncsource_found = false;
 	int run=0, min_peer_sel=PEER_INCLUDED, num_selected=0, num_valid=0;
 	int peers_size=0, peer_offset=0;
 	ntp_assoc_status_pair *peers=NULL;
@@ -570,12 +571,12 @@ double jitter_request(const char *host, int *status){
 		if (PEER_SEL(peers[i].status) >= PEER_INCLUDED){
 			num_candidates++;
 			if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
-				syncsource_found=1;
+				syncsource_found = true;
 				min_peer_sel=PEER_SYNCSOURCE;
 			}
 		}
 	}
-	if(verbose) printf("%d candiate peers available\n", num_candidates);
+	if(verbose) printf("%d candidate peers available\n", num_candidates);
 	if(verbose && syncsource_found) printf("synchronization source found\n");
 	if(! syncsource_found){
 		*status = STATE_UNKNOWN;
@@ -597,7 +598,7 @@ double jitter_request(const char *host, int *status){
 				/* By spec, putting the variable name "jitter"  in the request
 				 * should cause the server to provide _only_ the jitter value.
 				 * thus reducing net traffic, guaranteeing us only a single
-				 * datagram in reply, and making intepretation much simpler
+				 * datagram in reply, and making interpretation much simpler
 				 */
 				/* Older servers doesn't know what jitter is, so if we get an
 				 * error on the first pass we redo it with "dispersion" */
@@ -699,23 +700,23 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'w':
-			do_offset=1;
+			do_offset = true;
 			owarn = optarg;
 			break;
 		case 'c':
-			do_offset=1;
+			do_offset = true;
 			ocrit = optarg;
 			break;
 		case 'j':
-			do_jitter=1;
+			do_jitter = true;
 			jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter=1;
+			do_jitter = true;
 			jcrit = optarg;
 			break;
 		case 'H':
-			if(is_host(optarg) == FALSE)
+			if(!is_host(optarg))
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -749,9 +750,9 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		TRUE, offset_thresholds->warning->end,
-		TRUE, offset_thresholds->critical->end,
-		FALSE, 0, FALSE, 0);
+		true, offset_thresholds->warning->end,
+		true, offset_thresholds->critical->end,
+		false, 0, false, 0);
 }
 
 char *perfd_jitter (double jitter)
@@ -759,7 +760,7 @@ char *perfd_jitter (double jitter)
 	return fperfdata ("jitter", jitter, "s",
 		do_jitter, jitter_thresholds->warning->end,
 		do_jitter, jitter_thresholds->critical->end,
-		TRUE, 0, FALSE, 0);
+		true, 0, false, 0);
 }
 
 int main(int argc, char *argv[]){
@@ -803,7 +804,7 @@ int main(int argc, char *argv[]){
 	 * (for example) will result in an error
 	 */
 	if(do_jitter){
-		jitter=jitter_request(server_address, &jitter_result);
+		jitter=jitter_request(&jitter_result);
 		result = max_state_alt(result, get_status(jitter, jitter_thresholds));
 		/* -1 indicates that we couldn't calculate the jitter
 		 * Only overrides STATE_OK from the offset */

@@ -46,12 +46,13 @@ enum {
 
 #define CHECK_NONE	 0
 
-#define UPS_NONE     0   /* no supported options */
-#define UPS_UTILITY  1   /* supports utility line voltage */
-#define UPS_BATTPCT  2   /* supports percent battery remaining */
-#define UPS_STATUS   4   /* supports UPS status */
-#define UPS_TEMP     8   /* supports UPS temperature */
-#define UPS_LOADPCT	16   /* supports load percent */
+#define UPS_NONE       0   /* no supported options */
+#define UPS_UTILITY    1   /* supports utility line    */
+#define UPS_BATTPCT    2   /* supports percent battery remaining */
+#define UPS_STATUS     4   /* supports UPS status */
+#define UPS_TEMP       8   /* supports UPS temperature */
+#define UPS_LOADPCT   16   /* supports load percent */
+#define UPS_REALPOWER 32 /* supports real power */
 
 #define UPSSTATUS_NONE       0
 #define UPSSTATUS_OFF        1
@@ -75,8 +76,8 @@ char *server_address;
 char *ups_name = NULL;
 double warning_value = 0.0;
 double critical_value = 0.0;
-int check_warn = FALSE;
-int check_crit = FALSE;
+bool check_warn = false;
+bool check_crit = false;
 int check_variable = UPS_NONE;
 int supported_options = UPS_NONE;
 int status = UPSSTATUS_NONE;
@@ -85,11 +86,12 @@ double ups_utility_voltage = 0.0;
 double ups_battery_percent = 0.0;
 double ups_load_percent = 0.0;
 double ups_temperature = 0.0;
+double ups_realpower = 0.0;
 char *ups_status;
-int temp_output_c = 0;
+bool temp_output_c = false;
 
 int determine_status (void);
-int get_ups_variable (const char *, char *, size_t);
+int get_ups_variable (const char *, char *);
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -189,7 +191,7 @@ main (int argc, char **argv)
 	}
 
 	/* get the ups utility voltage if possible */
-	res=get_ups_variable ("input.voltage", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("input.voltage", temp_buffer);
 	if (res == NOSUCHVAR) supported_options &= ~UPS_UTILITY;
 	else if (res != OK)
 		return STATE_CRITICAL;
@@ -205,26 +207,26 @@ main (int argc, char **argv)
 			ups_utility_deviation = ups_utility_voltage - 120.0;
 
 		if (check_variable == UPS_UTILITY) {
-			if (check_crit==TRUE && ups_utility_deviation>=critical_value) {
+			if (check_crit && ups_utility_deviation>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_utility_deviation>=warning_value) {
+			else if (check_warn && ups_utility_deviation>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
 			                    check_warn, (long)(1000*warning_value),
 			                    check_crit, (long)(1000*critical_value),
-			                    TRUE, 0, FALSE, 0));
+			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s",
 			          perfdata ("voltage", (long)(1000*ups_utility_voltage), "mV",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+			                    false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
 	/* get the ups battery percent if possible */
-	res=get_ups_variable ("battery.charge", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("battery.charge", temp_buffer);
 	if (res == NOSUCHVAR) supported_options &= ~UPS_BATTPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -234,26 +236,26 @@ main (int argc, char **argv)
 		xasprintf (&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
 
 		if (check_variable == UPS_BATTPCT) {
-			if (check_crit==TRUE && ups_battery_percent <= critical_value) {
+			if (check_crit && ups_battery_percent <= critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_battery_percent<=warning_value) {
+			else if (check_warn && ups_battery_percent<=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, TRUE, 100));
+			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("battery", (long)ups_battery_percent, "%",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
+			                    false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
 	/* get the ups load percent if possible */
-	res=get_ups_variable ("ups.load", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("ups.load", temp_buffer);
 	if ( res == NOSUCHVAR ) supported_options &= ~UPS_LOADPCT;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -263,26 +265,26 @@ main (int argc, char **argv)
 		xasprintf (&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
 
 		if (check_variable == UPS_LOADPCT) {
-			if (check_crit==TRUE && ups_load_percent>=critical_value) {
+			if (check_crit && ups_load_percent>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn==TRUE && ups_load_percent>=warning_value) {
+			else if (check_warn && ups_load_percent>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, TRUE, 100));
+			                    true, 0, true, 100));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("load", (long)ups_load_percent, "%",
-			                    FALSE, 0, FALSE, 0, TRUE, 0, TRUE, 100));
+			                    false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
 	/* get the ups temperature if possible */
-	res=get_ups_variable ("ups.temperature", temp_buffer, sizeof (temp_buffer));
+	res=get_ups_variable ("ups.temperature", temp_buffer);
 	if ( res == NOSUCHVAR ) supported_options &= ~UPS_TEMP;
 	else if ( res != OK)
 		return STATE_CRITICAL;
@@ -300,21 +302,50 @@ main (int argc, char **argv)
 		}
 
 		if (check_variable == UPS_TEMP) {
-			if (check_crit==TRUE && ups_temperature>=critical_value) {
+			if (check_crit && ups_temperature>=critical_value) {
 				result = STATE_CRITICAL;
 			}
-			else if (check_warn == TRUE && ups_temperature>=warning_value) {
+			else if (check_warn && ups_temperature>=warning_value) {
 				result = max_state (result, STATE_WARNING);
 			}
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
 			                    check_warn, (long)(warning_value),
 			                    check_crit, (long)(critical_value),
-			                    TRUE, 0, FALSE, 0));
+			                    true, 0, false, 0));
 		} else {
 			xasprintf (&data, "%s %s", data,
 			          perfdata ("temp", (long)ups_temperature, tunits,
-			                    FALSE, 0, FALSE, 0, TRUE, 0, FALSE, 0));
+			                    false, 0, false, 0, true, 0, false, 0));
+		}
+	}
+
+	/* get the ups real power if possible */
+	res=get_ups_variable ("ups.realpower", temp_buffer);
+	if ( res == NOSUCHVAR ) supported_options &= ~UPS_REALPOWER;
+	else if ( res != OK)
+		return STATE_CRITICAL;
+	else {
+		supported_options |= UPS_REALPOWER;
+		ups_realpower = atof (temp_buffer);
+		xasprintf (&message, "%sReal power=%3.1fW ", message, ups_realpower);
+
+		if (check_variable == UPS_REALPOWER) {
+			if (check_crit && ups_realpower>=critical_value) {
+				result = STATE_CRITICAL;
+			}
+			else if (check_warn && ups_realpower>=warning_value) {
+				result = max_state (result, STATE_WARNING);
+			}
+			xasprintf (&data, "%s %s", data,
+								perfdata ("realpower", (long)ups_realpower, "W",
+										check_warn, (long)(warning_value),
+										check_crit, (long)(critical_value),
+										true, 0, false, 0));
+		} else {
+			xasprintf (&data, "%s %s", data,
+								perfdata ("realpower", (long)ups_realpower, "W",
+									false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -342,7 +373,7 @@ determine_status (void)
 	char *ptr;
 	int res;
 
-	res=get_ups_variable ("ups.status", recv_buffer, sizeof (recv_buffer));
+	res=get_ups_variable ("ups.status", recv_buffer);
 	if (res == NOSUCHVAR) return OK;
 	if (res != STATE_OK) {
 		printf ("%s\n", _("Invalid response received from host"));
@@ -388,7 +419,7 @@ determine_status (void)
 
 /* gets a variable value for a specific UPS  */
 int
-get_ups_variable (const char *varname, char *buf, size_t buflen)
+get_ups_variable (const char *varname, char *buf)
 {
 	/*  char command[MAX_INPUT_BUFFER]; */
 	char temp_buffer[MAX_INPUT_BUFFER];
@@ -402,7 +433,11 @@ get_ups_variable (const char *varname, char *buf, size_t buflen)
 
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
-	sprintf (send_buffer, "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
+	int res = snprintf (send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", ups_name, varname);
+	if ( (res > 0) && ((size_t)res >= sizeof(send_buffer))) {
+		printf("%s\n", _("UPS name to long for buffer"));
+		return ERROR;
+	}
 
 	/* send the command to the daemon and get a response back */
 	if (process_tcp_request
@@ -504,8 +539,8 @@ process_arguments (int argc, char **argv)
 				usage2 (_("Invalid hostname/address"), optarg);
 			}
 			break;
-		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Farenheit) */
-			temp_output_c = 1;
+		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for Fahrenheit) */
+			temp_output_c = true;
 			break;
 		case 'u':									/* ups name */
 			ups_name = optarg;
@@ -521,7 +556,7 @@ process_arguments (int argc, char **argv)
 		case 'c':									/* critical time threshold */
 			if (is_intnonneg (optarg)) {
 				critical_value = atoi (optarg);
-				check_crit = TRUE;
+				check_crit = true;
 			}
 			else {
 				usage2 (_("Critical time must be a positive integer"), optarg);
@@ -530,7 +565,7 @@ process_arguments (int argc, char **argv)
 		case 'w':									/* warning time threshold */
 			if (is_intnonneg (optarg)) {
 				warning_value = atoi (optarg);
-				check_warn = TRUE;
+				check_warn = true;
 			}
 			else {
 				usage2 (_("Warning time must be a positive integer"), optarg);
@@ -545,6 +580,8 @@ process_arguments (int argc, char **argv)
 				check_variable = UPS_BATTPCT;
 			else if (!strcmp (optarg, "LOADPCT"))
 				check_variable = UPS_LOADPCT;
+			else if (!strcmp (optarg, "REALPOWER"))
+				check_variable = UPS_REALPOWER;
 			else
 				usage2 (_("Unrecognized UPS variable"), optarg);
 			break;
@@ -621,7 +658,7 @@ print_help (void)
   printf (" %s\n", "-T, --temperature");
   printf ("    %s\n", _("Output of temperatures in Celsius"));
   printf (" %s\n", "-v, --variable=STRING");
-  printf ("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT or LOADPCT");
+  printf ("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT, LOADPCT or REALPOWER");
 
 	printf (UT_WARN_CRIT);
 

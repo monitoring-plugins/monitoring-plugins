@@ -37,6 +37,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "popen.h"
 #include "netutils.h"
 #include "utils.h"
+#include <stdbool.h>
 
 enum {
   PACKET_COUNT = 1,
@@ -58,20 +59,21 @@ int packet_size = PACKET_SIZE;
 int packet_count = PACKET_COUNT;
 int target_timeout = 0;
 int packet_interval = 0;
-int verbose = FALSE;
+bool verbose = false;
 int cpl;
 int wpl;
 double crta;
 double wrta;
-int cpl_p = FALSE;
-int wpl_p = FALSE;
-int crta_p = FALSE;
-int wrta_p = FALSE;
+bool cpl_p = false;
+bool wpl_p = false;
+bool alive_p = false;
+bool crta_p = false;
+bool wrta_p = false;
 
 int
 main (int argc, char **argv)
 {
-/* normaly should be  int result = STATE_UNKNOWN; */
+/* normally should be  int result = STATE_UNKNOWN; */
 
   int status = STATE_UNKNOWN;
   int result = 0;
@@ -147,9 +149,11 @@ main (int argc, char **argv)
   (void) fclose (child_stderr);
 
   /* close the pipe */
-  if (result = spclose (child_process))
+  result = spclose (child_process);
+  if (result) {
     /* need to use max_state not max */
     status = max_state (status, STATE_WARNING);
+  }
 
   if (result > 1 ) {
     status = max_state (status, STATE_UNKNOWN);
@@ -171,10 +175,7 @@ main (int argc, char **argv)
 }
 
 
-
-int
-textscan (char *buf)
-{
+int textscan (char *buf) {
   char *rtastr = NULL;
   char *losstr = NULL;
   char *xmtstr = NULL;
@@ -182,6 +183,20 @@ textscan (char *buf)
   double rta;
   double xmt;
   int status = STATE_UNKNOWN;
+
+  /* stops testing after the first successful reply. */
+  if (alive_p && strstr(buf, "avg, 0% loss)")) {
+    rtastr = strstr (buf, "ms (");
+    rtastr = 1 + index(rtastr, '(');
+    rta = strtod(rtastr, NULL);
+    loss=strtod("0",NULL);
+    die (STATE_OK,
+         _("FPING %s - %s (rta=%f ms)|%s\n"),
+         state_text (STATE_OK), server_name,rta,
+		 /* No loss since we only waited for the first reply
+         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100), */
+         fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, true, 0, false, 0));
+  }
 
   if (strstr (buf, "not found")) {
     die (STATE_CRITICAL, _("FPING UNKNOWN - %s not found\n"), server_name);
@@ -213,21 +228,21 @@ textscan (char *buf)
     rtastr = 1 + index (rtastr, '/');
     loss = strtod (losstr, NULL);
     rta = strtod (rtastr, NULL);
-    if (cpl_p == TRUE && loss > cpl)
+    if (cpl_p && loss > cpl)
       status = STATE_CRITICAL;
-    else if (crta_p == TRUE  && rta > crta)
+    else if (crta_p && rta > crta)
       status = STATE_CRITICAL;
-    else if (wpl_p == TRUE && loss > wpl)
+    else if (wpl_p && loss > wpl)
       status = STATE_WARNING;
-    else if (wrta_p == TRUE && rta > wrta)
+    else if (wrta_p && rta > wrta)
       status = STATE_WARNING;
     else
       status = STATE_OK;
     die (status,
           _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"),
          state_text (status), server_name, loss, rta,
-         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100),
-         fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, TRUE, 0, FALSE, 0));
+         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100),
+         fperfdata ("rta", rta/1.0e3, "s", wrta_p, wrta/1.0e3, crta_p, crta/1.0e3, true, 0, false, 0));
 
   }
   else if(strstr (buf, "xmt/rcv/%loss") ) {
@@ -243,16 +258,16 @@ textscan (char *buf)
     loss = strtod (losstr, NULL);
     if (atoi(losstr) == 100)
       status = STATE_CRITICAL;
-    else if (cpl_p == TRUE && loss > cpl)
+    else if (cpl_p && loss > cpl)
       status = STATE_CRITICAL;
-    else if (wpl_p == TRUE && loss > wpl)
+    else if (wpl_p && loss > wpl)
       status = STATE_WARNING;
     else
       status = STATE_OK;
     /* loss=%.0f%%;%d;%d;0;100 */
     die (status, _("FPING %s - %s (loss=%.0f%% )|%s\n"),
          state_text (status), server_name, loss ,
-         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, TRUE, 0, TRUE, 100));
+         perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100));
 
   }
   else {
@@ -278,6 +293,7 @@ process_arguments (int argc, char **argv)
     {"sourceif", required_argument, 0, 'I'},
     {"critical", required_argument, 0, 'c'},
     {"warning", required_argument, 0, 'w'},
+	{"alive", no_argument, 0, 'a'},
     {"bytes", required_argument, 0, 'b'},
     {"number", required_argument, 0, 'n'},
     {"target-timeout", required_argument, 0, 'T'},
@@ -304,7 +320,7 @@ process_arguments (int argc, char **argv)
   }
 
   while (1) {
-    c = getopt_long (argc, argv, "+hVvH:S:c:w:b:n:T:i:I:46", longopts, &option);
+    c = getopt_long (argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:46", longopts, &option);
 
     if (c == -1 || c == EOF || c == 1)
       break;
@@ -312,6 +328,9 @@ process_arguments (int argc, char **argv)
     switch (c) {
     case '?':                 /* print short usage statement if args not parsable */
       usage5 ();
+    case 'a':                 /* host alive mode */
+      alive_p = true;
+      break;
     case 'h':                 /* help */
       print_help ();
       exit (STATE_UNKNOWN);
@@ -319,22 +338,23 @@ process_arguments (int argc, char **argv)
       print_revision (progname, NP_VERSION);
       exit (STATE_UNKNOWN);
     case 'v':                 /* verbose mode */
-      verbose = TRUE;
+      verbose = true;
       break;
     case 'H':                 /* hostname */
-      if (is_host (optarg) == FALSE) {
+      if (is_host (optarg) == false) {
         usage2 (_("Invalid hostname/address"), optarg);
       }
       server_name = strscpy (server_name, optarg);
       break;
     case 'S':                 /* sourceip */
-      if (is_host (optarg) == FALSE) {
+      if (is_host (optarg) == false) {
         usage2 (_("Invalid hostname/address"), optarg);
       }
       sourceip = strscpy (sourceip, optarg);
       break;
     case 'I':                 /* sourceip */
       sourceif = strscpy (sourceif, optarg);
+			break;
     case '4':                 /* IPv4 only */
       address_family = AF_INET;
       break;
@@ -349,12 +369,12 @@ process_arguments (int argc, char **argv)
       get_threshold (optarg, rv);
       if (rv[RTA]) {
         crta = strtod (rv[RTA], NULL);
-        crta_p = TRUE;
+        crta_p = true;
         rv[RTA] = NULL;
       }
       if (rv[PL]) {
         cpl = atoi (rv[PL]);
-        cpl_p = TRUE;
+        cpl_p = true;
         rv[PL] = NULL;
       }
       break;
@@ -362,12 +382,12 @@ process_arguments (int argc, char **argv)
       get_threshold (optarg, rv);
       if (rv[RTA]) {
         wrta = strtod (rv[RTA], NULL);
-        wrta_p = TRUE;
+        wrta_p = true;
         rv[RTA] = NULL;
       }
       if (rv[PL]) {
         wpl = atoi (rv[PL]);
-        wpl_p = TRUE;
+        wpl_p = true;
         rv[PL] = NULL;
       }
       break;
@@ -446,9 +466,7 @@ get_threshold (char *arg, char *rv[2])
 }
 
 
-void
-print_help (void)
-{
+void print_help (void) {
 
   print_revision (progname, NP_VERSION);
 
@@ -474,6 +492,8 @@ print_help (void)
   printf ("    %s\n", _("warning threshold pair"));
   printf (" %s\n", "-c, --critical=THRESHOLD");
   printf ("    %s\n", _("critical threshold pair"));
+  printf (" %s\n", "-a, --alive");
+  printf ("    %s\n", _("Return OK after first successful reply"));
   printf (" %s\n", "-b, --bytes=INTEGER");
   printf ("    %s (default: %d)\n", _("size of ICMP packet"),PACKET_SIZE);
   printf (" %s\n", "-n, --number=INTEGER");

@@ -8,13 +8,14 @@ use Test::More;
 use NPTest;
 
 if (-x "./check_procs") {
-	plan tests => 50;
+	plan tests => 54;
 } else {
 	plan skip_all => "No check_procs compiled";
 }
 
 my $result;
-my $command = "./check_procs --input-file=tests/var/ps-axwo.darwin";
+my $command   = "./check_procs --input-file=tests/var/ps-axwo.darwin";
+my $cmd_etime = "./check_procs --input-file=tests/var/ps-axwo.debian";
 
 $result = NPTest->testCmd( "$command" );
 is( $result->return_code, 0, "Run with no options" );
@@ -33,8 +34,12 @@ is( $result->return_code, 0, "Checking no threshold breeched" );
 is( $result->output, "PROCS OK: 95 processes | procs=95;100;200;0;", "Output correct" );
 
 $result = NPTest->testCmd( "$command -C launchd -c 5" );
-is( $result->return_code, 2, "Checking processes filtered by command name" );
+is( $result->return_code, 2, "Checking processes matched by command name" );
 is( $result->output, "PROCS CRITICAL: 6 processes with command name 'launchd' | procs=6;;5;0;", "Output correct" );
+
+$result = NPTest->testCmd( "$command -X bash -c 5" );
+is( $result->return_code, 2, "Checking processes excluded by command name" );
+is( $result->output, "PROCS CRITICAL: 95 processes with exclude progs 'bash' | procs=95;;5;0;", "Output correct" );
 
 SKIP: {
     skip 'user with uid 501 required', 4 unless getpwuid(501);
@@ -69,9 +74,21 @@ SKIP: {
     like( $result->output, '/^PROCS OK: 0 processes with UID = -2 \(nobody\), args \'UsB\'/', "Output correct" );
 };
 
-$result = NPTest->testCmd( "$command --ereg-argument-array='mdworker.*501'" );
-is( $result->return_code, 0, "Checking regexp search of arguments" );
-is( $result->output, "PROCS OK: 1 process with regex args 'mdworker.*501' | procs=1;;;0;", "Output correct" );
+SKIP: {
+    skip 'check_procs is compiled with etime format support', 2 if `$command -vvv` =~ m/etime/mx;
+
+    $result = NPTest->testCmd( "$command --ereg-argument-array='mdworker.*501'" );
+    is( $result->return_code, 0, "Checking regexp search of arguments" );
+    is( $result->output, "PROCS OK: 1 process with regex args 'mdworker.*501' | procs=1;;;0;", "Output correct" );
+}
+
+SKIP: {
+    skip 'check_procs is compiled without etime format support', 2 if `$cmd_etime -vvv` !~ m/etime/mx;
+
+    $result = NPTest->testCmd( "$cmd_etime -m ELAPSED -C apache2 -w 1000 -c 2000" );
+    is( $result->return_code, 2, "Checking elapsed time threshold" );
+    is( $result->output, "ELAPSED CRITICAL: 10 crit, 0 warn out of 10 processes with command name 'apache2' | procs=10;;;0; procs_warn=0;;;0; procs_crit=10;;;0;", "Output correct" );
+}
 
 $result = NPTest->testCmd( "$command --vsz 1000000" );
 is( $result->return_code, 0, "Checking filter by VSZ" );
@@ -83,7 +100,7 @@ is( $result->output, 'PROCS OK: 3 processes with RSS >= 100000 | procs=3;;;0;', 
 
 $result = NPTest->testCmd( "$command -s S" );
 is( $result->return_code, 0, "Checking filter for sleeping processes" );
-like( $result->output, '/^PROCS OK: 44 processes with STATE = S/', "Output correct" );
+like( $result->output, '/^PROCS OK: 88 processes with STATE = S/', "Output correct" );
 
 $result = NPTest->testCmd( "$command -s Z" );
 is( $result->return_code, 0, "Checking filter for zombies" );
@@ -129,4 +146,3 @@ is( $result->output, 'RSS CRITICAL: 5 crit, 0 warn out of 95 processes [WindowSe
 $result = NPTest->testCmd( "$command --ereg-argument-array='(nosuchname|nosuch2name)'" );
 is( $result->return_code, 0, "Checking no pipe symbol in output" );
 is( $result->output, "PROCS OK: 0 processes with regex args '(nosuchname,nosuch2name)' | procs=0;;;0;", "Output correct" );
-

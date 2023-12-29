@@ -18,18 +18,18 @@
 * Care has been taken to make sure the functions are async-safe. The one
 * function which isn't is cmd_init() which it doesn't make sense to
 * call twice anyway, so the api as a whole should be considered async-safe.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
@@ -40,8 +40,22 @@
 
 /** includes **/
 #include "common.h"
+#include "utils.h"
 #include "utils_cmd.h"
+/* This variable must be global, since there's no way the caller
+ * can forcibly slay a dead or ungainly running program otherwise.
+ * Multithreading apps and plugins can initialize it (via CMD_INIT)
+ * in an async safe manner PRIOR to calling cmd_run() or cmd_run_array()
+ * for the first time.
+ *
+ * The check for initialized values is atomic and can
+ * occur in any number of threads simultaneously. */
+static pid_t *_cmd_pids = NULL;
+
 #include "utils_base.h"
+
+#include "./maxfd.h"
+
 #include <fcntl.h>
 
 #ifdef HAVE_SYS_WAIT_H
@@ -65,31 +79,6 @@ extern char **environ;
 # define SIG_ERR ((Sigfunc *)-1)
 #endif
 
-/* This variable must be global, since there's no way the caller
- * can forcibly slay a dead or ungainly running program otherwise.
- * Multithreading apps and plugins can initialize it (via CMD_INIT)
- * in an async safe manner PRIOR to calling cmd_run() or cmd_run_array()
- * for the first time.
- *
- * The check for initialized values is atomic and can
- * occur in any number of threads simultaneously. */
-static pid_t *_cmd_pids = NULL;
-
-/* Try sysconf(_SC_OPEN_MAX) first, as it can be higher than OPEN_MAX.
- * If that fails and the macro isn't defined, we fall back to an educated
- * guess. There's no guarantee that our guess is adequate and the program
- * will die with SIGSEGV if it isn't and the upper boundary is breached. */
-#define DEFAULT_MAXFD  256   /* fallback value if no max open files value is set */
-#define MAXFD_LIMIT   8192   /* upper limit of open files */
-#ifdef _SC_OPEN_MAX
-static long maxfd = 0;
-#elif defined(OPEN_MAX)
-# define maxfd OPEN_MAX
-#else	/* sysconf macro unavailable, so guess (may be wildly inaccurate) */
-# define maxfd DEFAULT_MAXFD
-#endif
-
-
 /** prototypes **/
 static int _cmd_open (char *const *, int *, int *)
 	__attribute__ ((__nonnull__ (1, 2, 3)));
@@ -110,13 +99,7 @@ extern void die (int, const char *, ...)
 void
 cmd_init (void)
 {
-#ifndef maxfd
-	if (!maxfd && (maxfd = sysconf (_SC_OPEN_MAX)) < 0) {
-		/* possibly log or emit a warning here, since there's no
-		 * guarantee that our guess at maxfd will be adequate */
-		maxfd = DEFAULT_MAXFD;
-	}
-#endif
+	long maxfd = mp_open_max();
 
 	/* if maxfd is unnaturally high, we force it to a lower value
 	 * ( e.g. on SunOS, when ulimit is set to unlimited: 2147483647 this would cause
@@ -141,10 +124,6 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 #endif
 
 	int i = 0;
-
-	/* if no command was passed, return with no error */
-	if (argv == NULL)
-		return -1;
 
 	if (!_cmd_pids)
 		CMD_INIT;
@@ -176,6 +155,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 		/* close all descriptors in _cmd_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
+		long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++)
 			if (_cmd_pids[i] > 0)
 				close (i);
@@ -185,7 +165,7 @@ _cmd_open (char *const *argv, int *pfd, int *pfderr)
 	}
 
 	/* parent picks up execution here */
-	/* close childs descriptors in our address space */
+	/* close children descriptors in our address space */
 	close (pfd[1]);
 	close (pfderr[1]);
 
@@ -202,6 +182,7 @@ _cmd_close (int fd)
 	pid_t pid;
 
 	/* make sure the provided fd was opened */
+	long maxfd = mp_open_max();
 	if (fd < 0 || fd > maxfd || !_cmd_pids || (pid = _cmd_pids[fd]) == 0)
 		return -1;
 
@@ -293,7 +274,6 @@ _cmd_fetch_output (int fd, output * op, int flags)
 int
 cmd_run (const char *cmdstring, output * out, output * err, int flags)
 {
-	int fd, pfd_out[2], pfd_err[2];
 	int i = 0, argc;
 	size_t cmdlen;
 	char **argv = NULL;
@@ -397,12 +377,28 @@ cmd_file_read ( char *filename, output *out, int flags)
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		die( STATE_UNKNOWN, _("Error opening %s: %s"), filename, strerror(errno) );
 	}
-	
+
 	if(out)
 		out->lines = _cmd_fetch_output (fd, out, flags);
-	
+
 	if (close(fd) == -1)
 		die( STATE_UNKNOWN, _("Error closing %s: %s"), filename, strerror(errno) );
 
 	return 0;
+}
+
+void
+timeout_alarm_handler (int signo)
+{
+	if (signo == SIGALRM) {
+		printf (_("%s - Plugin timed out after %d seconds\n"),
+						state_text(timeout_state), timeout_interval);
+
+		long maxfd = mp_open_max();
+		if(_cmd_pids) for(long int i = 0; i < maxfd; i++) {
+			if(_cmd_pids[i] != 0) kill(_cmd_pids[i], SIGKILL);
+		}
+
+		exit (timeout_state);
+	}
 }

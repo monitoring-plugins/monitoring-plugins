@@ -60,7 +60,7 @@ sub print_usage ();
 sub connection ($$$$);
 sub bindRemote ($$);
 
-# -------------------------------------------------------------[ Enviroment ]--
+# -------------------------------------------------------------[ Environment ]--
 
 $ENV{'PATH'}='@TRUSTED_PATH@';
 $ENV{'BASH_ENV'}=''; 
@@ -69,7 +69,9 @@ $ENV{'ENV'}='';
 # -----------------------------------------------------------------[ Global ]--
 
 $PROGNAME = "check_ircd";
-my $NICK="ircd$$";
+# nickname shouldn't be longer than 9 chars, this might happen with large PIDs
+# To prevent this, we cut of the part over 10000
+my $NICK="ircd" . $$ % 10000;
 my $USER_INFO="monitor localhost localhost : ";
 	
 # -------------------------------------------------------------[ connection ]--
@@ -144,7 +146,6 @@ sub bindRemote ($$)
 {
 	my ($in_remotehost, $in_remoteport) = @_;
 	my $proto = getprotobyname('tcp');
-	my $sockaddr;
 	my $that;
 	my ($name, $aliases,$type,$len,$thataddr) = gethostbyname($in_remotehost);
 
@@ -152,8 +153,7 @@ sub bindRemote ($$)
 	    print "IRCD UNKNOWN: Could not start socket ($!)\n";
 	    exit $ERRORS{"UNKNOWN"};
 	}
-	$sockaddr = 'S n a4 x8';
-	$that = pack($sockaddr, AF_INET, $in_remoteport, $thataddr);
+	$that = pack_sockaddr_in ($in_remoteport, $thataddr);
 	if (!connect(ClientSocket, $that)) { 
 	    print "IRCD UNKNOWN: Could not connect socket ($!)\n";
 	    exit $ERRORS{"UNKNOWN"};
@@ -206,7 +206,7 @@ MAIN:
 
 	# Just in case of problems, let's not hang the monitoring system
 	$SIG{'ALRM'} = sub {
-		print "Somthing is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
+		print "Something is Taking a Long Time, Increase Your TIMEOUT (Currently Set At $TIMEOUT Seconds)\n";
 		exit $ERRORS{"UNKNOWN"};
 	};
 	

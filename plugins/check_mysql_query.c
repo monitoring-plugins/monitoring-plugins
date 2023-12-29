@@ -136,17 +136,17 @@ main (int argc, char **argv)
 		die (STATE_CRITICAL, "QUERY %s: Fetch row error - %s\n", _("CRITICAL"), error);
 	}
 
-	/* free the result */
-	mysql_free_result (res);
-
-	/* close the connection */
-	mysql_close (&mysql);
-
 	if (! is_numeric(row[0])) {
 		die (STATE_CRITICAL, "QUERY %s: %s - '%s'\n", _("CRITICAL"), _("Is not a numeric"), row[0]);
 	}
 
 	value = strtod(row[0], NULL);
+
+	/* free the result */
+	mysql_free_result (res);
+
+	/* close the connection */
+	mysql_close (&mysql);
 
 	if (verbose >= 3)
 		printf("mysql result: %f\n", value);
@@ -162,10 +162,10 @@ main (int argc, char **argv)
 	}
 	printf(_("'%s' returned %f | %s"), sql_query, value,
 		fperfdata("result", value, "",
-		my_thresholds->warning?TRUE:FALSE, my_thresholds->warning?my_thresholds->warning->end:0,
-		my_thresholds->critical?TRUE:FALSE, my_thresholds->critical?my_thresholds->critical->end:0,
-		FALSE, 0, 
-		FALSE, 0)
+		my_thresholds->warning?true:false, my_thresholds->warning?my_thresholds->warning->end:0,
+		my_thresholds->critical?true:false, my_thresholds->critical?my_thresholds->critical->end:0,
+		false, 0,
+		false, 0)
 	);
 	printf("\n");
 
