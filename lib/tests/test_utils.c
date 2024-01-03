@@ -19,7 +19,7 @@
 #include "common.h"
 #include "utils_base.h"
 
-#include "../tap/tap.h"
+#include "tap.h"
 
 #include <unistd.h>
 #include <sys/types.h>

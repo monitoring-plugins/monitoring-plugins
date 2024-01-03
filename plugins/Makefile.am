@@ -9,12 +9,12 @@ NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
 -include NP-VERSION-FILE
 endif
 
-AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"' -Wall -Wextra
+AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
 AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl \
-	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@ -Wall -Wextra
+	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 # gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this

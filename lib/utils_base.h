@@ -6,8 +6,6 @@
 # include "sha256.h"
 #endif
 
-/* #include "./string_helper.h" */
-
 /* This file holds header information for thresholds - use this in preference to
    individual plugin logic */
 
