@@ -225,19 +225,41 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 	return result;
 }
 
-#ifdef CHECK_SWAP_SWAPCTL_BSD
-swap_result getSwapFromSwapctl_BSD(swap_config config) {
-	int i = 0, nswaps = 0, swapctl_res = 0;
-	struct swapent *ent;
+#ifndef CHECK_SWAP_SWAPCTL_BSD
+#define CHECK_SWAP_SWAPCTL_BSD
 
+// Stub functionality for BSD stuff, so the compiler always sees the following BSD code
+
+#define SWAP_NSWAP 0
+#define SWAP_STATS 1
+
+int swapctl(int cmd, const void *arg, int misc) {
+	(void) cmd;
+	(void) arg;
+	(void) misc;
+	return 512;
+}
+
+struct swapent {
+	dev_t	se_dev;			/* device id */
+	int	se_flags;		/* entry flags */
+	int	se_nblks;		/* total blocks */
+	int	se_inuse;		/* blocks in use */
+	int	se_priority;		/* priority */
+	char	se_path[PATH_MAX];	/* path to entry */
+};
+
+#endif
+
+swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	/* get the number of active swap devices */
-	nswaps = swapctl(SWAP_NSWAP, NULL, 0);
+	int nswaps = swapctl(SWAP_NSWAP, NULL, 0);
 
 	/* initialize swap table + entries */
-	ent = (struct swapent *)malloc(sizeof(struct swapent) * nswaps);
+	struct swapent *ent = (struct swapent *)malloc(sizeof(struct swapent) * nswaps);
 
 	/* and now, tally 'em up */
-	swapctl_res = swapctl(SWAP_STATS, ent, nswaps);
+	int swapctl_res = swapctl(SWAP_STATS, ent, nswaps);
 	if (swapctl_res < 0) {
 		perror(_("swapctl failed: "));
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
@@ -247,7 +269,7 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
 	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
 
-	for (i = 0; i < nswaps; i++) {
+	for (int i = 0; i < nswaps; i++) {
 		dsktotal_mb = (float)ent[i].se_nblks / config.conversion_factor;
 		dskused_mb = (float)ent[i].se_inuse / config.conversion_factor;
 		dskfree_mb = (dsktotal_mb - dskused_mb);
@@ -279,7 +301,6 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 
 	return result;
 }
-#endif // CHECK_SWAP_SWAPCTL_BSD
 
 #ifdef CHECK_SWAP_SWAPCTL_SVR4
 swap_result getSwapFromSwap_SRV4(swap_config config) {
