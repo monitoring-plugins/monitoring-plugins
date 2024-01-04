@@ -233,7 +233,7 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 #define SWAP_NSWAP 0
 #define SWAP_STATS 1
 
-int swapctl(int cmd, const void *arg, int misc) {
+int bsd_swapctl(int cmd, const void *arg, int misc) {
 	(void) cmd;
 	(void) arg;
 	(void) misc;
@@ -249,17 +249,19 @@ struct swapent {
 	char	se_path[PATH_MAX];	/* path to entry */
 };
 
+#else
+#define bsd_swapctl swapctl
 #endif
 
 swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	/* get the number of active swap devices */
-	int nswaps = swapctl(SWAP_NSWAP, NULL, 0);
+	int nswaps = bsd_swapctl(SWAP_NSWAP, NULL, 0);
 
 	/* initialize swap table + entries */
 	struct swapent *ent = (struct swapent *)malloc(sizeof(struct swapent) * nswaps);
 
 	/* and now, tally 'em up */
-	int swapctl_res = swapctl(SWAP_STATS, ent, nswaps);
+	int swapctl_res = bsd_swapctl(SWAP_STATS, ent, nswaps);
 	if (swapctl_res < 0) {
 		perror(_("swapctl failed: "));
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
@@ -302,15 +304,46 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	return result;
 }
 
-#ifdef CHECK_SWAP_SWAPCTL_SVR4
+
+
+#ifndef CHECK_SWAP_SWAPCTL_SVR4
+int srv4_swapctl(int cmd, void *arg) {
+	(void) cmd;
+	(void) arg;
+	return 512;
+}
+
+typedef struct srv4_swapent {
+	char   *ste_path;    /* name of the swap	file */
+	off_t  ste_start;    /* starting	block for swapping */
+	off_t  ste_length;   /* length of swap area */
+	long   ste_pages;    /* number of pages for swapping */
+	long   ste_free;	    /* number of ste_pages free	*/
+	long   ste_flags;    /* ST_INDEL	bit set	if swap	file */
+	/* is now being deleted */
+} swapent_t;
+
+typedef struct swaptbl {
+	int	       swt_n;	    /* number of swapents following */
+	struct srv4_swapent swt_ent[];   /* array	of swt_n swapents */
+} swaptbl_t;
+
+#define SC_LIST 2
+#define SC_GETNSWP 3
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 2048
+#endif
+
+#else
+#define srv4_swapctl swapctl
+#endif
+
 swap_result getSwapFromSwap_SRV4(swap_config config) {
-	int i = 0, nswaps = 0, swapctl_res = 0;
-	//swaptbl_t *tbl = NULL;
-	void*tbl = NULL;
-	//swapent_t *ent = NULL;
-	void*ent = NULL;
+	int nswaps = 0;
+
 	/* get the number of active swap devices */
-	if ((nswaps = swapctl(SC_GETNSWP, NULL)) == -1)
+	if ((nswaps = srv4_swapctl(SC_GETNSWP, NULL)) == -1)
 		die(STATE_UNKNOWN, _("Error getting swap devices\n"));
 
 	if (nswaps == 0)
@@ -320,21 +353,22 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 		printf("Found %d swap device(s)\n", nswaps);
 
 	/* initialize swap table + entries */
-	tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
+	swaptbl_t *tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
 
 	if (tbl == NULL)
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 
 	memset(tbl, 0, sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
 	tbl->swt_n = nswaps;
-	for (i = 0; i < nswaps; i++) {
+
+	for (int i = 0; i < nswaps; i++) {
 		if ((tbl->swt_ent[i].ste_path =
 				 (char *)malloc(sizeof(char) * MAXPATHLEN)) == NULL)
 			die(STATE_UNKNOWN, _("malloc() failed!\n"));
 	}
 
 	/* and now, tally 'em up */
-	swapctl_res = swapctl(SC_LIST, tbl);
+	int swapctl_res = srv4_swapctl(SC_LIST, tbl);
 	if (swapctl_res < 0) {
 		perror(_("swapctl failed: "));
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
@@ -343,7 +377,7 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
 	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
 
-	for (i = 0; i < nswaps; i++) {
+	for (int i = 0; i < nswaps; i++) {
 		dsktotal_mb = (float)tbl->swt_ent[i].ste_pages / SWAP_CONVERSION;
 		dskfree_mb = (float)tbl->swt_ent[i].ste_free / SWAP_CONVERSION;
 		dskused_mb = (dsktotal_mb - dskfree_mb);
@@ -366,7 +400,7 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 	}
 
 	/* and clean up after ourselves */
-	for (i = 0; i < nswaps; i++) {
+	for (int i = 0; i < nswaps; i++) {
 		free(tbl->swt_ent[i].ste_path);
 	}
 	free(tbl);
@@ -379,4 +413,3 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 
 	return result;
 }
-#endif // CHECK_SWAP_SWAPCTL_SVR4
