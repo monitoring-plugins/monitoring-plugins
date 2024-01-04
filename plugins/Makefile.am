@@ -135,7 +135,7 @@ check_users_LDADD += popen.o
 endif
 
 tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
-tests_test_check_swap_SOURCES = check_swap.c check_swap.d/swap.c
+tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
 
 ##############################################################################
 # secondary dependencies
