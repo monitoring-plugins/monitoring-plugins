@@ -178,13 +178,13 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -u http://$host_tcp_http -e 200,301,302");
         is( $res->return_code, 0, "Proxy HTTP works");
-        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficent");
+        like($res->output, qr/OK: Status line output matched/, "Proxy HTTP Output is sufficient");
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT");
         is( $res->return_code, 0, "Proxy HTTP CONNECT works");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficient");
 
         $res = NPTest->testCmd( "./$plugin -I $host_tcp_proxy -p $port_tcp_proxy -H $host_tls_http -S -j CONNECT:HEAD");
         is( $res->return_code, 0, "Proxy HTTP CONNECT works with override method");
-        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficent");
+        like($res->output, qr/HTTP OK:/, "Proxy HTTP CONNECT output sufficient");
 }

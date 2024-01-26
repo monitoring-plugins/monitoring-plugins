@@ -14,7 +14,7 @@
 * FILE * spopen(const char *);
 * int spclose(FILE *);
 * 
-* Code taken with liitle modification from "Advanced Programming for the Unix
+* Code taken with little modification from "Advanced Programming for the Unix
 * Environment" by W. Richard Stevens
 * 
 * This is considered safe in that no shell is spawned, and the environment
@@ -38,8 +38,9 @@
 * 
 *****************************************************************************/
 
-#include "common.h"
-#include "utils.h"
+#include "./common.h"
+#include "./utils.h"
+#include "../lib/maxfd.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
 extern pid_t *childpid;
@@ -49,9 +50,9 @@ extern FILE *child_process;
 FILE *spopen (const char *);
 int spclose (FILE *);
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE popen_sigchld_handler (int);
+void popen_sigchld_handler (int);
 #endif
-RETSIGTYPE popen_timeout_alarm_handler (int);
+void popen_timeout_alarm_handler (int);
 
 #include <stdarg.h>							/* ANSI C header file */
 #include <fcntl.h>
@@ -104,7 +105,7 @@ spopen (const char *cmdstring)
 #endif
 
 	env[0] = strdup("LC_ALL=C");
-	env[1] = '\0';
+	env[1] = NULL;
 
 	/* if no command was passed, return with no error */
 	if (cmdstring == NULL)
@@ -177,8 +178,7 @@ spopen (const char *cmdstring)
 	}
 	argv[i] = NULL;
 
-	if(maxfd == 0)
-		maxfd = open_max();
+	long maxfd = mp_open_max();
 
 	if (childpid == NULL) {				/* first time through */
 		if ((childpid = calloc ((size_t)maxfd, sizeof (pid_t))) == NULL)
@@ -266,7 +266,7 @@ spclose (FILE * fp)
 }
 
 #ifdef REDHAT_SPOPEN_ERROR
-RETSIGTYPE
+void
 popen_sigchld_handler (int signo)
 {
 	if (signo == SIGCHLD)
@@ -274,7 +274,7 @@ popen_sigchld_handler (int signo)
 }
 #endif
 
-RETSIGTYPE
+void
 popen_timeout_alarm_handler (int signo)
 {
 	int fh;

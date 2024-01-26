@@ -199,7 +199,7 @@ test_file (char *path)
 
 /*
  * process command-line arguments
- * returns true on succes, false otherwise
+ * returns true on success, false otherwise
   */
 bool process_arguments (int argc, char **argv)
 {
@@ -483,10 +483,9 @@ bool process_arguments (int argc, char **argv)
         free(http_method);
       http_method = strdup (optarg);
       char *tmp;
-      if ((tmp = strstr(http_method, ":")) > 0) {
-        tmp[0] = '\0';
-        http_method = http_method;
-        http_method_proxy = ++tmp;
+      if ((tmp = strstr(http_method, ":")) != NULL) {
+        tmp[0] = '\0'; // set the ":" in the middle to 0
+        http_method_proxy = ++tmp; // this points to the second part
       }
       break;
     case 'd': /* string or substring */
@@ -510,6 +509,7 @@ bool process_arguments (int argc, char **argv)
       break;
     case 'R': /* regex */
       cflags |= REG_ICASE;
+			// fall through
     case 'r': /* regex */
       strncpy (regexp, optarg, MAX_RE_SIZE - 1);
       regexp[MAX_RE_SIZE - 1] = 0;
@@ -1114,7 +1114,7 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
-    while (pos = memchr(buffer, '\0', i)) {
+    while ((pos = memchr(buffer, '\0', i))) {
       /* replace nul character with a blank */
       *pos = ' ';
     }
@@ -1299,7 +1299,7 @@ check_http (void)
 
   regmatch_t chre_pmatch[1]; // We actually do not care about this, since we only want to know IF it was found
 
-  if (regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
+  if (!no_body && regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
     if (verbose) {
       printf("Found chunked content\n");
     }
@@ -1412,7 +1412,6 @@ char *unchunk_content(const char *content) {
   // https://en.wikipedia.org/wiki/Chunked_transfer_encoding
   // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
   char *result = NULL;
-  size_t content_length = strlen(content);
   char *start_of_chunk;
   char* end_of_chunk;
   long size_of_chunk;
@@ -1919,7 +1918,7 @@ print_usage (void)
   printf (" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n",progname);
   printf ("       [-J <client certificate file>] [-K <private key>]\n");
   printf ("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-  printf ("       [-b proxy_auth] [-f <ok|warning|critcal|follow|sticky|stickyport>]\n");
+  printf ("       [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
   printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");

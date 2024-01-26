@@ -50,7 +50,7 @@ unsigned int services = 0;
 int skip_stdout = 0;
 int skip_stderr = 0;
 int warn_on_stderr = 0;
-bool unknown_timeout = FALSE;
+bool unknown_timeout = false;
 char *remotecmd = NULL;
 char **commargv = NULL;
 int commargc = 0;
@@ -58,8 +58,8 @@ char *hostname = NULL;
 char *outputfile = NULL;
 char *host_shortname = NULL;
 char **service;
-int passive = FALSE;
-int verbose = FALSE;
+bool passive = false;
+bool verbose = false;
 
 int
 main (int argc, char **argv)
@@ -68,7 +68,6 @@ main (int argc, char **argv)
 	char *status_text;
 	int cresult;
 	int result = STATE_UNKNOWN;
-	int i;
 	time_t local_time;
 	FILE *fp = NULL;
 	output chld_out, chld_err;
@@ -96,7 +95,7 @@ main (int argc, char **argv)
 	/* run the command */
 	if (verbose) {
 		printf ("Command: %s\n", commargv[0]);
-		for (i=1; i<commargc; i++)
+		for (int i = 1; i < commargc; i++)
 			printf ("Argument %i: %s\n", i, commargv[i]);
 	}
 
@@ -110,9 +109,9 @@ main (int argc, char **argv)
 	}
 
 	if (verbose) {
-		for(i = 0; i < chld_out.lines; i++)
+		for(size_t i = 0; i < chld_out.lines; i++)
 			printf("stdout: %s\n", chld_out.line[i]);
-		for(i = 0; i < chld_err.lines; i++)
+		for(size_t i = 0; i < chld_err.lines; i++)
 			printf("stderr: %s\n", chld_err.line[i]);
 	}
 
@@ -122,7 +121,7 @@ main (int argc, char **argv)
 		skip_stderr = chld_err.lines;
 
 	/* UNKNOWN or worse if (non-skipped) output found on stderr */
-	if(chld_err.lines > skip_stderr) {
+	if(chld_err.lines > (size_t)skip_stderr) {
 		printf (_("Remote command execution failed: %s\n"),
 		        chld_err.line[skip_stderr]);
 		if ( warn_on_stderr ) 
@@ -134,8 +133,8 @@ main (int argc, char **argv)
 	/* this is simple if we're not supposed to be passive.
 	 * Wrap up quickly and keep the tricks below */
 	if(!passive) {
-		if (chld_out.lines > skip_stdout)
-			for (i = skip_stdout; i < chld_out.lines; i++)
+		if (chld_out.lines > (size_t)skip_stdout)
+			for (size_t i = skip_stdout; i < chld_out.lines; i++)
 				puts (chld_out.line[i]);
 		else
 			printf (_("%s - check_by_ssh: Remote command '%s' returned status %d\n"),
@@ -156,7 +155,7 @@ main (int argc, char **argv)
 
 	local_time = time (NULL);
 	commands = 0;
-	for(i = skip_stdout; i < chld_out.lines; i++) {
+	for(size_t i = skip_stdout; i < chld_out.lines; i++) {
 		status_text = chld_out.line[i++];
 		if (i == chld_out.lines || strstr (chld_out.line[i], "STATUS CODE: ") == NULL)
 			die (STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
@@ -235,7 +234,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'v':									/* help */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -244,7 +243,7 @@ process_arguments (int argc, char **argv)
 				timeout_interval = atoi (optarg);
 			break;
 		case 'U':
-			unknown_timeout = TRUE;
+			unknown_timeout = true;
 			break;
 		case 'H':									/* host */
 			hostname = optarg;
@@ -257,7 +256,7 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'O':									/* output file */
 			outputfile = optarg;
-			passive = TRUE;
+			passive = true;
 			break;
 		case 's':									/* description of service to check */
 			p1 = optarg;

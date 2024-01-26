@@ -12,14 +12,14 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-	plan tests => 20;
+	plan tests => 39;
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
 my $sudo = $> == 0 ? '' : 'sudo';
 
-my $successOutput = '/OK - .*?: rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
-my $failureOutput = '/(WARNING|CRITICAL) - .*?: rta [\d\.]+ms, lost \d%/';
+my $successOutput = '/OK - .*? rta (?:[\d\.]+ms)|(?:nan), lost \d+%/';
+my $failureOutput = '/(WARNING|CRITICAL) - .*? rta (?:[\d\.]+ms > [\d\.]+ms|nan)/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_RESPONSIVE",
 				"The hostname of system responsive to network requests",
@@ -54,7 +54,7 @@ is( $res->return_code, 2, "Syntax ok, with forced critical" );
 like( $res->output, $failureOutput, "Output OK" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100%"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -t 2"
 	);
 is( $res->return_code, 2, "Timeout - host nonresponsive" );
 like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
@@ -66,13 +66,13 @@ is( $res->return_code, 3, "No hostname" );
 like( $res->output, '/No hosts to check/', "Output with appropriate error message");
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0 -t 2"
 	);
 is( $res->return_code, 0, "One host nonresponsive - zero required" );
 like( $res->output, $successOutput, "Output OK" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1"
+	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1 -t 2"
 	);
 is( $res->return_code, 0, "One of two host nonresponsive - one required" );
 like( $res->output, $successOutput, "Output OK" );
@@ -92,5 +92,51 @@ like( $res->output, $successOutput, "Output OK" );
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_responsive -b 65507"
 	);
-is( $res->return_code, 0, "Try max paket size" );
+is( $res->return_code, 0, "Try max packet size" );
 like( $res->output, $successOutput, "Output OK - Didn't overflow" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -R 100,100 -n 1 -t 2"
+	);
+is( $res->return_code, 0, "rta works" );
+like( $res->output, $successOutput, "Output OK" );
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -P 80,90 -n 1 -t 2"
+	);
+is( $res->return_code, 0, "pl works" );
+like( $res->output, '/lost 0%/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -J 80,90 -t 2"
+	);
+is( $res->return_code, 0, "jitter works" );
+like( $res->output, '/jitter \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -M 4,3 -t 2"
+	);
+is( $res->return_code, 0, "mos works" );
+like( $res->output, '/MOS \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -S 80,70 -t 2"
+	);
+is( $res->return_code, 0, "score works" );
+like( $res->output, '/Score \d/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -O -t 2"
+	);
+is( $res->return_code, 0, "order works" );
+like( $res->output, '/Packets in order/', "Output OK" );
+
+$res = NPTest->testCmd(
+	"$sudo ./check_icmp -H $host_responsive -O -S 80,70 -M 4,3 -J 80,90 -P 80,90 -R 100,100 -t 2"
+	);
+is( $res->return_code, 0, "order works" );
+like( $res->output, '/Packets in order/', "Output OK" );
+like( $res->output, '/Score \d/', "Output OK" );
+like( $res->output, '/MOS \d/', "Output OK" );
+like( $res->output, '/jitter \d/', "Output OK" );
+like( $res->output, '/lost 0%/', "Output OK" );
+like( $res->output, $successOutput, "Output OK" );

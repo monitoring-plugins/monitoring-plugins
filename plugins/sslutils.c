@@ -31,9 +31,8 @@
 #include "netutils.h"
 
 #ifdef HAVE_SSL
-static SSL_CTX *c=NULL;
+static SSL_CTX *ctx=NULL;
 static SSL *s=NULL;
-static int initialized=0;
 
 int verify_ssl_hostname = 0;
 
@@ -50,24 +49,24 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 }
 
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, int sni, char *cert, char *privkey) {
-	const SSL_METHOD *method = NULL;
 	long options = 0;
+
+	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL) {
+		printf("%s\n", _("CRITICAL - Cannot create SSL context."));
+		return STATE_CRITICAL;
+	}
 
 	switch (version) {
 	case MP_SSLv2: /* SSLv2 protocol */
-#if defined(USE_GNUTLS) || defined(OPENSSL_NO_SSL2)
 		printf("%s\n", _("UNKNOWN - SSL protocol version 2 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
-#else
-		method = SSLv2_client_method();
-		break;
-#endif
 	case MP_SSLv3: /* SSLv3 protocol */
 #if defined(OPENSSL_NO_SSL3)
 		printf("%s\n", _("UNKNOWN - SSL protocol version 3 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		method = SSLv3_client_method();
+		SSL_CTX_set_min_proto_version(ctx, SSL3_VERSION);
+		SSL_CTX_set_max_proto_version(ctx, SSL3_VERSION);
 		break;
 #endif
 	case MP_TLSv1: /* TLSv1 protocol */
@@ -75,7 +74,8 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		printf("%s\n", _("UNKNOWN - TLS protocol version 1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		method = TLSv1_client_method();
+		SSL_CTX_set_min_proto_version(ctx, TLS1_VERSION);
+		SSL_CTX_set_max_proto_version(ctx, TLS1_VERSION);
 		break;
 #endif
 	case MP_TLSv1_1: /* TLSv1.1 protocol */
@@ -83,7 +83,8 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		printf("%s\n", _("UNKNOWN - TLS protocol version 1.1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		method = TLSv1_1_client_method();
+		SSL_CTX_set_min_proto_version(ctx, TLS1_1_VERSION);
+		SSL_CTX_set_max_proto_version(ctx, TLS1_1_VERSION);
 		break;
 #endif
 	case MP_TLSv1_2: /* TLSv1.2 protocol */
@@ -91,7 +92,8 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		printf("%s\n", _("UNKNOWN - TLS protocol version 1.2 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		method = TLSv1_2_client_method();
+		SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
+		SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION);
 		break;
 #endif
 	case MP_TLSv1_2_OR_NEWER:
@@ -99,56 +101,43 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 		printf("%s\n", _("UNKNOWN - Disabling TLSv1.1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		options |= SSL_OP_NO_TLSv1_1;
+		SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
+		break;
 #endif
-		/* FALLTHROUGH */
 	case MP_TLSv1_1_OR_NEWER:
 #if !defined(SSL_OP_NO_TLSv1)
 		printf("%s\n", _("UNKNOWN - Disabling TLSv1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #else
-		options |= SSL_OP_NO_TLSv1;
+		SSL_CTX_set_min_proto_version(ctx, TLS1_1_VERSION);
+		break;
 #endif
-		/* FALLTHROUGH */
 	case MP_TLSv1_OR_NEWER:
 #if defined(SSL_OP_NO_SSLv3)
-		options |= SSL_OP_NO_SSLv3;
+		SSL_CTX_set_min_proto_version(ctx, TLS1_VERSION);
+		break;
 #endif
-		/* FALLTHROUGH */
 	case MP_SSLv3_OR_NEWER:
 #if defined(SSL_OP_NO_SSLv2)
-		options |= SSL_OP_NO_SSLv2;
+		SSL_CTX_set_min_proto_version(ctx, SSL3_VERSION);
+		break;
 #endif
-	case MP_SSLv2_OR_NEWER:
-		/* FALLTHROUGH */
-	default: /* Default to auto negotiation */
-		method = SSLv23_client_method();
 	}
-	if (!initialized) {
-		/* Initialize SSL context */
-		SSLeay_add_ssl_algorithms();
-		SSL_load_error_strings();
-		OpenSSL_add_all_algorithms();
-		initialized = 1;
-	}
-	if ((c = SSL_CTX_new(method)) == NULL) {
-		printf("%s\n", _("CRITICAL - Cannot create SSL context."));
-		return STATE_CRITICAL;
-	}
+
 	if (cert && privkey) {
 #ifdef USE_OPENSSL
-		if (!SSL_CTX_use_certificate_chain_file(c, cert)) {
+		if (!SSL_CTX_use_certificate_chain_file(ctx, cert)) {
 #elif  USE_GNUTLS
-		if (!SSL_CTX_use_certificate_file(c, cert, SSL_FILETYPE_PEM)) {
+		if (!SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM)) {
 #else
 #error Unported for unknown SSL library
 #endif
 			printf ("%s\n", _("CRITICAL - Unable to open certificate chain file!\n"));
 			return STATE_CRITICAL;
 		}
-		SSL_CTX_use_PrivateKey_file(c, privkey, SSL_FILETYPE_PEM);
+		SSL_CTX_use_PrivateKey_file(ctx, privkey, SSL_FILETYPE_PEM);
 #ifdef USE_OPENSSL
-		if (!SSL_CTX_check_private_key(c)) {
+		if (!SSL_CTX_check_private_key(ctx)) {
 			printf ("%s\n", _("CRITICAL - Private key does not seem to match certificate!\n"));
 			return STATE_CRITICAL;
 		}
@@ -157,9 +146,9 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #ifdef SSL_OP_NO_TICKET
 	options |= SSL_OP_NO_TICKET;
 #endif
-	SSL_CTX_set_options(c, options);
-	SSL_CTX_set_mode(c, SSL_MODE_AUTO_RETRY);
-	if ((s = SSL_new(c)) != NULL) {
+	SSL_CTX_set_options(ctx, options);
+	SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+	if ((s = SSL_new(ctx)) != NULL) {
 #ifdef SSL_set_tlsext_host_name
 		if (sni && host_name != NULL)
 			SSL_set_tlsext_host_name(s, host_name);
@@ -266,9 +255,9 @@ void np_net_ssl_cleanup() {
 #endif
 		SSL_shutdown(s);
 		SSL_free(s);
-		if (c) {
-			SSL_CTX_free(c);
-			c=NULL;
+		if (ctx) {
+			SSL_CTX_free(ctx);
+			ctx=NULL;
 		}
 		s=NULL;
 	}

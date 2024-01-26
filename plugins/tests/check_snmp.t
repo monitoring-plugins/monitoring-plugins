@@ -53,7 +53,7 @@ if ($pid) {
 	#print "child\n";
 
 	print "Please contact SNMP at: $port_snmp\n";
-	close(STDERR); # Coment out to debug snmpd problems (most errors sent there are OK)
+	close(STDERR); # Comment out to debug snmpd problems (most errors sent there are OK)
 	exec("snmpd -c tests/conf/snmpd.conf -C -f -r udp:$port_snmp");
 }
 
@@ -227,7 +227,7 @@ is($res->output, 'SNMP OK - "555\"I said\"" | ', "Check string with a double quo
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.15 -r 'CUSTOM CHECK OK'" );
 is($res->return_code, 0, "String check should check whole string, not a parsed number" );
-is($res->output, 'SNMP OK - "CUSTOM CHECK OK: foo is 12345" | ', "String check witn numbers returns whole string");
+is($res->output, 'SNMP OK - "CUSTOM CHECK OK: foo is 12345" | ', "String check with numbers returns whole string");
 
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.16 -w -2: -c -3:" );
 is($res->return_code, 0, "Negative integer check OK" );
