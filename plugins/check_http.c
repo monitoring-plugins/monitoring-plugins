@@ -364,7 +364,7 @@ bool process_arguments (int argc, char **argv)
       verify_ssl_hostname = true;
       goto enable_ssl;
 #else
-      usage4 (_("Invalid option - SSL hostname verfication not available"));
+      usage4 (_("Invalid option - SSL hostname verification not available"));
 #endif
 #endif
     case 'S': /* use SSL */
