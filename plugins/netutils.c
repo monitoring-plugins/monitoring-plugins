@@ -34,7 +34,7 @@ unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 unsigned int socket_timeout_state = STATE_CRITICAL;
 
 int econn_refuse_state = STATE_CRITICAL;
-int was_refused = FALSE;
+bool was_refused = false;
 #if USE_IPV6
 int address_family = AF_UNSPEC;
 #else
@@ -215,14 +215,14 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			result = connect (*sd, r->ai_addr, r->ai_addrlen);
 
 			if (result == 0) {
-				was_refused = FALSE;
+				was_refused = false;
 				break;
 			}
 
 			if (result < 0) {
 				switch (errno) {
 				case ECONNREFUSED:
-					was_refused = TRUE;
+					was_refused = true;
 					break;
 				}
 			}
@@ -246,7 +246,7 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		}
 		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
 		if (result < 0 && errno == ECONNREFUSED)
-			was_refused = TRUE;
+			was_refused = true;
 	}
 
 	if (result == 0)
@@ -326,13 +326,11 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 }
 
 
-int
-is_host (const char *address)
-{
+bool is_host (const char *address) {
 	if (is_addr (address) || is_hostname (address))
-		return (TRUE);
+		return (true);
 
-	return (FALSE);
+	return (false);
 }
 
 void
@@ -342,20 +340,18 @@ host_or_die(const char *str)
 		usage_va(_("Invalid hostname/address - %s"), str);
 }
 
-int
-is_addr (const char *address)
-{
+bool is_addr (const char *address) {
 #ifdef USE_IPV6
 	if (address_family == AF_INET && is_inet_addr (address))
-		return TRUE;
+		return true;
 	else if (address_family == AF_INET6 && is_inet6_addr (address))
-		return TRUE;
+		return true;
 #else
 	if (is_inet_addr (address))
-		return (TRUE);
+		return (true);
 #endif
 
-	return (FALSE);
+	return (false);
 }
 
 int
@@ -370,10 +366,10 @@ dns_lookup (const char *in, struct sockaddr_storage *ss, int family)
 
 	retval = getaddrinfo (in, NULL, &hints, &res);
 	if (retval != 0)
-		return FALSE;
+		return false;
 
 	if (ss != NULL)
 		memcpy (ss, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo (res);
-	return TRUE;
+	return true;
 }

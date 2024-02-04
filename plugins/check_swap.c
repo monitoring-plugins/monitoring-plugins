@@ -65,7 +65,7 @@ void print_help (void);
 threshold_t warn;
 threshold_t crit;
 int verbose;
-int allswaps;
+bool allswaps = false;
 int no_swap_state = STATE_CRITICAL;
 
 int
@@ -383,10 +383,10 @@ main (int argc, char **argv)
 	if (crit.is_percentage) crit_print = crit.value * (total_swap_mb *1024 *1024/100);
 
 	puts (perfdata_uint64 ("swap", free_swap_mb *1024 *1024, "B",
-	                TRUE, warn_print,
-	                TRUE, crit_print,
-	                TRUE, 0,
-	                TRUE, (long) total_swap_mb * 1024 * 1024));
+	                true, warn_print,
+	                true, crit_print,
+	                true, 0,
+	                true, (long) total_swap_mb * 1024 * 1024));
 
 	return result;
 }
@@ -514,7 +514,7 @@ process_arguments (int argc, char **argv)
 				}
 			  }
 		case 'a':									/* all swap */
-			allswaps = TRUE;
+			allswaps = true;
 			break;
 		case 'n':
 			if ((no_swap_state = mp_translate_state(optarg)) == ERROR) {

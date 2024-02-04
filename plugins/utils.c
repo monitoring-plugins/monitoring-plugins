@@ -147,98 +147,80 @@ print_revision (const char *command_name, const char *revision)
 	         command_name, revision, PACKAGE, VERSION);
 }
 
-int
-is_numeric (char *number)
-{
+bool is_numeric (char *number) {
 	char tmp[1];
 	float x;
 
 	if (!number)
-		return FALSE;
+		return false;
 	else if (sscanf (number, "%f%c", &x, tmp) == 1)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_positive (char *number)
-{
+bool is_positive (char *number) {
 	if (is_numeric (number) && atof (number) > 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_negative (char *number)
-{
+bool is_negative (char *number) {
 	if (is_numeric (number) && atof (number) < 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_nonnegative (char *number)
-{
+bool is_nonnegative (char *number) {
 	if (is_numeric (number) && atof (number) >= 0.0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_percentage (char *number)
-{
+bool is_percentage (char *number) {
 	int x;
 	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_integer (char *number)
-{
+bool is_integer (char *number) {
 	long int n;
 
 	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return FALSE;
+		return false;
 
 	n = strtol (number, NULL, 10);
 
 	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intpos (char *number)
-{
+bool is_intpos (char *number) {
 	if (is_integer (number) && atoi (number) > 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intneg (char *number)
-{
+bool is_intneg (char *number) {
 	if (is_integer (number) && atoi (number) < 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_intnonneg (char *number)
-{
+bool is_intnonneg (char *number) {
 	if (is_integer (number) && atoi (number) >= 0)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 /*
@@ -246,19 +228,27 @@ is_intnonneg (char *number)
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-int is_int64(char *number, int64_t *target) {
+bool is_int64(char *number, int64_t *target) {
 	errno = 0;
-	uint64_t tmp = strtoll(number, NULL, 10);
+	char *endptr = { 0 };
+
+	int64_t tmp = strtoll(number, &endptr, 10);
 	if (errno != 0) {
+		return false;
+	}
+
+	if (*endptr == '\0') {
 		return 0;
 	}
+
 	if (tmp < INT64_MIN || tmp > INT64_MAX) {
-		return 0;
+		return false;
 	}
+
 	if (target != NULL) {
 		*target = tmp;
 	}
-	return 1;
+	return true;
 }
 
 /*
@@ -266,40 +256,45 @@ int is_int64(char *number, int64_t *target) {
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-int is_uint64(char *number, uint64_t *target) {
+bool is_uint64(char *number, uint64_t *target) {
 	errno = 0;
-	uint64_t tmp = strtoll(number, NULL, 10);
+	char *endptr = { 0 };
+	unsigned long long tmp = strtoull(number, &endptr, 10);
+
 	if (errno != 0) {
-		return 0;
+		return false;
 	}
-	if (tmp < 0 || tmp > UINT64_MAX) {
-		return 0;
+
+	if (*endptr != '\0') {
+		return false;
 	}
+
+	if (tmp > UINT64_MAX) {
+		return false;
+	}
+
 	if (target != NULL) {
-		*target = tmp;
+		*target = (uint64_t)tmp;
 	}
-	return 1;
+
+	return true;
 }
 
-int
-is_intpercent (char *number)
-{
+bool is_intpercent (char *number) {
 	int i;
 	if (is_integer (number) && (i = atoi (number)) >= 0 && i <= 100)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
-int
-is_option (char *str)
-{
+bool is_option (char *str) {
 	if (!str)
-		return FALSE;
+		return false;
 	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 #ifdef NEED_GETTIMEOFDAY

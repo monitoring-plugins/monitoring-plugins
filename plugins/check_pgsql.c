@@ -69,7 +69,7 @@ int process_arguments (int, char **);
 int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
-int is_pg_logname (char *);
+bool is_pg_logname (char *);
 int do_query (PGconn *, char *);
 
 char *pghost = NULL;						/* host name of the backend server */
@@ -252,7 +252,7 @@ main (int argc, char **argv)
 	printf (_(" %s - database %s (%f sec.)|%s\n"),
 	        state_text(status), dbName, elapsed_time,
 	        fperfdata("time", elapsed_time, "s",
-	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, TRUE, 0, FALSE,0));
+	                 !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, true, 0, false,0));
 
 	if (pgquery)
 		query_status = do_query (conn, pgquery);
@@ -393,7 +393,7 @@ process_arguments (int argc, char **argv)
 
 <para>&PROTO_validate_arguments;</para>
 
-<para>Given a database name, this function returns TRUE if the string
+<para>Given a database name, this function returns true if the string
 is a valid PostgreSQL database name, and returns false if it is
 not.</para>
 
@@ -424,7 +424,7 @@ function prototype
 
 <para>&PROTO_is_pg_logname;</para>
 
-<para>Given a username, this function returns TRUE if the string is a
+<para>Given a username, this function returns true if the string is a
 valid PostgreSQL username, and returns false if it is not. Valid PostgreSQL
 usernames are less than &NAMEDATALEN; characters long and consist of
 letters, numbers, dashes, and underscores, plus possibly some other
@@ -439,12 +439,10 @@ should be added.</para>
 
 
 
-int
-is_pg_logname (char *username)
-{
+bool is_pg_logname (char *username) {
 	if (strlen (username) > NAMEDATALEN - 1)
-		return (FALSE);
-	return (TRUE);
+		return (false);
+	return (true);
 }
 
 /******************************************************************************

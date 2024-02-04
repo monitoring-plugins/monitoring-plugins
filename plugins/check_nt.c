@@ -67,17 +67,17 @@ char *req_password=NULL;
 unsigned long lvalue_list[MAX_VALUE_LIST];
 unsigned long warning_value=0L;
 unsigned long critical_value=0L;
-int check_warning_value=FALSE;
-int check_critical_value=FALSE;
+bool check_warning_value=false;
+bool check_critical_value=false;
 enum checkvars vars_to_check = CHECK_NONE;
-int show_all=FALSE;
+bool show_all = false;
 
 char recv_buffer[MAX_INPUT_BUFFER];
 
 void fetch_data (const char* address, int port, const char* sendb);
 int process_arguments(int, char **);
 void preparelist(char *string);
-int strtoularray(unsigned long *array, char *string, const char *delim);
+bool strtoularray(unsigned long *array, char *string, const char *delim);
 void print_help(void);
 void print_usage(void);
 
@@ -113,8 +113,8 @@ int main(int argc, char **argv){
 	int uphours=0;
 	int upminutes=0;
 
-	int isPercent = FALSE;
-	int allRight = FALSE;
+	bool isPercent = false;
+	bool allRight = false;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -151,7 +151,7 @@ int main(int argc, char **argv){
 
 		if (value_list==NULL)
 			output_message = strdup (_("missing -l parameters"));
-		else if (strtoularray(lvalue_list,value_list,",")==FALSE)
+		else if (! strtoularray(lvalue_list,value_list,","))
 			output_message = strdup (_("wrong -l parameter."));
 		else {
 			/* -l parameters is present with only integers */
@@ -224,9 +224,9 @@ int main(int argc, char **argv){
 
 			xasprintf(&output_message,_("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"),updays, uphours, upminutes, uptime);
 
-			if (check_critical_value==TRUE && uptime <= critical_value)
+			if (check_critical_value && uptime <= critical_value)
 				return_code=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && uptime <= warning_value)
+			else if (check_warning_value && uptime <= warning_value)
 				return_code=STATE_WARNING;
 			else
 				return_code=STATE_OK;
@@ -261,9 +261,9 @@ int main(int argc, char **argv){
 				  (total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
 				  critical_used_space / 1073741824, total_disk_space / 1073741824);
 
-				if(check_critical_value==TRUE && percent_used_space >= critical_value)
+				if(check_critical_value && percent_used_space >= critical_value)
 					return_code=STATE_CRITICAL;
-				else if (check_warning_value==TRUE && percent_used_space >= warning_value)
+				else if (check_warning_value && percent_used_space >= warning_value)
 					return_code=STATE_WARNING;
 				else
 					return_code=STATE_OK;
@@ -285,7 +285,7 @@ int main(int argc, char **argv){
 		else {
 			preparelist(value_list);		/* replace , between services with & to send the request */
 			xasprintf(&send_buffer,"%s&%u&%s&%s", req_password,(vars_to_check==CHECK_SERVICESTATE)?5:6,
-							 (show_all==TRUE) ? "ShowAll" : "ShowFail",value_list);
+							 (show_all) ? "ShowAll" : "ShowFail",value_list);
 			fetch_data (server_address, server_port, send_buffer);
 			numstr = strtok(recv_buffer,"&");
 			if (numstr == NULL)
@@ -321,9 +321,9 @@ int main(int argc, char **argv){
 		  warning_used_space / 1048567, critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code=STATE_OK;
-		if(check_critical_value==TRUE && percent_used_space >= critical_value)
+		if(check_critical_value && percent_used_space >= critical_value)
 			return_code=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && percent_used_space >= warning_value)
+		else if (check_warning_value && percent_used_space >= warning_value)
 			return_code=STATE_WARNING;
 
 		break;
@@ -371,7 +371,7 @@ int main(int argc, char **argv){
 			else if (isPercent)
 			{
 				counter_unit = strdup ("%");
-				allRight = TRUE;
+				allRight = true;
 			}
 
 			if ((counter_unit != NULL) && (!allRight))
@@ -391,7 +391,7 @@ int main(int argc, char **argv){
 					if ((fmaxval == 0) && (maxval == errcvt))
 						output_message = strdup (_("Maximum value contains non-numbers"));
 					else
-						allRight = TRUE;	/* Everything is OK. */
+						allRight = true;	/* Everything is OK. */
 
 				}
 			}
@@ -418,9 +418,9 @@ int main(int argc, char **argv){
 
 		if (critical_value > warning_value)
 		{			/* Normal thresholds */
-			if (check_critical_value == TRUE && counter_value >= critical_value)
+			if (check_critical_value && counter_value >= critical_value)
 				return_code = STATE_CRITICAL;
-			else if (check_warning_value == TRUE && counter_value >= warning_value)
+			else if (check_warning_value  && counter_value >= warning_value)
 				return_code = STATE_WARNING;
 			else
 				return_code = STATE_OK;
@@ -428,9 +428,9 @@ int main(int argc, char **argv){
 		else
 		{			/* inverse thresholds */
 			return_code = STATE_OK;
-			if (check_critical_value == TRUE && counter_value <= critical_value)
+			if (check_critical_value && counter_value <= critical_value)
 				return_code = STATE_CRITICAL;
-			else if (check_warning_value == TRUE && counter_value <= warning_value)
+			else if (check_warning_value && counter_value <= warning_value)
 				return_code = STATE_WARNING;
 		}
 	break;
@@ -448,17 +448,17 @@ int main(int argc, char **argv){
 			output_message = strdup (description);
 
 			if (critical_value > warning_value) {        /* Normal thresholds */
-				if(check_critical_value==TRUE && age_in_minutes >= critical_value)
+				if(check_critical_value && age_in_minutes >= critical_value)
 					return_code=STATE_CRITICAL;
-				else if (check_warning_value==TRUE && age_in_minutes >= warning_value)
+				else if (check_warning_value && age_in_minutes >= warning_value)
 					return_code=STATE_WARNING;
 				else
 					return_code=STATE_OK;
 			}
 			else {                                       /* inverse thresholds */
-				if(check_critical_value==TRUE && age_in_minutes <= critical_value)
+				if(check_critical_value && age_in_minutes <= critical_value)
 					return_code=STATE_CRITICAL;
-				else if (check_warning_value==TRUE && age_in_minutes <= warning_value)
+				else if (check_warning_value && age_in_minutes <= warning_value)
 					return_code=STATE_WARNING;
 				else
 					return_code=STATE_OK;
@@ -600,15 +600,15 @@ int process_arguments(int argc, char **argv){
 				break;
 			case 'w': /* warning threshold */
 				warning_value=strtoul(optarg,NULL,10);
-				check_warning_value=TRUE;
+				check_warning_value=true;
 				break;
 			case 'c': /* critical threshold */
 				critical_value=strtoul(optarg,NULL,10);
-				check_critical_value=TRUE;
+				check_critical_value=true;
 				break;
 			case 'd': /* Display select for services */
 				if (!strcmp(optarg,"SHOWALL"))
-					show_all = TRUE;
+					show_all = true;
 				break;
 			case 'u':
 				socket_timeout_state=STATE_UNKNOWN;
@@ -646,7 +646,7 @@ void fetch_data (const char *address, int port, const char *sendb) {
 		die (STATE_UNKNOWN, "NSClient - %s\n",recv_buffer);
 }
 
-int strtoularray(unsigned long *array, char *string, const char *delim) {
+bool strtoularray(unsigned long *array, char *string, const char *delim) {
 	/* split a <delim> delimited string into a long array */
 	int idx=0;
 	char *t1;
@@ -660,9 +660,9 @@ int strtoularray(unsigned long *array, char *string, const char *delim) {
 			array[idx]=strtoul(t1,NULL,10);
 			idx++;
 		} else
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 void preparelist(char *string) {

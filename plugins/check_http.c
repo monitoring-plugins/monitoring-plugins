@@ -471,10 +471,9 @@ bool process_arguments (int argc, char **argv)
         free(http_method);
       http_method = strdup (optarg);
       char *tmp;
-      if ((tmp = strstr(http_method, ":")) > 0) {
-        tmp[0] = '\0';
-        http_method = http_method;
-        http_method_proxy = ++tmp;
+      if ((tmp = strstr(http_method, ":")) != NULL) {
+        tmp[0] = '\0'; // set the ":" in the middle to 0
+        http_method_proxy = ++tmp; // this points to the second part
       }
       break;
     case 'd': /* string or substring */
@@ -1094,7 +1093,7 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
-    while (pos = memchr(buffer, '\0', i)) {
+    while ((pos = memchr(buffer, '\0', i))) {
       /* replace nul character with a blank */
       *pos = ' ';
     }

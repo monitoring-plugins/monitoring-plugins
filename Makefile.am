@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gl tap lib plugins plugins-scripts plugins-root po @PERLMODS_DIR@
+SUBDIRS = gl tap lib plugins plugins-scripts plugins-root @PERLMODS_DIR@
 
 EXTRA_DIST = config.rpath \
 	ABOUT-NLS ACKNOWLEDGEMENTS AUTHORS CODING ChangeLog FAQ NEWS \

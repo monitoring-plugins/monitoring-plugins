@@ -55,7 +55,7 @@ int error_scan (char buf[MAX_INPUT_BUFFER], const char *addr);
 void print_usage (void);
 void print_help (void);
 
-int display_html = FALSE;
+bool display_html = false;
 int wpl = UNKNOWN_PACKET_LOSS;
 int cpl = UNKNOWN_PACKET_LOSS;
 float wrta = UNKNOWN_TRIP_TIME;
@@ -153,7 +153,7 @@ main (int argc, char **argv)
 		if (n_addresses > 1 && this_result != STATE_UNKNOWN)
 			die (STATE_OK, "%s is alive\n", addresses[i]);
 
-		if (display_html == TRUE)
+		if (display_html == true)
 			printf ("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
 		if (pl == 100)
 			printf (_("PING %s - %sPacket loss = %d%%"), state_text (this_result), warn_text,
@@ -161,22 +161,22 @@ main (int argc, char **argv)
 		else
 			printf (_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"),
 							state_text (this_result), warn_text, pl, rta);
-		if (display_html == TRUE)
+		if (display_html == true)
 			printf ("</A>");
 
 		/* Print performance data */
 		if (pl != 100) {
 			printf("|%s", fperfdata ("rta", (double) rta, "ms",
-									  wrta>0?TRUE:FALSE, wrta,
-									  crta>0?TRUE:FALSE, crta,
-									  TRUE, 0, FALSE, 0));
+									  wrta>0?true:false, wrta,
+									  crta>0?true:false, crta,
+									  true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", wrta, crta);
 		}
 		printf(" %s\n", perfdata ("pl", (long) pl, "%",
-		                          wpl>0?TRUE:FALSE, wpl,
-		                          cpl>0?TRUE:FALSE, cpl,
-		                          TRUE, 0, FALSE, 0));
+		                          wpl>0?true:false, wpl,
+		                          cpl>0?true:false, cpl,
+		                          true, 0, false, 0));
 
 		if (verbose >= 2)
 			printf ("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
@@ -278,10 +278,10 @@ process_arguments (int argc, char **argv)
 				usage2 (_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			break;
 		case 'n':	/* no HTML */
-			display_html = FALSE;
+			display_html = false;
 			break;
 		case 'L':	/* show HTML */
-			display_html = TRUE;
+			display_html = true;
 			break;
 		case 'c':
 			get_threshold (optarg, &crta, &cpl);
@@ -297,7 +297,7 @@ process_arguments (int argc, char **argv)
 		return validate_arguments ();
 
 	if (addresses[0] == NULL) {
-		if (is_host (argv[c]) == FALSE) {
+		if (!is_host (argv[c])) {
 			usage2 (_("Invalid hostname/address"), argv[c]);
 		} else {
 			addresses[0] = argv[c++];
@@ -308,7 +308,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (wpl == UNKNOWN_PACKET_LOSS) {
-		if (is_intpercent (argv[c]) == FALSE) {
+		if (!is_intpercent (argv[c])) {
 			printf (_("<wpl> (%s) must be an integer percentage\n"), argv[c]);
 			return ERROR;
 		} else {
@@ -319,7 +319,7 @@ process_arguments (int argc, char **argv)
 	}
 
 	if (cpl == UNKNOWN_PACKET_LOSS) {
-		if (is_intpercent (argv[c]) == FALSE) {
+		if (!is_intpercent (argv[c])) {
 			printf (_("<cpl> (%s) must be an integer percentage\n"), argv[c]);
 			return ERROR;
 		} else {
@@ -420,7 +420,7 @@ validate_arguments ()
 		timeout_interval = (int)max_seconds;
 
 	for (i=0; i<n_addresses; i++) {
-		if (is_host(addresses[i]) == FALSE)
+		if (!is_host(addresses[i]))
 			usage2 (_("Invalid hostname/address"), addresses[i]);
 	}
 

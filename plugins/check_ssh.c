@@ -47,7 +47,7 @@ int port = -1;
 char *server_name = NULL;
 char *remote_version = NULL;
 char *remote_protocol = NULL;
-int verbose = FALSE;
+bool verbose = false;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -55,7 +55,6 @@ void print_help (void);
 void print_usage (void);
 
 int ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol);
-
 
 
 int
@@ -133,7 +132,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -158,7 +157,7 @@ process_arguments (int argc, char **argv)
 			remote_protocol = optarg;
 			break;
 		case 'H':									/* host */
-			if (is_host (optarg) == FALSE)
+			if (!is_host (optarg))
 				usage2 (_("Invalid hostname/address"), optarg);
 			server_name = optarg;
 			break;
@@ -335,8 +334,9 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 
 	if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 		printf
-			(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
-			 ssh_server, ssh_proto, remote_protocol);
+			(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s' | %s\n"),
+			 ssh_server, ssh_proto, remote_protocol, fperfdata("time", elapsed_time, "s",
+			 false, 0, false, 0, true, 0, true, (int)socket_timeout));
 		close(sd);
 		exit (STATE_CRITICAL);
 	}
@@ -345,7 +345,7 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	printf
 		(_("SSH OK - %s (protocol %s) | %s\n"),
 		 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
-			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+			 false, 0, false, 0, true, 0, true, (int)socket_timeout));
 	close(sd);
 	exit (STATE_OK);
 }

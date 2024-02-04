@@ -115,7 +115,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	if(!np_pids) NP_RUNCMD_INIT;
 
 	env[0] = strdup("LC_ALL=C");
-	env[1] = '\0';
+	env[1] = NULL;
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
@@ -240,13 +240,12 @@ np_runcmd_close(int fd)
 void
 runcmd_timeout_alarm_handler (int signo)
 {
-	size_t i;
 
 	if (signo == SIGALRM)
 		puts(_("CRITICAL - Plugin timed out while executing system call"));
 
   long maxfd = mp_open_max();
-	if(np_pids) for(i = 0; i < maxfd; i++) {
+	if(np_pids) for(long int i = 0; i < maxfd; i++) {
 		if(np_pids[i] != 0) kill(np_pids[i], SIGKILL);
 	}
 
