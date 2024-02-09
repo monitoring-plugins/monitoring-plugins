@@ -105,7 +105,7 @@ spopen (const char *cmdstring)
 #endif
 
 	env[0] = strdup("LC_ALL=C");
-	env[1] = '\0';
+	env[1] = NULL;
 
 	/* if no command was passed, return with no error */
 	if (cmdstring == NULL)

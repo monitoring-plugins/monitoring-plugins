@@ -26,7 +26,7 @@ EXTRA_PROGRAMS = pst3
 
 EXTRA_DIST = t pst3.c
 
-BASEOBJS = ../plugins/utils.o ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
+BASEOBJS = ../plugins/utils.o ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 
@@ -80,8 +80,8 @@ install-exec-local: $(noinst_PROGRAMS)
 
 ##############################################################################
 # the actual targets
-check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS)
-check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS)
+check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS) $(LIB_CRYPTO)
+check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS) $(LIB_CRYPTO)
 
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
