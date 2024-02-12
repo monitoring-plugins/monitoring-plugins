@@ -220,8 +220,10 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL and vice-versa)."));
-	printf ("%s\n", _("Additional switches can be used to control which state becomes what."));
+	printf ("%s\n", _("Negates only the return code of a plugin (returns OK for CRITICAL and vice-versa) by default."));
+	printf ("%s\n", _("Additional switches can be used to control:\n"));
+	printf ("- which state becomes what\n");
+	printf ("- changing the plugin output text to match the return code");
 
 	printf ("\n\n");
 
