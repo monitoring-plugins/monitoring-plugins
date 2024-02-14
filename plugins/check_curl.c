@@ -223,6 +223,7 @@ curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 int curl_http_version = CURL_HTTP_VERSION_NONE;
 bool automatic_decompression = false;
 char *cookie_jar_file = NULL;
+bool haproxy_protocol = false;
 
 bool process_arguments (int, char**);
 void handle_curl_option_return_code (CURLcode res, const char* option);
@@ -519,6 +520,11 @@ check_http (void)
   /* set timeouts */
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, socket_timeout), "CURLOPT_CONNECTTIMEOUT");
   handle_curl_option_return_code (curl_easy_setopt (curl, CURLOPT_TIMEOUT, socket_timeout), "CURLOPT_TIMEOUT");
+
+  /* enable haproxy protocol */
+  if (haproxy_protocol) {
+    handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_HAPROXYPROTOCOL, 1L), "CURLOPT_HAPROXYPROTOCOL");
+  }
 
   // fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we use the host_name later on to make SNI happy
   if(use_ssl && host_name != NULL) {
@@ -1384,7 +1390,8 @@ process_arguments (int argc, char **argv)
     CA_CERT_OPTION,
     HTTP_VERSION_OPTION,
     AUTOMATIC_DECOMPRESSION,
-    COOKIE_JAR
+    COOKIE_JAR,
+    HAPROXY_PROTOCOL
   };
 
   int option = 0;
@@ -1431,6 +1438,7 @@ process_arguments (int argc, char **argv)
     {"http-version", required_argument, 0, HTTP_VERSION_OPTION},
     {"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
     {"cookie-jar", required_argument, 0, COOKIE_JAR},
+    {"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
     {0, 0, 0, 0}
   };
 
@@ -1841,6 +1849,9 @@ process_arguments (int argc, char **argv)
     case COOKIE_JAR:
       cookie_jar_file = optarg;
       break;
+    case HAPROXY_PROTOCOL:
+      haproxy_protocol = true;
+      break;
     case '?':
       /* print short usage statement if args not parsable */
       usage5 ();
@@ -2060,6 +2071,8 @@ print_help (void)
   printf ("    %s\n", _("1.0 = HTTP/1.0, 1.1 = HTTP/1.1, 2.0 = HTTP/2 (HTTP/2 will fail without -S)"));
   printf (" %s\n", "--enable-automatic-decompression");
   printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
+  printf(" %s\n", "--haproxy-protocol");
+  printf("    %s\n", _("Send HAProxy proxy protocol v1 header (CURLOPT_HAPROXYPROTOCOL)."));
   printf (" %s\n", "---cookie-jar=FILE");
   printf ("    %s\n", _("Store cookies in the cookie jar and send them out when requested."));
   printf ("\n");
@@ -2144,7 +2157,7 @@ print_usage (void)
   printf ("       [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport|curl>]\n");
   printf ("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive regex>]\n");
   printf ("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
-  printf ("       [-A string] [-k string] [-S <version>] [--sni]\n");
+  printf ("       [-A string] [-k string] [-S <version>] [--sni] [--haproxy-protocol]\n");
   printf ("       [-T <content-type>] [-j method]\n");
   printf ("       [--http-version=<version>] [--enable-automatic-decompression]\n");
   printf ("       [--cookie-jar=<cookie jar file>\n");

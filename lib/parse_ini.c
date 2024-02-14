@@ -36,6 +36,7 @@
  */
 typedef struct {
 	char *file;
+	bool file_string_on_heap;
 	char *stanza;
 } np_ini_info;
 
@@ -95,16 +96,22 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 		i->stanza = malloc(sizeof(char) * (stanza_len + 1));
 		strncpy(i->stanza, locator, stanza_len);
 		i->stanza[stanza_len] = '\0';
-	} else	/* otherwise we use the default stanza */
+	} else	{/* otherwise we use the default stanza */
 		i->stanza = strdup(def_stanza);
+	}
 
 	if (i->stanza == NULL)
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 
 	/* check whether there's an @file part */
-	i->file = stanza_len == locator_len
-	    ? default_file()
-	    : strdup(&(locator[stanza_len + 1]));
+	if (stanza_len == locator_len) {
+	    i->file = default_file();
+		i->file_string_on_heap = false;
+	} else {
+		i->file = strdup(&(locator[stanza_len + 1]));
+		i->file_string_on_heap = true;
+	}
+
 	if (i->file == NULL || i->file[0] == '\0')
 		die(STATE_UNKNOWN,
 		    _("Cannot find config file in any standard location.\n"));
@@ -136,7 +143,10 @@ np_get_defaults(const char *locator, const char *default_section)
 		    _("Invalid section '%s' in config file '%s'\n"), i.stanza,
 		    i.file);
 
-	free(i.file);
+	if (i.file_string_on_heap) {
+		free(i.file);
+	}
+
 	if (inifile != stdin)
 		fclose(inifile);
 	free(i.stanza);
@@ -358,14 +368,18 @@ add_option(FILE *f, np_arg_list **optlst)
 static char *
 default_file(void)
 {
-	char **p, *ini_file;
+	char  *ini_file;
 
 	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
-	    (ini_file = default_file_in_path()) != NULL)
+	    (ini_file = default_file_in_path()) != NULL) {
 		return ini_file;
-	for (p = default_ini_path_names; *p != NULL; p++)
-		if (access(*p, F_OK) == 0)
+	}
+
+	for (char **p = default_ini_path_names; *p != NULL; p++) {
+		if (access(*p, F_OK) == 0) {
 			return *p;
+		}
+	}
 	return NULL;
 }
 
