@@ -1,6 +1,7 @@
 
 #include "../lib/output.h"
 #include "../../tap/tap.h"
+#include "./states.h"
 
 void test_one_subcheck();
 void test_two_subchecks();
@@ -16,7 +17,7 @@ void test_default_states2();
 
 int main(void) {
 
-	plan_tests(14);
+	plan_tests(19);
 
 	diag("Simple test with one subcheck");
 	test_one_subcheck();
@@ -53,6 +54,8 @@ void test_one_subcheck() {
 
 	mp_check check = mp_check_init();
 	mp_add_subcheck_to_check(&check, sc1);
+
+	ok(mp_compute_check_state(check) == STATE_WARNING, "Main state should be warning");
 
 	char *output = mp_fmt_output(check);
 
@@ -111,8 +114,9 @@ void test_two_subchecks() {
 	mp_subcheck sc1 = mp_subcheck_init();
 
 	sc1.output = "foobar";
-	sc1.state = STATE_WARNING;
 	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
+
+	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING, "Test subcheck state directly after setting it");
 
 	mp_perfdata pd1 = perfdata_init();
 
@@ -128,10 +132,16 @@ void test_two_subchecks() {
 	sc2.output = "baz";
 	sc2 = mp_set_subcheck_state(sc2, STATE_OK);
 
+	ok(mp_compute_subcheck_state(sc2) == STATE_OK, "Test subcheck 2 state after setting it");
+
 	mp_add_subcheck_to_subcheck(&sc1, sc2);
+
+	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING, "Test subcheck state after adding a subcheck");
 
 	mp_check check = mp_check_init();
 	mp_add_subcheck_to_check(&check, sc1);
+
+	ok(mp_compute_check_state(check) == STATE_WARNING, "Test main check result");
 
 	char *output = mp_fmt_output(check);
 
