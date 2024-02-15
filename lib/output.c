@@ -206,12 +206,12 @@ char *get_subcheck_summary(mp_check check) {
  * Generate the result state of a mp_subcheck object based on it's own state and it's subchecks states
  */
 mp_state_enum mp_compute_subcheck_state(const mp_subcheck check) {
-	mp_subcheck_list *scl = check.subchecks;
-
-	mp_state_enum result = check.default_state;
 	if (check.state_set_explicitly) {
-		result = check.state;
+		return check.state;
 	}
+
+	mp_subcheck_list *scl = check.subchecks;
+	mp_state_enum result = check.default_state;
 
 	while (scl != NULL) {
 		result = max_state_alt(result, mp_compute_subcheck_state(scl->subcheck));
