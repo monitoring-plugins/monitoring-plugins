@@ -691,7 +691,6 @@ process_arguments (int argc, char **argv)
 {
 	char *ptr;
 	int c = 1;
-	int ii = 0;
 	size_t j = 0, jj = 0;
 
 	int option = 0;
@@ -848,7 +847,6 @@ process_arguments (int argc, char **argv)
 			numoids = j;
 			if (c == 'E' || c == 'e') {
 				jj++;
-				ii++;
 				while (j+1 >= eval_size) {
 					eval_size += OID_COUNT_STEP;
 					eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
@@ -875,7 +873,6 @@ process_arguments (int argc, char **argv)
 				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 			}
 			eval_method[jj++] = CRIT_STRING;
-			ii++;
 			break;
 		case 'R':									/* regex */
 			cflags = REG_ICASE;
@@ -896,7 +893,6 @@ process_arguments (int argc, char **argv)
 				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 			}
 			eval_method[jj++] = CRIT_REGEX;
-			ii++;
 			break;
 
 	/* Format */

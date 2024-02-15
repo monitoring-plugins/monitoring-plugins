@@ -115,7 +115,7 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	if(!np_pids) NP_RUNCMD_INIT;
 
 	env[0] = strdup("LC_ALL=C");
-	env[1] = '\0';
+	env[1] = NULL;
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
