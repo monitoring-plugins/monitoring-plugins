@@ -240,7 +240,7 @@ mp_state_enum mp_compute_check_state(const mp_check check) {
 
 /*
  * Generate output string for a mp_check object
- * Non static to be availabe for testing functions
+ * Non static to be available for testing functions
  */
 char *mp_fmt_output(mp_check check) {
 	char *result = NULL;
@@ -368,7 +368,7 @@ void mp_print_output(mp_check check) {
 /*
  * Convenience function to print the output string of a mp_check object and exit
  * the program with the resulting state.
- * Intented to be used to exit a monitoring plugin.
+ * Intended to be used to exit a monitoring plugin.
  */
 void mp_exit(mp_check check) {
 	mp_print_output(check);
@@ -376,8 +376,8 @@ void mp_exit(mp_check check) {
 }
 
 /*
- * Function to set the result state of a mp_subcheck object explicitely.
- * This will overwrite the default state AND states dereived from it's subchecks
+ * Function to set the result state of a mp_subcheck object explicitly.
+ * This will overwrite the default state AND states derived from it's subchecks
  */
 mp_subcheck mp_set_subcheck_state(mp_subcheck check , mp_state_enum state) {
 	check.state = state;
