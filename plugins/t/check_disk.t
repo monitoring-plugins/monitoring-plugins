@@ -44,7 +44,7 @@ my @perf_data = sort(split(/ /, $result->perf_output));
 # Calculate avg_free free on mountpoint1 and mountpoint2
 # because if you check in the middle, you should get different errors
 $_ = $result->output;
-my ($free_on_mp1, $free_on_mp2) = (m/\((\d+)%.*\((\d+)%/);
+my ($free_on_mp1, $free_on_mp2) = (m/\((\d+\.\d+)%.*\((\d+\.\d+)%/);
 die "Cannot parse output: $_" unless ($free_on_mp1 && $free_on_mp2);
 my $avg_free = ceil(($free_on_mp1+$free_on_mp2)/2);
 my ($more_free, $less_free);
