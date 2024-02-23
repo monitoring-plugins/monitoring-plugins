@@ -28,7 +28,7 @@ use FindBin;
 use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 
-# make us session leader which makes all childs exit if we do
+# make us session leader which makes all children exit if we do
 setsid;
 
 sub print_help ();
@@ -226,7 +226,8 @@ if (/\s*(\d*) blocks of size (\d*)\. (\d*) blocks available/) {
 	my ($total_bytes) = $1 * $2;
 	my ($occupied_bytes) = $1 * $2 - $avail_bytes;
 	my ($avail) = $avail_bytes/1024;
-	my ($capper) = int(($3/$1)*100);
+	my ($capper);
+	if ($1!=0) { $capper = int(($3/$1)*100) } else { $capper=100 };
 	my ($mountpt) = "\\\\$host\\$share";
 
 	# TODO : why is the kB the standard unit for args ?

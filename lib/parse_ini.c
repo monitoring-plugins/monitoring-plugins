@@ -1,24 +1,24 @@
 /*****************************************************************************
-* 
+*
 * Monitoring Plugins parse_ini library
-* 
+*
 * License: GPL
 * Copyright (c) 2007 Monitoring Plugins Development Team
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -36,6 +36,7 @@
  */
 typedef struct {
 	char *file;
+	bool file_string_on_heap;
 	char *stanza;
 } np_ini_info;
 
@@ -78,7 +79,7 @@ static char *default_file_in_path(void);
 /*
  * Parse_locator decomposes a string of the form
  * 	[stanza][@filename]
- * into its seperate parts.
+ * into its separate parts.
  */
 static void
 parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
@@ -95,16 +96,22 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 		i->stanza = malloc(sizeof(char) * (stanza_len + 1));
 		strncpy(i->stanza, locator, stanza_len);
 		i->stanza[stanza_len] = '\0';
-	} else	/* otherwise we use the default stanza */
+	} else	{/* otherwise we use the default stanza */
 		i->stanza = strdup(def_stanza);
+	}
 
 	if (i->stanza == NULL)
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 
 	/* check whether there's an @file part */
-	i->file = stanza_len == locator_len
-	    ? default_file()
-	    : strdup(&(locator[stanza_len + 1]));
+	if (stanza_len == locator_len) {
+	    i->file = default_file();
+		i->file_string_on_heap = false;
+	} else {
+		i->file = strdup(&(locator[stanza_len + 1]));
+		i->file_string_on_heap = true;
+	}
+
 	if (i->file == NULL || i->file[0] == '\0')
 		die(STATE_UNKNOWN,
 		    _("Cannot find config file in any standard location.\n"));
@@ -131,12 +138,15 @@ np_get_defaults(const char *locator, const char *default_section)
 	if (inifile == NULL)
 		die(STATE_UNKNOWN, _("Can't read config file: %s\n"),
 		    strerror(errno));
-	if (read_defaults(inifile, i.stanza, &defaults) == FALSE)
+	if (!read_defaults(inifile, i.stanza, &defaults))
 		die(STATE_UNKNOWN,
 		    _("Invalid section '%s' in config file '%s'\n"), i.stanza,
 		    i.file);
 
-	free(i.file);
+	if (i.file_string_on_heap) {
+		free(i.file);
+	}
+
 	if (inifile != stdin)
 		fclose(inifile);
 	free(i.stanza);
@@ -157,7 +167,8 @@ np_get_defaults(const char *locator, const char *default_section)
 static int
 read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 {
-	int c, status = FALSE;
+	int c = 0;
+	bool status = false;
 	size_t i, stanza_len;
 	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate = NOSTANZA;
 
@@ -169,7 +180,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 		if (isspace(c))
 			continue;
 		switch (c) {
-			/* globble up coment lines */
+			/* globble up comment lines */
 		case ';':
 		case '#':
 			GOBBLE_TO(f, c, '\n');
@@ -219,7 +230,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 					die(STATE_UNKNOWN, "%s\n",
 					    _("Config file error"));
 				}
-				status = TRUE;
+				status = true;
 				break;
 			}
 			break;
@@ -357,14 +368,18 @@ add_option(FILE *f, np_arg_list **optlst)
 static char *
 default_file(void)
 {
-	char **p, *ini_file;
+	char  *ini_file;
 
 	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
-	    (ini_file = default_file_in_path()) != NULL)
+	    (ini_file = default_file_in_path()) != NULL) {
 		return ini_file;
-	for (p = default_ini_path_names; *p != NULL; p++)
-		if (access(*p, F_OK) == 0)
+	}
+
+	for (char **p = default_ini_path_names; *p != NULL; p++) {
+		if (access(*p, F_OK) == 0) {
 			return *p;
+		}
+	}
 	return NULL;
 }
 

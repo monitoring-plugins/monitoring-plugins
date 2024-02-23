@@ -10,7 +10,7 @@ if (! -e "./test_ini3") {
 # array of argument arrays
 #   - First value is the expected return code
 #   - 2nd value is the NAGIOS_CONFIG_PATH
-#     TODO: looks like we look in default path after looking trough this variable - shall we?
+#     TODO: looks like we look in default path after looking through this variable - shall we?
 #   - 3rd value is the plugin name
 #   - 4th is the ini locator
 my @TESTS = (

@@ -1,34 +1,35 @@
 /*****************************************************************************
-* 
+*
 * Library for check_disk
-* 
+*
 * License: GPL
 * Copyright (c) 1999-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains utilities for check_disk. These are tested by libtap
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
 #include "utils_disk.h"
 #include "gl/fsusage.h"
+#include <string.h>
 
 void
 np_add_name (struct name_list **list, const char *name)
@@ -40,6 +41,42 @@ np_add_name (struct name_list **list, const char *name)
   *list = new_entry;
 }
 
+/* @brief Initialises a new regex at the begin of list via regcomp(3)
+ *
+ * @details if the regex fails to compile the error code of regcomp(3) is returned
+ * 					and list is not modified, otherwise list is modified to point to the new
+ * 					element
+ * @param list Pointer to a linked list of regex_list elements
+ * @param regex the string containing the regex which should be inserted into the list
+ * @param clags the cflags parameter for regcomp(3)
+ */
+int
+np_add_regex (struct regex_list **list, const char *regex, int cflags)
+{
+  struct regex_list *new_entry = (struct regex_list *) malloc (sizeof *new_entry);
+
+	if (new_entry == NULL) {
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
+				strerror(errno));
+	}
+
+  int regcomp_result = regcomp(&new_entry->regex, regex, cflags);
+
+	if (!regcomp_result) {
+		// regcomp succeeded
+		new_entry->next = *list;
+		*list = new_entry;
+
+		return 0;
+	} else {
+		// regcomp failed
+		free(new_entry);
+
+		return regcomp_result;
+	}
+
+}
+
 /* Initialises a new parameter at the end of list */
 struct parameter_list *
 np_add_parameter(struct parameter_list **list, const char *name)
@@ -47,9 +84,10 @@ np_add_parameter(struct parameter_list **list, const char *name)
   struct parameter_list *current = *list;
   struct parameter_list *new_path;
   new_path = (struct parameter_list *) malloc (sizeof *new_path);
-  new_path->name = (char *) name;
+  new_path->name = (char *) malloc(strlen(name) + 1);
   new_path->best_match = NULL;
   new_path->name_next = NULL;
+  new_path->name_prev = NULL;
   new_path->freespace_bytes = NULL;
   new_path->freespace_units = NULL;
   new_path->freespace_percent = NULL;
@@ -60,7 +98,7 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->freeinodes_percent = NULL;
   new_path->group = NULL;
   new_path->dfree_pct = -1;
-  new_path->dused_pct = -1; 
+  new_path->dused_pct = -1;
   new_path->total = 0;
   new_path->available = 0;
   new_path->available_to_root = 0;
@@ -75,13 +113,17 @@ np_add_parameter(struct parameter_list **list, const char *name)
   new_path->dused_inodes_percent = 0;
   new_path->dfree_inodes_percent = 0;
 
+  strcpy(new_path->name, name);
+
   if (current == NULL) {
     *list = new_path;
+    new_path->name_prev = NULL;
   } else {
     while (current->name_next) {
       current = current->name_next;
     }
     current->name_next = new_path;
+    new_path->name_prev = current;
   }
   return new_path;
 }
@@ -90,6 +132,9 @@ np_add_parameter(struct parameter_list **list, const char *name)
 struct parameter_list *
 np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
 {
+  if (item == NULL) {
+    return NULL;
+  }
   struct parameter_list *next;
 
   if (item->name_next)
@@ -97,9 +142,16 @@ np_del_parameter(struct parameter_list *item, struct parameter_list *prev)
   else
     next = NULL;
 
-  free(item);
+  if (next)
+    next->name_prev = prev;
+
   if (prev)
     prev->name_next = next;
+
+  if (item->name) {
+    free(item->name);
+  }
+  free(item);
 
   return next;
 }
@@ -118,9 +170,7 @@ np_find_parameter(struct parameter_list *list, const char *name)
   return NULL;
 }
 
-void
-np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, int exact)
-{
+void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, bool exact) {
   struct parameter_list *d;
   for (d = desired; d; d= d->name_next) {
     if (! d->best_match) {
@@ -132,24 +182,25 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
 
       /* set best match if path name exactly matches a mounted device name */
       for (me = mount_list; me; me = me->me_next) {
-	if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
-	  continue; /* skip if permissions do not suffice for accessing device */
-        if (strcmp(me->me_devname, d->name)==0)
-          best_match = me;
+        if (strcmp(me->me_devname, d->name)==0) {
+          if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
+            best_match = me;
+          }
+        }
       }
 
       /* set best match by directory name if no match was found by devname */
       if (! best_match) {
         for (me = mount_list; me; me = me->me_next) {
-	  if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) < 0)
-	    continue; /* skip if permissions do not suffice for accessing device */
           size_t len = strlen (me->me_mountdir);
-          if ((exact == FALSE && (best_match_len <= len && len <= name_len &&
+          if ((!exact && (best_match_len <= len && len <= name_len &&
              (len == 1 || strncmp (me->me_mountdir, d->name, len) == 0)))
-             || (exact == TRUE && strcmp(me->me_mountdir, d->name)==0))
+             || (exact && strcmp(me->me_mountdir, d->name)==0))
           {
-            best_match = me;
-            best_match_len = len;
+            if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
+              best_match = me;
+              best_match_len = len;
+            }
           }
         }
       }
@@ -163,43 +214,57 @@ np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list
   }
 }
 
-/* Returns TRUE if name is in list */
-int
-np_find_name (struct name_list *list, const char *name)
-{
+/* Returns true if name is in list */
+bool np_find_name (struct name_list *list, const char *name) {
   const struct name_list *n;
 
   if (list == NULL || name == NULL) {
-    return FALSE;
+    return false;
   }
   for (n = list; n; n = n->next) {
     if (!strcmp(name, n->name)) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
-int
-np_seen_name(struct name_list *list, const char *name)
-{
+/* Returns true if name is in list */
+bool np_find_regmatch (struct regex_list *list, const char *name) {
+  int len;
+  regmatch_t m;
+
+  if (name == NULL) {
+    return false;
+  }
+
+  len = strlen(name);
+
+  for (; list; list = list->next) {
+    /* Emulate a full match as if surrounded with ^( )$
+       by checking whether the match spans the whole name */
+    if (!regexec(&list->regex, name, 1, &m, 0) && m.rm_so == 0 && m.rm_eo == len) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool np_seen_name(struct name_list *list, const char *name) {
   const struct name_list *s;
   for (s = list; s; s=s->next) {
     if (!strcmp(s->name, name)) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
-int
-np_regex_match_mount_entry (struct mount_entry* me, regex_t* re)
-{
+bool np_regex_match_mount_entry (struct mount_entry* me, regex_t* re) {
   if (regexec(re, me->me_devname, (size_t) 0, NULL, 0) == 0 ||
       regexec(re, me->me_mountdir, (size_t) 0, NULL, 0) == 0 ) {
-    return TRUE;
-  } else {
-    return FALSE;
+    return true;
   }
+	return false;
 }
-

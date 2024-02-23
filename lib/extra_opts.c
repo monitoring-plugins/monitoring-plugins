@@ -1,23 +1,23 @@
 /*****************************************************************************
-* 
+*
 * Monitoring Plugins extra_opts library
-* 
+*
 * License: GPL
 * Copyright (c) 2007 Monitoring Plugins Development Team
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -26,15 +26,14 @@
 #include "extra_opts.h"
 
 /* FIXME: copied from utils.h; we should move a bunch of libs! */
-int
-is_option2 (char *str)
+bool is_option2 (char *str)
 {
 	if (!str)
-		return FALSE;
+		return false;
 	else if (strspn (str, "-") == 1 || strspn (str, "-") == 2)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 /* this is the externally visible function used by plugins */
@@ -93,14 +92,14 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name){
 			/* append the list to extra_args */
 			if(extra_args==NULL){
 				extra_args=ea1;
-				while(ea1=ea1->next) ea_num++;
+				while((ea1 = ea1->next)) ea_num++;
 			}else{
 				ea_tmp=extra_args;
 				while(ea_tmp->next) {
 					ea_tmp=ea_tmp->next;
 				}
 				ea_tmp->next=ea1;
-				while(ea1=ea1->next) ea_num++;
+				while((ea1 = ea1->next)) ea_num++;
 			}
 			ea1=ea_tmp=NULL;
 		}

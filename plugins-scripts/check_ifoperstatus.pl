@@ -134,7 +134,7 @@ if (defined $ifdescr || defined $iftype) {
 	}
 	if ($status==0) {
 		$state = "UNKNOWN";
-		printf "$state: could not retrive ifdescr/iftype snmpkey - $status-$snmpkey\n";
+		printf "$state: could not retrieve ifdescr/iftype snmpkey - $status-$snmpkey\n";
 		$session->close;
 		exit $ERRORS{$state};
 	}
@@ -187,7 +187,7 @@ if (defined $ifXTable) {
 	 $name = $response->{$snmpIfDescr} ;
 }
 
-## if AdminStatus is down - some one made a consious effort to change config
+## if AdminStatus is down - some one made a conscious effort to change config
 ##
 if ( not ($response->{$snmpIfAdminStatus} == 1) ) {
 	$answer = "Interface $name (index $snmpkey) is administratively down.";
@@ -286,7 +286,7 @@ sub print_usage() {
 	printf "check_ifoperstatus -k <IF_KEY> -H <HOSTNAME> [-C <community>]\n";
 	printf "Copyright (C) 2000 Christoph Kron\n";
 	printf "check_ifoperstatus.pl comes with ABSOLUTELY NO WARRANTY\n";
-	printf "This programm is licensed under the terms of the ";
+	printf "This program is licensed under the terms of the ";
 	printf "GNU General Public License\n(check source code for details)\n";
 	printf "\n\n";
 }
@@ -424,7 +424,7 @@ sub process_arguments() {
 		if (defined $seclevel && defined $secname) {
 			$session_opts{'-username'} = $secname;
 		
-			# Must define a security level even though defualt is noAuthNoPriv
+			# Must define a security level even though default is noAuthNoPriv
 			unless ( grep /^$seclevel$/, qw(noAuthNoPriv authNoPriv authPriv) ) {
 				usage("Must define a valid security level even though default is noAuthNoPriv");
 			}

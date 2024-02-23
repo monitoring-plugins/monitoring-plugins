@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_icmp plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2005-2008 Monitoring Plugins Development Team
 * Original Author : Andreas Ericsson <ae@op5.se>
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_icmp plugin
-* 
+*
 * Relevant RFC's: 792 (ICMP), 791 (IP)
-* 
+*
 * This program was modeled somewhat after the check_icmp program,
 * which was in turn a hack of fping (www.fping.org) but has been
 * completely rewritten since to generate higher precision rta values,
 * and support several different modes as well as setting ttl to control.
 * redundant routes. The only remainders of fping is currently a few
 * function names.
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 /* progname may change */
@@ -43,7 +43,7 @@ const char *copyright = "2005-2008";
 const char *email = "devel@monitoring-plugins.org";
 
 /** Monitoring Plugins basic includes */
-#include "common.h"
+#include "../plugins/common.h"
 #include "netutils.h"
 #include "utils.h"
 
@@ -55,6 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
+#include <float.h>
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -95,10 +96,6 @@ const char *email = "devel@monitoring-plugins.org";
 # define ICMP_UNREACH_PRECEDENCE_CUTOFF 15
 #endif
 
-#ifndef DBL_MAX
-# define DBL_MAX 9.9999999999e999
-#endif
-
 typedef unsigned short range_t;  /* type for get_range() -- unimplemented */
 
 typedef struct rta_host {
@@ -112,18 +109,35 @@ typedef struct rta_host {
 	unsigned char icmp_type, icmp_code; /* type and code from errors */
 	unsigned short flags;        /* control/status flags */
 	double rta;                  /* measured RTA */
+	int rta_status;              // check result for RTA checks
 	double rtmax;                /* max rtt */
 	double rtmin;                /* min rtt */
+	double jitter;               /* measured jitter */
+	int jitter_status;           // check result for Jitter checks
+	double jitter_max;           /* jitter rtt maximum */
+	double jitter_min;           /* jitter rtt minimum */
+	double EffectiveLatency;
+	double mos;                  /* Mean opnion score */
+	int mos_status;              // check result for MOS checks
+	double  score;               /* score */
+	int score_status;            // check result for score checks
+	u_int last_tdiff;
+	u_int last_icmp_seq;         /* Last ICMP_SEQ to check out of order pkts */
 	unsigned char pl;            /* measured packet loss */
+	int pl_status;               // check result for packet loss checks
 	struct rta_host *next;       /* linked list */
+	int order_status;            // check result for packet order checks
 } rta_host;
 
 #define FLAG_LOST_CAUSE 0x01  /* decidedly dead target. */
 
 /* threshold structure. all values are maximum allowed, exclusive */
 typedef struct threshold {
-	unsigned char pl;    /* max allowed packet loss in percent */
-	unsigned int rta;  /* roundtrip time average, microseconds */
+	unsigned char pl;			/* max allowed packet loss in percent */
+	unsigned int rta;			/* roundtrip time average, microseconds */
+	double jitter;	/* jitter time average, microseconds */
+	double mos;			/* MOS */
+	double score;		/* Score */
 } threshold;
 
 /* the data structure */
@@ -162,6 +176,16 @@ typedef union icmp_packet {
 #define MODE_ALL 2
 #define MODE_ICMP 3
 
+enum enum_threshold_mode {
+	const_rta_mode,
+	const_packet_loss_mode,
+	const_jitter_mode,
+	const_mos_mode,
+	const_score_mode
+};
+
+typedef enum enum_threshold_mode threshold_mode;
+
 /* the different ping types we can do
  * TODO: investigate ARP ping as well */
 #define HAVE_ICMP 1
@@ -191,6 +215,8 @@ static int wait_for_reply(int, u_int);
 static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, struct timeval*);
 static int send_icmp_ping(int, struct rta_host *);
 static int get_threshold(char *str, threshold *th);
+static bool get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
+static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, threshold_mode mode);
 static void run_checks(void);
 static void set_source_ip(char *);
 static int add_target(char *);
@@ -202,13 +228,28 @@ static void finish(int);
 static void crash(const char *, ...);
 
 /** external **/
-extern int optind, opterr, optopt;
+extern int optind;
 extern char *optarg;
 extern char **environ;
 
 /** global variables **/
 static struct rta_host **table, *cursor, *list;
-static threshold crit = {80, 500000}, warn = {40, 200000};
+
+static threshold crit = {
+	.pl = 80,
+	.rta = 500000,
+	.jitter = 0.0,
+	.mos = 0.0,
+	.score = 0.0
+};
+static threshold warn = {
+	.pl = 40,
+	.rta = 200000,
+	.jitter = 0.0,
+	.mos = 0.0,
+	.score = 0.0
+};
+
 static int mode, protocols, sockets, debug = 0, timeout = 10;
 static unsigned short icmp_data_size = DEFAULT_PING_DATA_SIZE;
 static unsigned short icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN;
@@ -227,6 +268,12 @@ static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values 
 static int min_hosts_alive = -1;
 float pkt_backoff_factor = 1.5;
 float target_backoff_factor = 1.5;
+bool rta_mode=false;
+bool pl_mode=false;
+bool jitter_mode=false;
+bool score_mode=false;
+bool mos_mode=false;
+bool order_mode=false;
 
 /** code start **/
 static void
@@ -277,7 +324,7 @@ get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code)
 		break;
 
 	case ICMP_TIMXCEED:
-		/* really 'out of reach', or non-existant host behind a router serving
+		/* really 'out of reach', or non-existent host behind a router serving
 		 * two different subnets */
 		switch(icmp_code) {
 		case ICMP_TIMXCEED_INTRANS: msg = "Time to live exceeded in transit"; break;
@@ -396,12 +443,14 @@ main(int argc, char **argv)
 	int icmp_sockerrno, udp_sockerrno, tcp_sockerrno;
 	int result;
 	struct rta_host *host;
+#ifdef HAVE_SIGACTION
+	struct sigaction sig_action;
+#endif
 #ifdef SO_TIMESTAMP
 	int on = 1;
 #endif
 	char *source_ip = NULL;
-	char * opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:64";
-
+	char * opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O64";
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
@@ -410,7 +459,7 @@ main(int argc, char **argv)
 	 * that before pointer magic (esp. on network data) */
 	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;
 
-        address_family = -1;
+	address_family = -1;
 	int icmp_proto = IPPROTO_ICMP;
 
 	/* get calling name the old-fashioned way for portability instead
@@ -425,10 +474,19 @@ main(int argc, char **argv)
 	table = NULL;
 
 	mode = MODE_RTA;
+	/* Default critical thresholds */
 	crit.rta = 500000;
 	crit.pl = 80;
+	crit.jitter = 50;
+	crit.mos= 3;
+	crit.score=70;
+	/* Default warning thresholds */
 	warn.rta = 200000;
 	warn.pl = 40;
+	warn.jitter = 40;
+	warn.mos= 3.5;
+	warn.score=80;
+
 	protocols = HAVE_ICMP | HAVE_UDP | HAVE_TCP;
 	pkt_interval = 80000;  /* 80 msec packet interval by default */
 	packets = 5;
@@ -484,7 +542,8 @@ main(int argc, char **argv)
 	/* Reset argument scanning */
 	optind = 1;
 
-	unsigned short size;
+	unsigned long size;
+	bool err;
 	/* parse the arguments */
 	for(i = 1; i < argc; i++) {
 		while((arg = getopt(argc, argv, opts_str)) != EOF) {
@@ -493,7 +552,7 @@ main(int argc, char **argv)
 				debug++;
 				break;
 			case 'b':
-				size = (unsigned short)strtol(optarg,NULL,0);
+				size = strtol(optarg,NULL,0);
 				if (size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
 				    size < MAX_PING_DATA) {
 					icmp_data_size = size;
@@ -548,6 +607,49 @@ main(int argc, char **argv)
 				print_help ();
 				exit (STATE_UNKNOWN);
 				break;
+			case 'R': /* RTA mode */
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_rta_mode);
+				if (!err) {
+						crash("Failed to parse RTA threshold");
+				}
+
+				rta_mode=true;
+				break;
+			case 'P': /* packet loss mode */
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_packet_loss_mode);
+				if (!err) {
+						crash("Failed to parse packet loss threshold");
+				}
+
+				pl_mode=true;
+				break;
+			case 'J': /* jitter mode */
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_jitter_mode);
+				if (!err) {
+						crash("Failed to parse jitter threshold");
+				}
+
+				jitter_mode=true;
+				break;
+			case 'M': /* MOS mode */
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_mos_mode);
+				if (!err) {
+						crash("Failed to parse MOS threshold");
+				}
+
+				mos_mode=true;
+				break;
+			case 'S': /* score mode */
+				err = get_threshold2(optarg, strlen(optarg), &warn, &crit, const_score_mode);
+				if (!err) {
+						crash("Failed to parse score threshold");
+				}
+
+				score_mode=true;
+				break;
+			case 'O': /* out of order mode */
+				order_mode=true;
+				break;
 			}
 		}
 	}
@@ -568,10 +670,10 @@ main(int argc, char **argv)
 		add_target(*argv);
 		argv++;
 	}
+
 	if(!targets) {
 		errno = 0;
 		crash("No hosts to check");
-		exit(3);
 	}
 
 	// add_target might change address_family
@@ -634,11 +736,25 @@ main(int argc, char **argv)
 	if(warn.pl > crit.pl) warn.pl = crit.pl;
 	if(warn.rta > crit.rta) warn.rta = crit.rta;
 	if(warn_down > crit_down) crit_down = warn_down;
+	if(warn.jitter > crit.jitter) crit.jitter = warn.jitter;
+	if(warn.mos < crit.mos) warn.mos = crit.mos;
+	if(warn.score < crit.score) warn.score = crit.score;
 
+#ifdef HAVE_SIGACTION
+	sig_action.sa_sigaction = NULL;
+	sig_action.sa_handler = finish;
+	sigfillset(&sig_action.sa_mask);
+	sig_action.sa_flags = SA_NODEFER|SA_RESTART;
+	sigaction(SIGINT, &sig_action, NULL);
+	sigaction(SIGHUP, &sig_action, NULL);
+	sigaction(SIGTERM, &sig_action, NULL);
+	sigaction(SIGALRM, &sig_action, NULL);
+#else /* HAVE_SIGACTION */
 	signal(SIGINT, finish);
 	signal(SIGHUP, finish);
 	signal(SIGTERM, finish);
 	signal(SIGALRM, finish);
+#endif /* HAVE_SIGACTION */
 	if(debug) printf("Setting alarm timeout to %u seconds\n", timeout);
 	alarm(timeout);
 
@@ -688,7 +804,11 @@ main(int argc, char **argv)
 	}
 
 	host = list;
-	table = (struct rta_host**)malloc(sizeof(struct rta_host **) * targets);
+	table = malloc(sizeof(struct rta_host *) * targets);
+	if(!table) {
+		crash("main(): malloc failed for host table");
+	}
+
 	i = 0;
 	while(host) {
 		host->id = i*packets;
@@ -775,6 +895,7 @@ wait_for_reply(int sock, u_int t)
 	struct icmp_ping_data data;
 	struct timeval wait_start, now;
 	u_int tdiff, i, per_pkt_wait;
+	double jitter_tmp;
 
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
 		crash("send_icmp_ping(): failed to malloc %d bytes for send buffer",
@@ -893,12 +1014,44 @@ wait_for_reply(int sock, u_int t)
 
 		tdiff = get_timevaldiff(&data.stime, &now);
 
+		if (host->last_tdiff>0) {
+			/* Calculate jitter */
+			if (host->last_tdiff > tdiff) {
+				jitter_tmp = host->last_tdiff - tdiff;
+			} else {
+				jitter_tmp = tdiff - host->last_tdiff;
+			}
+
+			if (host->jitter==0) {
+				host->jitter=jitter_tmp;
+				host->jitter_max=jitter_tmp;
+				host->jitter_min=jitter_tmp;
+			} else {
+				host->jitter+=jitter_tmp;
+
+				if (jitter_tmp < host->jitter_min) {
+					host->jitter_min=jitter_tmp;
+				}
+
+				if (jitter_tmp > host->jitter_max) {
+					host->jitter_max=jitter_tmp;
+				}
+			}
+
+			/* Check if packets in order */
+			if (host->last_icmp_seq >= packet.icp->icmp_seq)
+				host->order_status=STATE_CRITICAL;
+		}
+		host->last_tdiff=tdiff;
+
+		host->last_icmp_seq=packet.icp->icmp_seq;
+
 		host->time_waited += tdiff;
 		host->icmp_recv++;
 		icmp_recv++;
-		if (tdiff > host->rtmax)
+		if (tdiff > (unsigned int)host->rtmax)
 			host->rtmax = tdiff;
-		if (tdiff < host->rtmin)
+		if (tdiff < (unsigned int)host->rtmin)
 			host->rtmin = tdiff;
 
 		if(debug) {
@@ -1059,7 +1212,9 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 	int n, ret;
 	struct timeval to, then, now;
 	fd_set rd, wr;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
 	char ans_data[4096];
+#endif // HAVE_MSGHDR_MSG_CONTROL
 	struct msghdr hdr;
 	struct iovec iov;
 #ifdef SO_TIMESTAMP
@@ -1097,8 +1252,10 @@ recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
 	hdr.msg_namelen = slen;
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
 	hdr.msg_control = ans_data;
 	hdr.msg_controllen = sizeof(ans_data);
+#endif
 
 	ret = recvmsg(sock, &hdr, 0);
 #ifdef SO_TIMESTAMP
@@ -1128,6 +1285,8 @@ finish(int sig)
 	{"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
 	int hosts_ok = 0;
 	int hosts_warn = 0;
+	int this_status;
+	double R;
 
 	alarm(0);
 	if(debug > 1) printf("finish(%d) called\n", sig);
@@ -1143,9 +1302,12 @@ finish(int sig)
 	}
 
 	/* iterate thrice to calculate values, give output, and print perfparse */
+	status=STATE_OK;
 	host = list;
 
 	while(host) {
+		this_status = STATE_OK;
+
 		if(!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
 			 * conspicuously as missing entries in perfparse and cacti */
@@ -1154,26 +1316,138 @@ finish(int sig)
 			status = STATE_CRITICAL;
 			/* up the down counter if not already counted */
 			if(!(host->flags & FLAG_LOST_CAUSE) && targets_alive) targets_down++;
-		}
-		else {
+		} else {
 			pl = ((host->icmp_sent - host->icmp_recv) * 100) / host->icmp_sent;
 			rta = (double)host->time_waited / host->icmp_recv;
 		}
+
+		if (host->icmp_recv>1) {
+			/*
+			 * This algorithm is probably pretty much blindly copied from
+			 * locations like this one: https://www.slac.stanford.edu/comp/net/wan-mon/tutorial.html#mos
+			 * It calculates a MOS value (range of 1 to 5, where 1 is bad and 5 really good).
+			 * According to some quick research MOS originates from the Audio/Video transport network area.
+			 * Whether it can and should be computed from ICMP data, I can not say.
+			 *
+			 * Anyway the basic idea is to map a value "R" with a range of 0-100 to the MOS value
+			 *
+			 * MOS stands likely for Mean Opinion Score ( https://en.wikipedia.org/wiki/Mean_Opinion_Score )
+			 *
+			 * More links:
+			 * - https://confluence.slac.stanford.edu/display/IEPM/MOS
+			 */
+			host->jitter=(host->jitter / (host->icmp_recv - 1)/1000);
+
+			/*
+			 * Take the average round trip latency (in milliseconds), add
+			 * round trip jitter, but double the impact to latency
+			 * then add 10 for protocol latencies (in milliseconds).
+			 */
+			host->EffectiveLatency = (rta/1000) + host->jitter * 2 + 10;
+
+			if (host->EffectiveLatency < 160) {
+			   R = 93.2 - (host->EffectiveLatency / 40);
+			} else {
+			   R = 93.2 - ((host->EffectiveLatency - 120) / 10);
+			}
+
+			// Now, let us deduct 2.5 R values per percentage of packet loss (i.e. a
+			// loss of 5% will be entered as 5).
+			R = R - (pl * 2.5);
+
+			if (R < 0) {
+				R = 0;
+			}
+
+			host->score = R;
+			host->mos= 1 + ((0.035) * R) + ((.000007) * R * (R-60) * (100-R));
+		} else {
+			host->jitter=0;
+			host->jitter_min=0;
+			host->jitter_max=0;
+			host->mos=0;
+		}
+
 		host->pl = pl;
 		host->rta = rta;
-		if(pl >= crit.pl || rta >= crit.rta) {
-			status = STATE_CRITICAL;
+
+		/* if no new mode selected, use old schema */
+		if (!rta_mode && !pl_mode && !jitter_mode && !score_mode && !mos_mode && !order_mode) {
+			rta_mode = true;
+			pl_mode = true;
 		}
-		else if(!status && (pl >= warn.pl || rta >= warn.rta)) {
-			status = STATE_WARNING;
+
+		/* Check which mode is on and do the warn / Crit stuff */
+		if (rta_mode) {
+			if(rta >= crit.rta) {
+				this_status = STATE_CRITICAL;
+				status = STATE_CRITICAL;
+				host->rta_status=STATE_CRITICAL;
+			} else if(status!=STATE_CRITICAL && (rta >= warn.rta)) {
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
+				status = STATE_WARNING;
+				host->rta_status=STATE_WARNING;
+			}
+		}
+
+		if (pl_mode) {
+			if(pl >= crit.pl) {
+				this_status = STATE_CRITICAL;
+				status = STATE_CRITICAL;
+				host->pl_status=STATE_CRITICAL;
+			} else if(status!=STATE_CRITICAL && (pl >= warn.pl)) {
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
+				status = STATE_WARNING;
+				host->pl_status=STATE_WARNING;
+			}
+		}
+
+		if (jitter_mode) {
+			if(host->jitter >= crit.jitter) {
+				this_status = STATE_CRITICAL;
+				status = STATE_CRITICAL;
+				host->jitter_status=STATE_CRITICAL;
+			} else if(status!=STATE_CRITICAL && (host->jitter >= warn.jitter)) {
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
+				status = STATE_WARNING;
+				host->jitter_status=STATE_WARNING;
+			}
+		}
+
+		if (mos_mode) {
+			if(host->mos <= crit.mos) {
+				this_status = STATE_CRITICAL;
+				status = STATE_CRITICAL;
+				host->mos_status=STATE_CRITICAL;
+			} else if(status!=STATE_CRITICAL && (host->mos <= warn.mos)) {
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
+				status = STATE_WARNING;
+				host->mos_status=STATE_WARNING;
+			}
+		}
+
+		if (score_mode) {
+			if(host->score <= crit.score) {
+				this_status = STATE_CRITICAL;
+				status = STATE_CRITICAL;
+				host->score_status=STATE_CRITICAL;
+			} else if(status!=STATE_CRITICAL && (host->score <= warn.score)) {
+				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
+				status = STATE_WARNING;
+				host->score_status=STATE_WARNING;
+			}
+		}
+
+		if (this_status == STATE_WARNING) {
 			hosts_warn++;
-		}
-		else {
+		} else if (this_status == STATE_OK) {
 			hosts_ok++;
 		}
 
 		host = host->next;
 	}
+
+
 	/* this is inevitable */
 	if(!targets_alive) status = STATE_CRITICAL;
 	if(min_hosts_alive > -1) {
@@ -1184,6 +1458,7 @@ finish(int sig)
 
 	host = list;
 	while(host) {
+
 		if(debug) puts("");
 		if(i) {
 			if(i < targets) printf(" :: ");
@@ -1192,6 +1467,8 @@ finish(int sig)
 		i++;
 		if(!host->icmp_recv) {
 			status = STATE_CRITICAL;
+			host->rtmin=0;
+			host->jitter_min=0;
 			if(host->flags & FLAG_LOST_CAUSE) {
 				char address[INET6_ADDRSTRLEN];
 				parse_address(&host->error_addr, address, sizeof(address));
@@ -1200,31 +1477,117 @@ finish(int sig)
 					   get_icmp_error_msg(host->icmp_type, host->icmp_code),
 					   address,
 					   100);
-			}
-			else { /* not marked as lost cause, so we have no flags for it */
+			} else { /* not marked as lost cause, so we have no flags for it */
 				printf("%s: rta nan, lost 100%%", host->name);
 			}
+		} else {	/* !icmp_recv */
+			printf("%s", host->name);
+			/* rta text output */
+			if (rta_mode) {
+				if (status == STATE_OK)
+					printf(" rta %0.3fms", host->rta / 1000);
+				else if (status==STATE_WARNING && host->rta_status==status)
+					printf(" rta %0.3fms > %0.3fms", (float)host->rta / 1000, (float)warn.rta/1000);
+				else if (status==STATE_CRITICAL && host->rta_status==status)
+					printf(" rta %0.3fms > %0.3fms", (float)host->rta / 1000, (float)crit.rta/1000);
+			}
+			/* pl text output */
+			if (pl_mode) {
+				if (status == STATE_OK)
+					printf(" lost %u%%", host->pl);
+				else if (status==STATE_WARNING && host->pl_status==status)
+					printf(" lost %u%% > %u%%", host->pl, warn.pl);
+				else if (status==STATE_CRITICAL && host->pl_status==status)
+					printf(" lost %u%% > %u%%", host->pl, crit.pl);
+			}
+			/* jitter text output */
+			if (jitter_mode) {
+				if (status == STATE_OK)
+					printf(" jitter %0.3fms", (float)host->jitter);
+				else if (status==STATE_WARNING && host->jitter_status==status)
+					printf(" jitter %0.3fms > %0.3fms", (float)host->jitter, warn.jitter);
+				else if (status==STATE_CRITICAL && host->jitter_status==status)
+					printf(" jitter %0.3fms > %0.3fms", (float)host->jitter, crit.jitter);
+			}
+			/* mos text output */
+			if (mos_mode) {
+				if (status == STATE_OK)
+					printf(" MOS %0.1f", (float)host->mos);
+				else if (status==STATE_WARNING && host->mos_status==status)
+					printf(" MOS %0.1f < %0.1f", (float)host->mos, (float)warn.mos);
+				else if (status==STATE_CRITICAL && host->mos_status==status)
+					printf(" MOS %0.1f < %0.1f", (float)host->mos, (float)crit.mos);
+			}
+			/* score text output */
+			if (score_mode) {
+				if (status == STATE_OK)
+					printf(" Score %u", (int)host->score);
+				else if (status==STATE_WARNING && host->score_status==status )
+					printf(" Score %u < %u", (int)host->score, (int)warn.score);
+				else if (status==STATE_CRITICAL && host->score_status==status )
+					printf(" Score %u < %u", (int)host->score, (int)crit.score);
+			}
+			/* order statis text output */
+			if (order_mode) {
+				if (status == STATE_OK)
+					printf(" Packets in order");
+				else if (status==STATE_CRITICAL && host->order_status==status)
+					printf(" Packets out of order");
+			}
 		}
-		else {	/* !icmp_recv */
-			printf("%s: rta %0.3fms, lost %u%%",
-				   host->name, host->rta / 1000, host->pl);
-		}
-
 		host = host->next;
 	}
 
 	/* iterate once more for pretty perfparse output */
-	printf("|");
+	if (!(!rta_mode && !pl_mode && !jitter_mode && !score_mode && !mos_mode && order_mode)) {
+			printf("|");
+	}
 	i = 0;
 	host = list;
 	while(host) {
 		if(debug) puts("");
-		printf("%srta=%0.3fms;%0.3f;%0.3f;0; %spl=%u%%;%u;%u;; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
+
+		if (rta_mode && host->pl<100) {
+			printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
 			   (targets > 1) ? host->name : "",
 			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
-			   (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl,
 			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-			   (targets > 1) ? host->name : "", (host->rtmin < DBL_MAX) ? (float)host->rtmin / 1000 : (float)0);
+			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
+		}
+
+		if (pl_mode) {
+			printf("%spl=%u%%;%u;%u;0;100 ", (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl);
+		}
+
+		if (jitter_mode && host->pl<100) {
+			printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ",
+				(targets > 1) ? host->name : "",
+				(float)host->jitter,
+				(float)warn.jitter,
+				(float)crit.jitter,
+				(targets > 1) ? host->name : "",
+				(float)host->jitter_max / 1000, (targets > 1) ? host->name : "",
+				(float)host->jitter_min / 1000
+			);
+		}
+
+		if (mos_mode && host->pl<100) {
+			printf("%smos=%0.1f;%0.1f;%0.1f;0;5 ",
+				(targets > 1) ? host->name : "",
+				(float)host->mos,
+				(float)warn.mos,
+				(float)crit.mos
+			);
+		}
+
+		if (score_mode && host->pl<100) {
+			printf("%sscore=%u;%u;%u;0;100 ",
+				(targets > 1) ? host->name : "",
+				(int)host->score,
+				(int)warn.score,
+				(int)crit.score
+			);
+		}
 
 		host = host->next;
 	}
@@ -1315,6 +1678,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 	/* set the values. use calling name for output */
 	host->name = strdup(arg);
 
+
 	/* fill out the sockaddr_storage struct */
 	if(address_family == AF_INET) {
 		host_sin = (struct sockaddr_in *)&host->saddr_in;
@@ -1327,7 +1691,22 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr, sizeof host_sin6->sin6_addr.s6_addr);
 	}
 
-	host->rtmin = DBL_MAX;
+	/* fill out the sockaddr_in struct */
+	host->rtmin = INFINITY;
+	host->rtmax = 0;
+	host->jitter=0;
+	host->jitter_max=0;
+	host->jitter_min=INFINITY;
+	host->last_tdiff=0;
+	host->order_status=STATE_OK;
+	host->last_icmp_seq=0;
+	host->rta_status=0;
+	host->pl_status=0;
+	host->jitter_status=0;
+	host->mos_status=0;
+	host->score_status=0;
+	host->pl_status=0;
+
 
 	if(!list) list = cursor = host;
 	else cursor->next = host;
@@ -1342,7 +1721,7 @@ add_target_ip(char *arg, struct sockaddr_storage *in)
 static int
 add_target(char *arg)
 {
-	int error, result;
+	int error, result = -1;
 	struct sockaddr_storage ip;
 	struct addrinfo hints, *res, *p;
 	struct sockaddr_in *sin;
@@ -1411,7 +1790,7 @@ add_target(char *arg)
 		}
 		break;
 	}
-        freeaddrinfo(res);
+	freeaddrinfo(res);
 
 	return 0;
 }
@@ -1433,20 +1812,26 @@ set_source_ip(char *arg)
 static in_addr_t
 get_ip_address(const char *ifname)
 {
+  // TODO: Rewrite this so the function return an error and we exit somewhere else
+	struct sockaddr_in ip;
+	ip.sin_addr.s_addr = 0; // Fake initialization to make compiler happy
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
-	struct sockaddr_in ip;
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+
 	if(ioctl(icmp_sock, SIOCGIFADDR, &ifr) == -1)
 		crash("Cannot determine IP address of interface %s", ifname);
+
 	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
-	return ip.sin_addr.s_addr;
 #else
+	(void) ifname;
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
 #endif
+	return ip.sin_addr.s_addr;
 }
 
 /*
@@ -1469,7 +1854,7 @@ get_timevar(const char *str)
 
 	/* unit might be given as ms|m (millisec),
 	 * us|u (microsec) or just plain s, for seconds */
-	u = p = '\0';
+	p = '\0';
 	u = str[len - 1];
 	if(len >= 2 && !isdigit((int)str[len - 2])) p = str[len - 2];
 	if(p && u == 's') u = p;
@@ -1527,6 +1912,81 @@ get_threshold(char *str, threshold *th)
 	return 0;
 }
 
+/*
+ * This functions receives a pointer to a string which should contain a threshold for the
+ * rta, packet_loss, jitter, mos or score mode in the form number,number[m|%]* assigns the
+ * parsed number to the corresponding threshold variable.
+ * @param[in,out] str String containing the given threshold values
+ * @param[in] length strlen(str)
+ * @param[out] warn Pointer to the warn threshold struct to which the values should be assigned
+ * @param[out] crit Pointer to the crit threshold struct to which the values should be assigned
+ * @param[in] mode Determines whether this a threshold for rta, packet_loss, jitter, mos or score (exclusively)
+ */
+static bool get_threshold2(char *str, size_t length, threshold *warn, threshold *crit, threshold_mode mode) {
+	if (!str || !length || !warn || !crit) return false;
+
+
+	// p points to the last char in str
+	char *p = &str[length - 1];
+
+	// first_iteration is bof-stop on stupid libc's
+	bool first_iteration = true;
+
+	while(p != &str[0]) {
+		if( (*p == 'm') || (*p == '%') ) {
+			*p = '\0';
+		} else if(*p == ',' && !first_iteration) {
+			*p = '\0';	/* reset it so get_timevar(str) works nicely later */
+
+			char *start_of_value = p + 1;
+
+			if (!parse_threshold2_helper(start_of_value, strlen(start_of_value), crit, mode)){
+				return false;
+			}
+
+		}
+		first_iteration = false;
+		p--;
+	}
+
+	return parse_threshold2_helper(p, strlen(p), warn, mode);
+}
+
+static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, threshold_mode mode) {
+	char *resultChecker = {0};
+
+	switch (mode) {
+		case const_rta_mode:
+			thr->rta = strtod(s, &resultChecker) * 1000;
+			break;
+		case const_packet_loss_mode:
+			thr->pl = (unsigned char)strtoul(s, &resultChecker, 0);
+			break;
+		case const_jitter_mode:
+			thr->jitter = strtod(s, &resultChecker);
+
+			break;
+		case const_mos_mode:
+			thr->mos = strtod(s, &resultChecker);
+			break;
+		case const_score_mode:
+			thr->score = strtod(s, &resultChecker);
+			break;
+	}
+
+	if (resultChecker == s) {
+		// Failed to parse
+		return false;
+	}
+
+	if (resultChecker != (s + length)) {
+		// Trailing symbols
+		return false;
+	}
+
+	return true;
+}
+
 unsigned short
 icmp_checksum(uint16_t *p, size_t n)
 {
@@ -1552,74 +2012,91 @@ icmp_checksum(uint16_t *p, size_t n)
 void
 print_help(void)
 {
+	/*print_revision (progname);*/ /* FIXME: Why? */
+	printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
 
-  /*print_revision (progname);*/ /* FIXME: Why? */
+	printf (COPYRIGHT, copyright, email);
 
-  printf ("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
-  printf (COPYRIGHT, copyright, email);
+	printf ("\n\n");
 
-  printf ("\n\n");
+	print_usage ();
 
-  print_usage ();
+	printf (UT_HELP_VRSN);
+	printf (UT_EXTRA_OPTS);
 
-  printf (UT_HELP_VRSN);
-  printf (UT_EXTRA_OPTS);
+	printf (" %s\n", "-H");
+	printf ("    %s\n", _("specify a target"));
+	printf (" %s\n", "[-4|-6]");
+	printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
+	printf (" %s\n", "-w");
+	printf ("    %s", _("warning threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
+	printf (" %s\n", "-c");
+	printf ("    %s", _("critical threshold (currently "));
+	printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
 
-  printf (" %s\n", "-H");
-  printf ("    %s\n", _("specify a target"));
-  printf (" %s\n", "[-4|-6]");
-  printf ("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
-  printf (" %s\n", "-w");
-  printf ("    %s", _("warning threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)warn.rta / 1000, warn.pl);
-  printf (" %s\n", "-c");
-  printf ("    %s", _("critical threshold (currently "));
-  printf ("%0.3fms,%u%%)\n", (float)crit.rta / 1000, crit.pl);
-  printf (" %s\n", "-s");
-  printf ("    %s\n", _("specify a source IP address or device name"));
-  printf (" %s\n", "-n");
-  printf ("    %s", _("number of packets to send (currently "));
-  printf ("%u)\n",packets);
-  printf (" %s\n", "-i");
-  printf ("    %s", _("max packet interval (currently "));
-  printf ("%0.3fms)\n",(float)pkt_interval / 1000);
-  printf (" %s\n", "-I");
-  printf ("    %s", _("max target interval (currently "));
-  printf ("%0.3fms)\n", (float)target_interval / 1000);
-  printf (" %s\n", "-m");
-  printf ("    %s",_("number of alive hosts required for success"));
-  printf ("\n");
-  printf (" %s\n", "-l");
-  printf ("    %s", _("TTL on outgoing packets (currently "));
-  printf ("%u)\n", ttl);
-  printf (" %s\n", "-t");
-  printf ("    %s",_("timeout value (seconds, currently  "));
-  printf ("%u)\n", timeout);
-  printf (" %s\n", "-b");
-  printf ("    %s\n", _("Number of icmp data bytes to send"));
-  printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
-  printf (" %s\n", "-v");
-  printf ("    %s\n", _("verbose"));
+	printf (" %s\n", "-R");
+	printf ("    %s\n", _("RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"));
+	printf (" %s\n", "-P");
+	printf ("    %s\n", _("packet loss mode, ex. 40%,50% , unit in %"));
+	printf (" %s\n", "-J");
+	printf ("    %s\n", _("jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "));
+	printf (" %s\n", "-M");
+	printf ("    %s\n", _("MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"));
+	printf (" %s\n", "-S");
+	printf ("    %s\n", _("score  mode, max value 100  warning,critical, ex. 80,70 "));
+	printf (" %s\n", "-O");
+	printf ("    %s\n", _("detect out of order ICMP packts "));
+	printf (" %s\n", "-H");
+	printf ("    %s\n", _("specify a target"));
+	printf (" %s\n", "-s");
+	printf ("    %s\n", _("specify a source IP address or device name"));
+	printf (" %s\n", "-n");
+	printf ("    %s", _("number of packets to send (currently "));
+	printf ("%u)\n",packets);
+	printf (" %s\n", "-p");
+	printf ("    %s", _("number of packets to send (currently "));
+	printf ("%u)\n",packets);
+	printf (" %s\n", "-i");
+	printf ("    %s", _("max packet interval (currently "));
+	printf ("%0.3fms)\n",(float)pkt_interval / 1000);
+	printf (" %s\n", "-I");
+	printf ("    %s", _("max target interval (currently "));
+	printf ("%0.3fms)\n", (float)target_interval / 1000);
+	printf (" %s\n", "-m");
+	printf ("    %s",_("number of alive hosts required for success"));
+	printf ("\n");
+	printf (" %s\n", "-l");
+	printf ("    %s", _("TTL on outgoing packets (currently "));
+	printf ("%u)\n", ttl);
+	printf (" %s\n", "-t");
+	printf ("    %s",_("timeout value (seconds, currently  "));
+	printf ("%u)\n", timeout);
+	printf (" %s\n", "-b");
+	printf ("    %s\n", _("Number of icmp data bytes to send"));
+	printf ("    %s %u + %d)\n", _("Packet size will be data bytes + icmp header (currently"),icmp_data_size, ICMP_MINLEN);
+	printf (" %s\n", "-v");
+	printf ("    %s\n", _("verbose"));
+	printf ("\n");
+	printf ("%s\n", _("Notes:"));
+	printf (" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
+	printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+	printf ("\n");
+	printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
+	printf (" %s\n", _("packet loss.  The default values should work well for most users."));
+	printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
+	printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
+	/* -d not yet implemented */
+	/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
+			printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
+			printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
+	printf ("\n");
+	printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
+	/*  printf ("%s\n", _("Long options are currently unsupported."));
+			printf ("%s\n", _("Options marked with * require an argument"));
+			*/
 
-  printf ("\n");
-  printf ("%s\n", _("Notes:"));
-  printf (" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
-  printf ("\n");
-  printf (" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
-  printf (" %s\n", _("packet loss.  The default values should work well for most users."));
-  printf (" %s\n", _("You can specify different RTA factors using the standardized abbreviations"));
-  printf (" %s\n", _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
-/* -d not yet implemented */
-/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12 hops"));
-  printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent."));
-  printf ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do not."));*/
-  printf ("\n");
-  printf (" %s\n", _("The -v switch can be specified several times for increased verbosity."));
-/*  printf ("%s\n", _("Long options are currently unsupported."));
-  printf ("%s\n", _("Options marked with * require an argument"));
-*/
-
-  printf (UT_SUPPORT);
+	printf (UT_SUPPORT);
 }
 
 
@@ -1627,6 +2104,6 @@ print_help(void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
-  printf(" %s [options] [-H] host1 host2 hostN\n", progname);
+	printf ("%s\n", _("Usage:"));
+	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }

@@ -47,7 +47,7 @@ static const char **process_arguments (int, char **);
 void validate_arguments (char **);
 void print_help (void);
 void print_usage (void);
-int subst_text = FALSE;
+bool subst_text = false;
 
 static int state[4] = {
 	STATE_OK,
@@ -63,7 +63,6 @@ main (int argc, char **argv)
 	char *sub;
 	char **command_line;
 	output chld_out, chld_err;
-	int i;
 
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
@@ -86,7 +85,7 @@ main (int argc, char **argv)
 		result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
 	}
 	if (chld_err.lines > 0) {
-		for (i = 0; i < chld_err.lines; i++) {
+		for (size_t i = 0; i < chld_err.lines; i++) {
 			fprintf (stderr, "%s\n", chld_err.line[i]);
 		}
 	}
@@ -95,7 +94,7 @@ main (int argc, char **argv)
 	if (chld_out.lines == 0)
 		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
 
-	for (i = 0; i < chld_out.lines; i++) {
+	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
 			/* Loop over each match found */
 			while ((sub = strstr (chld_out.line[i], state_text (result)))) {
@@ -122,7 +121,7 @@ static const char **
 process_arguments (int argc, char **argv)
 {
 	int c;
-	int permute = TRUE;
+	bool permute = true;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -168,26 +167,26 @@ process_arguments (int argc, char **argv)
 		case 'o':     /* replacement for OK */
 			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 
 		case 'w':     /* replacement for WARNING */
 			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 'c':     /* replacement for CRITICAL */
 			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 'u':     /* replacement for UNKNOWN */
 			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
 				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
-			permute = FALSE;
+			permute = false;
 			break;
 		case 's':     /* Substitute status text */
-			subst_text = TRUE;
+			subst_text = true;
 			break;
 		}
 	}
@@ -221,8 +220,10 @@ print_help (void)
 
 	printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL and vice-versa)."));
-	printf ("%s\n", _("Additional switches can be used to control which state becomes what."));
+	printf ("%s\n", _("Negates only the return code of a plugin (returns OK for CRITICAL and vice-versa) by default."));
+	printf ("%s\n", _("Additional switches can be used to control:\n"));
+	printf ("\t  - which state becomes what\n");
+	printf ("\t  - changing the plugin output text to match the return code");
 
 	printf ("\n\n");
 

@@ -1,19 +1,19 @@
 /*****************************************************************************
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -176,14 +176,14 @@ main (int argc, char **argv)
 	ok (result == UNSET, "(initialised) Checking exit code is reset");
 
 	command = (char *)malloc(COMMAND_LINE);
-	strcpy(command, "/bin/echo3456 non-existant command");
+	strcpy(command, "/bin/echo3456 non-existent command");
 	result = cmd_run (command, &chld_out, &chld_err, 0);
 
 	ok (chld_out.lines == 0,
-			"Non existant command, so no output");
+			"Non existent command, so no output");
 	ok (chld_err.lines == 0,
 			"No stderr either");
-	ok (result == 3, "Get return code 3 (?) for non-existant command");
+	ok (result == 3, "Get return code 3 (?) for non-existent command");
 
 
 	/* ensure everything is empty again */
@@ -192,14 +192,14 @@ main (int argc, char **argv)
 	result = UNSET;
 
 	command = (char *)malloc(COMMAND_LINE);
-	strcpy(command, "/bin/sh non-existant-file");
+	strcpy(command, "/bin/sh non-existent-file");
 	result = cmd_run (command, &chld_out, &chld_err, 0);
 
 	ok (chld_out.lines == 0,
 			"/bin/sh returns no stdout when file is missing...");
 	ok (chld_err.lines == 1,
 			"...but does give an error line");
-	ok (strstr(chld_err.line[0],"non-existant-file") != NULL, "And missing filename is in error message");
+	ok (strstr(chld_err.line[0],"non-existent-file") != NULL, "And missing filename is in error message");
 	ok (result != 0, "Get non-zero return code from /bin/sh");
 
 
@@ -219,11 +219,11 @@ main (int argc, char **argv)
 	result = UNSET;
 
 	command = (char *)malloc(COMMAND_LINE);
-	strcpy(command, "/bin/non-existant-command");
+	strcpy(command, "/bin/non-existent-command");
 	result = cmd_run (command, &chld_out, &chld_err, 0);
 
 	ok (chld_out.lines == 0,
-			"/bin/non-existant-command returns no stdout...");
+			"/bin/non-existent-command returns no stdout...");
 	ok (chld_err.lines == 0,
 			"...and no stderr output either");
 	ok (result == 3, "Get return code 3 = UNKNOWN when command does not exist");
