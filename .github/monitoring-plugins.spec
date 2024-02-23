@@ -106,7 +106,6 @@ Common files for Monitoring Plugins
 %doc REQUIREMENTS
 %doc SUPPORT
 %license COPYING
-/usr/share/locale/*/LC_MESSAGES/monitoring-plugins.mo
 
 
 
