@@ -139,9 +139,6 @@ make THANKS
 %make_install
 %{__make} install-root DESTDIR=%{buildroot} INSTALL="%{__install} -p"
 
-%clean
-rm -rf %{buildroot}/*
-
 
 
 
