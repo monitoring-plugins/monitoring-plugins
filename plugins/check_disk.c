@@ -526,7 +526,43 @@ process_arguments (int argc, char **argv)
   if (argc < 2)
     return ERROR;
 
+  // File system for optical discs, no way this is useful here
   np_add_regex(&fs_exclude_list, "iso9660", REG_EXTENDED);
+
+  // Read-only file system
+  np_add_regex(&fs_exclude_list, "squashfs", REG_EXTENDED);
+
+  // Not a file system used for storing data
+  np_add_regex(&fs_exclude_list, "tracefs", REG_EXTENDED);
+
+  // Well...
+  np_add_regex(&fs_exclude_list, "none", REG_EXTENDED);
+
+  // pseudo filesystem on linux
+  np_add_regex(&fs_exclude_list, "sysfs", REG_EXTENDED);
+
+  // pseudo filesystem on linux
+  np_add_regex(&fs_exclude_list, "proc", REG_EXTENDED);
+
+  // pseudo filesystem for device abstraction
+  np_add_regex(&fs_exclude_list, "devfs", REG_EXTENDED);
+  np_add_regex(&fs_exclude_list, "devtmpfs", REG_EXTENDED);
+
+  // pseudo filesystem on linux for cgroup stuff
+  np_add_regex(&fs_exclude_list, "cgroup", REG_EXTENDED);
+
+  // fuse filesystems, likely to originate from a desktop session, do not try to monitor these
+  np_add_regex(&fs_exclude_list, "fuse.gvfsd-fuse", REG_EXTENDED);
+  np_add_regex(&fs_exclude_list, "fuse.gvfs-fuse-daemon", REG_EXTENDED);
+
+  // file-descriptor file system (on freebsd), not reasonable to monitor this
+  np_add_regex(&fs_exclude_list, "fdescfs", REG_EXTENDED);
+
+  // Overlay filesystem, what good would monitoring these do?
+  np_add_regex(&fs_exclude_list, "overlay", REG_EXTENDED);
+
+  // pseudo filesystem on linux for namespaces
+  np_add_regex(&fs_exclude_list, "nsfs", REG_EXTENDED);
 
   for (c = 1; c < argc; c++)
     if (strcmp ("-to", argv[c]) == 0)
