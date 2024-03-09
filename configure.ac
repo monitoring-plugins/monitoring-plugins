@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)
+AC_PREREQ(2.64)
 AC_INIT(monitoring-plugins,2.3git)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
@@ -328,6 +328,25 @@ AS_IF([test "x$with_ldap" != "xno"], [
   LIBS="$_SAVEDLIBS"
 ])
 
+
+AC_ARG_WITH([systemd], [AS_HELP_STRING([--without-systemd], [Skips systemd support])])
+
+dnl Check for libsystemd
+AS_IF([test "x$with_systemd" != "xno"], [
+  _SAVEDLIBS="$LIBS"
+  AC_CHECK_LIB(systemd,sd_get_sessions,,,-lsystemd)
+  if test "$ac_cv_lib_systemd_sd_get_sessions" = "yes"; then
+    SYSTEMDLIBS="-lsystemd"
+    SYSTEMDINCLUDE=""
+    AC_SUBST(SYSTEMDLIBS)
+    AC_SUBST(SYSTEMDINCLUDE)
+  else
+    AC_MSG_WARN([Skipping systemd support])
+  fi
+  LIBS="$_SAVEDLIBS"
+])
+
+
 dnl Check for headers used by check_ide_smart
 case $host in
   *linux*)
@@ -602,7 +621,6 @@ AC_C_CONST
 AC_STRUCT_TM
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_TYPE_SIGNAL
 
 AC_CACHE_CHECK([for va_copy],ac_cv_HAVE_VA_COPY,[
 AC_TRY_LINK([#include <stdarg.h>
@@ -626,12 +644,16 @@ AC_TRY_COMPILE([#include <sys/time.h>],
                [struct timeval *tv;
                 struct timezone *tz;],
                AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])
-               AC_TRY_COMPILE([#include <sys/time.h>],
-                              [struct timeval *tv;
-                               struct timezone *tz;
-                               gettimeofday(tv, tz);],
-                              AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
-                              AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed])))
+			   FOUND_STRUCT_TIMEVAL="yes")
+
+if test x"$FOUND_STRUCT_TIMEVAL" = x"yes"; then
+	AC_TRY_COMPILE([#include <sys/time.h>],
+			  [struct timeval *tv;
+			   struct timezone *tz;
+			   gettimeofday(tv, tz);],
+			  AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
+			  AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed]))
+fi
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(memmove select socket strdup strstr strtol strtoul floor)
@@ -932,7 +954,7 @@ elif ps -Ao 's comm vsz rss uid user pid ppid args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS -Ao 's uid pid ppid vsz rss pcpu comm args'"
-	# There must be no space between the %s and %n due to a wierd problem in sscanf where
+	# There must be no space between the %s and %n due to a weird problem in sscanf where
 	# it will return %n as longer than the line length
 	ac_cv_ps_format="%s %d %d %d %d %d %f %s%n"
 	ac_cv_ps_cols=9
@@ -1552,7 +1574,7 @@ if test -n "$PATH_TO_SUDO"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_SUDO,"$PATH_TO_SUDO",[path to sudo])
 else
-	AC_MSG_WARN([Could not find sudo or eqivalent])
+	AC_MSG_WARN([Could not find sudo or equivalent])
 fi
 
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
@@ -1563,7 +1585,7 @@ if test -n "$PATH_TO_MAILQ"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_MAILQ,"$PATH_TO_MAILQ",[path to mailq])
 else
-	AC_MSG_WARN([Could not find mailq or eqivalent])
+	AC_MSG_WARN([Could not find mailq or equivalent])
 fi
 
 AC_PATH_PROG(PATH_TO_QMAIL_QSTAT,qmail-qstat)
@@ -1574,7 +1596,7 @@ if test -n "$PATH_TO_QMAIL_QSTAT"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_QMAIL_QSTAT,"$PATH_TO_QMAIL_QSTAT",[path to qmail-qstat])
 else
-	AC_MSG_WARN([Could not find qmail-qstat or eqivalent])
+	AC_MSG_WARN([Could not find qmail-qstat or equivalent])
 fi
 
 dnl SWAP info required is amount allocated/available and amount free
@@ -1592,13 +1614,13 @@ then
 		grep -E -i "^lswap +path +pri +swaplo +blocks +free +maxswap" \
 		>/dev/null]
 	then
-		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %f %f"]
+		ac_cv_swap_format=[" %*d %*s %*d,%*d %*d %*d %lu %lu"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using IRIX format swap])
 
 	elif [$PATH_TO_SWAP -l 2>/dev/null | grep -E -i "^path +dev +swaplo +blocks +free" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %*[0-9,-] %*d %f %f"]
+		ac_cv_swap_format=["%*s %*[0-9,-] %*d %lu %lu"]
 		ac_cv_swap_conv=2048
 		AC_MSG_RESULT([using Unixware format swap])
 	else
@@ -1622,7 +1644,7 @@ then
 
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %f %*d %f"]
+		ac_cv_swap_format=["%*s %lu %*d %lu"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
@@ -1631,7 +1653,7 @@ elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | grep -E -i "^TYPE +AVAIL +USED +FREE"
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM"
-	ac_cv_swap_format=["%*s %f %*d %f"]
+	ac_cv_swap_format=["%*s %lu %*d %lu"]
 	ac_cv_swap_conv=1024
 	AC_MSG_RESULT([using HP-UX format swapinfo])
 fi
@@ -1646,7 +1668,7 @@ if [$PATH_TO_LSPS -a 2>/dev/null | grep -E -i "^Page Space" > /dev/null]
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_LSPS -a"
-	ac_cv_swap_format=["%*s %*s %*s %f%*s %f %*s"]
+	ac_cv_swap_format=["%*s %*s %*s %lu%*s %lu %*s"]
 	ac_cv_swap_conv=1
 	AC_MSG_RESULT([using AIX lsps])
 fi
@@ -1832,7 +1854,7 @@ AM_GNU_GETTEXT([external], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.15)
 
 dnl Check for Redhat spopen problem
-dnl Wierd problem where ECHILD is returned from a wait call in error
+dnl Weird problem where ECHILD is returned from a wait call in error
 dnl Only appears to affect nslookup and dig calls. Only affects redhat around
 dnl 2.6.9-11 (okay in 2.6.9-5). Redhat investigating root cause
 dnl We patch plugins/popen.c
@@ -1902,7 +1924,6 @@ AC_OUTPUT(
   perlmods/Makefile
   test.pl
   pkg/solaris/pkginfo
-  po/Makefile.in
 )
 
 

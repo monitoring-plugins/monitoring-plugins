@@ -1,4 +1,5 @@
-name: Test
+---
+name: Tests
 
 on:
   push:
@@ -7,26 +8,20 @@ on:
   pull_request:
 
 jobs:
-#  macos:
-#    ...
-  linux:
+  full-test:
+    name: Running unit and integrationt tests
     runs-on: ubuntu-latest
-    name: Running tests on ${{ matrix.distro }}
     strategy:
       fail-fast: false
       matrix:
         distro:
-          - 'debian:testing'
-          #...
+          - 'debian:stable'
         include:
-          - distro: 'debian:testing'
+          - distro: 'debian:stable'
             prepare: .github/prepare_debian.sh
-          #...
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v3
-      #- name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
-      #  uses: mxschmitt/action-tmate@v3
+        uses: actions/checkout@v4
       - name: Run the tests on ${{ matrix.distro }}
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
@@ -42,6 +37,43 @@ jobs:
                 tools/setup && \
                 ./configure --enable-libtap  --with-ipv6=no && \
                 make && \
-                make test'
+                make test && \
+                make dist && \
+                tar zxf monitoring-plugins-*.tar.gz && \
+                cd monitoring-plugins-*/ && \
+                ./configure && \
+                make'
+          docker container prune -f
+          docker volume prune -f
+
+  build-test:
+    name: Running rpm build test on ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {"distro": "fedora:latest", "build": ".github/mock.sh"}
+          - {"distro": "fedora:rawhide", "build": ".github/mock.sh"}
+          - {"distro": "rockylinux:8", "build": ".github/mock.sh"}
+          - {"distro": "almalinux:9", "build": ".github/mock.sh"}
+#          - {"distro": "oraclelinux:9", "build": ".github/mock.sh"}
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v4
+      - name: Run the tests on ${{ matrix.distro }}
+        run: |
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
+          docker run \
+              --privileged=true \
+              -e NPTEST_ACCEPTDEFAULT=1 \
+              -e NPTEST_CACHE="/src/.github/NPTest.cache" \
+              -w /src -v ${PWD}:/src \
+              --tmpfs /media/ramdisk1 \
+              -v /var/run/utmp:/var/run/utmp \
+              --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
+              ${{ matrix.distro }} \
+              /bin/sh -c '${{ matrix.build }} && \
+                ls -la'
           docker container prune -f
           docker volume prune -f

@@ -110,7 +110,7 @@ $pretty_uptime .= sprintf( "%d week%s, ",   $weeks, $weeks == 1 ? "" : "s" )  if
 $pretty_uptime .= sprintf( "%d day%s, ",    $days,  $days  == 1 ? "" : "s" )  if  $days;
 $pretty_uptime .= sprintf( "%d hour%s, ",   $hours, $hours == 1 ? "" : "s" )  if  $hours;
 $pretty_uptime .= sprintf( "%d minute%s, ", $mins,  $mins  == 1 ? "" : "s" )  if  $mins;
-# Replace last occurence of comma with "and"
+# Replace last occurrence of comma with "and"
 $pretty_uptime =~ s/, $/ and /;
 # Always print the seconds (though it may be 0 seconds)
 $pretty_uptime .= sprintf( "%d second%s", $secs, $secs == 1 ? "" : "s" );
