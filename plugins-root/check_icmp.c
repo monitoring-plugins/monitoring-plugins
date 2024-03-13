@@ -1547,46 +1547,66 @@ finish(int sig)
 	while(host) {
 		if(debug) puts("");
 
-		if (rta_mode && host->pl<100) {
-			printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
-			   (targets > 1) ? host->name : "",
-			   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
-			   (targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-			   (targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
+		if (rta_mode) {
+			if (host->pl<100) {
+				printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
+					(targets > 1) ? host->name : "",
+					host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000,
+					(targets > 1) ? host->name : "", (float)host->rtmax / 1000,
+					(targets > 1) ? host->name : "", (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
+			} else {
+				printf("%srta=U;;;; %srtmax=U;;;; %srtmin=U;;;; ",
+					(targets > 1) ? host->name : "",
+					(targets > 1) ? host->name : "",
+					(targets > 1) ? host->name : "");
+			}
 		}
 
 		if (pl_mode) {
 			printf("%spl=%u%%;%u;%u;0;100 ", (targets > 1) ? host->name : "", host->pl, warn.pl, crit.pl);
 		}
 
-		if (jitter_mode && host->pl<100) {
-			printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ",
-				(targets > 1) ? host->name : "",
-				(float)host->jitter,
-				(float)warn.jitter,
-				(float)crit.jitter,
-				(targets > 1) ? host->name : "",
-				(float)host->jitter_max / 1000, (targets > 1) ? host->name : "",
-				(float)host->jitter_min / 1000
-			);
+		if (jitter_mode) {
+			if (host->pl<100) {
+				printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ",
+					(targets > 1) ? host->name : "",
+					(float)host->jitter,
+					(float)warn.jitter,
+					(float)crit.jitter,
+					(targets > 1) ? host->name : "",
+					(float)host->jitter_max / 1000, (targets > 1) ? host->name : "",
+					(float)host->jitter_min / 1000
+				);
+			} else {
+				printf("%sjitter_avg=U;;;; %sjitter_max=U;;;; %sjitter_min=U;;;; ",
+					(targets > 1) ? host->name : "",
+					(targets > 1) ? host->name : "",
+					(targets > 1) ? host->name : "");
+			}
 		}
 
-		if (mos_mode && host->pl<100) {
-			printf("%smos=%0.1f;%0.1f;%0.1f;0;5 ",
-				(targets > 1) ? host->name : "",
-				(float)host->mos,
-				(float)warn.mos,
-				(float)crit.mos
-			);
+		if (mos_mode) {
+			if (host->pl<100) {
+				printf("%smos=%0.1f;%0.1f;%0.1f;0;5 ",
+					(targets > 1) ? host->name : "",
+					(float)host->mos,
+					(float)warn.mos,
+					(float)crit.mos);
+			} else {
+				printf("%smos=U;;;; ", (targets > 1) ? host->name : "");
+			}
 		}
 
-		if (score_mode && host->pl<100) {
-			printf("%sscore=%u;%u;%u;0;100 ",
-				(targets > 1) ? host->name : "",
-				(int)host->score,
-				(int)warn.score,
-				(int)crit.score
-			);
+		if (score_mode) {
+			if (host->pl<100) {
+				printf("%sscore=%u;%u;%u;0;100 ",
+					(targets > 1) ? host->name : "",
+					(int)host->score,
+					(int)warn.score,
+					(int)crit.score);
+			} else {
+				printf("%sscore=U;;;; ", (targets > 1) ? host->name : "");
+			}
 		}
 
 		host = host->next;
