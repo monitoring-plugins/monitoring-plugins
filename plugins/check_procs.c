@@ -14,6 +14,9 @@
 * defaults to number of processes.  Search filters can be applied to limit
 * the processes to check.
 *
+* The parent process, check_procs itself and any child process of 
+* check_procs (ps) are excluded from any checks to prevent false positives.
+*
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -252,6 +255,13 @@ main (int argc, char **argv)
 			else if (myppid == procpid) {
 				if (verbose >= 3)
 					 printf("not considering - is parent\n");
+				continue;
+			}
+
+			/* Ignore our own children */
+			if (procppid == mypid) {
+				if (verbose >= 3)
+					 printf("not considering - is our child\n");
 				continue;
 			}
 
@@ -728,18 +738,23 @@ convert_to_seconds(char *etime) {
 void
 print_help (void)
 {
-	print_revision (progname, NP_VERSION);
+  print_revision (progname, NP_VERSION);
 
-	printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
-	printf (COPYRIGHT, copyright, email);
+  printf ("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
+  printf (COPYRIGHT, copyright, email);
 
-	printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
+  printf ("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
   printf ("%s\n", _("metric is outside the required threshold ranges. The metric defaults to number"));
   printf ("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
 
   printf ("\n\n");
 
-	print_usage ();
+  printf ("%s\n", _("The parent process, check_procs itself and any child process of check_procs (ps)"));
+  printf ("%s\n", _("are excluded from any checks to prevent false positives."));
+
+  printf ("\n\n");
+
+  print_usage ();
 
   printf (UT_HELP_VRSN);
   printf (UT_EXTRA_OPTS);
@@ -755,11 +770,11 @@ print_help (void)
   printf ("  %s\n", _("CPU     - percentage CPU"));
 /* only linux etime is support currently */
 #if defined( __linux__ )
-	printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
+  printf ("  %s\n", _("ELAPSED - time elapsed in seconds"));
 #endif /* defined(__linux__) */
-	printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+  printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-	printf (" %s\n", "-v, --verbose");
+  printf (" %s\n", "-v, --verbose");
   printf ("    %s\n", _("Extra information. Up to 3 verbosity levels"));
 
   printf (" %s\n", "-T, --traditional");
@@ -777,7 +792,7 @@ print_help (void)
   printf ("   %s\n", _("Only scan for processes with VSZ higher than indicated."));
   printf (" %s\n", "-r, --rss=RSS");
   printf ("   %s\n", _("Only scan for processes with RSS higher than indicated."));
-	printf (" %s\n", "-P, --pcpu=PCPU");
+  printf (" %s\n", "-P, --pcpu=PCPU");
   printf ("   %s\n", _("Only scan for processes with PCPU higher than indicated."));
   printf (" %s\n", "-u, --user=USER");
   printf ("   %s\n", _("Only scan for processes with user name or ID indicated."));
@@ -792,19 +807,19 @@ print_help (void)
   printf (" %s\n", "-k, --no-kthreads");
   printf ("   %s\n", _("Only scan for non kernel threads (works on Linux only)."));
 
-	printf(_("\n\
+  printf(_("\n\
 RANGEs are specified 'min:max' or 'min:' or ':max' (or 'max'). If\n\
 specified 'max:min', a warning status will be generated if the\n\
 count is inside the specified range\n\n"));
 
-	printf(_("\
+  printf(_("\
 This plugin checks the number of currently running processes and\n\
 generates WARNING or CRITICAL states if the process count is outside\n\
 the specified threshold ranges. The process count can be filtered by\n\
 process owner, parent process PID, current state (e.g., 'Z'), or may\n\
 be the total number of running processes\n\n"));
 
-	printf ("%s\n", _("Examples:"));
+  printf ("%s\n", _("Examples:"));
   printf (" %s\n", "check_procs -w 2:2 -c 2:1024 -C portsentry");
   printf ("  %s\n", _("Warning if not two processes with command name portsentry."));
   printf ("  %s\n\n", _("Critical if < 2 or > 1024 processes"));
@@ -821,14 +836,14 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
   printf ("  %s\n", _("Alert if CPU of any processes over 10\% or 20\%"));
 
-	printf (UT_SUPPORT);
+  printf (UT_SUPPORT);
 }
 
 void
 print_usage (void)
 {
   printf ("%s\n", _("Usage:"));
-	printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
+  printf ("%s -w <range> -c <range> [-m metric] [-s state] [-p ppid]\n", progname);
   printf (" [-u user] [-r rss] [-z vsz] [-P %%cpu] [-a argument-array]\n");
   printf (" [-C command] [-X process_to_exclude] [-k] [-t timeout] [-v]\n");
 }

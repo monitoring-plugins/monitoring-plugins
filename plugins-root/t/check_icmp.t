@@ -12,7 +12,7 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
 	"no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-	plan tests => 39;
+	plan tests => 40;
 } else {
 	plan skip_all => "Need sudo to test check_icmp";
 }
@@ -57,7 +57,8 @@ $res = NPTest->testCmd(
 	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -t 2"
 	);
 is( $res->return_code, 2, "Timeout - host nonresponsive" );
-like( $res->output, '/100%/', "Error contains '100%' string (for 100% packet loss)" );
+like( $res->output, '/pl=100%/', "Error contains 'pl=100%' string (for 100% packet loss)" );
+like( $res->output, '/rta=U/', "Error contains 'rta=U' string" );
 
 $res = NPTest->testCmd(
 	"$sudo ./check_icmp -w 10000ms,100% -c 10000ms,100%"
