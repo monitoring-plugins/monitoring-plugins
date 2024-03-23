@@ -1,0 +1,45 @@
+#ifndef CHECK_SWAP_H
+#define CHECK_SWAP_H
+
+#include "../common.h"
+
+#ifndef SWAP_CONVERSION
+#define SWAP_CONVERSION 1
+#endif
+
+typedef struct {
+	bool is_percentage;
+	uint64_t value;
+} threshold;
+
+typedef struct {
+	unsigned long long free;  // Free swap in Bytes!
+	unsigned long long used;  // Used swap in Bytes!
+	unsigned long long total; // Total swap size, you guessed it, in Bytes!
+} swap_metrics;
+
+typedef struct {
+	int errorcode;
+	int statusCode;
+	swap_metrics metrics;
+} swap_result;
+
+typedef struct {
+	int verbose;
+	bool allswaps;
+	int no_swap_state;
+	threshold warn;
+	threshold crit;
+	bool on_aix;
+	int conversion_factor;
+} swap_config;
+
+swap_config swap_config_init();
+
+swap_result get_swap_data(swap_config config);
+swap_result getSwapFromProcMeminfo(swap_config config, char path_to_proc_meminfo[]);
+swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[], const char swap_format[]);
+swap_result getSwapFromSwapctl_BSD(swap_config config);
+swap_result getSwapFromSwap_SRV4(swap_config config);
+
+#endif
