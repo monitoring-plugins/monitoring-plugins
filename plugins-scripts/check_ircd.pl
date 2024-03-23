@@ -40,15 +40,16 @@
 
 # ----------------------------------------------------------------[ Require ]--
 
-require 5.004;
+require 5.14.0;
 
 # -------------------------------------------------------------------[ Uses ]--
 
-use Socket;
 use strict;
+use IO::Socket::IP;
 use Getopt::Long;
-use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $verbose);
+use vars qw($opt_V $opt_h $opt_t $opt_p $opt_H $opt_w $opt_c $opt_4 $opt_6 $verbose);
 use vars qw($PROGNAME);
+use vars qw($ClientSocket);
 use FindBin;
 use lib "$FindBin::Bin";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
@@ -58,7 +59,6 @@ use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 sub print_help ();
 sub print_usage ();
 sub connection ($$$$);
-sub bindRemote ($$);
 
 # -------------------------------------------------------------[ Environment ]--
 
@@ -104,7 +104,7 @@ sub connection ($$$$)
 		$answer = "Server $in_remotehost has less than 0 users! Something is Really WRONG!\n";
 	}
 	
-	print ClientSocket "quit\n";
+	print $ClientSocket "quit\n";
 	print $answer;
 	exit $ERRORS{$state};
 }
@@ -112,7 +112,7 @@ sub connection ($$$$)
 # ------------------------------------------------------------[ print_usage ]--
 
 sub print_usage () {
-	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-p <port>]\n";
+	print "Usage: $PROGNAME -H <host> [-w <warn>] [-c <crit>] [-p <port>] [ -4|-6 ]\n";
 }
 
 # -------------------------------------------------------------[ print_help ]--
@@ -135,31 +135,13 @@ Perl Check IRCD plugin for monitoring
    Number of connected users which generates a critical state (Default: 100)
 -p, --port=INTEGER
    Port that the ircd daemon is running on <host> (Default: 6667)
+-4, --use-ipv4
+   Use IPv4 connection
+-6, --use-ipv6
+   Use IPv6 connection
 -v, --verbose
    Print extra debugging information
 ";
-}
-
-# -------------------------------------------------------------[ bindRemote ]--
-
-sub bindRemote ($$)
-{
-	my ($in_remotehost, $in_remoteport) = @_;
-	my $proto = getprotobyname('tcp');
-	my $that;
-	my ($name, $aliases,$type,$len,$thataddr) = gethostbyname($in_remotehost);
-
-	if (!socket(ClientSocket,AF_INET, SOCK_STREAM, $proto)) {
-	    print "IRCD UNKNOWN: Could not start socket ($!)\n";
-	    exit $ERRORS{"UNKNOWN"};
-	}
-	$that = pack_sockaddr_in ($in_remoteport, $thataddr);
-	if (!connect(ClientSocket, $that)) { 
-	    print "IRCD UNKNOWN: Could not connect socket ($!)\n";
-	    exit $ERRORS{"UNKNOWN"};
-	}
-	select(ClientSocket); $| = 1; select(STDOUT);
-	return \*ClientSocket;
 }
 
 # ===================================================================[ MAIN ]==
@@ -177,6 +159,8 @@ MAIN:
 		"w=i" => \$opt_w,  "warning=i"  => \$opt_w,
 		"c=i" => \$opt_c,  "critical=i" => \$opt_c,
 		"p=i" => \$opt_p,  "port=i"     => \$opt_p,
+		"4"   => \$opt_4,  "use-ipv4"   => \$opt_4,
+		"6"   => \$opt_6,  "use-ipv6"   => \$opt_6,
 		"H=s" => \$opt_H,  "hostname=s" => \$opt_H);
 
 	if ($opt_V) {
@@ -187,7 +171,7 @@ MAIN:
 	if ($opt_h) {print_help(); exit $ERRORS{'UNKNOWN'};}
 
 	($opt_H) || ($opt_H = shift @ARGV) || usage("Host name/address not specified\n");
-	my $remotehost = $1 if ($opt_H =~ /([-.A-Za-z0-9]+)/);
+	my $remotehost = $1 if ($opt_H =~ /([-.:%A-Za-z0-9]+)/);
 	($remotehost) || usage("Invalid host: $opt_H\n");
 
 	($opt_w) || ($opt_w = shift @ARGV) || ($opt_w = 50);
@@ -212,21 +196,28 @@ MAIN:
 	
 	alarm($TIMEOUT);
 
-	my ($name, $alias, $proto) = getprotobyname('tcp');
-
 	print "MAIN(debug): binding to remote host: $remotehost -> $remoteport\n" if $verbose;
-	my $ClientSocket = &bindRemote($remotehost,$remoteport);
+	$ClientSocket = IO::Socket::IP->new(
+		PeerHost    => $remotehost,
+		PeerService => $remoteport,
+		Family      => $opt_4 ? AF_INET : $opt_6 ? AF_INET6 : undef,
+		Type        => SOCK_STREAM,
+	);
+	if (!$ClientSocket) {
+		print "IRCD UNKNOWN: Could not start socket ($!)\n";
+		exit $ERRORS{"UNKNOWN"};
+	}
 	
-	print ClientSocket "NICK $NICK\nUSER $USER_INFO\n";
+	print $ClientSocket "NICK $NICK\nUSER $USER_INFO\n";
 	
-	while (<ClientSocket>) {
+	while (<$ClientSocket>) {
 		print "MAIN(debug): default var = $_\n" if $verbose;
 
 		# DALnet,LagNet,UnderNet etc. Require this!
 		# Replies with a PONG when presented with a PING query.
 		# If a server doesn't require it, it will be ignored.
 	
-		if (m/^PING (.*)/) {print ClientSocket "PONG $1\n";}
+		if (m/^PING (.*)/) {print $ClientSocket "PONG $1\n";}
 	
 		alarm(0);
 	
