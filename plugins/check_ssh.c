@@ -32,8 +32,8 @@ const char *progname = "check_ssh";
 const char *copyright = "2000-2007";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "netutils.h"
+#include "./common.h"
+#include "./netutils.h"
 #include "utils.h"
 
 #ifndef MSG_DONTWAIT
