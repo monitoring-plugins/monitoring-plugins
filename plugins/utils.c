@@ -258,16 +258,25 @@ bool is_int64(char *number, int64_t *target) {
  */
 bool is_uint64(char *number, uint64_t *target) {
 	errno = 0;
-	uint64_t tmp = strtoll(number, NULL, 10);
+	char *endptr = { 0 };
+	unsigned long long tmp = strtoull(number, &endptr, 10);
+
 	if (errno != 0) {
 		return false;
 	}
-	if (tmp < 0 || tmp > UINT64_MAX) {
+
+	if (*endptr != '\0') {
 		return false;
 	}
-	if (target != NULL) {
-		*target = tmp;
+
+	if (tmp > UINT64_MAX) {
+		return false;
 	}
+
+	if (target != NULL) {
+		*target = (uint64_t)tmp;
+	}
+
 	return true;
 }
 
