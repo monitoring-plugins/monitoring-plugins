@@ -215,12 +215,9 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	int sd;
 	int result;
 	int len = 0;
-	ssize_t byte_offset = 0;
 	ssize_t recv_ret = 0;
 	char *version_control_string = NULL;
-	char *output = NULL;
 	char *buffer = NULL;
-	char *tmp= NULL;
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
@@ -234,28 +231,34 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	if (result != STATE_OK)
 		return result;
 
-	output = (char *) malloc (BUFF_SZ + 1);
-	memset(output, 0, BUFF_SZ+1);
-	while (!version_control_string && (recv_ret = recv(sd, output+byte_offset, BUFF_SZ - byte_offset, 0)) > 0) {
+	char *output = (char *) calloc (BUFF_SZ + 1, sizeof(char));
+
+	unsigned int iteration = 0;
+	ssize_t byte_offset = 0;
+
+	while ((version_control_string == NULL) && (recv_ret = recv(sd, output+byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
+
 		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
 			byte_offset = 0;
-			while (strchr(output+byte_offset, '\n') != NULL) {
+
+			char *index = NULL;
+			while ((index = strchr(output+byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
-				output[(strchr(output+byte_offset, '\n')-output)]= '\0';
-				len = strlen(output+byte_offset);
-				if (len >= 4) {
+				output[(index - output)] = '\0';
+				len = strlen(output + byte_offset);
+
+				if ((len >= 4) && (strncmp (output+byte_offset, "SSH-", 4) == 0)) {
 					/*if the string starts with SSH-, this _should_ be a valid version control string*/
-					if (strncmp (output+byte_offset, "SSH-", 4) == 0) {
 						version_control_string = output+byte_offset;
 						break;
-					}
 				}
 
 				/*the start of the next line (if one exists) will be after the current one (+ NUL)*/
-				byte_offset+=len+1;
+				byte_offset += (len + 1);
 			}
-			if(!version_control_string) {
+
+			if(version_control_string == NULL) {
 				/* move unconsumed data to beginning of buffer, null rest */
 				memmove((void *)output, (void *)output+byte_offset+1, BUFF_SZ - len+1);
 				memset(output+byte_offset+1, 0, BUFF_SZ-byte_offset+1);
@@ -263,17 +266,17 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 				/*start reading from end of current line chunk on next recv*/
 				byte_offset = strlen(output);
 			}
-		}
-		else {
+		} else {
 			byte_offset += recv_ret;
 		}
 	}
-	tmp = NULL;
+
 	if (recv_ret < 0) {
 		printf("SSH CRITICAL - %s", strerror(errno));
 		exit(STATE_CRITICAL);
 	}
-	if (!version_control_string) {
+
+	if (version_control_string == NULL) {
 		printf("SSH CRITICAL - No version control string received");
 		exit(STATE_CRITICAL);
 	}
@@ -309,7 +312,7 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 
 	/* If there's a space in the version string, whatever's after the space is a comment
 	 * (which is NOT part of the server name/version)*/
-	tmp = strchr(ssh_server, ' ');
+	char *tmp = strchr(ssh_server, ' ');
 	if (tmp) {
 		ssh_server[tmp - ssh_server] = '\0';
 	}
