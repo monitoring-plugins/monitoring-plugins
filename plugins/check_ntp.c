@@ -80,7 +80,7 @@ typedef struct {
 /* this structure holds data about results from querying offset from a peer */
 typedef struct {
 	time_t waiting;         /* ts set when we started waiting for a response */
-	int num_requests;       /* number of reqeusts sent excluduing re-sends */
+	int num_requests;       /* number of requests sent excluduing re-sends */
 	int num_responses;      /* number of successfully received responses */
 	uint8_t stratum;        /* copied verbatim from the ntp_message */
 	double rtdelay;         /* converted from the ntp_message */
