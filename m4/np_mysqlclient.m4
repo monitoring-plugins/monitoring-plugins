@@ -13,7 +13,7 @@ dnl   np_mysql_libs    = flags for libs,    from mysql_config --libs
 dnl   np_mysql_cflags  = flags for cflags,  from mysql_config --cflags
 dnl Also sets in config.h:
 dnl   HAVE_MYSQLCLIENT
-dnl Copile your code with:
+dnl Compile your code with:
 dnl   $(CC) $(np_mysql_include) code.c $(np_mysql_libs)
 
 AC_DEFUN([np_mysqlclient],
@@ -81,7 +81,7 @@ AC_DEFUN([np_check_lib_mariadbclient],
     ], [with_mysql=no], [$np_mysql_libs])
 ])
 
-dnl Will take $1, find last occurrance of -LDIR and add DIR to LD_RUN_PATH
+dnl Will take $1, find last occurrence of -LDIR and add DIR to LD_RUN_PATH
 AC_DEFUN([np_add_to_runpath], 
 [
   dnl Need [[ ]] so autoconf gives us just one set

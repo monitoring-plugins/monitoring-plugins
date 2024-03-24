@@ -46,21 +46,20 @@ const char *email = "devel@monitoring-plugins.org";
 static char *server_address=NULL;
 static int port=123;
 static int verbose=0;
-static int quiet=0;
-static short do_offset=0;
+static bool quiet = false;
 static char *owarn="60";
 static char *ocrit="120";
-static short do_stratum=0;
+static bool do_stratum = false;
 static char *swarn="-1:16";
 static char *scrit="-1:16";
-static short do_jitter=0;
+static bool do_jitter = false;
 static char *jwarn="-1:5000";
 static char *jcrit="-1:10000";
-static short do_truechimers=0;
+static bool do_truechimers = false;
 static char *twarn="0:";
 static char *tcrit="0:";
-static int syncsource_found=0;
-static int li_alarm=0;
+static bool syncsource_found = false;
+static bool li_alarm = false;
 
 int process_arguments (int, char **);
 thresholds *offset_thresholds = NULL;
@@ -86,7 +85,7 @@ typedef struct {
 	                        /* NB: not necessarily NULL terminated! */
 } ntp_control_message;
 
-/* this is an association/status-word pair found in control packet reponses */
+/* this is an association/status-word pair found in control packet responses */
 typedef struct {
 	uint16_t assoc;
 	uint16_t status;
@@ -189,7 +188,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
 }
 
 /* This function does all the actual work; roughly here's what it does
- * beside setting the offest, jitter and stratum passed as argument:
+ * beside setting the offset, jitter and stratum passed as argument:
  *  - offset can be negative, so if it cannot get the offset, offset_result
  *    is set to UNKNOWN, otherwise OK.
  *  - jitter and stratum are set to -1 if they cannot be retrieved so any
@@ -199,7 +198,7 @@ setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq){
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
-int ntp_request(const char *host, double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers){
+int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers){
 	int conn=-1, i, npeers=0, num_candidates=0;
 	double tmp_offset = 0;
 	int min_peer_sel=PEER_INCLUDED;
@@ -254,7 +253,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				die(STATE_CRITICAL, "NTP CRITICAL: Invalid packet received from NTP server\n");
 		} while (!(req.op&OP_READSTAT && ntohs(req.seq) == 1));
 
-		if (LI(req.flags) == LI_ALARM) li_alarm = 1;
+		if (LI(req.flags) == LI_ALARM) li_alarm = true;
 		/* Each peer identifier is 4 bytes in the data section, which
 	 	 * we represent as a ntp_assoc_status_pair datatype.
 	 	 */
@@ -276,7 +275,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 			if(PEER_SEL(peers[i].status) >= PEER_INCLUDED){
 				num_candidates++;
 				if(PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE){
-					syncsource_found=1;
+					syncsource_found = true;
 					min_peer_sel=PEER_SYNCSOURCE;
 				}
 			}
@@ -306,7 +305,7 @@ int ntp_request(const char *host, double *offset, int *offset_result, double *ji
 				/* Putting the wanted variable names in the request
 				 * cause the server to provide _only_ the requested values.
 				 * thus reducing net traffic, guaranteeing us only a single
-				 * datagram in reply, and making intepretation much simpler
+				 * datagram in reply, and making interpretation much simpler
 				 */
 				/* Older servers doesn't know what jitter is, so if we get an
 				 * error on the first pass we redo it with "dispersion" */
@@ -440,7 +439,7 @@ int process_arguments(int argc, char **argv){
 	if (argc < 2)
 		usage ("\n");
 
-	while (1) {
+	while (true) {
 		c = getopt_long (argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -458,42 +457,40 @@ int process_arguments(int argc, char **argv){
 			verbose++;
 			break;
 		case 'q':
-			quiet = 1;
+			quiet = true;
 			break;
 		case 'w':
-			do_offset=1;
 			owarn = optarg;
 			break;
 		case 'c':
-			do_offset=1;
 			ocrit = optarg;
 			break;
 		case 'W':
-			do_stratum=1;
+			do_stratum = true;
 			swarn = optarg;
 			break;
 		case 'C':
-			do_stratum=1;
+			do_stratum = true;
 			scrit = optarg;
 			break;
 		case 'j':
-			do_jitter=1;
+			do_jitter = true;
 			jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter=1;
+			do_jitter = true;
 			jcrit = optarg;
 			break;
 		case 'm':
-			do_truechimers=1;
+			do_truechimers = true;
 			twarn = optarg;
 			break;
 		case 'n':
-			do_truechimers=1;
+			do_truechimers = true;
 			tcrit = optarg;
 			break;
 		case 'H':
-			if(is_host(optarg) == FALSE)
+			if(!is_host(optarg))
 				usage2(_("Invalid hostname/address"), optarg);
 			server_address = strdup(optarg);
 			break;
@@ -530,9 +527,9 @@ int process_arguments(int argc, char **argv){
 char *perfd_offset (double offset)
 {
 	return fperfdata ("offset", offset, "s",
-		TRUE, offset_thresholds->warning->end,
-		TRUE, offset_thresholds->critical->end,
-		FALSE, 0, FALSE, 0);
+		true, offset_thresholds->warning->end,
+		true, offset_thresholds->critical->end,
+		false, 0, false, 0);
 }
 
 char *perfd_jitter (double jitter)
@@ -540,7 +537,7 @@ char *perfd_jitter (double jitter)
 	return fperfdata ("jitter", jitter, "",
 		do_jitter, jitter_thresholds->warning->end,
 		do_jitter, jitter_thresholds->critical->end,
-		TRUE, 0, FALSE, 0);
+		true, 0, false, 0);
 }
 
 char *perfd_stratum (int stratum)
@@ -548,7 +545,7 @@ char *perfd_stratum (int stratum)
 	return perfdata ("stratum", stratum, "",
 		do_stratum, (int)stratum_thresholds->warning->end,
 		do_stratum, (int)stratum_thresholds->critical->end,
-		TRUE, 0, TRUE, 16);
+		true, 0, true, 16);
 }
 
 char *perfd_truechimers (int num_truechimers)
@@ -556,11 +553,11 @@ char *perfd_truechimers (int num_truechimers)
 	return perfdata ("truechimers", num_truechimers, "",
 		do_truechimers, (int)truechimer_thresholds->warning->end,
 		do_truechimers, (int)truechimer_thresholds->critical->end,
-		TRUE, 0, FALSE, 0);
+		true, 0, false, 0);
 }
 
 int main(int argc, char *argv[]){
-	int result, offset_result, stratum, num_truechimers, oresult, jresult, sresult, tresult;
+	int result, offset_result, stratum, num_truechimers;
 	double offset=0, jitter=0;
 	char *result_line, *perfdata_line;
 
@@ -585,29 +582,39 @@ int main(int argc, char *argv[]){
 	/* set socket timeout */
 	alarm (socket_timeout);
 
-	/* This returns either OK or WARNING (See comment preceeding ntp_request) */
-	result = ntp_request(server_address, &offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	/* This returns either OK or WARNING (See comment preceding ntp_request) */
+	result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if(offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
-		result = (quiet == 1 ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = (quiet ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (quiet == 1 && result == STATE_WARNING)
+		if (quiet && result == STATE_WARNING)
 			result = STATE_UNKNOWN;
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
-	oresult = result;
+
+	int oresult = result;
+
+
+	int tresult = STATE_UNKNOWN;
 	
 	if(do_truechimers) {
 		tresult = get_status(num_truechimers, truechimer_thresholds);
 		result = max_state_alt(result, tresult);
 	}
 
+
+	int sresult = STATE_UNKNOWN;
+
 	if(do_stratum) {
 		sresult = get_status(stratum, stratum_thresholds);
 		result = max_state_alt(result, sresult);
 	}
+
+
+	int jresult = STATE_UNKNOWN;
 
 	if(do_jitter) {
 		jresult = get_status(jitter, jitter_thresholds);

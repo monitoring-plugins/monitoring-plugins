@@ -4,7 +4,7 @@
 *
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 2000-2007 Monitoring Plugins Development Team
+* Copyright (c) 2000-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -28,15 +28,12 @@
 *****************************************************************************/
 
 const char *progname = "check_swap";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "popen.h"
 #include "utils.h"
-#include <string.h>
-#include <math.h>
-#include <libintl.h>
 
 #ifdef HAVE_DECL_SWAPCTL
 # ifdef HAVE_SYS_PARAM_H
@@ -55,9 +52,9 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 typedef struct {
-	int is_percentage;
+	bool is_percentage;
 	uint64_t value;
-} threshold_t;
+} threshold;
 
 int check_swap (float free_swap_mb, float total_swap_mb);
 int process_arguments (int argc, char **argv);
@@ -65,10 +62,10 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-threshold_t warn;
-threshold_t crit;
+threshold warn;
+threshold crit;
 int verbose;
-int allswaps;
+bool allswaps = false;
 int no_swap_state = STATE_CRITICAL;
 
 int
@@ -181,7 +178,7 @@ main (int argc, char **argv)
 #  ifdef _AIX
 	if (!allswaps) {
 		xasprintf(&swap_command, "%s", "/usr/sbin/lsps -s");
-		xasprintf(&swap_format, "%s", "%f%*s %f");
+		xasprintf(&swap_format, "%s", "%lu%*s %lu");
 		conv_factor = 1;
 	}
 #  endif
@@ -208,9 +205,9 @@ main (int argc, char **argv)
 		temp_buffer = strtok (input_buffer, " \n");
 		while (temp_buffer) {
 			if (strstr (temp_buffer, "blocks"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else if (strstr (temp_buffer, "dskfree"))
-				sprintf (str, "%s %s", str, "%f");
+				sprintf (str, "%s %s", str, "%lu");
 			else
 				sprintf (str, "%s %s", str, "%*s");
 			temp_buffer = strtok (NULL, " \n");
@@ -386,10 +383,10 @@ main (int argc, char **argv)
 	if (crit.is_percentage) crit_print = crit.value * (total_swap_mb *1024 *1024/100);
 
 	puts (perfdata_uint64 ("swap", free_swap_mb *1024 *1024, "B",
-	                TRUE, warn_print,
-	                TRUE, crit_print,
-	                TRUE, 0,
-	                TRUE, (long) total_swap_mb * 1024 * 1024));
+	                true, warn_print,
+	                true, crit_print,
+	                true, 0,
+	                true, (long) total_swap_mb * 1024 * 1024));
 
 	return result;
 }
@@ -468,7 +465,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					warn.is_percentage = 1;
+					warn.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
@@ -478,7 +475,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					warn.is_percentage = 0;
+					warn.is_percentage = false;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
 					} else {
@@ -498,7 +495,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					crit.is_percentage = 1;
+					crit.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
@@ -508,7 +505,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					crit.is_percentage = 0;
+					crit.is_percentage = false;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
 					} else {
@@ -517,7 +514,7 @@ process_arguments (int argc, char **argv)
 				}
 			  }
 		case 'a':									/* all swap */
-			allswaps = TRUE;
+			allswaps = true;
 			break;
 		case 'n':
 			if ((no_swap_state = mp_translate_state(optarg)) == ERROR) {
@@ -555,7 +552,7 @@ validate_arguments (void)
 	}
 	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
-		 * and crit is absolut. We cannot determine the condition at this point since we
+		 * and crit is absolute. We cannot determine the condition at this point since we
 		 * dont know the value of total swap yet
 		 */
 		usage4(_("Warning should be more than critical"));

@@ -138,7 +138,7 @@ sub BuildIt {
 # interprets that as the end of the mail, and truncates the log before
 # it gets to Tinderbox.  (terry weismann, chris yeh)
 #
-# This was replaced by a perl 'port' of the above, writen by 
+# This was replaced by a perl 'port' of the above, written by 
 # preed@netscape.com; good things: no need for system() call, and now it's
 # all in perl, so we don't have to do OS checking like before.
 

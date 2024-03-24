@@ -107,7 +107,7 @@ main (int argc, char **argv)
 	int i;
 	long numcpus;
 
-	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about unitialized arrays */
+	double la[3] = { 0.0, 0.0, 0.0 };	/* NetBSD complains about uninitialized arrays */
 #ifndef HAVE_GETLOADAVG
 	char input_buffer[MAX_INPUT_BUFFER];
 # ifdef HAVE_PROC_LOADAVG

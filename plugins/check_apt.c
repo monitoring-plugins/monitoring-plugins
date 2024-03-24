@@ -1,32 +1,32 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_apt plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2006-2008 Monitoring Plugins Development Team
-* 
+*
 * Original author: Sean Finney
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_apt plugin
-* 
+*
 * Check for available updates in apt package management systems
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
+*
 *****************************************************************************/
 
 const char *progname = "check_apt";
@@ -76,9 +76,9 @@ int cmpstringp(const void *p1, const void *p2);
 
 /* configuration variables */
 static int verbose = 0;      /* -v */
-static int list = 0;         /* list packages available for upgrade */
-static int do_update = 0;    /* whether to call apt-get update */
-static int only_critical = 0;    /* whether to warn about non-critical updates */
+static bool list = false;         /* list packages available for upgrade */
+static bool do_update = false;    /* whether to call apt-get update */
+static bool only_critical = false;    /* whether to warn about non-critical updates */
 static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
 static char *upgrade_opts = NULL; /* options to override defaults for upgrade */
 static char *update_opts = NULL; /* options to override defaults for update */
@@ -94,7 +94,7 @@ static int stderr_warning = 0;   /* if a cmd issued output on stderr */
 static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
-	int result=STATE_UNKNOWN, packages_available=0, sec_count=0, i=0;
+	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 	char **packages_list=NULL, **secpackages_list=NULL;
 
 	/* Parse extra opts if any */
@@ -119,7 +119,7 @@ int main (int argc, char **argv) {
 
 	if(sec_count > 0){
 		result = max_state(result, STATE_CRITICAL);
-	} else if(packages_available >= packages_warning && only_critical == 0){
+	} else if(packages_available >= packages_warning && only_critical == false){
 		result = max_state(result, STATE_WARNING);
 	} else if(result > STATE_UNKNOWN){
 		result = STATE_UNKNOWN;
@@ -142,10 +142,11 @@ int main (int argc, char **argv) {
 		qsort(secpackages_list, sec_count, sizeof(char*), cmpstringp);
 		qsort(packages_list, packages_available-sec_count, sizeof(char*), cmpstringp);
 
-		for(i = 0; i < sec_count; i++)
+		for(int i = 0; i < sec_count; i++)
 			printf("%s (security)\n", secpackages_list[i]);
-		if (only_critical == 0) {
-			for(i = 0; i < packages_available - sec_count; i++)
+
+		if (only_critical == false) {
+			for(int i = 0; i < packages_available - sec_count; i++)
 				printf("%s\n", packages_list[i]);
 		}
 	}
@@ -166,7 +167,7 @@ int process_arguments (int argc, char **argv) {
 		{"upgrade", optional_argument, 0, 'U'},
 		{"no-upgrade", no_argument, 0, 'n'},
 		{"dist-upgrade", optional_argument, 0, 'd'},
-		{"list", no_argument, 0, 'l'},
+		{"list", no_argument, false, 'l'},
 		{"include", required_argument, 0, 'i'},
 		{"exclude", required_argument, 0, 'e'},
 		{"critical", required_argument, 0, 'c'},
@@ -212,14 +213,14 @@ int process_arguments (int argc, char **argv) {
 			upgrade=NO_UPGRADE;
 			break;
 		case 'u':
-			do_update=1;
+			do_update=true;
 			if(optarg!=NULL){
 				update_opts=strdup(optarg);
 				if(update_opts==NULL) die(STATE_UNKNOWN, "strdup failed");
 			}
 			break;
 		case 'l':
-			list=1;
+			list=true;
 			break;
 		case 'i':
 			do_include=add_to_regexp(do_include, optarg);
@@ -231,7 +232,7 @@ int process_arguments (int argc, char **argv) {
 			do_critical=add_to_regexp(do_critical, optarg);
 			break;
 		case 'o':
-			only_critical=1;
+			only_critical=true;
 			break;
 		case INPUT_FILE_OPT:
 			input_filename = optarg;
@@ -251,7 +252,7 @@ int process_arguments (int argc, char **argv) {
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist){
-	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
+	int result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
 	char *cmdline=NULL, rerrbuf[64];
@@ -269,7 +270,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 		}
 	}
-   
+
 	if(do_exclude!=NULL){
 		regres=regcomp(&ereg, do_exclude, REG_EXTENDED);
 		if(regres!=0) {
@@ -278,7 +279,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			    progname, rerrbuf);
 		}
 	}
-   
+
 	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres=regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if(regres!=0) {
@@ -295,7 +296,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		/* run the upgrade */
 		result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	}
-   
+
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
@@ -320,7 +321,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	 * we may need to switch to the --print-uris output format,
 	 * in which case the logic here will slightly change.
 	 */
-	for(i = 0; i < chld_out.lines; i++) {
+	for(size_t i = 0; i < chld_out.lines; i++) {
 		if(verbose){
 			printf("%s\n", chld_out.line[i]);
 		}
@@ -353,7 +354,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
+			for(size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}
@@ -367,11 +368,11 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 
 /* run an apt-get update (needs root) */
 int run_update(void){
-	int i=0, result=STATE_UNKNOWN;
+	int result=STATE_UNKNOWN;
 	struct output chld_out, chld_err;
 	char *cmdline;
 
-	/* run the upgrade */
+	/* run the update */
 	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
 	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
@@ -385,7 +386,7 @@ int run_update(void){
 	}
 
 	if(verbose){
-		for(i = 0; i < chld_out.lines; i++) {
+		for(size_t i = 0; i < chld_out.lines; i++) {
 			printf("%s\n", chld_out.line[i]);
 		}
 	}
@@ -395,7 +396,7 @@ int run_update(void){
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
+			for(size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}
@@ -501,16 +502,6 @@ print_help (void)
 
   printf(UT_PLUG_TIMEOUT, timeout_interval);
 
-  printf (" %s\n", "-U, --upgrade=OPTS");
-  printf ("    %s\n", _("[Default] Perform an upgrade.  If an optional OPTS argument is provided,"));
-  printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
-  printf ("    %s", _("default "));
-  printf ("(%s).\n", UPGRADE_DEFAULT_OPTS);
-  printf ("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
-  printf ("    %s\n", _("the default options."));
-  printf (" %s\n", "-d, --dist-upgrade=OPTS");
-  printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
-  printf ("    %s\n", _("can be provided to override the default options."));
   printf (" %s\n", "-n, --no-upgrade");
   printf ("    %s\n", _("Do not run the upgrade.  Probably not useful (without -u at least)."));
   printf (" %s\n", "-l, --list");
@@ -530,7 +521,7 @@ print_help (void)
   printf ("    %s\n", _("this REGEXP, the plugin will return CRITICAL status.  Can be specified"));
   printf ("    %s\n", _("multiple times like above.  Default is a regexp matching security"));
   printf ("    %s\n", _("upgrades for Debian and Ubuntu:"));
-  printf ("    \t\%s\n", SECURITY_RE);
+  printf ("    \t%s\n", SECURITY_RE);
   printf ("    %s\n", _("Note that the package must first match the include list before its"));
   printf ("    %s\n", _("information is compared against the critical list."));
   printf (" %s\n", "-o, --only-critical");
@@ -538,7 +529,7 @@ print_help (void)
   printf ("    %s\n", _("of upgrades will be printed, but any non-critical upgrades will not cause"));
   printf ("    %s\n", _("the plugin to return WARNING status."));
   printf (" %s\n", "-w, --packages-warning");
-  printf ("    %s\n", _("Minumum number of packages available for upgrade to return WARNING status."));
+  printf ("    %s\n", _("Minimum number of packages available for upgrade to return WARNING status."));
   printf ("    %s\n\n", _("Default is 1 package."));
 
   printf ("%s\n\n", _("The following options require root privileges and should be used with care:"));
@@ -547,6 +538,16 @@ print_help (void)
   printf ("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
   printf ("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
   printf ("    %s\n", _("upgrade is expected to take longer than the default timeout."));
+  printf (" %s\n", "-U, --upgrade=OPTS");
+  printf ("    %s\n", _("Perform an upgrade. If an optional OPTS argument is provided,"));
+  printf ("    %s\n", _("apt-get will be run with these command line options instead of the"));
+  printf ("    %s", _("default "));
+  printf ("(%s).\n", UPGRADE_DEFAULT_OPTS);
+  printf ("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
+  printf ("    %s\n", _("the default options, which will only run a simulation and NOT perform the upgrade"));
+  printf (" %s\n", "-d, --dist-upgrade=OPTS");
+  printf ("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
+  printf ("    %s\n", _("can be provided to override the default options."));
 
   printf(UT_SUPPORT);
 }

@@ -1,19 +1,19 @@
 /*****************************************************************************
-* 
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 #include "common.h"
@@ -62,99 +62,99 @@ main (int argc, char **argv)
 	range = parse_range_string("6");
 	ok( range != NULL, "'6' is valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 6, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("1:12%%");
 	ok( range != NULL, "'1:12%%' is valid - percentages are ignored");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 12, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("-7:23");
 	ok( range != NULL, "'-7:23' is valid range");
 	ok( range->start == -7, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 23, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string(":5.75");
 	ok( range != NULL, "':5.75' is valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 5.75, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("~:-95.99");
 	ok( range != NULL, "~:-95.99' is valid range");
-	ok( range->start_infinity == TRUE, "Using negative infinity");
+	ok( range->start_infinity == true, "Using negative infinity");
 	ok( range->end == -95.99, "End correct (with rounding errors)");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("12345678901234567890:");
 	temp = atof("12345678901234567890");		/* Can't just use this because number too large */
 	ok( range != NULL, "'12345678901234567890:' is valid range");
 	ok( range->start == temp, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
-	ok( range->end_infinity == TRUE, "Using infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
+	ok( range->end_infinity == true, "Using infinity");
 	/* Cannot do a "-1" on temp, as it appears to be same value */
-	ok( check_range(temp/1.1, range) == TRUE, "12345678901234567890/1.1 - alert");
-	ok( check_range(temp, range) == FALSE, "12345678901234567890 - no alert");
-	ok( check_range(temp*2, range) == FALSE, "12345678901234567890*2 - no alert");
+	ok( check_range(temp/1.1, range) == true, "12345678901234567890/1.1 - alert");
+	ok( check_range(temp, range) == false, "12345678901234567890 - no alert");
+	ok( check_range(temp*2, range) == false, "12345678901234567890*2 - no alert");
 	free(range);
 
 	range = parse_range_string("~:0");
 	ok( range != NULL, "'~:0' is valid range");
-	ok( range->start_infinity == TRUE, "Using negative infinity");
+	ok( range->start_infinity == true, "Using negative infinity");
 	ok( range->end == 0, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == OUTSIDE, "Will alert on outside of this range");
-	ok( check_range(0.5, range) == TRUE, "0.5 - alert");
-	ok( check_range(-10, range) == FALSE, "-10 - no alert");
-	ok( check_range(0, range)   == FALSE, "0 - no alert");
+	ok( check_range(0.5, range) == true, "0.5 - alert");
+	ok( check_range(-10, range) == false, "-10 - no alert");
+	ok( check_range(0, range)   == false, "0 - no alert");
 	free(range);
-	
+
 	range = parse_range_string("@0:657.8210567");
 	ok( range != 0, "@0:657.8210567' is a valid range");
 	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 657.8210567, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(32.88, range) == TRUE, "32.88 - alert");
-	ok( check_range(-2, range)    == FALSE, "-2 - no alert");
-	ok( check_range(657.8210567, range) == TRUE, "657.8210567 - alert");
-	ok( check_range(0, range)     == TRUE, "0 - alert");
+	ok( check_range(32.88, range) == true, "32.88 - alert");
+	ok( check_range(-2, range)    == false, "-2 - no alert");
+	ok( check_range(657.8210567, range) == true, "657.8210567 - alert");
+	ok( check_range(0, range)     == true, "0 - alert");
 	free(range);
 
 	range = parse_range_string("@1:1");
 	ok( range != NULL, "'@1:1' is a valid range");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
+	ok( range->end_infinity == false, "Not using infinity");
 	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(0.5, range) == FALSE, "0.5 - no alert");
-	ok( check_range(1, range) == TRUE, "1 - alert");
-	ok( check_range(5.2, range) == FALSE, "5.2 - no alert");
+	ok( check_range(0.5, range) == false, "0.5 - no alert");
+	ok( check_range(1, range) == true, "1 - alert");
+	ok( check_range(5.2, range) == false, "5.2 - no alert");
 	free(range);
 
 	range = parse_range_string("1:1");
 	ok( range != NULL, "'1:1' is a valid range");
 	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == FALSE, "Not using negative infinity");
+	ok( range->start_infinity == false, "Not using negative infinity");
 	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == FALSE, "Not using infinity");
-	ok( check_range(0.5, range) == TRUE, "0.5 - alert");
-	ok( check_range(1, range) == FALSE, "1 - no alert");
-	ok( check_range(5.2, range) == TRUE, "5.2 - alert");
+	ok( range->end_infinity == false, "Not using infinity");
+	ok( check_range(0.5, range) == true, "0.5 - alert");
+	ok( check_range(1, range) == false, "1 - no alert");
+	ok( check_range(5.2, range) == true, "5.2 - alert");
 	free(range);
 
 	range = parse_range_string("2:1");
@@ -309,7 +309,7 @@ main (int argc, char **argv)
 
 	/* This is the result of running ./test_utils */
 	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got hash with exe and no parameters" ) || 
+	ok(!strcmp(temp_string, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got hash with exe and no parameters" ) ||
         diag( "You are probably running in wrong directory. Must run as ./test_utils" );
 
 
@@ -319,7 +319,7 @@ main (int argc, char **argv)
 	this_monitoring_plugin->argv[2] = "--and";
 	this_monitoring_plugin->argv[3] = "now";
 	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "94b5e17bf5abf51cb15aff5f69b96f2f8dac5ecd"), "Got based on expected argv" );
+	ok(!strcmp(temp_string, "bd72da9f78ff1419fad921ea5e43ce56508aef6c"), "Got based on expected argv" );
 
 	unsetenv("MP_STATE_PATH");
 	temp_string = (char *) _np_state_calculate_location_prefix();
@@ -342,7 +342,7 @@ main (int argc, char **argv)
 	np_enable_state(NULL, 51);
 	temp_state_key = this_monitoring_plugin->state;
 	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "83d877b6cdfefb5d6f06101fd6fe76762f21792c"), "Got generated filename" );
+	ok( !strcmp(temp_state_key->name, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got generated filename" );
 
 
 	np_enable_state("allowedchars_in_keyname", 77);
@@ -377,13 +377,13 @@ main (int argc, char **argv)
 
 /*
 	temp_fp = fopen("var/statefile", "r");
-	if (temp_fp==NULL) 
+	if (temp_fp==NULL)
 		printf("Error opening. errno=%d\n", errno);
 	printf("temp_fp=%s\n", temp_fp);
-	ok( _np_state_read_file(temp_fp) == TRUE, "Can read state file" );
+	ok( _np_state_read_file(temp_fp) == true, "Can read state file" );
 	fclose(temp_fp);
 */
-	
+
 	temp_state_key->_filename="var/statefile";
 	temp_state_data = np_state_read();
 	ok( this_monitoring_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
@@ -395,7 +395,7 @@ main (int argc, char **argv)
 	ok( temp_state_data==NULL, "Older data version gives NULL" );
 	temp_state_key->data_version=54;
 
-	temp_state_key->_filename="var/nonexistant";
+	temp_state_key->_filename="var/nonexistent";
 	temp_state_data = np_state_read();
 	ok( temp_state_data==NULL, "Missing file gives NULL" );
 	ok( this_monitoring_plugin->state->state_data==NULL, "No state information" );
@@ -446,20 +446,20 @@ main (int argc, char **argv)
 	/* Check time is set to current_time */
 	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
 	ok(this_monitoring_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
-	
+
 
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
 	/*
 	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
 	np_state_write_string(0, "Bad file");
 	*/
-	
+
 
 	np_cleanup();
 
 	ok(this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin");
 
-	ok(mp_suid() == FALSE, "Test aren't suid");
+	ok(mp_suid() == false, "Test aren't suid");
 
 	/* base states with random case */
 	char *states[] = {
@@ -508,4 +508,3 @@ main (int argc, char **argv)
 
 	return exit_status();
 }
-
