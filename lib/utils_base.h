@@ -16,23 +16,10 @@
    and utils_*.h for specific to plugin routines. If routines are
    placed in utils_*.h, then these can be tested with libtap */
 
-#define OUTSIDE 0
-#define INSIDE  1
 
-typedef struct range_struct {
-	double	start;
-	bool start_infinity;
-	double	end;
-	int	end_infinity;
-	int	alert_on;		/* OUTSIDE (default) or INSIDE */
-	char* text; /* original unparsed text input */
-	} range;
-
-typedef struct thresholds_struct {
-	range	*warning;
-	range	*critical;
-	} thresholds;
-
+#include "./perfdata.h"
+#include "./thresholds.h"
+#include "./output.h"
 #define NP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
@@ -40,7 +27,6 @@ typedef struct state_data_struct {
 	void	*data;
 	int	length; /* Of binary data */
 	} state_data;
-
 
 typedef struct state_key_struct {
 	char       *name;
@@ -58,11 +44,15 @@ typedef struct np_struct {
 	} monitoring_plugin;
 
 range *parse_range_string (char *);
+mp_range parse_mp_range_string (char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
+void mp_print_thresholds(const char *, mp_thresholds *);
 bool check_range(double, range *);
+bool mp_check_range(mp_perfdata_value, mp_range *);
 int get_status(double, thresholds *);
+int get_status2(mp_perfdata_value, mp_thresholds *);
 
 /* Handle timeouts */
 extern int timeout_state;
@@ -115,5 +105,18 @@ void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
 const char *state_text (int);
+
+#include <stdio.h>
+
+/* Handle strings safely */
+void strip (char *);
+char *strscpy (char *, const char *);
+char *strnl (char *);
+char *strpcpy (char *, const char *, const char *);
+char *strpcat (char *, const char *, const char *);
+int xvasprintf (char **strp, const char *fmt, va_list ap);
+int xasprintf (char **strp, const char *fmt, ...);
+
+bool is_integer (char *);
 
 #endif /* _UTILS_BASE_ */

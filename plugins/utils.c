@@ -24,13 +24,14 @@
 
 #include "common.h"
 #include "utils.h"
-#include "utils_base.h"
+#include "../lib/utils_base.h"
 #include <stdarg.h>
 #include <limits.h>
 #include <string.h>
 #include <errno.h>
 
 #include <arpa/inet.h>
+
 
 extern void print_usage (void);
 extern const char *progname;
@@ -39,58 +40,6 @@ extern const char *progname;
 #define TXTBLK 128
 
 time_t start_time, end_time;
-
-/* **************************************************************************
- * max_state(STATE_x, STATE_y)
- * compares STATE_x to  STATE_y and returns result based on the following
- * STATE_UNKNOWN < STATE_OK < STATE_WARNING < STATE_CRITICAL
- *
- * Note that numerically the above does not hold
- ****************************************************************************/
-
-int
-max_state (int a, int b)
-{
-	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
-		return STATE_CRITICAL;
-	else if (a == STATE_WARNING || b == STATE_WARNING)
-		return STATE_WARNING;
-	else if (a == STATE_OK || b == STATE_OK)
-		return STATE_OK;
-	else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
-		return STATE_UNKNOWN;
-	else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
-		return STATE_DEPENDENT;
-	else
-		return max (a, b);
-}
-
-/* **************************************************************************
- * max_state_alt(STATE_x, STATE_y)
- * compares STATE_x to  STATE_y and returns result based on the following
- * STATE_OK < STATE_DEPENDENT < STATE_UNKNOWN < STATE_WARNING < STATE_CRITICAL
- *
- * The main difference between max_state_alt and max_state it that it doesn't
- * allow setting a default to UNKNOWN. It will instead prioritixe any valid
- * non-OK state.
- ****************************************************************************/
-
-int
-max_state_alt (int a, int b)
-{
-	if (a == STATE_CRITICAL || b == STATE_CRITICAL)
-		return STATE_CRITICAL;
-	else if (a == STATE_WARNING || b == STATE_WARNING)
-		return STATE_WARNING;
-	else if (a == STATE_UNKNOWN || b == STATE_UNKNOWN)
-		return STATE_UNKNOWN;
-	else if (a == STATE_DEPENDENT || b == STATE_DEPENDENT)
-		return STATE_DEPENDENT;
-	else if (a == STATE_OK || b == STATE_OK)
-		return STATE_OK;
-	else
-		return max (a, b);
-}
 
 void usage (const char *msg)
 {
@@ -183,20 +132,6 @@ bool is_nonnegative (char *number) {
 bool is_percentage (char *number) {
 	int x;
 	if (is_numeric (number) && (x = atof (number)) >= 0 && x <= 100)
-		return true;
-	else
-		return false;
-}
-
-bool is_integer (char *number) {
-	long int n;
-
-	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
-		return false;
-
-	n = strtol (number, NULL, 10);
-
-	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
 		return true;
 	else
 		return false;
@@ -307,7 +242,6 @@ gettimeofday (struct timeval *tv, struct timezone *tz)
 #endif
 
 
-
 double
 delta_time (struct timeval tv)
 {
@@ -318,7 +252,6 @@ delta_time (struct timeval tv)
 }
 
 
-
 long
 deltime (struct timeval tv)
 {
@@ -327,226 +260,6 @@ deltime (struct timeval tv)
 	return (now.tv_sec - tv.tv_sec)*1000000 + now.tv_usec - tv.tv_usec;
 }
 
-
-
-
-void
-strip (char *buffer)
-{
-	size_t x;
-	int i;
-
-	for (x = strlen (buffer); x >= 1; x--) {
-		i = x - 1;
-		if (buffer[i] == ' ' ||
-				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
-			buffer[i] = '\0';
-		else
-			break;
-	}
-	return;
-}
-
-
-/******************************************************************************
- *
- * Copies one string to another. Any previously existing data in
- * the destination string is lost.
- *
- * Example:
- *
- * char *str=NULL;
- * str = strscpy("This is a line of text with no trailing newline");
- *
- *****************************************************************************/
-
-char *
-strscpy (char *dest, const char *src)
-{
-	if (src == NULL)
-		return NULL;
-
-	xasprintf (&dest, "%s", src);
-
-	return dest;
-}
-
-
-
-/******************************************************************************
- *
- * Returns a pointer to the next line of a multiline string buffer
- *
- * Given a pointer string, find the text following the next sequence
- * of \r and \n characters. This has the effect of skipping blank
- * lines as well
- *
- * Example:
- *
- * Given text as follows:
- *
- * ==============================
- * This
- * is
- * a
- * 
- * multiline string buffer
- * ==============================
- *
- * int i=0;
- * char *str=NULL;
- * char *ptr=NULL;
- * str = strscpy(str,"This\nis\r\na\n\nmultiline string buffer\n");
- * ptr = str;
- * while (ptr) {
- *   printf("%d %s",i++,firstword(ptr));
- *   ptr = strnl(ptr);
- * }
- * 
- * Produces the following:
- *
- * 1 This
- * 2 is
- * 3 a
- * 4 multiline
- *
- * NOTE: The 'firstword()' function is conceptual only and does not
- *       exist in this package.
- *
- * NOTE: Although the second 'ptr' variable is not strictly needed in
- *       this example, it is good practice with these utilities. Once
- *       the * pointer is advance in this manner, it may no longer be
- *       handled with * realloc(). So at the end of the code fragment
- *       above, * strscpy(str,"foo") work perfectly fine, but
- *       strscpy(ptr,"foo") will * cause the the program to crash with
- *       a segmentation fault.
- *
- *****************************************************************************/
-
-char *
-strnl (char *str)
-{
-	size_t len;
-	if (str == NULL)
-		return NULL;
-	str = strpbrk (str, "\r\n");
-	if (str == NULL)
-		return NULL;
-	len = strspn (str, "\r\n");
-	if (str[len] == '\0')
-		return NULL;
-	str += len;
-	if (strlen (str) == 0)
-		return NULL;
-	return str;
-}
-
-
-/******************************************************************************
- *
- * Like strscpy, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * Example:
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- * Produces:
- *
- *This is a line of te
- *
- *****************************************************************************/
-
-char *
-strpcpy (char *dest, const char *src, const char *str)
-{
-	size_t len;
-
-	if (src)
-		len = strcspn (src, str);
-	else
-		return NULL;
-
-	if (dest == NULL || strlen (dest) < len)
-		dest = realloc (dest, len + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
-
-	strncpy (dest, src, len);
-	dest[len] = '\0';
-
-	return dest;
-}
-
-
-
-/******************************************************************************
- *
- * Like strscat, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * str = strpcat(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- * 
- *This is a line of texThis is a line of tex
- *
- *****************************************************************************/
-
-char *
-strpcat (char *dest, const char *src, const char *str)
-{
-	size_t len, l2;
-
-	if (dest)
-		len = strlen (dest);
-	else
-		len = 0;
-
-	if (src) {
-		l2 = strcspn (src, str);
-	}
-	else {
-		return dest;
-	}
-
-	dest = realloc (dest, len + l2 + 1);
-	if (dest == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in strscat\n"));
-
-	strncpy (dest + len, src, l2);
-	dest[len + l2] = '\0';
-
-	return dest;
-}
-
-
-/******************************************************************************
- *
- * asprintf, but die on failure
- *
- ******************************************************************************/
-
-int
-xvasprintf (char **strp, const char *fmt, va_list ap)
-{
-	int result = vasprintf (strp, fmt, ap);
-	if (result == -1 || *strp == NULL)
-		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
-	return result;
-}
-
-int
-xasprintf (char **strp, const char *fmt, ...)
-{
-	va_list ap;
-	int result;
-	va_start (ap, fmt);
-	result = xvasprintf (strp, fmt, ap);
-	va_end (ap);
-	return result;
-}
 
 /******************************************************************************
  *

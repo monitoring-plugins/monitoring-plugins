@@ -14,7 +14,8 @@ provided to standardize version and error reporting across the entire
 suite of plugins. */
 
 /* now some functions etc are being defined in ../lib/utils_base.c */
-#include "utils_base.h"
+#include "../lib/utils_base.h"
+#include <ctype.h>
 
 #include <stdbool.h>
 
@@ -36,7 +37,6 @@ extern time_t start_time, end_time;
 
 /* Test input types */
 
-bool is_integer (char *);
 bool is_intpos (char *);
 bool is_intneg (char *);
 bool is_intnonneg (char *);
@@ -67,19 +67,6 @@ int gettimeofday(struct timeval *, struct timezone *);
 double delta_time (struct timeval tv);
 long deltime (struct timeval tv);
 
-/* Handle strings safely */
-
-void strip (char *);
-char *strscpy (char *, const char *);
-char *strnl (char *);
-char *strpcpy (char *, const char *, const char *);
-char *strpcat (char *, const char *, const char *);
-int xvasprintf (char **strp, const char *fmt, va_list ap);
-int xasprintf (char **strp, const char *fmt, ...);
-
-int max_state (int a, int b);
-int max_state_alt (int a, int b);
-
 void usage (const char *) __attribute__((noreturn));
 void usage2(const char *, const char *) __attribute__((noreturn));
 void usage3(const char *, int) __attribute__((noreturn));
@@ -91,7 +78,7 @@ void usage_va(const char *fmt, ...) __attribute__((noreturn));
 #define min(a,b) (((a)<(b))?(a):(b))
 
 char *perfdata (const char *, long int, const char *, int, long int,
-                int, long int, int, long int, int, long int);
+               int, long int, int, long int, int, long int);
 
 char *perfdata_uint64 (const char *, uint64_t , const char *, int, uint64_t,
                 int, uint64_t, int, uint64_t, int, uint64_t);

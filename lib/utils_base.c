@@ -25,13 +25,17 @@
 *****************************************************************************/
 
 #include "../plugins/common.h"
+#include "../plugins/utils.h"
 #include <stdarg.h>
-#include "utils_base.h"
+#include "./utils_base.h"
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
+
+#include <string.h>
+#include <stdlib.h>
 
 #define np_free(ptr) { if(ptr) { free(ptr); ptr = NULL; } }
 
@@ -44,7 +48,7 @@ bool _np_state_read_file(FILE *);
 
 void np_init( char *plugin_name, int argc, char **argv ) {
 	if (this_monitoring_plugin==NULL) {
-		this_monitoring_plugin = calloc(1, sizeof(monitoring_plugin));
+		this_monitoring_plugin = (monitoring_plugin *)calloc(1, sizeof(monitoring_plugin));
 		if (this_monitoring_plugin==NULL) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"),
 			    strerror(errno));
@@ -103,6 +107,46 @@ die (int result, const char *fmt, ...)
 	exit (result);
 }
 
+#define mp_set_range_start(R, V) \
+	_Generic(V, \
+	double: set_range_start_double \
+	long long: set_range_start_int \
+	) (R, V)
+
+#define mp_set_range_end(R, V) \
+	_Generic(V, \
+	double: set_range_end_double \
+	long long: set_range_end_int \
+	) (R, V)
+
+mp_range set_range_start_int (mp_range r, long long value) {
+	r.start.pd_int = value;
+	r.start.type = PD_TYPE_INT;
+	r.start_infinity = false;
+	return r;
+}
+
+mp_range set_range_start_double (mp_range r, double value) {
+	r.start.pd_double = value;
+	r.start.type = PD_TYPE_DOUBLE;
+	r.start_infinity = false;
+	return r;
+}
+
+mp_range set_range_end_int (mp_range r, long long value) {
+	r.end.pd_int = value;
+	r.end.type = PD_TYPE_INT;
+	r.end_infinity = false;
+	return r;
+}
+
+mp_range set_range_end_double (mp_range r, double value) {
+	r.end.pd_double = value;
+	r.end.type = PD_TYPE_DOUBLE;
+	r.end_infinity = false;
+	return r;
+}
+
 void set_range_start (range *this, double value) {
 	this->start = value;
 	this->start_infinity = false;
@@ -113,8 +157,7 @@ void set_range_end (range *this, double value) {
 	this->end_infinity = false;
 }
 
-range
-*parse_range_string (char *str) {
+range *parse_range_string (char *str) {
 	range *temp_range;
 	double start;
 	double end;
@@ -140,10 +183,10 @@ range
 		if (str[0] == '~') {
 			temp_range->start_infinity = true;
 		} else {
-			start = strtod(str, NULL);	/* Will stop at the ':' */
+			start = strtod(str, NULL);      /* Will stop at the ':' */
 			set_range_start(temp_range, start);
 		}
-		end_str++;		/* Move past the ':' */
+		end_str++;              /* Move past the ':' */
 	} else {
 		end_str = str;
 	}
@@ -153,15 +196,71 @@ range
 	}
 
 	if (temp_range->start_infinity == true ||
-		temp_range->end_infinity == true ||
-		temp_range->start <= temp_range->end) {
+			temp_range->end_infinity == true ||
+			temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
 	free(temp_range);
 	return NULL;
 }
 
-/* returns 0 if okay, otherwise 1 */
+mp_range parse_mp_range_string (char *str) {
+	mp_range temp_range = { 0 };
+	char *end_str;
+
+
+	/* Set defaults */
+	temp_range.start.pd_int = 0;
+	temp_range.start_infinity = false;
+	temp_range.end.pd_int = 0;
+	temp_range.end_infinity = true;
+	temp_range.alert_on = OUTSIDE;
+
+	if (str[0] == '@') {
+		temp_range.alert_on = INSIDE;
+		str++;
+	}
+
+	end_str = index(str, ':');
+	mp_perfdata_value tmp;
+
+	if (end_str != NULL) {
+		if (str[0] == '~') {
+			temp_range.start_infinity = true;
+		} else {
+			if (is_integer(str)) {
+				tmp.pd_int = strtoll(str, NULL, 0);
+				set_range_start_int(temp_range, tmp.pd_int);
+				tmp.type = PD_TYPE_INT;
+			} else {
+				set_range_start_double(temp_range, strtod(str, NULL));
+				tmp.type = PD_TYPE_DOUBLE;
+			}
+		}
+		end_str++;		/* Move past the ':' */
+	} else {
+		end_str = str;
+	}
+
+	if (strcmp(end_str, "") != 0) {
+		if (is_integer(end_str)) {
+				tmp.pd_int = strtoll(str, NULL, 0);
+			set_range_end_int(temp_range, tmp.pd_int);
+		} else {
+			set_range_end_double(temp_range, strtod(end_str, NULL));
+		}
+	}
+
+	if (temp_range.start_infinity == true ||
+		temp_range.end_infinity == true ||
+		cmp_perfdata_value(temp_range.start, temp_range.end) != -1) {
+		return temp_range;
+	}
+
+	return temp_range;
+}
+
+/* returns 0 if okay, otherwise error codes */
 int
 _set_thresholds(thresholds **my_thresholds, char *warn_string, char *critical_string)
 {
@@ -223,9 +322,33 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 	printf("\n");
 }
 
-/* Returns true if alert should be raised based on the range */
-bool check_range(double value, range *my_range)
-{
+void mp_print_thresholds(const char *threshold_name, mp_thresholds *my_threshold) {
+	printf("%s - ", threshold_name);
+	if (! my_threshold) {
+		printf("Threshold not set");
+	} else {
+		if (my_threshold->warning) {
+			printf("Warning: start=%s end=%s; ",
+					pd_value_to_string(my_threshold->warning->start),
+					pd_value_to_string(my_threshold->warning->end)
+				  );
+		} else {
+			printf("Warning not set; ");
+		}
+
+		if (my_threshold->critical) {
+			printf("Critical: start=%s end=%s; ",
+					pd_value_to_string(my_threshold->critical->start),
+					pd_value_to_string(my_threshold->critical->end)
+				  );
+		} else {
+			printf("Critical not set");
+		}
+	}
+	printf("\n");
+}
+
+bool check_range(double value, range *my_range) {
 	bool no = false;
 	bool yes = true;
 
@@ -257,10 +380,51 @@ bool check_range(double value, range *my_range)
 	}
 }
 
+/* Returns true if alert should be raised based on the range, false otherwise */
+bool mp_check_range(mp_perfdata_value value, mp_range *my_range) {
+	bool is_inside = false;
+
+	if (my_range->end_infinity == false && my_range->start_infinity == false) {
+		// range:  .........|---inside---|...........
+		// value
+		if (
+			(cmp_perfdata_value(my_range->start, value) < 1) &&
+			(cmp_perfdata_value(value, my_range->end) <= 0)) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else if (my_range->start_infinity == false && my_range->end_infinity == true) {
+		// range:  .........|---inside---------
+		// value
+		if (cmp_perfdata_value(my_range->start, value) < 0) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else if (my_range->start_infinity == true && my_range->end_infinity == false) {
+		// range:  -inside--------|....................
+		// value
+		if (cmp_perfdata_value(value, my_range->end) == -1) {
+			is_inside = true;
+		} else {
+			is_inside = false;
+		}
+	} else {
+		// range from -inf to inf, so always inside
+		is_inside = true;
+	}
+
+	if ( (is_inside && my_range->alert_on == INSIDE) ||
+	   (!is_inside && my_range->alert_on == OUTSIDE) ) {
+		   return true;
+	   }
+
+	return false;
+}
+
 /* Returns status */
-int
-get_status(double value, thresholds *my_thresholds)
-{
+int get_status(double value, thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
 		if (check_range(value, my_thresholds->critical) == true) {
 			return STATE_CRITICAL;
@@ -268,6 +432,21 @@ get_status(double value, thresholds *my_thresholds)
 	}
 	if (my_thresholds->warning != NULL) {
 		if (check_range(value, my_thresholds->warning) == true) {
+			return STATE_WARNING;
+		}
+	}
+	return STATE_OK;
+}
+
+int get_status2(mp_perfdata_value value, mp_thresholds *my_thresholds) {
+	if (my_thresholds->critical != NULL) {
+		if (mp_check_range(value, my_thresholds->critical)) {
+			return STATE_CRITICAL;
+		}
+	}
+
+	if (my_thresholds->warning != NULL) {
+		if (mp_check_range(value, my_thresholds->warning)) {
 			return STATE_WARNING;
 		}
 	}
@@ -724,4 +903,239 @@ void np_state_write_string(time_t data_time, char *data_string) {
 	}
 
 	np_free(temp_file);
+}
+
+void
+strip (char *buffer)
+{
+	size_t x;
+	int i;
+
+	for (x = strlen (buffer); x >= 1; x--) {
+		i = x - 1;
+		if (buffer[i] == ' ' ||
+				buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
+			buffer[i] = '\0';
+		else
+			break;
+	}
+	return;
+}
+
+
+/******************************************************************************
+ *
+ * Copies one string to another. Any previously existing data in
+ * the destination string is lost.
+ *
+ * Example:
+ *
+ * char *str=NULL;
+ * str = strscpy("This is a line of text with no trailing newline");
+ *
+ *****************************************************************************/
+
+char *
+strscpy (char *dest, const char *src)
+{
+	if (src == NULL)
+		return NULL;
+
+	xasprintf (&dest, "%s", src);
+
+	return dest;
+}
+
+
+
+/******************************************************************************
+ *
+ * Returns a pointer to the next line of a multiline string buffer
+ *
+ * Given a pointer string, find the text following the next sequence
+ * of \r and \n characters. This has the effect of skipping blank
+ * lines as well
+ *
+ * Example:
+ *
+ * Given text as follows:
+ *
+ * ==============================
+ * This
+ * is
+ * a
+ * 
+ * multiline string buffer
+ * ==============================
+ *
+ * int i=0;
+ * char *str=NULL;
+ * char *ptr=NULL;
+ * str = strscpy(str,"This\nis\r\na\n\nmultiline string buffer\n");
+ * ptr = str;
+ * while (ptr) {
+ *   printf("%d %s",i++,firstword(ptr));
+ *   ptr = strnl(ptr);
+ * }
+ * 
+ * Produces the following:
+ *
+ * 1 This
+ * 2 is
+ * 3 a
+ * 4 multiline
+ *
+ * NOTE: The 'firstword()' function is conceptual only and does not
+ *       exist in this package.
+ *
+ * NOTE: Although the second 'ptr' variable is not strictly needed in
+ *       this example, it is good practice with these utilities. Once
+ *       the * pointer is advance in this manner, it may no longer be
+ *       handled with * realloc(). So at the end of the code fragment
+ *       above, * strscpy(str,"foo") work perfectly fine, but
+ *       strscpy(ptr,"foo") will * cause the the program to crash with
+ *       a segmentation fault.
+ *
+ *****************************************************************************/
+
+char *
+strnl (char *str)
+{
+	size_t len;
+	if (str == NULL)
+		return NULL;
+	str = strpbrk (str, "\r\n");
+	if (str == NULL)
+		return NULL;
+	len = strspn (str, "\r\n");
+	if (str[len] == '\0')
+		return NULL;
+	str += len;
+	if (strlen (str) == 0)
+		return NULL;
+	return str;
+}
+
+
+/******************************************************************************
+ *
+ * Like strscpy, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * Example:
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ *
+ * Produces:
+ *
+ *This is a line of te
+ *
+ *****************************************************************************/
+
+char *
+strpcpy (char *dest, const char *src, const char *str)
+{
+	size_t len;
+
+	if (src)
+		len = strcspn (src, str);
+	else
+		return NULL;
+
+	if (dest == NULL || strlen (dest) < len)
+		dest = realloc (dest, len + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+
+	strncpy (dest, src, len);
+	dest[len] = '\0';
+
+	return dest;
+}
+
+
+
+/******************************************************************************
+ *
+ * Like strscat, except only the portion of the source string up to
+ * the provided delimiter is copied.
+ *
+ * str = strpcpy(str,"This is a line of text with no trailing newline","x");
+ * str = strpcat(str,"This is a line of text with no trailing newline","x");
+ * printf("%s\n",str);
+ * 
+ *This is a line of texThis is a line of tex
+ *
+ *****************************************************************************/
+
+char *
+strpcat (char *dest, const char *src, const char *str)
+{
+	size_t len, l2;
+
+	if (dest)
+		len = strlen (dest);
+	else
+		len = 0;
+
+	if (src) {
+		l2 = strcspn (src, str);
+	}
+	else {
+		return dest;
+	}
+
+	dest = realloc (dest, len + l2 + 1);
+	if (dest == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in strscat\n"));
+
+	strncpy (dest + len, src, l2);
+	dest[len + l2] = '\0';
+
+	return dest;
+}
+
+
+/******************************************************************************
+ *
+ * asprintf, but die on failure
+ *
+ ******************************************************************************/
+
+int
+xvasprintf (char **strp, const char *fmt, va_list ap)
+{
+	int result = vasprintf (strp, fmt, ap);
+	if (result == -1 || *strp == NULL)
+		die (STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+	return result;
+}
+
+int
+xasprintf (char **strp, const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+	va_start (ap, fmt);
+	result = xvasprintf (strp, fmt, ap);
+	va_end (ap);
+	return result;
+}
+
+/*
+ * Test whether a string contains only a number which would fit into an int
+ */
+bool is_integer (char *number) {
+	long int n;
+
+	if (!number || (strspn (number, "-0123456789 ") != strlen (number)))
+		return false;
+
+	n = strtol (number, NULL, 10);
+
+	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
+		return true;
+	else
+		return false;
 }
