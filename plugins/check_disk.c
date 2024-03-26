@@ -551,7 +551,7 @@ process_arguments (int argc, char **argv)
     /* See comments for 'c' */
     case 'w':                 /* warning threshold */
 			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
-					die(STATE_UNKNOWN, "Argument for --warning invalid or missing\n");
+					die(STATE_UNKNOWN, "Argument for --warning invalid or missing: %s\n", optarg);
 			}
 
       if (strstr(optarg, "%")) {
@@ -576,7 +576,7 @@ process_arguments (int argc, char **argv)
     */
     case 'c':                 /* critical threshold */
 			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
-					die(STATE_UNKNOWN, "Argument for --critical invalid or missing\n");
+					die(STATE_UNKNOWN, "Argument for --critical invalid or missing: %s\n", optarg);
 			}
 
       if (strstr(optarg, "%")) {
