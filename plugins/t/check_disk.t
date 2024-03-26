@@ -119,8 +119,12 @@ like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
 
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free -p $less_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free and $less_free");
+
 $_ = $result->output;
+
 my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+)MiB .* (\d+)MiB /g);
+die "Cannot parse output: $_" unless ($free_mb_on_mp1 && $free_mb_on_mp2);
+
 my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
 
 
