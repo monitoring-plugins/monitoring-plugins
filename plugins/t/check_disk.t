@@ -315,7 +315,7 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -C -w 0% -c 0% -p $mountpoi
 like( $result->output, '/;.*;\|/', "-C selects partitions if -p is not given");
 
 # grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit
-$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ."-g group -p $mountpoint_valid -p $mountpoint2_valid" );
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 2, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit\nInstead received: " . $result->output);
 
 # grouping: exit warning if the sum of free megs on mp1+mp2 is between -w and -c
