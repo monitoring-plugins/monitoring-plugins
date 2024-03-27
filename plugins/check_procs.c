@@ -56,6 +56,7 @@ int validate_arguments (void);
 int convert_to_seconds (char *);
 void print_help (void);
 void print_usage (void);
+int read_openvz_id(int procid);
 
 char *warning_range = NULL;
 char *critical_range = NULL;
@@ -255,6 +256,11 @@ main (int argc, char **argv)
 			else if (myppid == procpid) {
 				if (verbose >= 3)
 					 printf("not considering - is parent\n");
+				continue;
+			}
+
+			/* Ignore child containers if we're on an OpenVZ hardware node */
+			if (read_openvz_id(1) == 0 && read_openvz_id(procpid) != 0) {
 				continue;
 			}
 
@@ -645,6 +651,29 @@ process_arguments (int argc, char **argv)
 	return validate_arguments ();
 }
 
+/* Returns the OpenVZ environment ID of the specified process, or -1 if we're not on OpenVZ */
+int read_openvz_id(int procid) {
+	char *filename = NULL;
+	asprintf(&filename, "/proc/%d/status", procid);
+	
+	FILE *file = NULL;
+	if ((file = fopen(filename, "r")) == NULL) {
+		return -1;
+	}
+	
+	char line[64];
+	int result = -1;
+	while (fgets(line, sizeof(line), file) != NULL) {
+		int tmp = sscanf(line, "envID:\t%d", &result);
+		if (tmp == 1) {
+			// Found the line, abort here
+			break;
+		}
+	}
+	
+	fclose(file);
+	return result;
+}
 
 
 int
