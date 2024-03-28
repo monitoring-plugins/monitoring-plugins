@@ -4,7 +4,7 @@
 *
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 2000-2007 Monitoring Plugins Development Team
+* Copyright (c) 2000-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -28,7 +28,7 @@
 *****************************************************************************/
 
 const char *progname = "check_swap";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -52,9 +52,9 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 typedef struct {
-	int is_percentage;
+	bool is_percentage;
 	uint64_t value;
-} threshold_t;
+} threshold;
 
 int check_swap (float free_swap_mb, float total_swap_mb);
 int process_arguments (int argc, char **argv);
@@ -62,8 +62,8 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-threshold_t warn;
-threshold_t crit;
+threshold warn;
+threshold crit;
 int verbose;
 bool allswaps = false;
 int no_swap_state = STATE_CRITICAL;
@@ -465,7 +465,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					warn.is_percentage = 1;
+					warn.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
@@ -475,7 +475,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					warn.is_percentage = 0;
+					warn.is_percentage = false;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
 					} else {
@@ -495,7 +495,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					crit.is_percentage = 1;
+					crit.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
@@ -505,7 +505,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					crit.is_percentage = 0;
+					crit.is_percentage = false;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
 					} else {
