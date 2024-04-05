@@ -46,7 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <stdarg.h>
 #include "fsusage.h"
 #include "mountlist.h"
-#include "intprops.h"    /* necessary for TYPE_MAXIMUM */
+#include <float.h>
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
@@ -325,7 +325,7 @@ main (int argc, char **argv)
       get_stats (path, &fsp);
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%lu mult=%lu\n",
+        printf ("For %s, used_pct=%f free_pct=%f used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%f free_inodes_pct=%f fsp.fsu_blocksize=%lu mult=%lu\n",
                 me->me_mountdir,
                 path->dused_pct,
                 path->dfree_pct,
@@ -431,7 +431,7 @@ main (int argc, char **argv)
 	  } else {
 		  xasprintf(&flag_header, "");
 	  }
-	  xasprintf (&output, "%s%s %s %llu%s (%.0f%%",
+	  xasprintf (&output, "%s%s %s %llu%s (%.1f%%",
 			  output, flag_header,
 			  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 			  path->dfree_units,
@@ -461,24 +461,8 @@ main (int argc, char **argv)
 
 double calculate_percent(uintmax_t value, uintmax_t total) {
   double pct = -1;
-  /* I don't understand the below, but it is taken from coreutils' df */
-  /* Seems to be calculating pct, in the best possible way */
-  if (value <= TYPE_MAXIMUM(uintmax_t) / 100
-    && total != 0) {
-    uintmax_t u100 = value * 100;
-    pct = u100 / total + (u100 % total != 0);
-  } else {
-    /* Possible rounding errors - see coreutils' df for more explanation */
-    double u = value;
-    double t = total;
-    if (t) {
-      long int lipct = pct = u * 100 / t;
-      double ipct = lipct;
-
-      /* Like 'pct = ceil (dpct);', but without ceil - from coreutils again */
-      if (ipct - 1 < pct && pct <= ipct + 1)
-        pct = ipct + (ipct < pct);
-    }
+  if(value <= DBL_MAX && total != 0) {
+    pct = (double)value / total * 100.0;
   }
   return pct;
 }
@@ -566,6 +550,10 @@ process_arguments (int argc, char **argv)
 
     /* See comments for 'c' */
     case 'w':                 /* warning threshold */
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --warning invalid or missing: %s\n", optarg);
+			}
+
       if (strstr(optarg, "%")) {
         if (*optarg == '@') {
           warn_freespace_percent = optarg;
@@ -587,6 +575,10 @@ process_arguments (int argc, char **argv)
        force @ at the beginning of the range, so that it is backwards compatible
     */
     case 'c':                 /* critical threshold */
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --critical invalid or missing: %s\n", optarg);
+			}
+
       if (strstr(optarg, "%")) {
         if (*optarg == '@') {
           crit_freespace_percent = optarg;
@@ -1130,7 +1122,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
   }
   /* finally calculate percentages for either plain FS or summed up group */
   p->dused_pct = calculate_percent( p->used, p->used + p->available );    /* used + available can never be > uintmax */
-  p->dfree_pct = 100 - p->dused_pct;
+  p->dfree_pct = 100.0 - p->dused_pct;
   p->dused_inodes_percent = calculate_percent(p->inodes_total - p->inodes_free, p->inodes_total);
   p->dfree_inodes_percent = 100 - p->dused_inodes_percent;
 
