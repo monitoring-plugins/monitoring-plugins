@@ -2022,7 +2022,7 @@ print_help (void)
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
-  printf ("    %s\n", _("URL encoded http POST data"));
+  printf ("    %s\n", _("URL decoded http POST data"));
   printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
