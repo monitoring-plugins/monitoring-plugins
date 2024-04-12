@@ -401,7 +401,7 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	uint64_t free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
 	uint64_t usage_percentage = ((total_swap_mb - free_swap_mb) / total_swap_mb) * 100;
 
-	if (warn.value && crit.value) {                                 /* Thresholds defined */
+	if (warn.value || crit.value) {                                 /* Thresholds defined */
 	        if (!crit.is_percentage && crit.value >= free_swap) return STATE_CRITICAL;
 	        if (!warn.is_percentage && warn.value >= free_swap) return STATE_WARNING;
 
@@ -546,13 +546,7 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-        if (warn.value && !crit.value) {
-                usage4(_("Must define both warning and critical thresholds"));
-        }
-        else if (crit.value && !warn.value) {
-                usage4(_("Must define both warning and critical thresholds"));
-        }
-	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
+	if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
 		 * and crit is absolute. We cannot determine the condition at this point since we
 		 * dont know the value of total swap yet
