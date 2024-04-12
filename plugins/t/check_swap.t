@@ -40,4 +40,4 @@ like( $result->output, $warnOutput, "Right output" );
 
 $result = NPTest->testCmd( "./check_swap -c 100%" );				# 100% (single threshold, always critical)
 cmp_ok( $result->return_code, "==", 2, 'Get critical because not 100% free' );
-like( $result->output, $warnOutput, "Right output" );
+like( $result->output, $failureOutput, "Right output" );
