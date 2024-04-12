@@ -5,7 +5,7 @@
 #
 
 use strict;
-use Test::More tests => 8;
+use Test::More tests => 14;
 use NPTest;
 
 my $successOutput = '/^SWAP OK - [0-9]+\% free \([0-9]+MB out of [0-9]+MB\)/';
