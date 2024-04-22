@@ -110,11 +110,12 @@ void socket_timeout_alarm_handler (int) __attribute__((noreturn));
 int np_net_ssl_init(int sd);
 int np_net_ssl_init_with_hostname(int sd, char *host_name);
 int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version);
-int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey);
+int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, int sni, char *cert, char *privkey);
 void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
 int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
+int np_net_ssl_get_certificate_cn(X509 *certificate, char *buf, size_t buflen);
 #endif /* HAVE_SSL */
 
 #endif /* _NETUTILS_H_ */
