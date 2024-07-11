@@ -1,0 +1,27 @@
+---
+name: Spellcheck
+
+on:
+  # Run for pushes on any branch
+  push:
+    branches:
+      - '*'
+  # Run for any PRs
+  pull_request:
+
+jobs:
+  codespell:
+    name: codespell
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Codespell
+        uses: codespell-project/actions-codespell@v2
+        with:
+          skip: "./.git,./.gitignore,./ABOUT-NLS,./gl,./tools/squid.conf,./build-aux/ltmain.sh,THANKS.in"
+          ignore_words_list: allright,gord,didi,hda,nd,alis,clen,scrit,ser,fot,te,parm,isnt,consol,oneliners,esponse,slac
+          check_filenames: true
+          check_hidden: true

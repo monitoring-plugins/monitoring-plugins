@@ -87,7 +87,6 @@ main (int argc, char **argv)
   struct timeval tv;
   bool parse_address = false; /* This flag scans for Address: but only after Name: */
   output chld_out, chld_err;
-  size_t i;
   bool is_nxdomain = false;
 
   setlocale (LC_ALL, "");

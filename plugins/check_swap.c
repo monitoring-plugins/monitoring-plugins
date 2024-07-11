@@ -4,7 +4,7 @@
 *
 * License: GPL
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 2000-2007 Monitoring Plugins Development Team
+* Copyright (c) 2000-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -28,7 +28,7 @@
 *****************************************************************************/
 
 const char *progname = "check_swap";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -52,9 +52,9 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 typedef struct {
-	int is_percentage;
+	bool is_percentage;
 	uint64_t value;
-} threshold_t;
+} threshold;
 
 int check_swap (float free_swap_mb, float total_swap_mb);
 int process_arguments (int argc, char **argv);
@@ -62,8 +62,8 @@ int validate_arguments (void);
 void print_usage (void);
 void print_help (void);
 
-threshold_t warn;
-threshold_t crit;
+threshold warn;
+threshold crit;
 int verbose;
 bool allswaps = false;
 int no_swap_state = STATE_CRITICAL;
@@ -399,28 +399,30 @@ check_swap(float free_swap_mb, float total_swap_mb)
 	if (!total_swap_mb) return no_swap_state;
 
 	uint64_t free_swap = free_swap_mb * (1024 * 1024);		/* Convert back to bytes as warn and crit specified in bytes */
-
-	if (!crit.is_percentage && crit.value >= free_swap) return STATE_CRITICAL;
-	if (!warn.is_percentage && warn.value >= free_swap) return STATE_WARNING;
-
-
 	uint64_t usage_percentage = ((total_swap_mb - free_swap_mb) / total_swap_mb) * 100;
 
-	if (crit.is_percentage &&
-			crit.value != 0 &&
-			usage_percentage >= (100 - crit.value))
-	{
-			return STATE_CRITICAL;
-	}
+	if (warn.value || crit.value) {                                 /* Thresholds defined */
+	        if (!crit.is_percentage && crit.value >= free_swap) return STATE_CRITICAL;
+	        if (!warn.is_percentage && warn.value >= free_swap) return STATE_WARNING;
 
-	if (warn.is_percentage &&
-			warn.value != 0 &&
-			usage_percentage >= (100 - warn.value))
-	{
-			return STATE_WARNING;
-	}
+                if (crit.is_percentage &&
+                                crit.value != 0 &&
+                                usage_percentage >= (100 - crit.value))
+                {
+                                return STATE_CRITICAL;
+                }
 
-	return STATE_OK;
+                if (warn.is_percentage &&
+                                warn.value != 0 &&
+                                usage_percentage >= (100 - warn.value))
+                {
+                                return STATE_WARNING;
+                }
+
+                return STATE_OK;
+        } else {                                                        /* Without thresholds */
+                return STATE_OK;
+        }
 }
 
 
@@ -443,9 +445,6 @@ process_arguments (int argc, char **argv)
 		{0, 0, 0, 0}
 	};
 
-	if (argc < 2)
-		return ERROR;
-
 	while (1) {
 		c = getopt_long (argc, argv, "+?Vvhac:w:n:", longopts, &option);
 
@@ -465,7 +464,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					warn.is_percentage = 1;
+					warn.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &warn.value)) {
 						if (warn.value > 100) {
@@ -475,7 +474,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					warn.is_percentage = 0;
+					warn.is_percentage = false;
 					if (is_uint64(optarg, &warn.value)) {
 						break;
 					} else {
@@ -495,7 +494,7 @@ process_arguments (int argc, char **argv)
 
 				if (optarg[length - 1] == '%') {
 					/* It's percentage */
-					crit.is_percentage = 1;
+					crit.is_percentage = true;
 					optarg[length - 1] = '\0';
 					if (is_uint64(optarg, &crit.value)) {
 						if (crit.value> 100) {
@@ -505,7 +504,7 @@ process_arguments (int argc, char **argv)
 					break;
 				} else {
 					/* It's Bytes */
-					crit.is_percentage = 0;
+					crit.is_percentage = false;
 					if (is_uint64(optarg, &crit.value)) {
 						break;
 					} else {
@@ -547,10 +546,7 @@ process_arguments (int argc, char **argv)
 int
 validate_arguments (void)
 {
-	if (warn.value == 0 && crit.value == 0) {
-		return ERROR;
-	}
-	else if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
+	if ((warn.is_percentage == crit.is_percentage) && (warn.value < crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn is percentage
 		 * and crit is absolute. We cannot determine the condition at this point since we
 		 * dont know the value of total swap yet
@@ -595,6 +591,7 @@ print_help (void)
 	printf ("\n");
 	printf ("%s\n", _("Notes:"));
 	printf (" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, they are all checked."));
+	printf (" %s\n", _("Without thresholds, the plugin shows free swap space and performance data, but always returns OK."));
 	printf (" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
 
 	printf (UT_SUPPORT);
@@ -605,6 +602,6 @@ void
 print_usage (void)
 {
 	printf ("%s\n", _("Usage:"));
-	printf (" %s [-av] -w <percent_free>%% -c <percent_free>%%\n",progname);
-	printf ("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");
+	printf (" %s [-av] [-w <percent_free>%%] [-c <percent_free>%%]\n",progname);
+	printf ("  [-w <bytes_free>] [-c <bytes_free>] [-n <state>]\n");
 }

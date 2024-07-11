@@ -46,7 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <stdarg.h>
 #include "fsusage.h"
 #include "mountlist.h"
-#include "intprops.h"    /* necessary for TYPE_MAXIMUM */
+#include <float.h>
 #if HAVE_LIMITS_H
 # include <limits.h>
 #endif
@@ -112,8 +112,7 @@ enum
 {
   SYNC_OPTION = CHAR_MAX + 1,
   NO_SYNC_OPTION,
-  BLOCK_SIZE_OPTION,
-  IGNORE_MISSING
+  BLOCK_SIZE_OPTION
 };
 
 #ifdef _AIX
@@ -326,7 +325,7 @@ main (int argc, char **argv)
       get_stats (path, &fsp);
 
       if (verbose >= 3) {
-        printf ("For %s, used_pct=%g free_pct=%g used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%g free_inodes_pct=%g fsp.fsu_blocksize=%lu mult=%lu\n",
+        printf ("For %s, used_pct=%f free_pct=%f used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%f free_inodes_pct=%f fsp.fsu_blocksize=%lu mult=%lu\n",
                 me->me_mountdir,
                 path->dused_pct,
                 path->dfree_pct,
@@ -432,7 +431,7 @@ main (int argc, char **argv)
 	  } else {
 		  xasprintf(&flag_header, "");
 	  }
-	  xasprintf (&output, "%s%s %s %llu%s (%.0f%%",
+	  xasprintf (&output, "%s%s %s %llu%s (%.1f%%",
 			  output, flag_header,
 			  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
 			  path->dfree_units,
@@ -452,7 +451,7 @@ main (int argc, char **argv)
 
   if (strcmp(output, "") == 0 && ! erronly) {
     preamble = "";
-    xasprintf (&output, " - No disks were found for provided parameters;");
+    xasprintf (&output, " - No disks were found for provided parameters");
   }
 
   printf ("DISK %s%s%s%s%s|%s\n", state_text (result), ((erronly && result==STATE_OK)) ? "" : preamble, output, (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
@@ -462,24 +461,8 @@ main (int argc, char **argv)
 
 double calculate_percent(uintmax_t value, uintmax_t total) {
   double pct = -1;
-  /* I don't understand the below, but it is taken from coreutils' df */
-  /* Seems to be calculating pct, in the best possible way */
-  if (value <= TYPE_MAXIMUM(uintmax_t) / 100
-    && total != 0) {
-    uintmax_t u100 = value * 100;
-    pct = u100 / total + (u100 % total != 0);
-  } else {
-    /* Possible rounding errors - see coreutils' df for more explanation */
-    double u = value;
-    double t = total;
-    if (t) {
-      long int lipct = pct = u * 100 / t;
-      double ipct = lipct;
-
-      /* Like 'pct = ceil (dpct);', but without ceil - from coreutils again */
-      if (ipct - 1 < pct && pct <= ipct + 1)
-        pct = ipct + (ipct < pct);
-    }
+  if(value <= DBL_MAX && total != 0) {
+    pct = (double)value / total * 100.0;
   }
   return pct;
 }
@@ -524,7 +507,7 @@ process_arguments (int argc, char **argv)
     {"ignore-ereg-partition", required_argument, 0, 'i'},
     {"ignore-eregi-path", required_argument, 0, 'I'},
     {"ignore-eregi-partition", required_argument, 0, 'I'},
-    {"ignore-missing", no_argument, 0, IGNORE_MISSING},
+    {"ignore-missing", no_argument, 0, 'n'},
     {"local", no_argument, 0, 'l'},
     {"stat-remote-fs", no_argument, 0, 'L'},
     {"iperfdata", no_argument, 0, 'P'},
@@ -550,7 +533,7 @@ process_arguments (int argc, char **argv)
       strcpy (argv[c], "-t");
 
   while (1) {
-    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEA", longopts, &option);
+    c = getopt_long (argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEAn", longopts, &option);
 
     if (c == -1 || c == EOF)
       break;
@@ -567,6 +550,10 @@ process_arguments (int argc, char **argv)
 
     /* See comments for 'c' */
     case 'w':                 /* warning threshold */
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --warning invalid or missing: %s\n", optarg);
+			}
+
       if (strstr(optarg, "%")) {
         if (*optarg == '@') {
           warn_freespace_percent = optarg;
@@ -588,6 +575,10 @@ process_arguments (int argc, char **argv)
        force @ at the beginning of the range, so that it is backwards compatible
     */
     case 'c':                 /* critical threshold */
+			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+					die(STATE_UNKNOWN, "Argument for --critical invalid or missing: %s\n", optarg);
+			}
+
       if (strstr(optarg, "%")) {
         if (*optarg == '@') {
           crit_freespace_percent = optarg;
@@ -792,7 +783,7 @@ process_arguments (int argc, char **argv)
       cflags = default_cflags;
       break;
 
-    case IGNORE_MISSING:
+    case 'n':
       ignore_missing = true;
       break;
     case 'A':
@@ -832,7 +823,7 @@ process_arguments (int argc, char **argv)
 
       if (!fnd && ignore_missing == true) {
         path_ignored = true;
-        /* path_selected = true;*/
+        path_selected = true;
         break;
       } else if (!fnd)
         die (STATE_UNKNOWN, "DISK %s: %s - %s\n",_("UNKNOWN"),
@@ -1004,7 +995,7 @@ print_help (void)
   printf ("    %s\n", _("Regular expression to ignore selected path/partition (case insensitive) (may be repeated)"));
   printf (" %s\n", "-i, --ignore-ereg-path=PATH, --ignore-ereg-partition=PARTITION");
   printf ("    %s\n", _("Regular expression to ignore selected path or partition (may be repeated)"));
-  printf (" %s\n", "--ignore-missing");
+  printf (" %s\n", "-n, --ignore-missing");
   printf ("    %s\n", _("Return OK if no filesystem matches, filesystem does not exist or is inaccessible."));
   printf ("    %s\n", _("(Provide this option before -p / -r / --ereg-path if used)"));
   printf (UT_PLUG_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -1131,7 +1122,7 @@ get_stats (struct parameter_list *p, struct fs_usage *fsp) {
   }
   /* finally calculate percentages for either plain FS or summed up group */
   p->dused_pct = calculate_percent( p->used, p->used + p->available );    /* used + available can never be > uintmax */
-  p->dfree_pct = 100 - p->dused_pct;
+  p->dfree_pct = 100.0 - p->dused_pct;
   p->dused_inodes_percent = calculate_percent(p->inodes_total - p->inodes_free, p->inodes_total);
   p->dfree_inodes_percent = 100 - p->dused_inodes_percent;
 

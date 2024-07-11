@@ -23,11 +23,11 @@ my $mountpoint2_valid = getTestParameter( "NP_MOUNTPOINT2_VALID", "Path to anoth
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 88;
+	plan tests => 94;
 }
 
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $mountpoint_valid -w 1% -c 1% -p $mountpoint2_valid"
 	);
 cmp_ok( $result->return_code, "==", 0, "Checking two mountpoints (must have at least 1% free in space and inodes)");
 my $c = 0;
@@ -44,7 +44,7 @@ my @perf_data = sort(split(/ /, $result->perf_output));
 # Calculate avg_free free on mountpoint1 and mountpoint2
 # because if you check in the middle, you should get different errors
 $_ = $result->output;
-my ($free_on_mp1, $free_on_mp2) = (m/\((\d+)%.*\((\d+)%/);
+my ($free_on_mp1, $free_on_mp2) = (m/\((\d+\.\d+)%.*\((\d+\.\d+)%/);
 die "Cannot parse output: $_" unless ($free_on_mp1 && $free_on_mp2);
 my $avg_free = ceil(($free_on_mp1+$free_on_mp2)/2);
 my ($more_free, $less_free);
@@ -103,8 +103,8 @@ is ($crit_percth_data, int((1-10/100)*$total_percth_data), "Wrong critical in pe
 
 
 # Check when order of mount points are reversed, that perf data remains same
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $mountpoint2_valid -w 1% -c 1% -p $mountpoint_valid" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $mountpoint2_valid -w 1% -c 1% -p $mountpoint_valid"
 	);
 @_ = sort(split(/ /, $result->perf_output));
 is_deeply( \@perf_data, \@_, "perf data for both filesystems same when reversed");
@@ -119,8 +119,12 @@ like  ( $result->only_output, qr/$more_free/, "Have disk name in text");
 
 $result = NPTest->testCmd( "./check_disk -w 1 -c 1 -p $more_free -p $less_free" );
 cmp_ok( $result->return_code, '==', 0, "At least 1 MB available on $more_free and $less_free");
+
 $_ = $result->output;
+
 my ($free_mb_on_mp1, $free_mb_on_mp2) = (m/(\d+)MiB .* (\d+)MiB /g);
+die "Cannot parse output: $_" unless ($free_mb_on_mp1 && $free_mb_on_mp2);
+
 my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
 
 
@@ -134,8 +138,8 @@ cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );
 $result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p $more_free" );
 cmp_ok( $result->return_code, "==", 0, "At least 1% free" );
 
-$result = NPTest->testCmd( 
-	"./check_disk -w 1% -c 1% -p $more_free -w 100% -c 100% -p $less_free" 
+$result = NPTest->testCmd(
+	"./check_disk -w 1% -c 1% -p $more_free -w 100% -c 100% -p $less_free"
 	);
 cmp_ok( $result->return_code, "==", 2, "Get critical on less_free mountpoint $less_free" );
 like( $result->output, $failureOutput, "Right output" );
@@ -151,14 +155,14 @@ $result = NPTest->testCmd(
 	);
 cmp_ok( $result->return_code, '==', 0, "Get ok on more_free mountpoint, when checking avg_free");
 
-$result = NPTest->testCmd( 
-	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+$result = NPTest->testCmd(
+	"./check_disk -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free"
 	);
 cmp_ok( $result->return_code, "==", 1, "Combining above two tests, get warning");
 my $all_disks = $result->output;
 
 $result = NPTest->testCmd(
-	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free" 
+	"./check_disk -e -w $avg_free% -c 0% -p $less_free -w $avg_free% -c $avg_free% -p $more_free"
 	);
 isnt( $result->output, $all_disks, "-e gives different output");
 
@@ -240,7 +244,7 @@ TODO: {
 	cmp_ok( $result->return_code, '==', 3, "Invalid command line options" );
 }
 
-$result = NPTest->testCmd( 
+$result = NPTest->testCmd(
 	"./check_disk -p $mountpoint_valid -w 10% -c 15%"
 	);
 cmp_ok( $result->return_code, "==", 3, "Invalid options: -p must come after thresholds" );
@@ -311,8 +315,8 @@ $result = NPTest->testCmd( "./check_disk -w 0% -c 0% -C -w 0% -c 0% -p $mountpoi
 like( $result->output, '/;.*;\|/', "-C selects partitions if -p is not given");
 
 # grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit
-$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ."-g group -p $mountpoint_valid -p $mountpoint2_valid" );
-cmp_ok( $result->return_code, '==', 2, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit");
+$result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all + 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
+cmp_ok( $result->return_code, '==', 2, "grouping: exit crit if the sum of free megs on mp1+mp2 is less than warn/crit\nInstead received: " . $result->output);
 
 # grouping: exit warning if the sum of free megs on mp1+mp2 is between -w and -c
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all + 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
@@ -322,7 +326,7 @@ cmp_ok( $result->return_code, '==', 1, "grouping: exit warning if the sum of fre
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -g group -p $mountpoint_valid -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 0, "grouping: exit ok if the sum of free megs on mp1+mp2 is more than warn/crit");
 
-# grouping: exit unknown if group name is given after -p 
+# grouping: exit unknown if group name is given after -p
 $result = NPTest->testCmd( "./check_disk -w ". ($free_mb_on_all - 1) ." -c ". ($free_mb_on_all - 1) ." -p $mountpoint_valid -g group -p $mountpoint2_valid" );
 cmp_ok( $result->return_code, '==', 3, "Invalid options: -p must come after groupname");
 
@@ -355,17 +359,17 @@ like( $result->output, qr/$mountpoint2_valid/,"ignore: output data does have $mo
 # ignore-missing: exit okay, when fs is not accessible
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p /bob");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for not existing filesystem /bob");
-like( $result->output, '/^DISK OK - No disks were found for provided parameters; - ignored paths: /bob;.*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters - ignored paths: /bob;.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when regex does not match
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r /bob");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
-like( $result->output, '/^DISK OK - No disks were found for provided parameters;.*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when fs with exact match (-E) is not found
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -E -p /etc");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay when exact match does not find fs");
-like( $result->output, '/^DISK OK - No disks were found for provided parameters; - ignored paths: /etc;.*$/', 'Output OK');
+like( $result->output, '/^DISK OK - No disks were found for provided parameters - ignored paths: /etc;.*$/', 'Output OK');
 
 # ignore-missing: exit okay, when checking one existing fs and one non-existing fs (regex)
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -r '/bob' -r '^/\$'");
@@ -376,3 +380,18 @@ like( $result->output, '/^DISK OK - free space: \/ .*$/', 'Output OK');
 $result = NPTest->testCmd( "./check_disk --ignore-missing -w 0% -c 0% -p '/bob' -p '/'");
 cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
 like( $result->output, '/^DISK OK - free space: / .*; - ignored paths: /bob;.*$/', 'Output OK');
+
+# ignore-missing: exit okay, when checking one non-existing fs (path) and one ignored
+$result = NPTest->testCmd( "./check_disk -n -w 0% -c 0% -r /dummy -i /dummy2");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - No disks were found for provided parameters\|$/', 'Output OK');
+
+# ignore-missing: exit okay, when regex match does not find anything
+$result = NPTest->testCmd( "./check_disk -n -e -l -w 10% -c 5% -W 10% -K 5% -r /dummy");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK\|$/', 'Output OK');
+
+# ignore-missing: exit okay, when regex match does not find anything
+$result = NPTest->testCmd( "./check_disk -n -l -w 10% -c 5% -W 10% -K 5% -r /dummy");
+cmp_ok( $result->return_code, '==', 0, "ignore-missing: return okay for regular expression not matching");
+like( $result->output, '/^DISK OK - No disks were found for provided parameters\|$/', 'Output OK');

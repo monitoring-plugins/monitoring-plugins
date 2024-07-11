@@ -23,12 +23,14 @@
 *****************************************************************************/
 
 #include "common.h"
-#include "utils.h"
+#include "./utils.h"
 #include "utils_base.h"
 #include <stdarg.h>
 #include <limits.h>
 #include <string.h>
 #include <errno.h>
+
+#include <stdbool.h>
 
 #include <arpa/inet.h>
 
@@ -188,6 +190,33 @@ bool is_percentage (char *number) {
 		return false;
 }
 
+bool is_percentage_expression (const char str[]) {
+	if (!str) {
+		return false;
+	}
+
+	size_t len = strlen(str);
+
+	if (str[len-1] != '%') {
+		return false;
+	}
+
+	char *foo = calloc(sizeof(char), len + 1);
+
+	if (!foo) {
+		die (STATE_UNKNOWN, _("calloc failed \n"));
+	}
+
+	strcpy(foo, str);
+	foo[len-1] = '\0';
+
+	bool result = is_numeric(foo);
+
+	free(foo);
+
+	return result;
+}
+
 bool is_integer (char *number) {
 	long int n;
 
@@ -258,16 +287,25 @@ bool is_int64(char *number, int64_t *target) {
  */
 bool is_uint64(char *number, uint64_t *target) {
 	errno = 0;
-	uint64_t tmp = strtoll(number, NULL, 10);
+	char *endptr = { 0 };
+	unsigned long long tmp = strtoull(number, &endptr, 10);
+
 	if (errno != 0) {
 		return false;
 	}
-	if (tmp < 0 || tmp > UINT64_MAX) {
+
+	if (*endptr != '\0') {
 		return false;
 	}
-	if (target != NULL) {
-		*target = tmp;
+
+	if (tmp > UINT64_MAX) {
+		return false;
 	}
+
+	if (target != NULL) {
+		*target = (uint64_t)tmp;
+	}
+
 	return true;
 }
 
