@@ -64,13 +64,9 @@ apt-get -y install perl \
 	iproute2
 
 # remove ipv6 interface from hosts
-if [ $(ip addr show | grep "inet6 ::1" | wc -l) -eq "0" ]; then
-    sed '/^::1/d' /etc/hosts > /tmp/hosts
-    cp -f /tmp/hosts /etc/hosts
-fi
-
+sed '/^::1/d' /etc/hosts > /tmp/hosts
+cp -f /tmp/hosts /etc/hosts
 ip addr show
-
 cat /etc/hosts
 
 # apache
