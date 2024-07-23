@@ -134,6 +134,7 @@ char regexp[MAX_RE_SIZE];
 int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
 bool invert_regex = false;
+int state_regex = STATE_CRITICAL;
 
 char *server_address = NULL;
 char *host_name = NULL;
@@ -1133,7 +1134,7 @@ GOT_FIRST_CERT:
 				strcpy(msg, tmp);
 
 			}
-			result = STATE_CRITICAL;
+			result = state_regex;
 		} else {
 			regerror (errcode, &preg, errbuf, MAX_INPUT_BUFFER);
 
@@ -1391,7 +1392,8 @@ process_arguments (int argc, char **argv)
     HTTP_VERSION_OPTION,
     AUTOMATIC_DECOMPRESSION,
     COOKIE_JAR,
-    HAPROXY_PROTOCOL
+    HAPROXY_PROTOCOL,
+    STATE_REGEX
   };
 
   int option = 0;
@@ -1430,6 +1432,7 @@ process_arguments (int argc, char **argv)
     {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
+    {"state-regex", required_argument, 0, STATE_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
@@ -1765,6 +1768,13 @@ process_arguments (int argc, char **argv)
     case INVERT_REGEX:
       invert_regex = true;
       break;
+    case STATE_REGEX:
+      if (!strcmp (optarg, "critical"))
+        state_regex = STATE_CRITICAL;
+      else if (!strcmp (optarg, "warning"))
+        state_regex = STATE_WARNING;
+      else usage2 (_("Invalid state-regex option"), optarg);
+      break;
     case '4':
       address_family = AF_INET;
       break;
@@ -2022,7 +2032,7 @@ print_help (void)
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
-  printf ("    %s\n", _("URL encoded http POST data"));
+  printf ("    %s\n", _("URL decoded http POST data"));
   printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
@@ -2040,7 +2050,10 @@ print_help (void)
   printf (" %s\n", "-R, --eregi=STRING");
   printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
   printf (" %s\n", "--invert-regex");
-  printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
+  printf ("    %s\n", _("Return STATE if found, OK if not (STATE is CRITICAL, per default)"));
+  printf ("    %s\n", _("can be changed with --state--regex)"));
+  printf (" %s\n", "--regex-state=STATE");
+  printf ("    %s\n", _("Return STATE if regex is found, OK if not\n"));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
