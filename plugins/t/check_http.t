@@ -166,10 +166,10 @@ SKIP: {
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
         like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com -u /firefox -f follow" );
+        $res = NPTest->testCmd( "./$plugin -H monitoring-plugins.org -u /download.html -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
-        $res = NPTest->testCmd( "./$plugin -H www.mozilla.com --extended-perfdata" );
+        $res = NPTest->testCmd( "./$plugin -H monitoring-plugins.org --extended-perfdata" );
         like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
 }
 
