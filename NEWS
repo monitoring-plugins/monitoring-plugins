@@ -1,5 +1,64 @@
 This file documents the major additions and syntax changes between releases.
 
+2.4.0 25th Jul 2024
+	FIXES
+	* check_dbi: Compiler warning for uninitialized variable
+	* check_curl: Initialize pointer before usage
+	* check_ntp: Initialize intermediate results in any case
+	* Fixes for -Wsign-compare
+	* check_tcp: Fixes an error with using the wrong type for a variable
+	* check_mailq: exit on empty strings and exit early
+	* check_users: Change option for sanity checking arguments to avoid segfault
+	* check_users: Update help to properly show that thresholds are ranges
+	* check_users: fix segfault
+	* check_dbi: Fix compiler warning for uninitialized variable
+	* check_curl: Initialize pointer before usage
+	* check_ntp: Initialize intermediate results in any case
+	* Fix logic in is_uint64_t to fix type-limit warning
+	* check_ntp_peer: Fixes for Wmaybe-unitialized and some restructuring
+	* check_dns: Remove unused variable
+	* check_ntp_peer: Fixes for Wmaybe-unitialized and some restructuring
+	* check_dns: Remove unused variable
+	* check_disk: fix ignore-missing in combination with includes
+	* check_procs: ignore our own children
+	* Prevent -lcrypto from showing up in Makefile dependencies
+	* Change irritating NULL assignment
+	* check_http: Remove self assignment of a variable and add some comments
+	* check_snmp: Remove unused variable
+	* check_dhcp: Make implicit conversion explicit to dismiss warning
+	* check_http: Remove self assignment of a variable and add some comments
+	* check_dhcp: Make implicit conversion explicit to dismiss warning
+	* Ini Parser: Avoid freeing symbols from text section
+	* check_icmp: keep performance data order in case of none-reachable hosts
+	* check_swap: Change another fake boolean to a real one
+	* check_swap: Rename type since *_t is reserved for C standard types
+	* check_ssh: Fix a typo in "remote-protocol parameter
+	* check_ssh: Handle non-alpha software versions
+	* check_ssh: properly parse a delayed version control string
+	* check_disk: Fail on missing arguments for --warning and --critical and fix a test case
+	* check_disk: Use new test function for percentage expressions
+	* check_load: remove unused code
+        * check_curl/check_http: clarified format of POST data
+
+	ENHANCEMENTS
+	* Use C99 booleans
+	* check_mailq: remove trailing whitespaces
+	* check_mailq: unify tabs/spaces
+	* check_oracle: Shellcheck fixes
+	* check_ups: output ups.realpower if supported
+	* check_disk: add -n short option for --ignore-missing
+	* check_procs: Improve help text, mentioning excluded processes
+	* check_procs: Generalise wording, remove mentioning of nrpe
+	* check_curl: add haproxy protocol option
+	* Improve negate plugin helptext
+	* check_disk: increase alert precision
+	* check_ircd: IPv6 support
+	* check_nwstat: adds percentage used space
+	* Add new test function for percentage expressions
+	* check_swap: Possibility to run check_swap without thresholds
+	* check_ups: additional alarm conditions
+        * check_http/check_curl: added a --regex-state option to change the state of a regex check
+
 2.3.5 18th Oct 2023
 	FIXES
 	* Include maxfd.h in lib Makefile
