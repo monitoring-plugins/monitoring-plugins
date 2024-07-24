@@ -17,16 +17,12 @@ This file documents the major additions and syntax changes between releases.
 	* Fix logic in is_uint64_t to fix type-limit warning
 	* check_ntp_peer: Fixes for Wmaybe-unitialized and some restructuring
 	* check_dns: Remove unused variable
-	* check_ntp_peer: Fixes for Wmaybe-unitialized and some restructuring
-	* check_dns: Remove unused variable
 	* check_disk: fix ignore-missing in combination with includes
 	* check_procs: ignore our own children
 	* Prevent -lcrypto from showing up in Makefile dependencies
 	* Change irritating NULL assignment
 	* check_http: Remove self assignment of a variable and add some comments
 	* check_snmp: Remove unused variable
-	* check_dhcp: Make implicit conversion explicit to dismiss warning
-	* check_http: Remove self assignment of a variable and add some comments
 	* check_dhcp: Make implicit conversion explicit to dismiss warning
 	* Ini Parser: Avoid freeing symbols from text section
 	* check_icmp: keep performance data order in case of none-reachable hosts
