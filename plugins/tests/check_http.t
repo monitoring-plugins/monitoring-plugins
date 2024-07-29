@@ -13,7 +13,7 @@ use IO::Socket::INET;
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 71;
+my $common_tests = 73;
 my $virtual_port_tests = 8;
 my $ssl_only_tests = 12;
 my $chunked_encoding_special_tests = 1;
@@ -199,6 +199,11 @@ sub run_server {
 					$c->send_basic_header;
 					$c->send_crlf;
 					$c->send_response(HTTP::Response->new( 200, 'OK', undef, 'redirected' ));
+			} elsif ($r->url->path eq "/redirect_rel") {
+				$c->send_basic_header(302);
+				$c->send_header("Location", "/redirect2" );
+				$c->send_crlf;
+				$c->send_response('moved to /redirect2');
 				} elsif ($r->url->path eq "/redir_timeout") {
 					$c->send_redirect( "/timeout" );
 				} elsif ($r->url->path eq "/timeout") {
@@ -511,6 +516,11 @@ sub run_common_tests {
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
 	$cmd = "$command -f stickyport -u /redirect -k 'follow: me'";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
+
+	$cmd = "$command -f follow -u /redirect_rel -s redirected";
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );

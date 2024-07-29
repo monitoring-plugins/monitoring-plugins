@@ -1285,10 +1285,12 @@ redir (curlhelp_write_curlbuf* header_buf)
     }
   }
 
-  if (!uri_strcmp (uri.scheme, "https"))
-    use_ssl = true;
-  else
-    use_ssl = false;
+  if (uri.scheme.first) {
+    if (!uri_strcmp (uri.scheme, "https"))
+      use_ssl = true;
+    else
+      use_ssl = false;
+  }
 
   /* we do a sloppy test here only, because uriparser would have failed
    * above, if the port would be invalid, we just check for MAX_PORT
@@ -1306,10 +1308,13 @@ redir (curlhelp_write_curlbuf* header_buf)
          MAX_PORT, location, display_html ? "</A>" : "");
 
   /* by RFC 7231 relative URLs in Location should be taken relative to
-   * the original URL, so wy try to form a new absolute URL here
+   * the original URL, so we try to form a new absolute URL here
    */
   if (!uri.scheme.first && !uri.hostText.first) {
     new_host = strdup (host_name ? host_name : server_address);
+    new_port = server_port;
+    if(use_ssl)
+      uri_string (uri.scheme, "https", DEFAULT_BUFFER_SIZE);
   } else {
     new_host = strdup (uri_string (uri.hostText, buf, DEFAULT_BUFFER_SIZE));
   }
