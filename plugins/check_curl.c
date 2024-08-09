@@ -468,6 +468,7 @@ int
 check_http (void)
 {
   int result = STATE_OK;
+  int result_ssl = STATE_OK;
   int page_len = 0;
   int i;
   char *force_host_header = NULL;
@@ -852,9 +853,9 @@ check_http (void)
         /* check certificate with OpenSSL functions, curl has been built against OpenSSL
          * and we actually have OpenSSL in the monitoring tools
          */
-        result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+        result_ssl = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
         if (!continue_after_check_cert) {
-          return result;
+          return result_ssl;
         }
 #else /* USE_OPENSSL */
         die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL callback used and not linked against OpenSSL\n");
@@ -898,17 +899,17 @@ GOT_FIRST_CERT:
 						die (STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
           }
           BIO_free (cert_BIO);
-          result = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
+          result_ssl = np_net_ssl_check_certificate(cert, days_till_exp_warn, days_till_exp_crit);
           if (!continue_after_check_cert) {
-            return result;
+            return result_ssl;
           }
 #else /* USE_OPENSSL */
           /* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our disposal,
            * so we use the libcurl CURLINFO data
            */
-          result = net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn, days_till_exp_crit);
+          result_ssl = net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn, days_till_exp_crit);
           if (!continue_after_check_cert) {
-            return result;
+            return result_ssl;
           }
 #endif /* USE_OPENSSL */
         } else {
@@ -1176,7 +1177,7 @@ GOT_FIRST_CERT:
     }
 
   /* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
-  die (result, "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
+  die (max_state_alt(result, result_ssl), "HTTP %s: %s %d %s%s%s - %d bytes in %.3f second response time %s|%s\n%s%s",
     state_text(result), string_statuscode (status_line.http_major, status_line.http_minor),
     status_line.http_code, status_line.msg,
     strlen(msg) > 0 ? " - " : "",
@@ -1186,7 +1187,7 @@ GOT_FIRST_CERT:
     (show_body ? body_buf.buf : ""),
     (show_body ? "\n" : "") );
 
-  return result;
+  return max_state_alt(result, result_ssl);
 }
 
 int
