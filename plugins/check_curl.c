@@ -2008,8 +2008,11 @@ print_help (void)
   printf ("    %s\n", _("Note: SNI is not supported in libcurl before 7.18.1"));
 #endif
   printf (" %s\n", "-C, --certificate=INTEGER[,INTEGER]");
-  printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443"));
-  printf ("    %s\n", _("(when this option is used the URL is not checked by default. You can use"));
+  printf ("    %s\n", _("Minimum number of days a certificate has to be valid. Port defaults to 443."));
+  printf ("    %s\n", _("A STATE_WARNING is returned if the certificate has a validity less than the"));
+  printf ("    %s\n", _("first agument's value. If there is a second argument and the certificate's"));
+  printf ("    %s\n", _("validity is less than its value, a STATE_CRITICAL is returned."));
+  printf ("    %s\n", _("(When this option is used the URL is not checked by default. You can use"));
   printf ("    %s\n", _(" --continue-after-certificate to override this behavior)"));
   printf (" %s\n", "--continue-after-certificate");
   printf ("    %s\n", _("Allows the HTTP check to continue after performing the certificate check."));
@@ -2092,7 +2095,7 @@ print_help (void)
   printf ("    %s\n", _("Enable automatic decompression of body (CURLOPT_ACCEPT_ENCODING)."));
   printf(" %s\n", "--haproxy-protocol");
   printf("    %s\n", _("Send HAProxy proxy protocol v1 header (CURLOPT_HAPROXYPROTOCOL)."));
-  printf (" %s\n", "---cookie-jar=FILE");
+  printf (" %s\n", "--cookie-jar=FILE");
   printf ("    %s\n", _("Store cookies in the cookie jar and send them out when requested."));
   printf ("\n");
 
