@@ -1775,9 +1775,9 @@ process_arguments (int argc, char **argv)
       invert_regex = true;
       break;
     case STATE_REGEX:
-      if (!strcmp (optarg, "critical"))
+      if (!strcasecmp (optarg, "critical"))
         state_regex = STATE_CRITICAL;
-      else if (!strcmp (optarg, "warning"))
+      else if (!strcasecmp (optarg, "warning"))
         state_regex = STATE_WARNING;
       else usage2 (_("Invalid state-regex option"), optarg);
       break;
