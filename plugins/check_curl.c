@@ -2061,8 +2061,8 @@ print_help (void)
   printf (" %s\n", "--invert-regex");
   printf ("    %s\n", _("Return STATE if found, OK if not (STATE is CRITICAL, per default)"));
   printf ("    %s\n", _("can be changed with --state--regex)"));
-  printf (" %s\n", "--regex-state=STATE");
-  printf ("    %s\n", _("Return STATE if regex is found, OK if not\n"));
+  printf (" %s\n", "--state-regex=STATE");
+  printf ("    %s\n", _("Return STATE if regex is found, OK if not\nSTATE can be one of \"critical\",\"warning\""));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
