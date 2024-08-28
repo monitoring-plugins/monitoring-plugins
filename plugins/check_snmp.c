@@ -1253,10 +1253,12 @@ print_help (void)
 	printf ("    %s\n", _("SNMPv3 context"));
 	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf ("    %s\n", _("SNMPv3 securityLevel"));
-	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
-	printf ("    %s\n", _("SNMPv3 auth proto"));
-	printf (" %s\n", "-x, --privproto=[DES|AES]");
-	printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
+	printf (" %s\n", "-a, --authproto=AUTHENTICATION_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 authentication protocol (default MD5), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 SHA (1) and MD5 should be available, if >= 5.8 additionally SHA-224, SHA-256, SHA-384 and SHA-512"));
+	printf (" %s\n", "-x, --privproto=PRIVACY_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 privacy protocol (default DES), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 DES and AES should be available, if >= 5.8 additionally AES-192 and AES-256"));
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");
