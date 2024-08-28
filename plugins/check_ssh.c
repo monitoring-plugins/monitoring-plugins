@@ -233,7 +233,6 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 
 	char *output = (char *) calloc (BUFF_SZ + 1, sizeof(char));
 
-	unsigned int iteration = 0;
 	ssize_t byte_offset = 0;
 
 	while ((version_control_string == NULL) && (recv_ret = recv(sd, output+byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
