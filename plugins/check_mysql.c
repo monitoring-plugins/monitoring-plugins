@@ -59,7 +59,7 @@ bool ssl = false;
 char *opt_file = NULL;
 char *opt_group = NULL;
 unsigned int db_port = MYSQL_PORT;
-int check_slave = 0, warn_sec = 0, crit_sec = 0;
+int check_slave = 0;
 int ignore_auth = 0;
 int verbose = 0;
 
