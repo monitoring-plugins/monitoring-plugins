@@ -222,7 +222,7 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
 	struct timeval tv;
-	double elapsed_time;
+	double elapsed_time = 0;
 
 	gettimeofday(&tv, NULL);
 
