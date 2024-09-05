@@ -222,7 +222,6 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	char *ssh_server = NULL;
 	static char *rev_no = VERSION;
 	struct timeval tv;
-	double elapsed_time = 0;
 
 	gettimeofday(&tv, NULL);
 
@@ -334,6 +333,7 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 		exit (STATE_CRITICAL);
 	}
 
+	double elapsed_time = (double)deltime(tv) / 1.0e6;
 	if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 		printf
 			(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s' | %s\n"),
@@ -342,7 +342,6 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 		close(sd);
 		exit (STATE_CRITICAL);
 	}
-	elapsed_time = (double)deltime(tv) / 1.0e6;
 
 	printf
 		(_("SSH OK - %s (protocol %s) | %s\n"),
