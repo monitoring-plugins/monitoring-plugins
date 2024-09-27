@@ -55,8 +55,6 @@ const char *email = "devel@monitoring-plugins.org";
 #define CRIT_STRING 2
 #define CRIT_REGEX 4
 #define WARN_PRESENT 8
-#define WARN_STRING 16
-#define WARN_REGEX 32
 
 #define OID_COUNT_STEP 8
 
