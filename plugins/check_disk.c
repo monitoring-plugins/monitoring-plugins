@@ -119,44 +119,44 @@ enum
 #pragma alloca
 #endif
 
-int process_arguments (int, char **);
-void print_path (const char *mypath);
-void set_all_thresholds (struct parameter_list *path);
-int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
-void print_help (void);
+static int process_arguments (int, char **);
+static void print_path (const char *mypath);
+static void set_all_thresholds (struct parameter_list *path);
+static int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
+static void print_help (void);
 void print_usage (void);
-double calculate_percent(uintmax_t, uintmax_t);
-bool stat_path (struct parameter_list *p);
-void get_stats (struct parameter_list *p, struct fs_usage *fsp);
-void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
+static double calculate_percent(uintmax_t, uintmax_t);
+static bool stat_path (struct parameter_list *p);
+static void get_stats (struct parameter_list *p, struct fs_usage *fsp);
+static void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
-char *exclude_device;
-char *units;
-uintmax_t mult = 1024 * 1024;
-int verbose = 0;
-bool erronly = false;
-bool display_mntp = false;
-bool exact_match = false;
-bool ignore_missing = false;
-bool freespace_ignore_reserved = false;
-bool display_inodes_perfdata = false;
-char *warn_freespace_units = NULL;
-char *crit_freespace_units = NULL;
-char *warn_freespace_percent = NULL;
-char *crit_freespace_percent = NULL;
-char *warn_usedspace_units = NULL;
-char *crit_usedspace_units = NULL;
-char *warn_usedspace_percent = NULL;
-char *crit_usedspace_percent = NULL;
-char *warn_usedinodes_percent = NULL;
-char *crit_usedinodes_percent = NULL;
-char *warn_freeinodes_percent = NULL;
-char *crit_freeinodes_percent = NULL;
-bool path_selected = false;
-bool path_ignored = false;
-char *group = NULL;
-struct stat *stat_buf;
-struct name_list *seen = NULL;
+static char *exclude_device;
+static char *units;
+static uintmax_t mult = 1024 * 1024;
+static int verbose = 0;
+static bool erronly = false;
+static bool display_mntp = false;
+static bool exact_match = false;
+static bool ignore_missing = false;
+static bool freespace_ignore_reserved = false;
+static bool display_inodes_perfdata = false;
+static char *warn_freespace_units = NULL;
+static char *crit_freespace_units = NULL;
+static char *warn_freespace_percent = NULL;
+static char *crit_freespace_percent = NULL;
+static char *warn_usedspace_units = NULL;
+static char *crit_usedspace_units = NULL;
+static char *warn_usedspace_percent = NULL;
+static char *crit_usedspace_percent = NULL;
+static char *warn_usedinodes_percent = NULL;
+static char *crit_usedinodes_percent = NULL;
+static char *warn_freeinodes_percent = NULL;
+static char *crit_freeinodes_percent = NULL;
+static bool path_selected = false;
+static bool path_ignored = false;
+static char *group = NULL;
+static struct stat *stat_buf;
+static struct name_list *seen = NULL;
 
 
 int
