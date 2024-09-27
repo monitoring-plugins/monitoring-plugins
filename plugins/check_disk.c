@@ -120,9 +120,7 @@ enum
 #endif
 
 static int process_arguments (int, char **);
-static void print_path (const char *mypath);
 static void set_all_thresholds (struct parameter_list *path);
-static int validate_arguments (uintmax_t, uintmax_t, double, double, double, double, char *);
 static void print_help (void);
 void print_usage (void);
 static double calculate_percent(uintmax_t, uintmax_t);
@@ -130,7 +128,6 @@ static bool stat_path (struct parameter_list *p);
 static void get_stats (struct parameter_list *p, struct fs_usage *fsp);
 static void get_path_stats (struct parameter_list *p, struct fs_usage *fsp);
 
-static char *exclude_device;
 static char *units;
 static uintmax_t mult = 1024 * 1024;
 static int verbose = 0;
@@ -898,18 +895,6 @@ process_arguments (int argc, char **argv)
 
   return true;
 }
-
-
-
-void
-print_path (const char *mypath)
-{
-  if (mypath == NULL)
-    printf ("\n");
-  else
-    printf (_(" for %s\n"), mypath);
-}
-
 
 void
 set_all_thresholds (struct parameter_list *path)
