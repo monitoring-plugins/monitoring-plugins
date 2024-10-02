@@ -2,6 +2,7 @@
 name: Tests Debian:Testing and Fedora:Rawhide
 
 on:
+  workflow_dispatch: {}
   push:
     branches-ignore:
       - '*'
