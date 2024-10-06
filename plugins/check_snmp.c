@@ -55,8 +55,6 @@ const char *email = "devel@monitoring-plugins.org";
 #define CRIT_STRING 2
 #define CRIT_REGEX 4
 #define WARN_PRESENT 8
-#define WARN_STRING 16
-#define WARN_REGEX 32
 
 #define OID_COUNT_STEP 8
 
@@ -86,82 +84,82 @@ const char *email = "devel@monitoring-plugins.org";
 
 
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-char *thisarg (char *str);
-char *nextarg (char *str);
+static int process_arguments (int, char **);
+static int validate_arguments (void);
+static char *thisarg (char *str);
+static char *nextarg (char *str);
 void print_usage (void);
-void print_help (void);
-char *multiply (char *str);
+static void print_help (void);
+static char *multiply (char *str);
 
 #include "regex.h"
-char regex_expect[MAX_INPUT_BUFFER] = "";
-regex_t preg;
-regmatch_t pmatch[10];
-char errbuf[MAX_INPUT_BUFFER] = "";
-char perfstr[MAX_INPUT_BUFFER] = "| ";
-int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-int eflags = 0;
-int errcode, excode;
+static char regex_expect[MAX_INPUT_BUFFER] = "";
+static regex_t preg;
+static regmatch_t pmatch[10];
+static char errbuf[MAX_INPUT_BUFFER] = "";
+static char perfstr[MAX_INPUT_BUFFER] = "| ";
+static int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+static int eflags = 0;
+static int errcode, excode;
 
-char *server_address = NULL;
-char *community = NULL;
-char **contextargs = NULL;
-char *context = NULL;
-char **authpriv = NULL;
-char *proto = NULL;
-char *seclevel = NULL;
-char *secname = NULL;
-char *authproto = NULL;
-char *privproto = NULL;
-char *authpasswd = NULL;
-char *privpasswd = NULL;
-int nulloid = STATE_UNKNOWN;
-char **oids = NULL;
-size_t oids_size = 0;
-char *label;
-char *units;
-char *port;
-char *snmpcmd;
-char string_value[MAX_INPUT_BUFFER] = "";
-int  invert_search=0;
-char **labels = NULL;
-char **unitv = NULL;
-size_t nlabels = 0;
-size_t labels_size = OID_COUNT_STEP;
-size_t nunits = 0;
-size_t unitv_size = OID_COUNT_STEP;
-size_t numoids = 0;
-int numauthpriv = 0;
-int numcontext = 0;
-int verbose = 0;
-bool usesnmpgetnext = false;
-char *warning_thresholds = NULL;
-char *critical_thresholds = NULL;
-thresholds **thlds;
-size_t thlds_size = OID_COUNT_STEP;
-double *response_value;
-size_t response_size = OID_COUNT_STEP;
-int retries = 0;
-int *eval_method;
-size_t eval_size = OID_COUNT_STEP;
-char *delimiter;
-char *output_delim;
-char *miblist = NULL;
-bool needmibs = false;
-int calculate_rate = 0;
-double offset = 0.0;
-int rate_multiplier = 1;
-state_data *previous_state;
-double *previous_value;
-size_t previous_size = OID_COUNT_STEP;
-int perf_labels = 1;
-char* ip_version = "";
-double multiplier = 1.0;
-char *fmtstr = "";
-bool fmtstr_set = false;
-char buffer[DEFAULT_BUFFER_SIZE];
-bool ignore_mib_parsing_errors = false;
+static char *server_address = NULL;
+static char *community = NULL;
+static char **contextargs = NULL;
+static char *context = NULL;
+static char **authpriv = NULL;
+static char *proto = NULL;
+static char *seclevel = NULL;
+static char *secname = NULL;
+static char *authproto = NULL;
+static char *privproto = NULL;
+static char *authpasswd = NULL;
+static char *privpasswd = NULL;
+static int nulloid = STATE_UNKNOWN;
+static char **oids = NULL;
+static size_t oids_size = 0;
+static char *label;
+static char *units;
+static char *port;
+static char *snmpcmd;
+static char string_value[MAX_INPUT_BUFFER] = "";
+static int  invert_search=0;
+static char **labels = NULL;
+static char **unitv = NULL;
+static size_t nlabels = 0;
+static size_t labels_size = OID_COUNT_STEP;
+static size_t nunits = 0;
+static size_t unitv_size = OID_COUNT_STEP;
+static size_t numoids = 0;
+static int numauthpriv = 0;
+static int numcontext = 0;
+static int verbose = 0;
+static bool usesnmpgetnext = false;
+static char *warning_thresholds = NULL;
+static char *critical_thresholds = NULL;
+static thresholds **thlds;
+static size_t thlds_size = OID_COUNT_STEP;
+static double *response_value;
+static size_t response_size = OID_COUNT_STEP;
+static int retries = 0;
+static int *eval_method;
+static size_t eval_size = OID_COUNT_STEP;
+static char *delimiter;
+static char *output_delim;
+static char *miblist = NULL;
+static bool needmibs = false;
+static int calculate_rate = 0;
+static double offset = 0.0;
+static int rate_multiplier = 1;
+static state_data *previous_state;
+static double *previous_value;
+static size_t previous_size = OID_COUNT_STEP;
+static int perf_labels = 1;
+static char* ip_version = "";
+static double multiplier = 1.0;
+static char *fmtstr = "";
+static bool fmtstr_set = false;
+static char buffer[DEFAULT_BUFFER_SIZE];
+static bool ignore_mib_parsing_errors = false;
 
 static char *fix_snmp_range(char *th)
 {
@@ -1030,7 +1028,7 @@ selected.</para>
 
 
 
-int
+static int
 validate_arguments ()
 {
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
@@ -1139,7 +1137,7 @@ validate_arguments ()
 /* trim leading whitespace
 	 if there is a leading quote, make sure it balances */
 
-char *
+static char *
 thisarg (char *str)
 {
 	str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
@@ -1156,7 +1154,7 @@ thisarg (char *str)
 	 set the trailing quote to '\x0'
 	 if the string continues, advance beyond the comma */
 
-char *
+static char *
 nextarg (char *str)
 {
 	if (str[0] == '\'') {
@@ -1188,7 +1186,7 @@ nextarg (char *str)
 
 
 /* multiply result (values 0 < n < 1 work as divider) */
-char *
+static char *
 multiply (char *str)
 {
 	char *endptr;
@@ -1225,7 +1223,7 @@ multiply (char *str)
 }
 
 
-void
+static void
 print_help (void)
 {
 	print_revision (progname, NP_VERSION);
@@ -1253,10 +1251,12 @@ print_help (void)
 	printf ("    %s\n", _("SNMPv3 context"));
 	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf ("    %s\n", _("SNMPv3 securityLevel"));
-	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
-	printf ("    %s\n", _("SNMPv3 auth proto"));
-	printf (" %s\n", "-x, --privproto=[DES|AES]");
-	printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
+	printf (" %s\n", "-a, --authproto=AUTHENTICATION_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 authentication protocol (default MD5), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 SHA (1) and MD5 should be available, if >= 5.8 additionally SHA-224, SHA-256, SHA-384 and SHA-512"));
+	printf (" %s\n", "-x, --privproto=PRIVACY_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 privacy protocol (default DES), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 DES and AES should be available, if >= 5.8 additionally AES-192 and AES-256"));
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");

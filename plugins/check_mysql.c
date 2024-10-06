@@ -59,8 +59,8 @@ bool ssl = false;
 char *opt_file = NULL;
 char *opt_group = NULL;
 unsigned int db_port = MYSQL_PORT;
-int check_slave = 0, warn_sec = 0, crit_sec = 0;
-int ignore_auth = 0;
+bool check_slave = false;
+bool ignore_auth = false;
 int verbose = 0;
 
 static double warning_time = 0;
@@ -456,10 +456,10 @@ process_arguments (int argc, char **argv)
 			db_port = atoi (optarg);
 			break;
 		case 'S':
-			check_slave = 1;							/* check-slave */
+			check_slave = true;							/* check-slave */
 			break;
 		case 'n':
-			ignore_auth = 1;							/* ignore-auth */
+			ignore_auth = true;							/* ignore-auth */
 			break;
 		case 'w':
 			warning = optarg;
