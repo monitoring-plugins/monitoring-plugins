@@ -247,14 +247,14 @@ static struct timeval prog_start;
 static unsigned long long max_completion_time = 0;
 static unsigned int warn_down = 1, crit_down = 1; /* host down threshold values */
 static int min_hosts_alive = -1;
-float pkt_backoff_factor = 1.5;
-float target_backoff_factor = 1.5;
-bool rta_mode = false;
-bool pl_mode = false;
-bool jitter_mode = false;
-bool score_mode = false;
-bool mos_mode = false;
-bool order_mode = false;
+static float pkt_backoff_factor = 1.5;
+static float target_backoff_factor = 1.5;
+static bool rta_mode = false;
+static bool pl_mode = false;
+static bool jitter_mode = false;
+static bool score_mode = false;
+static bool mos_mode = false;
+static bool order_mode = false;
 
 /** code start **/
 static void crash(const char *fmt, ...) {
