@@ -3,7 +3,7 @@
  * Monitoring check_icmp plugin
  *
  * License: GPL
- * Copyright (c) 2005-2008 Monitoring Plugins Development Team
+ * Copyright (c) 2005-2024 Monitoring Plugins Development Team
  * Original Author : Andreas Ericsson <ae@op5.se>
  *
  * Description:
@@ -39,7 +39,7 @@
 /* progname may change */
 /* char *progname = "check_icmp"; */
 char *progname;
-const char *copyright = "2005-2008";
+const char *copyright = "2005-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 /** Monitoring Plugins basic includes */
