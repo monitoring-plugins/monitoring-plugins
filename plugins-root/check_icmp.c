@@ -845,7 +845,7 @@ int main(int argc, char **argv) {
 	return (0);
 }
 
-static void run_checks() {
+static void run_checks(void) {
 	u_int i, t;
 	u_int final_wait, time_passed;
 
