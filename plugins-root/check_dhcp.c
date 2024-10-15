@@ -4,7 +4,7 @@
  *
  * License: GPL
  * Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)
- * Copyright (c) 2001-2007 Monitoring Plugins Development Team
+ * Copyright (c) 2001-2023 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 const char *progname = "check_dhcp";
-const char *copyright = "2001-2023";
+const char *copyright = "2001-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
