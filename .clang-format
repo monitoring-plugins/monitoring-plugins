@@ -8,3 +8,4 @@ AlignConsecutiveMacros: true
 ColumnLimit: 180
 IndentPPDirectives: AfterHash
 SortIncludes: Never
+AllowShortEnumsOnASingleLine: false
