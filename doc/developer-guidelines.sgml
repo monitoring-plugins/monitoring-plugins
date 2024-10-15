@@ -14,15 +14,8 @@
     <pubdate>2013</pubdate>
     <title>Monitoring Plugins Development Guidelines</title>
 
-    <revhistory>
-       <revision>
-          <revnumber>1796</revnumber>
-          <date>2007-09-24 14:51:07 -0400 (Mon, 24 Sep 2007)</date>
-       </revision>
-    </revhistory>
-
 	<copyright>
-		<year>2000 - 2013</year>
+		<year>2000 - 2024</year>
 		<holder>Monitoring Plugins Development Team</holder>
 	</copyright>
 
@@ -34,7 +27,7 @@
     the plugin developers and encourage the standardization of the
     different kind of plugins: C, shell, perl, python, etc.</para>
 
-        <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2013
+        <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2024
         (Monitoring Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
