@@ -175,7 +175,13 @@ typedef union icmp_packet {
 #define MODE_ALL       2
 #define MODE_ICMP      3
 
-enum enum_threshold_mode { const_rta_mode, const_packet_loss_mode, const_jitter_mode, const_mos_mode, const_score_mode };
+enum enum_threshold_mode {
+	const_rta_mode,
+	const_packet_loss_mode,
+	const_jitter_mode,
+	const_mos_mode,
+	const_score_mode
+};
 
 typedef enum enum_threshold_mode threshold_mode;
 
