@@ -6,7 +6,7 @@
  * Copyright (c) 2000 Tom Shields
  *               2004 Alain Richard <alain.richard@equation.fr>
  *               2004 Arnaud Quette <arnaud.quette@mgeups.com>
- * Copyright (c) 2002-2023 Monitoring Plugins Development Team
+ * Copyright (c) 2002-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 const char *progname = "check_ups";
-const char *copyright = "2000-2023";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
