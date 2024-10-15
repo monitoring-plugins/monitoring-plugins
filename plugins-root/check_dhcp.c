@@ -105,7 +105,7 @@ static int put_ctrl(int, int, int);
 static int put_both(int, int, int, int);
 static int dl_open(const char *, int, int *);
 static int dl_bind(int, int, u_char *);
-long mac_addr_dlpi(const char *, int, u_char *);
+static long mac_addr_dlpi(const char *, int, u_char *);
 
 #endif // __sun__ || __solaris__ || __hpux
 
@@ -186,60 +186,60 @@ typedef struct requested_server_struct {
 #define ETHERNET_HARDWARE_ADDRESS        1 /* used in htype field of dhcp packet */
 #define ETHERNET_HARDWARE_ADDRESS_LENGTH 6 /* length of Ethernet hardware addresses */
 
-bool unicast = false;   /* unicast mode: mimic a DHCP relay */
-bool exclusive = false; /* exclusive mode aka "rogue DHCP server detection" */
-struct in_addr my_ip;   /* our address (required for relay) */
-struct in_addr dhcp_ip; /* server to query (if in unicast mode) */
-unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH] = "";
-unsigned char *user_specified_mac = NULL;
+static bool unicast = false;   /* unicast mode: mimic a DHCP relay */
+static bool exclusive = false; /* exclusive mode aka "rogue DHCP server detection" */
+static struct in_addr my_ip;   /* our address (required for relay) */
+static struct in_addr dhcp_ip; /* server to query (if in unicast mode) */
+static unsigned char client_hardware_address[MAX_DHCP_CHADDR_LENGTH] = "";
+static unsigned char *user_specified_mac = NULL;
 
-char network_interface_name[IFNAMSIZ] = "eth0";
+static char network_interface_name[IFNAMSIZ] = "eth0";
 
-uint32_t packet_xid = 0;
+static uint32_t packet_xid = 0;
 
-uint32_t dhcp_lease_time = 0;
-uint32_t dhcp_renewal_time = 0;
-uint32_t dhcp_rebinding_time = 0;
+static uint32_t dhcp_lease_time = 0;
+static uint32_t dhcp_renewal_time = 0;
+static uint32_t dhcp_rebinding_time = 0;
 
-int dhcpoffer_timeout = 2;
+static int dhcpoffer_timeout = 2;
 
-dhcp_offer *dhcp_offer_list = NULL;
-requested_server *requested_server_list = NULL;
+static dhcp_offer *dhcp_offer_list = NULL;
+static requested_server *requested_server_list = NULL;
 
-int valid_responses = 0; /* number of valid DHCPOFFERs we received */
-int requested_servers = 0;
-int requested_responses = 0;
+static int valid_responses = 0; /* number of valid DHCPOFFERs we received */
+static int requested_servers = 0;
+static int requested_responses = 0;
 
-bool request_specific_address = false;
-bool received_requested_address = false;
-int verbose = 0;
-struct in_addr requested_address;
+static bool request_specific_address = false;
+static bool received_requested_address = false;
+static int verbose = 0;
+static struct in_addr requested_address;
 
-int process_arguments(int, char **);
-int call_getopt(int, char **);
-int validate_arguments(int);
+static int process_arguments(int, char **);
+static int call_getopt(int, char **);
+static int validate_arguments(int);
 void print_usage(void);
-void print_help(void);
+static void print_help(void);
 
-void resolve_host(const char *in, struct in_addr *out);
-unsigned char *mac_aton(const char *);
-void print_hardware_address(const unsigned char *);
-int get_hardware_address(int, char *);
-int get_ip_address(int, char *);
+static void resolve_host(const char *in, struct in_addr *out);
+static unsigned char *mac_aton(const char *);
+static void print_hardware_address(const unsigned char *);
+static int get_hardware_address(int, char *);
+static int get_ip_address(int, char *);
 
-int send_dhcp_discover(int);
-int get_dhcp_offer(int);
+static int send_dhcp_discover(int);
+static int get_dhcp_offer(int);
 
-int get_results(void);
+static int get_results(void);
 
-int add_dhcp_offer(struct in_addr, dhcp_packet *);
-int free_dhcp_offer_list(void);
-int free_requested_server_list(void);
+static int add_dhcp_offer(struct in_addr, dhcp_packet *);
+static int free_dhcp_offer_list(void);
+static int free_requested_server_list(void);
 
-int create_dhcp_socket(void);
-int close_dhcp_socket(int);
-int send_dhcp_packet(void *, int, int, struct sockaddr_in *);
-int receive_dhcp_packet(void *, int, int, int, struct sockaddr_in *);
+static int create_dhcp_socket(void);
+static int close_dhcp_socket(int);
+static int send_dhcp_packet(void *, int, int, struct sockaddr_in *);
+static int receive_dhcp_packet(void *, int, int, int, struct sockaddr_in *);
 
 int main(int argc, char **argv) {
 	int dhcp_socket;
@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
 }
 
 /* determines hardware address on client machine */
-int get_hardware_address(int sock, char *interface_name) {
+static int get_hardware_address(int sock, char *interface_name) {
 
 #if defined(__linux__)
 	struct ifreq ifr;
@@ -400,7 +400,7 @@ int get_hardware_address(int sock, char *interface_name) {
 }
 
 /* determines IP address of the client interface */
-int get_ip_address(int sock, char *interface_name) {
+static int get_ip_address(int sock, char *interface_name) {
 #if defined(SIOCGIFADDR)
 	struct ifreq ifr;
 
@@ -426,7 +426,7 @@ int get_ip_address(int sock, char *interface_name) {
 }
 
 /* sends a DHCPDISCOVER broadcast message in an attempt to find DHCP servers */
-int send_dhcp_discover(int sock) {
+static int send_dhcp_discover(int sock) {
 	dhcp_packet discover_packet;
 	struct sockaddr_in sockaddr_broadcast;
 	unsigned short opts;
@@ -515,7 +515,7 @@ int send_dhcp_discover(int sock) {
 }
 
 /* waits for a DHCPOFFER message from one or more DHCP servers */
-int get_dhcp_offer(int sock) {
+static int get_dhcp_offer(int sock) {
 	dhcp_packet offer_packet;
 	struct sockaddr_in source;
 	struct sockaddr_in via;
@@ -617,7 +617,7 @@ int get_dhcp_offer(int sock) {
 }
 
 /* sends a DHCP packet */
-int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in *dest) {
+static int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in *dest) {
 	int result;
 
 	result = sendto(sock, (char *)buffer, buffer_size, 0, (struct sockaddr *)dest, sizeof(*dest));
@@ -632,7 +632,7 @@ int send_dhcp_packet(void *buffer, int buffer_size, int sock, struct sockaddr_in
 }
 
 /* receives a DHCP packet */
-int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, struct sockaddr_in *address) {
+static int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, struct sockaddr_in *address) {
 	struct timeval tv;
 	fd_set readfds;
 	fd_set oobfds;
@@ -685,7 +685,7 @@ int receive_dhcp_packet(void *buffer, int buffer_size, int sock, int timeout, st
 }
 
 /* creates a socket for DHCP communication */
-int create_dhcp_socket(void) {
+static int create_dhcp_socket(void) {
 	struct sockaddr_in myname;
 	struct ifreq interface;
 	int sock;
@@ -746,7 +746,7 @@ int create_dhcp_socket(void) {
 }
 
 /* closes DHCP socket */
-int close_dhcp_socket(int sock) {
+static int close_dhcp_socket(int sock) {
 
 	close(sock);
 
@@ -754,7 +754,7 @@ int close_dhcp_socket(int sock) {
 }
 
 /* adds a requested server address to list in memory */
-int add_requested_server(struct in_addr server_address) {
+static int add_requested_server(struct in_addr server_address) {
 	requested_server *new_server;
 
 	new_server = (requested_server *)malloc(sizeof(requested_server));
@@ -776,7 +776,7 @@ int add_requested_server(struct in_addr server_address) {
 }
 
 /* adds a DHCP OFFER to list in memory */
-int add_dhcp_offer(struct in_addr source, dhcp_packet *offer_packet) {
+static int add_dhcp_offer(struct in_addr source, dhcp_packet *offer_packet) {
 	dhcp_offer *new_offer;
 	int x;
 	unsigned option_type;
@@ -878,7 +878,7 @@ int add_dhcp_offer(struct in_addr source, dhcp_packet *offer_packet) {
 }
 
 /* frees memory allocated to DHCP OFFER list */
-int free_dhcp_offer_list(void) {
+static int free_dhcp_offer_list(void) {
 	dhcp_offer *this_offer;
 	dhcp_offer *next_offer;
 
@@ -891,7 +891,7 @@ int free_dhcp_offer_list(void) {
 }
 
 /* frees memory allocated to requested server list */
-int free_requested_server_list(void) {
+static int free_requested_server_list(void) {
 	requested_server *this_server;
 	requested_server *next_server;
 
@@ -904,7 +904,7 @@ int free_requested_server_list(void) {
 }
 
 /* gets state and plugin output to return */
-int get_results(void) {
+static int get_results(void) {
 	dhcp_offer *temp_offer, *undesired_offer = NULL;
 	requested_server *temp_server;
 	int result;
@@ -1025,7 +1025,7 @@ int get_results(void) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+static int process_arguments(int argc, char **argv) {
 	if (argc < 1)
 		return ERROR;
 
@@ -1033,7 +1033,7 @@ int process_arguments(int argc, char **argv) {
 	return validate_arguments(argc);
 }
 
-int call_getopt(int argc, char **argv) {
+static int call_getopt(int argc, char **argv) {
 	extern int optind;
 	int option_index = 0;
 	static struct option long_options[] = {{"serverip", required_argument, 0, 's'},
@@ -1125,7 +1125,7 @@ int call_getopt(int argc, char **argv) {
 	return optind;
 }
 
-int validate_arguments(int argc) {
+static int validate_arguments(int argc) {
 
 	if (argc - optind > 0)
 		usage(_("Got unexpected non-option argument"));
@@ -1249,7 +1249,7 @@ static int dl_bind(int fd, int sap, u_char *addr) {
  *
  ***********************************************************************/
 
-long mac_addr_dlpi(const char *dev, int unit, u_char *addr) {
+static long mac_addr_dlpi(const char *dev, int unit, u_char *addr) {
 	int fd;
 	u_char mac_addr[25];
 
@@ -1268,7 +1268,7 @@ long mac_addr_dlpi(const char *dev, int unit, u_char *addr) {
 #endif
 
 /* resolve host name or die (TODO: move this to netutils.c!) */
-void resolve_host(const char *in, struct in_addr *out) {
+static void resolve_host(const char *in, struct in_addr *out) {
 	struct addrinfo hints, *ai;
 
 	memset(&hints, 0, sizeof(hints));
@@ -1281,7 +1281,7 @@ void resolve_host(const char *in, struct in_addr *out) {
 }
 
 /* parse MAC address string, return 6 bytes (unterminated) or NULL */
-unsigned char *mac_aton(const char *string) {
+static unsigned char *mac_aton(const char *string) {
 	static unsigned char result[6];
 	char tmp[3];
 	unsigned i, j;
@@ -1301,7 +1301,7 @@ unsigned char *mac_aton(const char *string) {
 	return (j == 6) ? result : NULL;
 }
 
-void print_hardware_address(const unsigned char *address) {
+static void print_hardware_address(const unsigned char *address) {
 	int i;
 
 	printf(_("Hardware address: "));
@@ -1312,7 +1312,7 @@ void print_hardware_address(const unsigned char *address) {
 }
 
 /* print usage help */
-void print_help(void) {
+static void print_help(void) {
 
 	print_revision(progname, NP_VERSION);
 
