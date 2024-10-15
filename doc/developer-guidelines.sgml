@@ -713,11 +713,10 @@ setup the tests. Run "make test" to run all the tests.
 </section>
 <section id="CodingGuidelines"><title>Coding guidelines</title>
 	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
-	Coding standards</ulink> for general guidelines.</para>
+	Coding standards</ulink> for general guidelines.
+	Some parts of the guidelines (namely and explicitly the coding style)
+	are not seen as best practice by us.</para>
 	<section><title>C coding</title>
-
-	<para>Variables should be declared at the beginning of code blocks and
-	not inline because of portability with older compilers.</para>
 
 	<para>You should use the type "bool" and its values
 	"true" and "false" instead of the "int" type for booleans.
@@ -725,7 +724,7 @@ setup the tests. Run "make test" to run all the tests.
 	</section>
 
 	<section><title>Crediting sources</title>
-	<para>If you have copied a routine from another source, make sure the licence
+	<para>If you have copied a routine from another source, make sure the license
 	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
 	file, where you can put more detail about the source.</para>
 	<para>For contributed code, do not add any named credits in the source code
