@@ -4,7 +4,6 @@
 /*
  * Header file for Monitoring Plugins utils_cmd.c
  *
- *
  */
 
 /** types **/

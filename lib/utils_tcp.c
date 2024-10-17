@@ -3,7 +3,7 @@
  * Library for check_tcp
  *
  * License: GPL
- * Copyright (c) 1999-2013 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *

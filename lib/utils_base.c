@@ -3,7 +3,7 @@
  * utils_base.c
  *
  * License: GPL
- * Copyright (c) 2006 Monitoring Plugins Development Team
+ * Copyright (c) 2006 - 2024 Monitoring Plugins Development Team
  *
  * Library of useful functions for plugins
  *
