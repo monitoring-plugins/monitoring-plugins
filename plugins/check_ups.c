@@ -235,9 +235,19 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_utility_deviation >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s",
-					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", config.check_warn, (long)(1000 * config.warning_value), config.check_crit,
-							   (long)(1000 * config.critical_value), true, 0, false, 0));
+			xasprintf(&data,
+					  "%s",
+					  perfdata("voltage",
+							   (long)(1000 * ups_utility_voltage),
+							   "mV",
+							   config.check_warn,
+							   (long)(1000 * config.warning_value),
+							   config.check_crit,
+							   (long)(1000 * config.critical_value),
+							   true,
+							   0,
+							   false,
+							   0));
 		} else {
 			xasprintf(&data, "%s", perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false, 0, true, 0, false, 0));
 		}
@@ -262,9 +272,20 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_battery_percent <= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
-					  perfdata("battery", (long)ups_battery_percent, "%", config.check_warn, (long)(config.warning_value), config.check_crit, (long)(config.critical_value), true,
-							   0, true, 100));
+			xasprintf(&data,
+					  "%s %s",
+					  data,
+					  perfdata("battery",
+							   (long)ups_battery_percent,
+							   "%",
+							   config.check_warn,
+							   (long)(config.warning_value),
+							   config.check_crit,
+							   (long)(config.critical_value),
+							   true,
+							   0,
+							   true,
+							   100));
 		} else {
 			xasprintf(&data, "%s %s", data, perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true, 0, true, 100));
 		}
@@ -289,9 +310,20 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_load_percent >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
-					  perfdata("load", (long)ups_load_percent, "%", config.check_warn, (long)(config.warning_value), config.check_crit, (long)(config.critical_value), true, 0,
-							   true, 100));
+			xasprintf(&data,
+					  "%s %s",
+					  data,
+					  perfdata("load",
+							   (long)ups_load_percent,
+							   "%",
+							   config.check_warn,
+							   (long)(config.warning_value),
+							   config.check_crit,
+							   (long)(config.critical_value),
+							   true,
+							   0,
+							   true,
+							   100));
 		} else {
 			xasprintf(&data, "%s %s", data, perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0, true, 100));
 		}
@@ -325,9 +357,20 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_temperature >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
-					  perfdata("temp", (long)ups_temperature, tunits, config.check_warn, (long)(config.warning_value), config.check_crit, (long)(config.critical_value), true, 0,
-							   false, 0));
+			xasprintf(&data,
+					  "%s %s",
+					  data,
+					  perfdata("temp",
+							   (long)ups_temperature,
+							   tunits,
+							   config.check_warn,
+							   (long)(config.warning_value),
+							   config.check_crit,
+							   (long)(config.critical_value),
+							   true,
+							   0,
+							   false,
+							   0));
 		} else {
 			xasprintf(&data, "%s %s", data, perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0, false, 0));
 		}
@@ -351,9 +394,20 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_realpower >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
-					  perfdata("realpower", (long)ups_realpower, "W", config.check_warn, (long)(config.warning_value), config.check_crit, (long)(config.critical_value), true, 0,
-							   false, 0));
+			xasprintf(&data,
+					  "%s %s",
+					  data,
+					  perfdata("realpower",
+							   (long)ups_realpower,
+							   "W",
+							   config.check_warn,
+							   (long)(config.warning_value),
+							   config.check_crit,
+							   (long)(config.critical_value),
+							   true,
+							   0,
+							   false,
+							   0));
 		} else {
 			xasprintf(&data, "%s %s", data, perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0, false, 0));
 		}
@@ -635,10 +689,12 @@ void print_help(void) {
 	printf("Copyright (c) 2004 Arnaud Quette <arnaud.quette@mgeups.com>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("This plugin tests the UPS service on the specified host. "
-					 "Network UPS Tools"));
-	printf("%s\n", _("from www.networkupstools.org must be running for this "
-					 "plugin to work."));
+	printf("%s\n",
+		   _("This plugin tests the UPS service on the specified host. "
+			 "Network UPS Tools"));
+	printf("%s\n",
+		   _("from www.networkupstools.org must be running for this "
+			 "plugin to work."));
 
 	printf("\n\n");
 
@@ -667,31 +723,41 @@ void print_help(void) {
 	/*	printf (UT_VERBOSE); */
 
 	printf("\n");
-	printf("%s\n", _("This plugin attempts to determine the status of a UPS "
-					 "(Uninterruptible Power"));
-	printf("%s\n", _("Supply) on a local or remote host. If the UPS is online "
-					 "or calibrating, the"));
-	printf("%s\n", _("plugin will return an OK state. If the battery is on it "
-					 "will return a WARNING"));
-	printf("%s\n", _("state. If the UPS is off or has a low battery the plugin "
-					 "will return a CRITICAL"));
+	printf("%s\n",
+		   _("This plugin attempts to determine the status of a UPS "
+			 "(Uninterruptible Power"));
+	printf("%s\n",
+		   _("Supply) on a local or remote host. If the UPS is online "
+			 "or calibrating, the"));
+	printf("%s\n",
+		   _("plugin will return an OK state. If the battery is on it "
+			 "will return a WARNING"));
+	printf("%s\n",
+		   _("state. If the UPS is off or has a low battery the plugin "
+			 "will return a CRITICAL"));
 	printf("%s\n", _("state."));
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("You may also specify a variable to check (such as "
-					  "temperature, utility voltage,"));
-	printf(" %s\n", _("battery load, etc.) as well as warning and critical "
-					  "thresholds for the value"));
-	printf(" %s\n", _("of that variable.  If the remote host has multiple UPS "
-					  "that are being monitored"));
-	printf(" %s\n", _("you will have to use the --ups option to specify which "
-					  "UPS to check."));
+	printf(" %s\n",
+		   _("You may also specify a variable to check (such as "
+			 "temperature, utility voltage,"));
+	printf(" %s\n",
+		   _("battery load, etc.) as well as warning and critical "
+			 "thresholds for the value"));
+	printf(" %s\n",
+		   _("of that variable.  If the remote host has multiple UPS "
+			 "that are being monitored"));
+	printf(" %s\n",
+		   _("you will have to use the --ups option to specify which "
+			 "UPS to check."));
 	printf("\n");
-	printf(" %s\n", _("This plugin requires that the UPSD daemon distributed "
-					  "with Russell Kroll's"));
-	printf(" %s\n", _("Network UPS Tools be installed on the remote host. If "
-					  "you do not have the"));
+	printf(" %s\n",
+		   _("This plugin requires that the UPSD daemon distributed "
+			 "with Russell Kroll's"));
+	printf(" %s\n",
+		   _("Network UPS Tools be installed on the remote host. If "
+			 "you do not have the"));
 	printf(" %s\n", _("package installed on your system, you can download it from"));
 	printf(" %s\n", _("http://www.networkupstools.org"));
 
