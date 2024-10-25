@@ -2,6 +2,8 @@
 
 set -x
 
+set -euo pipefail
+
 export DEBIAN_FRONTEND=noninteractive
 
 BASE_PATH="/src"
