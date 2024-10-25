@@ -7,4 +7,4 @@ AlignConsecutiveMacros: true
 ColumnLimit: 140
 IndentPPDirectives: AfterHash
 SortIncludes: Never
-BinPackArguments: false
+BinPackArguments: true
