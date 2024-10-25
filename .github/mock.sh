@@ -58,7 +58,7 @@ dnf -y --setopt="tsflags=nodocs" install rpmdevtools && \
   { mock --dnf --clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --build || \
   { cat ${SRCRPM_DIR}/{root,build}.log; exit 1; } }
 
-mock --dnf --clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild "${SRCRPM_DIR}/${SRC_RPM}" || \
+mock --dnf --clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild "${SRCRPM_DIR}"/${SRC_RPM} || \
   { cat ${RPM_DIR}/{root,build}.log; exit 1; }
 
 ls -la ${SOURCE_DIR} ${SRCRPM_DIR} ${RPM_DIR}
