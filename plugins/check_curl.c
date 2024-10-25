@@ -214,6 +214,7 @@ char *client_privkey = NULL;
 char *ca_cert = NULL;
 bool verify_peer_and_host = false;
 bool is_openssl_callback = false;
+bool add_sslctx_verify_fun = false;
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 X509 *cert = NULL;
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
@@ -299,7 +300,7 @@ main (int argc, char **argv)
 
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
-	(void) preverify_ok;
+  (void) preverify_ok;
   /* TODO: we get all certificates of the chain, so which ones
    * should we test?
    * TODO: is the last certificate always the server certificate?
@@ -324,9 +325,18 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 
 CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm)
 {
-	(void) curl; // ignore unused parameter
-	(void) parm; // ignore unused parameter
-  SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, verify_callback);
+  (void) curl; // ignore unused parameter
+  (void) parm; // ignore unused parameter
+  if(add_sslctx_verify_fun) {
+    SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, verify_callback);
+  }
+
+  // workaround for issue:
+  // OpenSSL SSL_read: error:0A000126:SSL routines::unexpected eof while reading, errno 0
+  // see discussion https://github.com/openssl/openssl/discussions/22690
+#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
+  SSL_CTX_set_options(sslctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#endif
 
   return CURLE_OK;
 }
@@ -678,9 +688,8 @@ check_http (void)
          * OpenSSL-style libraries only!) */
 #ifdef USE_OPENSSL
         /* libcurl and monitoring plugins built with OpenSSL, good */
-        handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+        add_sslctx_verify_fun = true;
         is_openssl_callback = true;
-#else /* USE_OPENSSL */
 #endif /* USE_OPENSSL */
         /* libcurl is built with OpenSSL, monitoring plugins, so falling
          * back to manually extracting certificate information */
@@ -713,11 +722,17 @@ check_http (void)
 #else /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
     /* old libcurl, our only hope is OpenSSL, otherwise we are out of luck */
     if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL || ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL)
-      handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+      add_sslctx_verify_fun = true;
     else
       die (STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl too old and has no CURLOPT_CERTINFO)\n");
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
   }
+
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 10, 6) /* required for CURLOPT_SSL_CTX_FUNCTION */
+  // ssl ctx function is not available with all ssl backends
+  if (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, NULL) != CURLE_UNKNOWN_OPTION)
+    handle_curl_option_return_code (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+#endif
 
 #endif /* LIBCURL_FEATURE_SSL */
 
@@ -1775,9 +1790,9 @@ process_arguments (int argc, char **argv)
       invert_regex = true;
       break;
     case STATE_REGEX:
-      if (!strcmp (optarg, "critical"))
+      if (!strcasecmp (optarg, "critical"))
         state_regex = STATE_CRITICAL;
-      else if (!strcmp (optarg, "warning"))
+      else if (!strcasecmp (optarg, "warning"))
         state_regex = STATE_WARNING;
       else usage2 (_("Invalid state-regex option"), optarg);
       break;
@@ -2061,8 +2076,8 @@ print_help (void)
   printf (" %s\n", "--invert-regex");
   printf ("    %s\n", _("Return STATE if found, OK if not (STATE is CRITICAL, per default)"));
   printf ("    %s\n", _("can be changed with --state--regex)"));
-  printf (" %s\n", "--regex-state=STATE");
-  printf ("    %s\n", _("Return STATE if regex is found, OK if not\n"));
+  printf (" %s\n", "--state-regex=STATE");
+  printf ("    %s\n", _("Return STATE if regex is found, OK if not. STATE can be one of \"critical\",\"warning\""));
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));
   printf (" %s\n", "-b, --proxy-authorization=AUTH_PAIR");

@@ -7,33 +7,20 @@ readability in a wide range of environments.
 
 1. C Language Programming
 
-All code should comply with the requirements of the Free Software
+All code should comply with most of the requirements of the Free Software
 Foundation Coding standards (which are currently available at
-http://www.gnu.org/prep/standards_toc.html). We also follow most of
-the FSF guidelines. Developers may suggest deviations from the FSF
+https://www.gnu.org/prep/standards/standards.html ).
+We also follow most of the FSF guidelines, with the huge and explicit
+exception of the style guidelines.
+Developers may suggest deviations from the FSF
 style recommendations, which will be considered by open discussion on
-the Monitoring Plugins devel mailing list. Any such deviations will
-apply to the entire code base to ensure consistency.
+the Monitoring Plugins devel mailing list or the Github Pull Request.
+Any such deviations should be
+applied to the entire code base to ensure consistency.
 
-Currently, the exceptions to FSF recommendations are roughly equivalent
-to GNU indent with invoked as 'indent -ts 2 -br'. Specifically, the
-exceptions are as follows:
-
-a) leading white space for a statement should be formatted as tabs,
-with one tab for each code indentation level.
-
-b) in statement continuation lines, format whitespace up to the column
-starting the statement as tabs, format the rest as spaces (this
-results in code that is legible regardless of tab-width setting).
-
-c) with the exception of the above, tabs should generally be avoided
-
-d) when tab width is 2 spaces, line-length should not exceed 80
-characters
-
-e) The opening brace of an if or while block is on the same line as
-the end of the conditional expression (the '-br' option).
-
+The style guideline is the following:
+Whatever clang-format does with the configuration file available (.clang-format)
+Apart from that, code should naturally be readable and easy to understand.
 
 2. Perl Language Programming
 
