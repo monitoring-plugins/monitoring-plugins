@@ -127,5 +127,5 @@ sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.gith
 
 # create some test files to lower inodes
 for i in $(seq 10); do
-    touch /media/ramdisk2/test.$1
+    touch /media/ramdisk2/test.$i
 done
