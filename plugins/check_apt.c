@@ -103,8 +103,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage_va(_("Could not parse arguments"));
+	}
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -115,8 +116,9 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 
 	/* if they want to run apt-get update first... */
-	if (do_update)
+	if (do_update) {
 		result = run_update();
+	}
 
 	/* apt-get upgrade */
 	result = max_state(result, run_upgrade(&packages_available, &sec_count, &packages_list, &secpackages_list));
@@ -138,12 +140,14 @@ int main(int argc, char **argv) {
 		qsort(secpackages_list, sec_count, sizeof(char *), cmpstringp);
 		qsort(packages_list, packages_available - sec_count, sizeof(char *), cmpstringp);
 
-		for (int i = 0; i < sec_count; i++)
+		for (int i = 0; i < sec_count; i++) {
 			printf("%s (security)\n", secpackages_list[i]);
+		}
 
 		if (only_critical == false) {
-			for (int i = 0; i < packages_available - sec_count; i++)
+			for (int i = 0; i < packages_available - sec_count; i++) {
 				printf("%s\n", packages_list[i]);
+			}
 		}
 	}
 
@@ -174,8 +178,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		c = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:ow:", longopts, NULL);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 		case 'h':
@@ -194,16 +199,18 @@ int process_arguments(int argc, char **argv) {
 			upgrade = DIST_UPGRADE;
 			if (optarg != NULL) {
 				upgrade_opts = strdup(optarg);
-				if (upgrade_opts == NULL)
+				if (upgrade_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
+				}
 			}
 			break;
 		case 'U':
 			upgrade = UPGRADE;
 			if (optarg != NULL) {
 				upgrade_opts = strdup(optarg);
-				if (upgrade_opts == NULL)
+				if (upgrade_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
+				}
 			}
 			break;
 		case 'n':
@@ -213,8 +220,9 @@ int process_arguments(int argc, char **argv) {
 			do_update = true;
 			if (optarg != NULL) {
 				update_opts = strdup(optarg);
-				if (update_opts == NULL)
+				if (update_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
+				}
 			}
 			break;
 		case 'l':
@@ -264,8 +272,9 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	/* initialize ereg as it is possible it is printed while uninitialized */
 	memset(&ereg, '\0', sizeof(ereg.buffer));
 
-	if (upgrade == NO_UPGRADE)
+	if (upgrade == NO_UPGRADE) {
 		return STATE_OK;
+	}
 
 	/* compile the regexps */
 	if (do_include != NULL) {
@@ -310,11 +319,13 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	}
 
 	*pkglist = malloc(sizeof(char *) * chld_out.lines);
-	if (!pkglist)
+	if (!pkglist) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
+	}
 	*secpkglist = malloc(sizeof(char *) * chld_out.lines);
-	if (!secpkglist)
+	if (!secpkglist) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
+	}
 
 	/* parse the output, which should only consist of lines like
 	 *
@@ -338,8 +349,9 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 				pc++;
 				if (regexec(&sreg, chld_out.line[i], 0, NULL, 0) == 0) {
 					spc++;
-					if (verbose)
+					if (verbose) {
 						printf("*");
+					}
 					(*secpkglist)[spc - 1] = pkg_name(chld_out.line[i]);
 				} else {
 					(*pkglist)[pc - spc - 1] = pkg_name(chld_out.line[i]);
@@ -363,11 +375,13 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			}
 		}
 	}
-	if (do_include != NULL)
+	if (do_include != NULL) {
 		regfree(&ireg);
+	}
 	regfree(&sreg);
-	if (do_exclude != NULL)
+	if (do_exclude != NULL) {
 		regfree(&ereg);
+	}
 	free(cmdline);
 	return result;
 }
@@ -426,8 +440,9 @@ char *pkg_name(char *line) {
 	}
 
 	pkg = malloc(sizeof(char) * (len + 1));
-	if (!pkg)
+	if (!pkg) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
+	}
 
 	strncpy(pkg, start, len);
 	pkg[len] = '\0';
@@ -442,14 +457,16 @@ char *add_to_regexp(char *expr, const char *next) {
 
 	if (expr == NULL) {
 		re = malloc(sizeof(char) * (strlen("()") + strlen(next) + 1));
-		if (!re)
+		if (!re) {
 			die(STATE_UNKNOWN, "malloc failed!\n");
+		}
 		sprintf(re, "(%s)", next);
 	} else {
 		/* resize it, adding an extra char for the new '|' separator */
 		re = realloc(expr, sizeof(char) * (strlen(expr) + 1 + strlen(next) + 1));
-		if (!re)
+		if (!re) {
 			die(STATE_UNKNOWN, "realloc failed!\n");
+		}
 		/* append it starting at ')' in the old re */
 		sprintf((char *)(re + strlen(re) - 1), "|%s)", next);
 	}
@@ -465,24 +482,27 @@ char *construct_cmdline(upgrade_type u, const char *opts) {
 
 	switch (u) {
 	case UPGRADE:
-		if (opts == NULL)
+		if (opts == NULL) {
 			opts_ptr = UPGRADE_DEFAULT_OPTS;
-		else
+		} else {
 			opts_ptr = opts;
+		}
 		aptcmd = "upgrade";
 		break;
 	case DIST_UPGRADE:
-		if (opts == NULL)
+		if (opts == NULL) {
 			opts_ptr = UPGRADE_DEFAULT_OPTS;
-		else
+		} else {
 			opts_ptr = opts;
+		}
 		aptcmd = "dist-upgrade";
 		break;
 	case NO_UPGRADE:
-		if (opts == NULL)
+		if (opts == NULL) {
 			opts_ptr = UPDATE_DEFAULT_OPTS;
-		else
+		} else {
 			opts_ptr = opts;
+		}
 		aptcmd = "update";
 		break;
 	}
@@ -492,8 +512,9 @@ char *construct_cmdline(upgrade_type u, const char *opts) {
 	len += strlen(aptcmd) + 1;         /* "upgrade\0" */
 
 	cmd = (char *)malloc(sizeof(char) * len);
-	if (cmd == NULL)
+	if (cmd == NULL) {
 		die(STATE_UNKNOWN, "malloc failed");
+	}
 	sprintf(cmd, "%s %s %s", PATH_TO_APTGET, opts_ptr, aptcmd);
 	return cmd;
 }
