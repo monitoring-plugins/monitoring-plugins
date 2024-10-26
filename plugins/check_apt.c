@@ -57,22 +57,22 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 #define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
-int process_arguments(int /*argc*/, char ** /*argv*/);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static void print_help(void);
 void print_usage(void);
 
 /* construct the appropriate apt-get cmdline */
-char *construct_cmdline(upgrade_type u, const char *opts);
+static char *construct_cmdline(upgrade_type u, const char *opts);
 /* run an apt-get update */
-int run_update(void);
+static int run_update(void);
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist);
+static int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist);
 /* add another clause to a regexp */
-char *add_to_regexp(char *expr, const char *next);
+static char *add_to_regexp(char *expr, const char *next);
 /* extract package name from Inst line */
-char *pkg_name(char *line);
+static char *pkg_name(char *line);
 /* string comparison function for qsort */
-int cmpstringp(const void *p1, const void *p2);
+static int cmpstringp(const void *p1, const void *p2);
 
 /* configuration variables */
 static int verbose = 0;                /* -v */
