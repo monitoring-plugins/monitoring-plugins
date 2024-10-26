@@ -94,12 +94,6 @@ static int stderr_warning = 0; /* if a cmd issued output on stderr */
 static int exec_warning = 0;   /* if a cmd exited non-zero */
 
 int main(int argc, char **argv) {
-	int result = STATE_UNKNOWN;
-	int packages_available = 0;
-	int sec_count = 0;
-	char **packages_list = NULL;
-	char **secpackages_list = NULL;
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
@@ -115,11 +109,16 @@ int main(int argc, char **argv) {
 	/* handle timeouts gracefully... */
 	alarm(timeout_interval);
 
+	int result = STATE_UNKNOWN;
 	/* if they want to run apt-get update first... */
 	if (do_update) {
 		result = run_update();
 	}
 
+	int packages_available = 0;
+	int sec_count = 0;
+	char **packages_list = NULL;
+	char **secpackages_list = NULL;
 	/* apt-get upgrade */
 	result = max_state(result, run_upgrade(&packages_available, &sec_count, &packages_list, &secpackages_list));
 
@@ -156,8 +155,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -175,14 +172,14 @@ int process_arguments(int argc, char **argv) {
 									   {"packages-warning", required_argument, 0, 'w'},
 									   {0, 0, 0, 0}};
 
-	while (1) {
-		c = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:ow:", longopts, NULL);
+	while (true) {
+		int option_char = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:ow:", longopts, NULL);
 
-		if (c == -1 || c == EOF || c == 1) {
+		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_char) {
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -257,18 +254,7 @@ int process_arguments(int argc, char **argv) {
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist) {
-	int result = STATE_UNKNOWN;
-	int regres = 0;
-	int pc = 0;
-	int spc = 0;
-	struct output chld_out;
-	struct output chld_err;
-	regex_t ireg;
 	regex_t ereg;
-	regex_t sreg;
-	char *cmdline = NULL;
-	char rerrbuf[64];
-
 	/* initialize ereg as it is possible it is printed while uninitialized */
 	memset(&ereg, '\0', sizeof(ereg.buffer));
 
@@ -276,6 +262,9 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		return STATE_OK;
 	}
 
+	int regres = 0;
+	regex_t ireg;
+	char rerrbuf[64];
 	/* compile the regexps */
 	if (do_include != NULL) {
 		regres = regcomp(&ireg, do_include, REG_EXTENDED);
@@ -293,6 +282,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		}
 	}
 
+	regex_t sreg;
 	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres = regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if (regres != 0) {
@@ -300,6 +290,10 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 	}
 
+	int result = STATE_UNKNOWN;
+	struct output chld_out;
+	struct output chld_err;
+	char *cmdline = NULL;
 	cmdline = construct_cmdline(upgrade, upgrade_opts);
 	if (input_filename != NULL) {
 		/* read input from a file for testing */
@@ -336,6 +330,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	 * we may need to switch to the --print-uris output format,
 	 * in which case the logic here will slightly change.
 	 */
+	int pc = 0;
+	int spc = 0;
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (verbose) {
 			printf("%s\n", chld_out.line[i]);
@@ -389,12 +385,12 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 /* run an apt-get update (needs root) */
 int run_update(void) {
 	int result = STATE_UNKNOWN;
-	struct output chld_out;
-	struct output chld_err;
 	char *cmdline;
-
 	/* run the update */
 	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
+
+	struct output chld_out;
+	struct output chld_err;
 	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
 	 * since we were explicitly asked to do so, this is treated as
@@ -426,20 +422,16 @@ int run_update(void) {
 }
 
 char *pkg_name(char *line) {
-	char *start = NULL;
-	char *space = NULL;
-	char *pkg = NULL;
-	int len = 0;
+	char *start = line + strlen(PKGINST_PREFIX);
 
-	start = line + strlen(PKGINST_PREFIX);
-	len = strlen(start);
+	int len = strlen(start);
 
-	space = index(start, ' ');
+	char *space = index(start, ' ');
 	if (space != NULL) {
 		len = space - start;
 	}
 
-	pkg = malloc(sizeof(char) * (len + 1));
+	char *pkg = malloc(sizeof(char) * (len + 1));
 	if (!pkg) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
 	}
@@ -475,10 +467,8 @@ char *add_to_regexp(char *expr, const char *next) {
 }
 
 char *construct_cmdline(upgrade_type u, const char *opts) {
-	int len = 0;
 	const char *opts_ptr = NULL;
 	const char *aptcmd = NULL;
-	char *cmd = NULL;
 
 	switch (u) {
 	case UPGRADE:
@@ -507,11 +497,12 @@ char *construct_cmdline(upgrade_type u, const char *opts) {
 		break;
 	}
 
+	int len = 0;
 	len += strlen(PATH_TO_APTGET) + 1; /* "/usr/bin/apt-get " */
 	len += strlen(opts_ptr) + 1;       /* "opts " */
 	len += strlen(aptcmd) + 1;         /* "upgrade\0" */
 
-	cmd = (char *)malloc(sizeof(char) * len);
+	char *cmd = (char *)malloc(sizeof(char) * len);
 	if (cmd == NULL) {
 		die(STATE_UNKNOWN, "malloc failed");
 	}
