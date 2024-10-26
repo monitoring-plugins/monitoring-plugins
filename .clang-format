@@ -1,10 +1,10 @@
-BasedOnStyle: LLVM
 UseTab: ForContinuationAndIndentation
 IndentWidth: 4
 TabWidth: 4
 AllowShortIfStatementsOnASingleLine: false
 BreakBeforeBraces: Attach
 AlignConsecutiveMacros: true
-ColumnLimit: 180
+ColumnLimit: 140
 IndentPPDirectives: AfterHash
 SortIncludes: Never
+BinPackArguments: true
