@@ -57,7 +57,7 @@ typedef enum { UPGRADE, DIST_UPGRADE, NO_UPGRADE } upgrade_type;
 #define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
-int process_arguments(int, char **);
+int process_arguments(int /*argc*/, char ** /*argv*/);
 void print_help(void);
 void print_usage(void);
 
@@ -94,8 +94,11 @@ static int stderr_warning = 0; /* if a cmd issued output on stderr */
 static int exec_warning = 0;   /* if a cmd exited non-zero */
 
 int main(int argc, char **argv) {
-	int result = STATE_UNKNOWN, packages_available = 0, sec_count = 0;
-	char **packages_list = NULL, **secpackages_list = NULL;
+	int result = STATE_UNKNOWN;
+	int packages_available = 0;
+	int sec_count = 0;
+	char **packages_list = NULL;
+	char **secpackages_list = NULL;
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -246,10 +249,17 @@ int process_arguments(int argc, char **argv) {
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist) {
-	int result = STATE_UNKNOWN, regres = 0, pc = 0, spc = 0;
-	struct output chld_out, chld_err;
-	regex_t ireg, ereg, sreg;
-	char *cmdline = NULL, rerrbuf[64];
+	int result = STATE_UNKNOWN;
+	int regres = 0;
+	int pc = 0;
+	int spc = 0;
+	struct output chld_out;
+	struct output chld_err;
+	regex_t ireg;
+	regex_t ereg;
+	regex_t sreg;
+	char *cmdline = NULL;
+	char rerrbuf[64];
 
 	/* initialize ereg as it is possible it is printed while uninitialized */
 	memset(&ereg, '\0', sizeof(ereg.buffer));
@@ -365,7 +375,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 /* run an apt-get update (needs root) */
 int run_update(void) {
 	int result = STATE_UNKNOWN;
-	struct output chld_out, chld_err;
+	struct output chld_out;
+	struct output chld_err;
 	char *cmdline;
 
 	/* run the update */
@@ -401,7 +412,9 @@ int run_update(void) {
 }
 
 char *pkg_name(char *line) {
-	char *start = NULL, *space = NULL, *pkg = NULL;
+	char *start = NULL;
+	char *space = NULL;
+	char *pkg = NULL;
 	int len = 0;
 
 	start = line + strlen(PKGINST_PREFIX);
@@ -446,7 +459,8 @@ char *add_to_regexp(char *expr, const char *next) {
 
 char *construct_cmdline(upgrade_type u, const char *opts) {
 	int len = 0;
-	const char *opts_ptr = NULL, *aptcmd = NULL;
+	const char *opts_ptr = NULL;
+	const char *aptcmd = NULL;
 	char *cmd = NULL;
 
 	switch (u) {
