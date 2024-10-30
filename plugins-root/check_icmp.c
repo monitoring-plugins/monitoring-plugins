@@ -580,7 +580,8 @@ int main(int argc, char **argv) {
 					icmp_data_size = size;
 					icmp_pkt_size = size + ICMP_MINLEN;
 				} else
-					usage_va("ICMP data length must be between: %lu and %lu", sizeof(struct icmp) + sizeof(struct icmp_ping_data), MAX_PING_DATA - 1);
+					usage_va("ICMP data length must be between: %lu and %lu", sizeof(struct icmp) + sizeof(struct icmp_ping_data),
+							 MAX_PING_DATA - 1);
 				break;
 			case 'i':
 				pkt_interval = get_timevar(optarg);
@@ -803,7 +804,8 @@ int main(int argc, char **argv) {
 			   "target_interval: %0.3f, pkt_interval %0.3f\n"
 			   "crit.rta: %0.3f\n"
 			   "max_completion_time: %0.3f\n",
-			   packets, targets, (float)target_interval / 1000, (float)pkt_interval / 1000, (float)crit.rta / 1000, (float)max_completion_time / 1000);
+			   packets, targets, (float)target_interval / 1000, (float)pkt_interval / 1000, (float)crit.rta / 1000,
+			   (float)max_completion_time / 1000);
 	}
 
 	if (debug) {
@@ -997,9 +999,10 @@ static int wait_for_reply(int sock, u_int t) {
 		/*			address_family == AF_INET6 ? sizeof(struct icmp6_hdr)
 								   : sizeof(struct icmp));*/
 
-		if ((address_family == PF_INET && (ntohs(packet.icp->icmp_id) != pid || packet.icp->icmp_type != ICMP_ECHOREPLY || ntohs(packet.icp->icmp_seq) >= targets * packets)) ||
-			(address_family == PF_INET6 &&
-			 (ntohs(packet.icp6->icmp6_id) != pid || packet.icp6->icmp6_type != ICMP6_ECHO_REPLY || ntohs(packet.icp6->icmp6_seq) >= targets * packets))) {
+		if ((address_family == PF_INET && (ntohs(packet.icp->icmp_id) != pid || packet.icp->icmp_type != ICMP_ECHOREPLY ||
+										   ntohs(packet.icp->icmp_seq) >= targets * packets)) ||
+			(address_family == PF_INET6 && (ntohs(packet.icp6->icmp6_id) != pid || packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
+											ntohs(packet.icp6->icmp6_seq) >= targets * packets))) {
 			if (debug > 2)
 				printf("not a proper ICMP_ECHOREPLY\n");
 			handle_random_icmp(buf + hlen, &resp_addr);
@@ -1010,14 +1013,14 @@ static int wait_for_reply(int sock, u_int t) {
 		if (address_family == PF_INET) {
 			memcpy(&data, packet.icp->icmp_data, sizeof(data));
 			if (debug > 2)
-				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp->icmp_id), ntohs(packet.icp->icmp_seq),
-					   packet.icp->icmp_cksum);
+				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp->icmp_id),
+					   ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum);
 			host = table[ntohs(packet.icp->icmp_seq) / packets];
 		} else {
 			memcpy(&data, &packet.icp6->icmp6_dataun.icmp6_un_data8[4], sizeof(data));
 			if (debug > 2)
-				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp6->icmp6_id), ntohs(packet.icp6->icmp6_seq),
-					   packet.icp6->icmp6_cksum);
+				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp6->icmp6_id),
+					   ntohs(packet.icp6->icmp6_seq), packet.icp6->icmp6_cksum);
 			host = table[ntohs(packet.icp6->icmp6_seq) / packets];
 		}
 
@@ -1069,12 +1072,13 @@ static int wait_for_reply(int sock, u_int t) {
 
 			switch (address_family) {
 			case AF_INET: {
-				printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n", (float)tdiff / 1000, address, ttl, ip->ip.ip_ttl,
-					   (float)host->rtmax / 1000, (float)host->rtmin / 1000);
+				printf("%0.3f ms rtt from %s, outgoing ttl: %u, incoming ttl: %u, max: %0.3f, min: %0.3f\n", (float)tdiff / 1000, address,
+					   ttl, ip->ip.ip_ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
 				break;
 			};
 			case AF_INET6: {
-				printf("%0.3f ms rtt from %s, outgoing ttl: %u, max: %0.3f, min: %0.3f\n", (float)tdiff / 1000, address, ttl, (float)host->rtmax / 1000, (float)host->rtmin / 1000);
+				printf("%0.3f ms rtt from %s, outgoing ttl: %u, max: %0.3f, min: %0.3f\n", (float)tdiff / 1000, address, ttl,
+					   (float)host->rtmax / 1000, (float)host->rtmin / 1000);
 			};
 			}
 		}
@@ -1083,7 +1087,8 @@ static int wait_for_reply(int sock, u_int t) {
 		if (mode == MODE_HOSTCHECK) {
 			printf("OK - %s responds to ICMP. Packet %u, rta %0.3fms|"
 				   "pkt=%u;;;0;%u rta=%0.3f;%0.3f;%0.3f;;\n",
-				   host->name, icmp_recv, (float)tdiff / 1000, icmp_recv, packets, (float)tdiff / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000);
+				   host->name, icmp_recv, (float)tdiff / 1000, icmp_recv, packets, (float)tdiff / 1000, (float)warn.rta / 1000,
+				   (float)crit.rta / 1000);
 			exit(STATE_OK);
 		}
 	}
@@ -1138,8 +1143,8 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 		icp->icmp_cksum = icmp_checksum((uint16_t *)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2)
-			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data), ntohs(icp->icmp_id), ntohs(icp->icmp_seq),
-				   icp->icmp_cksum, host->name);
+			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data),
+				   ntohs(icp->icmp_id), ntohs(icp->icmp_seq), icp->icmp_cksum, host->name);
 	} else {
 		struct icmp6_hdr *icp6 = (struct icmp6_hdr *)buf;
 		addrlen = sizeof(struct sockaddr_in6);
@@ -1154,8 +1159,8 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 		// let checksum be calculated automatically
 
 		if (debug > 2) {
-			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data), ntohs(icp6->icmp6_id), ntohs(icp6->icmp6_seq),
-				   icp6->icmp6_cksum, host->name);
+			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data),
+				   ntohs(icp6->icmp6_id), ntohs(icp6->icmp6_seq), icp6->icmp6_cksum, host->name);
 		}
 	}
 
@@ -1542,11 +1547,13 @@ static void finish(int sig) {
 
 		if (rta_mode) {
 			if (host->pl < 100) {
-				printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ", (targets > 1) ? host->name : "", host->rta / 1000, (float)warn.rta / 1000,
-					   (float)crit.rta / 1000, (targets > 1) ? host->name : "", (float)host->rtmax / 1000, (targets > 1) ? host->name : "",
+				printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ", (targets > 1) ? host->name : "",
+					   host->rta / 1000, (float)warn.rta / 1000, (float)crit.rta / 1000, (targets > 1) ? host->name : "",
+					   (float)host->rtmax / 1000, (targets > 1) ? host->name : "",
 					   (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
 			} else {
-				printf("%srta=U;;;; %srtmax=U;;;; %srtmin=U;;;; ", (targets > 1) ? host->name : "", (targets > 1) ? host->name : "", (targets > 1) ? host->name : "");
+				printf("%srta=U;;;; %srtmax=U;;;; %srtmin=U;;;; ", (targets > 1) ? host->name : "", (targets > 1) ? host->name : "",
+					   (targets > 1) ? host->name : "");
 			}
 		}
 
@@ -1556,12 +1563,13 @@ static void finish(int sig) {
 
 		if (jitter_mode) {
 			if (host->pl < 100) {
-				printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ", (targets > 1) ? host->name : "", (float)host->jitter,
-					   (float)warn.jitter, (float)crit.jitter, (targets > 1) ? host->name : "", (float)host->jitter_max / 1000, (targets > 1) ? host->name : "",
+				printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; %sjitter_min=%0.3fms;;;; ",
+					   (targets > 1) ? host->name : "", (float)host->jitter, (float)warn.jitter, (float)crit.jitter,
+					   (targets > 1) ? host->name : "", (float)host->jitter_max / 1000, (targets > 1) ? host->name : "",
 					   (float)host->jitter_min / 1000);
 			} else {
-				printf("%sjitter_avg=U;;;; %sjitter_max=U;;;; %sjitter_min=U;;;; ", (targets > 1) ? host->name : "", (targets > 1) ? host->name : "",
-					   (targets > 1) ? host->name : "");
+				printf("%sjitter_avg=U;;;; %sjitter_max=U;;;; %sjitter_min=U;;;; ", (targets > 1) ? host->name : "",
+					   (targets > 1) ? host->name : "", (targets > 1) ? host->name : "");
 			}
 		}
 
@@ -1594,7 +1602,8 @@ static void finish(int sig) {
 	/* finish with an empty line */
 	puts("");
 	if (debug)
-		printf("targets: %u, targets_alive: %u, hosts_ok: %u, hosts_warn: %u, min_hosts_alive: %i\n", targets, targets_alive, hosts_ok, hosts_warn, min_hosts_alive);
+		printf("targets: %u, targets_alive: %u, hosts_ok: %u, hosts_warn: %u, min_hosts_alive: %i\n", targets, targets_alive, hosts_ok,
+			   hosts_warn, min_hosts_alive);
 
 	exit(status);
 }
