@@ -97,11 +97,12 @@ my $opt_V ;
 my $opt_u;
 my $opt_n;
 my $opt_x ;
+my $opt_d;
 my %excluded ;
 my %unused_names ;
 my @unused_ports ;
 my %session_opts;
-
+my @exclude_descriptions;
 
 
 
@@ -134,6 +135,7 @@ if (!defined($session)) {
 }
 
 
+push(@snmpoids,$snmpLocIfDescr);
 push(@snmpoids,$snmpIfOperStatus);
 push(@snmpoids,$snmpIfAdminStatus);
 push(@snmpoids,$snmpIfDescr);
@@ -180,18 +182,28 @@ foreach $key (keys %ifStatus) {
 		if ($ifStatus{$key}{$snmpIfAdminStatus} == 1 ) {
 			#check only if interface is not excluded
 			if (!defined $unused_names{$ifStatus{$key}{$snmpIfDescr}} ) {
-				# check only if interface type is not listed in %excluded
-				if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
-					if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ; }
-					if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
-									$ifdown++ ;
-									if (defined $ifXTable) {
-										$ifmessage .= sprintf("%s: down -> %s<BR>\n", $ifStatus{$key}{$snmpIfName}, $ifStatus{$key}{$snmpIfAlias});
-									}else{
-										$ifmessage .= sprintf("%s: down <BR>\n",$ifStatus{$key}{$snmpIfDescr});
-									}
+				#check only if interface is not excluded (by description)
+				#counter for matching descriptions
+				my $match_descr = 0;
+				foreach my $description (@exclude_descriptions) {
+					if ($ifStatus{$key}{$snmpLocIfDescr} =~ /^$description/) { $match_descr = 1; }
+				}
+				if ($match_descr == 0) {
+					# check only if interface type is not listed in %excluded
+					if (!defined $excluded{$ifStatus{$key}{$snmpIfType}} ) {
+						if ($ifStatus{$key}{$snmpIfOperStatus} == 1 ) { $ifup++ ; }
+						if ($ifStatus{$key}{$snmpIfOperStatus} == 2 ) {
+										$ifdown++ ;
+										if (defined $ifXTable) {
+											$ifmessage .= sprintf("%s: down -> %s<BR>\n", $ifStatus{$key}{$snmpIfName}, $ifStatus{$key}{$snmpIfAlias});
+										}else{
+											$ifmessage .= sprintf("%s: down <BR>\n",$ifStatus{$key}{$snmpIfDescr});
+										}
+						}
+						if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
+					} else {
+						$ifexclude++;
 					}
-					if ($ifStatus{$key}{$snmpIfOperStatus} == 5 ) { $ifdormant++ ;}
 				} else {
 					$ifexclude++;
 				}
@@ -264,6 +276,9 @@ sub print_help() {
 	printf "                     the descriptive name.  Do not use if you don't know what this is. \n";
 	printf "   -x (--exclude)    A comma separated list of ifType values that should be excluded \n";
 	printf "                     from the report (default for an empty list is PPP(23).\n";
+	printf "   -d (--exclude_ports_by_description) A comma separated list of LocIfDescr values that should be excluded \n";
+	printf "                     from the report (default is an empty exclusion list). Done using regexp '/^arg/', ex:\n";
+	printf "                     '-d connect,test' will match with descriptions like 'testing phase' but not 'in testing'.\n";
 	printf "   -n (--unused_ports_by_name) A comma separated list of ifDescr values that should be excluded \n";
 	printf "                     from the report (default is an empty exclusion list).\n";
 	printf "   -u (--unused_ports) A comma separated list of ifIndex values that should be excluded \n";
@@ -306,6 +321,7 @@ sub process_arguments() {
 		"I"		=> \$ifXTable, "ifmib" => \$ifXTable,
 		"x:s"		=>	\$opt_x,   "exclude:s" => \$opt_x,
 		"u=s" => \$opt_u,  "unused_ports=s" => \$opt_u,
+		"d=s" => \$opt_d, "exclude_ports_by_description=s" => \$opt_d,
 		"n=s" => \$opt_n, "unused_ports_by_name=s" => \$opt_n,
 		"M=i" => \$maxmsgsize, "maxmsgsize=i" => \$maxmsgsize,
 		"t=i" => \$timeout,    "timeout=i" => \$timeout,
@@ -414,6 +430,11 @@ sub process_arguments() {
 		}
 	}
 	
+	# Exclude interfaces by descriptions
+	if (defined $opt_d) {
+		@exclude_descriptions = split(/,/,$opt_d);
+	}
+
 	# Excluded interface descriptors
 	if (defined $opt_n) {
 		my @unused = split(/,/,$opt_n);
