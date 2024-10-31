@@ -71,11 +71,13 @@ int main(int argc, char **argv) {
 #endif /* PS_USES_PROCETIME */
 	char procprog[MAX_INPUT_BUFFER];
 	char *procargs;
-	int pos, cols;
+	int pos;
+	int cols;
 	int expected_cols = PS_COLS - 1;
 	const char *zombie = "Z";
 	char *temp_string;
-	output chld_out, chld_err;
+	output chld_out;
+	output chld_err;
 	size_t i;
 
 	setlocale(LC_ALL, "");
@@ -108,7 +110,8 @@ int main(int argc, char **argv) {
 			temp_entry_time = strtoul(temp_ptr + 8, NULL, 10);
 			latest_entry_time = temp_entry_time;
 			break;
-		} else if ((temp_ptr = strtok(input_buffer, "]")) != NULL) {
+		}
+		if ((temp_ptr = strtok(input_buffer, "]")) != NULL) {
 			temp_entry_time = strtoul(temp_ptr + 1, NULL, 10);
 			if (temp_entry_time > latest_entry_time)
 				latest_entry_time = temp_entry_time;
