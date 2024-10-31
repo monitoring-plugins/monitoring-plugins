@@ -3,7 +3,7 @@
  * Monitoring check_mrtgtraf plugin
  *
  * License: GPL
- * Copyright (c) 1999-2007 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -33,7 +33,7 @@
 #include "utils.h"
 
 const char *progname = "check_mrtgtraf";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 int process_arguments(int, char **);
