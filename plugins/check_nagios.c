@@ -40,15 +40,15 @@ const char *email = "devel@monitoring-plugins.org";
 #include "runcmd.h"
 #include "utils.h"
 
-int process_arguments(int, char **);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static void print_help(void);
 void print_usage(void);
 
-char *status_log = NULL;
-char *process_string = NULL;
-int expire_minutes = 0;
+static char *status_log = NULL;
+static char *process_string = NULL;
+static int expire_minutes = 0;
 
-int verbose = 0;
+static int verbose = 0;
 
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
