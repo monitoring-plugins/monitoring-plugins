@@ -3,8 +3,8 @@
  * Monitoring check_dbi plugin
  *
  * License: GPL
- * Copyright (c) 2011 Monitoring Plugins Development Team
- * Author: Sebastian 'tokkee' Harl <sh@teamix.net>
+ * Copyright (c) 2011-2024 Monitoring Plugins Development Team
+ * Original Author: Sebastian 'tokkee' Harl <sh@teamix.net>
  *
  * Description:
  *
@@ -30,7 +30,7 @@
  *****************************************************************************/
 
 const char *progname = "check_dbi";
-const char *copyright = "2011";
+const char *copyright = "2011-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
