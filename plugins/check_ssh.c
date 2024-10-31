@@ -43,18 +43,18 @@ const char *email = "devel@monitoring-plugins.org";
 #define SSH_DFL_PORT 22
 #define BUFF_SZ      256
 
-int port = -1;
-char *server_name = NULL;
-char *remote_version = NULL;
-char *remote_protocol = NULL;
-bool verbose = false;
+static int port = -1;
+static char *server_name = NULL;
+static char *remote_version = NULL;
+static char *remote_protocol = NULL;
+static bool verbose = false;
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
-int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_protocol);
+static int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_protocol);
 
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
