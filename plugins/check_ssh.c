@@ -49,7 +49,7 @@ static char *remote_version = NULL;
 static char *remote_protocol = NULL;
 static bool verbose = false;
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
 static void print_help(void);
 void print_usage(void);
@@ -57,8 +57,6 @@ void print_usage(void);
 static int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_protocol);
 
 int main(int argc, char **argv) {
-	int result = STATE_UNKNOWN;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -75,7 +73,7 @@ int main(int argc, char **argv) {
 	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	result = ssh_connect(server_name, port, remote_version, remote_protocol);
+	int result = ssh_connect(server_name, port, remote_version, remote_protocol);
 
 	alarm(0);
 
@@ -84,9 +82,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
 									   {"host", required_argument, 0, 'H'}, /* backward compatibility */
@@ -103,17 +98,19 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		return ERROR;
 
-	for (c = 1; c < argc; c++)
-		if (strcmp("-to", argv[c]) == 0)
-			strcpy(argv[c], "-t");
+	for (int i = 1; i < argc; i++)
+		if (strcmp("-to", argv[i]) == 0)
+			strcpy(argv[i], "-t");
 
-	while (1) {
-		c = getopt_long(argc, argv, "+Vhv46t:r:H:p:P:", longopts, &option);
+	int option_char;
+	while (true) {
+		int option = 0;
+		option_char = getopt_long(argc, argv, "+Vhv46t:r:H:p:P:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* help */
 			usage5();
 		case 'V': /* version */
@@ -161,16 +158,16 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (server_name == NULL && c < argc) {
-		if (is_host(argv[c])) {
-			server_name = argv[c++];
+	option_char = optind;
+	if (server_name == NULL && option_char < argc) {
+		if (is_host(argv[option_char])) {
+			server_name = argv[option_char++];
 		}
 	}
 
-	if (port == -1 && c < argc) {
-		if (is_intpos(argv[c])) {
-			port = atoi(argv[c++]);
+	if (port == -1 && option_char < argc) {
+		if (is_intpos(argv[option_char])) {
+			port = atoi(argv[option_char++]);
 		} else {
 			print_usage();
 			exit(STATE_UNKNOWN);
@@ -195,34 +192,27 @@ int validate_arguments(void) {
  *-----------------------------------------------------------------------*/
 
 int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_protocol) {
-	int sd;
-	int result;
-	int len = 0;
-	ssize_t recv_ret = 0;
-	char *version_control_string = NULL;
-	char *buffer = NULL;
-	char *ssh_proto = NULL;
-	char *ssh_server = NULL;
-	static char *rev_no = VERSION;
 	struct timeval tv;
-
 	gettimeofday(&tv, NULL);
 
-	result = my_tcp_connect(haddr, hport, &sd);
+	int socket;
+	int result = my_tcp_connect(haddr, hport, &socket);
 
 	if (result != STATE_OK)
 		return result;
 
 	char *output = (char *)calloc(BUFF_SZ + 1, sizeof(char));
-
+	char *buffer = NULL;
+	ssize_t recv_ret = 0;
+	char *version_control_string = NULL;
 	ssize_t byte_offset = 0;
-
-	while ((version_control_string == NULL) && (recv_ret = recv(sd, output + byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
+	while ((version_control_string == NULL) && (recv_ret = recv(socket, output + byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
 
 		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
 			byte_offset = 0;
 
 			char *index = NULL;
+			int len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
@@ -241,7 +231,7 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 
 			if (version_control_string == NULL) {
 				/* move unconsumed data to beginning of buffer, null rest */
-				memmove((void *)output, (void *)output + byte_offset + 1, BUFF_SZ - len + 1);
+				memmove((void *)output, (void *)(output + byte_offset + 1), BUFF_SZ - len + 1);
 				memset(output + byte_offset + 1, 0, BUFF_SZ - byte_offset + 1);
 
 				/*start reading from end of current line chunk on next recv*/
@@ -271,7 +261,8 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	strip(version_control_string);
 	if (verbose)
 		printf("%s\n", version_control_string);
-	ssh_proto = version_control_string + 4;
+
+	char *ssh_proto = version_control_string + 4;
 
 	/*
 	 * We assume the protoversion is of the form Major.Minor, although
@@ -289,7 +280,7 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	 * "1.x" (e.g., "1.5" or "1.3")."
 	 *		- RFC 4253:5
 	 */
-	ssh_server = ssh_proto + strspn(ssh_proto, "0123456789.") + 1; /* (+1 for the '-' separating protoversion from softwareversion) */
+	char *ssh_server = ssh_proto + strspn(ssh_proto, "0123456789.") + 1; /* (+1 for the '-' separating protoversion from softwareversion) */
 
 	/* If there's a space in the version string, whatever's after the space is a comment
 	 * (which is NOT part of the server name/version)*/
@@ -303,14 +294,15 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	}
 	ssh_proto[strspn(ssh_proto, "0123456789. ")] = 0;
 
+	static char *rev_no = VERSION;
 	xasprintf(&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
-	send(sd, buffer, strlen(buffer), MSG_DONTWAIT);
+	send(socket, buffer, strlen(buffer), MSG_DONTWAIT);
 	if (verbose)
 		printf("%s\n", buffer);
 
 	if (remote_version && strcmp(remote_version, ssh_server)) {
 		printf(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"), ssh_server, ssh_proto, remote_version);
-		close(sd);
+		close(socket);
 		exit(STATE_CRITICAL);
 	}
 
@@ -318,13 +310,13 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 		printf(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s' | %s\n"), ssh_server, ssh_proto, remote_protocol,
 			   fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, true, (int)socket_timeout));
-		close(sd);
+		close(socket);
 		exit(STATE_CRITICAL);
 	}
 
 	printf(_("SSH OK - %s (protocol %s) | %s\n"), ssh_server, ssh_proto,
 		   fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, true, (int)socket_timeout));
-	close(sd);
+	close(socket);
 	exit(STATE_OK);
 }
 
