@@ -33,29 +33,29 @@ const char *email = "devel@monitoring-plugins.org";
 #define CHECK_SERVICES 1
 #define CHECK_HOSTS    2
 
-void print_help(void);
+static void print_help(void);
 void print_usage(void);
 
-int total_services_ok = 0;
-int total_services_warning = 0;
-int total_services_unknown = 0;
-int total_services_critical = 0;
+static int total_services_ok = 0;
+static int total_services_warning = 0;
+static int total_services_unknown = 0;
+static int total_services_critical = 0;
 
-int total_hosts_up = 0;
-int total_hosts_down = 0;
-int total_hosts_unreachable = 0;
+static int total_hosts_up = 0;
+static int total_hosts_down = 0;
+static int total_hosts_unreachable = 0;
 
-char *warn_threshold;
-char *crit_threshold;
+static char *warn_threshold;
+static char *crit_threshold;
 
-int check_type = CHECK_SERVICES;
+static int check_type = CHECK_SERVICES;
 
-char *data_vals = NULL;
-char *label = NULL;
+static char *data_vals = NULL;
+static char *label = NULL;
 
-int verbose = 0;
+static int verbose = 0;
 
-int process_arguments(int, char **);
+static int process_arguments(int, char **);
 
 int main(int argc, char **argv) {
 	char *ptr;
