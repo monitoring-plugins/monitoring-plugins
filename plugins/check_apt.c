@@ -94,7 +94,7 @@ static int stderr_warning = 0;   /* if a cmd issued output on stderr */
 static int exec_warning = 0;     /* if a cmd exited non-zero */
 
 int main (int argc, char **argv) {
-	int result=STATE_UNKNOWN, packages_available=0, sec_count=0, i=0;
+	int result=STATE_UNKNOWN, packages_available=0, sec_count=0;
 	char **packages_list=NULL, **secpackages_list=NULL;
 
 	/* Parse extra opts if any */
@@ -142,10 +142,11 @@ int main (int argc, char **argv) {
 		qsort(secpackages_list, sec_count, sizeof(char*), cmpstringp);
 		qsort(packages_list, packages_available-sec_count, sizeof(char*), cmpstringp);
 
-		for(i = 0; i < sec_count; i++)
+		for(int i = 0; i < sec_count; i++)
 			printf("%s (security)\n", secpackages_list[i]);
+
 		if (only_critical == false) {
-			for(i = 0; i < packages_available - sec_count; i++)
+			for(int i = 0; i < packages_available - sec_count; i++)
 				printf("%s\n", packages_list[i]);
 		}
 	}
@@ -251,7 +252,7 @@ int process_arguments (int argc, char **argv) {
 
 /* run an apt-get upgrade */
 int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist){
-	int i=0, result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
+	int result=STATE_UNKNOWN, regres=0, pc=0, spc=0;
 	struct output chld_out, chld_err;
 	regex_t ireg, ereg, sreg;
 	char *cmdline=NULL, rerrbuf[64];
@@ -320,7 +321,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	 * we may need to switch to the --print-uris output format,
 	 * in which case the logic here will slightly change.
 	 */
-	for(i = 0; i < chld_out.lines; i++) {
+	for(size_t i = 0; i < chld_out.lines; i++) {
 		if(verbose){
 			printf("%s\n", chld_out.line[i]);
 		}
@@ -353,7 +354,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
+			for(size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}
@@ -367,7 +368,7 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 
 /* run an apt-get update (needs root) */
 int run_update(void){
-	int i=0, result=STATE_UNKNOWN;
+	int result=STATE_UNKNOWN;
 	struct output chld_out, chld_err;
 	char *cmdline;
 
@@ -385,7 +386,7 @@ int run_update(void){
 	}
 
 	if(verbose){
-		for(i = 0; i < chld_out.lines; i++) {
+		for(size_t i = 0; i < chld_out.lines; i++) {
 			printf("%s\n", chld_out.line[i]);
 		}
 	}
@@ -395,7 +396,7 @@ int run_update(void){
 		stderr_warning=1;
 		result = max_state(result, STATE_WARNING);
 		if(verbose){
-			for(i = 0; i < chld_err.lines; i++) {
+			for(size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}

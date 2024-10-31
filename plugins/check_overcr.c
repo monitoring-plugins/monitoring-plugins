@@ -56,15 +56,15 @@ char *server_address = NULL;
 int server_port = PORT;
 double warning_value = 0L;
 double critical_value = 0L;
-int check_warning_value = FALSE;
-int check_critical_value = FALSE;
+bool check_warning_value = false;
+bool check_critical_value = false;
 enum checkvar vars_to_check = NONE;
 int cmd_timeout = 1;
 
 int netstat_port = 0;
 char *disk_name = NULL;
 char *process_name = NULL;
-	char send_buffer[MAX_INPUT_BUFFER];
+char send_buffer[MAX_INPUT_BUFFER];
 
 int process_arguments (int, char **);
 void print_usage (void);
@@ -77,7 +77,7 @@ main (int argc, char **argv)
 	char recv_buffer[MAX_INPUT_BUFFER];
 	char temp_buffer[MAX_INPUT_BUFFER];
 	char *temp_ptr = NULL;
-	int found_disk = FALSE;
+	bool found_disk = false;
 	unsigned long percent_used_disk_space = 100;
 	double load;
 	double load_1min;
@@ -155,9 +155,9 @@ main (int argc, char **argv)
 			break;
 		}
 
-		if (check_critical_value == TRUE && (load >= critical_value))
+		if (check_critical_value && (load >= critical_value))
 			result = STATE_CRITICAL;
-		else if (check_warning_value == TRUE && (load >= warning_value))
+		else if (check_warning_value && (load >= warning_value))
 			result = STATE_WARNING;
 
 		die (result,
@@ -178,7 +178,7 @@ main (int argc, char **argv)
 		     temp_ptr = (char *) strtok (NULL, " ")) {
 
 			if (!strcmp (temp_ptr, disk_name)) {
-				found_disk = TRUE;
+				found_disk = true;
 				temp_ptr = (char *) strtok (NULL, "%");
 				if (temp_ptr == NULL)
 					die (STATE_CRITICAL, _("Invalid response from server\n"));
@@ -191,14 +191,14 @@ main (int argc, char **argv)
 		}
 
 		/* error if we couldn't find the info for the disk */
-		if (found_disk == FALSE)
+		if (!found_disk)
 			die (STATE_CRITICAL,
 			           "CRITICAL - Disk '%s' non-existent or not mounted",
 			           disk_name);
 
-		if (check_critical_value == TRUE && (percent_used_disk_space >= critical_value))
+		if (check_critical_value && (percent_used_disk_space >= critical_value))
 			result = STATE_CRITICAL;
-		else if (check_warning_value == TRUE && (percent_used_disk_space >= warning_value))
+		else if (check_warning_value && (percent_used_disk_space >= warning_value))
 			result = STATE_WARNING;
 
 		die (result, "Disk %s - %lu%% used on %s", state_text(result), percent_used_disk_space, disk_name);
@@ -212,9 +212,9 @@ main (int argc, char **argv)
 		else
 			port_connections = strtod (recv_buffer, NULL);
 
-		if (check_critical_value == TRUE && (port_connections >= critical_value))
+		if (check_critical_value && (port_connections >= critical_value))
 			result = STATE_CRITICAL;
-		else if (check_warning_value == TRUE && (port_connections >= warning_value))
+		else if (check_warning_value && (port_connections >= warning_value))
 			result = STATE_WARNING;
 
 		die (result,
@@ -241,9 +241,9 @@ main (int argc, char **argv)
 		else
 			processes = strtod (temp_ptr, NULL);
 
-		if (check_critical_value == TRUE && (processes >= critical_value))
+		if (check_critical_value && (processes >= critical_value))
 			result = STATE_CRITICAL;
-		else if (check_warning_value == TRUE && (processes >= warning_value))
+		else if (check_warning_value && (processes >= warning_value))
 			result = STATE_WARNING;
 
 		die (result,
@@ -262,9 +262,9 @@ main (int argc, char **argv)
 		uptime_raw_hours = strtod (recv_buffer, NULL);
 		uptime_raw_minutes = (unsigned long) (uptime_raw_hours * 60.0);
 
-		if (check_critical_value == TRUE && (uptime_raw_minutes <= critical_value))
+		if (check_critical_value && (uptime_raw_minutes <= critical_value))
 			result = STATE_CRITICAL;
-		else if (check_warning_value == TRUE && (uptime_raw_minutes <= warning_value))
+		else if (check_warning_value && (uptime_raw_minutes <= warning_value))
 			result = STATE_WARNING;
 
 		uptime_days = uptime_raw_minutes / 1440;
@@ -388,11 +388,11 @@ process_arguments (int argc, char **argv)
 			break;
 		case 'w':									/* warning threshold */
 			warning_value = strtoul (optarg, NULL, 10);
-			check_warning_value = TRUE;
+			check_warning_value = true;
 			break;
 		case 'c':									/* critical threshold */
 			critical_value = strtoul (optarg, NULL, 10);
-			check_critical_value = TRUE;
+			check_critical_value = true;
 			break;
 		case 't':									/* timeout */
 			socket_timeout = atoi (optarg);

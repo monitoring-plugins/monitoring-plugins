@@ -46,6 +46,7 @@ enum checkvar {
 	VPF,        /* check % free space on volume */
 	VMF,	    /* check MB free space on volume */
 	VMU,	    /* check MB used space on volume */
+	VPU,	    /* check % used space on volume */
 	VMP,	    /* check MB purgeable space on volume */
 	VKF,        /* check KB free space on volume */
 	LTCH,       /* check long-term cache hit percentage */
@@ -104,9 +105,9 @@ char *nss7_name=NULL;
 int server_port=PORT;
 unsigned long warning_value=0L;
 unsigned long critical_value=0L;
-int check_warning_value=FALSE;
-int check_critical_value=FALSE;
-int check_netware_version=FALSE;
+bool check_warning_value = false;
+bool check_critical_value = false;
+bool check_netware_version = false;
 enum checkvar vars_to_check = NONE;
 int sap_number=-1;
 
@@ -146,6 +147,8 @@ main(int argc, char **argv) {
 	unsigned long nss6_value=0L;
 	unsigned long nss7_value=0L;
 	unsigned long total_disk_space=0L;
+	unsigned long used_disk_space=0L;
+	unsigned long percent_used_disk_space=0L;
 	unsigned long purgeable_disk_space=0L;
 	unsigned long non_purgeable_disk_space=0L;
 	unsigned long percent_free_space=0;
@@ -182,7 +185,7 @@ main(int argc, char **argv) {
 	my_tcp_connect (server_address, server_port, &sd);
 
 	/* get OS version string */
-	if (check_netware_version==TRUE) {
+	if (check_netware_version) {
 		send_buffer = strdup ("S19\r\n");
 		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
 		if (result!=STATE_OK)
@@ -231,9 +234,9 @@ main(int argc, char **argv) {
 		recv_buffer[strlen(recv_buffer)-1]=0;
 		sprintf(uptime,_("Up %s,"),recv_buffer);
 
-		if (check_critical_value==TRUE && utilization >= critical_value)
+		if (check_critical_value && utilization >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && utilization >= warning_value)
+		else if (check_warning_value && utilization >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -259,9 +262,9 @@ main(int argc, char **argv) {
 			return result;
 		current_connections=strtoul(recv_buffer,NULL,10);
 
-		if (check_critical_value==TRUE && current_connections >= critical_value)
+		if (check_critical_value && current_connections >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && current_connections >= warning_value)
+		else if (check_warning_value && current_connections >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -284,9 +287,9 @@ main(int argc, char **argv) {
 			return result;
 		cache_hits=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && cache_hits <= critical_value)
+		if (check_critical_value && cache_hits <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && cache_hits <= warning_value)
+		else if (check_warning_value && cache_hits <= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -306,9 +309,9 @@ main(int argc, char **argv) {
 			return result;
 		cache_buffers=strtoul(recv_buffer,NULL,10);
 
-		if (check_critical_value==TRUE && cache_buffers <= critical_value)
+		if (check_critical_value && cache_buffers <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && cache_buffers <= warning_value)
+		else if (check_warning_value && cache_buffers <= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -331,9 +334,9 @@ main(int argc, char **argv) {
 			return result;
 		cache_buffers=strtoul(recv_buffer,NULL,10);
 
-		if (check_critical_value==TRUE && cache_buffers >= critical_value)
+		if (check_critical_value && cache_buffers >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && cache_buffers >= warning_value)
+		else if (check_warning_value && cache_buffers >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -356,9 +359,9 @@ main(int argc, char **argv) {
 			return result;
 		lru_time=strtoul(recv_buffer,NULL,10);
 
-		if (check_critical_value==TRUE && lru_time <= critical_value)
+		if (check_critical_value && lru_time <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && lru_time <= warning_value)
+		else if (check_warning_value && lru_time <= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -383,9 +386,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && free_disk_space <= critical_value)
+			if (check_critical_value && free_disk_space <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
+			else if (check_warning_value && free_disk_space <= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s%lu KB free on volume %s|KBFree%s=%lu;%lu;%lu;;"),
@@ -411,9 +414,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && free_disk_space <= critical_value)
+			if (check_critical_value && free_disk_space <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
+			else if (check_warning_value && free_disk_space <= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s%lu MB free on volume %s|MBFree%s=%lu;%lu;%lu;;"),
@@ -438,9 +441,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			free_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && free_disk_space <= critical_value)
+			if (check_critical_value && free_disk_space <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && free_disk_space <= warning_value)
+			else if (check_warning_value && free_disk_space <= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s%lu MB used on volume %s|MBUsed%s=%lu;%lu;%lu;;"),
@@ -452,7 +455,50 @@ main(int argc, char **argv) {
 				 warning_value,
 				 critical_value);
 		}
+		/* check % used space on volume */
+	} else if (vars_to_check==VPU) {
+		close(sd);
+		my_tcp_connect (server_address, server_port, &sd);
 
+		asprintf (&send_buffer,"VMU%s\r\n",volume_name);
+		result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+
+		if (result!=STATE_OK)
+			return result;
+
+		if (!strcmp(recv_buffer,"-1\n")) {
+			asprintf (&output_message,_("CRITICAL - Volume '%s' does not exist!"),volume_name);
+			result=STATE_CRITICAL;
+
+		} else {
+			used_disk_space=strtoul(recv_buffer,NULL,10);
+			close(sd);
+			my_tcp_connect (server_address, server_port, &sd);
+			/* get total volume in MB */
+			asprintf (&send_buffer,"VMS%s\r\n",volume_name);
+			result=send_tcp_request(sd,send_buffer,recv_buffer,sizeof(recv_buffer));
+			if (result!=STATE_OK)
+				return result;
+			total_disk_space=strtoul(recv_buffer,NULL,10);
+			/* calculate percent used on volume */
+			percent_used_disk_space=(unsigned long)(((double)used_disk_space/(double)total_disk_space)*100.0);
+
+			if (check_critical_value && percent_used_disk_space >= critical_value)
+				result=STATE_CRITICAL;
+			else if (check_warning_value && percent_used_disk_space >= warning_value)
+				result=STATE_WARNING;
+
+			asprintf (&output_message,_("%lu MB (%lu%%) used on volume %s - total %lu MB|Used space in percent on %s=%lu;%lu;%lu;0;100"),
+				used_disk_space,
+				percent_used_disk_space,
+				volume_name,
+				total_disk_space,
+				volume_name,
+				percent_used_disk_space,
+				warning_value,
+				critical_value
+				);
+		}
 
 		/* check % free space on volume */
 	} else if (vars_to_check==VPF) {
@@ -485,9 +531,9 @@ main(int argc, char **argv) {
 
 			percent_free_space=(unsigned long)(((double)free_disk_space/(double)total_disk_space)*100.0);
 
-			if (check_critical_value==TRUE && percent_free_space <= critical_value)
+			if (check_critical_value && percent_free_space <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && percent_free_space <= warning_value)
+			else if (check_warning_value && percent_free_space <= warning_value)
 				result=STATE_WARNING;
 			free_disk_space/=1024;
 			total_disk_space/=1024;
@@ -596,14 +642,14 @@ main(int argc, char **argv) {
 		percent_used_packet_receive_buffers=(unsigned long)(((double)used_packet_receive_buffers/(double)max_packet_receive_buffers)*100.0);
 
 		if (vars_to_check==UPRB) {
-			if (check_critical_value==TRUE && used_packet_receive_buffers >= critical_value)
+			if (check_critical_value && used_packet_receive_buffers >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && used_packet_receive_buffers >= warning_value)
+			else if (check_warning_value && used_packet_receive_buffers >= warning_value)
 				result=STATE_WARNING;
 		} else {
-			if (check_critical_value==TRUE && percent_used_packet_receive_buffers >= critical_value)
+			if (check_critical_value && percent_used_packet_receive_buffers >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && percent_used_packet_receive_buffers >= warning_value)
+			else if (check_warning_value && percent_used_packet_receive_buffers >= warning_value)
 				result=STATE_WARNING;
 		}
 
@@ -625,9 +671,9 @@ main(int argc, char **argv) {
 
 		sap_entries=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && sap_entries >= critical_value)
+		if (check_critical_value && sap_entries >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && sap_entries >= warning_value)
+		else if (check_warning_value && sap_entries >= warning_value)
 			result=STATE_WARNING;
 
 		if (sap_number==-1)
@@ -651,9 +697,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && purgeable_disk_space >= critical_value)
+			if (check_critical_value && purgeable_disk_space >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
+			else if (check_warning_value && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,_("%s%lu KB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
 				 (result==STATE_OK)?"":_("Only "),
@@ -677,9 +723,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		} else {
 			purgeable_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && purgeable_disk_space >= critical_value)
+			if (check_critical_value && purgeable_disk_space >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && purgeable_disk_space >= warning_value)
+			else if (check_warning_value && purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,_("%s%lu MB purgeable on volume %s|Purge%s=%lu;%lu;%lu;;"),
 				 (result==STATE_OK)?"":_("Only "),
@@ -722,9 +768,9 @@ main(int argc, char **argv) {
 
 			percent_purgeable_space=(unsigned long)(((double)purgeable_disk_space/(double)total_disk_space)*100.0);
 
-			if (check_critical_value==TRUE && percent_purgeable_space >= critical_value)
+			if (check_critical_value && percent_purgeable_space >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && percent_purgeable_space >= warning_value)
+			else if (check_warning_value && percent_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
 			xasprintf (&output_message,_("%lu MB (%lu%%) purgeable on volume %s|Purgeable%s=%lu;%lu;%lu;0;100"),
@@ -754,9 +800,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		} else {
 			non_purgeable_disk_space=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && non_purgeable_disk_space >= critical_value)
+			if (check_critical_value && non_purgeable_disk_space >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && non_purgeable_disk_space >= warning_value)
+			else if (check_warning_value && non_purgeable_disk_space >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,_("%s%lu KB not yet purgeable on volume %s"),(result==STATE_OK)?"":_("Only "),non_purgeable_disk_space,volume_name);
 		}
@@ -792,9 +838,9 @@ main(int argc, char **argv) {
 
 			percent_non_purgeable_space=(unsigned long)(((double)non_purgeable_disk_space/(double)total_disk_space)*100.0);
 
-			if (check_critical_value==TRUE && percent_non_purgeable_space >= critical_value)
+			if (check_critical_value && percent_non_purgeable_space >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && percent_non_purgeable_space >= warning_value)
+			else if (check_warning_value && percent_non_purgeable_space >= warning_value)
 				result=STATE_WARNING;
 			purgeable_disk_space/=1024;
 			xasprintf (&output_message,_("%lu MB (%lu%%) not yet purgeable on volume %s"),non_purgeable_disk_space,percent_non_purgeable_space,volume_name);
@@ -813,9 +859,9 @@ main(int argc, char **argv) {
 
 		open_files=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && open_files >= critical_value)
+		if (check_critical_value && open_files >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && open_files >= warning_value)
+		else if (check_warning_value && open_files >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,_("%lu open files|Openfiles=%lu;%lu;%lu;0,0"),
@@ -838,9 +884,9 @@ main(int argc, char **argv) {
 
 		abended_threads=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && abended_threads >= critical_value)
+		if (check_critical_value && abended_threads >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && abended_threads >= warning_value)
+		else if (check_warning_value && abended_threads >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,_("%lu abended threads|Abends=%lu;%lu;%lu;;"),
@@ -872,9 +918,9 @@ main(int argc, char **argv) {
 
 		current_service_processes=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && current_service_processes >= critical_value)
+		if (check_critical_value && current_service_processes >= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && current_service_processes >= warning_value)
+		else if (check_warning_value && current_service_processes >= warning_value)
 			result=STATE_WARNING;
 
 		xasprintf (&output_message,
@@ -923,9 +969,9 @@ main(int argc, char **argv) {
 			return result;
 		lru_time=strtoul(recv_buffer,NULL,10);
 
-		if (check_critical_value==TRUE && lru_time <= critical_value)
+		if (check_critical_value && lru_time <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && lru_time <= warning_value)
+		else if (check_warning_value && lru_time <= warning_value)
 			result=STATE_WARNING;
 		xasprintf (&output_message,_("LRU sitting time = %lu seconds"),lru_time);
 
@@ -942,9 +988,9 @@ main(int argc, char **argv) {
 			return result;
 		dirty_cache_buffers=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && dirty_cache_buffers <= critical_value)
+		if (check_critical_value && dirty_cache_buffers <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && dirty_cache_buffers <= warning_value)
+		else if (check_warning_value && dirty_cache_buffers <= warning_value)
 			result=STATE_WARNING;
 		xasprintf (&output_message,_("Dirty cache buffers = %lu%% of the total|DCB=%lu;%lu;%lu;0;100"),
 				dirty_cache_buffers,
@@ -964,9 +1010,9 @@ main(int argc, char **argv) {
 			return result;
 		total_cache_buffers=atoi(recv_buffer);
 
-		if (check_critical_value==TRUE && total_cache_buffers <= critical_value)
+		if (check_critical_value && total_cache_buffers <= critical_value)
 			result=STATE_CRITICAL;
-		else if (check_warning_value==TRUE && total_cache_buffers <= warning_value)
+		else if (check_warning_value && total_cache_buffers <= warning_value)
 			result=STATE_WARNING;
 		xasprintf (&output_message,_("Total cache buffers = %lu%% of the original|TCB=%lu;%lu;%lu;0;100"),
 				total_cache_buffers,
@@ -1034,9 +1080,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nrmp_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nrmp_value <= critical_value)
+			if (check_critical_value && nrmp_value <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nrmp_value <= warning_value)
+			else if (check_warning_value && nrmp_value <= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1060,9 +1106,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nrmm_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nrmm_value <= critical_value)
+			if (check_critical_value && nrmm_value <= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nrmm_value <= warning_value)
+			else if (check_warning_value && nrmm_value <= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1086,9 +1132,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nrms_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nrms_value >= critical_value)
+			if (check_critical_value && nrms_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nrms_value >= warning_value)
+			else if (check_warning_value && nrms_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1112,9 +1158,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss1_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss1_value >= critical_value)
+			if (check_critical_value && nss1_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss1_value >= warning_value)
+			else if (check_warning_value && nss1_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1138,9 +1184,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss2_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss2_value >= critical_value)
+			if (check_critical_value && nss2_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss2_value >= warning_value)
+			else if (check_warning_value && nss2_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1164,9 +1210,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss3_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss3_value >= critical_value)
+			if (check_critical_value && nss3_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss3_value >= warning_value)
+			else if (check_warning_value && nss3_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1190,9 +1236,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss4_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss4_value >= critical_value)
+			if (check_critical_value && nss4_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss4_value >= warning_value)
+			else if (check_warning_value && nss4_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1216,9 +1262,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss5_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss5_value >= critical_value)
+			if (check_critical_value && nss5_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss5_value >= warning_value)
+			else if (check_warning_value && nss5_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1242,9 +1288,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss6_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss6_value >= critical_value)
+			if (check_critical_value && nss6_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss6_value >= warning_value)
+			else if (check_warning_value && nss6_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1268,9 +1314,9 @@ main(int argc, char **argv) {
 			result=STATE_CRITICAL;
 		}	else {
 			nss7_value=strtoul(recv_buffer,NULL,10);
-			if (check_critical_value==TRUE && nss7_value >= critical_value)
+			if (check_critical_value && nss7_value >= critical_value)
 				result=STATE_CRITICAL;
-			else if (check_warning_value==TRUE && nss7_value >= warning_value)
+			else if (check_warning_value && nss7_value >= warning_value)
 				result=STATE_WARNING;
 			xasprintf (&output_message,
 			          _("%s is  %lu|%s=%lu;%lu;%lu;;"),
@@ -1362,7 +1408,7 @@ int process_arguments(int argc, char **argv) {
 				server_address=optarg;
 				break;
 			case 'o': /* display nos version */
-				check_netware_version=TRUE;
+				check_netware_version = true;
 				break;
 			case 'p': /* port */
 				if (is_intnonneg(optarg))
@@ -1446,6 +1492,12 @@ int process_arguments(int argc, char **argv) {
 				}
 				else if (strncmp(optarg,"VMU",3)==0) {
 					vars_to_check=VMU;
+					volume_name = strdup (optarg+3);
+					if (!strcmp(volume_name,""))
+						volume_name = strdup ("SYS");
+				}
+				else if (strncmp(optarg,"VPU",3)==0) {
+					vars_to_check=VPU;
 					volume_name = strdup (optarg+3);
 					if (!strcmp(volume_name,""))
 						volume_name = strdup ("SYS");
@@ -1569,11 +1621,11 @@ int process_arguments(int argc, char **argv) {
 				break;
 			case 'w': /* warning threshold */
 				warning_value=strtoul(optarg,NULL,10);
-				check_warning_value=TRUE;
+				check_warning_value = true;
 				break;
 			case 'c': /* critical threshold */
 				critical_value=strtoul(optarg,NULL,10);
-				check_critical_value=TRUE;
+				check_critical_value = true;
 				break;
 			case 't': /* timeout */
 				socket_timeout=atoi(optarg);
@@ -1626,6 +1678,7 @@ void print_help(void)
 	printf ("    %s\n", _("OFILES    = number of open files"));
   printf ("    %s\n", _("    VMF<vol>  = MB of free space on Volume <vol>"));
   printf ("    %s\n", _("    VMU<vol>  = MB used space on Volume <vol>"));
+  printf ("    %s\n", _("    VPU<vol>  = percent used space on Volume <vol>"));
   printf ("    %s\n", _("    VMP<vol>  = MB of purgeable space on Volume <vol>"));
   printf ("    %s\n", _("    VPF<vol>  = percent free space on volume <vol>"));
   printf ("    %s\n", _("    VKF<vol>  = KB of free space on volume <vol>"));

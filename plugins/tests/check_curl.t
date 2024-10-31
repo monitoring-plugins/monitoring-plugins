@@ -9,7 +9,7 @@
 # Country Name (2 letter code) [AU]:DE
 # State or Province Name (full name) [Some-State]:Bavaria
 # Locality Name (eg, city) []:Munich
-# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Monitoring Plugins
+# Organization Name (eg, company) [Internet Widgets Pty Ltd]:Monitoring Plugins
 # Organizational Unit Name (eg, section) []:
 # Common Name (e.g. server FQDN or YOUR name) []:Monitoring Plugins
 # Email Address []:devel@monitoring-plugins.org
@@ -21,7 +21,7 @@ use FindBin qw($Bin);
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 73;
+my $common_tests = 75;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -178,6 +178,11 @@ sub run_server {
 				$c->send_basic_header;
 				$c->send_crlf;
 				$c->send_response(HTTP::Response->new( 200, 'OK', undef, 'redirected' ));
+			} elsif ($r->url->path eq "/redirect_rel") {
+				$c->send_basic_header(302);
+				$c->send_header("Location", "/redirect2" );
+				$c->send_crlf;
+				$c->send_response('moved to /redirect2');
 			} elsif ($r->url->path eq "/redir_timeout") {
 				$c->send_redirect( "/timeout" );
 			} elsif ($r->url->path eq "/timeout") {
@@ -471,9 +476,12 @@ sub run_common_tests {
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
-  # These tests may block
-	print "ALRM\n";
+	$cmd = "$command -f follow -u /redirect_rel -s redirected";
+	$result = NPTest->testCmd( $cmd );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/^HTTP OK: HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second/', "Output correct: ".$result->output );
 
+	# These tests may block
 	# stickyport - on full urlS port is set back to 80 otherwise
 	$cmd = "$command -f stickyport -u /redir_external -t 5 -s redirected";
 	eval {

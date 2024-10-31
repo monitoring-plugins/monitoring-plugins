@@ -85,6 +85,7 @@ char errbuf[MAX_INPUT_BUFFER];
 int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 int errcode;
 int invert_regex = 0;
+int state_regex = STATE_CRITICAL;
 
 struct timeval tv;
 struct timeval tv_temp;
@@ -210,7 +211,8 @@ bool process_arguments (int argc, char **argv)
     INVERT_REGEX = CHAR_MAX + 1,
     SNI_OPTION,
     MAX_REDIRS_OPTION,
-    CONTINUE_AFTER_CHECK_CERT
+    CONTINUE_AFTER_CHECK_CERT,
+    STATE_REGEX
   };
 
   int option = 0;
@@ -246,6 +248,7 @@ bool process_arguments (int argc, char **argv)
     {"content-type", required_argument, 0, 'T'},
     {"pagesize", required_argument, 0, 'm'},
     {"invert-regex", no_argument, NULL, INVERT_REGEX},
+    {"state-regex", required_argument, 0, STATE_REGEX},
     {"use-ipv4", no_argument, 0, '4'},
     {"use-ipv6", no_argument, 0, '6'},
     {"extended-perfdata", no_argument, 0, 'E'},
@@ -471,10 +474,9 @@ bool process_arguments (int argc, char **argv)
         free(http_method);
       http_method = strdup (optarg);
       char *tmp;
-      if ((tmp = strstr(http_method, ":")) > 0) {
-        tmp[0] = '\0';
-        http_method = http_method;
-        http_method_proxy = ++tmp;
+      if ((tmp = strstr(http_method, ":")) != NULL) {
+        tmp[0] = '\0'; // set the ":" in the middle to 0
+        http_method_proxy = ++tmp; // this points to the second part
       }
       break;
     case 'd': /* string or substring */
@@ -498,6 +500,7 @@ bool process_arguments (int argc, char **argv)
       break;
     case 'R': /* regex */
       cflags |= REG_ICASE;
+			// fall through
     case 'r': /* regex */
       strncpy (regexp, optarg, MAX_RE_SIZE - 1);
       regexp[MAX_RE_SIZE - 1] = 0;
@@ -510,6 +513,13 @@ bool process_arguments (int argc, char **argv)
       break;
     case INVERT_REGEX:
       invert_regex = 1;
+      break;
+    case STATE_REGEX:
+      if (!strcmp (optarg, "critical"))
+        state_regex = STATE_CRITICAL;
+      else if (!strcmp (optarg, "warning"))
+        state_regex = STATE_WARNING;
+      else usage2 (_("Invalid state-regex option"), optarg);
       break;
     case '4':
       address_family = AF_INET;
@@ -1093,7 +1103,7 @@ check_http (void)
       microsec_firstbyte = deltime (tv_temp);
       elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
     }
-    while (pos = memchr(buffer, '\0', i)) {
+    while ((pos = memchr(buffer, '\0', i))) {
       /* replace nul character with a blank */
       *pos = ' ';
     }
@@ -1278,7 +1288,7 @@ check_http (void)
 
   regmatch_t chre_pmatch[1]; // We actually do not care about this, since we only want to know IF it was found
 
-  if (regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
+  if (!no_body && regexec(&chunked_header_regex, header, 1, chre_pmatch, 0) == 0) {
     if (verbose) {
       printf("Found chunked content\n");
     }
@@ -1317,7 +1327,7 @@ check_http (void)
         xasprintf (&msg, _("%spattern not found, "), msg);
       else
         xasprintf (&msg, _("%spattern found, "), msg);
-      result = STATE_CRITICAL;
+      result = state_regex;
     }
     else {
       /* FIXME: Shouldn't that be UNKNOWN? */
@@ -1391,7 +1401,6 @@ char *unchunk_content(const char *content) {
   // https://en.wikipedia.org/wiki/Chunked_transfer_encoding
   // https://www.rfc-editor.org/rfc/rfc7230#section-4.1
   char *result = NULL;
-  size_t content_length = strlen(content);
   char *start_of_chunk;
   char* end_of_chunk;
   long size_of_chunk;
@@ -1775,7 +1784,7 @@ print_help (void)
   printf (" %s\n", "-u, --url=PATH");
   printf ("    %s\n", _("URL to GET or POST (default: /)"));
   printf (" %s\n", "-P, --post=STRING");
-  printf ("    %s\n", _("URL encoded http POST data"));
+  printf ("    %s\n", _("URL decoded http POST data"));
   printf (" %s\n", "-j, --method=STRING  (for example: HEAD, OPTIONS, TRACE, PUT, DELETE, CONNECT, CONNECT:POST)");
   printf ("    %s\n", _("Set HTTP method."));
   printf (" %s\n", "-N, --no-body");
@@ -1794,7 +1803,10 @@ print_help (void)
   printf (" %s\n", "-R, --eregi=STRING");
   printf ("    %s\n", _("Search page for case-insensitive regex STRING"));
   printf (" %s\n", "--invert-regex");
-  printf ("    %s\n", _("Return CRITICAL if found, OK if not\n"));
+  printf ("    %s\n", _("Return STATE if found, OK if not (STATE is CRITICAL, per default)"));
+  printf ("    %s\n", _("can be changed with --state--regex)"));
+  printf (" %s\n", "--regex-state=STATE");
+  printf ("    %s\n", _("Return STATE if regex is found, OK if not\n"));
 
   printf (" %s\n", "-a, --authorization=AUTH_PAIR");
   printf ("    %s\n", _("Username:password on sites with basic authentication"));

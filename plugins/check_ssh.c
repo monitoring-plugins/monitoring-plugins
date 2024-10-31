@@ -1,39 +1,39 @@
 /*****************************************************************************
-* 
+*
 * Monitoring check_ssh plugin
-* 
+*
 * License: GPL
 * Copyright (c) 2000-2007 Monitoring Plugins Development Team
-* 
+*
 * Description:
-* 
+*
 * This file contains the check_ssh plugin
-* 
+*
 * Try to connect to an SSH server at specified server and port
-* 
-* 
+*
+*
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
+*
+*
 *****************************************************************************/
 
 const char *progname = "check_ssh";
 const char *copyright = "2000-2007";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "netutils.h"
+#include "./common.h"
+#include "./netutils.h"
 #include "utils.h"
 
 #ifndef MSG_DONTWAIT
@@ -47,7 +47,7 @@ int port = -1;
 char *server_name = NULL;
 char *remote_version = NULL;
 char *remote_protocol = NULL;
-int verbose = FALSE;
+bool verbose = false;
 
 int process_arguments (int, char **);
 int validate_arguments (void);
@@ -55,7 +55,6 @@ void print_help (void);
 void print_usage (void);
 
 int ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol);
-
 
 
 int
@@ -106,7 +105,7 @@ process_arguments (int argc, char **argv)
 		{"timeout", required_argument, 0, 't'},
 		{"verbose", no_argument, 0, 'v'},
 		{"remote-version", required_argument, 0, 'r'},
-		{"remote-protcol", required_argument, 0, 'P'},
+		{"remote-protocol", required_argument, 0, 'P'},
 		{0, 0, 0, 0}
 	};
 
@@ -133,7 +132,7 @@ process_arguments (int argc, char **argv)
 			print_help ();
 			exit (STATE_UNKNOWN);
 		case 'v':									/* verbose */
-			verbose = TRUE;
+			verbose = true;
 			break;
 		case 't':									/* timeout period */
 			if (!is_integer (optarg))
@@ -158,7 +157,7 @@ process_arguments (int argc, char **argv)
 			remote_protocol = optarg;
 			break;
 		case 'H':									/* host */
-			if (is_host (optarg) == FALSE)
+			if (!is_host (optarg))
 				usage2 (_("Invalid hostname/address"), optarg);
 			server_name = optarg;
 			break;
@@ -215,7 +214,9 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 {
 	int sd;
 	int result;
-	char *output = NULL;
+	int len = 0;
+	ssize_t recv_ret = 0;
+	char *version_control_string = NULL;
 	char *buffer = NULL;
 	char *ssh_proto = NULL;
 	char *ssh_server = NULL;
@@ -230,52 +231,126 @@ ssh_connect (char *haddr, int hport, char *remote_version, char *remote_protocol
 	if (result != STATE_OK)
 		return result;
 
-	output = (char *) malloc (BUFF_SZ + 1);
-	memset (output, 0, BUFF_SZ + 1);
-	recv (sd, output, BUFF_SZ, 0);
-	if (strncmp (output, "SSH", 3)) {
-		printf (_("Server answer: %s"), output);
+	char *output = (char *) calloc (BUFF_SZ + 1, sizeof(char));
+
+	unsigned int iteration = 0;
+	ssize_t byte_offset = 0;
+
+	while ((version_control_string == NULL) && (recv_ret = recv(sd, output+byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
+
+		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
+			byte_offset = 0;
+
+			char *index = NULL;
+			while ((index = strchr(output+byte_offset, '\n')) != NULL) {
+				/*Partition the buffer so that this line is a separate string,
+				 * by replacing the newline with NUL*/
+				output[(index - output)] = '\0';
+				len = strlen(output + byte_offset);
+
+				if ((len >= 4) && (strncmp (output+byte_offset, "SSH-", 4) == 0)) {
+					/*if the string starts with SSH-, this _should_ be a valid version control string*/
+						version_control_string = output+byte_offset;
+						break;
+				}
+
+				/*the start of the next line (if one exists) will be after the current one (+ NUL)*/
+				byte_offset += (len + 1);
+			}
+
+			if(version_control_string == NULL) {
+				/* move unconsumed data to beginning of buffer, null rest */
+				memmove((void *)output, (void *)output+byte_offset+1, BUFF_SZ - len+1);
+				memset(output+byte_offset+1, 0, BUFF_SZ-byte_offset+1);
+
+				/*start reading from end of current line chunk on next recv*/
+				byte_offset = strlen(output);
+			}
+		} else {
+			byte_offset += recv_ret;
+		}
+	}
+
+	if (recv_ret < 0) {
+		printf("SSH CRITICAL - %s", strerror(errno));
+		exit(STATE_CRITICAL);
+	}
+
+	if (version_control_string == NULL) {
+		printf("SSH CRITICAL - No version control string received");
+		exit(STATE_CRITICAL);
+	}
+	/*
+	 * "When the connection has been established, both sides MUST send an
+	 * identification string.  This identification string MUST be
+	 *
+	 * SSH-protoversion-softwareversion SP comments CR LF"
+	 *		- RFC 4253:4.2
+	 */
+	strip (version_control_string);
+	if (verbose)
+		printf ("%s\n", version_control_string);
+	ssh_proto = version_control_string + 4;
+
+	/*
+	 * We assume the protoversion is of the form Major.Minor, although
+	 * this is not _strictly_ required. See
+	 *
+	 * "Both the 'protoversion' and 'softwareversion' strings MUST consist of
+	 * printable US-ASCII characters, with the exception of whitespace
+	 * characters and the minus sign (-)"
+	 *		- RFC 4253:4.2
+	 * and,
+	 *
+	 * "As stated earlier, the 'protoversion' specified for this protocol is
+	 * "2.0".  Earlier versions of this protocol have not been formally
+	 * documented, but it is widely known that they use 'protoversion' of
+	 * "1.x" (e.g., "1.5" or "1.3")."
+	 *		- RFC 4253:5
+	 */
+	ssh_server = ssh_proto + strspn (ssh_proto, "0123456789.") + 1; /* (+1 for the '-' separating protoversion from softwareversion) */
+
+	/* If there's a space in the version string, whatever's after the space is a comment
+	 * (which is NOT part of the server name/version)*/
+	char *tmp = strchr(ssh_server, ' ');
+	if (tmp) {
+		ssh_server[tmp - ssh_server] = '\0';
+	}
+	if (strlen(ssh_proto) == 0 || strlen(ssh_server) == 0) {
+		printf(_("SSH CRITICAL - Invalid protocol version control string %s\n"), version_control_string);
+		exit (STATE_CRITICAL);
+	}
+	ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
+
+	xasprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
+	send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
+	if (verbose)
+		printf ("%s\n", buffer);
+
+	if (remote_version && strcmp(remote_version, ssh_server)) {
+		printf
+			(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
+			 ssh_server, ssh_proto, remote_version);
 		close(sd);
 		exit (STATE_CRITICAL);
 	}
-	else {
-		strip (output);
-		if (verbose)
-			printf ("%s\n", output);
-		ssh_proto = output + 4;
-		ssh_server = ssh_proto + strspn (ssh_proto, "-0123456789. ");
-		ssh_proto[strspn (ssh_proto, "0123456789. ")] = 0;
 
-		xasprintf (&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
-		send (sd, buffer, strlen (buffer), MSG_DONTWAIT);
-		if (verbose)
-			printf ("%s\n", buffer);
-
-		if (remote_version && strcmp(remote_version, ssh_server)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_version);
-			close(sd);
-			exit (STATE_CRITICAL);
-		}
-
-		if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
-			printf
-				(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s'\n"),
-				 ssh_server, ssh_proto, remote_protocol);
-			close(sd);
-			exit (STATE_CRITICAL);
-		}
-
-		elapsed_time = (double)deltime(tv) / 1.0e6;
-
+	if (remote_protocol && strcmp(remote_protocol, ssh_proto)) {
 		printf
-			(_("SSH OK - %s (protocol %s) | %s\n"),
-			 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
-			 FALSE, 0, FALSE, 0, TRUE, 0, TRUE, (int)socket_timeout));
+			(_("SSH CRITICAL - %s (protocol %s) protocol version mismatch, expected '%s' | %s\n"),
+			 ssh_server, ssh_proto, remote_protocol, fperfdata("time", elapsed_time, "s",
+			 false, 0, false, 0, true, 0, true, (int)socket_timeout));
 		close(sd);
-		exit (STATE_OK);
+		exit (STATE_CRITICAL);
 	}
+	elapsed_time = (double)deltime(tv) / 1.0e6;
+
+	printf
+		(_("SSH OK - %s (protocol %s) | %s\n"),
+		 ssh_server, ssh_proto, fperfdata("time", elapsed_time, "s",
+			 false, 0, false, 0, true, 0, true, (int)socket_timeout));
+	close(sd);
+	exit (STATE_OK);
 }
 
 
@@ -293,7 +368,7 @@ print_help (void)
 
 	printf ("%s\n", _("Try to connect to an SSH server at specified server and port"));
 
-  printf ("\n\n");
+	printf ("\n\n");
 
 	print_usage ();
 
@@ -307,10 +382,10 @@ print_help (void)
 	printf (UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf (" %s\n", "-r, --remote-version=STRING");
-  printf ("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+	printf ("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 
 	printf (" %s\n", "-P, --remote-protocol=STRING");
-  printf ("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
+	printf ("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
 
 	printf (UT_VERBOSE);
 
@@ -322,7 +397,7 @@ print_help (void)
 void
 print_usage (void)
 {
-  printf ("%s\n", _("Usage:"));
+	printf ("%s\n", _("Usage:"));
 	printf ("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
 }
 

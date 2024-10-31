@@ -14,15 +14,8 @@
     <pubdate>2013</pubdate>
     <title>Monitoring Plugins Development Guidelines</title>
 
-    <revhistory>
-       <revision>
-          <revnumber>1796</revnumber>
-          <date>2007-09-24 14:51:07 -0400 (Mon, 24 Sep 2007)</date>
-       </revision>
-    </revhistory>
-
 	<copyright>
-		<year>2000 - 2013</year>
+		<year>2000 - 2024</year>
 		<holder>Monitoring Plugins Development Team</holder>
 	</copyright>
 
@@ -34,7 +27,7 @@
     the plugin developers and encourage the standardization of the
     different kind of plugins: C, shell, perl, python, etc.</para>
 
-        <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2013
+        <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2024
         (Monitoring Plugins Team)</para>
 
         <para>Permission is granted to make and distribute verbatim
@@ -383,13 +376,6 @@
 		<para>It is up to third party programs to convert the Monitoring Plugins
 		performance data into graphs.</para>
 		</section>
-
-	<section><title>Translations</title>
-	<para>If possible, use translation tools for all output to respect the user's language
-		settings. See <xref linkend="translationsdevelopers"> for guidelines
-		for the core plugins.
-	</para>
-	</section>
 </section>
 
 <section id="SysCmdAuxFiles"><title>System Commands and Auxiliary Files</title>
@@ -727,22 +713,18 @@ setup the tests. Run "make test" to run all the tests.
 </section>
 <section id="CodingGuidelines"><title>Coding guidelines</title>
 	<para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
-	Coding standards</ulink> for general guidelines.</para>
+	Coding standards</ulink> for general guidelines.
+	Some parts of the guidelines (namely and explicitly the coding style)
+	are not seen as best practice by us.</para>
 	<section><title>C coding</title>
 
-	<para>Variables should be declared at the beginning of code blocks and
-	not inline because of portability with older compilers.</para>
-
-	<para>You should use /* */ for comments and not // as some compilers
-	do not handle the latter form.</para>
-
-	<para>You should also avoid using the type "bool" and its values
-	"true" and "false". Instead use the "int" type and the plugins' own
-	"TRUE"/"FALSE" values to keep the code uniformly.</para>
+	<para>You should use the type "bool" and its values
+	"true" and "false" instead of the "int" type for booleans.
+	</para>
 	</section>
 
 	<section><title>Crediting sources</title>
-	<para>If you have copied a routine from another source, make sure the licence
+	<para>If you have copied a routine from another source, make sure the license
 	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
 	file, where you can put more detail about the source.</para>
 	<para>For contributed code, do not add any named credits in the source code
@@ -759,32 +741,6 @@ setup the tests. Run "make test" to run all the tests.
 	<para>All commits will be written to a ChangeLog at release time.
 	</para>
 	</section>
-
-	<section id="translationsdevelopers"><title>Translations for developers</title>
-	<para>To make the job easier for translators, please follow these guidelines:</para>
-	<orderedlist>
-	  <listitem><para>
-	    Before creating new strings, check the po/monitoring-plugins.pot file to
-	    see if a similar string
-	    already exists
-	  </para></listitem>
-	  <listitem><para>
-	    For help texts, break into individual options so that these can be reused
-	    between plugins
-	  </para></listitem>
-	  <listitem><para>Try to avoid linefeeds unless you are working on a block of text</para></listitem>
-	  <listitem><para>Short help is not translated</para></listitem>
-	  <listitem><para>Long help has options in English language, but text translated</para></listitem>
-	  <listitem><para>"Copyright" kept in English</para></listitem>
-	  <listitem><para>Copyright holder names kept in original text</para></listitem>
-	  <listitem><para>Debugging output does not need to be translated</para></listitem>
-	</orderedlist>
-	</section>
-
-	<section><title>Translations for translators</title>
-	<para>To create an up to date list of translatable strings, run: tools/gen_locale.sh</para>
-	</section>
-
 </section>
 
 <section id="SubmittingChanges"><title>Submission of new plugins and patches</title>

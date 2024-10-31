@@ -16,6 +16,8 @@ suite of plugins. */
 /* now some functions etc are being defined in ../lib/utils_base.c */
 #include "utils_base.h"
 
+#include <stdbool.h>
+
 
 #ifdef NP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
@@ -34,21 +36,22 @@ extern time_t start_time, end_time;
 
 /* Test input types */
 
-int is_integer (char *);
-int is_intpos (char *);
-int is_intneg (char *);
-int is_intnonneg (char *);
-int is_intpercent (char *);
-int is_uint64(char *number, uint64_t *target);
-int is_int64(char *number, int64_t *target);
+bool is_integer (char *);
+bool is_intpos (char *);
+bool is_intneg (char *);
+bool is_intnonneg (char *);
+bool is_intpercent (char *);
+bool is_uint64(char *number, uint64_t *target);
+bool is_int64(char *number, int64_t *target);
 
-int is_numeric (char *);
-int is_positive (char *);
-int is_negative (char *);
-int is_nonnegative (char *);
-int is_percentage (char *);
+bool is_numeric (char *);
+bool is_positive (char *);
+bool is_negative (char *);
+bool is_nonnegative (char *);
+bool is_percentage (char *);
+bool is_percentage_expression (const char[]);
 
-int is_option (char *);
+bool is_option (char *);
 
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
@@ -105,8 +108,6 @@ char *sperfdata (const char *, double, const char *, char *, char *,
 
 char *sperfdata_int (const char *, int, const char *, char *, char *,
                      int, int, int, int);
-
-int open_max (void);
 
 /* The idea here is that, although not every plugin will use all of these, 
    most will or should.  Therefore, for consistency, these very common 

@@ -1,17 +1,22 @@
 #!/bin/bash
 
 set -x
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-sed "s/main/non-free contrib/g" /etc/apt/sources.list.d/debian.sources > /etc/apt/sources.list.d/debian-nonfree.sources
-apt-get update
-apt-get -y install software-properties-common
-if [ $(lsb_release -is) = "Debian" ]; then
-  apt-add-repository non-free
-  apt-get update
+source /etc/os-release
+
+if [ ${ID} = "debian" ]; then
+	if [ -f /etc/apt/sources.list.d/debian.sources  ]; then
+		sed "s/main/non-free contrib/g" /etc/apt/sources.list.d/debian.sources > /etc/apt/sources.list.d/debian-nonfree.sources
+	else
+		apt-get update
+		apt-get -y install software-properties-common
+		apt-add-repository non-free
+	fi
 fi
+apt-get update
 apt-get -y install perl \
 	autotools-dev \
 	libdbi-dev \
@@ -59,13 +64,9 @@ apt-get -y install perl \
 	iproute2
 
 # remove ipv6 interface from hosts
-if [ $(ip addr show | grep "inet6 ::1" | wc -l) -eq "0" ]; then
-    sed '/^::1/d' /etc/hosts > /tmp/hosts
-    cp -f /tmp/hosts /etc/hosts
-fi
-
+sed '/^::1/d' /etc/hosts > /tmp/hosts
+cp -f /tmp/hosts /etc/hosts
 ip addr show
-
 cat /etc/hosts
 
 # apache
@@ -83,7 +84,7 @@ cp tools/squid.conf /etc/squid/squid.conf
 service squid start
 
 # mariadb
-service mariadb start
+service mariadb start || service mysql start
 mysql -e "create database IF NOT EXISTS test;" -uroot
 
 # ldap
@@ -103,12 +104,7 @@ ssh -tt localhost </dev/null >/dev/null 2>/dev/null &
 disown %1
 
 # snmpd
-for DIR in /usr/share/snmp/mibs /usr/share/mibs; do
-    rm -f $DIR/ietf/SNMPv2-PDU \
-          $DIR/ietf/IPSEC-SPD-MIB \
-          $DIR/ietf/IPATM-IPMC-MIB \
-          $DIR/iana/IANA-IPPM-METRICS-REGISTRY-MIB
-done
+service snmpd stop
 mkdir -p /var/lib/snmp/mib_indexes
 sed -e 's/^agentaddress.*/agentaddress 127.0.0.1/' -i /etc/snmp/snmpd.conf
 service snmpd start
@@ -116,7 +112,11 @@ service snmpd start
 # start cron, will be used by check_nagios
 cron
 
-# start postfix
+# postfix
+cat <<EOD >> /etc/postfix/master.cf
+smtps     inet  n       -       n       -       -       smtpd
+  -o smtpd_tls_wrappermode=yes
+EOD
 service postfix start
 
 # start ftpd
@@ -127,5 +127,5 @@ sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.gith
 
 # create some test files to lower inodes
 for i in $(seq 10); do
-    touch /media/ramdisk2/test.$1
+    touch /media/ramdisk2/test.$i
 done

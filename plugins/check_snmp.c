@@ -55,8 +55,6 @@ const char *email = "devel@monitoring-plugins.org";
 #define CRIT_STRING 2
 #define CRIT_REGEX 4
 #define WARN_PRESENT 8
-#define WARN_STRING 16
-#define WARN_REGEX 32
 
 #define OID_COUNT_STEP 8
 
@@ -65,6 +63,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define L_RATE_MULTIPLIER CHAR_MAX+2
 #define L_INVERT_SEARCH CHAR_MAX+3
 #define L_OFFSET CHAR_MAX+4
+#define L_IGNORE_MIB_PARSING_ERRORS CHAR_MAX+5
 
 /* Gobble to string - stop incrementing c when c[0] match one of the
  * characters in s */
@@ -85,80 +84,82 @@ const char *email = "devel@monitoring-plugins.org";
 
 
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-char *thisarg (char *str);
-char *nextarg (char *str);
+static int process_arguments (int, char **);
+static int validate_arguments (void);
+static char *thisarg (char *str);
+static char *nextarg (char *str);
 void print_usage (void);
-void print_help (void);
-char *multiply (char *str);
+static void print_help (void);
+static char *multiply (char *str);
 
 #include "regex.h"
-char regex_expect[MAX_INPUT_BUFFER] = "";
-regex_t preg;
-regmatch_t pmatch[10];
-char errbuf[MAX_INPUT_BUFFER] = "";
-char perfstr[MAX_INPUT_BUFFER] = "| ";
-int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-int eflags = 0;
-int errcode, excode;
+static char regex_expect[MAX_INPUT_BUFFER] = "";
+static regex_t preg;
+static regmatch_t pmatch[10];
+static char errbuf[MAX_INPUT_BUFFER] = "";
+static char perfstr[MAX_INPUT_BUFFER] = "| ";
+static int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+static int eflags = 0;
+static int errcode, excode;
 
-char *server_address = NULL;
-char *community = NULL;
-char **contextargs = NULL;
-char *context = NULL;
-char **authpriv = NULL;
-char *proto = NULL;
-char *seclevel = NULL;
-char *secname = NULL;
-char *authproto = NULL;
-char *privproto = NULL;
-char *authpasswd = NULL;
-char *privpasswd = NULL;
-int nulloid = STATE_UNKNOWN;
-char **oids = NULL;
-size_t oids_size = 0;
-char *label;
-char *units;
-char *port;
-char *snmpcmd;
-char string_value[MAX_INPUT_BUFFER] = "";
-int  invert_search=0;
-char **labels = NULL;
-char **unitv = NULL;
-size_t nlabels = 0;
-size_t labels_size = OID_COUNT_STEP;
-size_t nunits = 0;
-size_t unitv_size = OID_COUNT_STEP;
-int numoids = 0;
-int numauthpriv = 0;
-int numcontext = 0;
-int verbose = 0;
-int usesnmpgetnext = FALSE;
-char *warning_thresholds = NULL;
-char *critical_thresholds = NULL;
-thresholds **thlds;
-size_t thlds_size = OID_COUNT_STEP;
-double *response_value;
-size_t response_size = OID_COUNT_STEP;
-int retries = 0;
-int *eval_method;
-size_t eval_size = OID_COUNT_STEP;
-char *delimiter;
-char *output_delim;
-char *miblist = NULL;
-int needmibs = FALSE;
-int calculate_rate = 0;
-double offset = 0.0;
-int rate_multiplier = 1;
-state_data *previous_state;
-double *previous_value;
-size_t previous_size = OID_COUNT_STEP;
-int perf_labels = 1;
-char* ip_version = "";
-double multiplier = 1.0;
-char *fmtstr = "";
-char buffer[DEFAULT_BUFFER_SIZE];
+static char *server_address = NULL;
+static char *community = NULL;
+static char **contextargs = NULL;
+static char *context = NULL;
+static char **authpriv = NULL;
+static char *proto = NULL;
+static char *seclevel = NULL;
+static char *secname = NULL;
+static char *authproto = NULL;
+static char *privproto = NULL;
+static char *authpasswd = NULL;
+static char *privpasswd = NULL;
+static int nulloid = STATE_UNKNOWN;
+static char **oids = NULL;
+static size_t oids_size = 0;
+static char *label;
+static char *units;
+static char *port;
+static char *snmpcmd;
+static char string_value[MAX_INPUT_BUFFER] = "";
+static int  invert_search=0;
+static char **labels = NULL;
+static char **unitv = NULL;
+static size_t nlabels = 0;
+static size_t labels_size = OID_COUNT_STEP;
+static size_t nunits = 0;
+static size_t unitv_size = OID_COUNT_STEP;
+static size_t numoids = 0;
+static int numauthpriv = 0;
+static int numcontext = 0;
+static int verbose = 0;
+static bool usesnmpgetnext = false;
+static char *warning_thresholds = NULL;
+static char *critical_thresholds = NULL;
+static thresholds **thlds;
+static size_t thlds_size = OID_COUNT_STEP;
+static double *response_value;
+static size_t response_size = OID_COUNT_STEP;
+static int retries = 0;
+static int *eval_method;
+static size_t eval_size = OID_COUNT_STEP;
+static char *delimiter;
+static char *output_delim;
+static char *miblist = NULL;
+static bool needmibs = false;
+static int calculate_rate = 0;
+static double offset = 0.0;
+static int rate_multiplier = 1;
+static state_data *previous_state;
+static double *previous_value;
+static size_t previous_size = OID_COUNT_STEP;
+static int perf_labels = 1;
+static char* ip_version = "";
+static double multiplier = 1.0;
+static char *fmtstr = "";
+static bool fmtstr_set = false;
+static char buffer[DEFAULT_BUFFER_SIZE];
+static bool ignore_mib_parsing_errors = false;
 
 static char *fix_snmp_range(char *th)
 {
@@ -184,7 +185,8 @@ static char *fix_snmp_range(char *th)
 int
 main (int argc, char **argv)
 {
-	int i, len, line, total_oids;
+	int len, total_oids;
+	size_t line;
 	unsigned int bk_count = 0, dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
@@ -250,14 +252,16 @@ main (int argc, char **argv)
 	if(calculate_rate) {
 		if (!strcmp(label, "SNMP"))
 			label = strdup("SNMP RATE");
-		i=0;
+
+		size_t i = 0;
+
 		previous_state = np_state_read();
 		if(previous_state!=NULL) {
 			/* Split colon separated values */
 			previous_string = strdup((char *) previous_state->data);
 			while((ap = strsep(&previous_string, ":")) != NULL) {
 				if(verbose>2)
-					printf("State for %d=%s\n", i, ap);
+					printf("State for %zd=%s\n", i, ap);
 				while (i >= previous_size) {
 					previous_size += OID_COUNT_STEP;
 					previous_value = realloc(previous_value, previous_size * sizeof(*previous_value));
@@ -270,7 +274,7 @@ main (int argc, char **argv)
 	/* Populate the thresholds */
 	th_warn=warning_thresholds;
 	th_crit=critical_thresholds;
-	for (i=0; i<numoids; i++) {
+	for (size_t i = 0; i < numoids; i++) {
 		char *w = th_warn ? strndup(th_warn, strcspn(th_warn, ",")) : NULL;
 		char *c = th_crit ? strndup(th_crit, strcspn(th_crit, ",")) : NULL;
 		/* translate "2:1" to "@1:2" for backwards compatibility */
@@ -299,49 +303,62 @@ main (int argc, char **argv)
 	}
 
 	/* Create the command array to execute */
-	if(usesnmpgetnext == TRUE) {
+	if(usesnmpgetnext) {
 		snmpcmd = strdup (PATH_TO_SNMPGETNEXT);
 	}else{
 		snmpcmd = strdup (PATH_TO_SNMPGET);
 	}
 
 	/* 10 arguments to pass before context and authpriv options + 1 for host and numoids. Add one for terminating NULL */
-	command_line = calloc (10 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
-	command_line[0] = snmpcmd;
-	command_line[1] = strdup ("-Le");
-	command_line[2] = strdup ("-t");
-	xasprintf (&command_line[3], "%d", timeout_interval);
-	command_line[4] = strdup ("-r");
-	xasprintf (&command_line[5], "%d", retries);
-	command_line[6] = strdup ("-m");
-	command_line[7] = strdup (miblist);
-	command_line[8] = "-v";
-	command_line[9] = strdup (proto);
 
-	for (i = 0; i < numcontext; i++) {
-		command_line[10 + i] = contextargs[i];
+	unsigned index = 0;
+	command_line = calloc (11 + numcontext + numauthpriv + 1 + numoids + 1, sizeof (char *));
+
+	command_line[index++] = snmpcmd;
+	command_line[index++] = strdup ("-Le");
+	command_line[index++] = strdup ("-t");
+	xasprintf (&command_line[index++], "%d", timeout_interval);
+	command_line[index++] = strdup ("-r");
+	xasprintf (&command_line[index++], "%d", retries);
+	command_line[index++] = strdup ("-m");
+	command_line[index++] = strdup (miblist);
+	command_line[index++] = "-v";
+	command_line[index++] = strdup (proto);
+
+	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s",
+		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto);
+
+	if (ignore_mib_parsing_errors) {
+		command_line[index++] = "-Pe";
+		xasprintf(&cl_hidden_auth, "%s -Pe", cl_hidden_auth);
 	}
 
-	for (i = 0; i < numauthpriv; i++) {
-		command_line[10 + numcontext + i] = authpriv[i];
+
+	for (int i = 0; i < numcontext; i++) {
+		command_line[index++] = contextargs[i];
 	}
 
-	xasprintf (&command_line[10 + numcontext + numauthpriv], "%s:%s", server_address, port);
+	for (int i = 0; i < numauthpriv; i++) {
+		command_line[index++] = authpriv[i];
+	}
 
-	/* This is just for display purposes, so it can remain a string */
-	xasprintf(&cl_hidden_auth, "%s -Le -t %d -r %d -m %s -v %s %s %s %s:%s",
-		snmpcmd, timeout_interval, retries, strlen(miblist) ? miblist : "''", proto, "[context]", "[authpriv]",
-		server_address, port);
+	xasprintf (&command_line[index++], "%s:%s", server_address, port);
 
-	for (i = 0; i < numoids; i++) {
-		command_line[10 + numcontext + numauthpriv + 1 + i] = oids[i];
+	xasprintf(&cl_hidden_auth, "%s [context] [authpriv] %s:%s",
+	 cl_hidden_auth,
+	 server_address,
+	 port);
+
+	for (size_t i = 0; i < numoids; i++) {
+		command_line[index++] = oids[i];
 		xasprintf(&cl_hidden_auth, "%s %s", cl_hidden_auth, oids[i]);
 	}
 
-	command_line[10 + numcontext + numauthpriv + 1 + numoids] = NULL;
+	command_line[index++] = NULL;
 
-	if (verbose)
+	if (verbose) {
 		printf ("%s\n", cl_hidden_auth);
+	}
 
 	/* Set signal handling and alarm */
 	if (signal (SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
@@ -366,7 +383,7 @@ main (int argc, char **argv)
 	if (external_error) {
 		if (chld_err.lines > 0) {
 			printf (_("External command error: %s\n"), chld_err.line[0]);
-			for (i = 1; i < chld_err.lines; i++) {
+			for (size_t i = 1; i < chld_err.lines; i++) {
 				printf ("%s\n", chld_err.line[i]);
 			}
 		} else {
@@ -376,12 +393,14 @@ main (int argc, char **argv)
 	}
 
 	if (verbose) {
-		for (i = 0; i < chld_out.lines; i++) {
+		for (size_t i = 0; i < chld_out.lines; i++) {
 			printf ("%s\n", chld_out.line[i]);
 		}
 	}
 
-	for (line=0, i=0; line < chld_out.lines && i < numoids ; line++, i++) {
+	line = 0;
+	total_oids = 0;
+	for (size_t i = 0; line < chld_out.lines && i < numoids ; line++, i++, total_oids++) {
 		if(calculate_rate)
 			conv = "%.10g";
 		else
@@ -394,7 +413,7 @@ main (int argc, char **argv)
 			break;
 
 		if (verbose > 2) {
-			printf("Processing oid %i (line %i)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
+			printf("Processing oid %zi (line %zi)\n  oidname: %s\n  response: %s\n", i+1, line+1, oidname, response);
 		}
 
 		/* Clean up type array - Sol10 does not necessarily zero it out */
@@ -422,7 +441,8 @@ main (int argc, char **argv)
 		}
 		else if (strstr (response, "INTEGER: ")) {
 			show = multiply (strstr (response, "INTEGER: ") + 9);
-			if (fmtstr != "") {
+
+			if (fmtstr_set) {
 				conv = fmtstr;
 			}
 		}
@@ -596,8 +616,9 @@ main (int argc, char **argv)
 			len = sizeof(perfstr)-strlen(perfstr)-1;
 			strncat(perfstr, show, len>ptr-show ? ptr-show : len);
 
-			if (type)
+			if (strcmp(type, "") != 0) {
 				strncat(perfstr, type, sizeof(perfstr)-strlen(perfstr)-1);
+			}
 
 			if (warning_thresholds) {
 				strncat(perfstr, ";", sizeof(perfstr)-strlen(perfstr)-1);
@@ -616,7 +637,6 @@ main (int argc, char **argv)
 			strncat(perfstr, " ", sizeof(perfstr)-strlen(perfstr)-1);
 		}
 	}
-	total_oids=i;
 
 	/* Save state data, as all data collected now */
 	if(calculate_rate) {
@@ -626,7 +646,7 @@ main (int argc, char **argv)
 			die(STATE_UNKNOWN, _("Cannot malloc"));
 
 		current_length=0;
-		for(i=0; i<total_oids; i++) {
+		for(int i = 0; i < total_oids; i++) {
 			xasprintf(&temp_string,"%.0f",response_value[i]);
 			if(temp_string==NULL)
 				die(STATE_UNKNOWN,_("Cannot asprintf()"));
@@ -669,7 +689,7 @@ process_arguments (int argc, char **argv)
 {
 	char *ptr;
 	int c = 1;
-	int j = 0, jj = 0, ii = 0;
+	size_t j = 0, jj = 0;
 
 	int option = 0;
 	static struct option longopts[] = {
@@ -708,6 +728,7 @@ process_arguments (int argc, char **argv)
 		{"ipv6", no_argument, 0, '6'},
 		{"multiplier", required_argument, 0, 'M'},
 		{"fmtstr", required_argument, 0, 'f'},
+		{"ignore-mib-parsing-errors", no_argument, false, L_IGNORE_MIB_PARSING_ERRORS},
 		{0, 0, 0, 0}
 	};
 
@@ -758,7 +779,7 @@ process_arguments (int argc, char **argv)
 			miblist = optarg;
 			break;
 		case 'n':	/* usesnmpgetnext */
-			usesnmpgetnext = TRUE;
+			usesnmpgetnext = true;
 			break;
 		case 'P':	/* SNMP protocol version */
 			proto = optarg;
@@ -812,7 +833,7 @@ process_arguments (int argc, char **argv)
 					 * so we have a mib variable, rather than just an SNMP OID,
 					 * so we have to actually read the mib files
 					 */
-					needmibs = TRUE;
+					needmibs = true;
 			}
 			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
 				while (j >= oids_size) {
@@ -824,7 +845,6 @@ process_arguments (int argc, char **argv)
 			numoids = j;
 			if (c == 'E' || c == 'e') {
 				jj++;
-				ii++;
 				while (j+1 >= eval_size) {
 					eval_size += OID_COUNT_STEP;
 					eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
@@ -851,10 +871,10 @@ process_arguments (int argc, char **argv)
 				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 			}
 			eval_method[jj++] = CRIT_STRING;
-			ii++;
 			break;
 		case 'R':									/* regex */
 			cflags = REG_ICASE;
+			// fall through
 		case 'r':									/* regex */
 			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy (regex_expect, optarg, sizeof (regex_expect) - 1);
@@ -871,7 +891,6 @@ process_arguments (int argc, char **argv)
 				memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 			}
 			eval_method[jj++] = CRIT_REGEX;
-			ii++;
 			break;
 
 	/* Format */
@@ -971,8 +990,11 @@ process_arguments (int argc, char **argv)
 		case 'f':
 			if (multiplier != 1.0) {
 				fmtstr=optarg;
+				fmtstr_set = true;
 			}
 			break;
+		case L_IGNORE_MIB_PARSING_ERRORS:
+			ignore_mib_parsing_errors = true;
 		}
 	}
 
@@ -1006,12 +1028,12 @@ selected.</para>
 
 
 
-int
+static int
 validate_arguments ()
 {
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
 	if (miblist == NULL) {
-		if ( needmibs == TRUE ) {
+		if (needmibs) {
 			miblist = strdup (DEFAULT_MIBLIST);
 		}else{
 			miblist = "";			/* don't read any mib files for numeric oids */
@@ -1115,7 +1137,7 @@ validate_arguments ()
 /* trim leading whitespace
 	 if there is a leading quote, make sure it balances */
 
-char *
+static char *
 thisarg (char *str)
 {
 	str += strspn (str, " \t\r\n");	/* trim any leading whitespace */
@@ -1132,7 +1154,7 @@ thisarg (char *str)
 	 set the trailing quote to '\x0'
 	 if the string continues, advance beyond the comma */
 
-char *
+static char *
 nextarg (char *str)
 {
 	if (str[0] == '\'') {
@@ -1164,7 +1186,7 @@ nextarg (char *str)
 
 
 /* multiply result (values 0 < n < 1 work as divider) */
-char *
+static char *
 multiply (char *str)
 {
 	char *endptr;
@@ -1185,7 +1207,7 @@ multiply (char *str)
 	if(verbose>2)
 		printf("    multiply extracted double: %f\n", val);
 	val *= multiplier;
-	if (fmtstr != "") {
+	if (fmtstr_set) {
 		conv = fmtstr;
 	}
 	if (val == (int)val) {
@@ -1201,7 +1223,7 @@ multiply (char *str)
 }
 
 
-void
+static void
 print_help (void)
 {
 	print_revision (progname, NP_VERSION);
@@ -1229,10 +1251,12 @@ print_help (void)
 	printf ("    %s\n", _("SNMPv3 context"));
 	printf (" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf ("    %s\n", _("SNMPv3 securityLevel"));
-	printf (" %s\n", "-a, --authproto=[MD5|SHA]");
-	printf ("    %s\n", _("SNMPv3 auth proto"));
-	printf (" %s\n", "-x, --privproto=[DES|AES]");
-	printf ("    %s\n", _("SNMPv3 priv proto (default DES)"));
+	printf (" %s\n", "-a, --authproto=AUTHENTICATION_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 authentication protocol (default MD5), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 SHA (1) and MD5 should be available, if >= 5.8 additionally SHA-224, SHA-256, SHA-384 and SHA-512"));
+	printf (" %s\n", "-x, --privproto=PRIVACY_PROTOCOL");
+	printf ("    %s\n", _("SNMPv3 privacy protocol (default DES), available options depend on the specific version of the net-snmp tools"));
+	printf ("    %s\n", _("if < 5.8 DES and AES should be available, if >= 5.8 additionally AES-192 and AES-256"));
 
 	/* Authentication Tokens*/
 	printf (" %s\n", "-C, --community=STRING");
@@ -1305,6 +1329,9 @@ print_help (void)
 
 	printf (" %s\n", "-O, --perf-oids");
 	printf ("    %s\n", _("Label performance data with OIDs instead of --label's"));
+
+	printf (" %s\n", "--ignore-mib-parsing-errors");
+	printf ("    %s\n", _("Tell snmpget to not print errors encountered when parsing MIB files"));
 
 	printf (UT_VERBOSE);
 
