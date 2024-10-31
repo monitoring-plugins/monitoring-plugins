@@ -42,22 +42,22 @@ enum {
 
 #define UNIX_EPOCH 2208988800UL
 
-uint32_t raw_server_time;
-unsigned long server_time, diff_time;
-int warning_time = 0;
-bool check_warning_time = false;
-int critical_time = 0;
-bool check_critical_time = false;
-unsigned long warning_diff = 0;
-bool check_warning_diff = false;
-unsigned long critical_diff = 0;
-bool check_critical_diff = false;
-int server_port = TIME_PORT;
-char *server_address = NULL;
-bool use_udp = false;
+static uint32_t raw_server_time;
+static unsigned long server_time, diff_time;
+static int warning_time = 0;
+static bool check_warning_time = false;
+static int critical_time = 0;
+static bool check_critical_time = false;
+static unsigned long warning_diff = 0;
+static bool check_warning_diff = false;
+static unsigned long critical_diff = 0;
+static bool check_critical_diff = false;
+static int server_port = TIME_PORT;
+static char *server_address = NULL;
+static bool use_udp = false;
 
-int process_arguments(int, char **);
-void print_help(void);
+static int process_arguments(int, char **);
+static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {
