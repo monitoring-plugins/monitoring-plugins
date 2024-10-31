@@ -3,7 +3,7 @@
 * Monitoring check_ldap plugin
 *
 * License: GPL
-* Copyright (c) 2000-2008 Monitoring Plugins Development Team
+* Copyright (c) 2000-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -28,7 +28,7 @@
 
 /* progname may be check_ldaps */
 char *progname = "check_ldap";
-const char *copyright = "2000-2008";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"

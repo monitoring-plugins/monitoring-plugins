@@ -1,20 +1,20 @@
 /*****************************************************************************
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*
-*****************************************************************************/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 #include "common.h"
 #include "utils_base.h"
@@ -27,331 +27,323 @@
 
 #include "utils_base.c"
 
-int
-main (int argc, char **argv)
-{
+int main(int argc, char **argv) {
 	char state_path[1024];
-	range	*range;
-	double	temp;
+	range *range;
+	double temp;
 	thresholds *thresholds = NULL;
-	int	i, rc;
-	char	*temp_string;
+	int i, rc;
+	char *temp_string;
 	state_key *temp_state_key = NULL;
 	state_data *temp_state_data;
-	time_t	current_time;
+	time_t current_time;
 
 	plan_tests(185);
 
-	ok( this_monitoring_plugin==NULL, "monitoring_plugin not initialised");
+	ok(this_monitoring_plugin == NULL, "monitoring_plugin not initialised");
 
-	np_init( "check_test", argc, argv );
+	np_init("check_test", argc, argv);
 
-	ok( this_monitoring_plugin!=NULL, "monitoring_plugin now initialised");
-	ok( !strcmp(this_monitoring_plugin->plugin_name, "check_test"), "plugin name initialised" );
+	ok(this_monitoring_plugin != NULL, "monitoring_plugin now initialised");
+	ok(!strcmp(this_monitoring_plugin->plugin_name, "check_test"), "plugin name initialised");
 
-	ok( this_monitoring_plugin->argc==argc, "Argc set" );
-	ok( this_monitoring_plugin->argv==argv, "Argv set" );
+	ok(this_monitoring_plugin->argc == argc, "Argc set");
+	ok(this_monitoring_plugin->argv == argv, "Argv set");
 
-	np_set_args(0,0);
+	np_set_args(0, 0);
 
-	ok( this_monitoring_plugin->argc==0, "argc changed" );
-	ok( this_monitoring_plugin->argv==0, "argv changed" );
+	ok(this_monitoring_plugin->argc == 0, "argc changed");
+	ok(this_monitoring_plugin->argv == 0, "argv changed");
 
 	np_set_args(argc, argv);
 
 	range = parse_range_string("6");
-	ok( range != NULL, "'6' is valid range");
-	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 6, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
+	ok(range != NULL, "'6' is valid range");
+	ok(range->start == 0, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 6, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("1:12%%");
-	ok( range != NULL, "'1:12%%' is valid - percentages are ignored");
-	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 12, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
+	ok(range != NULL, "'1:12%%' is valid - percentages are ignored");
+	ok(range->start == 1, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 12, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("-7:23");
-	ok( range != NULL, "'-7:23' is valid range");
-	ok( range->start == -7, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 23, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
+	ok(range != NULL, "'-7:23' is valid range");
+	ok(range->start == -7, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 23, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string(":5.75");
-	ok( range != NULL, "':5.75' is valid range");
-	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 5.75, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
+	ok(range != NULL, "':5.75' is valid range");
+	ok(range->start == 0, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 5.75, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("~:-95.99");
-	ok( range != NULL, "~:-95.99' is valid range");
-	ok( range->start_infinity == true, "Using negative infinity");
-	ok( range->end == -95.99, "End correct (with rounding errors)");
-	ok( range->end_infinity == false, "Not using infinity");
+	ok(range != NULL, "~:-95.99' is valid range");
+	ok(range->start_infinity == true, "Using negative infinity");
+	ok(range->end == -95.99, "End correct (with rounding errors)");
+	ok(range->end_infinity == false, "Not using infinity");
 	free(range);
 
 	range = parse_range_string("12345678901234567890:");
-	temp = atof("12345678901234567890");		/* Can't just use this because number too large */
-	ok( range != NULL, "'12345678901234567890:' is valid range");
-	ok( range->start == temp, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end_infinity == true, "Using infinity");
+	temp = atof("12345678901234567890"); /* Can't just use this because number too large */
+	ok(range != NULL, "'12345678901234567890:' is valid range");
+	ok(range->start == temp, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end_infinity == true, "Using infinity");
 	/* Cannot do a "-1" on temp, as it appears to be same value */
-	ok( check_range(temp/1.1, range) == true, "12345678901234567890/1.1 - alert");
-	ok( check_range(temp, range) == false, "12345678901234567890 - no alert");
-	ok( check_range(temp*2, range) == false, "12345678901234567890*2 - no alert");
+	ok(check_range(temp / 1.1, range) == true, "12345678901234567890/1.1 - alert");
+	ok(check_range(temp, range) == false, "12345678901234567890 - no alert");
+	ok(check_range(temp * 2, range) == false, "12345678901234567890*2 - no alert");
 	free(range);
 
 	range = parse_range_string("~:0");
-	ok( range != NULL, "'~:0' is valid range");
-	ok( range->start_infinity == true, "Using negative infinity");
-	ok( range->end == 0, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
-	ok( range->alert_on == OUTSIDE, "Will alert on outside of this range");
-	ok( check_range(0.5, range) == true, "0.5 - alert");
-	ok( check_range(-10, range) == false, "-10 - no alert");
-	ok( check_range(0, range)   == false, "0 - no alert");
+	ok(range != NULL, "'~:0' is valid range");
+	ok(range->start_infinity == true, "Using negative infinity");
+	ok(range->end == 0, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
+	ok(range->alert_on == OUTSIDE, "Will alert on outside of this range");
+	ok(check_range(0.5, range) == true, "0.5 - alert");
+	ok(check_range(-10, range) == false, "-10 - no alert");
+	ok(check_range(0, range) == false, "0 - no alert");
 	free(range);
 
 	range = parse_range_string("@0:657.8210567");
-	ok( range != 0, "@0:657.8210567' is a valid range");
-	ok( range->start == 0, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 657.8210567, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
-	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(32.88, range) == true, "32.88 - alert");
-	ok( check_range(-2, range)    == false, "-2 - no alert");
-	ok( check_range(657.8210567, range) == true, "657.8210567 - alert");
-	ok( check_range(0, range)     == true, "0 - alert");
+	ok(range != 0, "@0:657.8210567' is a valid range");
+	ok(range->start == 0, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 657.8210567, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
+	ok(range->alert_on == INSIDE, "Will alert on inside of this range");
+	ok(check_range(32.88, range) == true, "32.88 - alert");
+	ok(check_range(-2, range) == false, "-2 - no alert");
+	ok(check_range(657.8210567, range) == true, "657.8210567 - alert");
+	ok(check_range(0, range) == true, "0 - alert");
 	free(range);
 
 	range = parse_range_string("@1:1");
-	ok( range != NULL, "'@1:1' is a valid range");
-	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
-	ok( range->alert_on == INSIDE, "Will alert on inside of this range" );
-	ok( check_range(0.5, range) == false, "0.5 - no alert");
-	ok( check_range(1, range) == true, "1 - alert");
-	ok( check_range(5.2, range) == false, "5.2 - no alert");
+	ok(range != NULL, "'@1:1' is a valid range");
+	ok(range->start == 1, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 1, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
+	ok(range->alert_on == INSIDE, "Will alert on inside of this range");
+	ok(check_range(0.5, range) == false, "0.5 - no alert");
+	ok(check_range(1, range) == true, "1 - alert");
+	ok(check_range(5.2, range) == false, "5.2 - no alert");
 	free(range);
 
 	range = parse_range_string("1:1");
-	ok( range != NULL, "'1:1' is a valid range");
-	ok( range->start == 1, "Start correct");
-	ok( range->start_infinity == false, "Not using negative infinity");
-	ok( range->end == 1, "End correct");
-	ok( range->end_infinity == false, "Not using infinity");
-	ok( check_range(0.5, range) == true, "0.5 - alert");
-	ok( check_range(1, range) == false, "1 - no alert");
-	ok( check_range(5.2, range) == true, "5.2 - alert");
+	ok(range != NULL, "'1:1' is a valid range");
+	ok(range->start == 1, "Start correct");
+	ok(range->start_infinity == false, "Not using negative infinity");
+	ok(range->end == 1, "End correct");
+	ok(range->end_infinity == false, "Not using infinity");
+	ok(check_range(0.5, range) == true, "0.5 - alert");
+	ok(check_range(1, range) == false, "1 - no alert");
+	ok(check_range(5.2, range) == true, "5.2 - alert");
 	free(range);
 
 	range = parse_range_string("2:1");
-	ok( range == NULL, "'2:1' rejected");
+	ok(range == NULL, "'2:1' rejected");
 
 	rc = _set_thresholds(&thresholds, NULL, NULL);
-	ok( rc == 0, "Thresholds (NULL, NULL) set");
-	ok( thresholds->warning == NULL, "Warning not set");
-	ok( thresholds->critical == NULL, "Critical not set");
+	ok(rc == 0, "Thresholds (NULL, NULL) set");
+	ok(thresholds->warning == NULL, "Warning not set");
+	ok(thresholds->critical == NULL, "Critical not set");
 
 	rc = _set_thresholds(&thresholds, NULL, "80");
-	ok( rc == 0, "Thresholds (NULL, '80') set");
-	ok( thresholds->warning == NULL, "Warning not set");
-	ok( thresholds->critical->end == 80, "Critical set correctly");
+	ok(rc == 0, "Thresholds (NULL, '80') set");
+	ok(thresholds->warning == NULL, "Warning not set");
+	ok(thresholds->critical->end == 80, "Critical set correctly");
 
 	rc = _set_thresholds(&thresholds, "5:33", NULL);
-	ok( rc == 0, "Thresholds ('5:33', NULL) set");
-	ok( thresholds->warning->start == 5, "Warning start set");
-	ok( thresholds->warning->end == 33, "Warning end set");
-	ok( thresholds->critical == NULL, "Critical not set");
+	ok(rc == 0, "Thresholds ('5:33', NULL) set");
+	ok(thresholds->warning->start == 5, "Warning start set");
+	ok(thresholds->warning->end == 33, "Warning end set");
+	ok(thresholds->critical == NULL, "Critical not set");
 
 	rc = _set_thresholds(&thresholds, "30", "60");
-	ok( rc == 0, "Thresholds ('30', '60') set");
-	ok( thresholds->warning->end == 30, "Warning set correctly");
-	ok( thresholds->critical->end == 60, "Critical set correctly");
-	ok( get_status(15.3, thresholds) == STATE_OK, "15.3 - ok");
-	ok( get_status(30.0001, thresholds) == STATE_WARNING, "30.0001 - warning");
-	ok( get_status(69, thresholds) == STATE_CRITICAL, "69 - critical");
+	ok(rc == 0, "Thresholds ('30', '60') set");
+	ok(thresholds->warning->end == 30, "Warning set correctly");
+	ok(thresholds->critical->end == 60, "Critical set correctly");
+	ok(get_status(15.3, thresholds) == STATE_OK, "15.3 - ok");
+	ok(get_status(30.0001, thresholds) == STATE_WARNING, "30.0001 - warning");
+	ok(get_status(69, thresholds) == STATE_CRITICAL, "69 - critical");
 
 	rc = _set_thresholds(&thresholds, "-10:-2", "-30:20");
-	ok( rc == 0, "Thresholds ('-30:20', '-10:-2') set");
-	ok( thresholds->warning->start == -10, "Warning start set correctly");
-	ok( thresholds->warning->end == -2, "Warning end set correctly");
-	ok( thresholds->critical->start == -30, "Critical start set correctly");
-	ok( thresholds->critical->end == 20, "Critical end set correctly");
-	ok( get_status(-31, thresholds) == STATE_CRITICAL, "-31 - critical");
-	ok( get_status(-29, thresholds) == STATE_WARNING, "-29 - warning");
-	ok( get_status(-11, thresholds) == STATE_WARNING, "-11 - warning");
-	ok( get_status(-10, thresholds) == STATE_OK, "-10 - ok");
-	ok( get_status(-2, thresholds) == STATE_OK, "-2 - ok");
-	ok( get_status(-1, thresholds) == STATE_WARNING, "-1 - warning");
-	ok( get_status(19, thresholds) == STATE_WARNING, "19 - warning");
-	ok( get_status(21, thresholds) == STATE_CRITICAL, "21 - critical");
+	ok(rc == 0, "Thresholds ('-30:20', '-10:-2') set");
+	ok(thresholds->warning->start == -10, "Warning start set correctly");
+	ok(thresholds->warning->end == -2, "Warning end set correctly");
+	ok(thresholds->critical->start == -30, "Critical start set correctly");
+	ok(thresholds->critical->end == 20, "Critical end set correctly");
+	ok(get_status(-31, thresholds) == STATE_CRITICAL, "-31 - critical");
+	ok(get_status(-29, thresholds) == STATE_WARNING, "-29 - warning");
+	ok(get_status(-11, thresholds) == STATE_WARNING, "-11 - warning");
+	ok(get_status(-10, thresholds) == STATE_OK, "-10 - ok");
+	ok(get_status(-2, thresholds) == STATE_OK, "-2 - ok");
+	ok(get_status(-1, thresholds) == STATE_WARNING, "-1 - warning");
+	ok(get_status(19, thresholds) == STATE_WARNING, "19 - warning");
+	ok(get_status(21, thresholds) == STATE_CRITICAL, "21 - critical");
 
 	char *test;
 	test = np_escaped_string("bob\\n");
-	ok( strcmp(test, "bob\n") == 0, "bob\\n ok");
+	ok(strcmp(test, "bob\n") == 0, "bob\\n ok");
 	free(test);
 
 	test = np_escaped_string("rhuba\\rb");
-	ok( strcmp(test, "rhuba\rb") == 0, "rhuba\\rb okay");
+	ok(strcmp(test, "rhuba\rb") == 0, "rhuba\\rb okay");
 	free(test);
 
 	test = np_escaped_string("ba\\nge\\r");
-	ok( strcmp(test, "ba\nge\r") == 0, "ba\\nge\\r okay");
+	ok(strcmp(test, "ba\nge\r") == 0, "ba\\nge\\r okay");
 	free(test);
 
 	test = np_escaped_string("\\rabbi\\t");
-	ok( strcmp(test, "\rabbi\t") == 0, "\\rabbi\\t okay");
+	ok(strcmp(test, "\rabbi\t") == 0, "\\rabbi\\t okay");
 	free(test);
 
 	test = np_escaped_string("and\\\\or");
-	ok( strcmp(test, "and\\or") == 0, "and\\\\or okay");
+	ok(strcmp(test, "and\\or") == 0, "and\\\\or okay");
 	free(test);
 
 	test = np_escaped_string("bo\\gus");
-	ok( strcmp(test, "bogus") == 0, "bo\\gus okay");
+	ok(strcmp(test, "bogus") == 0, "bo\\gus okay");
 	free(test);
 
 	test = np_escaped_string("everything");
-	ok( strcmp(test, "everything") == 0, "everything okay");
+	ok(strcmp(test, "everything") == 0, "everything okay");
 
 	/* np_extract_ntpvar tests (23) */
-	test=np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foo");
+	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foo");
 	ok(test && !strcmp(test, "bar"), "1st test as expected");
 	free(test);
 
-	test=np_extract_ntpvar("foo=bar,bar=foo,foobar=barfoo\n", "bar");
+	test = np_extract_ntpvar("foo=bar,bar=foo,foobar=barfoo\n", "bar");
 	ok(test && !strcmp(test, "foo"), "2nd test as expected");
 	free(test);
 
-	test=np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foobar");
+	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foobar");
 	ok(test && !strcmp(test, "barfoo"), "3rd test as expected");
 	free(test);
 
-	test=np_extract_ntpvar("foo=bar\n", "foo");
+	test = np_extract_ntpvar("foo=bar\n", "foo");
 	ok(test && !strcmp(test, "bar"), "Single test as expected");
 	free(test);
 
-	test=np_extract_ntpvar("foo=bar, bar=foo, foobar=barfooi\n", "abcd");
+	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfooi\n", "abcd");
 	ok(!test, "Key not found 1");
 
-	test=np_extract_ntpvar("foo=bar\n", "abcd");
+	test = np_extract_ntpvar("foo=bar\n", "abcd");
 	ok(!test, "Key not found 2");
 
-	test=np_extract_ntpvar("foo=bar=foobar", "foo");
+	test = np_extract_ntpvar("foo=bar=foobar", "foo");
 	ok(test && !strcmp(test, "bar=foobar"), "Strange string 1");
 	free(test);
 
-	test=np_extract_ntpvar("foo", "foo");
+	test = np_extract_ntpvar("foo", "foo");
 	ok(!test, "Malformed string 1");
 
-	test=np_extract_ntpvar("foo,", "foo");
+	test = np_extract_ntpvar("foo,", "foo");
 	ok(!test, "Malformed string 2");
 
-	test=np_extract_ntpvar("foo=", "foo");
+	test = np_extract_ntpvar("foo=", "foo");
 	ok(!test, "Malformed string 3");
 
-	test=np_extract_ntpvar("foo=,bar=foo", "foo");
+	test = np_extract_ntpvar("foo=,bar=foo", "foo");
 	ok(!test, "Malformed string 4");
 
-	test=np_extract_ntpvar(",foo", "foo");
+	test = np_extract_ntpvar(",foo", "foo");
 	ok(!test, "Malformed string 5");
 
-	test=np_extract_ntpvar("=foo", "foo");
+	test = np_extract_ntpvar("=foo", "foo");
 	ok(!test, "Malformed string 6");
 
-	test=np_extract_ntpvar("=foo,", "foo");
+	test = np_extract_ntpvar("=foo,", "foo");
 	ok(!test, "Malformed string 7");
 
-	test=np_extract_ntpvar(",,,", "foo");
+	test = np_extract_ntpvar(",,,", "foo");
 	ok(!test, "Malformed string 8");
 
-	test=np_extract_ntpvar("===", "foo");
+	test = np_extract_ntpvar("===", "foo");
 	ok(!test, "Malformed string 9");
 
-	test=np_extract_ntpvar(",=,=,", "foo");
+	test = np_extract_ntpvar(",=,=,", "foo");
 	ok(!test, "Malformed string 10");
 
-	test=np_extract_ntpvar("=,=,=", "foo");
+	test = np_extract_ntpvar("=,=,=", "foo");
 	ok(!test, "Malformed string 11");
 
-	test=np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foo");
+	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foo");
 	ok(test && !strcmp(test, "bar"), "Random spaces and newlines 1");
 	free(test);
 
-	test=np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "bar");
+	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "bar");
 	ok(test && !strcmp(test, "foo"), "Random spaces and newlines 2");
 	free(test);
 
-	test=np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foobar");
+	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foobar");
 	ok(test && !strcmp(test, "barfoo"), "Random spaces and newlines 3");
 	free(test);
 
-	test=np_extract_ntpvar("  foo=bar  ,\n bar\n \n= \n foo\n , foobar=barfoo  \n  ", "bar");
+	test = np_extract_ntpvar("  foo=bar  ,\n bar\n \n= \n foo\n , foobar=barfoo  \n  ", "bar");
 	ok(test && !strcmp(test, "foo"), "Random spaces and newlines 4");
 	free(test);
 
-	test=np_extract_ntpvar("", "foo");
+	test = np_extract_ntpvar("", "foo");
 	ok(!test, "Empty string return NULL");
 
-
 	/* This is the result of running ./test_utils */
-	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got hash with exe and no parameters" ) ||
-        diag( "You are probably running in wrong directory. Must run as ./test_utils" );
+	temp_string = (char *)_np_state_generate_key();
+	ok(!strcmp(temp_string, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got hash with exe and no parameters") ||
+		diag("You are probably running in wrong directory. Must run as ./test_utils");
 
-
-	this_monitoring_plugin->argc=4;
+	this_monitoring_plugin->argc = 4;
 	this_monitoring_plugin->argv[0] = "./test_utils";
 	this_monitoring_plugin->argv[1] = "here";
 	this_monitoring_plugin->argv[2] = "--and";
 	this_monitoring_plugin->argv[3] = "now";
-	temp_string = (char *) _np_state_generate_key();
-	ok(!strcmp(temp_string, "bd72da9f78ff1419fad921ea5e43ce56508aef6c"), "Got based on expected argv" );
+	temp_string = (char *)_np_state_generate_key();
+	ok(!strcmp(temp_string, "bd72da9f78ff1419fad921ea5e43ce56508aef6c"), "Got based on expected argv");
 
 	unsetenv("MP_STATE_PATH");
-	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory" );
+	temp_string = (char *)_np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory");
 
 	setenv("MP_STATE_PATH", "", 1);
-	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string" );
+	temp_string = (char *)_np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string");
 
 	setenv("MP_STATE_PATH", "/usr/local/nagios/var", 1);
-	temp_string = (char *) _np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory" );
+	temp_string = (char *)_np_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory");
 
+	ok(temp_state_key == NULL, "temp_state_key initially empty");
 
-
-	ok(temp_state_key==NULL, "temp_state_key initially empty");
-
-	this_monitoring_plugin->argc=1;
+	this_monitoring_plugin->argc = 1;
 	this_monitoring_plugin->argv[0] = "./test_utils";
 	np_enable_state(NULL, 51);
 	temp_state_key = this_monitoring_plugin->state;
-	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got generated filename" );
-
+	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
+	ok(!strcmp(temp_state_key->name, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got generated filename");
 
 	np_enable_state("allowedchars_in_keyname", 77);
 	temp_state_key = this_monitoring_plugin->state;
 	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/allowedchars_in_keyname", (unsigned long)geteuid());
-	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars" );
-	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
-
+	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
+	ok(!strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars");
+	ok(!strcmp(temp_state_key->_filename, state_path), "Got internal filename");
 
 	/* Don't do this test just yet. Will die */
 	/*
@@ -363,73 +355,65 @@ main (int argc, char **argv)
 	np_enable_state("funnykeyname", 54);
 	temp_state_key = this_monitoring_plugin->state;
 	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/funnykeyname", (unsigned long)geteuid());
-	ok( !strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name" );
-	ok( !strcmp(temp_state_key->name, "funnykeyname"), "Got key name" );
+	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
+	ok(!strcmp(temp_state_key->name, "funnykeyname"), "Got key name");
 
-
-
-	ok( !strcmp(temp_state_key->_filename, state_path), "Got internal filename" );
-	ok( temp_state_key->data_version==54, "Version set" );
+	ok(!strcmp(temp_state_key->_filename, state_path), "Got internal filename");
+	ok(temp_state_key->data_version == 54, "Version set");
 
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Got no state data as file does not exist" );
+	ok(temp_state_data == NULL, "Got no state data as file does not exist");
 
+	/*
+		temp_fp = fopen("var/statefile", "r");
+		if (temp_fp==NULL)
+			printf("Error opening. errno=%d\n", errno);
+		printf("temp_fp=%s\n", temp_fp);
+		ok( _np_state_read_file(temp_fp) == true, "Can read state file" );
+		fclose(temp_fp);
+	*/
 
-/*
-	temp_fp = fopen("var/statefile", "r");
-	if (temp_fp==NULL)
-		printf("Error opening. errno=%d\n", errno);
-	printf("temp_fp=%s\n", temp_fp);
-	ok( _np_state_read_file(temp_fp) == true, "Can read state file" );
-	fclose(temp_fp);
-*/
-
-	temp_state_key->_filename="var/statefile";
+	temp_state_key->_filename = "var/statefile";
 	temp_state_data = np_state_read();
-	ok( this_monitoring_plugin->state->state_data!=NULL, "Got state data now" ) || diag("Are you running in right directory? Will get coredump next if not");
-	ok( this_monitoring_plugin->state->state_data->time==1234567890, "Got time" );
-	ok( !strcmp((char *)this_monitoring_plugin->state->state_data->data, "String to read"), "Data as expected" );
+	ok(this_monitoring_plugin->state->state_data != NULL, "Got state data now") ||
+		diag("Are you running in right directory? Will get coredump next if not");
+	ok(this_monitoring_plugin->state->state_data->time == 1234567890, "Got time");
+	ok(!strcmp((char *)this_monitoring_plugin->state->state_data->data, "String to read"), "Data as expected");
 
-	temp_state_key->data_version=53;
+	temp_state_key->data_version = 53;
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Older data version gives NULL" );
-	temp_state_key->data_version=54;
+	ok(temp_state_data == NULL, "Older data version gives NULL");
+	temp_state_key->data_version = 54;
 
-	temp_state_key->_filename="var/nonexistent";
+	temp_state_key->_filename = "var/nonexistent";
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Missing file gives NULL" );
-	ok( this_monitoring_plugin->state->state_data==NULL, "No state information" );
+	ok(temp_state_data == NULL, "Missing file gives NULL");
+	ok(this_monitoring_plugin->state->state_data == NULL, "No state information");
 
-	temp_state_key->_filename="var/oldformat";
+	temp_state_key->_filename = "var/oldformat";
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Old file format gives NULL" );
+	ok(temp_state_data == NULL, "Old file format gives NULL");
 
-	temp_state_key->_filename="var/baddate";
+	temp_state_key->_filename = "var/baddate";
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Bad date gives NULL" );
+	ok(temp_state_data == NULL, "Bad date gives NULL");
 
-	temp_state_key->_filename="var/missingdataline";
+	temp_state_key->_filename = "var/missingdataline";
 	temp_state_data = np_state_read();
-	ok( temp_state_data==NULL, "Missing data line gives NULL" );
-
-
-
+	ok(temp_state_data == NULL, "Missing data line gives NULL");
 
 	unlink("var/generated");
-	temp_state_key->_filename="var/generated";
-	current_time=1234567890;
+	temp_state_key->_filename = "var/generated";
+	current_time = 1234567890;
 	np_state_write_string(current_time, "String to read");
-	ok(system("cmp var/generated var/statefile")==0, "Generated file same as expected");
-
-
-
+	ok(system("cmp var/generated var/statefile") == 0, "Generated file same as expected");
 
 	unlink("var/generated_directory/statefile");
 	unlink("var/generated_directory");
-	temp_state_key->_filename="var/generated_directory/statefile";
-	current_time=1234567890;
+	temp_state_key->_filename = "var/generated_directory/statefile";
+	current_time = 1234567890;
 	np_state_write_string(current_time, "String to read");
-	ok(system("cmp var/generated_directory/statefile var/statefile")==0, "Have created directory");
+	ok(system("cmp var/generated_directory/statefile var/statefile") == 0, "Have created directory");
 
 	/* This test to check cannot write to dir - can't automate yet */
 	/*
@@ -438,15 +422,13 @@ main (int argc, char **argv)
 	np_state_write_string(current_time, "String to read");
 	*/
 
-
-	temp_state_key->_filename="var/generated";
+	temp_state_key->_filename = "var/generated";
 	time(&current_time);
 	np_state_write_string(0, "String to read");
 	temp_state_data = np_state_read();
 	/* Check time is set to current_time */
-	ok(system("cmp var/generated var/statefile > /dev/null")!=0, "Generated file should be different this time");
-	ok(this_monitoring_plugin->state->state_data->time-current_time<=1, "Has time generated from current time");
-
+	ok(system("cmp var/generated var/statefile > /dev/null") != 0, "Generated file should be different this time");
+	ok(this_monitoring_plugin->state->state_data->time - current_time <= 1, "Has time generated from current time");
 
 	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
 	/*
@@ -454,23 +436,16 @@ main (int argc, char **argv)
 	np_state_write_string(0, "Bad file");
 	*/
 
-
 	np_cleanup();
 
-	ok(this_monitoring_plugin==NULL, "Free'd this_monitoring_plugin");
+	ok(this_monitoring_plugin == NULL, "Free'd this_monitoring_plugin");
 
 	ok(mp_suid() == false, "Test aren't suid");
 
 	/* base states with random case */
-	char *states[] = {
-		"Ok",
-		"wArnINg",
-		"cRiTIcaL",
-		"UnKNoWN",
-		NULL
-	};
+	char *states[] = {"Ok", "wArnINg", "cRiTIcaL", "UnKNoWN", NULL};
 
-	for (i=0; states[i]!=NULL; i++) {
+	for (i = 0; states[i] != NULL; i++) {
 		/* out of the random case states, create the lower and upper versions + numeric string one */
 		char *statelower = strdup(states[i]);
 		char *stateupper = strdup(states[i]);
@@ -488,23 +463,23 @@ main (int argc, char **argv)
 		char testname[64] = "Translate state string: ";
 		int tlen = strlen(testname);
 
-		strcpy(testname+tlen, states[i]);
-		ok(i==mp_translate_state(states[i]), testname);
+		strcpy(testname + tlen, states[i]);
+		ok(i == mp_translate_state(states[i]), testname);
 
-		strcpy(testname+tlen, statelower);
-		ok(i==mp_translate_state(statelower), testname);
+		strcpy(testname + tlen, statelower);
+		ok(i == mp_translate_state(statelower), testname);
 
-		strcpy(testname+tlen, stateupper);
-		ok(i==mp_translate_state(stateupper), testname);
+		strcpy(testname + tlen, stateupper);
+		ok(i == mp_translate_state(stateupper), testname);
 
-		strcpy(testname+tlen, statenum);
-		ok(i==mp_translate_state(statenum), testname);
+		strcpy(testname + tlen, statenum);
+		ok(i == mp_translate_state(statenum), testname);
 	}
-	ok(ERROR==mp_translate_state("warningfewgw"), "Translate state string with garbage");
-	ok(ERROR==mp_translate_state("00"), "Translate state string: bad numeric string 1");
-	ok(ERROR==mp_translate_state("01"), "Translate state string: bad numeric string 2");
-	ok(ERROR==mp_translate_state("10"), "Translate state string: bad numeric string 3");
-	ok(ERROR==mp_translate_state(""), "Translate state string: empty string");
+	ok(ERROR == mp_translate_state("warningfewgw"), "Translate state string with garbage");
+	ok(ERROR == mp_translate_state("00"), "Translate state string: bad numeric string 1");
+	ok(ERROR == mp_translate_state("01"), "Translate state string: bad numeric string 2");
+	ok(ERROR == mp_translate_state("10"), "Translate state string: bad numeric string 3");
+	ok(ERROR == mp_translate_state(""), "Translate state string: empty string");
 
 	return exit_status();
 }
