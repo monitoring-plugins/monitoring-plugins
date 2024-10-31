@@ -39,27 +39,27 @@ const char *email = "devel@monitoring-plugins.org";
 #	define NP_MAXARGS 1024
 #endif
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void comm_append(const char *);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void comm_append(const char *);
+static void print_help(void);
 void print_usage(void);
 
-unsigned int commands = 0;
-unsigned int services = 0;
-int skip_stdout = 0;
-int skip_stderr = 0;
-int warn_on_stderr = 0;
-bool unknown_timeout = false;
-char *remotecmd = NULL;
-char **commargv = NULL;
-int commargc = 0;
-char *hostname = NULL;
-char *outputfile = NULL;
-char *host_shortname = NULL;
-char **service;
-bool passive = false;
-bool verbose = false;
+static unsigned int commands = 0;
+static unsigned int services = 0;
+static int skip_stdout = 0;
+static int skip_stderr = 0;
+static int warn_on_stderr = 0;
+static bool unknown_timeout = false;
+static char *remotecmd = NULL;
+static char **commargv = NULL;
+static int commargc = 0;
+static char *hostname = NULL;
+static char *outputfile = NULL;
+static char *host_shortname = NULL;
+static char **service;
+static bool passive = false;
+static bool verbose = false;
 
 int main(int argc, char **argv) {
 
