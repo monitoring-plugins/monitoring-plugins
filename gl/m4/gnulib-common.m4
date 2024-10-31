@@ -1,5 +1,6 @@
-# gnulib-common.m4 serial 75a
-dnl Copyright (C) 2007-2023 Free Software Foundation, Inc.
+# gnulib-common.m4
+# serial 93
+dnl Copyright (C) 2007-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -15,6 +16,10 @@ AC_DEFUN([gl_COMMON], [
   AC_REQUIRE([gl_ZZGNULIB])
 ])
 AC_DEFUN([gl_COMMON_BODY], [
+  AH_VERBATIM([0witness],
+[/* Witness that <config.h> has been included.  */
+#define _GL_CONFIG_H_INCLUDED 1
+])
   AH_VERBATIM([_GL_GNUC_PREREQ],
 [/* True if the compiler says it groks GNU C version MAJOR.MINOR.  */
 #if defined __GNUC__ && defined __GNUC_MINOR__
@@ -72,50 +77,74 @@ AC_DEFUN([gl_COMMON_BODY], [
 #endif])
   AH_VERBATIM([attribute],
 [/* Attributes.  */
-#if (defined __has_attribute \
-     && (!defined __clang_minor__ \
-         || (defined __apple_build_version__ \
-             ? 6000000 <= __apple_build_version__ \
-             : 3 < __clang_major__ + (5 <= __clang_minor__))))
-# define _GL_HAS_ATTRIBUTE(attr) __has_attribute (__##attr##__)
-#else
-# define _GL_HAS_ATTRIBUTE(attr) _GL_ATTR_##attr
-# define _GL_ATTR_alloc_size _GL_GNUC_PREREQ (4, 3)
-# define _GL_ATTR_always_inline _GL_GNUC_PREREQ (3, 2)
-# define _GL_ATTR_artificial _GL_GNUC_PREREQ (4, 3)
-# define _GL_ATTR_cold _GL_GNUC_PREREQ (4, 3)
-# define _GL_ATTR_const _GL_GNUC_PREREQ (2, 95)
-# define _GL_ATTR_deprecated _GL_GNUC_PREREQ (3, 1)
-# define _GL_ATTR_diagnose_if 0
-# define _GL_ATTR_error _GL_GNUC_PREREQ (4, 3)
-# define _GL_ATTR_externally_visible _GL_GNUC_PREREQ (4, 1)
-# define _GL_ATTR_fallthrough _GL_GNUC_PREREQ (7, 0)
-# define _GL_ATTR_format _GL_GNUC_PREREQ (2, 7)
-# define _GL_ATTR_leaf _GL_GNUC_PREREQ (4, 6)
-# define _GL_ATTR_malloc _GL_GNUC_PREREQ (3, 0)
-# ifdef _ICC
-#  define _GL_ATTR_may_alias 0
+/* Define _GL_HAS_ATTRIBUTE only once, because on FreeBSD, with gcc < 5, if
+   <config.h> gets included once again after <sys/cdefs.h>, __has_attribute(x)
+   expands to 0 always, and redefining _GL_HAS_ATTRIBUTE would turn off all
+   attributes.  */
+#ifndef _GL_HAS_ATTRIBUTE
+# if (defined __has_attribute \
+      && (!defined __clang_minor__ \
+          || (defined __apple_build_version__ \
+              ? 7000000 <= __apple_build_version__ \
+              : 5 <= __clang_major__)))
+#  define _GL_HAS_ATTRIBUTE(attr) __has_attribute (__##attr##__)
 # else
-#  define _GL_ATTR_may_alias _GL_GNUC_PREREQ (3, 3)
+#  define _GL_HAS_ATTRIBUTE(attr) _GL_ATTR_##attr
+#  define _GL_ATTR_alloc_size _GL_GNUC_PREREQ (4, 3)
+#  define _GL_ATTR_always_inline _GL_GNUC_PREREQ (3, 2)
+#  define _GL_ATTR_artificial _GL_GNUC_PREREQ (4, 3)
+#  define _GL_ATTR_cold _GL_GNUC_PREREQ (4, 3)
+#  define _GL_ATTR_const _GL_GNUC_PREREQ (2, 95)
+#  define _GL_ATTR_deprecated _GL_GNUC_PREREQ (3, 1)
+#  define _GL_ATTR_diagnose_if 0
+#  define _GL_ATTR_error _GL_GNUC_PREREQ (4, 3)
+#  define _GL_ATTR_externally_visible _GL_GNUC_PREREQ (4, 1)
+#  define _GL_ATTR_fallthrough _GL_GNUC_PREREQ (7, 0)
+#  define _GL_ATTR_format _GL_GNUC_PREREQ (2, 7)
+#  define _GL_ATTR_leaf _GL_GNUC_PREREQ (4, 6)
+#  define _GL_ATTR_malloc _GL_GNUC_PREREQ (3, 0)
+#  ifdef _ICC
+#   define _GL_ATTR_may_alias 0
+#  else
+#   define _GL_ATTR_may_alias _GL_GNUC_PREREQ (3, 3)
+#  endif
+#  define _GL_ATTR_noinline _GL_GNUC_PREREQ (3, 1)
+#  define _GL_ATTR_nonnull _GL_GNUC_PREREQ (3, 3)
+#  define _GL_ATTR_nonstring _GL_GNUC_PREREQ (8, 0)
+#  define _GL_ATTR_nothrow _GL_GNUC_PREREQ (3, 3)
+#  define _GL_ATTR_packed _GL_GNUC_PREREQ (2, 7)
+#  define _GL_ATTR_pure _GL_GNUC_PREREQ (2, 96)
+#  define _GL_ATTR_returns_nonnull _GL_GNUC_PREREQ (4, 9)
+#  define _GL_ATTR_sentinel _GL_GNUC_PREREQ (4, 0)
+#  define _GL_ATTR_unused _GL_GNUC_PREREQ (2, 7)
+#  define _GL_ATTR_warn_unused_result _GL_GNUC_PREREQ (3, 4)
 # endif
-# define _GL_ATTR_noinline _GL_GNUC_PREREQ (3, 1)
-# define _GL_ATTR_nonnull _GL_GNUC_PREREQ (3, 3)
-# define _GL_ATTR_nonstring _GL_GNUC_PREREQ (8, 0)
-# define _GL_ATTR_nothrow _GL_GNUC_PREREQ (3, 3)
-# define _GL_ATTR_packed _GL_GNUC_PREREQ (2, 7)
-# define _GL_ATTR_pure _GL_GNUC_PREREQ (2, 96)
-# define _GL_ATTR_returns_nonnull _GL_GNUC_PREREQ (4, 9)
-# define _GL_ATTR_sentinel _GL_GNUC_PREREQ (4, 0)
-# define _GL_ATTR_unused _GL_GNUC_PREREQ (2, 7)
-# define _GL_ATTR_warn_unused_result _GL_GNUC_PREREQ (3, 4)
 #endif
 
-/* Disable GCC -Wpedantic if using __has_c_attribute and this is not C23+.  */
-#if (defined __has_c_attribute && _GL_GNUC_PREREQ (4, 6) \
-     && (defined __STDC_VERSION__ ? __STDC_VERSION__ : 0) <= 201710)
-# pragma GCC diagnostic ignored "-Wpedantic"
+/* Use __has_c_attribute if available.  However, do not use with
+   pre-C23 GCC, which can issue false positives if -Wpedantic.  */
+#if (defined __has_c_attribute \
+     && ! (_GL_GNUC_PREREQ (4, 6) \
+           && (defined __STDC_VERSION__ ? __STDC_VERSION__ : 0) <= 201710))
+# define _GL_HAVE___HAS_C_ATTRIBUTE 1
+#else
+# define _GL_HAVE___HAS_C_ATTRIBUTE 0
 #endif
 
+/* Define if, in a function declaration, the attributes in bracket syntax
+   [[...]] must come before the attributes in __attribute__((...)) syntax.
+   If this is defined, it is best to avoid the bracket syntax, so that the
+   various _GL_ATTRIBUTE_* can be cumulated on the same declaration in any
+   order.  */
+#ifdef __cplusplus
+# if defined __clang__
+#  define _GL_BRACKET_BEFORE_ATTRIBUTE 1
+# endif
+#else
+# if defined __GNUC__ && !defined __clang__
+#  define _GL_BRACKET_BEFORE_ATTRIBUTE 1
+# endif
+#endif
 ]dnl There is no _GL_ATTRIBUTE_ALIGNED; use stdalign's alignas instead.
 [
 /* _GL_ATTRIBUTE_ALLOC_SIZE ((N)) declares that the Nth argument of the function
@@ -223,9 +252,11 @@ AC_DEFUN([gl_COMMON_BODY], [
      - typedef,
    in C++ also: namespace, class, template specialization.  */
 #ifndef _GL_ATTRIBUTE_DEPRECATED
-# ifdef __has_c_attribute
-#  if __has_c_attribute (__deprecated__)
-#   define _GL_ATTRIBUTE_DEPRECATED [[__deprecated__]]
+# ifndef _GL_BRACKET_BEFORE_ATTRIBUTE
+#  if _GL_HAVE___HAS_C_ATTRIBUTE
+#   if __has_c_attribute (__deprecated__)
+#    define _GL_ATTRIBUTE_DEPRECATED [[__deprecated__]]
+#   endif
 #  endif
 # endif
 # if !defined _GL_ATTRIBUTE_DEPRECATED && _GL_HAS_ATTRIBUTE (deprecated)
@@ -271,7 +302,7 @@ AC_DEFUN([gl_COMMON_BODY], [
 /* Applies to: Empty statement (;), inside a 'switch' statement.  */
 /* Always expands to something.  */
 #ifndef _GL_ATTRIBUTE_FALLTHROUGH
-# ifdef __has_c_attribute
+# if _GL_HAVE___HAS_C_ATTRIBUTE
 #  if __has_c_attribute (__fallthrough__)
 #   define _GL_ATTRIBUTE_FALLTHROUGH [[__fallthrough__]]
 #  endif
@@ -351,11 +382,19 @@ AC_DEFUN([gl_COMMON_BODY], [
    in C++ also: class.  */
 /* In C++ and C23, this is spelled [[__maybe_unused__]].
    GCC's syntax is __attribute__ ((__unused__)).
-   clang supports both syntaxes.  */
+   clang supports both syntaxes.  Except that with clang ≥ 6, < 10, in C++ mode,
+   __has_c_attribute (__maybe_unused__) yields true but the use of
+   [[__maybe_unused__]] nevertheless produces a warning.  */
 #ifndef _GL_ATTRIBUTE_MAYBE_UNUSED
-# ifdef __has_c_attribute
-#  if __has_c_attribute (__maybe_unused__)
-#   define _GL_ATTRIBUTE_MAYBE_UNUSED [[__maybe_unused__]]
+# ifndef _GL_BRACKET_BEFORE_ATTRIBUTE
+#  if defined __clang__ && defined __cplusplus
+#   if !defined __apple_build_version__ && __clang_major__ >= 10
+#    define _GL_ATTRIBUTE_MAYBE_UNUSED [[__maybe_unused__]]
+#   endif
+#  elif _GL_HAVE___HAS_C_ATTRIBUTE
+#   if __has_c_attribute (__maybe_unused__)
+#    define _GL_ATTRIBUTE_MAYBE_UNUSED [[__maybe_unused__]]
+#   endif
 #  endif
 # endif
 # ifndef _GL_ATTRIBUTE_MAYBE_UNUSED
@@ -373,9 +412,20 @@ AC_DEFUN([gl_COMMON_BODY], [
    the return value, unless the caller uses something like ignore_value.  */
 /* Applies to: function, enumeration, class.  */
 #ifndef _GL_ATTRIBUTE_NODISCARD
-# ifdef __has_c_attribute
-#  if __has_c_attribute (__nodiscard__)
-#   define _GL_ATTRIBUTE_NODISCARD [[__nodiscard__]]
+# ifndef _GL_BRACKET_BEFORE_ATTRIBUTE
+#  if defined __clang__ && defined __cplusplus
+  /* With clang up to 15.0.6 (at least), in C++ mode, [[__nodiscard__]] produces
+     a warning.
+     The 1000 below means a yet unknown threshold.  When clang++ version X
+     starts supporting [[__nodiscard__]] without warning about it, you can
+     replace the 1000 with X.  */
+#   if __clang_major__ >= 1000
+#    define _GL_ATTRIBUTE_NODISCARD [[__nodiscard__]]
+#   endif
+#  elif _GL_HAVE___HAS_C_ATTRIBUTE
+#   if __has_c_attribute (__nodiscard__)
+#    define _GL_ATTRIBUTE_NODISCARD [[__nodiscard__]]
+#   endif
 #  endif
 # endif
 # if !defined _GL_ATTRIBUTE_NODISCARD && _GL_HAS_ATTRIBUTE (warn_unused_result)
@@ -427,11 +477,25 @@ AC_DEFUN([gl_COMMON_BODY], [
 /* _GL_ATTRIBUTE_NOTHROW declares that the function does not throw exceptions.
  */
 /* Applies to: functions.  */
+/* After a function's parameter list, this attribute must come first, before
+   other attributes.  */
 #ifndef _GL_ATTRIBUTE_NOTHROW
-# if _GL_HAS_ATTRIBUTE (nothrow) && !defined __cplusplus
-#  define _GL_ATTRIBUTE_NOTHROW __attribute__ ((__nothrow__))
+# if defined __cplusplus
+#  if _GL_GNUC_PREREQ (2, 8) || __clang_major >= 4
+#   if __cplusplus >= 201103L
+#    define _GL_ATTRIBUTE_NOTHROW noexcept (true)
+#   else
+#    define _GL_ATTRIBUTE_NOTHROW throw ()
+#   endif
+#  else
+#   define _GL_ATTRIBUTE_NOTHROW
+#  endif
 # else
-#  define _GL_ATTRIBUTE_NOTHROW
+#  if _GL_HAS_ATTRIBUTE (nothrow)
+#   define _GL_ATTRIBUTE_NOTHROW __attribute__ ((__nothrow__))
+#  else
+#   define _GL_ATTRIBUTE_NOTHROW
+#  endif
 # endif
 #endif
 
@@ -441,8 +505,10 @@ AC_DEFUN([gl_COMMON_BODY], [
    minimizing the memory required.  */
 /* Applies to: struct members, struct, union,
    in C++ also: class.  */
+/* Oracle Studio 12.6 miscompiles code with __attribute__ ((__packed__)) despite
+   __has_attribute OK.  */
 #ifndef _GL_ATTRIBUTE_PACKED
-# if _GL_HAS_ATTRIBUTE (packed)
+# if _GL_HAS_ATTRIBUTE (packed) && !defined __SUNPRO_C
 #  define _GL_ATTRIBUTE_PACKED __attribute__ ((__packed__))
 # else
 #  define _GL_ATTRIBUTE_PACKED
@@ -513,6 +579,18 @@ AC_DEFUN([gl_COMMON_BODY], [
 # endif
 #endif
 ])
+  AH_VERBATIM([c_linkage],
+[/* In C++, there is the concept of "language linkage", that encompasses
+    name mangling and function calling conventions.
+    The following macros start and end a block of "C" linkage.  */
+#ifdef __cplusplus
+# define _GL_BEGIN_C_LINKAGE extern "C" {
+# define _GL_END_C_LINKAGE }
+#else
+# define _GL_BEGIN_C_LINKAGE
+# define _GL_END_C_LINKAGE
+#endif
+])
   AH_VERBATIM([async_safe],
 [/* The _GL_ASYNC_SAFE marker should be attached to functions that are
    signal handlers (for signals other than SIGABRT, SIGPIPE) or can be
@@ -568,7 +646,7 @@ AC_DEFUN([gl_COMMON_BODY], [
   dnl gl_cross_guess_normal    (to be used when 'yes' is good and 'no' is bad),
   dnl gl_cross_guess_inverted  (to be used when 'no' is good and 'yes' is bad).
   AC_ARG_ENABLE([cross-guesses],
-    [AS_HELP_STRING([--enable-cross-guesses={conservative|risky}],
+    [AS_HELP_STRING([[--enable-cross-guesses={conservative|risky}]],
        [specify policy for cross-compilation guesses])],
     [if test "x$enableval" != xconservative && test "x$enableval" != xrisky; then
        AC_MSG_WARN([invalid argument supplied to --enable-cross-guesses])
@@ -1005,6 +1083,7 @@ AC_DEFUN([gl_CC_GNULIB_WARNINGS],
     dnl -Wno-pedantic                         >= 4.8          >= 3.9
     dnl -Wno-sign-compare                     >= 3            >= 3.9
     dnl -Wno-sign-conversion                  >= 4.3          >= 3.9
+    dnl -Wno-tautological-out-of-range-compare  -             >= 3.9
     dnl -Wno-type-limits                      >= 4.3          >= 3.9
     dnl -Wno-undef                            >= 3            >= 3.9
     dnl -Wno-unsuffixed-float-constants       >= 4.5
@@ -1029,6 +1108,9 @@ AC_DEFUN([gl_CC_GNULIB_WARNINGS],
       #endif
       #if __GNUC__ + (__GNUC_MINOR__ >= 8) > 4 || (__clang_major__ + (__clang_minor__ >= 9) > 3)
       -Wno-pedantic
+      #endif
+      #if 3 < __clang_major__ + (9 <= __clang_minor__)
+      -Wno-tautological-constant-out-of-range-compare
       #endif
       #if __GNUC__ + (__GNUC_MINOR__ >= 3) > 4 || (__clang_major__ + (__clang_minor__ >= 9) > 3)
       -Wno-sign-conversion
@@ -1078,6 +1160,238 @@ AC_DEFUN([gl_CONDITIONAL_HEADER],
   m4_popdef([gl_generate_cond])
   m4_popdef([gl_generate_var])
   m4_popdef([gl_header_name])
+])
+
+dnl Preparations for gl_CHECK_FUNCS_MACOS.
+AC_DEFUN([gl_PREPARE_CHECK_FUNCS_MACOS],
+[
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_COMPILER_CLANG])
+  AC_CACHE_CHECK([for compiler option needed when checking for future declarations],
+    [gl_cv_compiler_check_future_option],
+    [case "$host_os" in
+       dnl This is only needed on macOS.
+       darwin*)
+         if test $gl_cv_compiler_clang = yes; then
+           dnl Test whether the compiler supports the option
+           dnl '-Werror=unguarded-availability-new'.
+           saved_ac_compile="$ac_compile"
+           ac_compile="$ac_compile -Werror=unguarded-availability-new"
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
+             [gl_cv_compiler_check_future_option='-Werror=unguarded-availability-new'],
+             [gl_cv_compiler_check_future_option=none])
+           ac_compile="$saved_ac_compile"
+         else
+           gl_cv_compiler_check_future_option=none
+         fi
+         ;;
+       *) gl_cv_compiler_check_future_option=none ;;
+     esac
+    ])
+])
+
+dnl Pieces of the expansion of
+dnl gl_CHECK_FUNCS_ANDROID
+dnl gl_CHECK_FUNCS_MACOS
+dnl gl_CHECK_FUNCS_ANDROID_MACOS
+
+AC_DEFUN([gl_CHECK_FUNCS_DEFAULT_CASE],
+[
+         *)
+           AC_CHECK_FUNC([$1])
+           [gl_cv_onwards_func_][$1]=$[ac_cv_func_][$1]
+           ;;
+])
+
+AC_DEFUN([gl_CHECK_FUNCS_CASE_FOR_ANDROID],
+[
+         linux*-android*)
+           AC_CHECK_DECL([$1], , , [$2])
+           if test $[ac_cv_have_decl_][$1] = yes; then
+             AC_CHECK_FUNC([[$1]])
+             if test $[ac_cv_func_][$1] = yes; then
+               [gl_cv_onwards_func_][$1]=yes
+             else
+               dnl The function is declared but does not exist. This should not
+               dnl happen normally. But anyway, we know that a future version
+               dnl of Android will have the function.
+               [gl_cv_onwards_func_][$1]='future OS version'
+             fi
+           else
+             [gl_cv_onwards_func_][$1]='future OS version'
+           fi
+           ;;
+])
+
+AC_DEFUN([gl_CHECK_FUNCS_CASE_FOR_MACOS],
+[
+         darwin*)
+           if test "x$gl_cv_compiler_check_future_option" != "xnone"; then
+             dnl Use a compile test, not a link test.
+             saved_ac_compile="$ac_compile"
+             ac_compile="$ac_compile $gl_cv_compiler_check_future_option"
+             saved_ac_compile_for_check_decl="$ac_compile_for_check_decl"
+             ac_compile_for_check_decl="$ac_compile_for_check_decl $gl_cv_compiler_check_future_option"
+             unset [ac_cv_have_decl_][$1]
+             AC_CHECK_DECL([$1], , , [$2])
+             ac_compile="$saved_ac_compile"
+             ac_compile_for_check_decl="$saved_ac_compile_for_check_decl"
+             [ac_cv_func_][$1]="$[ac_cv_have_decl_][$1]"
+             if test $[ac_cv_func_][$1] = yes; then
+               [gl_cv_onwards_func_][$1]=yes
+             else
+               unset [ac_cv_have_decl_][$1]
+               AC_CHECK_DECL([$1], , , [$2])
+               if test $[ac_cv_have_decl_][$1] = yes; then
+                 [gl_cv_onwards_func_][$1]='future OS version'
+               else
+                 [gl_cv_onwards_func_][$1]=no
+               fi
+             fi
+           else
+             AC_CHECK_FUNC([$1])
+             [gl_cv_onwards_func_][$1]=$[ac_cv_func_][$1]
+           fi
+           ;;
+])
+
+AC_DEFUN([gl_CHECK_FUNCS_SET_RESULTS],
+[
+  case "$[gl_cv_onwards_func_][$1]" in
+    future*) [ac_cv_func_][$1]=no ;;
+    *)       [ac_cv_func_][$1]=$[gl_cv_onwards_func_][$1] ;;
+  esac
+  if test $[ac_cv_func_][$1] = yes; then
+    AC_DEFINE([HAVE_]m4_translit([[$1]],
+                                 [abcdefghijklmnopqrstuvwxyz],
+                                 [ABCDEFGHIJKLMNOPQRSTUVWXYZ]),
+              [1], [Define to 1 if you have the `$1' function.])
+  fi
+])
+
+dnl gl_CHECK_FUNCS_ANDROID([func], [[#include <foo.h>]])
+dnl is like AC_CHECK_FUNCS([func]), taking into account a portability problem
+dnl on Android.
+dnl
+dnl When code is compiled on Android, it is in the context of a certain
+dnl "Android API level", which indicates the minimum version of Android on
+dnl which the app can be installed. In other words, you don't compile for a
+dnl specific version of Android. You compile for all versions of Android,
+dnl onwards from the given API level.
+dnl Thus, the question "does the OS have the function func" has three possible
+dnl answers:
+dnl   - yes, in all versions starting from the given API level,
+dnl   - no, in no version,
+dnl   - not in the given API level, but in a later version of Android.
+dnl
+dnl In detail, this works as follows:
+dnl If func was added to Android API level, say, 28, then the libc.so has the
+dnl symbol func always, whereas the header file <foo.h> declares func
+dnl conditionally:
+dnl   #if __ANDROID_API__ >= 28
+dnl   ... func (...) __INTRODUCED_IN(28);
+dnl   #endif
+dnl Thus, when compiling with "clang -target armv7a-unknown-linux-android28",
+dnl the function func is declared and exists in libc.
+dnl Whereas when compiling with "clang -target armv7a-unknown-linux-android27",
+dnl the function func is not declared but exists in libc.
+dnl
+dnl This macro sets two variables:
+dnl   - gl_cv_onwards_func_<func>   to yes / no / "future OS version"
+dnl   - ac_cv_func_<func>           to yes / no / no
+dnl The first variable allows to distinguish all three cases.
+dnl The second variable is set, so that an invocation
+dnl   gl_CHECK_FUNCS_ANDROID([func], [[#include <foo.h>]])
+dnl can be used as a drop-in replacement for
+dnl   AC_CHECK_FUNCS([func]).
+AC_DEFUN([gl_CHECK_FUNCS_ANDROID],
+[
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_CACHE_CHECK([for [$1]],
+    [[gl_cv_onwards_func_][$1]],
+    [gl_SILENT([
+       case "$host_os" in
+         gl_CHECK_FUNCS_CASE_FOR_ANDROID([$1], [$2])
+         gl_CHECK_FUNCS_DEFAULT_CASE([$1])
+       esac
+      ])
+    ])
+  gl_CHECK_FUNCS_SET_RESULTS([$1])
+])
+
+dnl gl_CHECK_FUNCS_MACOS([func], [[#include <foo.h>]])
+dnl is like AC_CHECK_FUNCS([func]), taking into account a portability problem
+dnl on macOS.
+dnl
+dnl When code is compiled on macOS, it is in the context of a certain minimum
+dnl macOS version, that can be set through the option '-mmacosx-version-min='.
+dnl In other words, you don't compile for a specific version of macOS. You
+dnl compile for all versions of macOS, onwards from the given version.
+dnl Thus, the question "does the OS have the function func" has three possible
+dnl answers:
+dnl   - yes, in all versions starting from the given version,
+dnl   - no, in no version,
+dnl   - not in the given version, but in a later version of macOS.
+dnl
+dnl In detail, this works as follows:
+dnl If func was added to, say, macOS version 13, then the libc has the
+dnl symbol func always, whereas the header file <foo.h> declares func
+dnl conditionally with a special availability attribute:
+dnl   ... func (...) __attribute__((availability(macos,introduced=13.0)));
+dnl Thus, when compiling with "clang mmacosx-version-min=13", there is no
+dnl warning about the use of func, and the resulting binary
+dnl   - runs fine on macOS 13,
+dnl   - aborts with a dyld "Symbol not found" message on macOS 12.
+dnl Whereas, when compiling with "clang mmacosx-version-min=12", there is a
+dnl   warning: 'func' is only available on macOS 13.0 or newer
+dnl   [-Wunguarded-availability-new],
+dnl and the resulting binary
+dnl   - runs fine on macOS 13,
+dnl   - crashes with a SIGSEGV (signal 11) on macOS 12.
+dnl
+dnl This macro sets two variables:
+dnl   - gl_cv_onwards_func_<func>   to yes / no / "future OS version"
+dnl   - ac_cv_func_<func>           to yes / no / no
+dnl The first variable allows to distinguish all three cases.
+dnl The second variable is set, so that an invocation
+dnl   gl_CHECK_FUNCS_MACOS([func], [[#include <foo.h>]])
+dnl can be used as a drop-in replacement for
+dnl   AC_CHECK_FUNCS([func]).
+AC_DEFUN([gl_CHECK_FUNCS_MACOS],
+[
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_PREPARE_CHECK_FUNCS_MACOS])
+  AC_CACHE_CHECK([for [$1]],
+    [[gl_cv_onwards_func_][$1]],
+    [gl_SILENT([
+       case "$host_os" in
+         gl_CHECK_FUNCS_CASE_FOR_MACOS([$1], [$2])
+         gl_CHECK_FUNCS_DEFAULT_CASE([$1])
+       esac
+      ])
+    ])
+  gl_CHECK_FUNCS_SET_RESULTS([$1])
+])
+
+dnl gl_CHECK_FUNCS_ANDROID_MACOS([func], [[#include <foo.h>]])
+dnl is like AC_CHECK_FUNCS([func]), taking into account a portability problem
+dnl on Android and on macOS.
+dnl It is the combination of gl_CHECK_FUNCS_ANDROID and gl_CHECK_FUNCS_MACOS.
+AC_DEFUN([gl_CHECK_FUNCS_ANDROID_MACOS],
+[
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_REQUIRE([gl_PREPARE_CHECK_FUNCS_MACOS])
+  AC_CACHE_CHECK([for [$1]],
+    [[gl_cv_onwards_func_][$1]],
+    [gl_SILENT([
+       case "$host_os" in
+         gl_CHECK_FUNCS_CASE_FOR_ANDROID([$1], [$2])
+         gl_CHECK_FUNCS_CASE_FOR_MACOS([$1], [$2])
+         gl_CHECK_FUNCS_DEFAULT_CASE([$1])
+       esac
+      ])
+    ])
+  gl_CHECK_FUNCS_SET_RESULTS([$1])
 ])
 
 dnl Expands to some code for use in .c programs that, on native Windows, defines

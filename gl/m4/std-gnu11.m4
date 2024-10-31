@@ -1,3 +1,6 @@
+# std-gnu11.m4
+# serial 1
+
 # Prefer GNU C11 and C++11 to earlier versions.  -*- coding: utf-8 -*-
 
 # This implementation is taken from GNU Autoconf lib/autoconf/c.m4
@@ -9,7 +12,7 @@
 m4_version_prereq([2.70], [], [
 
 
-# Copyright (C) 2001-2023 Free Software Foundation, Inc.
+# Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -1,5 +1,6 @@
-# serial 15
-dnl Copyright (C) 2002-2006, 2009-2023 Free Software Foundation, Inc.
+# mountlist.m4
+# serial 17
+dnl Copyright (C) 2002-2006, 2009-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -106,7 +107,18 @@ $ac_includes_default
           [Define if there is a function named getmntent for reading the list
            of mounted file systems, and that function takes a single argument.
            (4.3BSD, SunOS, HP-UX, Irix)])
-        AC_CHECK_FUNCS([setmntent endmntent hasmntopt])
+        gl_CHECK_FUNCS_ANDROID([setmntent],
+          [[#include <stdio.h>
+            #include <mntent.h>
+          ]])
+        gl_CHECK_FUNCS_ANDROID([endmntent],
+          [[#include <stdio.h>
+            #include <mntent.h>
+          ]])
+        gl_CHECK_FUNCS_ANDROID([hasmntopt],
+          [[#include <stdio.h>
+            #include <mntent.h>
+          ]])
       fi
     fi
 
