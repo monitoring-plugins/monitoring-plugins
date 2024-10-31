@@ -35,7 +35,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 
-void print_help(void);
+static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {
