@@ -39,26 +39,26 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "runcmd.h"
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-int error_scan(char *, bool *);
-bool ip_match_cidr(const char *, const char *);
-unsigned long ip2long(const char *);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static int error_scan(char *, bool *);
+static bool ip_match_cidr(const char *, const char *);
+static unsigned long ip2long(const char *);
+static void print_help(void);
 void print_usage(void);
 
 #define ADDRESS_LENGTH 256
-char query_address[ADDRESS_LENGTH] = "";
-char dns_server[ADDRESS_LENGTH] = "";
-char ptr_server[ADDRESS_LENGTH] = "";
-bool verbose = false;
-char **expected_address = NULL;
-int expected_address_cnt = 0;
-bool expect_nxdomain = false;
+static char query_address[ADDRESS_LENGTH] = "";
+static char dns_server[ADDRESS_LENGTH] = "";
+static char ptr_server[ADDRESS_LENGTH] = "";
+static bool verbose = false;
+static char **expected_address = NULL;
+static int expected_address_cnt = 0;
+static bool expect_nxdomain = false;
 
-bool expect_authority = false;
-bool all_match = false;
-thresholds *time_thresholds = NULL;
+static bool expect_authority = false;
+static bool all_match = false;
+static thresholds *time_thresholds = NULL;
 
 static int qstrcmp(const void *p1, const void *p2) {
 	/* The actual arguments to this function are "pointers to
