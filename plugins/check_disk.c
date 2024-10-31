@@ -3,7 +3,7 @@
  * Monitoring check_disk plugin
  *
  * License: GPL
- * Copyright (c) 1999-2008 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -28,7 +28,7 @@
 
 const char *progname = "check_disk";
 const char *program_name = "check_disk"; /* Required for coreutils libs */
-const char *copyright = "1999-2008";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
