@@ -59,12 +59,11 @@ enum {
 	DEFAULT_CRIT = 8
 };
 
-static int process_arguments(int, char **);
-static int validate_arguments(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_usage(void);
 static void print_help(void);
-static bool is_pg_logname(char *);
-static int do_query(PGconn *, char *);
+static bool is_pg_logname(char * /*username*/);
+static int do_query(PGconn * /*conn*/, char * /*query*/);
 
 static char *pghost = NULL; /* host name of the backend server */
 static char *pgport = NULL; /* port of the backend server */
@@ -136,14 +135,9 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 ******************************************************************************/
 
 int main(int argc, char **argv) {
-	PGconn *conn;
-	char *conninfo = NULL;
-
-	struct timeval start_timeval;
-	struct timeval end_timeval;
-	double elapsed_time;
-	int status = STATE_UNKNOWN;
-	int query_status = STATE_UNKNOWN;
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
 
 	/* begin, by setting the parameters for a backend connection if the
 	 * parameters are null, then the system will try to use reasonable
@@ -152,10 +146,6 @@ int main(int argc, char **argv) {
 
 	pgoptions = NULL; /* special options to start up the backend server */
 	pgtty = NULL;     /* debugging tty for the backend server */
-
-	setlocale(LC_ALL, "");
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -171,6 +161,7 @@ int main(int argc, char **argv) {
 	}
 	alarm(timeout_interval);
 
+	char *conninfo = NULL;
 	if (pgparams)
 		asprintf(&conninfo, "%s ", pgparams);
 
@@ -192,15 +183,18 @@ int main(int argc, char **argv) {
 		asprintf(&conninfo, "%s password = '%s'", conninfo, pgpasswd);
 
 	/* make a connection to the database */
+	struct timeval start_timeval;
 	gettimeofday(&start_timeval, NULL);
-	conn = PQconnectdb(conninfo);
+	PGconn *conn = PQconnectdb(conninfo);
+	struct timeval end_timeval;
 	gettimeofday(&end_timeval, NULL);
 
 	while (start_timeval.tv_usec > end_timeval.tv_usec) {
 		--end_timeval.tv_sec;
 		end_timeval.tv_usec += 1000000;
 	}
-	elapsed_time = (double)(end_timeval.tv_sec - start_timeval.tv_sec) + (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
+	double elapsed_time =
+		(double)(end_timeval.tv_sec - start_timeval.tv_sec) + (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
 
 	if (verbose)
 		printf("Time elapsed: %f\n", elapsed_time);
@@ -212,7 +206,10 @@ int main(int argc, char **argv) {
 		printf(_("CRITICAL - no connection to '%s' (%s).\n"), dbName, PQerrorMessage(conn));
 		PQfinish(conn);
 		return STATE_CRITICAL;
-	} else if (elapsed_time > tcrit) {
+	}
+
+	int status = STATE_UNKNOWN;
+	if (elapsed_time > tcrit) {
 		status = STATE_CRITICAL;
 	} else if (elapsed_time > twarn) {
 		status = STATE_WARNING;
@@ -234,6 +231,7 @@ int main(int argc, char **argv) {
 	printf(_(" %s - database %s (%f sec.)|%s\n"), state_text(status), dbName, elapsed_time,
 		   fperfdata("time", elapsed_time, "s", !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, true, 0, false, 0));
 
+	int query_status = STATE_UNKNOWN;
 	if (pgquery)
 		query_status = do_query(conn, pgquery);
 
@@ -245,9 +243,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
 									   {"timeout", required_argument, 0, 't'},
@@ -267,13 +262,14 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},
 									   {0, 0, 0, 0}};
 
-	while (1) {
-		c = getopt_long(argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v", longopts, &option);
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v", longopts, &option);
 
-		if (c == EOF)
+		if (option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* usage */
 			usage5();
 		case 'h': /* help */
@@ -354,30 +350,8 @@ int process_arguments(int argc, char **argv) {
 
 	set_thresholds(&qthresholds, query_warning, query_critical);
 
-	return validate_arguments();
+	return OK;
 }
-
-/******************************************************************************
-
-@@-
-<sect3>
-<title>validate_arguments</title>
-
-<para>&PROTO_validate_arguments;</para>
-
-<para>Given a database name, this function returns true if the string
-is a valid PostgreSQL database name, and returns false if it is
-not.</para>
-
-<para>Valid PostgreSQL database names are less than &NAMEDATALEN;
-characters long and consist of letters, numbers, and underscores. The
-first character cannot be a number, however.</para>
-
-</sect3>
--@@
-******************************************************************************/
-
-int validate_arguments() { return OK; }
 
 /**
 
@@ -509,19 +483,9 @@ void print_usage(void) {
 }
 
 int do_query(PGconn *conn, char *query) {
-	PGresult *res;
-
-	char *val_str;
-	char *extra_info;
-	double value;
-
-	char *endptr = NULL;
-
-	int my_status = STATE_UNKNOWN;
-
 	if (verbose)
 		printf("Executing SQL query \"%s\".\n", query);
-	res = PQexec(conn, query);
+	PGresult *res = PQexec(conn, query);
 
 	if (PGRES_TUPLES_OK != PQresultStatus(res)) {
 		printf(_("QUERY %s - %s: %s.\n"), _("CRITICAL"), _("Error with query"), PQerrorMessage(conn));
@@ -538,25 +502,28 @@ int do_query(PGconn *conn, char *query) {
 		return STATE_WARNING;
 	}
 
-	val_str = PQgetvalue(res, 0, 0);
+	char *val_str = PQgetvalue(res, 0, 0);
 	if (!val_str) {
 		printf("QUERY %s - %s.\n", _("CRITICAL"), _("No data returned"));
 		return STATE_CRITICAL;
 	}
 
-	value = strtod(val_str, &endptr);
+	char *endptr = NULL;
+	double value = strtod(val_str, &endptr);
 	if (verbose)
 		printf("Query result: %f\n", value);
 
 	if (endptr == val_str) {
 		printf("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
 		return STATE_CRITICAL;
-	} else if ((endptr != NULL) && (*endptr != '\0')) {
+	}
+
+	if ((endptr != NULL) && (*endptr != '\0')) {
 		if (verbose)
 			printf("Garbage after value: %s.\n", endptr);
 	}
 
-	my_status = get_status(value, qthresholds);
+	int my_status = get_status(value, qthresholds);
 	printf("QUERY %s - ", (my_status == STATE_OK)         ? _("OK")
 						  : (my_status == STATE_WARNING)  ? _("WARNING")
 						  : (my_status == STATE_CRITICAL) ? _("CRITICAL")
@@ -569,7 +536,7 @@ int do_query(PGconn *conn, char *query) {
 
 	printf("|query=%f;%s;%s;;\n", value, query_warning ? query_warning : "", query_critical ? query_critical : "");
 	if (PQnfields(res) > 1) {
-		extra_info = PQgetvalue(res, 0, 1);
+		char *extra_info = PQgetvalue(res, 0, 1);
 		if (extra_info != NULL) {
 			printf("Extra Info: %s\n", extra_info);
 		}
