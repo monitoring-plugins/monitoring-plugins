@@ -44,10 +44,10 @@ const char *email = "devel@monitoring-plugins.org";
 /* char *command_line; */
 
 static const char **process_arguments(int, char **);
-void validate_arguments(char **);
-void print_help(void);
+static void validate_arguments(char **);
+static void print_help(void);
 void print_usage(void);
-bool subst_text = false;
+static bool subst_text = false;
 
 static int state[4] = {
 	STATE_OK,
