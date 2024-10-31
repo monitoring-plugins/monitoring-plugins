@@ -41,8 +41,6 @@ const char *email = "devel@monitoring-plugins.org";
 #define DEFAULT_COMMUNITY "public"
 #define DEFAULT_PORT      "161"
 
-const char *option_summary = "-H host [-C community]\n";
-
 #define HPJD_LINE_STATUS           ".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS          ".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
 #define HPJD_INTERVENTION_REQUIRED ".1.3.6.1.4.1.11.2.3.9.1.1.2.3"
@@ -59,15 +57,15 @@ const char *option_summary = "-H host [-C community]\n";
 #define ONLINE  0
 #define OFFLINE 1
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
-char *community = NULL;
-char *address = NULL;
-unsigned int port = 0;
-int check_paper_out = 1;
+static char *community = NULL;
+static char *address = NULL;
+static unsigned int port = 0;
+static int check_paper_out = 1;
 
 int main(int argc, char **argv) {
 	char command_line[1024];
