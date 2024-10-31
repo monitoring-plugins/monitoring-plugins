@@ -147,7 +147,8 @@ static bool verbose = false;
 
 int main(int argc, char *argv[]) {
 	char *device = NULL;
-	int o, longindex;
+	int o;
+	int longindex;
 	int retval = 0;
 
 	thresholds_t thresholds;
