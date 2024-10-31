@@ -3,7 +3,7 @@
  * Monitoring Plugins popen
  *
  * License: GPL
- * Copyright (c) 2005-2007 Monitoring Plugins Development Team
+ * Copyright (c) 2005-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
