@@ -51,8 +51,8 @@ static int days_till_exp_warn, days_till_exp_crit;
 #endif
 
 /* int my_recv(char *, size_t); */
-static int process_arguments(int, char **);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static void print_help(void);
 void print_usage(void);
 
 #define EXPECT server_expect[0]
@@ -99,15 +99,6 @@ static bool sni_specified = false;
 static size_t flags;
 
 int main(int argc, char **argv) {
-	int result = STATE_UNKNOWN;
-	char *status = NULL;
-	struct timeval tv;
-	struct timeval timeout;
-	int match = -1;
-	fd_set rfds;
-
-	FD_ZERO(&rfds);
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -202,7 +193,7 @@ int main(int argc, char **argv) {
 	server_port = PORT;
 	server_send = SEND;
 	server_quit = QUIT;
-	status = NULL;
+	char *status = NULL;
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -228,8 +219,10 @@ int main(int argc, char **argv) {
 	alarm(socket_timeout);
 
 	/* try to connect to the host at the given port number */
+	struct timeval tv;
 	gettimeofday(&tv, NULL);
 
+	int result = STATE_UNKNOWN;
 	result = np_net_connect(server_address, server_port, &sd, PROTOCOL);
 	if (result == STATE_CRITICAL)
 		return econn_refuse_state;
@@ -273,6 +266,10 @@ int main(int argc, char **argv) {
 	/* if(len) later on, we know we have a non-NULL response */
 	ssize_t len = 0;
 
+	int match = -1;
+	struct timeval timeout;
+	fd_set rfds;
+	FD_ZERO(&rfds);
 	if (server_expect_count) {
 		ssize_t received = 0;
 
@@ -377,15 +374,10 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 static int process_arguments(int argc, char **argv) {
-	int c;
-	bool escape = false;
-	char *temp;
-
 	enum {
 		SNI_OPTION = CHAR_MAX + 1
 	};
 
-	int option = 0;
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"warning", required_argument, 0, 'w'},
@@ -418,13 +410,13 @@ static int process_arguments(int argc, char **argv) {
 		usage4(_("No arguments found"));
 
 	/* backwards compatibility */
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
-			strcpy(argv[c], "-t");
-		else if (strcmp("-wt", argv[c]) == 0)
-			strcpy(argv[c], "-w");
-		else if (strcmp("-ct", argv[c]) == 0)
-			strcpy(argv[c], "-c");
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0)
+			strcpy(argv[i], "-t");
+		else if (strcmp("-wt", argv[i]) == 0)
+			strcpy(argv[i], "-w");
+		else if (strcmp("-ct", argv[i]) == 0)
+			strcpy(argv[i], "-c");
 	}
 
 	if (!is_option(argv[1])) {
@@ -434,13 +426,16 @@ static int process_arguments(int argc, char **argv) {
 		argc--;
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
+	int option_char;
+	bool escape = false;
+	while (true) {
+		int option = 0;
+		option_char = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
@@ -553,9 +548,10 @@ static int process_arguments(int argc, char **argv) {
 			else
 				usage4(_("Delay must be a positive integer"));
 			break;
-		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
+		case 'D': { /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
 #	ifdef USE_OPENSSL /* XXX */
+			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
 				if (!is_intnonneg(optarg))
@@ -574,7 +570,7 @@ static int process_arguments(int argc, char **argv) {
 			}
 			check_cert = true;
 			flags |= FLAG_SSL;
-			break;
+		} break;
 #	endif /* USE_OPENSSL */
 #endif
 			/* fallthrough if we don't have ssl */
@@ -600,9 +596,9 @@ static int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (!host_specified && c < argc)
-		server_address = strdup(argv[c++]);
+	option_char = optind;
+	if (!host_specified && option_char < argc)
+		server_address = strdup(argv[option_char++]);
 
 	if (server_address == NULL)
 		usage4(_("You must provide a server address"));
