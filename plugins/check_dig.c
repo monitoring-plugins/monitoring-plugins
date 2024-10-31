@@ -65,7 +65,8 @@ static struct timeval tv;
 
 int main(int argc, char **argv) {
 	char *command_line;
-	output chld_out, chld_err;
+	output chld_out;
+	output chld_err;
 	char *msg = NULL;
 	size_t i;
 	char *t;
@@ -293,8 +294,7 @@ int process_arguments(int argc, char **argv) {
 int validate_arguments(void) {
 	if (query_address != NULL)
 		return OK;
-	else
-		return ERROR;
+	return ERROR;
 }
 
 void print_help(void) {
