@@ -57,7 +57,7 @@ const char *email = "devel@monitoring-plugins.org";
 #define ONLINE  0
 #define OFFLINE 1
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
 static void print_help(void);
 void print_usage(void);
