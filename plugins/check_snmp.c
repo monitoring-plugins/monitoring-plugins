@@ -170,8 +170,10 @@ static char buffer[DEFAULT_BUFFER_SIZE];
 static bool ignore_mib_parsing_errors = false;
 
 static char *fix_snmp_range(char *th) {
-	double left, right;
-	char *colon, *ret;
+	double left;
+	double right;
+	char *colon;
+	char *ret;
 
 	if ((colon = strchr(th, ':')) == NULL || *(colon + 1) == '\0')
 		return th;
@@ -190,9 +192,11 @@ static char *fix_snmp_range(char *th) {
 }
 
 int main(int argc, char **argv) {
-	int len, total_oids;
+	int len;
+	int total_oids;
 	size_t line;
-	unsigned int bk_count = 0, dq_count = 0;
+	unsigned int bk_count = 0;
+	unsigned int dq_count = 0;
 	int iresult = STATE_UNKNOWN;
 	int result = STATE_UNKNOWN;
 	int return_code = 0;
@@ -208,11 +212,14 @@ int main(int argc, char **argv) {
 	char *th_warn = NULL;
 	char *th_crit = NULL;
 	char type[8] = "";
-	output chld_out, chld_err;
+	output chld_out;
+	output chld_err;
 	char *previous_string = NULL;
 	char *ap = NULL;
 	char *state_string = NULL;
-	size_t response_length, current_length, string_length;
+	size_t response_length;
+	size_t current_length;
+	size_t string_length;
 	char *temp_string = NULL;
 	char *quote_string = NULL;
 	time_t current_time;
@@ -676,11 +683,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	char *ptr;
-	int c = 1;
-	size_t j = 0, jj = 0;
-
-	int option = 0;
 	static struct option longopts[] = {STD_LONG_OPTS,
 									   {"community", required_argument, 0, 'C'},
 									   {"oid", required_argument, 0, 'o'},
@@ -723,7 +725,7 @@ int process_arguments(int argc, char **argv) {
 		return ERROR;
 
 	/* reverse compatibility for very old non-POSIX usage forms */
-	for (c = 1; c < argc; c++) {
+	for (int c = 1; c < argc; c++) {
 		if (strcmp("-to", argv[c]) == 0)
 			strcpy(argv[c], "-t");
 		if (strcmp("-wv", argv[c]) == 0)
@@ -732,13 +734,16 @@ int process_arguments(int argc, char **argv) {
 			strcpy(argv[c], "-c");
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
+	size_t j = 0;
+	size_t jj = 0;
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* usage */
 			usage5();
 		case 'h': /* help */
@@ -821,7 +826,7 @@ int process_arguments(int argc, char **argv) {
 				 */
 				needmibs = true;
 			}
-			for (ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
+			for (char *ptr = strtok(optarg, ", "); ptr != NULL; ptr = strtok(NULL, ", "), j++) {
 				while (j >= oids_size) {
 					oids_size += OID_COUNT_STEP;
 					oids = realloc(oids, oids_size * sizeof(*oids));
@@ -829,16 +834,16 @@ int process_arguments(int argc, char **argv) {
 				oids[j] = strdup(ptr);
 			}
 			numoids = j;
-			if (c == 'E' || c == 'e') {
+			if (option_char == 'E' || option_char == 'e') {
 				jj++;
 				while (j + 1 >= eval_size) {
 					eval_size += OID_COUNT_STEP;
 					eval_method = realloc(eval_method, eval_size * sizeof(*eval_method));
 					memset(eval_method + eval_size - OID_COUNT_STEP, 0, 8);
 				}
-				if (c == 'E')
+				if (option_char == 'E')
 					eval_method[j + 1] |= WARN_PRESENT;
-				else if (c == 'e')
+				else if (option_char == 'e')
 					eval_method[j + 1] |= CRIT_PRESENT;
 			}
 			break;
@@ -895,7 +900,7 @@ int process_arguments(int argc, char **argv) {
 					die(STATE_UNKNOWN, _("Could not reallocate labels[%d]"), (int)nlabels);
 			}
 			labels[nlabels - 1] = optarg;
-			ptr = thisarg(optarg);
+			char *ptr = thisarg(optarg);
 			labels[nlabels - 1] = ptr;
 			if (ptr[0] == '\'')
 				labels[nlabels - 1] = ptr + 1;
@@ -1154,24 +1159,23 @@ static char *nextarg(char *str) {
 
 /* multiply result (values 0 < n < 1 work as divider) */
 static char *multiply(char *str) {
-	char *endptr;
-	double val;
-	char *conv = "%f";
-
 	if (multiplier == 1)
 		return (str);
 
 	if (verbose > 2)
 		printf("    multiply input: %s\n", str);
 
-	val = strtod(str, &endptr);
+	char *endptr;
+	double val = strtod(str, &endptr);
 	if ((val == 0.0) && (endptr == str)) {
 		die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier, str);
 	}
 
 	if (verbose > 2)
 		printf("    multiply extracted double: %f\n", val);
+
 	val *= multiplier;
+	char *conv = "%f";
 	if (fmtstr_set) {
 		conv = fmtstr;
 	}
