@@ -61,7 +61,7 @@ static char *tcrit = "0:";
 static bool syncsource_found = false;
 static bool li_alarm = false;
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static thresholds *offset_thresholds = NULL;
 static thresholds *jitter_thresholds = NULL;
 static thresholds *stratum_thresholds = NULL;
@@ -158,9 +158,6 @@ typedef struct {
 	} while (0);
 
 void print_ntp_control_message(const ntp_control_message *p) {
-	int i = 0, numpeers = 0;
-	const ntp_assoc_status_pair *peer = NULL;
-
 	printf("control packet contents:\n");
 	printf("\tflags: 0x%.2x , 0x%.2x\n", p->flags, p->op);
 	printf("\t  li=%d (0x%.2x)\n", LI(p->flags), p->flags & LI_MASK);
@@ -175,10 +172,11 @@ void print_ntp_control_message(const ntp_control_message *p) {
 	printf("\tassoc: %d (0x%.2x)\n", ntohs(p->assoc), ntohs(p->assoc));
 	printf("\toffset: %d (0x%.2x)\n", ntohs(p->offset), ntohs(p->offset));
 	printf("\tcount: %d (0x%.2x)\n", ntohs(p->count), ntohs(p->count));
-	numpeers = ntohs(p->count) / (sizeof(ntp_assoc_status_pair));
+
+	int numpeers = ntohs(p->count) / (sizeof(ntp_assoc_status_pair));
 	if (p->op & REM_RESP && p->op & OP_READSTAT) {
-		peer = (ntp_assoc_status_pair *)p->data;
-		for (i = 0; i < numpeers; i++) {
+		const ntp_assoc_status_pair *peer = (ntp_assoc_status_pair *)p->data;
+		for (int i = 0; i < numpeers; i++) {
 			printf("\tpeer id %.2x status %.2x", ntohs(peer[i].assoc), ntohs(peer[i].status));
 			if (PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE) {
 				printf(" <-- current sync source");
@@ -214,18 +212,6 @@ void setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq)
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
 int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers) {
-	int conn = -1, i, npeers = 0, num_candidates = 0;
-	double tmp_offset = 0;
-	int min_peer_sel = PEER_INCLUDED;
-	int peers_size = 0, peer_offset = 0;
-	int status;
-	ntp_assoc_status_pair *peers = NULL;
-	ntp_control_message req;
-	const char *getvar = "stratum,offset,jitter";
-	char *data, *value, *nptr;
-	void *tmp;
-
-	status = STATE_OK;
 	*offset_result = STATE_UNKNOWN;
 	*jitter = *stratum = -1;
 	*num_truechimers = 0;
@@ -246,10 +232,19 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	 * 4) Extract the offset, jitter and stratum value from the data[]
 	 *    (it's ASCII)
 	 */
+	int min_peer_sel = PEER_INCLUDED;
+	int num_candidates = 0;
+	void *tmp;
+	ntp_assoc_status_pair *peers = NULL;
+	int peer_offset = 0;
+	int peers_size = 0;
+	int npeers = 0;
+	int conn = -1;
 	my_udp_connect(server_address, port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
+	ntp_control_message req;
 	do {
 		setup_control_request(&req, OP_READSTAT, 1);
 		DBG(printf("sending READSTAT request"));
@@ -285,7 +280,7 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	/* first, let's find out if we have a sync source, or if there are
 	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
-	for (i = 0; i < npeers; i++) {
+	for (int i = 0; i < npeers; i++) {
 		if (PEER_SEL(peers[i].status) >= PEER_TRUECHIMER) {
 			(*num_truechimers)++;
 			if (PEER_SEL(peers[i].status) >= PEER_INCLUDED) {
@@ -297,10 +292,13 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 			}
 		}
 	}
+
 	if (verbose)
 		printf("%d candidate peers available\n", num_candidates);
 	if (verbose && syncsource_found)
 		printf("synchronization source found\n");
+
+	int status = STATE_OK;
 	if (!syncsource_found) {
 		status = STATE_WARNING;
 		if (verbose)
@@ -312,7 +310,9 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 			printf("warning: LI_ALARM bit is set\n");
 	}
 
-	for (i = 0; i < npeers; i++) {
+	const char *getvar = "stratum,offset,jitter";
+	char *data;
+	for (int i = 0; i < npeers; i++) {
 		/* Only query this server if it is the current sync source */
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel) {
@@ -354,7 +354,8 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 					getvar = "stratum,offset,dispersion";
 					i--;
 					continue;
-				} else if (strlen(getvar)) {
+				}
+				if (strlen(getvar)) {
 					if (verbose)
 						printf("Server didn't like dispersion either; will retrieve everything\n");
 					getvar = "";
@@ -366,6 +367,9 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 			if (verbose > 1)
 				printf("Server responded: >>>%s<<<\n", data);
 
+			double tmp_offset = 0;
+			char *value;
+			char *nptr;
 			/* get the offset */
 			if (verbose)
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
@@ -442,8 +446,6 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 }
 
 int process_arguments(int argc, char **argv) {
-	int c;
-	int option = 0;
 	static struct option longopts[] = {
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},       {"quiet", no_argument, 0, 'q'},
@@ -456,11 +458,12 @@ int process_arguments(int argc, char **argv) {
 		usage("\n");
 
 	while (true) {
-		c = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
-		if (c == -1 || c == EOF || c == 1)
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
+		if (option_char == -1 || option_char == EOF || option_char == 1)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -561,10 +564,6 @@ char *perfd_truechimers(int num_truechimers) {
 }
 
 int main(int argc, char *argv[]) {
-	int result, offset_result, stratum, num_truechimers;
-	double offset = 0, jitter = 0;
-	char *result_line, *perfdata_line;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -586,8 +585,13 @@ int main(int argc, char *argv[]) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
+	int offset_result;
+	int stratum;
+	int num_truechimers;
+	double offset = 0;
+	double jitter = 0;
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
-	result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	int result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
 
 	if (offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
@@ -622,6 +626,7 @@ int main(int argc, char *argv[]) {
 		result = max_state_alt(result, jresult);
 	}
 
+	char *result_line;
 	switch (result) {
 	case STATE_CRITICAL:
 		xasprintf(&result_line, _("NTP CRITICAL:"));
@@ -641,6 +646,7 @@ int main(int argc, char *argv[]) {
 	else if (li_alarm)
 		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
 
+	char *perfdata_line;
 	if (offset_result == STATE_UNKNOWN) {
 		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		xasprintf(&perfdata_line, "");
