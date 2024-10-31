@@ -3,7 +3,7 @@
  * Monitoring check_nagios plugin
  *
  * License: GPL
- * Copyright (c) 1999-2007 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 const char *progname = "check_nagios";
-const char *copyright = "1999-2007";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
