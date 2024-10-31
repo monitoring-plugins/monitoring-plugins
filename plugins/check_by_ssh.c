@@ -39,9 +39,9 @@ const char *email = "devel@monitoring-plugins.org";
 #	define NP_MAXARGS 1024
 #endif
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
-static void comm_append(const char *);
+static void comm_append(const char * /*str*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -67,8 +67,9 @@ int main(int argc, char **argv) {
 	int cresult;
 	int result = STATE_UNKNOWN;
 	time_t local_time;
-	FILE *fp = NULL;
-	output chld_out, chld_err;
+	FILE *file_pointer = NULL;
+	output chld_out;
+	output chld_err;
 
 	remotecmd = "";
 	comm_append(SSH_COMMAND);
@@ -122,8 +123,7 @@ int main(int argc, char **argv) {
 		printf(_("Remote command execution failed: %s\n"), chld_err.line[skip_stderr]);
 		if (warn_on_stderr)
 			return max_state_alt(result, STATE_WARNING);
-		else
-			return max_state_alt(result, STATE_UNKNOWN);
+		return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 	 */
 
 	/* process output */
-	if (!(fp = fopen(outputfile, "a"))) {
+	if (!(file_pointer = fopen(outputfile, "a"))) {
 		printf(_("SSH WARNING: could not open %s\n"), outputfile);
 		exit(STATE_UNKNOWN);
 	}
@@ -155,8 +155,8 @@ int main(int argc, char **argv) {
 			die(STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
 
 		if (service[commands] && status_text && sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
-			fprintf(fp, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, host_shortname, service[commands++], cresult,
-					status_text);
+			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, host_shortname, service[commands++],
+					cresult, status_text);
 		}
 	}
 
@@ -167,7 +167,8 @@ int main(int argc, char **argv) {
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
 	int c;
-	char *p1, *p2;
+	char *p1;
+	char *p2;
 
 	int option = 0;
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
