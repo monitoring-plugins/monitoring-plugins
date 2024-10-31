@@ -3,7 +3,7 @@
  * Monitoring check_real plugin
  *
  * License: GPL
- * Copyright (c) 2000-2007 Monitoring Plugins Development Team
+ * Copyright (c) 2000-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 const char *progname = "check_real";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
