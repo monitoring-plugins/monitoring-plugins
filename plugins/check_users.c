@@ -55,13 +55,13 @@ const char *email = "devel@monitoring-plugins.org";
 
 #define possibly_set(a, b) ((a) == 0 ? (b) : 0)
 
-int process_arguments(int, char **);
-void print_help(void);
+static int process_arguments(int, char **);
+static void print_help(void);
 void print_usage(void);
 
-char *warning_range = NULL;
-char *critical_range = NULL;
-thresholds *thlds = NULL;
+static char *warning_range = NULL;
+static char *critical_range = NULL;
+static thresholds *thlds = NULL;
 
 int main(int argc, char **argv) {
 	int users = -1;
@@ -180,8 +180,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-	int option = 0;
 	static struct option longopts[] = {{"critical", required_argument, 0, 'c'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"version", no_argument, 0, 'V'},
@@ -191,13 +189,15 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		usage("\n");
 
+	int option_char;
 	while (true) {
-		c = getopt_long(argc, argv, "+hVvc:w:", longopts, &option);
+		int option = 0;
+		option_char = getopt_long(argc, argv, "+hVvc:w:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
@@ -215,13 +215,13 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
+	option_char = optind;
 
-	if (warning_range == NULL && argc > c)
-		warning_range = argv[c++];
+	if (warning_range == NULL && argc > option_char)
+		warning_range = argv[option_char++];
 
-	if (critical_range == NULL && argc > c)
-		critical_range = argv[c++];
+	if (critical_range == NULL && argc > option_char)
+		critical_range = argv[option_char++];
 
 	/* this will abort in case of invalid ranges */
 	set_thresholds(&thlds, warning_range, critical_range);
