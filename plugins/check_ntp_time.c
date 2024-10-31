@@ -50,9 +50,9 @@ static char *owarn = "60";
 static char *ocrit = "120";
 static int time_offset = 0;
 
-int process_arguments(int, char **);
-thresholds *offset_thresholds = NULL;
-void print_help(void);
+static int process_arguments(int, char **);
+static thresholds *offset_thresholds = NULL;
+static void print_help(void);
 void print_usage(void);
 
 /* number of times to perform each request to get a good average. */
