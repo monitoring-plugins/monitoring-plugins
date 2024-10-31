@@ -40,7 +40,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 
-void print_help(void);
+static void print_help(void);
 void print_usage(void);
 
 #include <sys/stat.h>
@@ -118,14 +118,12 @@ struct {
 	char *text;
 }
 
-offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"}, {0x05, "Aborted"}, {0x06, "Failed"}, {0, 0}};
+static offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"}, {0x05, "Aborted"}, {0x06, "Failed"}, {0, 0}};
 
-struct {
+static struct {
 	__u8 value;
 	char *text;
-}
-
-smart_command[] = {{SMART_ENABLE, "SMART_ENABLE"},
+} smart_command[] = {{SMART_ENABLE, "SMART_ENABLE"},
 				   {SMART_DISABLE, "SMART_DISABLE"},
 				   {SMART_IMMEDIATE_OFFLINE, "SMART_IMMEDIATE_OFFLINE"},
 				   {SMART_AUTO_OFFLINE, "SMART_AUTO_OFFLINE"}};
@@ -138,14 +136,14 @@ enum SmartCommand {
 	SMART_CMD_AUTO_OFFLINE
 };
 
-char *get_offline_text(int);
-int smart_read_values(int, values_t *);
-int nagios(values_t *, thresholds_t *);
-void print_value(value_t *, threshold_t *);
-void print_values(values_t *, thresholds_t *);
-int smart_cmd_simple(int, enum SmartCommand, __u8, bool);
-int smart_read_thresholds(int, thresholds_t *);
-bool verbose = false;
+static char *get_offline_text(int);
+static int smart_read_values(int, values_t *);
+static int nagios(values_t *, thresholds_t *);
+static void print_value(value_t *, threshold_t *);
+static void print_values(values_t *, thresholds_t *);
+static int smart_cmd_simple(int, enum SmartCommand, __u8, bool);
+static int smart_read_thresholds(int, thresholds_t *);
+static bool verbose = false;
 
 int main(int argc, char *argv[]) {
 	char *device = NULL;
