@@ -36,19 +36,19 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
-char *log_file = NULL;
-int expire_minutes = 0;
-bool use_average = true;
-int variable_number = -1;
-unsigned long value_warning_threshold = 0L;
-unsigned long value_critical_threshold = 0L;
-char *label;
-char *units;
+static char *log_file = NULL;
+static int expire_minutes = 0;
+static bool use_average = true;
+static int variable_number = -1;
+static unsigned long value_warning_threshold = 0L;
+static unsigned long value_critical_threshold = 0L;
+static char *label;
+static char *units;
 
 int main(int argc, char **argv) {
 	int result = STATE_OK;
