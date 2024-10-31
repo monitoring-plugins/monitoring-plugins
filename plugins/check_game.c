@@ -37,7 +37,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "runcmd.h"
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
 static void print_help(void);
 void print_usage(void);
@@ -64,7 +64,8 @@ static int qstat_ping_field = -1;
 int main(int argc, char **argv) {
 	char *command_line;
 	int result = STATE_UNKNOWN;
-	char *p, *ret[QSTAT_MAX_RETURN_ARGS];
+	char *p;
+	char *ret[QSTAT_MAX_RETURN_ARGS];
 	size_t i = 0;
 	output chld_out;
 
