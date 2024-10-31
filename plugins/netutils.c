@@ -1,31 +1,31 @@
 /*****************************************************************************
-* 
-* Monitoring Plugins network utilities
-* 
-* License: GPL
-* Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
-* Copyright (c) 2003-2008 Monitoring Plugins Development Team
-* 
-* Description:
-* 
-* This file contains commons functions used in many of the plugins.
-* 
-* 
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-* 
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
-*****************************************************************************/
+ *
+ * Monitoring Plugins network utilities
+ *
+ * License: GPL
+ * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
+ * Copyright (c) 2003-2008 Monitoring Plugins Development Team
+ *
+ * Description:
+ *
+ * This file contains commons functions used in many of the plugins.
+ *
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 #include "common.h"
 #include "netutils.h"
@@ -42,25 +42,19 @@ int address_family = AF_INET;
 #endif
 
 /* handles socket timeouts */
-void
-socket_timeout_alarm_handler (int sig)
-{
+void socket_timeout_alarm_handler(int sig) {
 	if (sig == SIGALRM)
-		printf (_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state),  socket_timeout);
+		printf(_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
 	else
-		printf (_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
+		printf(_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
 
-	exit (socket_timeout_state);
+	exit(socket_timeout_state);
 }
-
 
 /* connects to a host on a specified tcp port, sends a string, and gets a
 	 response. loops on select-recv until timeout or eof to get all of a
 	 multi-packet answer */
-int
-process_tcp_request2 (const char *server_address, int server_port,
-	const char *send_buffer, char *recv_buffer, int recv_size)
-{
+int process_tcp_request2(const char *server_address, int server_port, const char *send_buffer, char *recv_buffer, int recv_size) {
 
 	int result;
 	int send_result;
@@ -70,13 +64,13 @@ process_tcp_request2 (const char *server_address, int server_port,
 	fd_set readfds;
 	int recv_length = 0;
 
-	result = np_net_connect (server_address, server_port, &sd, IPPROTO_TCP);
+	result = np_net_connect(server_address, server_port, &sd, IPPROTO_TCP);
 	if (result != STATE_OK)
 		return STATE_CRITICAL;
 
-	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
-	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("%s\n", _("Send failed"));
+	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
+	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
+		printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -85,38 +79,32 @@ process_tcp_request2 (const char *server_address, int server_port,
 		   minus one for data from the host */
 		tv.tv_sec = socket_timeout - 1;
 		tv.tv_usec = 0;
-		FD_ZERO (&readfds);
-		FD_SET (sd, &readfds);
-		select (sd + 1, &readfds, NULL, NULL, &tv);
+		FD_ZERO(&readfds);
+		FD_SET(sd, &readfds);
+		select(sd + 1, &readfds, NULL, NULL, &tv);
 
 		/* make sure some data has arrived */
-		if (!FD_ISSET (sd, &readfds)) {	/* it hasn't */
+		if (!FD_ISSET(sd, &readfds)) { /* it hasn't */
 			if (!recv_length) {
-				strcpy (recv_buffer, "");
-				printf ("%s\n", _("No data was received from host!"));
+				strcpy(recv_buffer, "");
+				printf("%s\n", _("No data was received from host!"));
 				result = STATE_WARNING;
-			}
-			else {										/* this one failed, but previous ones worked */
+			} else { /* this one failed, but previous ones worked */
 				recv_buffer[recv_length] = 0;
 			}
 			break;
-		}
-		else {											/* it has */
-			recv_result =
-				recv (sd, recv_buffer + recv_length,
-					(size_t)recv_size - recv_length - 1, 0);
+		} else { /* it has */
+			recv_result = recv(sd, recv_buffer + recv_length, (size_t)recv_size - recv_length - 1, 0);
 			if (recv_result == -1) {
 				/* recv failed, bail out */
-				strcpy (recv_buffer + recv_length, "");
+				strcpy(recv_buffer + recv_length, "");
 				result = STATE_WARNING;
 				break;
-			}
-			else if (recv_result == 0) {
+			} else if (recv_result == 0) {
 				/* end of file ? */
 				recv_buffer[recv_length] = 0;
 				break;
-			}
-			else {										/* we got data! */
+			} else { /* we got data! */
 				recv_length += recv_result;
 				if (recv_length >= recv_size - 1) {
 					/* buffer full, we're done */
@@ -129,42 +117,35 @@ process_tcp_request2 (const char *server_address, int server_port,
 	}
 	/* end while(1) */
 
-	close (sd);
+	close(sd);
 	return result;
 }
 
-
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-int
-process_request (const char *server_address, int server_port, int proto,
-	const char *send_buffer, char *recv_buffer, int recv_size)
-{
+int process_request(const char *server_address, int server_port, int proto, const char *send_buffer, char *recv_buffer, int recv_size) {
 	int result;
 	int sd;
 
 	result = STATE_OK;
 
-	result = np_net_connect (server_address, server_port, &sd, proto);
+	result = np_net_connect(server_address, server_port, &sd, proto);
 	if (result != STATE_OK)
 		return STATE_CRITICAL;
 
-	result = send_request (sd, proto, send_buffer, recv_buffer, recv_size);
+	result = send_request(sd, proto, send_buffer, recv_buffer, recv_size);
 
-	close (sd);
+	close(sd);
 
 	return result;
 }
 
-
 /* opens a tcp or udp connection to a remote host or local socket */
-int
-np_net_connect (const char *host_name, int port, int *sd, int proto)
-{
-        /* send back STATE_UNKOWN if there's an error
-           send back STATE_OK if we connect
-           send back STATE_CRITICAL if we can't connect.
-           Let upstream figure out what to send to the user. */
+int np_net_connect(const char *host_name, int port, int *sd, int proto) {
+	/* send back STATE_UNKOWN if there's an error
+	   send back STATE_OK if we connect
+	   send back STATE_CRITICAL if we can't connect.
+	   Let upstream figure out what to send to the user. */
 	struct addrinfo hints;
 	struct addrinfo *r, *res;
 	struct sockaddr_un su;
@@ -176,13 +157,13 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
 	/* as long as it doesn't start with a '/', it's assumed a host or ip */
-	if (!is_socket){
-		memset (&hints, 0, sizeof (hints));
+	if (!is_socket) {
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = address_family;
 		hints.ai_protocol = proto;
 		hints.ai_socktype = socktype;
 
-		len = strlen (host_name);
+		len = strlen(host_name);
 		/* check for an [IPv6] address (and strip the brackets) */
 		if (len >= 2 && host_name[0] == '[' && host_name[len - 1] == ']') {
 			host_name++;
@@ -190,29 +171,29 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 		}
 		if (len >= sizeof(host))
 			return STATE_UNKNOWN;
-		memcpy (host, host_name, len);
+		memcpy(host, host_name, len);
 		host[len] = '\0';
-		snprintf (port_str, sizeof (port_str), "%d", port);
-		result = getaddrinfo (host, port_str, &hints, &res);
+		snprintf(port_str, sizeof(port_str), "%d", port);
+		result = getaddrinfo(host, port_str, &hints, &res);
 
 		if (result != 0) {
-			printf ("%s\n", gai_strerror (result));
+			printf("%s\n", gai_strerror(result));
 			return STATE_UNKNOWN;
 		}
 
 		r = res;
 		while (r) {
 			/* attempt to create a socket */
-			*sd = socket (r->ai_family, socktype, r->ai_protocol);
+			*sd = socket(r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
-				printf ("%s\n", _("Socket creation failed"));
-				freeaddrinfo (r);
+				printf("%s\n", _("Socket creation failed"));
+				freeaddrinfo(r);
 				return STATE_UNKNOWN;
 			}
 
 			/* attempt to open a connection */
-			result = connect (*sd, r->ai_addr, r->ai_addrlen);
+			result = connect(*sd, r->ai_addr, r->ai_addrlen);
 
 			if (result == 0) {
 				was_refused = false;
@@ -227,21 +208,21 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 				}
 			}
 
-			close (*sd);
+			close(*sd);
 			r = r->ai_next;
 		}
-		freeaddrinfo (res);
+		freeaddrinfo(res);
 	}
 	/* else the hostname is interpreted as a path to a unix socket */
 	else {
-		if(strlen(host_name) >= UNIX_PATH_MAX){
+		if (strlen(host_name) >= UNIX_PATH_MAX) {
 			die(STATE_UNKNOWN, _("Supplied path too long unix domain socket"));
 		}
 		memset(&su, 0, sizeof(su));
 		su.sun_family = AF_UNIX;
 		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
 		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
-		if(*sd < 0){
+		if (*sd < 0) {
 			die(STATE_UNKNOWN, _("Socket creation failed"));
 		}
 		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
@@ -259,37 +240,32 @@ np_net_connect (const char *host_name, int port, int *sd, int proto)
 			if (is_socket)
 				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 			else
-				printf("connect to address %s and port %d: %s\n",
-				       host_name, port, strerror(errno));
+				printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
 			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
 			return STATE_UNKNOWN;
 			break;
 		}
-	}
-	else {
+	} else {
 		if (is_socket)
 			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 		else
-			printf("connect to address %s and port %d: %s\n",
-			       host_name, port, strerror(errno));
+			printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
 		return STATE_CRITICAL;
 	}
 }
 
-int
-send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size)
-{
+int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size) {
 	int result = STATE_OK;
 	int send_result;
 	int recv_result;
 	struct timeval tv;
 	fd_set readfds;
 
-	send_result = send (sd, send_buffer, strlen (send_buffer), 0);
-	if (send_result<0 || (size_t)send_result!=strlen(send_buffer)) {
-		printf ("%s\n", _("Send failed"));
+	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
+	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
+		printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -297,26 +273,25 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 	   for data from the host */
 	tv.tv_sec = socket_timeout - 1;
 	tv.tv_usec = 0;
-	FD_ZERO (&readfds);
-	FD_SET (sd, &readfds);
-	select (sd + 1, &readfds, NULL, NULL, &tv);
+	FD_ZERO(&readfds);
+	FD_SET(sd, &readfds);
+	select(sd + 1, &readfds, NULL, NULL, &tv);
 
 	/* make sure some data has arrived */
-	if (!FD_ISSET (sd, &readfds)) {
-		strcpy (recv_buffer, "");
-		printf ("%s\n", _("No data was received from host!"));
+	if (!FD_ISSET(sd, &readfds)) {
+		strcpy(recv_buffer, "");
+		printf("%s\n", _("No data was received from host!"));
 		result = STATE_WARNING;
 	}
 
 	else {
-		recv_result = recv (sd, recv_buffer, (size_t)recv_size - 1, 0);
+		recv_result = recv(sd, recv_buffer, (size_t)recv_size - 1, 0);
 		if (recv_result == -1) {
-			strcpy (recv_buffer, "");
+			strcpy(recv_buffer, "");
 			if (proto != IPPROTO_TCP)
-				printf ("%s\n", _("Receive failed"));
+				printf("%s\n", _("Receive failed"));
 			result = STATE_WARNING;
-		}
-		else
+		} else
 			recv_buffer[recv_result] = 0;
 
 		/* die returned string */
@@ -325,51 +300,46 @@ send_request (int sd, int proto, const char *send_buffer, char *recv_buffer, int
 	return result;
 }
 
-
-bool is_host (const char *address) {
-	if (is_addr (address) || is_hostname (address))
+bool is_host(const char *address) {
+	if (is_addr(address) || is_hostname(address))
 		return (true);
 
 	return (false);
 }
 
-void
-host_or_die(const char *str)
-{
-	if(!str || (!is_addr(str) && !is_hostname(str)))
+void host_or_die(const char *str) {
+	if (!str || (!is_addr(str) && !is_hostname(str)))
 		usage_va(_("Invalid hostname/address - %s"), str);
 }
 
-bool is_addr (const char *address) {
+bool is_addr(const char *address) {
 #ifdef USE_IPV6
-	if (address_family == AF_INET && is_inet_addr (address))
+	if (address_family == AF_INET && is_inet_addr(address))
 		return true;
-	else if (address_family == AF_INET6 && is_inet6_addr (address))
+	else if (address_family == AF_INET6 && is_inet6_addr(address))
 		return true;
 #else
-	if (is_inet_addr (address))
+	if (is_inet_addr(address))
 		return (true);
 #endif
 
 	return (false);
 }
 
-int
-dns_lookup (const char *in, struct sockaddr_storage *ss, int family)
-{
+int dns_lookup(const char *in, struct sockaddr_storage *ss, int family) {
 	struct addrinfo hints;
 	struct addrinfo *res;
 	int retval;
 
-	memset (&hints, 0, sizeof(struct addrinfo));
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
 
-	retval = getaddrinfo (in, NULL, &hints, &res);
+	retval = getaddrinfo(in, NULL, &hints, &res);
 	if (retval != 0)
 		return false;
 
 	if (ss != NULL)
-		memcpy (ss, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo (res);
+		memcpy(ss, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 	return true;
 }
