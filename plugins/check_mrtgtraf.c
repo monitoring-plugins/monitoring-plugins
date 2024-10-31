@@ -36,18 +36,18 @@ const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
-char *log_file = NULL;
-int expire_minutes = -1;
-bool use_average = true;
-unsigned long incoming_warning_threshold = 0L;
-unsigned long incoming_critical_threshold = 0L;
-unsigned long outgoing_warning_threshold = 0L;
-unsigned long outgoing_critical_threshold = 0L;
+static char *log_file = NULL;
+static int expire_minutes = -1;
+static bool use_average = true;
+static unsigned long incoming_warning_threshold = 0L;
+static unsigned long incoming_critical_threshold = 0L;
+static unsigned long outgoing_warning_threshold = 0L;
+static unsigned long outgoing_critical_threshold = 0L;
 
 int main(int argc, char **argv) {
 	int result = STATE_OK;
