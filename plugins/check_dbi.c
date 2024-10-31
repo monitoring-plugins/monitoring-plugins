@@ -70,38 +70,38 @@ typedef struct {
 	char *value;
 } driver_option_t;
 
-char *host = NULL;
-int verbose = 0;
+static char *host = NULL;
+static int verbose = 0;
 
-char *warning_range = NULL;
-char *critical_range = NULL;
-thresholds *dbi_thresholds = NULL;
+static char *warning_range = NULL;
+static char *critical_range = NULL;
+static thresholds *dbi_thresholds = NULL;
 
-char *expect = NULL;
+static char *expect = NULL;
 
-regex_t expect_re;
-char *expect_re_str = NULL;
-int expect_re_cflags = 0;
+static regex_t expect_re;
+static char *expect_re_str = NULL;
+static int expect_re_cflags = 0;
 
-np_dbi_metric_t metric = METRIC_QUERY_RESULT;
-np_dbi_type_t type = TYPE_NUMERIC;
+static np_dbi_metric_t metric = METRIC_QUERY_RESULT;
+static np_dbi_type_t type = TYPE_NUMERIC;
 
-char *np_dbi_driver = NULL;
-driver_option_t *np_dbi_options = NULL;
-int np_dbi_options_num = 0;
-char *np_dbi_database = NULL;
-char *np_dbi_query = NULL;
+static char *np_dbi_driver = NULL;
+static driver_option_t *np_dbi_options = NULL;
+static int np_dbi_options_num = 0;
+static char *np_dbi_database = NULL;
+static char *np_dbi_query = NULL;
 
-int process_arguments(int, char **);
-int validate_arguments(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
 void print_usage(void);
-void print_help(void);
+static void print_help(void);
 
-double timediff(struct timeval, struct timeval);
+static double timediff(struct timeval, struct timeval);
 
-void np_dbi_print_error(dbi_conn, char *, ...);
+static void np_dbi_print_error(dbi_conn, char *, ...);
 
-int do_query(dbi_conn, const char **, double *, double *);
+static int do_query(dbi_conn, const char **, double *, double *);
 
 int main(int argc, char **argv) {
 	int status = STATE_UNKNOWN;
