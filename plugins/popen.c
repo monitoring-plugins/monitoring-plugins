@@ -47,12 +47,12 @@ extern pid_t *childpid;
 extern int *child_stderr_array;
 extern FILE *child_process;
 
-FILE *spopen(const char *);
-int spclose(FILE *);
+FILE *spopen(const char * /*cmdstring*/);
+int spclose(FILE * /*fp*/);
 #ifdef REDHAT_SPOPEN_ERROR
 void popen_sigchld_handler(int);
 #endif
-void popen_timeout_alarm_handler(int);
+void popen_timeout_alarm_handler(int /*signo*/);
 
 #include <stdarg.h> /* ANSI C header file */
 #include <fcntl.h>
@@ -84,15 +84,6 @@ static volatile int childtermd = 0;
 #endif
 
 FILE *spopen(const char *cmdstring) {
-	char *env[2];
-	char *cmd = NULL;
-	char **argv = NULL;
-	char *str, *tmp;
-	int argc;
-
-	int i = 0, pfd[2], pfderr[2];
-	pid_t pid;
-
 #ifdef RLIMIT_CORE
 	/* do not leave core files */
 	struct rlimit limit;
@@ -101,6 +92,7 @@ FILE *spopen(const char *cmdstring) {
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
+	char *env[2];
 	env[0] = strdup("LC_ALL=C");
 	env[1] = NULL;
 
@@ -108,6 +100,7 @@ FILE *spopen(const char *cmdstring) {
 	if (cmdstring == NULL)
 		return (NULL);
 
+	char *cmd = NULL;
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmd = malloc(strlen(cmdstring) + 1);
@@ -123,6 +116,8 @@ FILE *spopen(const char *cmdstring) {
 	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
 		return NULL;
 
+	int argc;
+	char **argv = NULL;
 	/* there cannot be more args than characters */
 	argc = strlen(cmdstring) + 1; /* add 1 for NULL termination */
 	argv = malloc(sizeof(char *) * argc);
@@ -132,6 +127,8 @@ FILE *spopen(const char *cmdstring) {
 		return NULL;
 	}
 
+	int i = 0;
+	char *str;
 	/* loop to get arguments to command */
 	while (cmd) {
 		str = cmd;
@@ -150,7 +147,7 @@ FILE *spopen(const char *cmdstring) {
 			str[strcspn(str, "'")] = 0;
 		} else if (strcspn(str, "'") < strcspn(str, " \t\r\n")) {
 			/* handle --option='foo bar' strings */
-			tmp = str + strcspn(str, "'") + 1;
+			char *tmp = str + strcspn(str, "'") + 1;
 			if (!strstr(tmp, "'"))
 				return NULL; /* balanced? */
 			tmp += strcspn(tmp, "'") + 1;
@@ -184,9 +181,11 @@ FILE *spopen(const char *cmdstring) {
 			return (NULL);
 	}
 
+	int pfd[2];
 	if (pipe(pfd) < 0)
 		return (NULL); /* errno set by pipe() */
 
+	int pfderr[2];
 	if (pipe(pfderr) < 0)
 		return (NULL); /* errno set by pipe() */
 
@@ -196,9 +195,11 @@ FILE *spopen(const char *cmdstring) {
 	}
 #endif
 
+	pid_t pid;
 	if ((pid = fork()) < 0)
-		return (NULL);   /* errno set by fork() */
-	else if (pid == 0) { /* child */
+		return (NULL); /* errno set by fork() */
+
+	if (pid == 0) { /* child */
 		close(pfd[0]);
 		if (pfd[1] != STDOUT_FILENO) {
 			dup2(pfd[1], STDOUT_FILENO);
@@ -229,13 +230,11 @@ FILE *spopen(const char *cmdstring) {
 }
 
 int spclose(FILE *fp) {
-	int fd, status;
-	pid_t pid;
-
 	if (childpid == NULL)
 		return (1); /* popen() has never been called */
 
-	fd = fileno(fp);
+	pid_t pid;
+	int fd = fileno(fp);
 	if ((pid = childpid[fd]) == 0)
 		return (1); /* fp wasn't opened by popen() */
 
@@ -248,6 +247,7 @@ int spclose(FILE *fp) {
 		; /* wait until SIGCHLD */
 #endif
 
+	int status;
 	while (waitpid(pid, &status, 0) < 0)
 		if (errno != EINTR)
 			return (1); /* error other than EINTR from waitpid() */
@@ -266,10 +266,9 @@ void popen_sigchld_handler(int signo) {
 #endif
 
 void popen_timeout_alarm_handler(int signo) {
-	int fh;
 	if (signo == SIGALRM) {
 		if (child_process != NULL) {
-			fh = fileno(child_process);
+			int fh = fileno(child_process);
 			if (fh >= 0) {
 				kill(childpid[fh], SIGKILL);
 			}
