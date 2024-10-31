@@ -60,10 +60,10 @@ enum {
 };
 
 static int process_arguments(int /*argc*/, char ** /*argv*/);
-static void print_usage(void);
 static void print_help(void);
 static bool is_pg_logname(char * /*username*/);
 static int do_query(PGconn * /*conn*/, char * /*query*/);
+void print_usage(void);
 
 static char *pghost = NULL; /* host name of the backend server */
 static char *pgport = NULL; /* port of the backend server */
