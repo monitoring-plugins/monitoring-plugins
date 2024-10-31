@@ -46,29 +46,29 @@ enum {
 	RTA = 1
 };
 
-int textscan(char *buf);
-int process_arguments(int, char **);
-int get_threshold(char *arg, char *rv[2]);
-void print_help(void);
+static int textscan(char *buf);
+static int process_arguments(int, char **);
+static int get_threshold(char *arg, char *rv[2]);
+static void print_help(void);
 void print_usage(void);
 
-char *server_name = NULL;
-char *sourceip = NULL;
-char *sourceif = NULL;
-int packet_size = PACKET_SIZE;
-int packet_count = PACKET_COUNT;
-int target_timeout = 0;
-int packet_interval = 0;
-bool verbose = false;
-int cpl;
-int wpl;
-double crta;
-double wrta;
-bool cpl_p = false;
-bool wpl_p = false;
-bool alive_p = false;
-bool crta_p = false;
-bool wrta_p = false;
+static char *server_name = NULL;
+static char *sourceip = NULL;
+static char *sourceif = NULL;
+static int packet_size = PACKET_SIZE;
+static int packet_count = PACKET_COUNT;
+static int target_timeout = 0;
+static int packet_interval = 0;
+static bool verbose = false;
+static int cpl;
+static int wpl;
+static double crta;
+static double wrta;
+static bool cpl_p = false;
+static bool wpl_p = false;
+static bool alive_p = false;
+static bool crta_p = false;
+static bool wrta_p = false;
 
 int main(int argc, char **argv) {
 	/* normally should be  int result = STATE_UNKNOWN; */
