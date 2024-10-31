@@ -225,41 +225,41 @@ static bool automatic_decompression = false;
 static char *cookie_jar_file = NULL;
 static bool haproxy_protocol = false;
 
-static bool process_arguments(int, char **);
+static bool process_arguments(int /*argc*/, char ** /*argv*/);
 static void handle_curl_option_return_code(CURLcode res, const char *option);
 static int check_http(void);
-static void redir(curlhelp_write_curlbuf *);
-static char *perfd_time(double microsec);
-static char *perfd_time_connect(double microsec);
-static char *perfd_time_ssl(double microsec);
-static char *perfd_time_firstbyte(double microsec);
-static char *perfd_time_headers(double microsec);
-static char *perfd_time_transfer(double microsec);
+static void redir(curlhelp_write_curlbuf * /*header_buf*/);
+static char *perfd_time(double elapsed_time);
+static char *perfd_time_connect(double elapsed_time_connect);
+static char *perfd_time_ssl(double elapsed_time_ssl);
+static char *perfd_time_firstbyte(double elapsed_time_firstbyte);
+static char *perfd_time_headers(double elapsed_time_headers);
+static char *perfd_time_transfer(double elapsed_time_transfer);
 static char *perfd_size(int page_len);
 static void print_help(void);
 void print_usage(void);
 static void print_curl_version(void);
-static int curlhelp_initwritebuffer(curlhelp_write_curlbuf *);
-static size_t curlhelp_buffer_write_callback(void *, size_t, size_t, void *);
-static void curlhelp_freewritebuffer(curlhelp_write_curlbuf *);
-static int curlhelp_initreadbuffer(curlhelp_read_curlbuf *, const char *, size_t);
-static size_t curlhelp_buffer_read_callback(void *, size_t, size_t, void *);
-static void curlhelp_freereadbuffer(curlhelp_read_curlbuf *);
-static curlhelp_ssl_library curlhelp_get_ssl_library();
-static const char *curlhelp_get_ssl_library_string(curlhelp_ssl_library);
+static int curlhelp_initwritebuffer(curlhelp_write_curlbuf * /*buf*/);
+static size_t curlhelp_buffer_write_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/, void * /*stream*/);
+static void curlhelp_freewritebuffer(curlhelp_write_curlbuf * /*buf*/);
+static int curlhelp_initreadbuffer(curlhelp_read_curlbuf * /*buf*/, const char * /*data*/, size_t /*datalen*/);
+static size_t curlhelp_buffer_read_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/, void * /*stream*/);
+static void curlhelp_freereadbuffer(curlhelp_read_curlbuf * /*buf*/);
+static curlhelp_ssl_library curlhelp_get_ssl_library(void);
+static const char *curlhelp_get_ssl_library_string(curlhelp_ssl_library /*ssl_library*/);
 int net_noopenssl_check_certificate(cert_ptr_union *, int, int);
 
-static int curlhelp_parse_statusline(const char *, curlhelp_statusline *);
-static void curlhelp_free_statusline(curlhelp_statusline *);
-static char *get_header_value(const struct phr_header *headers, const size_t nof_headers, const char *header);
-static int check_document_dates(const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
+static int curlhelp_parse_statusline(const char * /*buf*/, curlhelp_statusline * /*status_line*/);
+static void curlhelp_free_statusline(curlhelp_statusline * /*status_line*/);
+static char *get_header_value(const struct phr_header *headers, size_t nof_headers, const char *header);
+static int check_document_dates(const curlhelp_write_curlbuf * /*header_buf*/, char (*msg)[DEFAULT_BUFFER_SIZE]);
 static int get_content_length(const curlhelp_write_curlbuf *header_buf, const curlhelp_write_curlbuf *body_buf);
 
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit);
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 
-static void test_file(char *);
+static void test_file(char * /*path*/);
 
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
@@ -301,7 +301,8 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 #		endif
 	if (verbose >= 2) {
 		puts("* SSL verify callback with certificate:");
-		X509_NAME *subject, *issuer;
+		X509_NAME *subject;
+		X509_NAME *issuer;
 		printf("*   issuer:\n");
 		issuer = X509_get_issuer_name(cert);
 		X509_NAME_print_ex_fp(stdout, issuer, 5, XN_FLAG_MULTILINE);
@@ -356,7 +357,8 @@ static char *string_statuscode(int major, int minor) {
 
 /* Checks if the server 'reply' is one of the expected 'statuscodes' */
 static int expected_statuscode(const char *reply, const char *statuscodes) {
-	char *expected, *code;
+	char *expected;
+	char *code;
 	int result = 0;
 
 	if ((expected = strdup(statuscodes)) == NULL)
@@ -523,7 +525,7 @@ int check_http(void) {
 	// use the host_name later on to make SNI happy
 	if (use_ssl && host_name != NULL) {
 		if ((res = lookup_host(server_address, addrstr, DEFAULT_BUFFER_SIZE / 2)) != 0) {
-			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"), server_address, res,
+			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %d"), server_address, res,
 					 gai_strerror(res));
 			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 		}
@@ -2183,8 +2185,7 @@ const char *strrstr2(const char *haystack, const char *needle) {
 		if (pos == NULL) {
 			if (counter == 0)
 				return NULL;
-			else
-				return prev_pos;
+			return prev_pos;
 		}
 		counter++;
 		prev_pos = pos;
@@ -2438,7 +2439,7 @@ int get_content_length(const curlhelp_write_curlbuf *header_buf, const curlhelp_
 }
 
 /* TODO: is there a better way in libcurl to check for the SSL library? */
-curlhelp_ssl_library curlhelp_get_ssl_library() {
+curlhelp_ssl_library curlhelp_get_ssl_library(void) {
 	curl_version_info_data *version_data;
 	char *ssl_version;
 	char *library;
