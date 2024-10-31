@@ -59,31 +59,31 @@ enum {
 	DEFAULT_CRIT = 8
 };
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_usage(void);
-void print_help(void);
-bool is_pg_logname(char *);
-int do_query(PGconn *, char *);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_usage(void);
+static void print_help(void);
+static bool is_pg_logname(char *);
+static int do_query(PGconn *, char *);
 
-char *pghost = NULL; /* host name of the backend server */
-char *pgport = NULL; /* port of the backend server */
-int default_port = DEFAULT_PORT;
-char *pgoptions = NULL;
-char *pgtty = NULL;
-char dbName[NAMEDATALEN] = DEFAULT_DB;
-char *pguser = NULL;
-char *pgpasswd = NULL;
-char *pgparams = NULL;
-double twarn = (double)DEFAULT_WARN;
-double tcrit = (double)DEFAULT_CRIT;
-char *pgquery = NULL;
+static char *pghost = NULL; /* host name of the backend server */
+static char *pgport = NULL; /* port of the backend server */
+static char *pgoptions = NULL;
+static char *pgtty = NULL;
+static char dbName[NAMEDATALEN] = DEFAULT_DB;
+static char *pguser = NULL;
+static char *pgpasswd = NULL;
+static char *pgparams = NULL;
+static double twarn = (double)DEFAULT_WARN;
+static double tcrit = (double)DEFAULT_CRIT;
+static char *pgquery = NULL;
+static char *pgqueryname = NULL;
+static char *query_warning = NULL;
+static char *query_critical = NULL;
+static thresholds *qthresholds = NULL;
+static int verbose = 0;
+
 #define OPTID_QUERYNAME -1000
-char *pgqueryname = NULL;
-char *query_warning = NULL;
-char *query_critical = NULL;
-thresholds *qthresholds = NULL;
-int verbose = 0;
 
 /******************************************************************************
 
