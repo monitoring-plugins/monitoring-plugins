@@ -209,17 +209,19 @@ typedef struct {
 
 /* calculate the offset of the local clock */
 static inline double calc_offset(const ntp_message *m, const struct timeval *t) {
-	double client_tx, peer_rx, peer_tx, client_rx;
-	client_tx = NTP64asDOUBLE(m->origts);
-	peer_rx = NTP64asDOUBLE(m->rxts);
-	peer_tx = NTP64asDOUBLE(m->txts);
-	client_rx = TVasDOUBLE((*t));
+	double client_tx = NTP64asDOUBLE(m->origts);
+	double peer_rx = NTP64asDOUBLE(m->rxts);
+	double peer_tx = NTP64asDOUBLE(m->txts);
+	double client_rx = TVasDOUBLE((*t));
 	return (.5 * ((peer_tx - client_rx) + (peer_rx - client_tx)));
 }
 
 /* print out a ntp packet in human readable/debuggable format */
 void print_ntp_message(const ntp_message *p) {
-	struct timeval ref, orig, rx, tx;
+	struct timeval ref;
+	struct timeval orig;
+	struct timeval rx;
+	struct timeval tx;
 
 	NTP64toTV(p->refts, ref);
 	NTP64toTV(p->origts, orig);
@@ -244,8 +246,6 @@ void print_ntp_message(const ntp_message *p) {
 }
 
 void setup_request(ntp_message *p) {
-	struct timeval t;
-
 	memset(p, 0, sizeof(ntp_message));
 	LI_SET(p->flags, LI_ALARM);
 	VN_SET(p->flags, 4);
@@ -255,6 +255,7 @@ void setup_request(ntp_message *p) {
 	L16(p->rtdelay) = htons(1);
 	L16(p->rtdisp) = htons(1);
 
+	struct timeval t;
 	gettimeofday(&t, NULL);
 	TVtoNTP64(t, p->txts);
 }
@@ -263,10 +264,10 @@ void setup_request(ntp_message *p) {
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
 int best_offset_server(const ntp_server_results *slist, int nservers) {
-	int cserver = 0, best_server = -1;
+	int best_server = -1;
 
 	/* for each server */
-	for (cserver = 0; cserver < nservers; cserver++) {
+	for (int cserver = 0; cserver < nservers; cserver++) {
 		/* We don't want any servers that fails these tests */
 		/* Sort out servers that didn't respond or responede with a 0 stratum;
 		 * stratum 0 is for reference clocks so no NTP server should ever report
@@ -311,10 +312,9 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
 	if (best_server >= 0) {
 		DBG(printf("best server selected: peer %d\n", best_server));
 		return best_server;
-	} else {
-		DBG(printf("no peers meeting synchronization criteria :(\n"));
-		return -1;
 	}
+	DBG(printf("no peers meeting synchronization criteria :(\n"));
+	return -1;
 }
 
 /* do everything we need to get the total average offset
@@ -323,50 +323,48 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
 double offset_request(const char *host, int *status) {
-	int i = 0, j = 0, ga_result = 0, num_hosts = 0, *socklist = NULL, respnum = 0;
-	int servers_completed = 0, one_read = 0, servers_readable = 0, best_index = -1;
-	time_t now_time = 0, start_ts = 0;
-	ntp_message *req = NULL;
-	double avg_offset = 0.;
-	struct timeval recv_time;
-	struct addrinfo *ai = NULL, *ai_tmp = NULL, hints;
-	struct pollfd *ufds = NULL;
-	ntp_server_results *servers = NULL;
-
 	/* setup hints to only return results from getaddrinfo that we'd like */
+	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = address_family;
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_socktype = SOCK_DGRAM;
 
 	/* fill in ai with the list of hosts resolved by the host name */
-	ga_result = getaddrinfo(host, port, &hints, &ai);
+	struct addrinfo *ai = NULL;
+	int ga_result = getaddrinfo(host, port, &hints, &ai);
 	if (ga_result != 0) {
 		die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
 	}
 
 	/* count the number of returned hosts, and allocate stuff accordingly */
-	for (ai_tmp = ai; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
+	int num_hosts = 0;
+	for (struct addrinfo *ai_tmp = ai; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
 		num_hosts++;
 	}
-	req = (ntp_message *)malloc(sizeof(ntp_message) * num_hosts);
+
+	ntp_message *req = (ntp_message *)malloc(sizeof(ntp_message) * num_hosts);
+
 	if (req == NULL)
 		die(STATE_UNKNOWN, "can not allocate ntp message array");
-	socklist = (int *)malloc(sizeof(int) * num_hosts);
+	int *socklist = (int *)malloc(sizeof(int) * num_hosts);
+
 	if (socklist == NULL)
 		die(STATE_UNKNOWN, "can not allocate socket array");
-	ufds = (struct pollfd *)malloc(sizeof(struct pollfd) * num_hosts);
+
+	struct pollfd *ufds = (struct pollfd *)malloc(sizeof(struct pollfd) * num_hosts);
 	if (ufds == NULL)
 		die(STATE_UNKNOWN, "can not allocate socket array");
-	servers = (ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
+
+	ntp_server_results *servers = (ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
 	if (servers == NULL)
 		die(STATE_UNKNOWN, "can not allocate server array");
 	memset(servers, 0, sizeof(ntp_server_results) * num_hosts);
 	DBG(printf("Found %d peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
-	ai_tmp = ai;
-	for (i = 0; ai_tmp; i++) {
+	struct addrinfo *ai_tmp = ai;
+	for (int i = 0; ai_tmp; i++) {
 		socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 		if (socklist[i] == -1) {
 			perror(NULL);
@@ -388,7 +386,11 @@ double offset_request(const char *host, int *status) {
 
 	/* now do AVG_NUM checks to each host. We stop before timeout/2 seconds
 	 * have passed in order to ensure post-processing and jitter time. */
+	time_t start_ts = 0;
+	time_t now_time = 0;
 	now_time = start_ts = time(NULL);
+	int servers_completed = 0;
+	bool one_read = false;
 	while (servers_completed < num_hosts && now_time - start_ts <= socket_timeout / 2) {
 		/* loop through each server and find each one which hasn't
 		 * been touched in the past second or so and is still lacking
@@ -396,7 +398,7 @@ double offset_request(const char *host, int *status) {
 		 * and update the "waiting" timestamp with the current time. */
 		now_time = time(NULL);
 
-		for (i = 0; i < num_hosts; i++) {
+		for (int i = 0; i < num_hosts; i++) {
 			if (servers[i].waiting < now_time && servers[i].num_responses < AVG_NUM) {
 				if (verbose && servers[i].waiting != 0)
 					printf("re-");
@@ -410,23 +412,25 @@ double offset_request(const char *host, int *status) {
 		}
 
 		/* quickly poll for any sockets with pending data */
-		servers_readable = poll(ufds, num_hosts, 100);
+		int servers_readable = poll(ufds, num_hosts, 100);
 		if (servers_readable == -1) {
 			perror("polling ntp sockets");
 			die(STATE_UNKNOWN, "communication errors");
 		}
 
 		/* read from any sockets with pending data */
-		for (i = 0; servers_readable && i < num_hosts; i++) {
+		for (int i = 0; servers_readable && i < num_hosts; i++) {
 			if (ufds[i].revents & POLLIN && servers[i].num_responses < AVG_NUM) {
 				if (verbose) {
 					printf("response from peer %d: ", i);
 				}
 
 				read(ufds[i].fd, &req[i], sizeof(ntp_message));
+
+				struct timeval recv_time;
 				gettimeofday(&recv_time, NULL);
 				DBG(print_ntp_message(&req[i]));
-				respnum = servers[i].num_responses++;
+				int respnum = servers[i].num_responses++;
 				servers[i].offset[respnum] = calc_offset(&req[i], &recv_time) + time_offset;
 				if (verbose) {
 					printf("offset %.10g\n", servers[i].offset[respnum]);
@@ -437,7 +441,7 @@ double offset_request(const char *host, int *status) {
 				servers[i].waiting = 0;
 				servers[i].flags = req[i].flags;
 				servers_readable--;
-				one_read = 1;
+				one_read = true;
 				if (servers[i].num_responses == AVG_NUM)
 					servers_completed++;
 			}
@@ -445,24 +449,25 @@ double offset_request(const char *host, int *status) {
 		/* lather, rinse, repeat. */
 	}
 
-	if (one_read == 0) {
+	if (one_read == false) {
 		die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 	}
 
 	/* now, pick the best server from the list */
-	best_index = best_offset_server(servers, num_hosts);
+	double avg_offset = 0.;
+	int best_index = best_offset_server(servers, num_hosts);
 	if (best_index < 0) {
 		*status = STATE_UNKNOWN;
 	} else {
 		/* finally, calculate the average offset */
-		for (i = 0; i < servers[best_index].num_responses; i++) {
+		for (int i = 0; i < servers[best_index].num_responses; i++) {
 			avg_offset += servers[best_index].offset[i];
 		}
 		avg_offset /= servers[best_index].num_responses;
 	}
 
 	/* cleanup */
-	for (j = 0; j < num_hosts; j++) {
+	for (int j = 0; j < num_hosts; j++) {
 		close(socklist[j]);
 	}
 	free(socklist);
@@ -477,8 +482,6 @@ double offset_request(const char *host, int *status) {
 }
 
 int process_arguments(int argc, char **argv) {
-	int c;
-	int option = 0;
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -496,12 +499,13 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		usage("\n");
 
-	while (1) {
-		c = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
-		if (c == -1 || c == EOF || c == 1)
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
+		if (option_char == -1 || option_char == EOF || option_char == 1)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -566,15 +570,9 @@ char *perfd_offset(double offset) {
 }
 
 int main(int argc, char *argv[]) {
-	int result, offset_result;
-	double offset = 0;
-	char *result_line, *perfdata_line;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-
-	result = offset_result = STATE_OK;
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -590,13 +588,16 @@ int main(int argc, char *argv[]) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	offset = offset_request(server_address, &offset_result);
+	int offset_result = STATE_OK;
+	int result = STATE_OK;
+	double offset = offset_request(server_address, &offset_result);
 	if (offset_result == STATE_UNKNOWN) {
 		result = ((!quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		result = get_status(fabs(offset), offset_thresholds);
 	}
 
+	char *result_line;
 	switch (result) {
 	case STATE_CRITICAL:
 		xasprintf(&result_line, _("NTP CRITICAL:"));
@@ -611,6 +612,8 @@ int main(int argc, char *argv[]) {
 		xasprintf(&result_line, _("NTP UNKNOWN:"));
 		break;
 	}
+
+	char *perfdata_line;
 	if (offset_result == STATE_UNKNOWN) {
 		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		xasprintf(&perfdata_line, "");
