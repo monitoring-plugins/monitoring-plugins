@@ -50,7 +50,7 @@ static char *opt_file = NULL;
 static char *opt_group = NULL;
 static unsigned int db_port = MYSQL_PORT;
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
 static void print_help(void);
 void print_usage(void);
@@ -60,15 +60,6 @@ static int verbose = 0;
 static thresholds *my_thresholds = NULL;
 
 int main(int argc, char **argv) {
-
-	MYSQL mysql;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-
-	double value;
-	char *error = NULL;
-	int status;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -79,6 +70,7 @@ int main(int argc, char **argv) {
 	if (process_arguments(argc, argv) == ERROR)
 		usage4(_("Could not parse arguments"));
 
+	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
 
@@ -106,12 +98,14 @@ int main(int argc, char **argv) {
 			die(STATE_CRITICAL, "QUERY %s: %s\n", _("CRITICAL"), mysql_error(&mysql));
 	}
 
+	char *error = NULL;
 	if (mysql_query(&mysql, sql_query) != 0) {
 		error = strdup(mysql_error(&mysql));
 		mysql_close(&mysql);
 		die(STATE_CRITICAL, "QUERY %s: %s - %s\n", _("CRITICAL"), _("Error with query"), error);
 	}
 
+	MYSQL_RES *res;
 	/* store the result */
 	if ((res = mysql_store_result(&mysql)) == NULL) {
 		error = strdup(mysql_error(&mysql));
@@ -125,6 +119,7 @@ int main(int argc, char **argv) {
 		die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), _("No rows returned"));
 	}
 
+	MYSQL_ROW row;
 	/* fetch the first row */
 	if ((row = mysql_fetch_row(res)) == NULL) {
 		error = strdup(mysql_error(&mysql));
@@ -137,7 +132,7 @@ int main(int argc, char **argv) {
 		die(STATE_CRITICAL, "QUERY %s: %s - '%s'\n", _("CRITICAL"), _("Is not a numeric"), row[0]);
 	}
 
-	value = strtod(row[0], NULL);
+	double value = strtod(row[0], NULL);
 
 	/* free the result */
 	mysql_free_result(res);
@@ -148,7 +143,7 @@ int main(int argc, char **argv) {
 	if (verbose >= 3)
 		printf("mysql result: %f\n", value);
 
-	status = get_status(value, my_thresholds);
+	int status = get_status(value, my_thresholds);
 
 	if (status == STATE_OK) {
 		printf("QUERY %s: ", _("OK"));
@@ -168,11 +163,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-	char *warning = NULL;
-	char *critical = NULL;
-
-	int option = 0;
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'}, {"socket", required_argument, 0, 's'},   {"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'}, {"file", required_argument, 0, 'f'},
@@ -183,13 +173,17 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 1)
 		return ERROR;
 
-	while (1) {
-		c = getopt_long(argc, argv, "hvVP:p:u:d:H:s:q:w:c:f:g:", longopts, &option);
+	char *warning = NULL;
+	char *critical = NULL;
 
-		if (c == -1 || c == EOF)
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "hvVP:p:u:d:H:s:q:w:c:f:g:", longopts, &option);
+
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'H': /* hostname */
 			if (is_host(optarg)) {
 				db_host = optarg;
@@ -246,8 +240,6 @@ int process_arguments(int argc, char **argv) {
 			usage5();
 		}
 	}
-
-	c = optind;
 
 	set_thresholds(&my_thresholds, warning, critical);
 
