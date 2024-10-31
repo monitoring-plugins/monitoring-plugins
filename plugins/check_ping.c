@@ -47,29 +47,29 @@ enum {
 	DEFAULT_MAX_PACKETS = 5    /* default no. of ICMP ECHO packets */
 };
 
-int process_arguments(int, char **);
-int get_threshold(char *, float *, int *);
-int validate_arguments(void);
-int run_ping(const char *cmd, const char *addr);
-int error_scan(char buf[MAX_INPUT_BUFFER], const char *addr);
+static int process_arguments(int, char **);
+static int get_threshold(char *, float *, int *);
+static int validate_arguments(void);
+static int run_ping(const char *cmd, const char *addr);
+static int error_scan(char buf[MAX_INPUT_BUFFER], const char *addr);
+static void print_help(void);
 void print_usage(void);
-void print_help(void);
 
-bool display_html = false;
-int wpl = UNKNOWN_PACKET_LOSS;
-int cpl = UNKNOWN_PACKET_LOSS;
-float wrta = UNKNOWN_TRIP_TIME;
-float crta = UNKNOWN_TRIP_TIME;
-char **addresses = NULL;
-int n_addresses = 0;
-int max_addr = 1;
-int max_packets = -1;
-int verbose = 0;
+static bool display_html = false;
+static int wpl = UNKNOWN_PACKET_LOSS;
+static int cpl = UNKNOWN_PACKET_LOSS;
+static float wrta = UNKNOWN_TRIP_TIME;
+static float crta = UNKNOWN_TRIP_TIME;
+static char **addresses = NULL;
+static int n_addresses = 0;
+static int max_addr = 1;
+static int max_packets = -1;
+static int verbose = 0;
 
-float rta = UNKNOWN_TRIP_TIME;
-int pl = UNKNOWN_PACKET_LOSS;
+static float rta = UNKNOWN_TRIP_TIME;
+static int pl = UNKNOWN_PACKET_LOSS;
 
-char *warn_text;
+static char *warn_text;
 
 int main(int argc, char **argv) {
 	char *cmd = NULL;
