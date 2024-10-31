@@ -117,7 +117,7 @@ enum {
 #	pragma alloca
 #endif
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static void set_all_thresholds(struct parameter_list *path);
 static void print_help(void);
 void print_usage(void);
@@ -168,7 +168,8 @@ int main(int argc, char **argv) {
 
 	struct mount_entry *me;
 	struct fs_usage fsp;
-	struct parameter_list *temp_list, *path;
+	struct parameter_list *temp_list;
+	struct parameter_list *path;
 
 #ifdef __CYGWIN__
 	char mountdir[32];
@@ -286,17 +287,20 @@ int main(int argc, char **argv) {
 				}
 				continue;
 				/* Skip pseudo fs's if we haven't asked for all fs's */
-			} else if (me->me_dummy && !show_all_fs) {
+			}
+			if (me->me_dummy && !show_all_fs) {
 				continue;
 				/* Skip excluded fstypes */
-			} else if (fs_exclude_list && np_find_regmatch(fs_exclude_list, me->me_type)) {
+			}
+			if (fs_exclude_list && np_find_regmatch(fs_exclude_list, me->me_type)) {
 				continue;
 				/* Skip excluded fs's */
-			} else if (dp_exclude_list &&
-					   (np_find_name(dp_exclude_list, me->me_devname) || np_find_name(dp_exclude_list, me->me_mountdir))) {
+			}
+			if (dp_exclude_list && (np_find_name(dp_exclude_list, me->me_devname) || np_find_name(dp_exclude_list, me->me_mountdir))) {
 				continue;
 				/* Skip not included fstypes */
-			} else if (fs_include_list && !np_find_regmatch(fs_include_list, me->me_type)) {
+			}
+			if (fs_include_list && !np_find_regmatch(fs_include_list, me->me_type)) {
 				continue;
 			}
 		}
@@ -453,9 +457,11 @@ double calculate_percent(uintmax_t value, uintmax_t total) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c, err;
+	int c;
+	int err;
 	struct parameter_list *se;
-	struct parameter_list *temp_list = NULL, *previous = NULL;
+	struct parameter_list *temp_list = NULL;
+	struct parameter_list *previous = NULL;
 	struct mount_entry *me;
 	regex_t re;
 	int cflags = REG_NOSUB | REG_EXTENDED;
@@ -803,7 +809,8 @@ int process_arguments(int argc, char **argv) {
 				path_ignored = true;
 				path_selected = true;
 				break;
-			} else if (!fnd)
+			}
+			if (!fnd)
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Regular expression did not match any path or disk"), optarg);
 
 			fnd = false;
@@ -1011,10 +1018,9 @@ bool stat_path(struct parameter_list *p) {
 			printf("stat failed on %s\n", p->name);
 		if (ignore_missing == true) {
 			return false;
-		} else {
-			printf("DISK %s - ", _("CRITICAL"));
-			die(STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
 		}
+		printf("DISK %s - ", _("CRITICAL"));
+		die(STATE_CRITICAL, _("%s %s: %s\n"), p->name, _("is not accessible"), strerror(errno));
 	}
 	return true;
 }
