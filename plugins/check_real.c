@@ -43,28 +43,22 @@ enum {
 #define EXPECT "RTSP/1."
 #define URL    ""
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static void print_help(void);
 void print_usage(void);
 
-int server_port = PORT;
-char *server_address;
-char *host_name;
-char *server_url = NULL;
-char *server_expect;
-int warning_time = 0;
-bool check_warning_time = false;
-int critical_time = 0;
-bool check_critical_time = false;
-bool verbose = false;
+static int server_port = PORT;
+static char *server_address;
+static char *host_name;
+static char *server_url = NULL;
+static char *server_expect;
+static int warning_time = 0;
+static bool check_warning_time = false;
+static int critical_time = 0;
+static bool check_critical_time = false;
+static bool verbose = false;
 
 int main(int argc, char **argv) {
-	int sd;
-	int result = STATE_UNKNOWN;
-	char buffer[MAX_INPUT_BUFFER];
-	char *status_line = NULL;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -83,30 +77,33 @@ int main(int argc, char **argv) {
 	time(&start_time);
 
 	/* try to connect to the host at the given port number */
-	if (my_tcp_connect(server_address, server_port, &sd) != STATE_OK)
+	int socket;
+	if (my_tcp_connect(server_address, server_port, &socket) != STATE_OK)
 		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), server_address, server_port);
 
 	/* Part I - Server Check */
 
 	/* send the OPTIONS request */
+	char buffer[MAX_INPUT_BUFFER];
 	sprintf(buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", host_name, server_port);
-	result = send(sd, buffer, strlen(buffer), 0);
+	int result = send(socket, buffer, strlen(buffer), 0);
 
 	/* send the header sync */
 	sprintf(buffer, "CSeq: 1\r\n");
-	result = send(sd, buffer, strlen(buffer), 0);
+	result = send(socket, buffer, strlen(buffer), 0);
 
 	/* send a newline so the server knows we're done with the request */
 	sprintf(buffer, "\r\n");
-	result = send(sd, buffer, strlen(buffer), 0);
+	result = send(socket, buffer, strlen(buffer), 0);
 
 	/* watch for the REAL connection string */
-	result = recv(sd, buffer, MAX_INPUT_BUFFER - 1, 0);
+	result = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (result == -1)
 		die(STATE_CRITICAL, _("No data received from %s\n"), host_name);
 
+	char *status_line = NULL;
 	/* make sure we find the response we are looking for */
 	if (!strstr(buffer, server_expect)) {
 		if (server_port == PORT)
@@ -158,18 +155,18 @@ int main(int argc, char **argv) {
 
 		/* send the DESCRIBE request */
 		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", host_name, server_port, server_url);
-		result = send(sd, buffer, strlen(buffer), 0);
+		result = send(socket, buffer, strlen(buffer), 0);
 
 		/* send the header sync */
 		sprintf(buffer, "CSeq: 2\r\n");
-		result = send(sd, buffer, strlen(buffer), 0);
+		result = send(socket, buffer, strlen(buffer), 0);
 
 		/* send a newline so the server knows we're done with the request */
 		sprintf(buffer, "\r\n");
-		result = send(sd, buffer, strlen(buffer), 0);
+		result = send(socket, buffer, strlen(buffer), 0);
 
 		/* watch for the REAL connection string */
-		result = recv(sd, buffer, MAX_INPUT_BUFFER - 1, 0);
+		result = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
 		buffer[result] = '\0'; /* null terminate received buffer */
 
 		/* return a CRITICAL status if we couldn't read any data */
@@ -238,7 +235,7 @@ int main(int argc, char **argv) {
 		printf("%s\n", status_line);
 
 	/* close the connection */
-	close(sd);
+	close(socket);
 
 	/* reset the alarm */
 	alarm(0);
@@ -248,9 +245,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"IPaddress", required_argument, 0, 'I'},
 									   {"expect", required_argument, 0, 'e'},   {"url", required_argument, 0, 'u'},
 									   {"port", required_argument, 0, 'p'},     {"critical", required_argument, 0, 'c'},
@@ -261,22 +255,24 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		return ERROR;
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
-			strcpy(argv[c], "-t");
-		else if (strcmp("-wt", argv[c]) == 0)
-			strcpy(argv[c], "-w");
-		else if (strcmp("-ct", argv[c]) == 0)
-			strcpy(argv[c], "-c");
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0)
+			strcpy(argv[i], "-t");
+		else if (strcmp("-wt", argv[i]) == 0)
+			strcpy(argv[i], "-w");
+		else if (strcmp("-ct", argv[i]) == 0)
+			strcpy(argv[i], "-c");
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts, &option);
+	int option_char;
+	while (true) {
+		int option = 0;
+		option_char = getopt_long(argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'I': /* hostname */
 		case 'H': /* hostname */
 			if (server_address)
@@ -336,12 +332,12 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (server_address == NULL && argc > c) {
-		if (is_host(argv[c])) {
-			server_address = argv[c++];
+	option_char = optind;
+	if (server_address == NULL && argc > option_char) {
+		if (is_host(argv[option_char])) {
+			server_address = argv[option_char++];
 		} else {
-			usage2(_("Invalid hostname/address"), argv[c]);
+			usage2(_("Invalid hostname/address"), argv[option_char]);
 		}
 	}
 
@@ -354,10 +350,8 @@ int process_arguments(int argc, char **argv) {
 	if (server_expect == NULL)
 		server_expect = strdup(EXPECT);
 
-	return validate_arguments();
+	return OK;
 }
-
-int validate_arguments(void) { return OK; }
 
 void print_help(void) {
 	char *myport;
