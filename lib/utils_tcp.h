@@ -10,6 +10,10 @@
  * caller to decide whether it makes sense to wait for additional data from the
  * server.
  */
-enum np_match_result { NP_MATCH_FAILURE, NP_MATCH_SUCCESS, NP_MATCH_RETRY };
+enum np_match_result {
+	NP_MATCH_FAILURE,
+	NP_MATCH_SUCCESS,
+	NP_MATCH_RETRY
+};
 
 enum np_match_result np_expect_match(char *status, char **server_expect, int server_expect_count, int flags);
