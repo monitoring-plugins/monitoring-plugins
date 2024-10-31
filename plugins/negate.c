@@ -41,10 +41,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <ctype.h>
 
-/* char *command_line; */
-
-static const char **process_arguments(int, char **);
-static void validate_arguments(char **);
+static const char **process_arguments(int /*argc*/, char ** /*argv*/);
+static void validate_arguments(char ** /*command_line*/);
 static void print_help(void);
 void print_usage(void);
 static bool subst_text = false;
@@ -57,24 +55,23 @@ static int state[4] = {
 };
 
 int main(int argc, char **argv) {
-	int result = STATE_UNKNOWN;
-	char *sub;
-	char **command_line;
-	output chld_out, chld_err;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
 	timeout_interval = DEFAULT_TIMEOUT;
 
-	command_line = (char **)process_arguments(argc, argv);
+	char **command_line = (char **)process_arguments(argc, argv);
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR)
 		die(STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 
 	(void)alarm((unsigned)timeout_interval);
+
+	int result = STATE_UNKNOWN;
+	output chld_out;
+	output chld_err;
 
 	/* catch when the command is quoted */
 	if (command_line[1] == NULL) {
@@ -92,6 +89,7 @@ int main(int argc, char **argv) {
 	if (chld_out.lines == 0)
 		die(max_state_alt(result, STATE_UNKNOWN), _("No data returned from command\n"));
 
+	char *sub;
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (subst_text && result >= 0 && result <= 4 && result != state[result]) {
 			/* Loop over each match found */
@@ -115,23 +113,21 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 static const char **process_arguments(int argc, char **argv) {
-	int c;
-	bool permute = true;
-
-	int option = 0;
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},           {"version", no_argument, 0, 'V'},
 									   {"timeout", required_argument, 0, 't'},  {"timeout-result", required_argument, 0, 'T'},
 									   {"ok", required_argument, 0, 'o'},       {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'}, {"unknown", required_argument, 0, 'u'},
 									   {"substitute", no_argument, 0, 's'},     {0, 0, 0, 0}};
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
+	bool permute = true;
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* help */
 			usage5();
 			break;
