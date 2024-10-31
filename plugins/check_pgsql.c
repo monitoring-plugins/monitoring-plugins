@@ -3,7 +3,7 @@
  * Monitoring check_pgsql plugin
  *
  * License: GPL
- * Copyright (c) 1999-2011 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 const char *progname = "check_pgsql";
-const char *copyright = "1999-2011";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
