@@ -30,7 +30,7 @@
  *****************************************************************************/
 
 const char *progname = "urlize";
-const char *copyright = "2000-2006";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
