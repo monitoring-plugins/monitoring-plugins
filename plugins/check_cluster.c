@@ -30,8 +30,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "utils_base.h"
 
-#define CHECK_SERVICES 1
-#define CHECK_HOSTS    2
+enum {
+	CHECK_SERVICES = 1,
+	CHECK_HOSTS = 2
+};
 
 static void print_help(void);
 void print_usage(void);
@@ -55,7 +57,7 @@ static char *label = NULL;
 
 static int verbose = 0;
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 
 int main(int argc, char **argv) {
 	char *ptr;
