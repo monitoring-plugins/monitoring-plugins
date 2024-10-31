@@ -41,27 +41,27 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "runcmd.h"
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
 #define UNDEFINED     0
 #define DEFAULT_PORT  53
 #define DEFAULT_TRIES 2
 
-char *query_address = NULL;
-char *record_type = "A";
-char *expected_address = NULL;
-char *dns_server = NULL;
-char *dig_args = "";
-char *query_transport = "";
-bool verbose = false;
-int server_port = DEFAULT_PORT;
-int number_tries = DEFAULT_TRIES;
-double warning_interval = UNDEFINED;
-double critical_interval = UNDEFINED;
-struct timeval tv;
+static char *query_address = NULL;
+static char *record_type = "A";
+static char *expected_address = NULL;
+static char *dns_server = NULL;
+static char *dig_args = "";
+static char *query_transport = "";
+static bool verbose = false;
+static int server_port = DEFAULT_PORT;
+static int number_tries = DEFAULT_TRIES;
+static double warning_interval = UNDEFINED;
+static double critical_interval = UNDEFINED;
+static struct timeval tv;
 
 int main(int argc, char **argv) {
 	char *command_line;
