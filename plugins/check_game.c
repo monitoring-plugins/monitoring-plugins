@@ -37,9 +37,9 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "runcmd.h"
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
 #define QSTAT_DATA_DELIMITER ","
@@ -49,17 +49,17 @@ void print_usage(void);
 #define QSTAT_HOST_TIMEOUT    "TIMEOUT"
 #define QSTAT_MAX_RETURN_ARGS 12
 
-char *server_ip;
-char *game_type;
-int port = 0;
+static char *server_ip;
+static char *game_type;
+static int port = 0;
 
-bool verbose = false;
+static bool verbose = false;
 
-int qstat_game_players_max = -1;
-int qstat_game_players = -1;
-int qstat_game_field = -1;
-int qstat_map_field = -1;
-int qstat_ping_field = -1;
+static int qstat_game_players_max = -1;
+static int qstat_game_players = -1;
+static int qstat_game_field = -1;
+static int qstat_map_field = -1;
+static int qstat_ping_field = -1;
 
 int main(int argc, char **argv) {
 	char *command_line;
