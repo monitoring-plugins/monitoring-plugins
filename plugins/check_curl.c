@@ -128,141 +128,138 @@ enum {
 	MAX_RE_SIZE = 1024
 };
 #include "regex.h"
-regex_t preg;
-regmatch_t pmatch[REGS];
-char regexp[MAX_RE_SIZE];
-int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
-int errcode;
-bool invert_regex = false;
-int state_regex = STATE_CRITICAL;
+static regex_t preg;
+static regmatch_t pmatch[REGS];
+static char regexp[MAX_RE_SIZE];
+static int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
+static int errcode;
+static bool invert_regex = false;
+static int state_regex = STATE_CRITICAL;
 
-char *server_address = NULL;
-char *host_name = NULL;
-char *server_url = 0;
-char server_ip[DEFAULT_BUFFER_SIZE];
-struct curl_slist *server_ips = NULL;
-bool specify_port = false;
-unsigned short server_port = HTTP_PORT;
-unsigned short virtual_port = 0;
-int host_name_length;
-char output_header_search[30] = "";
-char output_string_search[30] = "";
-char *warning_thresholds = NULL;
-char *critical_thresholds = NULL;
-int days_till_exp_warn, days_till_exp_crit;
-thresholds *thlds;
-char user_agent[DEFAULT_BUFFER_SIZE];
-int verbose = 0;
-bool show_extended_perfdata = false;
-bool show_body = false;
-int min_page_len = 0;
-int max_page_len = 0;
-int redir_depth = 0;
-int max_depth = DEFAULT_MAX_REDIRS;
-char *http_method = NULL;
-char *http_post_data = NULL;
-char *http_content_type = NULL;
-CURL *curl;
-bool curl_global_initialized = false;
-bool curl_easy_initialized = false;
-struct curl_slist *header_list = NULL;
-bool body_buf_initialized = false;
-curlhelp_write_curlbuf body_buf;
-bool header_buf_initialized = false;
-curlhelp_write_curlbuf header_buf;
-bool status_line_initialized = false;
-curlhelp_statusline status_line;
-bool put_buf_initialized = false;
-curlhelp_read_curlbuf put_buf;
-char http_header[DEFAULT_BUFFER_SIZE];
-long code;
-long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
-double total_time;
-double time_connect;
-double time_appconnect;
-double time_headers;
-double time_firstbyte;
-char errbuf[MAX_INPUT_BUFFER];
-CURLcode res;
-char url[DEFAULT_BUFFER_SIZE];
-char msg[DEFAULT_BUFFER_SIZE];
-char perfstring[DEFAULT_BUFFER_SIZE];
-char header_expect[MAX_INPUT_BUFFER] = "";
-char string_expect[MAX_INPUT_BUFFER] = "";
-char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
-int server_expect_yn = 0;
-char user_auth[MAX_INPUT_BUFFER] = "";
-char proxy_auth[MAX_INPUT_BUFFER] = "";
-char **http_opt_headers;
-int http_opt_headers_count = 0;
-bool display_html = false;
-int onredirect = STATE_OK;
-int followmethod = FOLLOW_HTTP_CURL;
-int followsticky = STICKY_NONE;
-bool use_ssl = false;
-bool use_sni = true;
-bool check_cert = false;
-bool continue_after_check_cert = false;
+static char *server_address = NULL;
+static char *host_name = NULL;
+static char *server_url = 0;
+static struct curl_slist *server_ips = NULL;
+static bool specify_port = false;
+static unsigned short server_port = HTTP_PORT;
+static unsigned short virtual_port = 0;
+static int host_name_length;
+static char output_header_search[30] = "";
+static char output_string_search[30] = "";
+static char *warning_thresholds = NULL;
+static char *critical_thresholds = NULL;
+static int days_till_exp_warn, days_till_exp_crit;
+static thresholds *thlds;
+static char user_agent[DEFAULT_BUFFER_SIZE];
+static int verbose = 0;
+static bool show_extended_perfdata = false;
+static bool show_body = false;
+static int min_page_len = 0;
+static int max_page_len = 0;
+static int redir_depth = 0;
+static int max_depth = DEFAULT_MAX_REDIRS;
+static char *http_method = NULL;
+static char *http_post_data = NULL;
+static char *http_content_type = NULL;
+static CURL *curl;
+static bool curl_global_initialized = false;
+static bool curl_easy_initialized = false;
+static struct curl_slist *header_list = NULL;
+static bool body_buf_initialized = false;
+static curlhelp_write_curlbuf body_buf;
+static bool header_buf_initialized = false;
+static curlhelp_write_curlbuf header_buf;
+static bool status_line_initialized = false;
+static curlhelp_statusline status_line;
+static bool put_buf_initialized = false;
+static curlhelp_read_curlbuf put_buf;
+static char http_header[DEFAULT_BUFFER_SIZE];
+static long code;
+static long socket_timeout = DEFAULT_SOCKET_TIMEOUT;
+static double total_time;
+static double time_connect;
+static double time_appconnect;
+static double time_headers;
+static double time_firstbyte;
+static char errbuf[MAX_INPUT_BUFFER];
+static CURLcode res;
+static char url[DEFAULT_BUFFER_SIZE];
+static char msg[DEFAULT_BUFFER_SIZE];
+static char perfstring[DEFAULT_BUFFER_SIZE];
+static char header_expect[MAX_INPUT_BUFFER] = "";
+static char string_expect[MAX_INPUT_BUFFER] = "";
+static char server_expect[MAX_INPUT_BUFFER] = HTTP_EXPECT;
+static int server_expect_yn = 0;
+static char user_auth[MAX_INPUT_BUFFER] = "";
+static char proxy_auth[MAX_INPUT_BUFFER] = "";
+static char **http_opt_headers;
+static int http_opt_headers_count = 0;
+static bool display_html = false;
+static int onredirect = STATE_OK;
+static int followmethod = FOLLOW_HTTP_CURL;
+static int followsticky = STICKY_NONE;
+static bool use_ssl = false;
+static bool check_cert = false;
+static bool continue_after_check_cert = false;
 typedef union {
 	struct curl_slist *to_info;
 	struct curl_certinfo *to_certinfo;
 } cert_ptr_union;
-cert_ptr_union cert_ptr;
-int ssl_version = CURL_SSLVERSION_DEFAULT;
-char *client_cert = NULL;
-char *client_privkey = NULL;
-char *ca_cert = NULL;
-bool verify_peer_and_host = false;
-bool is_openssl_callback = false;
-bool add_sslctx_verify_fun = false;
+static cert_ptr_union cert_ptr;
+static int ssl_version = CURL_SSLVERSION_DEFAULT;
+static char *client_cert = NULL;
+static char *client_privkey = NULL;
+static char *ca_cert = NULL;
+static bool verify_peer_and_host = false;
+static bool is_openssl_callback = false;
+static bool add_sslctx_verify_fun = false;
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
-X509 *cert = NULL;
+static X509 *cert = NULL;
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
-bool no_body = false;
-int maximum_age = -1;
-int address_family = AF_UNSPEC;
-curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
-int curl_http_version = CURL_HTTP_VERSION_NONE;
-bool automatic_decompression = false;
-char *cookie_jar_file = NULL;
-bool haproxy_protocol = false;
+static bool no_body = false;
+static int maximum_age = -1;
+static int address_family = AF_UNSPEC;
+static curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
+static int curl_http_version = CURL_HTTP_VERSION_NONE;
+static bool automatic_decompression = false;
+static char *cookie_jar_file = NULL;
+static bool haproxy_protocol = false;
 
-bool process_arguments(int, char **);
-void handle_curl_option_return_code(CURLcode res, const char *option);
-int check_http(void);
-void redir(curlhelp_write_curlbuf *);
-char *perfd_time(double microsec);
-char *perfd_time_connect(double microsec);
-char *perfd_time_ssl(double microsec);
-char *perfd_time_firstbyte(double microsec);
-char *perfd_time_headers(double microsec);
-char *perfd_time_transfer(double microsec);
-char *perfd_size(int page_len);
-void print_help(void);
+static bool process_arguments(int, char **);
+static void handle_curl_option_return_code(CURLcode res, const char *option);
+static int check_http(void);
+static void redir(curlhelp_write_curlbuf *);
+static char *perfd_time(double microsec);
+static char *perfd_time_connect(double microsec);
+static char *perfd_time_ssl(double microsec);
+static char *perfd_time_firstbyte(double microsec);
+static char *perfd_time_headers(double microsec);
+static char *perfd_time_transfer(double microsec);
+static char *perfd_size(int page_len);
+static void print_help(void);
 void print_usage(void);
-void print_curl_version(void);
-int curlhelp_initwritebuffer(curlhelp_write_curlbuf *);
-size_t curlhelp_buffer_write_callback(void *, size_t, size_t, void *);
-void curlhelp_freewritebuffer(curlhelp_write_curlbuf *);
-int curlhelp_initreadbuffer(curlhelp_read_curlbuf *, const char *, size_t);
-size_t curlhelp_buffer_read_callback(void *, size_t, size_t, void *);
-void curlhelp_freereadbuffer(curlhelp_read_curlbuf *);
-curlhelp_ssl_library curlhelp_get_ssl_library();
-const char *curlhelp_get_ssl_library_string(curlhelp_ssl_library);
+static void print_curl_version(void);
+static int curlhelp_initwritebuffer(curlhelp_write_curlbuf *);
+static size_t curlhelp_buffer_write_callback(void *, size_t, size_t, void *);
+static void curlhelp_freewritebuffer(curlhelp_write_curlbuf *);
+static int curlhelp_initreadbuffer(curlhelp_read_curlbuf *, const char *, size_t);
+static size_t curlhelp_buffer_read_callback(void *, size_t, size_t, void *);
+static void curlhelp_freereadbuffer(curlhelp_read_curlbuf *);
+static curlhelp_ssl_library curlhelp_get_ssl_library();
+static const char *curlhelp_get_ssl_library_string(curlhelp_ssl_library);
 int net_noopenssl_check_certificate(cert_ptr_union *, int, int);
 
-int curlhelp_parse_statusline(const char *, curlhelp_statusline *);
-void curlhelp_free_statusline(curlhelp_statusline *);
-char *get_header_value(const struct phr_header *headers, const size_t nof_headers, const char *header);
-int check_document_dates(const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
-int get_content_length(const curlhelp_write_curlbuf *header_buf, const curlhelp_write_curlbuf *body_buf);
+static int curlhelp_parse_statusline(const char *, curlhelp_statusline *);
+static void curlhelp_free_statusline(curlhelp_statusline *);
+static char *get_header_value(const struct phr_header *headers, const size_t nof_headers, const char *header);
+static int check_document_dates(const curlhelp_write_curlbuf *, char (*msg)[DEFAULT_BUFFER_SIZE]);
+static int get_content_length(const curlhelp_write_curlbuf *header_buf, const curlhelp_write_curlbuf *body_buf);
 
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit);
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 
-void remove_newlines(char *);
-void test_file(char *);
+static void test_file(char *);
 
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
@@ -2310,14 +2307,6 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 }
 
 void curlhelp_free_statusline(curlhelp_statusline *status_line) { free(status_line->first_line); }
-
-void remove_newlines(char *s) {
-	char *p;
-
-	for (p = s; *p != '\0'; p++)
-		if (*p == '\r' || *p == '\n')
-			*p = ' ';
-}
 
 char *get_header_value(const struct phr_header *headers, const size_t nof_headers, const char *header) {
 	for (size_t i = 0; i < nof_headers; i++) {
