@@ -41,23 +41,23 @@ const char *email = "devel@monitoring-plugins.org";
 #include <mysql.h>
 #include <errmsg.h>
 
-char *db_user = NULL;
-char *db_host = NULL;
-char *db_socket = NULL;
-char *db_pass = NULL;
-char *db = NULL;
-char *opt_file = NULL;
-char *opt_group = NULL;
-unsigned int db_port = MYSQL_PORT;
+static char *db_user = NULL;
+static char *db_host = NULL;
+static char *db_socket = NULL;
+static char *db_pass = NULL;
+static char *db = NULL;
+static char *opt_file = NULL;
+static char *opt_group = NULL;
+static unsigned int db_port = MYSQL_PORT;
 
-int process_arguments(int, char **);
-int validate_arguments(void);
-void print_help(void);
+static int process_arguments(int, char **);
+static int validate_arguments(void);
+static void print_help(void);
 void print_usage(void);
 
-char *sql_query = NULL;
-int verbose = 0;
-thresholds *my_thresholds = NULL;
+static char *sql_query = NULL;
+static int verbose = 0;
+static thresholds *my_thresholds = NULL;
 
 int main(int argc, char **argv) {
 
