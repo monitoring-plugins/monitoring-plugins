@@ -3,7 +3,7 @@
  * Monitoring check_by_ssh plugin
  *
  * License: GPL
- * Copyright (c) 2000-2008 Monitoring Plugins Development Team
+ * Copyright (c) 2000-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -27,7 +27,7 @@
  *****************************************************************************/
 
 const char *progname = "check_by_ssh";
-const char *copyright = "2000-2008";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
