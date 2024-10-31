@@ -180,7 +180,8 @@ void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount
 			if (!best_match) {
 				for (me = mount_list; me; me = me->me_next) {
 					size_t len = strlen(me->me_mountdir);
-					if ((!exact && (best_match_len <= len && len <= name_len && (len == 1 || strncmp(me->me_mountdir, d->name, len) == 0))) ||
+					if ((!exact &&
+						 (best_match_len <= len && len <= name_len && (len == 1 || strncmp(me->me_mountdir, d->name, len) == 0))) ||
 						(exact && strcmp(me->me_mountdir, d->name) == 0)) {
 						if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
 							best_match = me;

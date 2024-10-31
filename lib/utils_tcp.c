@@ -29,10 +29,10 @@
 #include "common.h"
 #include "utils_tcp.h"
 
-#define VERBOSE(message)                                                                                                                                                           \
-	do {                                                                                                                                                                           \
-		if (flags & NP_MATCH_VERBOSE)                                                                                                                                              \
-			puts(message);                                                                                                                                                         \
+#define VERBOSE(message)                                                                                                                   \
+	do {                                                                                                                                   \
+		if (flags & NP_MATCH_VERBOSE)                                                                                                      \
+			puts(message);                                                                                                                 \
 	} while (0)
 
 enum np_match_result np_expect_match(char *status, char **server_expect, int expect_count, int flags) {

@@ -375,7 +375,8 @@ int main(int argc, char **argv) {
 
 	temp_state_key->_filename = "var/statefile";
 	temp_state_data = np_state_read();
-	ok(this_monitoring_plugin->state->state_data != NULL, "Got state data now") || diag("Are you running in right directory? Will get coredump next if not");
+	ok(this_monitoring_plugin->state->state_data != NULL, "Got state data now") ||
+		diag("Are you running in right directory? Will get coredump next if not");
 	ok(this_monitoring_plugin->state->state_data->time == 1234567890, "Got time");
 	ok(!strcmp((char *)this_monitoring_plugin->state->state_data->data, "String to read"), "Data as expected");
 

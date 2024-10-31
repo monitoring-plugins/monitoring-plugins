@@ -140,7 +140,8 @@ int main(int argc, char **argv) {
 	ok(chld_err.lines == 0, "(array) Check for expected number of stderr lines");
 	ok(strcmp(chld_out.line[0], "this is a test via echo") == 0, "(array) Check line 1 for expected stdout output");
 	ok(strcmp(chld_out.line[1], "line two") == 0, "(array) Check line 2 for expected stdout output");
-	ok(strcmp(chld_out.line[2], "it's line 3 and (note space between '3' and 'and') $$ will not get evaluated") == 0, "(array) Check line 3 for expected stdout output");
+	ok(strcmp(chld_out.line[2], "it's line 3 and (note space between '3' and 'and') $$ will not get evaluated") == 0,
+	   "(array) Check line 3 for expected stdout output");
 	ok(result == 0, "(array) Checking exit code");
 
 	/* ensure everything is empty again */

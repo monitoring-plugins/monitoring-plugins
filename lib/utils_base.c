@@ -33,12 +33,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define np_free(ptr)                                                                                                                                                               \
-	{                                                                                                                                                                              \
-		if (ptr) {                                                                                                                                                                 \
-			free(ptr);                                                                                                                                                             \
-			ptr = NULL;                                                                                                                                                            \
-		}                                                                                                                                                                          \
+#define np_free(ptr)                                                                                                                       \
+	{                                                                                                                                      \
+		if (ptr) {                                                                                                                         \
+			free(ptr);                                                                                                                     \
+			ptr = NULL;                                                                                                                    \
+		}                                                                                                                                  \
 	}
 
 monitoring_plugin *this_monitoring_plugin = NULL;
@@ -511,7 +511,8 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data = NULL;
 
 	/* Calculate filename */
-	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(), (unsigned long)geteuid(), this_monitoring_plugin->plugin_name, this_state->name);
+	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(), (unsigned long)geteuid(),
+				   this_monitoring_plugin->plugin_name, this_state->name);
 	if (ret < 0)
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 
@@ -568,7 +569,13 @@ bool _np_state_read_file(FILE *f) {
 	int i;
 	int failure = 0;
 	time_t current_time, data_time;
-	enum { STATE_FILE_VERSION, STATE_DATA_VERSION, STATE_DATA_TIME, STATE_DATA_TEXT, STATE_DATA_END } expected = STATE_FILE_VERSION;
+	enum {
+		STATE_FILE_VERSION,
+		STATE_DATA_VERSION,
+		STATE_DATA_TIME,
+		STATE_DATA_TEXT,
+		STATE_DATA_END
+	} expected = STATE_FILE_VERSION;
 
 	time(&current_time);
 

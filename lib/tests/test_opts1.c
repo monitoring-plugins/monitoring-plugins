@@ -126,9 +126,11 @@ int main(int argc, char **argv) {
 	}
 
 	{
-		char *argv_test[] = {"prog_name", "--arg1=val1", "--extra-opts=@./config-opts.ini", "--extra-opts", "sect1@./config-opts.ini", "--arg2", (char *)NULL};
+		char *argv_test[] = {"prog_name", "--arg1=val1", "--extra-opts=@./config-opts.ini", "--extra-opts", "sect1@./config-opts.ini",
+							 "--arg2",    (char *)NULL};
 		argc_test = 6;
-		char *argv_known[] = {"prog_name", "--foo=Bar", "--this=Your Mother!", "--blank", "--one=two", "--arg1=val1", "--arg2", (char *)NULL};
+		char *argv_known[] = {"prog_name",   "--foo=Bar", "--this=Your Mother!", "--blank", "--one=two",
+							  "--arg1=val1", "--arg2",    (char *)NULL};
 		argv_new = np_extra_opts(&argc_test, argv_test, "check_disk");
 		ok(array_diff(argc_test, argv_new, 7, argv_known), "twice extra opts using two sections");
 		my_free(&argc_test, argv_new, argv_test);

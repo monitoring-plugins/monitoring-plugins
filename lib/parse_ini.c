@@ -42,16 +42,17 @@ typedef struct {
 
 static char *default_ini_file_names[] = {"monitoring-plugins.ini", "plugins.ini", "nagios-plugins.ini", NULL};
 
-static char *default_ini_path_names[] = {"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini", "/usr/local/etc/monitoring-plugins.ini",
-										 "/etc/monitoring-plugins/monitoring-plugins.ini", "/etc/monitoring-plugins.ini",
-										 /* deprecated path names (for backward compatibility): */
-										 "/etc/nagios/plugins.ini", "/usr/local/nagios/etc/plugins.ini", "/usr/local/etc/nagios/plugins.ini", "/etc/opt/nagios/plugins.ini",
-										 "/etc/nagios-plugins.ini", "/usr/local/etc/nagios-plugins.ini", "/etc/opt/nagios-plugins.ini", NULL};
+static char *default_ini_path_names[] = {
+	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini", "/usr/local/etc/monitoring-plugins.ini",
+	"/etc/monitoring-plugins/monitoring-plugins.ini", "/etc/monitoring-plugins.ini",
+	/* deprecated path names (for backward compatibility): */
+	"/etc/nagios/plugins.ini", "/usr/local/nagios/etc/plugins.ini", "/usr/local/etc/nagios/plugins.ini", "/etc/opt/nagios/plugins.ini",
+	"/etc/nagios-plugins.ini", "/usr/local/etc/nagios-plugins.ini", "/etc/opt/nagios-plugins.ini", NULL};
 
 /* eat all characters from a FILE pointer until n is encountered */
-#define GOBBLE_TO(f, c, n)                                                                                                                                                         \
-	do {                                                                                                                                                                           \
-		(c) = fgetc((f));                                                                                                                                                          \
+#define GOBBLE_TO(f, c, n)                                                                                                                 \
+	do {                                                                                                                                   \
+		(c) = fgetc((f));                                                                                                                  \
 	} while ((c) != EOF && (c) != (n))
 
 /* internal function that returns the constructed defaults options */
@@ -146,7 +147,11 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts) {
 	int c = 0;
 	bool status = false;
 	size_t i, stanza_len;
-	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate = NOSTANZA;
+	enum {
+		NOSTANZA,
+		WRONGSTANZA,
+		RIGHTSTANZA
+	} stanzastate = NOSTANZA;
 
 	stanza_len = strlen(stanza);
 
