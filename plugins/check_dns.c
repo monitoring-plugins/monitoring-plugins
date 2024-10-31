@@ -39,11 +39,11 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "runcmd.h"
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
-static int error_scan(char *, bool *);
-static bool ip_match_cidr(const char *, const char *);
-static unsigned long ip2long(const char *);
+static int error_scan(char * /*input_buffer*/, bool *);
+static bool ip_match_cidr(const char * /*addr*/, const char * /*cidr_ro*/);
+static unsigned long ip2long(const char * /*src*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -81,7 +81,8 @@ int main(int argc, char **argv) {
 	long microsec;
 	struct timeval tv;
 	bool parse_address = false; /* This flag scans for Address: but only after Name: */
-	output chld_out, chld_err;
+	output chld_out;
+	output chld_err;
 	bool is_nxdomain = false;
 
 	setlocale(LC_ALL, "");
@@ -204,7 +205,8 @@ int main(int argc, char **argv) {
 	}
 
 	if (addresses) {
-		int i, slen;
+		int i;
+		int slen;
 		char *adrp;
 		qsort(addresses, n_addresses, sizeof(*addresses), qstrcmp);
 		for (i = 0, slen = 1; i < n_addresses; i++) {
@@ -303,7 +305,9 @@ int main(int argc, char **argv) {
 }
 
 bool ip_match_cidr(const char *addr, const char *cidr_ro) {
-	char *subnet, *mask_c, *cidr = strdup(cidr_ro);
+	char *subnet;
+	char *mask_c;
+	char *cidr = strdup(cidr_ro);
 	int mask;
 	subnet = strtok(cidr, "/");
 	mask_c = strtok(NULL, "\0");
@@ -505,7 +509,7 @@ int process_arguments(int argc, char **argv) {
 	return validate_arguments();
 }
 
-int validate_arguments() {
+int validate_arguments(void) {
 	if (query_address[0] == 0) {
 		printf("missing --host argument\n");
 		return ERROR;
