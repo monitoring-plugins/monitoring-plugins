@@ -36,8 +36,7 @@ const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-static int process_arguments(int, char **);
-static int validate_arguments(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -50,25 +49,6 @@ static unsigned long outgoing_warning_threshold = 0L;
 static unsigned long outgoing_critical_threshold = 0L;
 
 int main(int argc, char **argv) {
-	int result = STATE_OK;
-	FILE *fp;
-	int line;
-	char input_buffer[MAX_INPUT_BUFFER];
-	char *temp_buffer;
-	time_t current_time;
-	char *error_message;
-	time_t timestamp = 0L;
-	unsigned long average_incoming_rate = 0L;
-	unsigned long average_outgoing_rate = 0L;
-	unsigned long maximum_incoming_rate = 0L;
-	unsigned long maximum_outgoing_rate = 0L;
-	unsigned long incoming_rate = 0L;
-	unsigned long outgoing_rate = 0L;
-	double adjusted_incoming_rate = 0.0;
-	double adjusted_outgoing_rate = 0.0;
-	char incoming_speed_rating[8];
-	char outgoing_speed_rating[8];
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -80,12 +60,18 @@ int main(int argc, char **argv) {
 		usage4(_("Could not parse arguments"));
 
 	/* open the MRTG log file for reading */
-	fp = fopen(log_file, "r");
-	if (fp == NULL)
+	FILE *mrtg_log_file_ptr = fopen(log_file, "r");
+	if (mrtg_log_file_ptr == NULL)
 		usage4(_("Unable to open MRTG log file"));
 
-	line = 0;
-	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
+	time_t timestamp = 0L;
+	char input_buffer[MAX_INPUT_BUFFER];
+	unsigned long average_incoming_rate = 0L;
+	unsigned long average_outgoing_rate = 0L;
+	unsigned long maximum_incoming_rate = 0L;
+	unsigned long maximum_outgoing_rate = 0L;
+	int line = 0;
+	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, mrtg_log_file_ptr)) {
 
 		line++;
 
@@ -99,7 +85,7 @@ int main(int argc, char **argv) {
 			break;
 
 		/* grab the timestamp */
-		temp_buffer = strtok(input_buffer, " ");
+		char *temp_buffer = strtok(input_buffer, " ");
 		timestamp = strtoul(temp_buffer, NULL, 10);
 
 		/* grab the average incoming transfer rate */
@@ -120,17 +106,20 @@ int main(int argc, char **argv) {
 	}
 
 	/* close the log file */
-	fclose(fp);
+	fclose(mrtg_log_file_ptr);
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2)
 		usage4(_("Unable to process MRTG log file"));
 
 	/* make sure the MRTG data isn't too old */
+	time_t current_time;
 	time(&current_time);
 	if ((expire_minutes > 0) && (current_time - timestamp) > (expire_minutes * 60))
 		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
 
+	unsigned long incoming_rate = 0L;
+	unsigned long outgoing_rate = 0L;
 	/* else check the incoming/outgoing rates */
 	if (use_average) {
 		incoming_rate = average_incoming_rate;
@@ -140,6 +129,8 @@ int main(int argc, char **argv) {
 		outgoing_rate = maximum_outgoing_rate;
 	}
 
+	double adjusted_incoming_rate = 0.0;
+	char incoming_speed_rating[8];
 	/* report incoming traffic in Bytes/sec */
 	if (incoming_rate < 1024) {
 		strcpy(incoming_speed_rating, "B");
@@ -158,6 +149,8 @@ int main(int argc, char **argv) {
 		adjusted_incoming_rate = (double)(incoming_rate / 1024.0 / 1024.0);
 	}
 
+	double adjusted_outgoing_rate = 0.0;
+	char outgoing_speed_rating[8];
 	/* report outgoing traffic in Bytes/sec */
 	if (outgoing_rate < 1024) {
 		strcpy(outgoing_speed_rating, "B");
@@ -176,12 +169,14 @@ int main(int argc, char **argv) {
 		adjusted_outgoing_rate = (double)(outgoing_rate / 1024.0 / 1024.0);
 	}
 
+	int result = STATE_OK;
 	if (incoming_rate > incoming_critical_threshold || outgoing_rate > outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
 	} else if (incoming_rate > incoming_warning_threshold || outgoing_rate > outgoing_warning_threshold) {
 		result = STATE_WARNING;
 	}
 
+	char *error_message;
 	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"), (use_average) ? _("Avg") : _("Max"),
 			  adjusted_incoming_rate, incoming_speed_rating, (use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
 			  outgoing_speed_rating,
@@ -197,9 +192,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"filename", required_argument, 0, 'F'},
 									   {"expires", required_argument, 0, 'e'},
 									   {"aggregation", required_argument, 0, 'a'},
@@ -212,22 +204,24 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		return ERROR;
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
-			strcpy(argv[c], "-t");
-		else if (strcmp("-wt", argv[c]) == 0)
-			strcpy(argv[c], "-w");
-		else if (strcmp("-ct", argv[c]) == 0)
-			strcpy(argv[c], "-c");
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0)
+			strcpy(argv[i], "-t");
+		else if (strcmp("-wt", argv[i]) == 0)
+			strcpy(argv[i], "-w");
+		else if (strcmp("-ct", argv[i]) == 0)
+			strcpy(argv[i], "-c");
 	}
 
+	int option_char;
+	int option = 0;
 	while (1) {
-		c = getopt_long(argc, argv, "hVF:e:a:c:w:", longopts, &option);
+		option_char = getopt_long(argc, argv, "hVF:e:a:c:w:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'F': /* input file */
 			log_file = optarg;
 			break;
@@ -257,43 +251,41 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (argc > c && log_file == NULL) {
-		log_file = argv[c++];
+	option_char = optind;
+	if (argc > option_char && log_file == NULL) {
+		log_file = argv[option_char++];
 	}
 
-	if (argc > c && expire_minutes == -1) {
-		expire_minutes = atoi(argv[c++]);
+	if (argc > option_char && expire_minutes == -1) {
+		expire_minutes = atoi(argv[option_char++]);
 	}
 
-	if (argc > c && strcmp(argv[c], "MAX") == 0) {
+	if (argc > option_char && strcmp(argv[option_char], "MAX") == 0) {
 		use_average = false;
-		c++;
-	} else if (argc > c && strcmp(argv[c], "AVG") == 0) {
+		option_char++;
+	} else if (argc > option_char && strcmp(argv[option_char], "AVG") == 0) {
 		use_average = true;
-		c++;
+		option_char++;
 	}
 
-	if (argc > c && incoming_warning_threshold == 0) {
-		incoming_warning_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && incoming_warning_threshold == 0) {
+		incoming_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > c && incoming_critical_threshold == 0) {
-		incoming_critical_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && incoming_critical_threshold == 0) {
+		incoming_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > c && outgoing_warning_threshold == 0) {
-		outgoing_warning_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && outgoing_warning_threshold == 0) {
+		outgoing_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > c && outgoing_critical_threshold == 0) {
-		outgoing_critical_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && outgoing_critical_threshold == 0) {
+		outgoing_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	return validate_arguments();
+	return OK;
 }
-
-int validate_arguments(void) { return OK; }
 
 void print_help(void) {
 	print_revision(progname, NP_VERSION);
