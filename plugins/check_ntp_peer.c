@@ -61,12 +61,12 @@ static char *tcrit = "0:";
 static bool syncsource_found = false;
 static bool li_alarm = false;
 
-int process_arguments(int, char **);
-thresholds *offset_thresholds = NULL;
-thresholds *jitter_thresholds = NULL;
-thresholds *stratum_thresholds = NULL;
-thresholds *truechimer_thresholds = NULL;
-void print_help(void);
+static int process_arguments(int, char **);
+static thresholds *offset_thresholds = NULL;
+static thresholds *jitter_thresholds = NULL;
+static thresholds *stratum_thresholds = NULL;
+static thresholds *truechimer_thresholds = NULL;
+static void print_help(void);
 void print_usage(void);
 
 /* max size of control message data */
