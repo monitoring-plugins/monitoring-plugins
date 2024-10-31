@@ -111,7 +111,8 @@ int main(int argc, char **argv) {
 
 	unsigned int server_version;
 
-	struct timeval start_timeval, end_timeval;
+	struct timeval start_timeval;
+	struct timeval end_timeval;
 	double conn_time = 0.0;
 	double query_time = 0.0;
 
@@ -202,7 +203,8 @@ int main(int argc, char **argv) {
 	}
 
 	if (verbose) {
-		const char *dbname, *host;
+		const char *dbname;
+		const char *host;
 
 		dbname = dbi_conn_get_option(conn, "dbname");
 		host = dbi_conn_get_option(conn, "host");
@@ -424,7 +426,8 @@ int process_arguments(int argc, char **argv) {
 		case 'o': {
 			driver_option_t *new;
 
-			char *k, *v;
+			char *k;
+			char *v;
 
 			k = optarg;
 			v = strchr(k, (int)'=');
@@ -462,7 +465,7 @@ int process_arguments(int argc, char **argv) {
 	return validate_arguments();
 }
 
-int validate_arguments() {
+int validate_arguments(void) {
 	if (!np_dbi_driver)
 		usage("Must specify a DBI driver");
 
@@ -639,7 +642,8 @@ double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type) {
 			printf("CRITICAL - result value is not a numeric: %s\n", val_str);
 			*field_type = DBI_TYPE_ERROR;
 			return NAN;
-		} else if ((endptr != NULL) && (*endptr != '\0')) {
+		}
+		if ((endptr != NULL) && (*endptr != '\0')) {
 			if (verbose)
 				printf("Garbage after value: %s\n", endptr);
 		}
@@ -716,7 +720,8 @@ double get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str,
 int do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *res_time) {
 	dbi_result res;
 
-	struct timeval timeval_start, timeval_end;
+	struct timeval timeval_start;
+	struct timeval timeval_end;
 	int status = STATE_OK;
 
 	assert(np_dbi_query);
