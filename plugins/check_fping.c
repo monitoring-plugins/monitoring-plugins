@@ -47,7 +47,7 @@ enum {
 };
 
 static int textscan(char *buf);
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int get_threshold(char *arg, char *rv[2]);
 static void print_help(void);
 void print_usage(void);
