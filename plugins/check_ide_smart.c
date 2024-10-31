@@ -118,15 +118,16 @@ struct {
 	char *text;
 }
 
-static offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"}, {0x05, "Aborted"}, {0x06, "Failed"}, {0, 0}};
+static offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"},
+								{0x05, "Aborted"},      {0x06, "Failed"},    {0, 0}};
 
 static struct {
 	__u8 value;
 	char *text;
 } smart_command[] = {{SMART_ENABLE, "SMART_ENABLE"},
-				   {SMART_DISABLE, "SMART_DISABLE"},
-				   {SMART_IMMEDIATE_OFFLINE, "SMART_IMMEDIATE_OFFLINE"},
-				   {SMART_AUTO_OFFLINE, "SMART_AUTO_OFFLINE"}};
+					 {SMART_DISABLE, "SMART_DISABLE"},
+					 {SMART_IMMEDIATE_OFFLINE, "SMART_IMMEDIATE_OFFLINE"},
+					 {SMART_AUTO_OFFLINE, "SMART_AUTO_OFFLINE"}};
 
 /* Index to smart_command table, keep in order */
 enum SmartCommand {
