@@ -36,7 +36,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static int validate_arguments(void);
 static void print_help(void);
 void print_usage(void);
@@ -51,17 +51,6 @@ static char *label;
 static char *units;
 
 int main(int argc, char **argv) {
-	int result = STATE_OK;
-	FILE *fp;
-	int line;
-	char input_buffer[MAX_INPUT_BUFFER];
-	char *temp_buffer;
-	time_t current_time;
-	time_t timestamp = 0L;
-	unsigned long average_value_rate = 0L;
-	unsigned long maximum_value_rate = 0L;
-	unsigned long rate = 0L;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -73,14 +62,18 @@ int main(int argc, char **argv) {
 		usage4(_("Could not parse arguments\n"));
 
 	/* open the MRTG log file for reading */
-	fp = fopen(log_file, "r");
-	if (fp == NULL) {
+	FILE *mtrg_log_file = fopen(log_file, "r");
+	if (mtrg_log_file == NULL) {
 		printf(_("Unable to open MRTG log file\n"));
 		return STATE_UNKNOWN;
 	}
 
-	line = 0;
-	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
+	time_t timestamp = 0L;
+	unsigned long average_value_rate = 0L;
+	unsigned long maximum_value_rate = 0L;
+	char input_buffer[MAX_INPUT_BUFFER];
+	int line = 0;
+	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, mtrg_log_file)) {
 
 		line++;
 
@@ -93,7 +86,7 @@ int main(int argc, char **argv) {
 			break;
 
 		/* grab the timestamp */
-		temp_buffer = strtok(input_buffer, " ");
+		char *temp_buffer = strtok(input_buffer, " ");
 		timestamp = strtoul(temp_buffer, NULL, 10);
 
 		/* grab the average value 1 rate */
@@ -118,7 +111,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* close the log file */
-	fclose(fp);
+	fclose(mtrg_log_file);
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2) {
@@ -127,18 +120,21 @@ int main(int argc, char **argv) {
 	}
 
 	/* make sure the MRTG data isn't too old */
+	time_t current_time;
 	time(&current_time);
 	if (expire_minutes > 0 && (current_time - timestamp) > (expire_minutes * 60)) {
 		printf(_("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
 		return STATE_WARNING;
 	}
 
+	unsigned long rate = 0L;
 	/* else check the incoming/outgoing rates */
 	if (use_average)
 		rate = average_value_rate;
 	else
 		rate = maximum_value_rate;
 
+	int result = STATE_OK;
 	if (rate > value_critical_threshold)
 		result = STATE_CRITICAL;
 	else if (rate > value_warning_threshold)
@@ -153,9 +149,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {
 		{"logfile", required_argument, 0, 'F'},  {"expires", required_argument, 0, 'e'},  {"aggregation", required_argument, 0, 'a'},
 		{"variable", required_argument, 0, 'v'}, {"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},
@@ -165,22 +158,24 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2)
 		return ERROR;
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
-			strcpy(argv[c], "-t");
-		else if (strcmp("-wt", argv[c]) == 0)
-			strcpy(argv[c], "-w");
-		else if (strcmp("-ct", argv[c]) == 0)
-			strcpy(argv[c], "-c");
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0)
+			strcpy(argv[i], "-t");
+		else if (strcmp("-wt", argv[i]) == 0)
+			strcpy(argv[i], "-w");
+		else if (strcmp("-ct", argv[i]) == 0)
+			strcpy(argv[i], "-c");
 	}
 
+	int option_char;
+	int option = 0;
 	while (1) {
-		c = getopt_long(argc, argv, "hVF:e:a:v:c:w:l:u:", longopts, &option);
+		option_char = getopt_long(argc, argv, "hVF:e:a:v:c:w:l:u:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
+		switch (option_char) {
 		case 'F': /* input file */
 			log_file = optarg;
 			break;
@@ -221,48 +216,48 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (log_file == NULL && argc > c) {
-		log_file = argv[c++];
+	option_char = optind;
+	if (log_file == NULL && argc > option_char) {
+		log_file = argv[option_char++];
 	}
 
-	if (expire_minutes <= 0 && argc > c) {
-		if (is_intpos(argv[c]))
-			expire_minutes = atoi(argv[c++]);
+	if (expire_minutes <= 0 && argc > option_char) {
+		if (is_intpos(argv[option_char]))
+			expire_minutes = atoi(argv[option_char++]);
 		else
-			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[c], progname);
+			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[option_char], progname);
 	}
 
-	if (argc > c && strcmp(argv[c], "MAX") == 0) {
+	if (argc > option_char && strcmp(argv[option_char], "MAX") == 0) {
 		use_average = false;
-		c++;
-	} else if (argc > c && strcmp(argv[c], "AVG") == 0) {
+		option_char++;
+	} else if (argc > option_char && strcmp(argv[option_char], "AVG") == 0) {
 		use_average = true;
-		c++;
+		option_char++;
 	}
 
-	if (argc > c && variable_number == -1) {
-		variable_number = atoi(argv[c++]);
+	if (argc > option_char && variable_number == -1) {
+		variable_number = atoi(argv[option_char++]);
 		if (variable_number < 1 || variable_number > 2) {
-			printf("%s :", argv[c]);
+			printf("%s :", argv[option_char]);
 			usage(_("Invalid variable number\n"));
 		}
 	}
 
-	if (argc > c && value_warning_threshold == 0) {
-		value_warning_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && value_warning_threshold == 0) {
+		value_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > c && value_critical_threshold == 0) {
-		value_critical_threshold = strtoul(argv[c++], NULL, 10);
+	if (argc > option_char && value_critical_threshold == 0) {
+		value_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > c && strlen(label) == 0) {
-		label = argv[c++];
+	if (argc > option_char && strlen(label) == 0) {
+		label = argv[option_char++];
 	}
 
-	if (argc > c && strlen(units) == 0) {
-		units = argv[c++];
+	if (argc > option_char && strlen(units) == 0) {
+		units = argv[option_char++];
 	}
 
 	return validate_arguments();
