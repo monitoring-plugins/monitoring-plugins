@@ -4,7 +4,7 @@
  *
  * License: GPL
  * Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)
- * Copyright (c) 2007 Monitoring Plugins Development Team
+ * Copyright (c) 2007-2024 Monitoring Plugins Development Team
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 const char *progname = "check_cluster";
-const char *copyright = "2000-2007";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
