@@ -4,7 +4,7 @@
  *
  * License: GPL
  * Copyright (c) 1999 Ethan Galstad (nagios@nagios.org)
- * Copyright (c) 2003-2008 Monitoring Plugins Development Team
+ * Copyright (c) 2003-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
