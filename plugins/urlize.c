@@ -3,7 +3,7 @@
  * Monitoring urlize plugin
  *
  * License: GPL
- * Copyright (c) 2000-2007 Monitoring Plugins Development Team
+ * Copyright (c) 2000-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
