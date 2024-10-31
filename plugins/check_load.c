@@ -3,7 +3,7 @@
  * Monitoring check_load plugin
  *
  * License: GPL
- * Copyright (c) 1999-2023 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 const char *progname = "check_load";
-const char *copyright = "1999-2023";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "./common.h"
