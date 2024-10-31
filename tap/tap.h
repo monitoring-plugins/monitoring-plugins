@@ -28,52 +28,46 @@
    and requires the caller to add the final comma if they've omitted
    the optional arguments */
 #ifdef __GNUC__
-# define ok(e, test, ...) ((e) ?					\
-			   _gen_result(1, __func__, __FILE__, __LINE__,	\
-				       test, ## __VA_ARGS__) :		\
-			   _gen_result(0, __func__, __FILE__, __LINE__,	\
-				       test, ## __VA_ARGS__))
+#	define ok(e, test, ...)                                                                                                               \
+		((e) ? _gen_result(1, __func__, __FILE__, __LINE__, test, ##__VA_ARGS__)                                                           \
+			 : _gen_result(0, __func__, __FILE__, __LINE__, test, ##__VA_ARGS__))
 
-# define ok1(e) ((e) ?							\
-		 _gen_result(1, __func__, __FILE__, __LINE__, "%s", #e) : \
-		 _gen_result(0, __func__, __FILE__, __LINE__, "%s", #e))
+#	define ok1(e) ((e) ? _gen_result(1, __func__, __FILE__, __LINE__, "%s", #e) : _gen_result(0, __func__, __FILE__, __LINE__, "%s", #e))
 
-# define pass(test, ...) ok(1, test, ## __VA_ARGS__);
-# define fail(test, ...) ok(0, test, ## __VA_ARGS__);
+#	define pass(test, ...) ok(1, test, ##__VA_ARGS__);
+#	define fail(test, ...) ok(0, test, ##__VA_ARGS__);
 
-# define skip_start(test, n, fmt, ...)			\
-	do {						\
-		if((test)) {				\
-			skip(n, fmt, ## __VA_ARGS__);	\
-			continue;			\
-		}
+#	define skip_start(test, n, fmt, ...)                                                                                                  \
+		do {                                                                                                                               \
+			if ((test)) {                                                                                                                  \
+				skip(n, fmt, ##__VA_ARGS__);                                                                                               \
+				continue;                                                                                                                  \
+			}
 #else /* __GNUC__ */
 /* The original tap.h used to test if __STDC_VERSION__ >= 199901L here. This
  * doesn't seem to work on HP-UX even though the code compile fine. I'm not
  * sure how to add an exception here for HP-UX so I just removed the check
  * for now */
-# define ok(e, ...) ((e) ?						\
-		     _gen_result(1, __func__, __FILE__, __LINE__,	\
-				 __VA_ARGS__) :				\
-		     _gen_result(0, __func__, __FILE__, __LINE__,	\
-				 __VA_ARGS__))
+#	define ok(e, ...)                                                                                                                     \
+		((e) ? _gen_result(1, __func__, __FILE__, __LINE__, __VA_ARGS__) : _gen_result(0, __func__, __FILE__, __LINE__, __VA_ARGS__))
 
-# define ok1(e) ((e) ?							\
-		 _gen_result(1, __func__, __FILE__, __LINE__, "%s", #e) : \
-		 _gen_result(0, __func__, __FILE__, __LINE__, "%s", #e))
+#	define ok1(e) ((e) ? _gen_result(1, __func__, __FILE__, __LINE__, "%s", #e) : _gen_result(0, __func__, __FILE__, __LINE__, "%s", #e))
 
-# define pass(...) ok(1, __VA_ARGS__);
-# define fail(...) ok(0, __VA_ARGS__);
+#	define pass(...) ok(1, __VA_ARGS__);
+#	define fail(...) ok(0, __VA_ARGS__);
 
-# define skip_start(test, n, ...)			\
-	do {						\
-		if((test)) {				\
-			skip(n,  __VA_ARGS__);		\
-			continue;			\
-		}
+#	define skip_start(test, n, ...)                                                                                                       \
+		do {                                                                                                                               \
+			if ((test)) {                                                                                                                  \
+				skip(n, __VA_ARGS__);                                                                                                      \
+				continue;                                                                                                                  \
+			}
 #endif /* __GNUC__ */
 
-# define skip_end } while(0);
+#define skip_end                                                                                                                           \
+	}                                                                                                                                      \
+	while (0)                                                                                                                              \
+		;
 
 unsigned int _gen_result(int, const char *, char *, unsigned int, char *, ...);
 
