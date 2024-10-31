@@ -3,7 +3,7 @@
  * Monitoring check_curl plugin
  *
  * License: GPL
- * Copyright (c) 1999-2019 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -34,7 +34,7 @@
  *****************************************************************************/
 const char *progname = "check_curl";
 
-const char *copyright = "2006-2019";
+const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include <stdbool.h>
