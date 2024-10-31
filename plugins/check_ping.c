@@ -47,8 +47,8 @@ enum {
 	DEFAULT_MAX_PACKETS = 5    /* default no. of ICMP ECHO packets */
 };
 
-static int process_arguments(int, char **);
-static int get_threshold(char *, float *, int *);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static int get_threshold(char * /*arg*/, float * /*trta*/, int * /*tpl*/);
 static int validate_arguments(void);
 static int run_ping(const char *cmd, const char *addr);
 static int error_scan(char buf[MAX_INPUT_BUFFER], const char *addr);
