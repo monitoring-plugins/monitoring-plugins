@@ -3,7 +3,7 @@
 * Monitoring check_radius plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Monitoring Plugins Development Team
+* Copyright (c) 1999-2024 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 const char *progname = "check_radius";
-const char *copyright = "2000-2008";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"

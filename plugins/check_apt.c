@@ -3,7 +3,7 @@
 * Monitoring check_apt plugin
 *
 * License: GPL
-* Copyright (c) 2006-2008 Monitoring Plugins Development Team
+* Copyright (c) 2006-2024 Monitoring Plugins Development Team
 *
 * Original author: Sean Finney
 *
@@ -30,7 +30,7 @@
 *****************************************************************************/
 
 const char *progname = "check_apt";
-const char *copyright = "2006-2008";
+const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"

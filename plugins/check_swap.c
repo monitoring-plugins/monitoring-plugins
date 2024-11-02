@@ -4,7 +4,7 @@
  *
  * License: GPL
  * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
- * Copyright (c) 2000-2023 Monitoring Plugins Development Team
+ * Copyright (c) 2000-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -27,21 +27,21 @@
  *
  *****************************************************************************/
 
+#include <stdint.h>
 const char *progname = "check_swap";
-const char *copyright = "2000-2023";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-
 #ifdef HAVE_DECL_SWAPCTL
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_SWAP_H
-#include <sys/swap.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
+#	ifdef HAVE_SYS_PARAM_H
+#		include <sys/param.h>
+#	endif
+#	ifdef HAVE_SYS_SWAP_H
+#		include <sys/swap.h>
+#	endif
+#	ifdef HAVE_SYS_STAT_H
+#		include <sys/stat.h>
+#	endif
 #endif
 
 #include "./check_swap.d/check_swap.h"
@@ -52,11 +52,13 @@ typedef struct {
 	swap_config config;
 } swap_config_wrapper;
 
-swap_config_wrapper process_arguments(swap_config_wrapper config, int argc,
-									  char **argv);
-void print_usage();
-void print_help(swap_config);
+static swap_config_wrapper process_arguments(int argc, char **argv);
+void print_usage(void);
+static void print_help(swap_config /*config*/);
 
+static int verbose;
+
+#define HUNDRED_PERCENT 100
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -69,11 +71,7 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	swap_config_wrapper tmp = {.errorcode = OK};
-
-	tmp.config = swap_config_init();
-
-	tmp = process_arguments(tmp, argc, argv);
+	swap_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode != OK) {
 		usage4(_("Could not parse arguments"));
@@ -87,8 +85,7 @@ int main(int argc, char **argv) {
 
 	/* if total_swap_mb == 0, let's not divide by 0 */
 	if (data.metrics.total != 0) {
-		percent_used =
-			100 * ((double)data.metrics.used) / ((double)data.metrics.total);
+		percent_used = HUNDRED_PERCENT * ((double)data.metrics.used) / ((double)data.metrics.total);
 	} else {
 		printf(_("SWAP %s - Swap is either disabled, not present, or of zero "
 				 "size."),
@@ -96,77 +93,97 @@ int main(int argc, char **argv) {
 		exit(config.no_swap_state);
 	}
 
-	if (config.verbose) {
+	if (verbose) {
 		printf("Computed usage percentage: %g\n", percent_used);
 	}
 
 	uint64_t warn_print = config.warn.value;
 	if (config.warn.is_percentage) {
-		warn_print = config.warn.value * (data.metrics.total / 100);
+		warn_print = config.warn.value * (data.metrics.total / HUNDRED_PERCENT);
 	}
 
 	uint64_t crit_print = config.crit.value;
 	if (config.crit.is_percentage) {
-		crit_print = config.crit.value * (data.metrics.total / 100);
+		crit_print = config.crit.value * (data.metrics.total / HUNDRED_PERCENT);
 	}
 
-	char *perfdata =
-		perfdata_uint64("swap", data.metrics.free, "B", true, warn_print, true,
-						crit_print, true, 0, true, (long)data.metrics.total);
+	char *perfdata = perfdata_uint64("swap", data.metrics.free, "B", true, warn_print, true, crit_print, true, 0, true, data.metrics.total);
 
-	if (config.verbose > 1) {
+	if (verbose > 1) {
 		printf("Warn threshold value: %" PRIu64 "\n", config.warn.value);
 	}
 
-	if ((config.warn.is_percentage &&
-		 (percent_used >= (100 - config.warn.value))) ||
+	if ((config.warn.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.warn.value))) ||
 		config.warn.value >= data.metrics.free) {
 		data.statusCode = max_state(data.statusCode, STATE_WARNING);
 	}
 
-	if (config.verbose > 1) {
+	if (verbose > 1) {
 		printf("Crit threshold value: %" PRIu64 "\n", config.crit.value);
 	}
 
-	if ((config.crit.is_percentage &&
-		 (percent_used >= (100 - config.crit.value))) ||
+	if ((config.crit.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.crit.value))) ||
 		config.crit.value >= data.metrics.free) {
 		data.statusCode = max_state(data.statusCode, STATE_CRITICAL);
 	}
 
-	printf(_("SWAP %s - %g%% free (%lluMB out of %lluMB) %s|%s\n"),
-		   state_text(data.statusCode), (100 - percent_used), data.metrics.free,
-		   data.metrics.total, status, perfdata);
+	printf(_("SWAP %s - %g%% free (%lluMB out of %lluMB) %s|%s\n"), state_text(data.statusCode), (HUNDRED_PERCENT - percent_used),
+		   data.metrics.free, data.metrics.total, status, perfdata);
 
 	exit(data.statusCode);
 }
 
+int check_swap(float free_swap_mb, float total_swap_mb, swap_config config) {
+	if (total_swap_mb == 0) {
+		return config.no_swap_state;
+	}
+
+	uint64_t free_swap = (uint64_t)(free_swap_mb * (1024 * 1024)); /* Convert back to bytes as warn and crit specified in bytes */
+
+	if (!config.crit.is_percentage && config.crit.value >= free_swap) {
+		return STATE_CRITICAL;
+	}
+	if (!config.warn.is_percentage && config.warn.value >= free_swap) {
+		return STATE_WARNING;
+	}
+
+	uint64_t usage_percentage = (uint64_t)((total_swap_mb - free_swap_mb) / total_swap_mb) * HUNDRED_PERCENT;
+
+	if (config.crit.is_percentage && config.crit.value != 0 && usage_percentage >= (HUNDRED_PERCENT - config.crit.value)) {
+		return STATE_CRITICAL;
+	}
+
+	if (config.warn.is_percentage && config.warn.value != 0 && usage_percentage >= (HUNDRED_PERCENT - config.warn.value)) {
+		return STATE_WARNING;
+	}
+
+	return STATE_OK;
+}
+
 /* process command-line arguments */
-swap_config_wrapper process_arguments(swap_config_wrapper conf_wrapper,
-									  int argc, char **argv) {
+swap_config_wrapper process_arguments(int argc, char **argv) {
+	swap_config_wrapper conf_wrapper = {.errorcode = OK};
+	conf_wrapper.config = swap_config_init();
+
 	if (argc < 2) {
 		conf_wrapper.errorcode = ERROR;
 		return conf_wrapper;
 	}
 
-	int option = 0;
-	static struct option longopts[] = {{"warning", required_argument, 0, 'w'},
-									   {"critical", required_argument, 0, 'c'},
-									   {"allswaps", no_argument, 0, 'a'},
-									   {"no-swap", required_argument, 0, 'n'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {{"warning", required_argument, 0, 'w'}, {"critical", required_argument, 0, 'c'},
+									   {"allswaps", no_argument, 0, 'a'},      {"no-swap", required_argument, 0, 'n'},
+									   {"verbose", no_argument, 0, 'v'},       {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},          {0, 0, 0, 0}};
 
-	int c = 0; /* option character */
 	while (true) {
-		c = getopt_long(argc, argv, "+?Vvhac:w:n:", longopts, &option);
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "+?Vvhac:w:n:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
-		switch (c) {
+		switch (option_char) {
 		case 'w': /* warning size threshold */
 		{
 			/*
@@ -183,22 +200,18 @@ swap_config_wrapper process_arguments(swap_config_wrapper conf_wrapper,
 				conf_wrapper.config.warn.is_percentage = true;
 				optarg[length - 1] = '\0';
 				if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
-					if (conf_wrapper.config.warn.value > 100) {
-						usage4(
-							_("Warning threshold percentage must be <= 100!"));
+					if (conf_wrapper.config.warn.value > HUNDRED_PERCENT) {
+						usage4(_("Warning threshold percentage must be <= 100!"));
 					}
 				}
 				break;
-			} else {
-				/* It's Bytes */
-				conf_wrapper.config.warn.is_percentage = false;
-				if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
-					break;
-				} else {
-					usage4(_("Warning threshold be positive integer or "
-							 "percentage!"));
-				}
+			} /* It's Bytes */
+			conf_wrapper.config.warn.is_percentage = false;
+			if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
+				break;
 			}
+			usage4(_("Warning threshold be positive integer or "
+					 "percentage!"));
 		}
 		case 'c': /* critical size threshold */
 		{
@@ -216,35 +229,30 @@ swap_config_wrapper process_arguments(swap_config_wrapper conf_wrapper,
 				conf_wrapper.config.crit.is_percentage = true;
 				optarg[length - 1] = '\0';
 				if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
-					if (conf_wrapper.config.crit.value > 100) {
-						usage4(
-							_("Critical threshold percentage must be <= 100!"));
+					if (conf_wrapper.config.crit.value > HUNDRED_PERCENT) {
+						usage4(_("Critical threshold percentage must be <= 100!"));
 					}
 				}
 				break;
-			} else {
-				/* It's Bytes */
-				conf_wrapper.config.crit.is_percentage = false;
-				if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
-					break;
-				} else {
-					usage4(_("Critical threshold be positive integer or "
-							 "percentage!"));
-				}
+			} /* It's Bytes */
+			conf_wrapper.config.crit.is_percentage = false;
+			if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
+				break;
 			}
+			usage4(_("Critical threshold be positive integer or "
+					 "percentage!"));
 		}
 		case 'a': /* all swap */
 			conf_wrapper.config.allswaps = true;
 			break;
 		case 'n':
-			if ((conf_wrapper.config.no_swap_state =
-					 mp_translate_state(optarg)) == ERROR) {
+			if ((conf_wrapper.config.no_swap_state = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("no-swap result must be a valid state name (OK, "
 						 "WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			break;
 		case 'v': /* verbose */
-			conf_wrapper.config.verbose++;
+			verbose++;
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -257,16 +265,12 @@ swap_config_wrapper process_arguments(swap_config_wrapper conf_wrapper,
 		}
 	}
 
-	c = optind;
-
-	if (conf_wrapper.config.warn.value == 0 &&
-		conf_wrapper.config.crit.value == 0) {
+	if (conf_wrapper.config.warn.value == 0 && conf_wrapper.config.crit.value == 0) {
 		conf_wrapper.errorcode = ERROR;
 		return conf_wrapper;
-	} else if ((conf_wrapper.config.warn.is_percentage ==
-				conf_wrapper.config.crit.is_percentage) &&
-			   (conf_wrapper.config.warn.value <
-				conf_wrapper.config.crit.value)) {
+	}
+	if ((conf_wrapper.config.warn.is_percentage == conf_wrapper.config.crit.is_percentage) &&
+		(conf_wrapper.config.warn.value < conf_wrapper.config.crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn
 		 * is percentage and crit is absolute. We cannot determine the condition
 		 * at this point since we dont know the value of total swap yet
@@ -304,8 +308,7 @@ void print_help(swap_config config) {
 	printf("    %s\n", _("Exit with CRITICAL status if less than PERCENT of "
 						 "swap space is free"));
 	printf(" %s\n", "-a, --allswaps");
-	printf("    %s\n",
-		   _("Conduct comparisons for all swap partitions, one by one"));
+	printf("    %s\n", _("Conduct comparisons for all swap partitions, one by one"));
 	printf(" %s\n", "-n, --no-swap=<ok|warning|critical|unknown>");
 	printf("    %s %s\n",
 		   _("Resulting state when there is no swap regardless of thresholds. "
@@ -317,14 +320,12 @@ void print_help(swap_config config) {
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("Both INTEGER and PERCENT thresholds can be specified, "
 					  "they are all checked."));
-	printf(
-		" %s\n",
-		_("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
+	printf(" %s\n", _("On AIX, if -a is specified, uses lsps -a, otherwise uses lsps -s."));
 
 	printf(UT_SUPPORT);
 }
 
-void print_usage() {
+void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf(" %s [-av] -w <percent_free>%% -c <percent_free>%%\n", progname);
 	printf("  -w <bytes_free> -c <bytes_free> [-n <state>]\n");

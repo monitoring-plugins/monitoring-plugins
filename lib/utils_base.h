@@ -3,7 +3,7 @@
 /* Header file for Monitoring Plugins utils_base.c */
 
 #ifndef USE_OPENSSL
-# include "sha256.h"
+#	include "sha256.h"
 #endif
 
 /* This file holds header information for thresholds - use this in preference to
@@ -20,44 +20,43 @@
 #define INSIDE  1
 
 typedef struct range_struct {
-	double	start;
+	double start;
 	bool start_infinity;
-	double	end;
-	int	end_infinity;
-	int	alert_on;		/* OUTSIDE (default) or INSIDE */
-	char* text; /* original unparsed text input */
-	} range;
+	double end;
+	int end_infinity;
+	int alert_on; /* OUTSIDE (default) or INSIDE */
+	char *text;   /* original unparsed text input */
+} range;
 
 typedef struct thresholds_struct {
-	range	*warning;
-	range	*critical;
-	} thresholds;
+	range *warning;
+	range *critical;
+} thresholds;
 
 #define NP_STATE_FORMAT_VERSION 1
 
 typedef struct state_data_struct {
-	time_t	time;
-	void	*data;
-	int	length; /* Of binary data */
-	} state_data;
-
+	time_t time;
+	void *data;
+	int length; /* Of binary data */
+} state_data;
 
 typedef struct state_key_struct {
-	char       *name;
-	char       *plugin_name;
-	int        data_version;
-	char       *_filename;
+	char *name;
+	char *plugin_name;
+	int data_version;
+	char *_filename;
 	state_data *state_data;
-	} state_key;
+} state_key;
 
 typedef struct np_struct {
-	char      *plugin_name;
+	char *plugin_name;
 	state_key *state;
-	int       argc;
-	char      **argv;
-	} monitoring_plugin;
+	int argc;
+	char **argv;
+} monitoring_plugin;
 
-range *parse_range_string (char *);
+range *parse_range_string(char *);
 int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
@@ -71,13 +70,13 @@ extern unsigned int timeout_interval;
 /* All possible characters in a threshold range */
 #define NP_THRESHOLDS_CHARS "-0123456789.:@~"
 
-char *np_escaped_string (const char *);
+char *np_escaped_string(const char *);
 
-void die (int, const char *, ...) __attribute__((noreturn,format(printf, 2, 3)));
+void die(int, const char *, ...) __attribute__((noreturn, format(printf, 2, 3)));
 
 /* Return codes for _set_thresholds */
 #define NP_RANGE_UNPARSEABLE 1
-#define NP_WARN_WITHIN_CRIT 2
+#define NP_WARN_WITHIN_CRIT  2
 
 /* a simple check to see if we're running as root.
  * returns zero on failure, nonzero on success */
@@ -93,7 +92,7 @@ int np_check_if_root(void);
  * This function can be used to parse NTP control packet data and performance
  * data strings.
  */
-char *np_extract_value(const char*, const char*, char);
+char *np_extract_value(const char *, const char *, char);
 
 /*
  * Same as np_extract_value with separator suitable for NTP control packet
@@ -105,7 +104,7 @@ char *np_extract_value(const char*, const char*, char);
  * Read a string representing a state (ok, warning... or numeric: 0, 1) and
  * return the corresponding NP_STATE or ERROR)
  */
-int mp_translate_state (char *);
+int mp_translate_state(char *);
 
 void np_enable_state(char *, int);
 state_data *np_state_read();
@@ -114,6 +113,6 @@ void np_state_write_string(time_t, char *);
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup();
-const char *state_text (int);
+const char *state_text(int);
 
 #endif /* _UTILS_BASE_ */

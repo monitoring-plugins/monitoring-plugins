@@ -1,36 +1,36 @@
 /*****************************************************************************
-* 
-* Monitoring negate plugin
-* 
-* License: GPL
-* Copyright (c) 2002-2008 Monitoring Plugins Development Team
-* 
-* Description:
-* 
-* This file contains the negate plugin
-* 
-* Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).
-* Can also perform custom state switching.
-* 
-* 
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-* 
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
-*****************************************************************************/
+ *
+ * Monitoring negate plugin
+ *
+ * License: GPL
+ * Copyright (c) 2002-2024 Monitoring Plugins Development Team
+ *
+ * Description:
+ *
+ * This file contains the negate plugin
+ *
+ * Negates the status of a plugin (returns OK for CRITICAL, and vice-versa).
+ * Can also perform custom state switching.
+ *
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 const char *progname = "negate";
-const char *copyright = "2002-2008";
+const char *copyright = "2002-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_TIMEOUT 11
@@ -41,13 +41,11 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <ctype.h>
 
-/* char *command_line; */
-
-static const char **process_arguments (int, char **);
-void validate_arguments (char **);
-void print_help (void);
-void print_usage (void);
-bool subst_text = false;
+static const char **process_arguments(int /*argc*/, char ** /*argv*/);
+static void validate_arguments(char ** /*command_line*/);
+static void print_help(void);
+void print_usage(void);
+static bool subst_text = false;
 
 static int state[4] = {
 	STATE_OK,
@@ -56,183 +54,165 @@ static int state[4] = {
 	STATE_UNKNOWN,
 };
 
-int
-main (int argc, char **argv)
-{
-	int result = STATE_UNKNOWN;
-	char *sub;
-	char **command_line;
-	output chld_out, chld_err;
-
-	setlocale (LC_ALL, "");
-	bindtextdomain (PACKAGE, LOCALEDIR);
-	textdomain (PACKAGE);
+int main(int argc, char **argv) {
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
 
 	timeout_interval = DEFAULT_TIMEOUT;
 
-	command_line = (char **) process_arguments (argc, argv);
+	char **command_line = (char **)process_arguments(argc, argv);
 
 	/* Set signal handling and alarm */
-	if (signal (SIGALRM, timeout_alarm_handler) == SIG_ERR)
-		die (STATE_UNKNOWN, _("Cannot catch SIGALRM"));
+	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR)
+		die(STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 
-	(void) alarm ((unsigned) timeout_interval);
+	(void)alarm((unsigned)timeout_interval);
+
+	int result = STATE_UNKNOWN;
+	output chld_out;
+	output chld_err;
 
 	/* catch when the command is quoted */
-	if(command_line[1] == NULL) {
-		result = cmd_run (command_line[0], &chld_out, &chld_err, 0);
+	if (command_line[1] == NULL) {
+		result = cmd_run(command_line[0], &chld_out, &chld_err, 0);
 	} else {
-		result = cmd_run_array (command_line, &chld_out, &chld_err, 0);
+		result = cmd_run_array(command_line, &chld_out, &chld_err, 0);
 	}
 	if (chld_err.lines > 0) {
 		for (size_t i = 0; i < chld_err.lines; i++) {
-			fprintf (stderr, "%s\n", chld_err.line[i]);
+			fprintf(stderr, "%s\n", chld_err.line[i]);
 		}
 	}
 
 	/* Return UNKNOWN or worse if no output is returned */
 	if (chld_out.lines == 0)
-		die (max_state_alt (result, STATE_UNKNOWN), _("No data returned from command\n"));
+		die(max_state_alt(result, STATE_UNKNOWN), _("No data returned from command\n"));
 
+	char *sub;
 	for (size_t i = 0; i < chld_out.lines; i++) {
-		if (subst_text && result >= 0 && result <= 4 && result != state[result])  {
+		if (subst_text && result >= 0 && result <= 4 && result != state[result]) {
 			/* Loop over each match found */
-			while ((sub = strstr (chld_out.line[i], state_text (result)))) {
+			while ((sub = strstr(chld_out.line[i], state_text(result)))) {
 				/* Terminate the first part and skip over the string we'll substitute */
 				*sub = '\0';
-				sub += strlen (state_text (result));
+				sub += strlen(state_text(result));
 				/* then put everything back together */
-				xasprintf (&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text (state[result]), sub);
+				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text(state[result]), sub);
 			}
 		}
-		printf ("%s\n", chld_out.line[i]);
+		printf("%s\n", chld_out.line[i]);
 	}
 
 	if (result >= 0 && result <= 4) {
-		exit (state[result]);
+		exit(state[result]);
 	} else {
-		exit (result);
+		exit(result);
 	}
 }
 
-
 /* process command-line arguments */
-static const char **
-process_arguments (int argc, char **argv)
-{
-	int c;
+static const char **process_arguments(int argc, char **argv) {
+	static struct option longopts[] = {{"help", no_argument, 0, 'h'},           {"version", no_argument, 0, 'V'},
+									   {"timeout", required_argument, 0, 't'},  {"timeout-result", required_argument, 0, 'T'},
+									   {"ok", required_argument, 0, 'o'},       {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'}, {"unknown", required_argument, 0, 'u'},
+									   {"substitute", no_argument, 0, 's'},     {0, 0, 0, 0}};
+
 	bool permute = true;
+	while (true) {
+		int option = 0;
+		int option_char = getopt_long(argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
 
-	int option = 0;
-	static struct option longopts[] = {
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'V'},
-		{"timeout", required_argument, 0, 't'},
-		{"timeout-result", required_argument, 0, 'T'},
-		{"ok", required_argument, 0, 'o'},
-		{"warning", required_argument, 0, 'w'},
-		{"critical", required_argument, 0, 'c'},
-		{"unknown", required_argument, 0, 'u'},
-		{"substitute", no_argument, 0, 's'},
-		{0, 0, 0, 0}
-	};
-
-	while (1) {
-		c = getopt_long (argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
-
-		if (c == -1 || c == EOF)
+		if (option_char == -1 || option_char == EOF)
 			break;
 
-		switch (c) {
-		case '?':     /* help */
-			usage5 ();
+		switch (option_char) {
+		case '?': /* help */
+			usage5();
 			break;
-		case 'h':     /* help */
-			print_help ();
-			exit (EXIT_SUCCESS);
+		case 'h': /* help */
+			print_help();
+			exit(EXIT_SUCCESS);
 			break;
-		case 'V':     /* version */
-			print_revision (progname, NP_VERSION);
-			exit (EXIT_SUCCESS);
-		case 't':     /* timeout period */
-			if (!is_integer (optarg))
-				usage2 (_("Timeout interval must be a positive integer"), optarg);
+		case 'V': /* version */
+			print_revision(progname, NP_VERSION);
+			exit(EXIT_SUCCESS);
+		case 't': /* timeout period */
+			if (!is_integer(optarg))
+				usage2(_("Timeout interval must be a positive integer"), optarg);
 			else
-				timeout_interval = atoi (optarg);
+				timeout_interval = atoi(optarg);
 			break;
-		case 'T':     /* Result to return on timeouts */
+		case 'T': /* Result to return on timeouts */
 			if ((timeout_state = mp_translate_state(optarg)) == ERROR)
-				usage4 (_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			break;
-		case 'o':     /* replacement for OK */
+		case 'o': /* replacement for OK */
 			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
-				usage4 (_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = false;
 			break;
 
-		case 'w':     /* replacement for WARNING */
+		case 'w': /* replacement for WARNING */
 			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
-				usage4 (_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = false;
 			break;
-		case 'c':     /* replacement for CRITICAL */
+		case 'c': /* replacement for CRITICAL */
 			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
-				usage4 (_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = false;
 			break;
-		case 'u':     /* replacement for UNKNOWN */
+		case 'u': /* replacement for UNKNOWN */
 			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
-				usage4 (_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			permute = false;
 			break;
-		case 's':     /* Substitute status text */
+		case 's': /* Substitute status text */
 			subst_text = true;
 			break;
 		}
 	}
 
-	validate_arguments (&argv[optind]);
+	validate_arguments(&argv[optind]);
 
 	if (permute) { /* No [owcu] switch specified, default to this */
 		state[STATE_OK] = STATE_CRITICAL;
 		state[STATE_CRITICAL] = STATE_OK;
 	}
 
-	return (const char **) &argv[optind];
+	return (const char **)&argv[optind];
 }
 
-
-void
-validate_arguments (char **command_line)
-{
+void validate_arguments(char **command_line) {
 	if (command_line[0] == NULL)
-		usage4 (_("Could not parse arguments"));
+		usage4(_("Could not parse arguments"));
 
-	if (strncmp(command_line[0],"/",1) != 0 && strncmp(command_line[0],"./",2) != 0)
-		usage4 (_("Require path to command"));
+	if (strncmp(command_line[0], "/", 1) != 0 && strncmp(command_line[0], "./", 2) != 0)
+		usage4(_("Require path to command"));
 }
 
+void print_help(void) {
+	print_revision(progname, NP_VERSION);
 
-void
-print_help (void)
-{
-	print_revision (progname, NP_VERSION);
+	printf(COPYRIGHT, copyright, email);
 
-	printf (COPYRIGHT, copyright, email);
+	printf("%s\n", _("Negates only the return code of a plugin (returns OK for CRITICAL and vice-versa) by default."));
+	printf("%s\n", _("Additional switches can be used to control:\n"));
+	printf("\t  - which state becomes what\n");
+	printf("\t  - changing the plugin output text to match the return code");
 
-	printf ("%s\n", _("Negates the status of a plugin (returns OK for CRITICAL and vice-versa)."));
-	printf ("%s\n", _("Additional switches can be used to control which state becomes what."));
+	printf("\n\n");
 
-	printf ("\n\n");
+	print_usage();
 
-	print_usage ();
+	printf(UT_HELP_VRSN);
 
-	printf (UT_HELP_VRSN);
-
-	printf (UT_PLUG_TIMEOUT, timeout_interval);
-	printf ("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
-	printf (" -T, --timeout-result=STATUS\n");
-	printf ("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));
+	printf(UT_PLUG_TIMEOUT, timeout_interval);
+	printf("    %s\n", _("Keep timeout longer than the plugin timeout to retain CRITICAL status."));
+	printf(" -T, --timeout-result=STATUS\n");
+	printf("    %s\n", _("Custom result on Negate timeouts; see below for STATUS definition\n"));
 
 	printf(" -o, --ok=STATUS\n");
 	printf(" -w, --warning=STATUS\n");
@@ -244,31 +224,27 @@ print_help (void)
 	printf(" -s, --substitute\n");
 	printf(_("    Substitute output text as well. Will only substitute text in CAPITALS\n"));
 
-	printf ("\n");
-	printf ("%s\n", _("Examples:"));
-	printf (" %s\n", "negate /usr/local/nagios/libexec/check_ping -H host");
-	printf ("    %s\n", _("Run check_ping and invert result. Must use full path to plugin"));
-	printf (" %s\n", "negate -w OK -c UNKNOWN /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
-	printf ("    %s\n", _("This will return OK instead of WARNING and UNKNOWN instead of CRITICAL"));
-	printf ("\n");
-	printf ("%s\n", _("Notes:"));
-	printf (" %s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
-	printf (" %s\n", _("The full path of the plugin must be provided."));
-	printf (" %s\n", _("If the wrapped plugin returns OK, the wrapper will return CRITICAL."));
-	printf (" %s\n", _("If the wrapped plugin returns CRITICAL, the wrapper will return OK."));
-	printf (" %s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
-	printf ("\n");
-	printf (" %s\n", _("Using timeout-result, it is possible to override the timeout behaviour or a"));
-	printf (" %s\n", _("plugin by setting the negate timeout a bit lower."));
+	printf("\n");
+	printf("%s\n", _("Examples:"));
+	printf(" %s\n", "negate /usr/local/nagios/libexec/check_ping -H host");
+	printf("    %s\n", _("Run check_ping and invert result. Must use full path to plugin"));
+	printf(" %s\n", "negate -w OK -c UNKNOWN /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
+	printf("    %s\n", _("This will return OK instead of WARNING and UNKNOWN instead of CRITICAL"));
+	printf("\n");
+	printf("%s\n", _("Notes:"));
+	printf(" %s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
+	printf(" %s\n", _("The full path of the plugin must be provided."));
+	printf(" %s\n", _("If the wrapped plugin returns OK, the wrapper will return CRITICAL."));
+	printf(" %s\n", _("If the wrapped plugin returns CRITICAL, the wrapper will return OK."));
+	printf(" %s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
+	printf("\n");
+	printf(" %s\n", _("Using timeout-result, it is possible to override the timeout behaviour or a"));
+	printf(" %s\n", _("plugin by setting the negate timeout a bit lower."));
 
-	printf (UT_SUPPORT);
+	printf(UT_SUPPORT);
 }
 
-
-
-void
-print_usage (void)
-{
-	printf ("%s\n", _("Usage:"));
-	printf ("%s [-t timeout] [-Towcu STATE] [-s] <definition of wrapped plugin>\n", progname);
+void print_usage(void) {
+	printf("%s\n", _("Usage:"));
+	printf("%s [-t timeout] [-Towcu STATE] [-s] <definition of wrapped plugin>\n", progname);
 }

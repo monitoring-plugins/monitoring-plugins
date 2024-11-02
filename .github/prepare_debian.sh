@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -x
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -64,13 +64,9 @@ apt-get -y install perl \
 	iproute2
 
 # remove ipv6 interface from hosts
-if [ $(ip addr show | grep "inet6 ::1" | wc -l) -eq "0" ]; then
-    sed '/^::1/d' /etc/hosts > /tmp/hosts
-    cp -f /tmp/hosts /etc/hosts
-fi
-
+sed '/^::1/d' /etc/hosts > /tmp/hosts
+cp -f /tmp/hosts /etc/hosts
 ip addr show
-
 cat /etc/hosts
 
 # apache
@@ -131,5 +127,5 @@ sed "/NP_HOST_TLS_CERT/s/.*/'NP_HOST_TLS_CERT' => '$(hostname)',/" -i /src/.gith
 
 # create some test files to lower inodes
 for i in $(seq 10); do
-    touch /media/ramdisk2/test.$1
+    touch /media/ramdisk2/test.$i
 done

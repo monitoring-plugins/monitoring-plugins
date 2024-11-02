@@ -4,7 +4,7 @@
 #include "../common.h"
 
 #ifndef SWAP_CONVERSION
-#define SWAP_CONVERSION 1
+#	define SWAP_CONVERSION 1
 #endif
 
 typedef struct {
@@ -25,7 +25,6 @@ typedef struct {
 } swap_result;
 
 typedef struct {
-	int verbose;
 	bool allswaps;
 	int no_swap_state;
 	threshold warn;
@@ -34,10 +33,10 @@ typedef struct {
 	int conversion_factor;
 } swap_config;
 
-swap_config swap_config_init();
+swap_config swap_config_init(void);
 
 swap_result get_swap_data(swap_config config);
-swap_result getSwapFromProcMeminfo(swap_config config, char path_to_proc_meminfo[]);
+swap_result getSwapFromProcMeminfo(char path_to_proc_meminfo[]);
 swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[], const char swap_format[]);
 swap_result getSwapFromSwapctl_BSD(swap_config config);
 swap_result getSwapFromSwap_SRV4(swap_config config);
