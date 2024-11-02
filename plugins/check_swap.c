@@ -56,9 +56,12 @@ static swap_config_wrapper process_arguments(int argc, char **argv);
 void print_usage(void);
 static void print_help(swap_config /*config*/);
 
-static int verbose;
+int verbose;
 
 #define HUNDRED_PERCENT 100
+
+#define BYTES_TO_KiB(number) (number / 1024)
+#define BYTES_TO_MiB(number) (BYTES_TO_KiB(number) / 1024)
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -127,8 +130,8 @@ int main(int argc, char **argv) {
 		data.statusCode = max_state(data.statusCode, STATE_CRITICAL);
 	}
 
-	printf(_("SWAP %s - %g%% free (%lluMB out of %lluMB) %s|%s\n"), state_text(data.statusCode), (HUNDRED_PERCENT - percent_used),
-		   data.metrics.free, data.metrics.total, status, perfdata);
+	printf(_("SWAP %s - %g%% free (%lluMiB out of %lluMiB) %s|%s\n"), state_text(data.statusCode), (HUNDRED_PERCENT - percent_used),
+		   BYTES_TO_MiB(data.metrics.free), BYTES_TO_MiB(data.metrics.total), status, perfdata);
 
 	exit(data.statusCode);
 }

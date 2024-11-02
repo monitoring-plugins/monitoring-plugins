@@ -59,18 +59,20 @@ swap_result get_swap_data(swap_config config) {
 }
 
 swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
-	FILE *fp;
-	fp = fopen(proc_meminfo, "r");
+	FILE *meminfo_file_ptr;
+	meminfo_file_ptr = fopen(proc_meminfo, "r");
 
 	swap_result result = {0};
 	result.statusCode = STATE_OK;
 
-	uint64_t swap_total = 0, swap_used = 0, swap_free = 0;
+	uint64_t swap_total = 0;
+	uint64_t swap_used = 0;
+	uint64_t swap_free = 0;
 
 	char input_buffer[MAX_INPUT_BUFFER];
 	char str[32];
 
-	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, fp)) {
+	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, meminfo_file_ptr)) {
 		uint64_t tmp_KB = 0;
 
 		/*
@@ -111,7 +113,7 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 		}
 	}
 
-	fclose(fp);
+	fclose(meminfo_file_ptr);
 
 	result.metrics.total = swap_total;
 	result.metrics.used = swap_total - swap_free;
@@ -125,10 +127,12 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 
 	char *temp_buffer;
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf(_("Command: %s\n"), swap_command);
-	if (verbose >= 3)
+	}
+	if (verbose >= 3) {
 		printf(_("Format: %s\n"), swap_format);
+	}
 
 	child_process = spopen(swap_command);
 	if (child_process == NULL) {
@@ -152,18 +156,23 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 	if (strcmp(swap_format, "") == 0) {
 		temp_buffer = strtok(input_buffer, " \n");
 		while (temp_buffer) {
-			if (strstr(temp_buffer, "blocks"))
+			if (strstr(temp_buffer, "blocks")) {
 				sprintf(str, "%s %s", str, "%lu");
-			else if (strstr(temp_buffer, "dskfree"))
+			} else if (strstr(temp_buffer, "dskfree")) {
 				sprintf(str, "%s %s", str, "%lu");
-			else
+			} else {
 				sprintf(str, "%s %s", str, "%*s");
+			}
 			temp_buffer = strtok(NULL, " \n");
 		}
 	}
 
-	double total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
-	double dsktotal_mb = 0, dskused_mb = 0, dskfree_mb = 0;
+	double total_swap_mb = 0;
+	double free_swap_mb = 0;
+	double used_swap_mb = 0;
+	double dsktotal_mb = 0;
+	double dskused_mb = 0;
+	double dskfree_mb = 0;
 
 	/*
 	 * If different swap command is used for summary switch, need to read format
@@ -191,8 +200,9 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 				dskfree_mb = dskfree_mb / config.conversion_factor;
 			}
 
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf(_("total=%.0f, free=%.0f\n"), dsktotal_mb, dskfree_mb);
+			}
 
 			dskused_mb = dsktotal_mb - dskfree_mb;
 			total_swap_mb += dsktotal_mb;
@@ -256,7 +266,7 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	int nswaps = bsd_swapctl(SWAP_NSWAP, NULL, 0);
 
 	/* initialize swap table + entries */
-	struct swapent *ent = (struct swapent *)malloc(sizeof(struct swapent) * nswaps);
+	struct swapent *ent = (struct swapent *)malloc(sizeof(struct swapent) * (unsigned long)nswaps);
 
 	/* and now, tally 'em up */
 	int swapctl_res = bsd_swapctl(SWAP_STATS, ent, nswaps);
@@ -265,8 +275,12 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 		die(STATE_UNKNOWN, _("Error in swapctl call\n"));
 	}
 
-	double dsktotal_mb = 0.0, dskfree_mb = 0.0, dskused_mb = 0.0;
-	unsigned long long total_swap_mb = 0, free_swap_mb = 0, used_swap_mb = 0;
+	double dsktotal_mb = 0.0;
+	double dskfree_mb = 0.0;
+	double dskused_mb = 0.0;
+	unsigned long long total_swap_mb = 0;
+	unsigned long long free_swap_mb = 0;
+	unsigned long long used_swap_mb = 0;
 
 	for (int i = 0; i < nswaps; i++) {
 		dsktotal_mb = (float)ent[i].se_nblks / config.conversion_factor;
@@ -338,27 +352,32 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 	int nswaps = 0;
 
 	/* get the number of active swap devices */
-	if ((nswaps = srv4_swapctl(SC_GETNSWP, NULL)) == -1)
+	if ((nswaps = srv4_swapctl(SC_GETNSWP, NULL)) == -1) {
 		die(STATE_UNKNOWN, _("Error getting swap devices\n"));
+	}
 
-	if (nswaps == 0)
+	if (nswaps == 0) {
 		die(STATE_OK, _("SWAP OK: No swap devices defined\n"));
+	}
 
-	if (verbose >= 3)
+	if (verbose >= 3) {
 		printf("Found %d swap device(s)\n", nswaps);
+	}
 
 	/* initialize swap table + entries */
 	swaptbl_t *tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
 
-	if (tbl == NULL)
+	if (tbl == NULL) {
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
+	}
 
 	memset(tbl, 0, sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
 	tbl->swt_n = nswaps;
 
 	for (int i = 0; i < nswaps; i++) {
-		if ((tbl->swt_ent[i].ste_path = (char *)malloc(sizeof(char) * MAXPATHLEN)) == NULL)
+		if ((tbl->swt_ent[i].ste_path = (char *)malloc(sizeof(char) * MAXPATHLEN)) == NULL) {
 			die(STATE_UNKNOWN, _("malloc() failed!\n"));
+		}
 	}
 
 	/* and now, tally 'em up */
@@ -380,8 +399,9 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 		dskfree_mb = (float)tbl->swt_ent[i].ste_free / SWAP_CONVERSION;
 		dskused_mb = (dsktotal_mb - dskfree_mb);
 
-		if (verbose >= 3)
+		if (verbose >= 3) {
 			printf("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n", dsktotal_mb, dskfree_mb, dskused_mb);
+		}
 
 		if (config.allswaps && dsktotal_mb > 0) {
 			double percent = 100 * (((double)dskused_mb) / ((double)dsktotal_mb));
