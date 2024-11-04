@@ -156,20 +156,20 @@ static struct name_list *seen = NULL;
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
 	int disk_result = STATE_UNKNOWN;
-	char *output;
-	char *ignored;
-	char *details;
-	char *perf;
-	char *perf_ilabel;
+	char *output = NULL;
+	char *ignored = NULL;
+	char *details = NULL;
+	char *perf = NULL;
+	char *perf_ilabel = NULL;
 	char *preamble = " - free space:";
 	char *ignored_preamble = " - ignored paths:";
-	char *flag_header;
-	int temp_result;
+	char *flag_header = NULL;
+	int temp_result = STATE_UNKNOWN;
 
-	struct mount_entry *me;
-	struct fs_usage fsp;
-	struct parameter_list *temp_list;
-	struct parameter_list *path;
+	struct mount_entry *me = NULL;
+	struct fs_usage fsp = {0};
+	struct parameter_list *temp_list = NULL;
+	struct parameter_list *path = NULL;
 
 #ifdef __CYGWIN__
 	char mountdir[32];
