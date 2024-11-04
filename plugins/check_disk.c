@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
 	char *perf_ilabel;
 	char *preamble = " - free space:";
 	char *ignored_preamble = " - ignored paths:";
-	char *flag_header;
+	char *flag_header = NULL;
 	int temp_result;
 
 	struct mount_entry *me;
