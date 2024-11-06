@@ -1,6 +1,7 @@
-# getdelim.m4 serial 16
+# getdelim.m4
+# serial 19
 
-dnl Copyright (C) 2005-2007, 2009-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 2005-2007, 2009-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -18,7 +19,7 @@ AC_DEFUN([gl_FUNC_GETDELIM],
 
   AC_CHECK_DECLS_ONCE([getdelim])
 
-  AC_CHECK_FUNCS_ONCE([getdelim])
+  gl_CHECK_FUNCS_ANDROID([getdelim], [[#include <stdio.h>]])
   if test $ac_cv_func_getdelim = yes; then
     HAVE_GETDELIM=1
     dnl Found it in some library.  Verify that it works.
@@ -82,8 +83,8 @@ AC_DEFUN([gl_FUNC_GETDELIM],
                 ],
                 [gl_cv_func_working_getdelim="guessing yes"],
                 [case "$host_os" in
-                   *-musl*) gl_cv_func_working_getdelim="guessing yes" ;;
-                   *)       gl_cv_func_working_getdelim="$gl_cross_guess_normal" ;;
+                   *-musl* | midipix*) gl_cv_func_working_getdelim="guessing yes" ;;
+                   *)                  gl_cv_func_working_getdelim="$gl_cross_guess_normal" ;;
                  esac
                 ])
              ])
@@ -96,6 +97,9 @@ AC_DEFUN([gl_FUNC_GETDELIM],
     esac
   else
     HAVE_GETDELIM=0
+    case "$gl_cv_onwards_func_getdelim" in
+      future*) REPLACE_GETDELIM=1 ;;
+    esac
   fi
 
   if test $ac_cv_have_decl_getdelim = no; then

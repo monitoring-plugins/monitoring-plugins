@@ -1,5 +1,5 @@
 # DO NOT EDIT! GENERATED AUTOMATICALLY!
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ AC_DEFUN([gl_EARLY],
   AC_REQUIRE([gl_PROG_AR_RANLIB])
 
   # Code from module absolute-header:
+  # Code from module alignasof:
   # Code from module alloca-opt:
   # Code from module arpa_inet:
   # Code from module assert-h:
@@ -67,6 +68,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module environ:
   # Code from module errno:
   # Code from module error:
+  # Code from module error-h:
   # Code from module exitfail:
   # Code from module extensions:
   # Code from module extern-inline:
@@ -112,6 +114,11 @@ AC_DEFUN([gl_EARLY],
   # Code from module inet_ntop:
   # Code from module intprops:
   # Code from module inttypes-incomplete:
+  # Code from module iswblank:
+  # Code from module iswctype:
+  # Code from module iswdigit:
+  # Code from module iswpunct:
+  # Code from module iswxdigit:
   # Code from module langinfo:
   # Code from module largefile:
   AC_REQUIRE([AC_SYS_LARGEFILE])
@@ -128,6 +135,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module math:
   # Code from module mbrtowc:
   # Code from module mbsinit:
+  # Code from module mbszero:
   # Code from module mbtowc:
   # Code from module memchr:
   # Code from module minmax:
@@ -150,6 +158,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module servent:
   # Code from module setenv:
   # Code from module setlocale-null:
+  # Code from module setlocale-null-unlocked:
   # Code from module size_max:
   # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
@@ -163,12 +172,12 @@ AC_DEFUN([gl_EARLY],
   # Code from module stat:
   # Code from module stat-time:
   # Code from module std-gnu11:
-  # Code from module stdalign:
   # Code from module stdbool:
   # Code from module stdckdint:
   # Code from module stddef:
   # Code from module stdint:
   # Code from module stdio:
+  gl_STDIO_H_EARLY
   # Code from module stdlib:
   # Code from module strcase:
   # Code from module strcasestr:
@@ -186,7 +195,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module sys_uio:
   # Code from module threadlib:
   gl_THREADLIB_EARLY
-  # Code from module time:
+  # Code from module time-h:
   # Code from module time_r:
   # Code from module timegm:
   # Code from module unistd:
@@ -199,6 +208,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module vsnprintf:
   # Code from module wchar:
   # Code from module wcrtomb:
+  # Code from module wctype:
   # Code from module wctype-h:
   # Code from module windows-mutex:
   # Code from module windows-once:
@@ -229,6 +239,7 @@ AC_DEFUN([gl_INIT],
   gl_COMMON
   gl_source_base='gl'
   gl_source_base_prefix=
+  gl_ALIGNASOF
   gl_FUNC_ALLOCA
   gl_CONDITIONAL_HEADER([alloca.h])
   AC_PROG_MKDIR_P
@@ -280,14 +291,17 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_ERRNO_H
   gl_CONDITIONAL_HEADER([errno.h])
   AC_PROG_MKDIR_P
+  AC_REQUIRE([gl_ERROR_H])
   gl_ERROR
-  gl_CONDITIONAL([GL_COND_OBJ_ERROR], [test "$ac_cv_lib_error_at_line" = no])
+  gl_CONDITIONAL([GL_COND_OBJ_ERROR], [test $COMPILE_ERROR_C = 1])
   AM_COND_IF([GL_COND_OBJ_ERROR], [
     gl_PREREQ_ERROR
   ])
   m4_ifdef([AM_XGETTEXT_OPTION],
     [AM_][XGETTEXT_OPTION([--flag=error:3:c-format])
      AM_][XGETTEXT_OPTION([--flag=error_at_line:5:c-format])])
+  gl_ERROR_H
+  AC_PROG_MKDIR_P
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FUNC_FCNTL
   gl_CONDITIONAL([GL_COND_OBJ_FCNTL],
@@ -350,7 +364,7 @@ AC_DEFUN([gl_INIT],
   gl_CONDITIONAL([GL_COND_OBJ_FSTAT], [test $REPLACE_FSTAT = 1])
   AM_COND_IF([GL_COND_OBJ_FSTAT], [
     case "$host_os" in
-      mingw*)
+      mingw* | windows*)
         AC_LIBOBJ([stat-w32])
         ;;
     esac
@@ -406,7 +420,8 @@ AC_DEFUN([gl_INIT],
   gl_STDIO_MODULE_INDICATOR([getline])
   AC_REQUIRE([AC_CANONICAL_HOST])
   gl_GETLOADAVG
-  gl_CONDITIONAL([GL_COND_OBJ_GETLOADAVG], [test $HAVE_GETLOADAVG = 0])
+  gl_CONDITIONAL([GL_COND_OBJ_GETLOADAVG],
+                 [test $HAVE_GETLOADAVG = 0 || test $REPLACE_GETLOADAVG = 1])
   AM_COND_IF([GL_COND_OBJ_GETLOADAVG], [
     gl_PREREQ_GETLOADAVG
   ])
@@ -427,11 +442,20 @@ AC_DEFUN([gl_INIT],
   ])
   gl_UNISTD_MODULE_INDICATOR([getopt-posix])
   gl_FUNC_GETPROGNAME
+  gl_CONDITIONAL([GL_COND_OBJ_GETPROGNAME],
+                 [test $HAVE_GETPROGNAME = 0 || test $REPLACE_GETPROGNAME = 1])
+  AM_COND_IF([GL_COND_OBJ_GETPROGNAME], [
+    gl_PREREQ_GETPROGNAME
+  ])
+  gl_STDLIB_MODULE_INDICATOR([getprogname])
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   AC_PROG_MKDIR_P
   AC_REQUIRE([gl_FUNC_SETLOCALE_NULL])
-  LIB_HARD_LOCALE="$LIB_SETLOCALE_NULL"
+  HARD_LOCALE_LIB="$SETLOCALE_NULL_LIB"
+  AC_SUBST([HARD_LOCALE_LIB])
+  dnl For backward compatibility.
+  LIB_HARD_LOCALE="$HARD_LOCALE_LIB"
   AC_SUBST([LIB_HARD_LOCALE])
   gl_HOSTENT
   gl_IDPRIV
@@ -445,6 +469,26 @@ AC_DEFUN([gl_INIT],
   gl_INTTYPES_INCOMPLETE
   gl_INTTYPES_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  gl_FUNC_ISWBLANK
+  gl_CONDITIONAL([GL_COND_OBJ_ISWBLANK],
+                 [! { test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; } && { test $HAVE_ISWBLANK = 0 || test $REPLACE_ISWBLANK = 1; }])
+  gl_WCTYPE_MODULE_INDICATOR([iswblank])
+  gl_FUNC_ISWCTYPE
+  gl_CONDITIONAL([GL_COND_OBJ_ISWCTYPE],
+                 [test $HAVE_WCTYPE_T = 0 || test $GNULIBHEADERS_OVERRIDE_WINT_T = 1 || test $REPLACE_WCTYPE = 1])
+  gl_WCTYPE_MODULE_INDICATOR([iswctype])
+  gl_FUNC_ISWDIGIT
+  gl_CONDITIONAL([GL_COND_OBJ_ISWDIGIT],
+                 [! { test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; } && test $REPLACE_ISWDIGIT = 1])
+  gl_WCTYPE_MODULE_INDICATOR([iswdigit])
+  gl_FUNC_ISWPUNCT
+  gl_CONDITIONAL([GL_COND_OBJ_ISWPUNCT],
+                 [! { test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; } && test $REPLACE_ISWPUNCT = 1])
+  gl_WCTYPE_MODULE_INDICATOR([iswpunct])
+  gl_FUNC_ISWXDIGIT
+  gl_CONDITIONAL([GL_COND_OBJ_ISWXDIGIT],
+                 [! { test $HAVE_ISWCNTRL = 0 || test $REPLACE_ISWCNTRL = 1; } && test $REPLACE_ISWXDIGIT = 1])
+  gl_WCTYPE_MODULE_INDICATOR([iswxdigit])
   gl_LANGINFO_H
   gl_LANGINFO_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
@@ -504,6 +548,10 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_MBSINIT
   ])
   gl_WCHAR_MODULE_INDICATOR([mbsinit])
+  AC_REQUIRE([AC_TYPE_MBSTATE_T])
+  gl_MBSTATE_T_BROKEN
+  gl_MUSL_LIBC
+  gl_WCHAR_MODULE_INDICATOR([mbszero])
   gl_FUNC_MBTOWC
   gl_CONDITIONAL([GL_COND_OBJ_MBTOWC],
                  [test $HAVE_MBTOWC = 0 || test $REPLACE_MBTOWC = 1])
@@ -611,7 +659,7 @@ AC_DEFUN([gl_INIT],
   gl_CONDITIONAL([GL_COND_OBJ_STAT], [test $REPLACE_STAT = 1])
   AM_COND_IF([GL_COND_OBJ_STAT], [
     case "$host_os" in
-      mingw*)
+      mingw* | windows*)
         AC_LIBOBJ([stat-w32])
         ;;
     esac
@@ -620,9 +668,6 @@ AC_DEFUN([gl_INIT],
   gl_SYS_STAT_MODULE_INDICATOR([stat])
   gl_STAT_TIME
   gl_STAT_BIRTHTIME
-  gl_STDALIGN_H
-  gl_CONDITIONAL_HEADER([stdalign.h])
-  AC_PROG_MKDIR_P
   gl_C_BOOL
   AC_CHECK_HEADERS_ONCE([stdckdint.h])
   if test $ac_cv_header_stdckdint_h = yes; then
@@ -781,21 +826,24 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_WCRTOMB
   ])
   gl_WCHAR_MODULE_INDICATOR([wcrtomb])
+  gl_FUNC_WCTYPE
+  gl_CONDITIONAL([GL_COND_OBJ_WCTYPE], [test $HAVE_WCTYPE = 0 || test $REPLACE_WCTYPE = 1])
+  gl_WCTYPE_MODULE_INDICATOR([wctype])
   gl_WCTYPE_H
   gl_WCTYPE_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
   AC_REQUIRE([AC_CANONICAL_HOST])
   gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_MUTEX],
-                 [case "$host_os" in mingw*) true;; *) false;; esac])
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
   AC_REQUIRE([AC_CANONICAL_HOST])
   gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_ONCE],
-                 [case "$host_os" in mingw*) true;; *) false;; esac])
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
   AC_REQUIRE([AC_CANONICAL_HOST])
   gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_RECMUTEX],
-                 [case "$host_os" in mingw*) true;; *) false;; esac])
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
   AC_REQUIRE([AC_CANONICAL_HOST])
   gl_CONDITIONAL([GL_COND_OBJ_WINDOWS_RWLOCK],
-                 [case "$host_os" in mingw*) true;; *) false;; esac])
+                 [case "$host_os" in mingw* | windows*) true;; *) false;; esac])
   gl_XALLOC
   gl_MODULE_INDICATOR([xalloc])
   gl_MODULE_INDICATOR([xalloc-die])
@@ -1002,7 +1050,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/dynarray.h
   lib/errno.in.h
   lib/error.c
-  lib/error.h
+  lib/error.in.h
   lib/exitfail.c
   lib/exitfail.h
   lib/fcntl.c
@@ -1062,6 +1110,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/intprops-internal.h
   lib/intprops.h
   lib/inttypes.in.h
+  lib/iswblank.c
+  lib/iswctype-impl.h
+  lib/iswctype.c
+  lib/iswdigit.c
+  lib/iswpunct.c
+  lib/iswxdigit.c
   lib/itold.c
   lib/langinfo.in.h
   lib/lc-charset-dispatch.c
@@ -1089,6 +1143,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/mbrtowc-impl.h
   lib/mbrtowc.c
   lib/mbsinit.c
+  lib/mbszero.c
   lib/mbtowc-impl.h
   lib/mbtowc-lock.c
   lib/mbtowc-lock.h
@@ -1124,6 +1179,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/regexec.c
   lib/setenv.c
   lib/setlocale-lock.c
+  lib/setlocale_null-unlocked.c
   lib/setlocale_null.c
   lib/setlocale_null.h
   lib/sha256-stream.c
@@ -1138,7 +1194,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/stat-w32.c
   lib/stat-w32.h
   lib/stat.c
-  lib/stdalign.in.h
   lib/stdckdint.in.h
   lib/stddef.in.h
   lib/stdint.in.h
@@ -1183,6 +1238,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/wchar.in.h
   lib/wcrtomb.c
   lib/wctype-h.c
+  lib/wctype-impl.h
+  lib/wctype.c
   lib/wctype.in.h
   lib/windows-initguard.h
   lib/windows-mutex.c
@@ -1220,9 +1277,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/environ.m4
   m4/errno_h.m4
   m4/error.m4
+  m4/error_h.m4
   m4/exponentd.m4
   m4/extensions.m4
   m4/extern-inline.m4
+  m4/fclose.m4
   m4/fcntl-o.m4
   m4/fcntl.m4
   m4/fcntl_h.m4
@@ -1257,6 +1316,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/intmax_t.m4
   m4/inttypes.m4
   m4/inttypes_h.m4
+  m4/iswblank.m4
+  m4/iswctype.m4
+  m4/iswdigit.m4
+  m4/iswpunct.m4
+  m4/iswxdigit.m4
   m4/langinfo_h.m4
   m4/largefile.m4
   m4/limits-h.m4
@@ -1284,6 +1348,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/msvc-inval.m4
   m4/msvc-nothrow.m4
   m4/multiarch.m4
+  m4/musl.m4
   m4/netdb_h.m4
   m4/netinet_in_h.m4
   m4/nl_langinfo.m4
@@ -1346,6 +1411,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/wchar_h.m4
   m4/wchar_t.m4
   m4/wcrtomb.m4
+  m4/wctype.m4
   m4/wctype_h.m4
   m4/wint_t.m4
   m4/xalloc.m4

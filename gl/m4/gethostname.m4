@@ -1,5 +1,6 @@
-# gethostname.m4 serial 15
-dnl Copyright (C) 2002, 2008-2023 Free Software Foundation, Inc.
+# gethostname.m4
+# serial 16
+dnl Copyright (C) 2002, 2008-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -20,7 +21,7 @@ AC_DEFUN([gl_FUNC_GETHOSTNAME],
     AC_CACHE_CHECK([for gethostname in winsock2.h and -lws2_32],
       [gl_cv_w32_gethostname],
       [gl_cv_w32_gethostname=no
-       gl_save_LIBS="$LIBS"
+       gl_saved_LIBS="$LIBS"
        LIBS="$LIBS -lws2_32"
        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_WINSOCK2_H
@@ -28,7 +29,7 @@ AC_DEFUN([gl_FUNC_GETHOSTNAME],
 #endif
 #include <stddef.h>
 ]], [[gethostname(NULL, 0);]])], [gl_cv_w32_gethostname=yes])
-       LIBS="$gl_save_LIBS"
+       LIBS="$gl_saved_LIBS"
       ])
     if test "$gl_cv_w32_gethostname" = "yes"; then
       GETHOSTNAME_LIB="-lws2_32"
