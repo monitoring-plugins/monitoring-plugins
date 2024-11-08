@@ -52,23 +52,22 @@ enum {
 	PORT = 2000
 };
 
-char *server_address = NULL;
-int server_port = PORT;
-double warning_value = 0L;
-double critical_value = 0L;
-bool check_warning_value = false;
-bool check_critical_value = false;
-enum checkvar vars_to_check = NONE;
-int cmd_timeout = 1;
+static char *server_address = NULL;
+static int server_port = PORT;
+static double warning_value = 0L;
+static double critical_value = 0L;
+static bool check_warning_value = false;
+static bool check_critical_value = false;
+static enum checkvar vars_to_check = NONE;
 
-int netstat_port = 0;
-char *disk_name = NULL;
-char *process_name = NULL;
-char send_buffer[MAX_INPUT_BUFFER];
-
-int process_arguments(int, char **);
+static int netstat_port = 0;
+static char *disk_name = NULL;
+static char *process_name = NULL;
+static char send_buffer[MAX_INPUT_BUFFER];
+ 
+static int process_arguments(int, char **);
 void print_usage(void);
-void print_help(void);
+static void print_help(void);
 
 int main(int argc, char **argv) {
 	int result = STATE_UNKNOWN;
