@@ -7,7 +7,7 @@
  *
  * Description:
  *
- * This file contains the check_disk plugin
+ * This file contains the check_fping plugin
  *
  * This plugin will use the fping command to ping the specified host for a
  * fast check
@@ -304,7 +304,7 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:46", longopts, &option);
+		c = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
