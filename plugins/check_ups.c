@@ -103,7 +103,7 @@ static int get_ups_variable(const char * /*varname*/, char * /*buf*/, ups_config
 static int process_arguments(int /*argc*/, char ** /*argv*/, ups_config * /*config*/);
 static int validate_arguments(ups_config /*config*/);
 static void print_help(void);
-static void print_usage(void);
+void print_usage(void);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
