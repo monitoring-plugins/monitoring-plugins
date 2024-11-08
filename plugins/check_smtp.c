@@ -40,8 +40,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include <ctype.h>
 
 #ifdef HAVE_SSL
-bool check_cert = false;
-int days_till_exp_warn, days_till_exp_crit;
+static bool check_cert = false;
+static int days_till_exp_warn, days_till_exp_crit;
 #  define my_recv(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 #  define my_send(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
@@ -64,61 +64,59 @@ enum {
 
 #define EHLO_SUPPORTS_STARTTLS 1
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-void print_help (void);
+static int process_arguments (int, char **);
+static int validate_arguments (void);
+static void print_help (void);
 void print_usage (void);
-void smtp_quit(void);
-int recvline(char *, size_t);
-int recvlines(char *, size_t);
-int my_close(void);
+static void smtp_quit(void);
+static int recvline(char *, size_t);
+static int recvlines(char *, size_t);
+static int my_close(void);
 
 #include "regex.h"
-char regex_expect[MAX_INPUT_BUFFER] = "";
-regex_t preg;
-regmatch_t pmatch[10];
-char timestamp[20] = "";
-char errbuf[MAX_INPUT_BUFFER];
-int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-int eflags = 0;
-int errcode, excode;
+static regex_t preg;
+static regmatch_t pmatch[10];
+static char errbuf[MAX_INPUT_BUFFER];
+static int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+static int eflags = 0;
+static int errcode, excode;
 
-int server_port = SMTP_PORT;
-int server_port_option = 0;
-char *server_address = NULL;
-char *server_expect = NULL;
-char *mail_command = NULL;
-char *from_arg = NULL;
-int send_mail_from=0;
-int ncommands=0;
-int command_size=0;
-int nresponses=0;
-int response_size=0;
-char **commands = NULL;
-char **responses = NULL;
-char *authtype = NULL;
-char *authuser = NULL;
-char *authpass = NULL;
-double warning_time = 0;
-bool check_warning_time = false;
-double critical_time = 0;
-bool check_critical_time = false;
-int verbose = 0;
-bool use_ssl = false;
-bool use_starttls = false;
-bool use_sni = false;
-bool use_proxy_prefix = false;
-bool use_ehlo = false;
-bool use_lhlo = false;
-bool ssl_established = false;
-char *localhostname = NULL;
-int sd;
-char buffer[MAX_INPUT_BUFFER];
+static int server_port = SMTP_PORT;
+static int server_port_option = 0;
+static char *server_address = NULL;
+static char *server_expect = NULL;
+static char *mail_command = NULL;
+static char *from_arg = NULL;
+static int send_mail_from=0;
+static int ncommands=0;
+static int command_size=0;
+static int nresponses=0;
+static int response_size=0;
+static char **commands = NULL;
+static char **responses = NULL;
+static char *authtype = NULL;
+static char *authuser = NULL;
+static char *authpass = NULL;
+static double warning_time = 0;
+static bool check_warning_time = false;
+static double critical_time = 0;
+static bool check_critical_time = false;
+static int verbose = 0;
+static bool use_ssl = false;
+static bool use_starttls = false;
+static bool use_sni = false;
+static bool use_proxy_prefix = false;
+static bool use_ehlo = false;
+static bool use_lhlo = false;
+static bool ssl_established = false;
+static char *localhostname = NULL;
+static int sd;
+static char buffer[MAX_INPUT_BUFFER];
 enum {
   TCP_PROTOCOL = 1,
   UDP_PROTOCOL = 2,
 };
-bool ignore_send_quit_failure = false;
+static bool ignore_send_quit_failure = false;
 
 
 int
