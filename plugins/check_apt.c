@@ -69,8 +69,18 @@ void print_usage(void);
 static char *construct_cmdline(upgrade_type u, const char *opts);
 /* run an apt-get update */
 static int run_update(void);
+
+typedef struct {
+	int errorcode;
+	int package_count;
+	int security_package_count;
+	char **packages_list;
+	char **secpackages_list;
+} run_upgrade_result;
+
 /* run an apt-get upgrade */
-static int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist);
+static run_upgrade_result run_upgrade(void);
+
 /* add another clause to a regexp */
 static char *add_to_regexp(char *expr, const char *next);
 /* extract package name from Inst line */
@@ -119,12 +129,14 @@ int main(int argc, char **argv) {
 		result = run_update();
 	}
 
-	int packages_available = 0;
-	int sec_count = 0;
-	char **packages_list = NULL;
-	char **secpackages_list = NULL;
 	/* apt-get upgrade */
-	result = max_state(result, run_upgrade(&packages_available, &sec_count, &packages_list, &secpackages_list));
+	run_upgrade_result upgrad_res = run_upgrade();
+
+	result = max_state(result, upgrad_res.errorcode);
+	int packages_available = upgrad_res.package_count;
+	int sec_count = upgrad_res.security_package_count;
+	char **packages_list = upgrad_res.packages_list;
+	char **secpackages_list = upgrad_res.secpackages_list;
 
 	if (sec_count > 0) {
 		result = max_state(result, STATE_CRITICAL);
@@ -257,13 +269,18 @@ int process_arguments(int argc, char **argv) {
 }
 
 /* run an apt-get upgrade */
-int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkglist) {
+run_upgrade_result run_upgrade(void) {
 	regex_t ereg;
 	/* initialize ereg as it is possible it is printed while uninitialized */
 	memset(&ereg, '\0', sizeof(ereg.buffer));
 
+	run_upgrade_result result = {
+		.errorcode = STATE_UNKNOWN,
+	};
+
 	if (upgrade == NO_UPGRADE) {
-		return STATE_OK;
+		result.errorcode = STATE_OK;
+		return result;
 	}
 
 	int regres = 0;
@@ -294,33 +311,32 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 	}
 
-	int result = STATE_UNKNOWN;
 	struct output chld_out;
 	struct output chld_err;
 	char *cmdline = NULL;
 	cmdline = construct_cmdline(upgrade, upgrade_opts);
 	if (input_filename != NULL) {
 		/* read input from a file for testing */
-		result = cmd_file_read(input_filename, &chld_out, 0);
+		result.errorcode = cmd_file_read(input_filename, &chld_out, 0);
 	} else {
 		/* run the upgrade */
-		result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+		result.errorcode = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	}
 
 	/* apt-get upgrade only changes exit status if there is an
 	 * internal error when run in dry-run mode.  therefore we will
 	 * treat such an error as UNKNOWN */
-	if (result != 0) {
+	if (result.errorcode != STATE_OK) {
 		exec_warning = 1;
-		result = STATE_UNKNOWN;
+		result.errorcode = STATE_UNKNOWN;
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
 
-	*pkglist = malloc(sizeof(char *) * chld_out.lines);
+  char **pkglist = malloc(sizeof(char *) * chld_out.lines);
 	if (!pkglist) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
 	}
-	*secpkglist = malloc(sizeof(char *) * chld_out.lines);
+	char **secpkglist = malloc(sizeof(char *) * chld_out.lines);
 	if (!secpkglist) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
 	}
@@ -334,8 +350,8 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 	 * we may need to switch to the --print-uris output format,
 	 * in which case the logic here will slightly change.
 	 */
-	int pc = 0;
-	int spc = 0;
+	int package_counter = 0;
+	int security_package_counter = 0;
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (verbose) {
 			printf("%s\n", chld_out.line[i]);
@@ -346,15 +362,15 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			/* if we're not excluding, or it's not in the
 			 * list of stuff to exclude */
 			if (do_exclude == NULL || regexec(&ereg, chld_out.line[i], 0, NULL, 0) != 0) {
-				pc++;
+				package_counter++;
 				if (regexec(&sreg, chld_out.line[i], 0, NULL, 0) == 0) {
-					spc++;
+					security_package_counter++;
 					if (verbose) {
 						printf("*");
 					}
-					(*secpkglist)[spc - 1] = pkg_name(chld_out.line[i]);
+					(secpkglist)[security_package_counter - 1] = pkg_name(chld_out.line[i]);
 				} else {
-					(*pkglist)[pc - spc - 1] = pkg_name(chld_out.line[i]);
+					(pkglist)[package_counter - security_package_counter - 1] = pkg_name(chld_out.line[i]);
 				}
 				if (verbose) {
 					printf("*%s\n", chld_out.line[i]);
@@ -362,13 +378,15 @@ int run_upgrade(int *pkgcount, int *secpkgcount, char ***pkglist, char ***secpkg
 			}
 		}
 	}
-	*pkgcount = pc;
-	*secpkgcount = spc;
+	result.package_count = package_counter;
+	result.security_package_count = security_package_counter;
+	result.packages_list = pkglist;
+	result.secpackages_list = secpkglist;
 
 	/* If we get anything on stderr, at least set warning */
 	if (input_filename == NULL && chld_err.buflen) {
 		stderr_warning = 1;
-		result = max_state(result, STATE_WARNING);
+		result.errorcode = max_state(result.errorcode, STATE_WARNING);
 		if (verbose) {
 			for (size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
