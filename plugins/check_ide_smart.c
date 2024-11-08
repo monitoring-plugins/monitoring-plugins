@@ -113,12 +113,10 @@ typedef struct values_s {
 	__u8 checksum;
 } __attribute__((packed)) values_t;
 
-struct {
+static struct {
 	__u8 value;
 	char *text;
-}
-
-static offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"},
+} offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"},
 								{0x05, "Aborted"},      {0x06, "Failed"},    {0, 0}};
 
 static struct {
