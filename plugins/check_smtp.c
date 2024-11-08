@@ -40,8 +40,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include <ctype.h>
 
 #ifdef HAVE_SSL
-bool check_cert = false;
-int days_till_exp_warn, days_till_exp_crit;
+static bool check_cert = false;
+static int days_till_exp_warn, days_till_exp_crit;
 #  define my_recv(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
 #  define my_send(buf, len) (((use_starttls || use_ssl) && ssl_established) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
