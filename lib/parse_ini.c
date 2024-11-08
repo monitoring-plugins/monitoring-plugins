@@ -1,25 +1,25 @@
 /*****************************************************************************
-*
-* Monitoring Plugins parse_ini library
-*
-* License: GPL
-* Copyright (c) 2007 Monitoring Plugins Development Team
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*
-*****************************************************************************/
+ *
+ * Monitoring Plugins parse_ini library
+ *
+ * License: GPL
+ * Copyright (c) 2007 - 2024 Monitoring Plugins Development Team
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 #include "common.h"
 #include "idpriv.h"
@@ -40,31 +40,20 @@ typedef struct {
 	char *stanza;
 } np_ini_info;
 
-static char *default_ini_file_names[] = {
-	"monitoring-plugins.ini",
-	"plugins.ini",
-	"nagios-plugins.ini",
-	NULL
-};
+static char *default_ini_file_names[] = {"monitoring-plugins.ini", "plugins.ini", "nagios-plugins.ini", NULL};
 
 static char *default_ini_path_names[] = {
-	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini",
-	"/usr/local/etc/monitoring-plugins.ini",
-	"/etc/monitoring-plugins/monitoring-plugins.ini",
-	"/etc/monitoring-plugins.ini",
+	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini", "/usr/local/etc/monitoring-plugins.ini",
+	"/etc/monitoring-plugins/monitoring-plugins.ini", "/etc/monitoring-plugins.ini",
 	/* deprecated path names (for backward compatibility): */
-	"/etc/nagios/plugins.ini",
-	"/usr/local/nagios/etc/plugins.ini",
-	"/usr/local/etc/nagios/plugins.ini",
-	"/etc/opt/nagios/plugins.ini",
-	"/etc/nagios-plugins.ini",
-	"/usr/local/etc/nagios-plugins.ini",
-	"/etc/opt/nagios-plugins.ini",
-	NULL
-};
+	"/etc/nagios/plugins.ini", "/usr/local/nagios/etc/plugins.ini", "/usr/local/etc/nagios/plugins.ini", "/etc/opt/nagios/plugins.ini",
+	"/etc/nagios-plugins.ini", "/usr/local/etc/nagios-plugins.ini", "/etc/opt/nagios-plugins.ini", NULL};
 
 /* eat all characters from a FILE pointer until n is encountered */
-#define GOBBLE_TO(f, c, n) do { (c)=fgetc((f)); } while((c)!=EOF && (c)!=(n))
+#define GOBBLE_TO(f, c, n)                                                                                                                 \
+	do {                                                                                                                                   \
+		(c) = fgetc((f));                                                                                                                  \
+	} while ((c) != EOF && (c) != (n))
 
 /* internal function that returns the constructed defaults options */
 static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
@@ -81,9 +70,7 @@ static char *default_file_in_path(void);
  * 	[stanza][@filename]
  * into its separate parts.
  */
-static void
-parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
-{
+static void parse_locator(const char *locator, const char *def_stanza, np_ini_info *i) {
 	size_t locator_len = 0, stanza_len = 0;
 
 	/* if locator is NULL we'll use default values */
@@ -96,7 +83,7 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 		i->stanza = malloc(sizeof(char) * (stanza_len + 1));
 		strncpy(i->stanza, locator, stanza_len);
 		i->stanza[stanza_len] = '\0';
-	} else	{/* otherwise we use the default stanza */
+	} else { /* otherwise we use the default stanza */
 		i->stanza = strdup(def_stanza);
 	}
 
@@ -105,7 +92,7 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 
 	/* check whether there's an @file part */
 	if (stanza_len == locator_len) {
-	    i->file = default_file();
+		i->file = default_file();
 		i->file_string_on_heap = false;
 	} else {
 		i->file = strdup(&(locator[stanza_len + 1]));
@@ -113,35 +100,28 @@ parse_locator(const char *locator, const char *def_stanza, np_ini_info *i)
 	}
 
 	if (i->file == NULL || i->file[0] == '\0')
-		die(STATE_UNKNOWN,
-		    _("Cannot find config file in any standard location.\n"));
+		die(STATE_UNKNOWN, _("Cannot find config file in any standard location.\n"));
 }
 
 /*
  * This is the externally visible function used by extra_opts.
  */
-np_arg_list *
-np_get_defaults(const char *locator, const char *default_section)
-{
+np_arg_list *np_get_defaults(const char *locator, const char *default_section) {
 	FILE *inifile = NULL;
 	np_arg_list *defaults = NULL;
 	np_ini_info i;
 	int is_suid_plugin = mp_suid();
 
 	if (is_suid_plugin && idpriv_temp_drop() == -1)
-		die(STATE_UNKNOWN, _("Cannot drop privileges: %s\n"),
-		    strerror(errno));
+		die(STATE_UNKNOWN, _("Cannot drop privileges: %s\n"), strerror(errno));
 
 	parse_locator(locator, default_section, &i);
 	inifile = strcmp(i.file, "-") == 0 ? stdin : fopen(i.file, "r");
 
 	if (inifile == NULL)
-		die(STATE_UNKNOWN, _("Can't read config file: %s\n"),
-		    strerror(errno));
+		die(STATE_UNKNOWN, _("Can't read config file: %s\n"), strerror(errno));
 	if (!read_defaults(inifile, i.stanza, &defaults))
-		die(STATE_UNKNOWN,
-		    _("Invalid section '%s' in config file '%s'\n"), i.stanza,
-		    i.file);
+		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
 
 	if (i.file_string_on_heap) {
 		free(i.file);
@@ -151,8 +131,7 @@ np_get_defaults(const char *locator, const char *default_section)
 		fclose(inifile);
 	free(i.stanza);
 	if (is_suid_plugin && idpriv_temp_restore() == -1)
-		die(STATE_UNKNOWN, _("Cannot restore privileges: %s\n"),
-		    strerror(errno));
+		die(STATE_UNKNOWN, _("Cannot restore privileges: %s\n"), strerror(errno));
 
 	return defaults;
 }
@@ -164,13 +143,15 @@ np_get_defaults(const char *locator, const char *default_section)
  * be extra careful about user-supplied input (i.e. avoiding possible
  * format string vulnerabilities, etc).
  */
-static int
-read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
-{
+static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts) {
 	int c = 0;
 	bool status = false;
 	size_t i, stanza_len;
-	enum { NOSTANZA, WRONGSTANZA, RIGHTSTANZA } stanzastate = NOSTANZA;
+	enum {
+		NOSTANZA,
+		WRONGSTANZA,
+		RIGHTSTANZA
+	} stanzastate = NOSTANZA;
 
 	stanza_len = strlen(stanza);
 
@@ -217,8 +198,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 				 * we're dealing with a config error
 				 */
 			case NOSTANZA:
-				die(STATE_UNKNOWN, "%s\n",
-				    _("Config file error"));
+				die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 				/* we're in a stanza, but for a different plugin */
 			case WRONGSTANZA:
 				GOBBLE_TO(f, c, '\n');
@@ -227,8 +207,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
 			case RIGHTSTANZA:
 				ungetc(c, f);
 				if (add_option(f, opts)) {
-					die(STATE_UNKNOWN, "%s\n",
-					    _("Config file error"));
+					die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 				}
 				status = true;
 				break;
@@ -246,9 +225,7 @@ read_defaults(FILE *f, const char *stanza, np_arg_list **opts)
  * 	--option[=value]
  * appending it to the linked list optbuf.
  */
-static int
-add_option(FILE *f, np_arg_list **optlst)
-{
+static int add_option(FILE *f, np_arg_list **optlst) {
 	np_arg_list *opttmp = *optlst, *optnew;
 	char *linebuf = NULL, *lineend = NULL, *optptr = NULL, *optend = NULL;
 	char *eqptr = NULL, *valptr = NULL, *valend = NULL;
@@ -295,8 +272,7 @@ add_option(FILE *f, np_arg_list **optlst)
 	if (optptr == eqptr)
 		die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 	/* continue from '=' to start of value or EOL */
-	for (valptr = eqptr + 1; valptr < lineend && isspace(*valptr);
-	    valptr++)
+	for (valptr = eqptr + 1; valptr < lineend && isspace(*valptr); valptr++)
 		continue;
 	/* continue to the end of value */
 	for (valend = valptr; valend < lineend; valend++)
@@ -365,13 +341,10 @@ add_option(FILE *f, np_arg_list **optlst)
 	return 0;
 }
 
-static char *
-default_file(void)
-{
-	char  *ini_file;
+static char *default_file(void) {
+	char *ini_file;
 
-	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
-	    (ini_file = default_file_in_path()) != NULL) {
+	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL || (ini_file = default_file_in_path()) != NULL) {
 		return ini_file;
 	}
 
@@ -383,9 +356,7 @@ default_file(void)
 	return NULL;
 }
 
-static char *
-default_file_in_path(void)
-{
+static char *default_file_in_path(void) {
 	char *config_path, **file;
 	char *dir, *ini_file, *tokens;
 

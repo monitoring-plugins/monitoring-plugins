@@ -3,7 +3,7 @@
 * Monitoring check_radius plugin
 * 
 * License: GPL
-* Copyright (c) 1999-2008 Monitoring Plugins Development Team
+* Copyright (c) 1999-2024 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 const char *progname = "check_radius";
-const char *copyright = "2000-2008";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -46,8 +46,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include <radiusclient.h>
 #endif
 
-int process_arguments (int, char **);
-void print_help (void);
+static int process_arguments (int /*argc*/, char ** /*argv*/);
+static void print_help (void);
 void print_usage (void);
 
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
@@ -78,22 +78,22 @@ void print_usage (void);
 #define REJECT_RC BADRESP_RC
 #endif
 
-int my_rc_read_config(char *);
+static int my_rc_read_config(char * /*a*/);
 
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
-rc_handle *rch = NULL;
+static rc_handle *rch = NULL;
 #endif
 
-char *server = NULL;
-char *username = NULL;
-char *password = NULL;
-char *nasid = NULL;
-char *nasipaddress = NULL;
-char *expect = NULL;
-char *config_file = NULL;
-unsigned short port = PW_AUTH_UDP_PORT;
-int retries = 1;
-bool verbose = false;
+static char *server = NULL;
+static char *username = NULL;
+static char *password = NULL;
+static char *nasid = NULL;
+static char *nasipaddress = NULL;
+static char *expect = NULL;
+static char *config_file = NULL;
+static unsigned short port = PW_AUTH_UDP_PORT;
+static int retries = 1;
+static bool verbose = false;
 
 /******************************************************************************
 

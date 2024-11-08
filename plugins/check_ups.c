@@ -40,7 +40,9 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "utils.h"
 
-enum { PORT = 3493 };
+enum {
+	PORT = 3493
+};
 
 #define UPS_NONE      0  /* no supported options */
 #define UPS_UTILITY   1  /* supports utility line    */
@@ -66,7 +68,9 @@ enum { PORT = 3493 };
 #define UPSSTATUS_UNKNOWN 4096
 #define UPSSTATUS_ALARM   8192
 
-enum { NOSUCHVAR = ERROR - 1 };
+enum {
+	NOSUCHVAR = ERROR - 1
+};
 
 typedef struct ups_config {
 	unsigned int server_port;
@@ -93,12 +97,12 @@ ups_config ups_config_init(void) {
 }
 
 // Forward declarations
-int determine_status(ups_config *, int *supported_options);
-int get_ups_variable(const char *, char *, const ups_config config);
+static int determine_status(ups_config * /*config*/, int *supported_options);
+static int get_ups_variable(const char * /*varname*/, char * /*buf*/, ups_config config);
 
-int process_arguments(int, char **, ups_config *);
-int validate_arguments(ups_config);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/, ups_config * /*config*/);
+static int validate_arguments(ups_config /*config*/);
+static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {

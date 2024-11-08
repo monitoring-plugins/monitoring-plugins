@@ -3,7 +3,7 @@
 * Monitoring check_http plugin
 *
 * License: GPL
-* Copyright (c) 1999-2013 Monitoring Plugins Development Team
+* Copyright (c) 1999-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -32,7 +32,7 @@
 *****************************************************************************/
 
 const char *progname = "check_http";
-const char *copyright = "1999-2022";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 // Do NOT sort those headers, it will break the build

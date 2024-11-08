@@ -52,13 +52,16 @@ if command -v git > /dev/null 2>&1; then
 fi
 
 mkdir -p "${SRCRPM_DIR}" "${RPM_DIR}"
-#rpmbuild --undefine=_disable_source_fetch --define "_sourcedir ${SOURCE_DIR}" -ba ${SPEC_FILE}
+
+# Run mock below
+# No idea what happens here to be honest
+# mock seems to run more containers to build the package
 dnf -y --setopt="tsflags=nodocs" install rpmdevtools && \
   spectool -g -C ${SOURCE_DIR} ${SPEC_FILE} && \
-  { mock --dnf --clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --build || \
-  { cat ${SRCRPM_DIR}/{root,build}.log; exit 1; } }
-
-mock --dnf --clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild "${SRCRPM_DIR}"/${SRC_RPM} || \
-  { cat ${RPM_DIR}/{root,build}.log; exit 1; }
+  mock --init && \
+  { mock --no-clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --build || \
+  { cat ${SRCRPM_DIR}/{root,build}.log; exit 1; } } && \
+  { mock --no-clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild "${SRCRPM_DIR}"/${SRC_RPM} || \
+  { cat ${RPM_DIR}/{root,build}.log; exit 1; } }
 
 ls -la ${SOURCE_DIR} ${SRCRPM_DIR} ${RPM_DIR}

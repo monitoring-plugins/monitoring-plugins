@@ -1,5 +1,5 @@
 /* base64.c -- Encode binary data using printable characters.
-   Copyright (C) 1999-2001, 2004-2006, 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2001, 2004-2006, 2009-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -42,15 +42,13 @@
 #include <config.h>
 
 /* Get prototype. */
+#define BASE64_INLINE _GL_EXTERN_INLINE
 #include "base64.h"
 
 /* Get imalloc. */
 #include <ialloc.h>
 
 #include <intprops.h>
-
-/* Get UCHAR_MAX. */
-#include <limits.h>
 
 #include <string.h>
 
@@ -242,7 +240,7 @@ base64_encode_alloc (const char *in, idx_t inlen, char **out)
    : (_) == '/' ? 63                            \
    : -1)
 
-static const signed char b64[0x100] = {
+signed char const base64_to_int[256] = {
   B64 (0), B64 (1), B64 (2), B64 (3),
   B64 (4), B64 (5), B64 (6), B64 (7),
   B64 (8), B64 (9), B64 (10), B64 (11),
@@ -308,28 +306,6 @@ static const signed char b64[0x100] = {
   B64 (248), B64 (249), B64 (250), B64 (251),
   B64 (252), B64 (253), B64 (254), B64 (255)
 };
-
-#if UCHAR_MAX == 255
-# define uchar_in_range(c) true
-#else
-# define uchar_in_range(c) ((c) <= 255)
-#endif
-
-/* Return true if CH is a character from the Base64 alphabet, and
-   false otherwise.  Note that '=' is padding and not considered to be
-   part of the alphabet.  */
-bool
-isbase64 (char ch)
-{
-  return uchar_in_range (to_uchar (ch)) && 0 <= b64[to_uchar (ch)];
-}
-
-/* Initialize decode-context buffer, CTX.  */
-void
-base64_decode_ctx_init (struct base64_decode_context *ctx)
-{
-  ctx->i = 0;
-}
 
 /* If CTX->i is 0 or 4, there are four or more bytes in [*IN..IN_END), and
    none of those four is a newline, then return *IN.  Otherwise, copy up to
@@ -405,8 +381,8 @@ decode_4 (char const *restrict in, idx_t inlen,
 
   if (*outleft)
     {
-      *out++ = ((b64[to_uchar (in[0])] << 2)
-                | (b64[to_uchar (in[1])] >> 4));
+      *out++ = ((base64_to_int[to_uchar (in[0])] << 2)
+                | (base64_to_int[to_uchar (in[1])] >> 4));
       --*outleft;
     }
 
@@ -420,6 +396,10 @@ decode_4 (char const *restrict in, idx_t inlen,
 
       if (in[3] != '=')
         return_false;
+
+      /* Reject non-canonical encodings.  */
+      if (base64_to_int[to_uchar (in[1])] & 0x0f)
+        return_false;
     }
   else
     {
@@ -428,8 +408,8 @@ decode_4 (char const *restrict in, idx_t inlen,
 
       if (*outleft)
         {
-          *out++ = (((b64[to_uchar (in[1])] << 4) & 0xf0)
-                    | (b64[to_uchar (in[2])] >> 2));
+          *out++ = (((base64_to_int[to_uchar (in[1])] << 4) & 0xf0)
+                    | (base64_to_int[to_uchar (in[2])] >> 2));
           --*outleft;
         }
 
@@ -440,6 +420,10 @@ decode_4 (char const *restrict in, idx_t inlen,
         {
           if (inlen != 4)
             return_false;
+
+          /* Reject non-canonical encodings.  */
+          if (base64_to_int[to_uchar (in[2])] & 0x03)
+            return_false;
         }
       else
         {
@@ -448,8 +432,8 @@ decode_4 (char const *restrict in, idx_t inlen,
 
           if (*outleft)
             {
-              *out++ = (((b64[to_uchar (in[2])] << 6) & 0xc0)
-                        | b64[to_uchar (in[3])]);
+              *out++ = (((base64_to_int[to_uchar (in[2])] << 6) & 0xc0)
+                        | base64_to_int[to_uchar (in[3])]);
               --*outleft;
             }
         }

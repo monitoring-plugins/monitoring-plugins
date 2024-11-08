@@ -1,5 +1,6 @@
-# math_h.m4 serial 125
-dnl Copyright (C) 2007-2023 Free Software Foundation, Inc.
+# math_h.m4
+# serial 138
+dnl Copyright (C) 2007-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -42,15 +43,21 @@ AC_DEFUN_ONCE([gl_MATH_H],
      cbrt cbrtf cbrtl ceilf ceill copysign copysignf copysignl cosf cosl coshf
      expf expl exp2 exp2f exp2l expm1 expm1f expm1l
      fabsf fabsl floorf floorl fma fmaf fmal
-     fmod fmodf fmodl frexpf frexpl hypotf hypotl
+     fmod fmodf fmodl frexpf frexpl
+     getpayload getpayloadf getpayloadl
+     hypotf hypotl
      ilogb ilogbf ilogbl
      ldexpf ldexpl
      log logf logl log10 log10f log10l log1p log1pf log1pl log2 log2f log2l
      logb logbf logbl
      modf modff modfl powf
      remainder remainderf remainderl
-     rint rintf rintl round roundf roundl sinf sinl sinhf sqrtf sqrtl
-     tanf tanl tanhf trunc truncf truncl])
+     rint rintf rintl round roundf roundl
+     setpayload setpayloadf setpayloadl
+     setpayloadsig setpayloadsigf setpayloadsigl
+     sinf sinl sinhf sqrtf sqrtl
+     tanf tanl tanhf totalorder totalorderf totalorderl totalordermag
+     totalordermagf totalordermagl trunc truncf truncl])
 ])
 
 # gl_MATH_MODULE_INDICATOR([modulename])
@@ -113,6 +120,9 @@ AC_DEFUN([gl_MATH_H_REQUIRE_DEFAULTS],
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_FREXPF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_FREXP])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_FREXPL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_GETPAYLOAD])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_GETPAYLOADF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_GETPAYLOADL])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_HYPOT])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_HYPOTF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_HYPOTL])
@@ -125,6 +135,7 @@ AC_DEFUN([gl_MATH_H_REQUIRE_DEFAULTS],
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ISNANF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ISNAND])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ISNANL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LDEXP])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LDEXPF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LDEXPL])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOG])
@@ -155,6 +166,12 @@ AC_DEFUN([gl_MATH_H_REQUIRE_DEFAULTS],
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ROUND])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ROUNDF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_ROUNDL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOAD])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOADF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOADL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOADSIG])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOADSIGF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SETPAYLOADSIGL])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SIGNBIT])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SINF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_SINL])
@@ -164,6 +181,12 @@ AC_DEFUN([gl_MATH_H_REQUIRE_DEFAULTS],
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TANF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TANL])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TANHF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDER])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDERF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDERL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDERMAG])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDERMAGF])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TOTALORDERMAGL])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TRUNC])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TRUNCF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_TRUNCL])
@@ -209,6 +232,9 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   HAVE_FMODF=1;                     AC_SUBST([HAVE_FMODF])
   HAVE_FMODL=1;                     AC_SUBST([HAVE_FMODL])
   HAVE_FREXPF=1;                    AC_SUBST([HAVE_FREXPF])
+  HAVE_GETPAYLOAD=1;                AC_SUBST([HAVE_GETPAYLOAD])
+  HAVE_GETPAYLOADF=1;               AC_SUBST([HAVE_GETPAYLOADF])
+  HAVE_GETPAYLOADL=1;               AC_SUBST([HAVE_GETPAYLOADL])
   HAVE_HYPOTF=1;                    AC_SUBST([HAVE_HYPOTF])
   HAVE_HYPOTL=1;                    AC_SUBST([HAVE_HYPOTL])
   HAVE_ILOGB=1;                     AC_SUBST([HAVE_ILOGB])
@@ -234,6 +260,12 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   HAVE_REMAINDERF=1;                AC_SUBST([HAVE_REMAINDERF])
   HAVE_RINT=1;                      AC_SUBST([HAVE_RINT])
   HAVE_RINTL=1;                     AC_SUBST([HAVE_RINTL])
+  HAVE_SETPAYLOAD=1;                AC_SUBST([HAVE_SETPAYLOAD])
+  HAVE_SETPAYLOADF=1;               AC_SUBST([HAVE_SETPAYLOADF])
+  HAVE_SETPAYLOADL=1;               AC_SUBST([HAVE_SETPAYLOADL])
+  HAVE_SETPAYLOADSIG=1;             AC_SUBST([HAVE_SETPAYLOADSIG])
+  HAVE_SETPAYLOADSIGF=1;            AC_SUBST([HAVE_SETPAYLOADSIGF])
+  HAVE_SETPAYLOADSIGL=1;            AC_SUBST([HAVE_SETPAYLOADSIGL])
   HAVE_SINF=1;                      AC_SUBST([HAVE_SINF])
   HAVE_SINL=1;                      AC_SUBST([HAVE_SINL])
   HAVE_SINHF=1;                     AC_SUBST([HAVE_SINHF])
@@ -242,6 +274,12 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   HAVE_TANF=1;                      AC_SUBST([HAVE_TANF])
   HAVE_TANL=1;                      AC_SUBST([HAVE_TANL])
   HAVE_TANHF=1;                     AC_SUBST([HAVE_TANHF])
+  HAVE_TOTALORDER=1;                AC_SUBST([HAVE_TOTALORDER])
+  HAVE_TOTALORDERF=1;               AC_SUBST([HAVE_TOTALORDERF])
+  HAVE_TOTALORDERL=1;               AC_SUBST([HAVE_TOTALORDERL])
+  HAVE_TOTALORDERMAG=1;             AC_SUBST([HAVE_TOTALORDERMAG])
+  HAVE_TOTALORDERMAGF=1;            AC_SUBST([HAVE_TOTALORDERMAGF])
+  HAVE_TOTALORDERMAGL=1;            AC_SUBST([HAVE_TOTALORDERMAGL])
   HAVE_DECL_ACOSL=1;                AC_SUBST([HAVE_DECL_ACOSL])
   HAVE_DECL_ASINL=1;                AC_SUBST([HAVE_DECL_ASINL])
   HAVE_DECL_ATANL=1;                AC_SUBST([HAVE_DECL_ATANL])
@@ -309,6 +347,9 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   REPLACE_FREXPF=0;                 AC_SUBST([REPLACE_FREXPF])
   REPLACE_FREXP=0;                  AC_SUBST([REPLACE_FREXP])
   REPLACE_FREXPL=0;                 AC_SUBST([REPLACE_FREXPL])
+  REPLACE_GETPAYLOAD=0;             AC_SUBST([REPLACE_GETPAYLOAD])
+  REPLACE_GETPAYLOADF=0;            AC_SUBST([REPLACE_GETPAYLOADF])
+  REPLACE_GETPAYLOADL=0;            AC_SUBST([REPLACE_GETPAYLOADL])
   REPLACE_HUGE_VAL=0;               AC_SUBST([REPLACE_HUGE_VAL])
   REPLACE_HYPOT=0;                  AC_SUBST([REPLACE_HYPOT])
   REPLACE_HYPOTF=0;                 AC_SUBST([REPLACE_HYPOTF])
@@ -319,6 +360,7 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   REPLACE_ISFINITE=0;               AC_SUBST([REPLACE_ISFINITE])
   REPLACE_ISINF=0;                  AC_SUBST([REPLACE_ISINF])
   REPLACE_ISNAN=0;                  AC_SUBST([REPLACE_ISNAN])
+  REPLACE_LDEXP=0;                  AC_SUBST([REPLACE_LDEXP])
   REPLACE_LDEXPL=0;                 AC_SUBST([REPLACE_LDEXPL])
   REPLACE_LOG=0;                    AC_SUBST([REPLACE_LOG])
   REPLACE_LOGF=0;                   AC_SUBST([REPLACE_LOGF])
@@ -354,6 +396,12 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   REPLACE_SQRTL=0;                  AC_SUBST([REPLACE_SQRTL])
   REPLACE_TANF=0;                   AC_SUBST([REPLACE_TANF])
   REPLACE_TANHF=0;                  AC_SUBST([REPLACE_TANHF])
+  REPLACE_TOTALORDER=0;             AC_SUBST([REPLACE_TOTALORDER])
+  REPLACE_TOTALORDERF=0;            AC_SUBST([REPLACE_TOTALORDERF])
+  REPLACE_TOTALORDERL=0;            AC_SUBST([REPLACE_TOTALORDERL])
+  REPLACE_TOTALORDERMAG=0;          AC_SUBST([REPLACE_TOTALORDERMAG])
+  REPLACE_TOTALORDERMAGF=0;         AC_SUBST([REPLACE_TOTALORDERMAGF])
+  REPLACE_TOTALORDERMAGL=0;         AC_SUBST([REPLACE_TOTALORDERMAGL])
   REPLACE_TRUNC=0;                  AC_SUBST([REPLACE_TRUNC])
   REPLACE_TRUNCF=0;                 AC_SUBST([REPLACE_TRUNCF])
   REPLACE_TRUNCL=0;                 AC_SUBST([REPLACE_TRUNCL])
@@ -364,7 +412,7 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
 # Sets variable HAVE_SAME_LONG_DOUBLE_AS_DOUBLE to 0 or 1, and defines
 # HAVE_SAME_LONG_DOUBLE_AS_DOUBLE accordingly.
 # The currently known platforms where this is the case are:
-# Linux/HPPA, Minix 3.1.8, AIX 5, AIX 6 and 7 with xlc, MSVC 9.
+# Linux/HPPA, NetBSD/sparc32, Minix 3.1.8, AIX 5, AIX 6 and 7 with xlc, MSVC 9.
 AC_DEFUN([gl_LONG_DOUBLE_VS_DOUBLE],
 [
   AC_CACHE_CHECK([whether long double and double are the same],

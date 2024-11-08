@@ -28,9 +28,7 @@
 
 #include "tap.h"
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	unsigned int rc = 0;
 
 	rc = plan_tests(0);

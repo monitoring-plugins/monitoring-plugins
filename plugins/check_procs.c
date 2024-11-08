@@ -3,7 +3,7 @@
 * Monitoring check_procs plugin
 *
 * License: GPL
-* Copyright (c) 2000-2008 Monitoring Plugins Development Team
+* Copyright (c) 2000-2024 Monitoring Plugins Development Team
 *
 * Description:
 *
@@ -36,7 +36,7 @@
 
 const char *progname = "check_procs";
 const char *program_name = "check_procs";  /* Required for coreutils libs */
-const char *copyright = "2000-2008";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -51,17 +51,17 @@ const char *email = "devel@monitoring-plugins.org";
 #include <sys/stat.h>
 #endif
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-int convert_to_seconds (char *);
-void print_help (void);
+static int process_arguments (int /*argc*/, char ** /*argv*/);
+static int validate_arguments (void);
+static int convert_to_seconds (char * /*etime*/);
+static void print_help (void);
 void print_usage (void);
 
-char *warning_range = NULL;
-char *critical_range = NULL;
-thresholds *procs_thresholds = NULL;
+static char *warning_range = NULL;
+static char *critical_range = NULL;
+static thresholds *procs_thresholds = NULL;
 
-int options = 0; /* bitmask of filter criteria to test against */
+static int options = 0; /* bitmask of filter criteria to test against */
 #define ALL 1
 #define STAT 2
 #define PPID 4
@@ -89,27 +89,25 @@ enum metric {
 };
 enum metric metric = METRIC_PROCS;
 
-int verbose = 0;
-int uid;
-pid_t ppid;
-int vsz;
-int rss;
-float pcpu;
-char *statopts;
-char *prog;
-char *exclude_progs;
-char **exclude_progs_arr = NULL;
-char exclude_progs_counter = 0;
-char *args;
-char *input_filename = NULL;
-regex_t re_args;
-char *fmt;
-char *fails;
-char tmp[MAX_INPUT_BUFFER];
-int kthread_filter = 0;
-int usepid = 0; /* whether to test for pid or /proc/pid/exe */
-
-FILE *ps_input = NULL;
+static int verbose = 0;
+static int uid;
+static pid_t ppid;
+static int vsz;
+static int rss;
+static float pcpu;
+static char *statopts;
+static char *prog;
+static char *exclude_progs;
+static char **exclude_progs_arr = NULL;
+static char exclude_progs_counter = 0;
+static char *args;
+static char *input_filename = NULL;
+static regex_t re_args;
+static char *fmt;
+static char *fails;
+static char tmp[MAX_INPUT_BUFFER];
+static int kthread_filter = 0;
+static int usepid = 0; /* whether to test for pid or /proc/pid/exe */
 
 static int
 stat_exe (const pid_t pid, struct stat *buf) {
@@ -834,7 +832,7 @@ be the total number of running processes\n\n"));
   printf (" %s\n", "check_procs -w 50000 -c 100000 --metric=VSZ");
   printf ("  %s\n\n", _("Alert if VSZ of any processes over 50K or 100K"));
   printf (" %s\n", "check_procs -w 10 -c 20 --metric=CPU");
-  printf ("  %s\n", _("Alert if CPU of any processes over 10\% or 20\%"));
+  printf ("  %s\n", _("Alert if CPU of any processes over 10%% or 20%%"));
 
   printf (UT_SUPPORT);
 }

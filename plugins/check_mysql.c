@@ -5,7 +5,7 @@
 * License: GPL
 * Copyright (c) 1999 Didi Rieder (adrieder@sbox.tu-graz.ac.at)
 * Copyright (c) 2000 Karl DeBisschop (kdebisschop@users.sourceforge.net)
-* Copyright (c) 1999-2011 Monitoring Plugins Development Team
+* Copyright (c) 1999-2024 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 *****************************************************************************/
 
 const char *progname = "check_mysql";
-const char *copyright = "1999-2011";
+const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #define SLAVERESULTSIZE 96
@@ -45,23 +45,23 @@ const char *email = "devel@monitoring-plugins.org";
 #include <mysqld_error.h>
 #include <errmsg.h>
 
-char *db_user = NULL;
-char *db_host = NULL;
-char *db_socket = NULL;
-char *db_pass = NULL;
-char *db = NULL;
-char *ca_cert = NULL;
-char *ca_dir = NULL;
-char *cert = NULL;
-char *key = NULL;
-char *ciphers = NULL;
-bool ssl = false;
-char *opt_file = NULL;
-char *opt_group = NULL;
-unsigned int db_port = MYSQL_PORT;
-bool check_slave = false;
-bool ignore_auth = false;
-int verbose = 0;
+static char *db_user = NULL;
+static char *db_host = NULL;
+static char *db_socket = NULL;
+static char *db_pass = NULL;
+static char *db = NULL;
+static char *ca_cert = NULL;
+static char *ca_dir = NULL;
+static char *cert = NULL;
+static char *key = NULL;
+static char *ciphers = NULL;
+static bool ssl = false;
+static char *opt_file = NULL;
+static char *opt_group = NULL;
+static unsigned int db_port = MYSQL_PORT;
+static bool check_slave = false;
+static bool ignore_auth = false;
+static int verbose = 0;
 
 static double warning_time = 0;
 static double critical_time = 0;
@@ -91,11 +91,11 @@ static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
 
 #define MYSQLDUMP_THREADS_QUERY "SELECT COUNT(1) mysqldumpThreads FROM information_schema.processlist WHERE info LIKE 'SELECT /*!40001 SQL_NO_CACHE */%'"
 
-thresholds *my_threshold = NULL;
+static thresholds *my_threshold = NULL;
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-void print_help (void);
+static int process_arguments (int, char **);
+static int validate_arguments (void);
+static void print_help (void);
 void print_usage (void);
 
 int

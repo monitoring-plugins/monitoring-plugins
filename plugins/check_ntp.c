@@ -4,7 +4,7 @@
 * 
 * License: GPL
 * Copyright (c) 2006 Sean Finney <seanius@seanius.net>
-* Copyright (c) 2006-2008 Monitoring Plugins Development Team
+* Copyright (c) 2006-2024 Monitoring Plugins Development Team
 * 
 * Description:
 * 
@@ -31,7 +31,7 @@
 *****************************************************************************/
 
 const char *progname = "check_ntp";
-const char *copyright = "2006-2008";
+const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
@@ -47,10 +47,10 @@ static bool do_jitter = false;
 static char *jwarn="5000";
 static char *jcrit="10000";
 
-int process_arguments (int, char **);
-thresholds *offset_thresholds = NULL;
-thresholds *jitter_thresholds = NULL;
-void print_help (void);
+static int process_arguments (int /*argc*/, char ** /*argv*/);
+static thresholds *offset_thresholds = NULL;
+static thresholds *jitter_thresholds = NULL;
+static void print_help (void);
 void print_usage (void);
 
 /* number of times to perform each request to get a good average. */

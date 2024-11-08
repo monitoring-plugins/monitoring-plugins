@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995-2003, 2005-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 1995-2003, 2005-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This file is free software: you can redistribute it and/or modify
@@ -82,6 +82,7 @@ typedef int (*compar_fn_t) (const void *, const void *);
 static void *known_values;
 
 # define KNOWN_VALUE(Str) \
+  __extension__                                                               \
   ({                                                                          \
     void *value = tfind (Str, &known_values, (compar_fn_t) strcmp);           \
     value != NULL ? *(char **) value : NULL;                                  \
@@ -375,6 +376,11 @@ rpl_setenv (const char *name, const char *value, int replace)
           int saved_errno;
           size_t len = strlen (value);
           tmp = malloca (len + 2);
+          if (tmp == NULL)
+            {
+              errno = ENOMEM;
+              return -1;
+            }
           /* Since leading '=' is eaten, double it up.  */
           *tmp = '=';
           memcpy (tmp + 1, value, len + 1);

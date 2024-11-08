@@ -28,16 +28,14 @@
 
 #include "tap.h"
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	unsigned int rc = 0;
 	unsigned int side_effect = 0;
 
 	rc = plan_tests(5);
 	diag("Returned: %d", rc);
 
-	rc = ok(1 == 1, "1 equals 1");	/* Should always work */
+	rc = ok(1 == 1, "1 equals 1"); /* Should always work */
 	diag("Returned: %d", rc);
 
 	todo_start("For testing purposes");

@@ -1,63 +1,63 @@
 /*****************************************************************************
-* 
-* Monitoring run command utilities
-* 
-* License: GPL
-* Copyright (c) 2005-2006 Monitoring Plugins Development Team
-* 
-* Description :
-* 
-* A simple interface to executing programs from other programs, using an
-* optimized and safe popen()-like implementation. It is considered safe
-* in that no shell needs to be spawned and the environment passed to the
-* execve()'d program is essentially empty.
-* 
-* The code in this file is a derivative of popen.c which in turn was taken
-* from "Advanced Programming for the Unix Environment" by W. Richard Stevens.
-* 
-* Care has been taken to make sure the functions are async-safe. The one
-* function which isn't is np_runcmd_init() which it doesn't make sense to
-* call twice anyway, so the api as a whole should be considered async-safe.
-* 
-* 
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-* 
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-* 
-* 
-*****************************************************************************/
+ *
+ * Monitoring run command utilities
+ *
+ * License: GPL
+ * Copyright (c) 2005-2024 Monitoring Plugins Development Team
+ *
+ * Description :
+ *
+ * A simple interface to executing programs from other programs, using an
+ * optimized and safe popen()-like implementation. It is considered safe
+ * in that no shell needs to be spawned and the environment passed to the
+ * execve()'d program is essentially empty.
+ *
+ * The code in this file is a derivative of popen.c which in turn was taken
+ * from "Advanced Programming for the Unix Environment" by W. Richard Stevens.
+ *
+ * Care has been taken to make sure the functions are async-safe. The one
+ * function which isn't is np_runcmd_init() which it doesn't make sense to
+ * call twice anyway, so the api as a whole should be considered async-safe.
+ *
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
 
 #define NAGIOSPLUG_API_C 1
 
 /** includes **/
 #include "runcmd.h"
 #ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
+#	include <sys/wait.h>
 #endif
 
 #include "./utils.h"
 
 /** macros **/
 #ifndef WEXITSTATUS
-# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+#	define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif
 
 #ifndef WIFEXITED
-# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#	define WIFEXITED(stat_val) (((stat_val)&255) == 0)
 #endif
 
 /* 4.3BSD Reno <signal.h> doesn't define SIG_ERR */
 #if defined(SIG_IGN) && !defined(SIG_ERR)
-# define SIG_ERR ((Sigfunc *)-1)
+#	define SIG_ERR ((Sigfunc *)-1)
 #endif
 
 #include "../lib/maxfd.h"
@@ -72,33 +72,26 @@
 static pid_t *np_pids = NULL;
 
 /** prototypes **/
-static int np_runcmd_open(const char *, int *, int *)
-	__attribute__((__nonnull__(1, 2, 3)));
+static int np_runcmd_open(const char *, int *, int *) __attribute__((__nonnull__(1, 2, 3)));
 
-static int np_fetch_output(int, output *, int)
-	__attribute__((__nonnull__(2)));
+static int np_fetch_output(int, output *, int) __attribute__((__nonnull__(2)));
 
 static int np_runcmd_close(int);
 
 /* prototype imported from utils.h */
-extern void die (int, const char *, ...)
-	__attribute__((__noreturn__,__format__(__printf__, 2, 3)));
-
+extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
 
 /* this function is NOT async-safe. It is exported so multithreaded
  * plugins (or other apps) can call it prior to running any commands
  * through this api and thus achieve async-safeness throughout the api */
-void np_runcmd_init(void)
-{
-  long maxfd = mp_open_max();
-	if(!np_pids) np_pids = calloc(maxfd, sizeof(pid_t));
+void np_runcmd_init(void) {
+	long maxfd = mp_open_max();
+	if (!np_pids)
+		np_pids = calloc(maxfd, sizeof(pid_t));
 }
 
-
 /* Start running a command */
-static int
-np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
-{
+static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 	char *env[2];
 	char *cmd = NULL;
 	char **argv = NULL;
@@ -112,7 +105,8 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 
 	int i = 0;
 
-	if(!np_pids) NP_RUNCMD_INIT;
+	if (!np_pids)
+		NP_RUNCMD_INIT;
 
 	env[0] = strdup("LC_ALL=C");
 	env[1] = NULL;
@@ -120,15 +114,17 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmdlen = strlen(cmdstring);
-	if((cmd = malloc(cmdlen + 1)) == NULL) return -1;
+	if ((cmd = malloc(cmdlen + 1)) == NULL)
+		return -1;
 	memcpy(cmd, cmdstring, cmdlen);
 	cmd[cmdlen] = '\0';
 
 	/* This is not a shell, so we don't handle "???" */
-	if (strstr (cmdstring, "\"")) return -1;
+	if (strstr(cmdstring, "\""))
+		return -1;
 
 	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
-	if (strstr (cmdstring, " ' ") || strstr (cmdstring, "'''"))
+	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
 		return -1;
 
 	/* each arg must be whitespace-separated, so args can be a maximum
@@ -137,32 +133,31 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	argv = calloc(sizeof(char *), argc);
 
 	if (argv == NULL) {
-		printf ("%s\n", _("Could not malloc argv array in popen()"));
+		printf("%s\n", _("Could not malloc argv array in popen()"));
 		return -1;
 	}
 
 	/* get command arguments (stupidly, but fairly quickly) */
 	while (cmd) {
 		str = cmd;
-		str += strspn (str, " \t\r\n"); /* trim any leading whitespace */
+		str += strspn(str, " \t\r\n"); /* trim any leading whitespace */
 
-		if (strstr (str, "'") == str) {	/* handle SIMPLE quoted strings */
+		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
 			str++;
-			if (!strstr (str, "'")) return -1;	/* balanced? */
-			cmd = 1 + strstr (str, "'");
-			str[strcspn (str, "'")] = 0;
-		}
-		else {
-			if (strpbrk (str, " \t\r\n")) {
-				cmd = 1 + strpbrk (str, " \t\r\n");
-				str[strcspn (str, " \t\r\n")] = 0;
-			}
-			else {
+			if (!strstr(str, "'"))
+				return -1; /* balanced? */
+			cmd = 1 + strstr(str, "'");
+			str[strcspn(str, "'")] = 0;
+		} else {
+			if (strpbrk(str, " \t\r\n")) {
+				cmd = 1 + strpbrk(str, " \t\r\n");
+				str[strcspn(str, " \t\r\n")] = 0;
+			} else {
 				cmd = NULL;
 			}
 		}
 
-		if (cmd && strlen (cmd) == strspn (cmd, " \t\r\n"))
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n"))
 			cmd = NULL;
 
 		argv[i++] = str;
@@ -173,33 +168,33 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 
 	/* child runs exceve() and _exit. */
 	if (pid == 0) {
-#ifdef 	RLIMIT_CORE
+#ifdef RLIMIT_CORE
 		/* the program we execve shouldn't leave core files */
-		getrlimit (RLIMIT_CORE, &limit);
+		getrlimit(RLIMIT_CORE, &limit);
 		limit.rlim_cur = 0;
-		setrlimit (RLIMIT_CORE, &limit);
+		setrlimit(RLIMIT_CORE, &limit);
 #endif
-		close (pfd[0]);
+		close(pfd[0]);
 		if (pfd[1] != STDOUT_FILENO) {
-			dup2 (pfd[1], STDOUT_FILENO);
-			close (pfd[1]);
+			dup2(pfd[1], STDOUT_FILENO);
+			close(pfd[1]);
 		}
-		close (pfderr[0]);
+		close(pfderr[0]);
 		if (pfderr[1] != STDERR_FILENO) {
-			dup2 (pfderr[1], STDERR_FILENO);
-			close (pfderr[1]);
+			dup2(pfderr[1], STDERR_FILENO);
+			close(pfderr[1]);
 		}
 
 		/* close all descriptors in np_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
-    long maxfd = mp_open_max();
+		long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++)
-			if(np_pids[i] > 0)
-				close (i);
+			if (np_pids[i] > 0)
+				close(i);
 
-		execve (argv[0], argv, env);
-		_exit (STATE_UNKNOWN);
+		execve(argv[0], argv, env);
+		_exit(STATE_UNKNOWN);
 	}
 
 	/* parent picks up execution here */
@@ -213,49 +208,44 @@ np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr)
 	return pfd[0];
 }
 
-
-static int
-np_runcmd_close(int fd)
-{
+static int np_runcmd_close(int fd) {
 	int status;
 	pid_t pid;
 
 	/* make sure this fd was opened by popen() */
-  long maxfd = mp_open_max();
-	if(fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0)
+	long maxfd = mp_open_max();
+	if (fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0)
 		return -1;
 
 	np_pids[fd] = 0;
-	if (close (fd) == -1) return -1;
+	if (close(fd) == -1)
+		return -1;
 
 	/* EINTR is ok (sort of), everything else is bad */
-	while (waitpid (pid, &status, 0) < 0)
-		if (errno != EINTR) return -1;
+	while (waitpid(pid, &status, 0) < 0)
+		if (errno != EINTR)
+			return -1;
 
 	/* return child's termination status */
 	return (WIFEXITED(status)) ? WEXITSTATUS(status) : -1;
 }
 
-
-void
-runcmd_timeout_alarm_handler (int signo)
-{
+void runcmd_timeout_alarm_handler(int signo) {
 
 	if (signo == SIGALRM)
 		puts(_("CRITICAL - Plugin timed out while executing system call"));
 
-  long maxfd = mp_open_max();
-	if(np_pids) for(long int i = 0; i < maxfd; i++) {
-		if(np_pids[i] != 0) kill(np_pids[i], SIGKILL);
-	}
+	long maxfd = mp_open_max();
+	if (np_pids)
+		for (long int i = 0; i < maxfd; i++) {
+			if (np_pids[i] != 0)
+				kill(np_pids[i], SIGKILL);
+		}
 
-	exit (STATE_CRITICAL);
+	exit(STATE_CRITICAL);
 }
 
-
-static int
-np_fetch_output(int fd, output *op, int flags)
-{
+static int np_fetch_output(int fd, output *op, int flags) {
 	size_t len = 0, i = 0, lineno = 0;
 	size_t rsf = 6, ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
 	char *buf = NULL;
@@ -264,7 +254,7 @@ np_fetch_output(int fd, output *op, int flags)
 
 	op->buf = NULL;
 	op->buflen = 0;
-	while((ret = read(fd, tmpbuf, sizeof(tmpbuf))) > 0) {
+	while ((ret = read(fd, tmpbuf, sizeof(tmpbuf))) > 0) {
 		len = (size_t)ret;
 		op->buf = realloc(op->buf, op->buflen + len + 1);
 		memcpy(op->buf + op->buflen, tmpbuf, len);
@@ -272,33 +262,33 @@ np_fetch_output(int fd, output *op, int flags)
 		i++;
 	}
 
-	if(ret < 0) {
+	if (ret < 0) {
 		printf("read() returned %d: %s\n", ret, strerror(errno));
 		return ret;
 	}
 
 	/* some plugins may want to keep output unbroken, and some commands
 	 * will yield no output, so return here for those */
-	if(flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen)
+	if (flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen)
 		return op->buflen;
 
 	/* and some may want both */
-	if(flags & RUNCMD_NO_ASSOC) {
+	if (flags & RUNCMD_NO_ASSOC) {
 		buf = malloc(op->buflen);
 		memcpy(buf, op->buf, op->buflen);
-	}
-	else buf = op->buf;
+	} else
+		buf = op->buf;
 
 	op->line = NULL;
 	op->lens = NULL;
 	i = 0;
-	while(i < op->buflen) {
+	while (i < op->buflen) {
 		/* make sure we have enough memory */
-		if(lineno >= ary_size) {
+		if (lineno >= ary_size) {
 			/* ary_size must never be zero */
 			do {
 				ary_size = op->buflen >> --rsf;
-			} while(!ary_size);
+			} while (!ary_size);
 
 			op->line = realloc(op->line, ary_size * sizeof(char *));
 			op->lens = realloc(op->lens, ary_size * sizeof(size_t));
@@ -308,7 +298,8 @@ np_fetch_output(int fd, output *op, int flags)
 		op->line[lineno] = &buf[i];
 
 		/* hop to next newline or end of buffer */
-		while(buf[i] != '\n' && i < op->buflen) i++;
+		while (buf[i] != '\n' && i < op->buflen)
+			i++;
 		buf[i] = '\0';
 
 		/* calculate the string length using pointer difference */
@@ -321,21 +312,22 @@ np_fetch_output(int fd, output *op, int flags)
 	return lineno;
 }
 
-
-int
-np_runcmd(const char *cmd, output *out, output *err, int flags)
-{
+int np_runcmd(const char *cmd, output *out, output *err, int flags) {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
-	if(out) memset(out, 0, sizeof(output));
-	if(err) memset(err, 0, sizeof(output));
+	if (out)
+		memset(out, 0, sizeof(output));
+	if (err)
+		memset(err, 0, sizeof(output));
 
-	if((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1)
-		die (STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
+	if ((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1)
+		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 
-	if(out) out->lines = np_fetch_output(pfd_out[0], out, flags);
-	if(err) err->lines = np_fetch_output(pfd_err[0], err, flags);
+	if (out)
+		out->lines = np_fetch_output(pfd_out[0], out, flags);
+	if (err)
+		err->lines = np_fetch_output(pfd_err[0], err, flags);
 
 	return np_runcmd_close(fd);
 }
