@@ -47,10 +47,10 @@ static bool do_jitter = false;
 static char *jwarn="5000";
 static char *jcrit="10000";
 
-int process_arguments (int, char **);
-thresholds *offset_thresholds = NULL;
-thresholds *jitter_thresholds = NULL;
-void print_help (void);
+static int process_arguments (int /*argc*/, char ** /*argv*/);
+static thresholds *offset_thresholds = NULL;
+static thresholds *jitter_thresholds = NULL;
+static void print_help (void);
 void print_usage (void);
 
 /* number of times to perform each request to get a good average. */
