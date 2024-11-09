@@ -1,5 +1,5 @@
 /* Get address information (partial implementation).
-   Copyright (C) 1997, 2001-2002, 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997, 2001-2002, 2004-2024 Free Software Foundation, Inc.
    Contributed by Simon Josefsson <simon@josefsson.org>.
 
    This file is free software: you can redistribute it and/or modify

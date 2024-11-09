@@ -525,7 +525,7 @@ int check_http(void) {
 	// use the host_name later on to make SNI happy
 	if (use_ssl && host_name != NULL) {
 		if ((res = lookup_host(server_address, addrstr, DEFAULT_BUFFER_SIZE / 2)) != 0) {
-			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %d"), server_address, res,
+			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"), server_address, res,
 					 gai_strerror(res));
 			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 		}

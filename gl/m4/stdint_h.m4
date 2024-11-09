@@ -1,5 +1,6 @@
-# stdint_h.m4 serial 9
-dnl Copyright (C) 1997-2004, 2006, 2008-2023 Free Software Foundation, Inc.
+# stdint_h.m4
+# serial 9
+dnl Copyright (C) 1997-2004, 2006, 2008-2024 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.

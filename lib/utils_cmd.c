@@ -290,7 +290,7 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 	/* each arg must be whitespace-separated, so args can be a maximum
 	 * of (len / 2) + 1. We add 1 extra to the mix for NULL termination */
 	argc = (cmdlen >> 1) + 2;
-	argv = calloc(sizeof(char *), argc);
+	argv = calloc((size_t)argc, sizeof(char *));
 
 	if (argv == NULL) {
 		printf("%s\n", _("Could not malloc argv array in popen()"));

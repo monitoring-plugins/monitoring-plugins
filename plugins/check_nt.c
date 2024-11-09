@@ -59,26 +59,25 @@ enum {
 	PORT = 1248
 };
 
-char *server_address = NULL;
-char *volume_name = NULL;
-int server_port = PORT;
-char *value_list = NULL;
-char *req_password = NULL;
-unsigned long lvalue_list[MAX_VALUE_LIST];
-unsigned long warning_value = 0L;
-unsigned long critical_value = 0L;
-bool check_warning_value = false;
-bool check_critical_value = false;
-enum checkvars vars_to_check = CHECK_NONE;
-bool show_all = false;
+static char *server_address = NULL;
+static int server_port = PORT;
+static char *value_list = NULL;
+static char *req_password = NULL;
+static unsigned long lvalue_list[MAX_VALUE_LIST];
+static unsigned long warning_value = 0L;
+static unsigned long critical_value = 0L;
+static bool check_warning_value = false;
+static bool check_critical_value = false;
+static enum checkvars vars_to_check = CHECK_NONE;
+static bool show_all = false;
 
-char recv_buffer[MAX_INPUT_BUFFER];
+static char recv_buffer[MAX_INPUT_BUFFER];
 
-void fetch_data(const char *address, int port, const char *sendb);
-int process_arguments(int, char **);
-void preparelist(char *string);
-bool strtoularray(unsigned long *array, char *string, const char *delim);
-void print_help(void);
+static void fetch_data(const char *address, int port, const char *sendb);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static void preparelist(char *string);
+static bool strtoularray(unsigned long *array, char *string, const char *delim);
+static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {

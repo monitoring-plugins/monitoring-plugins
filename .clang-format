@@ -9,3 +9,4 @@ IndentPPDirectives: AfterHash
 SortIncludes: Never
 AllowShortEnumsOnASingleLine: false
 BinPackArguments: true
+InsertBraces: true

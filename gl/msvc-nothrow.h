@@ -1,6 +1,6 @@
 /* Wrappers that don't throw invalid parameter notifications
    with MSVC runtime libraries.
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -25,10 +25,19 @@
    This file defines wrappers that turn such an invalid parameter notification
    into an error code.  */
 
+/* This file uses HAVE_MSVC_INVALID_PARAMETER_HANDLER.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
+
 #if defined _WIN32 && ! defined __CYGWIN__
 
 /* Get original declaration of _get_osfhandle.  */
 # include <io.h>
+
+# ifdef __cplusplus
+extern "C" {
+# endif
 
 # if HAVE_MSVC_INVALID_PARAMETER_HANDLER
 
@@ -36,6 +45,10 @@
 extern intptr_t _gl_nothrow_get_osfhandle (int fd);
 #  define _get_osfhandle _gl_nothrow_get_osfhandle
 
+# endif
+
+# ifdef __cplusplus
+}
 # endif
 
 #endif

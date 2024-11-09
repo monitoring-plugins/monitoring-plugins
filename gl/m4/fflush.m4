@@ -1,9 +1,9 @@
-# fflush.m4 serial 18
-
-# Copyright (C) 2007-2023 Free Software Foundation, Inc.
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
+# fflush.m4
+# serial 19
+dnl Copyright (C) 2007-2024 Free Software Foundation, Inc.
+dnl This file is free software; the Free Software Foundation
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Eric Blake
 
@@ -79,9 +79,9 @@ AC_DEFUN([gl_FUNC_FFLUSH_STDIN],
        [gl_cv_func_fflush_stdin=yes],
        [gl_cv_func_fflush_stdin=no],
        [case "$host_os" in
-                  # Guess no on native Windows.
-          mingw*) gl_cv_func_fflush_stdin="guessing no" ;;
-          *)      gl_cv_func_fflush_stdin=cross ;;
+                             # Guess no on native Windows.
+          mingw* | windows*) gl_cv_func_fflush_stdin="guessing no" ;;
+          *)                 gl_cv_func_fflush_stdin=cross ;;
         esac
        ])
      rm conftest.txt

@@ -1,6 +1,6 @@
 /* xsize.h -- Checked size_t computations.
 
-   Copyright (C) 2003, 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2008-2024 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -18,6 +18,11 @@
 #ifndef _XSIZE_H
 #define _XSIZE_H
 
+/* This file uses _GL_INLINE_HEADER_BEGIN, _GL_INLINE, HAVE_STDINT_H.  */
+#if !_GL_CONFIG_H_INCLUDED
+ #error "Please include config.h first."
+#endif
+
 /* Get size_t.  */
 #include <stddef.h>
 
@@ -30,13 +35,15 @@
 /* Get ATTRIBUTE_PURE.  */
 #include "attribute.h"
 
-#ifndef _GL_INLINE_HEADER_BEGIN
- #error "Please include config.h first."
-#endif
 _GL_INLINE_HEADER_BEGIN
 #ifndef XSIZE_INLINE
 # define XSIZE_INLINE _GL_INLINE
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* The size of memory objects is often computed through expressions of
    type size_t. Example:
@@ -102,6 +109,11 @@ xmax (size_t size1, size_t size2)
 /* Check against overflow.  */
 #define size_in_bounds_p(SIZE) \
   ((SIZE) != SIZE_MAX)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 _GL_INLINE_HEADER_END
 

@@ -47,37 +47,37 @@ enum {
 	DEFAULT_PORT = 389
 };
 
-int process_arguments (int, char **);
-int validate_arguments (void);
-void print_help (void);
+static int process_arguments (int, char **);
+static int validate_arguments (void);
+static void print_help (void);
 void print_usage (void);
 
-char ld_defattr[] = "(objectclass=*)";
-char *ld_attr = ld_defattr;
-char *ld_host = NULL;
-char *ld_base = NULL;
-char *ld_passwd = NULL;
-char *ld_binddn = NULL;
-int ld_port = -1;
+static char ld_defattr[] = "(objectclass=*)";
+static char *ld_attr = ld_defattr;
+static char *ld_host = NULL;
+static char *ld_base = NULL;
+static char *ld_passwd = NULL;
+static char *ld_binddn = NULL;
+static int ld_port = -1;
 #ifdef HAVE_LDAP_SET_OPTION
-int ld_protocol = DEFAULT_PROTOCOL;
+static int ld_protocol = DEFAULT_PROTOCOL;
 #endif
 #ifndef LDAP_OPT_SUCCESS
 # define LDAP_OPT_SUCCESS LDAP_SUCCESS
 #endif
-double warn_time = UNDEFINED;
-double crit_time = UNDEFINED;
-thresholds *entries_thresholds = NULL;
-struct timeval tv;
-char* warn_entries = NULL;
-char* crit_entries = NULL;
-bool starttls = false;
-bool ssl_on_connect = false;
-bool verbose = false;
+static double warn_time = UNDEFINED;
+static double crit_time = UNDEFINED;
+static thresholds *entries_thresholds = NULL;
+static struct timeval tv;
+static char* warn_entries = NULL;
+static char* crit_entries = NULL;
+static bool starttls = false;
+static bool ssl_on_connect = false;
+static bool verbose = false;
 
 /* for ldap tls */
 
-char *SERVICE = "LDAP";
+static char *SERVICE = "LDAP";
 
 int
 main (int argc, char *argv[])

@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
 	/* set up a reasonable buffer at first (will be realloc()'ed if
 	 * user specifies other options) */
-	server_expect = calloc(sizeof(char *), 2);
+	server_expect = calloc(2, sizeof(char *));
 
 	/* determine defaults for this service's protocol */
 	if (!strncmp(SERVICE, "UDP", 3)) {

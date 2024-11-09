@@ -28,29 +28,27 @@
 
 #include "tap.h"
 
-int
-main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	unsigned int rc = 0;
 	unsigned int side_effect = 0;
 
 	rc = plan_tests(4);
 	diag("Returned: %d", rc);
 
-	rc = ok(1 == 1, "1 equals 1");	/* Should always work */
+	rc = ok(1 == 1, "1 equals 1"); /* Should always work */
 	diag("Returned: %d", rc);
 
 	do {
-		if(1) {
+		if (1) {
 			rc = skip(1, "Testing skipping");
 			continue;
 		}
-		
+
 		side_effect++;
 
 		ok(side_effect == 1, "side_effect checked out");
 
-	} while(0);
+	} while (0);
 
 	diag("Returned: %d", rc);
 

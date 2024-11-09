@@ -311,18 +311,18 @@ sub get_rpcinfo {
 		printf "$line " if $verbose;
 		chomp $line;
 
-    	if ( $line =~ /program $prognum version ([0-9]*) ready and waiting/ ) {
+    	if ( $line =~ /[Pp]rogram $prognum version ([0-9]*) ready and waiting/ ) {
 			$response .= " version $1";
 			$state = 'OK' unless $state ne 'UNKNOWN';
 			print "1:$response \n" if $verbose;
     	}
 
-		if ( $line =~ /program $prognum version ([0-9]*) is not available/ ) {
+		if ( $line =~ /[Pp]rogram $prognum version ([0-9]*) is not available/ ) {
 			$response2 .= " version $1";
 			$state = 'CRITICAL';
 			print "2:$response2 \n" if $verbose;
 		}
-		if ( $line =~ /program $prognum is not available/ ) {
+		if ( $line =~ /[Pp]rogram $prognum is not available/ ) {
 			$response3 = "";
 			$response3 = "tcp" if $opt_t;
 			$response3 = "udp" if $opt_u;

@@ -7,7 +7,7 @@
  *
  * Description:
  *
- * This file contains the check_disk plugin
+ * This file contains the check_fping plugin
  *
  * This plugin will use the fping command to ping the specified host for a
  * fast check
@@ -60,6 +60,8 @@ static int packet_count = PACKET_COUNT;
 static int target_timeout = 0;
 static int packet_interval = 0;
 static bool verbose = false;
+static bool dontfrag = false;
+static bool randomize_packet_data = false;
 static int cpl;
 static int wpl;
 static double crta;
@@ -103,6 +105,11 @@ int main(int argc, char **argv) {
 		xasprintf(&option_string, "%s-S %s ", option_string, sourceip);
 	if (sourceif)
 		xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
+	if (dontfrag)
+		xasprintf(&option_string, "%s-M ", option_string);
+	if (randomize_packet_data)
+		xasprintf(&option_string, "%s-R ", option_string);
+
 
 #ifdef PATH_TO_FPING6
 	if (address_family != AF_INET && is_inet6_addr(server))
@@ -279,6 +286,8 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {"use-ipv4", no_argument, 0, '4'},
 									   {"use-ipv6", no_argument, 0, '6'},
+									   {"dontfrag", no_argument, 0, 'M'},
+									   {"random", no_argument, 0, 'R'},
 									   {0, 0, 0, 0}};
 
 	rv[PL] = NULL;
@@ -295,7 +304,7 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	while (1) {
-		c = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:46", longopts, &option);
+		c = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (c == -1 || c == EOF || c == 1)
 			break;
@@ -390,6 +399,12 @@ int process_arguments(int argc, char **argv) {
 			else
 				usage(_("Interval must be a positive integer"));
 			break;
+		case 'R':
+			randomize_packet_data = true;
+			break;
+		case 'M':
+			dontfrag = true;
+			break;
 		}
 	}
 
@@ -470,6 +485,10 @@ void print_help(void) {
 	printf("    %s\n", _("name or IP Address of sourceip"));
 	printf(" %s\n", "-I, --sourceif=IF");
 	printf("    %s\n", _("source interface name"));
+	printf(" %s\n", "-M, --dontfrag");
+	printf("    %s\n", _("set the Don't Fragment flag"));
+	printf(" %s\n", "-R, --random");
+	printf("    %s\n", _("random packet data (to foil link data compression)"));
 	printf(UT_VERBOSE);
 	printf("\n");
 	printf(" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));

@@ -89,30 +89,30 @@ enum {
 	PORT = 9999
 };
 
-char *server_address = NULL;
-char *volume_name = NULL;
-char *nlm_name = NULL;
-char *nrmp_name = NULL;
-char *nrmm_name = NULL;
-char *nrms_name = NULL;
-char *nss1_name = NULL;
-char *nss2_name = NULL;
-char *nss3_name = NULL;
-char *nss4_name = NULL;
-char *nss5_name = NULL;
-char *nss6_name = NULL;
-char *nss7_name = NULL;
-int server_port = PORT;
-unsigned long warning_value = 0L;
-unsigned long critical_value = 0L;
-bool check_warning_value = false;
-bool check_critical_value = false;
-bool check_netware_version = false;
-enum checkvar vars_to_check = NONE;
-int sap_number = -1;
+static char *server_address = NULL;
+static char *volume_name = NULL;
+static char *nlm_name = NULL;
+static char *nrmp_name = NULL;
+static char *nrmm_name = NULL;
+static char *nrms_name = NULL;
+static char *nss1_name = NULL;
+static char *nss2_name = NULL;
+static char *nss3_name = NULL;
+static char *nss4_name = NULL;
+static char *nss5_name = NULL;
+static char *nss6_name = NULL;
+static char *nss7_name = NULL;
+static int server_port = PORT;
+static unsigned long warning_value = 0L;
+static unsigned long critical_value = 0L;
+static bool check_warning_value = false;
+static bool check_critical_value = false;
+static bool check_netware_version = false;
+static enum checkvar vars_to_check = NONE;
+static int sap_number = -1;
 
-int process_arguments(int, char **);
-void print_help(void);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
+static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {
