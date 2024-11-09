@@ -185,7 +185,7 @@ bool is_percentage_expression(const char str[]) {
 		return false;
 	}
 
-	char *foo = calloc(sizeof(char), len + 1);
+	char *foo = calloc(len + 1, sizeof(char));
 
 	if (!foo) {
 		die(STATE_UNKNOWN, _("calloc failed \n"));
