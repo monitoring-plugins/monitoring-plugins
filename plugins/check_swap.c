@@ -27,11 +27,6 @@
  *
  *****************************************************************************/
 
-#include <stdint.h>
-const char *progname = "check_swap";
-const char *copyright = "2000-2024";
-const char *email = "devel@monitoring-plugins.org";
-
 #ifdef HAVE_DECL_SWAPCTL
 #	ifdef HAVE_SYS_PARAM_H
 #		include <sys/param.h>
@@ -44,6 +39,7 @@ const char *email = "devel@monitoring-plugins.org";
 #	endif
 #endif
 
+#include <stdint.h>
 #include "./check_swap.d/check_swap.h"
 #include "./utils.h"
 
@@ -63,13 +59,16 @@ int verbose;
 #define BYTES_TO_KiB(number) (number / 1024)
 #define BYTES_TO_MiB(number) (BYTES_TO_KiB(number) / 1024)
 
+const char *progname = "check_swap";
+const char *copyright = "2000-2024";
+const char *email = "devel@monitoring-plugins.org";
+
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	char *status;
-	status = strdup("");
+	char *status = strdup("");
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -85,7 +84,6 @@ int main(int argc, char **argv) {
 	swap_result data = get_swap_data(config);
 
 	double percent_used;
-
 	/* if total_swap_mb == 0, let's not divide by 0 */
 	if (data.metrics.total != 0) {
 		percent_used = HUNDRED_PERCENT * ((double)data.metrics.used) / ((double)data.metrics.total);
