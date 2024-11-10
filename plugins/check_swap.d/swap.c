@@ -99,7 +99,7 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 		} else if (sscanf(input_buffer,
 						  "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
 						  "%*[k]%*[B]",
-						  str, &tmp_KB)) {
+						  str, &tmp_KB) == 2) {
 
 			if (verbose >= 3) {
 				printf("Got %s with %lu\n", str, tmp_KB);
