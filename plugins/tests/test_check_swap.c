@@ -2,6 +2,8 @@
 #include "../check_swap.d/check_swap.h"
 #include "../../tap/tap.h"
 
+int verbose = 0;
+
 void print_usage(void) {}
 void print_help(swap_config config) {
 	(void) config;
