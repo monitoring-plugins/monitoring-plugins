@@ -8,9 +8,10 @@
 #endif
 
 typedef struct {
+	bool is_set;
 	bool is_percentage;
 	uint64_t value;
-} threshold;
+} check_swap_threshold;
 
 typedef struct {
 	unsigned long long free;  // Free swap in Bytes!
@@ -27,8 +28,8 @@ typedef struct {
 typedef struct {
 	bool allswaps;
 	int no_swap_state;
-	threshold warn;
-	threshold crit;
+	check_swap_threshold warn;
+	check_swap_threshold crit;
 	bool on_aix;
 	int conversion_factor;
 } swap_config;

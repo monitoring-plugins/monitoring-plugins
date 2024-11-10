@@ -166,11 +166,6 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 	swap_config_wrapper conf_wrapper = {.errorcode = OK};
 	conf_wrapper.config = swap_config_init();
 
-	if (argc < 2) {
-		conf_wrapper.errorcode = ERROR;
-		return conf_wrapper;
-	}
-
 	static struct option longopts[] = {{"warning", required_argument, 0, 'w'}, {"critical", required_argument, 0, 'c'},
 									   {"allswaps", no_argument, 0, 'a'},      {"no-swap", required_argument, 0, 'n'},
 									   {"verbose", no_argument, 0, 'v'},       {"version", no_argument, 0, 'V'},
@@ -195,6 +190,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			 */
 			size_t length;
 			length = strlen(optarg);
+			conf_wrapper.config.warn.is_set = true;
 
 			if (optarg[length - 1] == '%') {
 				/* It's percentage */
@@ -224,6 +220,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			 */
 			size_t length;
 			length = strlen(optarg);
+			conf_wrapper.config.crit.is_set = true;
 
 			if (optarg[length - 1] == '%') {
 				/* It's percentage */
@@ -266,10 +263,6 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (conf_wrapper.config.warn.value == 0 && conf_wrapper.config.crit.value == 0) {
-		conf_wrapper.errorcode = ERROR;
-		return conf_wrapper;
-	}
 	if ((conf_wrapper.config.warn.is_percentage == conf_wrapper.config.crit.is_percentage) &&
 		(conf_wrapper.config.warn.value < conf_wrapper.config.crit.value)) {
 		/* This is NOT triggered if warn and crit are different units, e.g warn

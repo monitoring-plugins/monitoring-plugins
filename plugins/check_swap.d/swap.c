@@ -10,6 +10,9 @@ swap_config swap_config_init(void) {
 	tmp.no_swap_state = STATE_CRITICAL;
 	tmp.conversion_factor = SWAP_CONVERSION;
 
+	tmp.warn.is_set = false;
+	tmp.crit.is_set = false;
+
 #ifdef _AIX
 	tmp.on_aix = true;
 #else
