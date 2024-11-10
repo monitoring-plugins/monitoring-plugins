@@ -2,17 +2,15 @@
 #include "../check_swap.d/check_swap.h"
 #include "../../tap/tap.h"
 
-void print_usage() {};
+void print_usage(void) {}
 void print_help(swap_config config) {
 	(void) config;
-};
+}
 
 const char *progname = "test_check_swap";
 
-int main() {
-	swap_config config = swap_config_init();
-
-	swap_result test_data = getSwapFromProcMeminfo(config, "./var/proc_meminfo");
+int main(void) {
+	swap_result test_data = getSwapFromProcMeminfo("./var/proc_meminfo");
 
 	plan_tests(4);
 
