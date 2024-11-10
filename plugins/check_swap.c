@@ -27,6 +27,7 @@
  *
  *****************************************************************************/
 
+#include "common.h"
 #ifdef HAVE_DECL_SWAPCTL
 #	ifdef HAVE_SYS_PARAM_H
 #		include <sys/param.h>
@@ -82,6 +83,11 @@ int main(int argc, char **argv) {
 	swap_config config = tmp.config;
 
 	swap_result data = get_swap_data(config);
+
+	if (data.errorcode != STATE_OK) {
+		puts("SWAP UNKNOWN - Failed to retrieve Swap usage");
+		exit(STATE_UNKNOWN);
+	}
 
 	double percent_used;
 	/* if total_swap_mb == 0, let's not divide by 0 */

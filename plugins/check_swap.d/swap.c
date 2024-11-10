@@ -1,6 +1,7 @@
 #include "./check_swap.d/check_swap.h"
 #include "../popen.h"
 #include "../utils.h"
+#include "common.h"
 
 extern int verbose;
 
@@ -66,7 +67,7 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	meminfo_file_ptr = fopen(proc_meminfo, "r");
 
 	swap_result result = {0};
-	result.statusCode = STATE_OK;
+	result.errorcode = STATE_UNKNOWN;
 
 	uint64_t swap_total = 0;
 	uint64_t swap_used = 0;
@@ -91,6 +92,9 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 			result.metrics.used += swap_used;
 			result.metrics.free += swap_free;
 
+			// Set error 
+			result.errorcode = STATE_OK;
+
 			/*
 			 * The following sscanf call looks for lines looking like:
 			 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
@@ -113,6 +117,8 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 			} else if (strcmp("Cached", str) == 0) {
 				swap_free = swap_free + tmp_KB * 1024;
 			}
+
+			result.errorcode = STATE_OK;
 		}
 	}
 
