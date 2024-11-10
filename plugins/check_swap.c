@@ -114,24 +114,29 @@ int main(int argc, char **argv) {
 		crit_print = config.crit.value * (data.metrics.total / HUNDRED_PERCENT);
 	}
 
-	char *perfdata = perfdata_uint64("swap", data.metrics.free, "B", true, warn_print, true, crit_print, true, 0, true, data.metrics.total);
+	char *perfdata = perfdata_uint64("swap", data.metrics.free, "B", config.warn_is_set, warn_print, config.crit_is_set, crit_print, true,
+									 0, true, data.metrics.total);
 
-	if (verbose > 1) {
-		printf("Warn threshold value: %" PRIu64 "\n", config.warn.value);
+	if (config.warn_is_set) {
+		if (verbose > 1) {
+			printf("Warn threshold value: %" PRIu64 "\n", config.warn.value);
+		}
+
+		if ((config.warn.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.warn.value))) ||
+			config.warn.value >= data.metrics.free) {
+			data.statusCode = max_state(data.statusCode, STATE_WARNING);
+		}
 	}
 
-	if ((config.warn.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.warn.value))) ||
-		config.warn.value >= data.metrics.free) {
-		data.statusCode = max_state(data.statusCode, STATE_WARNING);
-	}
+	if (config.crit_is_set) {
+		if (verbose > 1) {
+			printf("Crit threshold value: %" PRIu64 "\n", config.crit.value);
+		}
 
-	if (verbose > 1) {
-		printf("Crit threshold value: %" PRIu64 "\n", config.crit.value);
-	}
-
-	if ((config.crit.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.crit.value))) ||
-		config.crit.value >= data.metrics.free) {
-		data.statusCode = max_state(data.statusCode, STATE_CRITICAL);
+		if ((config.crit.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.crit.value))) ||
+			config.crit.value >= data.metrics.free) {
+			data.statusCode = max_state(data.statusCode, STATE_CRITICAL);
+		}
 	}
 
 	printf(_("SWAP %s - %g%% free (%lluMiB out of %lluMiB) %s|%s\n"), state_text(data.statusCode), (HUNDRED_PERCENT - percent_used),
@@ -196,7 +201,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			 */
 			size_t length;
 			length = strlen(optarg);
-			conf_wrapper.config.warn.is_set = true;
+			conf_wrapper.config.warn_is_set = true;
 
 			if (optarg[length - 1] == '%') {
 				/* It's percentage */
@@ -226,7 +231,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			 */
 			size_t length;
 			length = strlen(optarg);
-			conf_wrapper.config.crit.is_set = true;
+			conf_wrapper.config.crit_is_set = true;
 
 			if (optarg[length - 1] == '%') {
 				/* It's percentage */

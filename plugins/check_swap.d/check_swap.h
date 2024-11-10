@@ -8,7 +8,6 @@
 #endif
 
 typedef struct {
-	bool is_set;
 	bool is_percentage;
 	uint64_t value;
 } check_swap_threshold;
@@ -28,7 +27,9 @@ typedef struct {
 typedef struct {
 	bool allswaps;
 	int no_swap_state;
+	bool warn_is_set;
 	check_swap_threshold warn;
+	bool crit_is_set;
 	check_swap_threshold crit;
 	bool on_aix;
 	int conversion_factor;
