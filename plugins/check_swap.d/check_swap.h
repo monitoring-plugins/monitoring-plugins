@@ -1,5 +1,4 @@
-#ifndef CHECK_SWAP_H
-#define CHECK_SWAP_H
+#pragma once
 
 #include "../common.h"
 
@@ -42,5 +41,3 @@ swap_result getSwapFromProcMeminfo(char path_to_proc_meminfo[]);
 swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[], const char swap_format[]);
 swap_result getSwapFromSwapctl_BSD(swap_config config);
 swap_result getSwapFromSwap_SRV4(swap_config config);
-
-#endif
