@@ -30,7 +30,7 @@ swap_result get_swap_data(swap_config config) {
 	}
 
 	return getSwapFromProcMeminfo(PROC_MEMINFO);
-#else
+#else // HAVE_PROC_MEMINFO
 #	ifdef HAVE_SWAP
 	if (verbose >= 3) {
 		printf("Using swap command %s with format: %s\n", SWAP_COMMAND, SWAP_FORMAT);
@@ -48,13 +48,13 @@ swap_result get_swap_data(swap_config config) {
 	} else {
 		return getSwapFromSwapCommand(config, SWAP_COMMAND, SWAP_FORMAT);
 	}
-#	else
+#	else // HAVE_SWAP
 #		ifdef CHECK_SWAP_SWAPCTL_SVR4
 	return getSwapFromSwapctl_SRV4();
-#		else
+#		else // CHECK_SWAP_SWAPCTL_SVR4
 #			ifdef CHECK_SWAP_SWAPCTL_BSD
 	return getSwapFromSwapctl_BSD();
-#			else
+#			else // CHECK_SWAP_SWAPCTL_BSD
 #				error No way found to retrieve swap
 #			endif /* CHECK_SWAP_SWAPCTL_BSD */
 #		endif     /* CHECK_SWAP_SWAPCTL_SVR4 */
