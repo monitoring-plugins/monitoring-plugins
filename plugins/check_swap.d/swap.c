@@ -69,6 +69,13 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	swap_result result = {0};
 	result.errorcode = STATE_UNKNOWN;
 
+	if (meminfo_file_ptr == NULL) {
+		// failed to open meminfo file
+		// errno should contain an error
+		result.errorcode = STATE_UNKNOWN;
+		return result;
+	}
+
 	uint64_t swap_total = 0;
 	uint64_t swap_used = 0;
 	uint64_t swap_free = 0;
