@@ -313,8 +313,8 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	unsigned long long used_swap_mb = 0;
 
 	for (int i = 0; i < nswaps; i++) {
-		dsktotal_mb = (float)ent[i].se_nblks / config.conversion_factor;
-		dskused_mb = (float)ent[i].se_inuse / config.conversion_factor;
+		dsktotal_mb = (float)ent[i].se_nblks / (float)config.conversion_factor;
+		dskused_mb = (float)ent[i].se_inuse / (float)config.conversion_factor;
 		dskfree_mb = (dsktotal_mb - dskused_mb);
 
 		if (config.allswaps && dsktotal_mb > 0) {
@@ -325,9 +325,9 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 			}
 		}
 
-		total_swap_mb += dsktotal_mb;
-		free_swap_mb += dskfree_mb;
-		used_swap_mb += dskused_mb;
+		total_swap_mb += (unsigned long long)dsktotal_mb;
+		free_swap_mb += (unsigned long long)dskfree_mb;
+		used_swap_mb += (unsigned long long)dskused_mb;
 	}
 
 	/* and clean up after ourselves */
@@ -395,13 +395,13 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 	}
 
 	/* initialize swap table + entries */
-	swaptbl_t *tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
+	swaptbl_t *tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * (unsigned long)nswaps));
 
 	if (tbl == NULL) {
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 	}
 
-	memset(tbl, 0, sizeof(swaptbl_t) + (sizeof(swapent_t) * nswaps));
+	memset(tbl, 0, sizeof(swaptbl_t) + (sizeof(swapent_t) * (unsigned long)nswaps));
 	tbl->swt_n = nswaps;
 
 	for (int i = 0; i < nswaps; i++) {
@@ -441,9 +441,9 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 			}
 		}
 
-		total_swap_mb += dsktotal_mb;
-		free_swap_mb += dskfree_mb;
-		used_swap_mb += dskused_mb;
+		total_swap_mb += (unsigned long long)dsktotal_mb;
+		free_swap_mb += (unsigned long long)dskfree_mb;
+		used_swap_mb += (unsigned long long)dskused_mb;
 	}
 
 	/* and clean up after ourselves */
