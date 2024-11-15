@@ -73,6 +73,10 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	uint64_t swap_used = 0;
 	uint64_t swap_free = 0;
 
+	bool found_total = false;
+	bool found_used = false;
+	bool found_free = false;
+
 	char input_buffer[MAX_INPUT_BUFFER];
 	char str[32];
 
@@ -92,7 +96,11 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 			result.metrics.used += swap_used;
 			result.metrics.free += swap_free;
 
-			// Set error 
+			found_total = true;
+			found_free = true;
+			found_used = true;
+
+			// Set error
 			result.errorcode = STATE_OK;
 
 			/*
@@ -100,25 +108,34 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 			 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
 			 * on Debian Linux with a 5.* kernel
 			 */
-		} else if (sscanf(input_buffer,
-						  "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
-						  "%*[k]%*[B]",
-						  str, &tmp_KB) == 2) {
+		} else {
+			int sscanf_result = sscanf(input_buffer,
+									   "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
+									   "%*[k]%*[B]",
+									   str, &tmp_KB);
 
-			if (verbose >= 3) {
-				printf("Got %s with %lu\n", str, tmp_KB);
+			if (sscanf_result == 2) {
+
+				if (verbose >= 3) {
+					printf("Got %s with %lu\n", str, tmp_KB);
+				}
+
+				/* I think this part is always in Kb, so convert to bytes */
+				if (strcmp("Total", str) == 0) {
+					swap_total = tmp_KB * 1000;
+					found_total = true;
+				} else if (strcmp("Free", str) == 0) {
+					swap_free = swap_free + tmp_KB * 1000;
+					found_free = true;
+					found_used = true; // No explicit used metric available
+				} else if (strcmp("Cached", str) == 0) {
+					swap_free = swap_free + tmp_KB * 1000;
+					found_free = true;
+					found_used = true; // No explicit used metric available
+				}
+
+				result.errorcode = STATE_OK;
 			}
-
-			/* I think this part is always in Kb, so convert to bytes */
-			if (strcmp("Total", str) == 0) {
-				swap_total = tmp_KB * 1024;
-			} else if (strcmp("Free", str) == 0) {
-				swap_free = swap_free + tmp_KB * 1024;
-			} else if (strcmp("Cached", str) == 0) {
-				swap_free = swap_free + tmp_KB * 1024;
-			}
-
-			result.errorcode = STATE_OK;
 		}
 	}
 
@@ -127,6 +144,10 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	result.metrics.total = swap_total;
 	result.metrics.used = swap_total - swap_free;
 	result.metrics.free = swap_free;
+
+	if (!found_free || !found_total || !found_used) {
+		result.errorcode = STATE_UNKNOWN;
+	}
 
 	return result;
 }
