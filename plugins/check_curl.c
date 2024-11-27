@@ -1912,7 +1912,7 @@ void print_help(void) {
 	printf("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
 	printf("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
 	printf("    %s\n", _("1.2 = TLSv1.2, 1.3 = TLSv1.3). With a '+' suffix, newer versions are also accepted."));
-	printf("    %s\n", _("Note: SSLv2 and SSLv3 are deprecated and are usually disabled in libcurl"));
+	printf("    %s\n", _("Note: SSLv2, SSLv3, TLSv1.0 and TLSv1.1 are deprecated and are usually disabled in libcurl"));
 	printf(" %s\n", "--sni");
 	printf("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
 #	if LIBCURL_VERSION_NUM >= 0x071801
