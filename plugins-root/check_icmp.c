@@ -1095,6 +1095,7 @@ static int wait_for_reply(int sock, u_int t) {
 		host->time_waited += tdiff;
 		host->icmp_recv++;
 		icmp_recv++;
+
 		if (tdiff > (unsigned int)host->rtmax) {
 			host->rtmax = tdiff;
 		}
@@ -1503,10 +1504,10 @@ static void finish(int sig) {
 
 	host = list;
 	while (host) {
-
 		if (debug) {
 			puts("");
 		}
+
 		if (i) {
 			if (i < targets) {
 				printf(" :: ");
@@ -1514,11 +1515,14 @@ static void finish(int sig) {
 				printf("\n");
 			}
 		}
+
 		i++;
+
 		if (!host->icmp_recv) {
 			status = STATE_CRITICAL;
 			host->rtmin = 0;
 			host->jitter_min = 0;
+
 			if (host->flags & FLAG_LOST_CAUSE) {
 				char address[INET6_ADDRSTRLEN];
 				parse_address(&host->error_addr, address, sizeof(address));
@@ -1538,6 +1542,7 @@ static void finish(int sig) {
 					printf(" rta %0.3fms > %0.3fms", (float)host->rta / 1000, (float)crit.rta / 1000);
 				}
 			}
+
 			/* pl text output */
 			if (pl_mode) {
 				if (status == STATE_OK) {
@@ -1548,6 +1553,7 @@ static void finish(int sig) {
 					printf(" lost %u%% > %u%%", host->pl, crit.pl);
 				}
 			}
+
 			/* jitter text output */
 			if (jitter_mode) {
 				if (status == STATE_OK) {
@@ -1558,6 +1564,7 @@ static void finish(int sig) {
 					printf(" jitter %0.3fms > %0.3fms", (float)host->jitter, crit.jitter);
 				}
 			}
+
 			/* mos text output */
 			if (mos_mode) {
 				if (status == STATE_OK) {
@@ -1568,6 +1575,7 @@ static void finish(int sig) {
 					printf(" MOS %0.1f < %0.1f", (float)host->mos, (float)crit.mos);
 				}
 			}
+
 			/* score text output */
 			if (score_mode) {
 				if (status == STATE_OK) {
@@ -1578,6 +1586,7 @@ static void finish(int sig) {
 					printf(" Score %u < %u", (int)host->score, (int)crit.score);
 				}
 			}
+
 			/* order statis text output */
 			if (order_mode) {
 				if (status == STATE_OK) {
