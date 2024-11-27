@@ -64,6 +64,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
+#include <math.h>
 
 /** sometimes undefined system macros (quite a few, actually) **/
 #ifndef MAXTTL
@@ -1099,7 +1100,8 @@ static int wait_for_reply(int sock, u_int t) {
 		if (tdiff > (unsigned int)host->rtmax) {
 			host->rtmax = tdiff;
 		}
-		if (tdiff < (unsigned int)host->rtmin) {
+
+		if ((host->rtmin == INFINITY) || (tdiff < (unsigned int)host->rtmin)) {
 			host->rtmin = tdiff;
 		}
 
