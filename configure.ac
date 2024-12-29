@@ -4,7 +4,7 @@ AC_INIT(monitoring-plugins,2.4git)
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
-AM_INIT_AUTOMAKE([1.8.3])
+AM_INIT_AUTOMAKE([1.8.3 subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_HEADERS([config.h])
@@ -185,6 +185,9 @@ fi
 if test "$enable_libtap" = "yes" ; then
 	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
+
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap"
+	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
 dnl INI Parsing
@@ -1850,8 +1853,8 @@ AC_SUBST(EXTRAS_ROOT)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
-AM_GNU_GETTEXT([external], [need-ngettext])
-AM_GNU_GETTEXT_VERSION(0.15)
+dnl AM_GNU_GETTEXT([external], [need-ngettext])
+dnl AM_GNU_GETTEXT_VERSION(0.15)
 
 dnl Check for Redhat spopen problem
 dnl Weird problem where ECHILD is returned from a wait call in error
