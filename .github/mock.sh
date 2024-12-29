@@ -59,7 +59,7 @@ mkdir -p "${SRCRPM_DIR}" "${RPM_DIR}"
 dnf -y --setopt="tsflags=nodocs" install rpmdevtools && \
   spectool -g -C ${SOURCE_DIR} ${SPEC_FILE} && \
   mock --init && \
-  { mock --no-clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --build || \
+  { mock --no-clean --spec ${SPEC_FILE} --sources=${SOURCE_DIR} --result=${SRCRPM_DIR} --buildsrpm || \
   { cat ${SRCRPM_DIR}/{root,build}.log; exit 1; } } && \
   { mock --no-clean --sources=${SOURCE_DIR} --result=${RPM_DIR} --rebuild "${SRCRPM_DIR}"/${SRC_RPM} || \
   { cat ${RPM_DIR}/{root,build}.log; exit 1; } }

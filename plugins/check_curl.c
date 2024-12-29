@@ -818,8 +818,11 @@ int check_http(void) {
 
 	/* cookie handling */
 	if (cookie_jar_file != NULL) {
-		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
+		/* enable reading cookies from a file, and if the filename is an empty string, only enable the curl cookie engine */
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie_jar_file), "CURLOPT_COOKIEFILE");
+		/* now enable saving cookies to a file, but only if the filename is not an empty string, since writing it would fail */
+		if (*cookie_jar_file)
+			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
 	}
 
 	/* do the request */
@@ -1912,7 +1915,7 @@ void print_help(void) {
 	printf("    %s\n", _("Connect via SSL. Port defaults to 443. VERSION is optional, and prevents"));
 	printf("    %s\n", _("auto-negotiation (2 = SSLv2, 3 = SSLv3, 1 = TLSv1, 1.1 = TLSv1.1,"));
 	printf("    %s\n", _("1.2 = TLSv1.2, 1.3 = TLSv1.3). With a '+' suffix, newer versions are also accepted."));
-	printf("    %s\n", _("Note: SSLv2 and SSLv3 are deprecated and are usually disabled in libcurl"));
+	printf("    %s\n", _("Note: SSLv2, SSLv3, TLSv1.0 and TLSv1.1 are deprecated and are usually disabled in libcurl"));
 	printf(" %s\n", "--sni");
 	printf("    %s\n", _("Enable SSL/TLS hostname extension support (SNI)"));
 #	if LIBCURL_VERSION_NUM >= 0x071801
@@ -2011,6 +2014,9 @@ void print_help(void) {
 	printf("    %s\n", _("Send HAProxy proxy protocol v1 header (CURLOPT_HAPROXYPROTOCOL)."));
 	printf(" %s\n", "--cookie-jar=FILE");
 	printf("    %s\n", _("Store cookies in the cookie jar and send them out when requested."));
+	printf("    %s\n", _("Specify an empty string as FILE to enable curl's cookie engine without saving"));
+	printf("    %s\n", _("the cookies to disk. Only enabling the engine without saving to disk requires"));
+	printf("    %s\n", _("handling multiple requests internally to curl, so use it with --onredirect=curl"));
 	printf("\n");
 
 	printf(UT_WARN_CRIT);
