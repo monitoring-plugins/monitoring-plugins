@@ -58,6 +58,7 @@ NP-VERSION-FILE
 /gl/charset.alias
 /gl/configmake.h
 /gl/errno.h
+/gl/error.h
 /gl/fcntl.h
 /gl/float.h
 /gl/getopt.h
