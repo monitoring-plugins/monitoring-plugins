@@ -1,10 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.64)
-AC_INIT(monitoring-plugins,2.4git)
+AC_PREREQ([2.64])
+AC_INIT([monitoring-plugins],[2.4git])
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
-AM_INIT_AUTOMAKE([1.8.3])
+AM_INIT_AUTOMAKE([1.8.3 subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_HEADERS([config.h])
@@ -43,14 +43,14 @@ AC_SUBST(INSTALL)
 AC_PROG_CC
 gl_EARLY
 AC_PROG_GCC_TRADITIONAL
-AC_PROG_LIBTOOL
+LT_INIT
 
 AM_PROG_CC_C_O
 
 AC_FUNC_ERROR_AT_LINE
 AC_SYS_LARGEFILE
 
-ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AM_FUNC_STRTOD])
+ifdef([AC_FUNC_STRTOD],[AC_FUNC_STRTOD],[AC_FUNC_STRTOD])
 
 PLUGIN_TEST=`echo $srcdir/plugins/t/*.t|sed -e 's,\.*/plugins/,,g'`
 AC_SUBST(PLUGIN_TEST)dnl
@@ -125,8 +125,7 @@ AC_SUBST(PERL, $with_perl)
 
 dnl openssl/gnutls
 AC_ARG_WITH(openssl,
-            AC_HELP_STRING([--with-openssl=DIR],
-                           [path to openssl installation]),)
+            AS_HELP_STRING([--with-openssl=DIR],[path to openssl installation]),)
 
 AC_ARG_WITH(gnutls,
             ACX_HELP_STRING([--with-gnutls=PATH],
@@ -167,8 +166,7 @@ AC_SUBST(MATHLIBS)
 
 dnl Check if we buils local libtap
 AC_ARG_ENABLE(libtap,
-  AC_HELP_STRING([--enable-libtap],
-		[Enable built-in libtap for unit-testing (default: autodetect system library).]),
+  AS_HELP_STRING([--enable-libtap],[Enable built-in libtap for unit-testing (default: autodetect system library).]),
 	[enable_libtap=$enableval],
 	[enable_libtap=no])
 AM_CONDITIONAL([USE_LIBTAP_LOCAL],[test "$enable_libtap" = "yes"])
@@ -185,12 +183,14 @@ fi
 if test "$enable_libtap" = "yes" ; then
 	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
+
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap"
+	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
 dnl INI Parsing
 AC_ARG_ENABLE(extra-opts,
-  AC_HELP_STRING([--enable-extra-opts],
-		[Enables parsing of plugins ini config files for extra options (default: no)]),
+  AS_HELP_STRING([--enable-extra-opts],[Enables parsing of plugins ini config files for extra options (default: no)]),
 	[enable_extra_opts=$enableval],
 	[enable_extra_opts=yes])
 AM_CONDITIONAL([USE_PARSE_INI],[test "$enable_extra_opts" = "yes"])
@@ -464,20 +464,16 @@ AC_ARG_WITH([ipv6],
 dnl Check for AF_INET6 support - unistd.h required for Darwin
 if test "$with_ipv6" != "no"; then
 	AC_CACHE_CHECK([for IPv6 support], np_cv_sys_ipv6, [
-		AC_TRY_COMPILE(
-			[#ifdef HAVE_UNISTD_H
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_UNISTD_H
 			#include <unistd.h>
 			#endif
 			#include <netinet/in.h>
-			#include <sys/socket.h>],
-			[struct sockaddr_in6 sin6;
+			#include <sys/socket.h>]], [[struct sockaddr_in6 sin6;
 			void *p;
 
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_port = 587;
-			p = &sin6.sin6_addr;],
-			[np_cv_sys_ipv6=yes],
-			[np_cv_sys_ipv6=no])
+			p = &sin6.sin6_addr;]])],[np_cv_sys_ipv6=yes],[np_cv_sys_ipv6=no])
 		])
 	if test "$np_cv_sys_ipv6" = "no" -a "$with_ipv6" != "check"; then
 		AC_MSG_FAILURE([--with-ipv6 was given, but test for IPv6 support failed])
@@ -611,10 +607,10 @@ dnl
 dnl Checks for header files.
 dnl
 
-AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(signal.h syslog.h uio.h errno.h sys/time.h sys/socket.h sys/un.h sys/poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h)
+AC_CHECK_HEADERS_ONCE([sys/time.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -623,36 +619,27 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 
 AC_CACHE_CHECK([for va_copy],ac_cv_HAVE_VA_COPY,[
-AC_TRY_LINK([#include <stdarg.h>
-va_list ap1,ap2;], [va_copy(ap1,ap2);],
-ac_cv_HAVE_VA_COPY=yes,
-ac_cv_HAVE_VA_COPY=no)])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
+va_list ap1,ap2;]], [[va_copy(ap1,ap2);]])],[ac_cv_HAVE_VA_COPY=yes],[ac_cv_HAVE_VA_COPY=no])])
 if test x"$ac_cv_HAVE_VA_COPY" = x"yes"; then
     AC_DEFINE(HAVE_VA_COPY,1,[Whether va_copy() is available])
 else
     AC_CACHE_CHECK([for __va_copy],ac_cv_HAVE___VA_COPY,[
-    AC_TRY_LINK([#include <stdarg.h>
-    va_list ap1,ap2;], [__va_copy(ap1,ap2);],
-    ac_cv_HAVE___VA_COPY=yes,
-    ac_cv_HAVE___VA_COPY=no)])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
+    va_list ap1,ap2;]], [[__va_copy(ap1,ap2);]])],[ac_cv_HAVE___VA_COPY=yes],[ac_cv_HAVE___VA_COPY=no])])
     if test x"$ac_cv_HAVE___VA_COPY" = x"yes"; then
         AC_DEFINE(HAVE___VA_COPY,1,[Whether __va_copy() is available])
     fi
 fi
 
-AC_TRY_COMPILE([#include <sys/time.h>],
-               [struct timeval *tv;
-                struct timezone *tz;],
-               AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,[Define if we have a timeval structure])
-			   FOUND_STRUCT_TIMEVAL="yes")
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/time.h>]], [[struct timeval *tv;
+                struct timezone *tz;]])],[AC_DEFINE(HAVE_STRUCT_TIMEVAL,1,Define if we have a timeval structure)
+			   FOUND_STRUCT_TIMEVAL="yes"],[])
 
 if test x"$FOUND_STRUCT_TIMEVAL" = x"yes"; then
-	AC_TRY_COMPILE([#include <sys/time.h>],
-			  [struct timeval *tv;
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/time.h>]], [[struct timeval *tv;
 			   struct timezone *tz;
-			   gettimeofday(tv, tz);],
-			  AC_DEFINE(HAVE_GETTIMEOFDAY,1,[Define if gettimeofday is found]),
-			  AC_DEFINE(NEED_GETTIMEOFDAY,1,[Define if gettimeofday is needed]))
+			   gettimeofday(tv, tz);]])],[AC_DEFINE(HAVE_GETTIMEOFDAY,1,Define if gettimeofday is found)],[AC_DEFINE(NEED_GETTIMEOFDAY,1,Define if gettimeofday is needed)])
 fi
 
 dnl Checks for library functions.
@@ -660,14 +647,11 @@ AC_CHECK_FUNCS(memmove select socket strdup strstr strtol strtoul floor)
 AC_CHECK_FUNCS(poll)
 
 AC_MSG_CHECKING(return type of socket size)
-AC_TRY_COMPILE([#include <stdlib.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
                 #include <sys/types.h>
-                #include <sys/socket.h>],
-               [int a = send(1, (const void *) buffer, (size_t *) 0, (int *) 0);],
-               ac_cv_socket_size_type=["size_t"]
-                AC_MSG_RESULT(size_t),
-               ac_cv_socket_size_type=["int"]
-                AC_MSG_RESULT(int))
+                #include <sys/socket.h>]], [[int a = send(1, (const void *) buffer, (size_t *) 0, (int *) 0);]])],[ac_cv_socket_size_type="size_t"
+                AC_MSG_RESULT(size_t)],[ac_cv_socket_size_type="int"
+                AC_MSG_RESULT(int)])
 
 AC_DEFINE_UNQUOTED(SOCKET_SIZE_TYPE, $ac_cv_socket_size_type ,
 	[Define type of socket size])
@@ -1430,20 +1414,14 @@ if test -n "$ac_cv_nslookup_command"; then
 fi
 
 AC_MSG_CHECKING([for number of online cpus])
-AC_TRY_COMPILE([#include <unistd.h>],
-	[sysconf(_SC_NPROCESSORS_ONLN) > 0;],
-	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_ONLN,1,[Define if sysconf returns number of online cpus])
-	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_ONLN)]),
-	AC_MSG_RESULT([cannot calculate])
-	)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[sysconf(_SC_NPROCESSORS_ONLN) > 0;]])],[AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_ONLN,1,Define if sysconf returns number of online cpus)
+	AC_MSG_RESULT(sysconf(_SC_NPROCESSORS_ONLN))],[AC_MSG_RESULT(cannot calculate)
+	])
 
 AC_MSG_CHECKING([for number of available cpus])
-AC_TRY_COMPILE([#include <unistd.h>],
-	[sysconf(_SC_NPROCESSORS_CONF) > 0;],
-	AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_CONF,1,[Define if sysconf returns number of available cpus])
-	AC_MSG_RESULT([sysconf(_SC_NPROCESSORS_CONF)]),
-	AC_MSG_RESULT([cannot calculate])
-	)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[sysconf(_SC_NPROCESSORS_CONF) > 0;]])],[AC_DEFINE(HAVE_SYSCONF__SC_NPROCESSORS_CONF,1,Define if sysconf returns number of available cpus)
+	AC_MSG_RESULT(sysconf(_SC_NPROCESSORS_CONF))],[AC_MSG_RESULT(cannot calculate)
+	])
 
 AC_PATH_PROG(PATH_TO_UPTIME,uptime)
 AC_ARG_WITH(uptime_command,
@@ -1850,8 +1828,8 @@ AC_SUBST(EXTRAS_ROOT)
 AC_SUBST(EXTRA_NETOBJS)
 AC_SUBST(DEPLIBS)
 
-AM_GNU_GETTEXT([external], [need-ngettext])
-AM_GNU_GETTEXT_VERSION(0.15)
+dnl AM_GNU_GETTEXT([external], [need-ngettext])
+dnl AM_GNU_GETTEXT_VERSION(0.15)
 
 dnl Check for Redhat spopen problem
 dnl Weird problem where ECHILD is returned from a wait call in error
@@ -1861,8 +1839,7 @@ dnl We patch plugins/popen.c
 dnl Need to add smp because uname different on those
 dnl Can force patch to be applied with --enable-redhat-pthread-workaround
 AC_ARG_ENABLE(redhat-pthread-workaround,
-	AC_HELP_STRING([--enable-redhat-pthread-workaround],
-		[force Redhat patch to be applied (default: test system)]),
+	AS_HELP_STRING([--enable-redhat-pthread-workaround],[force Redhat patch to be applied (default: test system)]),
 	[ac_cv_enable_redhat_pthread_workaround=$enableval],
 	[ac_cv_enable_redhat_pthread_workaround=test])
 if test "$ac_cv_enable_redhat_pthread_workaround" = "test" ; then
@@ -1883,8 +1860,7 @@ fi
 
 dnl Perl modules
 AC_ARG_ENABLE(perl-modules,
-	AC_HELP_STRING([--enable-perl-modules],
-		[Enables installation of Monitoring::Plugin and its dependencies (default: no)]),
+	AS_HELP_STRING([--enable-perl-modules],[Enables installation of Monitoring::Plugin and its dependencies (default: no)]),
 	[enable_perl_modules=$enableval],
 	[enable_perl_modules=no])
 if test "$enable_perl_modules" = "yes" ; then
@@ -1911,8 +1887,7 @@ if test "$ac_cv_uname_s" = 'SunOS' -a \( "x$ac_cv_prog_ac_ct_AR" = "x" -o "$ac_c
 	AC_MSG_ERROR(No ar found for Solaris - is /usr/ccs/bin in PATH?)
 fi
 
-AC_OUTPUT(
-  Makefile
+AC_CONFIG_FILES([Makefile
   tap/Makefile
   lib/Makefile
   plugins/Makefile
@@ -1924,7 +1899,8 @@ AC_OUTPUT(
   perlmods/Makefile
   test.pl
   pkg/solaris/pkginfo
-)
+])
+AC_OUTPUT
 
 
 dnl the ones below that are commented out need to be cleaned up
