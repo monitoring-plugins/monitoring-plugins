@@ -1460,23 +1460,21 @@ AC_ARG_WITH(snmpget_command,
             ACX_HELP_STRING([--with-snmpget-command=PATH],
                             [Path to snmpget command]),
             PATH_TO_SNMPGET=$withval)
-if test -n "$PATH_TO_SNMPGET"
-then
+AS_IF([test -n "$PATH_TO_SNMPGET"], [
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd check_snmp\$(EXEEXT)"
-else
+], [
 	AC_MSG_WARN([Get snmpget from https://net-snmp.sourceforge.io/ to make check_hpjd and check_snmp plugins])
-fi
+])
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
 AC_ARG_WITH(snmpgetnext_command,
             ACX_HELP_STRING([--with-snmpgetnext-command=PATH],
                             [Path to snmpgetnext command]),
             PATH_TO_SNMPGETNEXT=$withval)
-if test -n "$PATH_TO_SNMPGETNEXT"
-then
+AS_IF([test -n "$PATH_TO_SNMPGETNEXT"], [
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT",[path to snmpgetnext binary])
-fi
+])
 
 if ( $PERL -M"Net::SNMP 3.6" -e 'exit' 2>/dev/null  )
 then
