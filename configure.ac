@@ -1465,7 +1465,7 @@ then
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd check_snmp\$(EXEEXT)"
 else
-	AC_MSG_WARN([Get snmpget from http://net-snmp.sourceforge.net to make check_hpjd and check_snmp plugins])
+	AC_MSG_WARN([Get snmpget from https://net-snmp.sourceforge.io/ to make check_hpjd and check_snmp plugins])
 fi
 
 AC_PATH_PROG(PATH_TO_SNMPGETNEXT,snmpgetnext)
