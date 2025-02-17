@@ -141,7 +141,11 @@ static size_t numoids = 0;
 static int numauthpriv = 0;
 static int numcontext = 0;
 static int verbose = 0;
+
+#ifdef PATH_TO_SNMPGETNEXT
 static bool usesnmpgetnext = false;
+#endif
+
 static char *warning_thresholds = NULL;
 static char *critical_thresholds = NULL;
 static thresholds **thlds;
@@ -315,11 +319,15 @@ int main(int argc, char **argv) {
 	}
 
 	/* Create the command array to execute */
+#ifdef PATH_TO_SNMPGETNEXT
 	if (usesnmpgetnext) {
 		snmpcmd = strdup(PATH_TO_SNMPGETNEXT);
 	} else {
 		snmpcmd = strdup(PATH_TO_SNMPGET);
 	}
+#else
+	snmpcmd = strdup(PATH_TO_SNMPGET);
+#endif
 
 	/* 10 arguments to pass before context and authpriv options + 1 for host and numoids. Add one for terminating NULL */
 
@@ -769,8 +777,10 @@ int process_arguments(int argc, char **argv) {
 		case 'm': /* List of MIBS */
 			miblist = optarg;
 			break;
+#ifdef PATH_TO_SNMPGETNEXT
 		case 'n': /* usesnmpgetnext */
 			usesnmpgetnext = true;
+#endif 
 			break;
 		case 'P': /* SNMP protocol version */
 			proto = optarg;
@@ -1209,8 +1219,10 @@ static void print_help(void) {
 	printf(UT_HOST_PORT, 'p', DEFAULT_PORT);
 
 	/* SNMP and Authentication Protocol */
+#ifdef PATH_TO_SNMPGETNEXT
 	printf(" %s\n", "-n, --next");
 	printf("    %s\n", _("Use SNMP GETNEXT instead of SNMP GET"));
+#endif
 	printf(" %s\n", "-P, --protocol=[1|2c|3]");
 	printf("    %s\n", _("SNMP protocol version"));
 	printf(" %s\n", "-N, --context=CONTEXT");
