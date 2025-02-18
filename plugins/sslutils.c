@@ -29,6 +29,7 @@
 #define MAX_CN_LENGTH 256
 #include "common.h"
 #include "netutils.h"
+#include "../lib/monitoringplug.h"
 
 #ifdef HAVE_SSL
 static SSL_CTX *ctx = NULL;

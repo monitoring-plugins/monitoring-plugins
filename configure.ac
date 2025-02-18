@@ -190,6 +190,19 @@ if test "$enable_libtap" = "yes" ; then
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
+dnl JSON capabilities (cjson)
+AC_ARG_ENABLE([json-output],
+	AC_HELP_STRING([--enable-json-output],
+		[Enables switching the output format to JSON (default: yes)]),
+		 [case "${enableval}" in
+			yes) json-ouput=true ;;
+			no)  json-ouput=false ;;
+			*) AC_MSG_ERROR([bad value ${enableval} for --enable-json-ouput]) ;;
+		 esac], [json_output=true])
+
+AM_CONDITIONAL([ENALBE_JSON_OUTPUT], [test x$json_output = xtrue])
+
+
 dnl INI Parsing
 AC_ARG_ENABLE(extra-opts,
   AC_HELP_STRING([--enable-extra-opts],
