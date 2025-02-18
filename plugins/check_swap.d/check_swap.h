@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common.h"
+#include "output.h"
 
 #ifndef SWAP_CONVERSION
 #	define SWAP_CONVERSION 1
@@ -32,6 +33,9 @@ typedef struct {
 	check_swap_threshold crit;
 	bool on_aix;
 	int conversion_factor;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } swap_config;
 
 swap_config swap_config_init(void);

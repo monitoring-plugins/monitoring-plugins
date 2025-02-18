@@ -28,6 +28,9 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "output.h"
+#include "states.h"
+#include <limits.h>
 #ifdef HAVE_DECL_SWAPCTL
 #	ifdef HAVE_SYS_PARAM_H
 #		include <sys/param.h>
@@ -69,8 +72,6 @@ int main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	char *status = strdup("");
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
@@ -90,59 +91,101 @@ int main(int argc, char **argv) {
 	}
 
 	double percent_used;
+	mp_check overall = mp_check_init();
+	if (config.output_format_is_set) {
+		overall.format = config.output_format;
+	}
+	mp_subcheck sc1 = mp_subcheck_init();
+	sc1 = mp_set_subcheck_default_state(sc1, STATE_OK);
+
 	/* if total_swap_mb == 0, let's not divide by 0 */
 	if (data.metrics.total != 0) {
 		percent_used = HUNDRED_PERCENT * ((double)data.metrics.used) / ((double)data.metrics.total);
 	} else {
-		printf(_("SWAP %s - Swap is either disabled, not present, or of zero "
-				 "size."),
-			   state_text(data.statusCode));
-		exit(config.no_swap_state);
+		sc1 = mp_set_subcheck_state(sc1, config.no_swap_state);
+		sc1.output = (char *)_("Swap is either disabled, not present, or of zero size.");
+
+		mp_add_subcheck_to_check(&overall, sc1);
+		mp_exit(overall);
 	}
 
 	if (verbose) {
 		printf("Computed usage percentage: %g\n", percent_used);
 	}
 
-	uint64_t warn_print = config.warn.value;
-	if (config.warn.is_percentage) {
-		warn_print = config.warn.value * (data.metrics.total / HUNDRED_PERCENT);
-	}
-
-	uint64_t crit_print = config.crit.value;
-	if (config.crit.is_percentage) {
-		crit_print = config.crit.value * (data.metrics.total / HUNDRED_PERCENT);
-	}
-
-	char *perfdata = perfdata_uint64("swap", data.metrics.free, "B", config.warn_is_set, warn_print, config.crit_is_set, crit_print, true,
-									 0, true, data.metrics.total);
+	mp_perfdata pd = perfdata_init();
+	pd.label = "swap";
+	pd = mp_set_pd_value(pd, data.metrics.free);
+	pd.uom = "B";
 
 	if (config.warn_is_set) {
-		if (verbose > 1) {
-			printf("Warn threshold value: %" PRIu64 "\n", config.warn.value);
+		uint64_t warn_print = config.warn.value;
+		if (config.warn.is_percentage) {
+			warn_print = config.warn.value * (data.metrics.total / HUNDRED_PERCENT);
 		}
 
-		if ((config.warn.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.warn.value))) ||
-			config.warn.value >= data.metrics.free) {
-			data.statusCode = max_state(data.statusCode, STATE_WARNING);
-		}
+		mp_perfdata_value warn_pd = mp_create_pd_value(warn_print);
+
+		mp_range warn_range = mp_range_init();
+		warn_range.end_infinity = false;
+		warn_range.end = warn_pd;
+
+		pd.warn = warn_range;
+		pd.warn_present = true;
 	}
 
 	if (config.crit_is_set) {
-		if (verbose > 1) {
-			printf("Crit threshold value: %" PRIu64 "\n", config.crit.value);
+		uint64_t crit_print = config.crit.value;
+		if (config.crit.is_percentage) {
+			crit_print = config.crit.value * (data.metrics.total / HUNDRED_PERCENT);
 		}
 
-		if ((config.crit.is_percentage && (percent_used >= (double)(HUNDRED_PERCENT - config.crit.value))) ||
-			config.crit.value >= data.metrics.free) {
-			data.statusCode = max_state(data.statusCode, STATE_CRITICAL);
+		mp_perfdata_value crit_pd = mp_create_pd_value(crit_print);
+
+		mp_range crit_range = mp_range_init();
+		crit_range.end_infinity = false;
+		crit_range.end = crit_pd;
+
+		pd.crit = crit_range;
+		pd.crit_present = true;
+	}
+
+	mp_perfdata_value max = mp_create_pd_value(data.metrics.total);
+	pd.max = max;
+	pd.max_present = true;
+
+	mp_perfdata_value min = mp_create_pd_value(0);
+	pd.min = min;
+	pd.min_present = true;
+
+	mp_add_perfdata_to_subcheck(&sc1, pd);
+	if (verbose > 1) {
+		printf("Warn threshold value: %" PRIu64 "\n", config.warn.value);
+	}
+
+	if (config.warn_is_set) {
+		if ((config.warn.is_percentage && (percent_used >= (100 - (double)config.warn.value))) || config.warn.value >= data.metrics.free) {
+			sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 		}
 	}
 
-	printf(_("SWAP %s - %g%% free (%lluMiB out of %lluMiB) %s|%s\n"), state_text(data.statusCode), (HUNDRED_PERCENT - percent_used),
-		   BYTES_TO_MiB(data.metrics.free), BYTES_TO_MiB(data.metrics.total), status, perfdata);
+	if (verbose > 1) {
+		printf("Crit threshold value: %" PRIu64 "\n", config.crit.value);
+	}
 
-	exit(data.statusCode);
+	if (config.crit_is_set) {
+		if ((config.crit.is_percentage && (percent_used >= (100 - (double)config.crit.value))) || config.crit.value >= data.metrics.free) {
+			sc1 = mp_set_subcheck_state(sc1, STATE_CRITICAL);
+		}
+	}
+
+	xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used), data.metrics.free >> 20,
+			  data.metrics.total >> 20);
+
+	overall.summary = "Swap";
+	mp_add_subcheck_to_check(&overall, sc1);
+
+	mp_exit(overall);
 }
 
 int check_swap(float free_swap_mb, float total_swap_mb, swap_config config) {
@@ -172,15 +215,22 @@ int check_swap(float free_swap_mb, float total_swap_mb, swap_config config) {
 	return STATE_OK;
 }
 
+#define output_format_index CHAR_MAX + 1
+
 /* process command-line arguments */
 swap_config_wrapper process_arguments(int argc, char **argv) {
 	swap_config_wrapper conf_wrapper = {.errorcode = OK};
 	conf_wrapper.config = swap_config_init();
 
-	static struct option longopts[] = {{"warning", required_argument, 0, 'w'}, {"critical", required_argument, 0, 'c'},
-									   {"allswaps", no_argument, 0, 'a'},      {"no-swap", required_argument, 0, 'n'},
-									   {"verbose", no_argument, 0, 'v'},       {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},          {0, 0, 0, 0}};
+	static struct option longopts[] = {{"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"allswaps", no_argument, 0, 'a'},
+									   {"no-swap", required_argument, 0, 'n'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	while (true) {
 		int option = 0;
@@ -263,6 +313,18 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 		case 'v': /* verbose */
 			verbose++;
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			conf_wrapper.config.output_format_is_set = true;
+			conf_wrapper.config.output_format = parser.output_format;
+			break;
+		}
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
@@ -319,6 +381,8 @@ void print_help(swap_config config) {
 		   _("Resulting state when there is no swap regardless of thresholds. "
 			 "Default:"),
 		   state_text(config.no_swap_state));
+	printf(" %s\n", "--output-format");
+	printf("    %s\n", _("Select output format. Valid values: \"one-line\", \"icingaweb2\", \"summary-only\", \"mp-test-json\""));
 	printf(UT_VERBOSE);
 
 	printf("\n");
