@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use warnings;
 use Test;
 
 use vars qw($dir $file $prog $idx $state $output %progs @dirs);
@@ -8,7 +9,7 @@ my $tests = 0;
 
 @dirs = qw(plugins plugins-scripts);
 
-foreach $dir (@dirs) {
+foreach my $dir (@dirs) {
 	opendir(DIR, $dir) || die "can't opendir $dir: $!";
 	while ($file = readdir(DIR)) {
 		if (-x "$dir/$file" && -f "$dir/$file") {
@@ -21,7 +22,7 @@ foreach $dir (@dirs) {
 
 plan tests => $tests;
 
-for $prog (keys %progs) {
+for my $prog (keys %progs) {
 	$state = 0;
 	$file = `basename $prog`;
 
