@@ -3,6 +3,10 @@ use strict;
 use warnings;
 use Test;
 
+# This script (when executed from the monitoring plugins top level directory)
+# executes all the plugins with -h, --help, -V and --version to verify that
+# all of them exit properly with the state UNKNOWN (3)
+
 use vars qw($dir $file $prog $idx $state $output %progs @dirs);
 
 my $tests = 0;
