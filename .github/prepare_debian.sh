@@ -61,7 +61,8 @@ apt-get -y install perl \
 	libmariadb-dev \
 	cron \
 	iputils-ping \
-	iproute2
+	iproute2 \
+	libjson-perl
 
 # remove ipv6 interface from hosts
 sed '/^::1/d' /etc/hosts > /tmp/hosts
