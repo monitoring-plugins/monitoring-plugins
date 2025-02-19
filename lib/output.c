@@ -413,6 +413,10 @@ void mp_print_output(mp_check check) { puts(mp_fmt_output(check)); }
  */
 void mp_exit(mp_check check) {
 	mp_print_output(check);
+	if (check.format == MP_FORMAT_TEST_JSON) {
+		exit(0);
+	}
+
 	exit(mp_compute_check_state(check));
 }
 
