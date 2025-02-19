@@ -14,13 +14,13 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 
 	switch (pd.type) {
 	case PD_TYPE_INT:
-		xasprintf(&result, "%lli", pd.pd_int);
+		asprintf(&result, "%lli", pd.pd_int);
 		break;
 	case PD_TYPE_UINT:
-		xasprintf(&result, "%llu", pd.pd_int);
+		asprintf(&result, "%llu", pd.pd_int);
 		break;
 	case PD_TYPE_DOUBLE:
-		xasprintf(&result, "%f", pd.pd_double);
+		asprintf(&result, "%f", pd.pd_double);
 		break;
 	default:
 		// die here
@@ -33,33 +33,33 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 char *pd_to_string(mp_perfdata pd) {
 	assert(pd.label != NULL);
 	char *result = NULL;
-	xasprintf(&result, "%s=", pd.label);
+	asprintf(&result, "%s=", pd.label);
 
-	xasprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
+	asprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
 
 	if (pd.uom != NULL) {
-		xasprintf(&result, "%s%s", result, pd.uom);
+		asprintf(&result, "%s%s", result, pd.uom);
 	}
 
 	if (pd.warn_present) {
-		xasprintf(&result, "%s;%s", result, mp_range_to_string(pd.warn));
+		asprintf(&result, "%s;%s", result, mp_range_to_string(pd.warn));
 	} else {
-		xasprintf(&result, "%s;", result);
+		asprintf(&result, "%s;", result);
 	}
 
 	if (pd.crit_present) {
-		xasprintf(&result, "%s;%s", result, mp_range_to_string(pd.crit));
+		asprintf(&result, "%s;%s", result, mp_range_to_string(pd.crit));
 	} else {
-		xasprintf(&result, "%s;", result);
+		asprintf(&result, "%s;", result);
 	}
 	if (pd.min_present) {
-		xasprintf(&result, "%s;%s", result, pd_value_to_string(pd.min));
+		asprintf(&result, "%s;%s", result, pd_value_to_string(pd.min));
 	} else {
-		xasprintf(&result, "%s;", result);
+		asprintf(&result, "%s;", result);
 	}
 
 	if (pd.max_present) {
-		xasprintf(&result, "%s;%s", result, pd_value_to_string(pd.max));
+		asprintf(&result, "%s;%s", result, pd_value_to_string(pd.max));
 	}
 
 	/*printf("pd_to_string: %s\n", result); */
@@ -71,7 +71,7 @@ char *pd_list_to_string(const pd_list pd) {
 	char *result = pd_to_string(pd.data);
 
 	for (pd_list *elem = pd.next; elem != NULL; elem = elem->next) {
-		xasprintf(&result, "%s %s", result, pd_to_string(elem->data));
+		asprintf(&result, "%s %s", result, pd_to_string(elem->data));
 	}
 
 	return result;
@@ -234,17 +234,17 @@ int cmp_perfdata_value(const mp_perfdata_value a, const mp_perfdata_value b) {
 char *mp_range_to_string(const mp_range input) {
 	char *result = "";
 	if (input.alert_on_inside_range == INSIDE) {
-		xasprintf(&result, "@");
+		asprintf(&result, "@");
 	}
 
 	if (input.start_infinity) {
-		xasprintf(&result, "%s~:", result);
+		asprintf(&result, "%s~:", result);
 	} else {
-		xasprintf(&result, "%s%s:", result, pd_value_to_string(input.start));
+		asprintf(&result, "%s%s:", result, pd_value_to_string(input.start));
 	}
 
 	if (!input.end_infinity) {
-		xasprintf(&result, "%s%s", result, pd_value_to_string(input.end));
+		asprintf(&result, "%s%s", result, pd_value_to_string(input.end));
 	}
 	return result;
 }

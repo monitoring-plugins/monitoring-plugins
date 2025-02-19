@@ -23,7 +23,7 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
 	int added = 0;
 
 	if (check.perfdata != NULL) {
-		added = xasprintf(&result, "%s", pd_list_to_string(*check.perfdata));
+		added = asprintf(&result, "%s", pd_list_to_string(*check.perfdata));
 	}
 
 	if (check.subchecks == NULL) {
@@ -35,10 +35,10 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
 
 	while (subchecks != NULL) {
 		if (added > 0) {
-			added = xasprintf(&result, "%s%s", result, fmt_subcheck_perfdata(subchecks->subcheck));
+			added = asprintf(&result, "%s%s", result, fmt_subcheck_perfdata(subchecks->subcheck));
 		} else {
 			// TODO free previous result here?
-			added = xasprintf(&result, "%s", result, fmt_subcheck_perfdata(subchecks->subcheck));
+			added = asprintf(&result, "%s", fmt_subcheck_perfdata(subchecks->subcheck));
 		}
 
 		subchecks = subchecks->next;
@@ -185,7 +185,7 @@ char *get_subcheck_summary(mp_check check) {
 		subchecks = subchecks->next;
 	}
 	char *result = NULL;
-	xasprintf(&result, "ok=%d, warning=%d, critical=%d, unknown=%d", ok, warning, critical, unknown);
+	asprintf(&result, "ok=%d, warning=%d, critical=%d, unknown=%d", ok, warning, critical, unknown);
 	return result;
 }
 
@@ -238,7 +238,7 @@ char *mp_fmt_output(mp_check check) {
 			check.summary = get_subcheck_summary(check);
 		}
 
-		xasprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
+		asprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
 		return result;
 
 	case MP_FORMAT_ONE_LINE: {
@@ -251,12 +251,12 @@ char *mp_fmt_output(mp_check check) {
 			check.summary = get_subcheck_summary(check);
 		}
 
-		xasprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
+		asprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
 
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			xasprintf(&result, "%s - %s", result, fmt_subcheck_output(MP_FORMAT_ONE_LINE, subchecks->subcheck, 1));
+			asprintf(&result, "%s - %s", result, fmt_subcheck_output(MP_FORMAT_ONE_LINE, subchecks->subcheck, 1));
 			subchecks = subchecks->next;
 		}
 
@@ -267,12 +267,12 @@ char *mp_fmt_output(mp_check check) {
 			check.summary = get_subcheck_summary(check);
 		}
 
-		xasprintf(&result, "[%s] - %s", state_text(mp_compute_check_state(check)), check.summary);
+		asprintf(&result, "[%s] - %s", state_text(mp_compute_check_state(check)), check.summary);
 
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			xasprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_ICINGA_WEB_2, subchecks->subcheck, 1));
+			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_ICINGA_WEB_2, subchecks->subcheck, 1));
 			subchecks = subchecks->next;
 		}
 
@@ -281,16 +281,16 @@ char *mp_fmt_output(mp_check check) {
 
 		while (subchecks != NULL) {
 			if (pd_string == NULL) {
-				xasprintf(&pd_string, "%s", fmt_subcheck_perfdata(subchecks->subcheck));
+				asprintf(&pd_string, "%s", fmt_subcheck_perfdata(subchecks->subcheck));
 			} else {
-				xasprintf(&pd_string, "%s %s", pd_string, fmt_subcheck_perfdata(subchecks->subcheck));
+				asprintf(&pd_string, "%s %s", pd_string, fmt_subcheck_perfdata(subchecks->subcheck));
 			}
 
 			subchecks = subchecks->next;
 		}
 
 		if (pd_string != NULL && strlen(pd_string) > 0) {
-			xasprintf(&result, "%s|%s", result, pd_string);
+			asprintf(&result, "%s|%s", result, pd_string);
 		}
 
 		break;
@@ -358,23 +358,23 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 
 	switch (output_format) {
 	case MP_FORMAT_ICINGA_WEB_2:
-		xasprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
+		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
 				  check.output);
 
 		subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			xasprintf(&result, "%s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
+			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
 			subchecks = subchecks->next;
 		}
 		return result;
 	case MP_FORMAT_ONE_LINE:
-		xasprintf(&result, "[%s] - %s", state_text(mp_compute_subcheck_state(check)), check.output);
+		asprintf(&result, "[%s] - %s", state_text(mp_compute_subcheck_state(check)), check.output);
 
 		subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			xasprintf(&result, " - %s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
+			asprintf(&result, " - %s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
 			subchecks = subchecks->next;
 		}
 		return result;
