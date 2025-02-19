@@ -260,7 +260,7 @@ char *mp_fmt_output(mp_check check) {
 			subchecks = subchecks->next;
 		}
 
-		break;
+		return result;
 	}
 	case MP_FORMAT_ICINGA_WEB_2: {
 		if (check.summary == NULL) {
@@ -354,13 +354,14 @@ static char *generate_indentation_string(unsigned int indentation) {
  */
 static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation) {
 	char *result = NULL;
+	mp_subcheck_list *subchecks = NULL;
 
 	switch (output_format) {
 	case MP_FORMAT_ICINGA_WEB_2:
 		xasprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
 				  check.output);
 
-		mp_subcheck_list *subchecks = check.subchecks;
+		subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
 			xasprintf(&result, "%s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
@@ -368,6 +369,14 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 		}
 		return result;
 	case MP_FORMAT_ONE_LINE:
+		xasprintf(&result, "[%s] - %s", state_text(mp_compute_subcheck_state(check)), check.output);
+
+		subchecks = check.subchecks;
+
+		while (subchecks != NULL) {
+			xasprintf(&result, " - %s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
+			subchecks = subchecks->next;
+		}
 		return result;
 	case MP_FORMAT_SUMMARY_ONLY:
 		return result;
