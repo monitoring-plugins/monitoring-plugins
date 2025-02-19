@@ -8,6 +8,8 @@
 #include <strings.h>
 // #include <cjson/cJSON.h>
 #include "./vendor/cJSON/cJSON.h"
+#include "perfdata.h"
+#include "states.h"
 
 // == Prototypes ==
 static char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation);
@@ -359,7 +361,7 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 	switch (output_format) {
 	case MP_FORMAT_ICINGA_WEB_2:
 		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
-				  check.output);
+				 check.output);
 
 		subchecks = check.subchecks;
 
@@ -385,12 +387,111 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 	}
 }
 
+static inline cJSON *json_serialise_pd_value(mp_perfdata_value value) {
+	cJSON *result = cJSON_CreateObject();
+
+	switch (value.type) {
+	case PD_TYPE_DOUBLE:
+		cJSON_AddStringToObject(result, "type", "double");
+		break;
+	case PD_TYPE_INT:
+		cJSON_AddStringToObject(result, "type", "int");
+		break;
+	case PD_TYPE_UINT:
+		cJSON_AddStringToObject(result, "type", "uint");
+		break;
+	case PD_TYPE_NONE:
+		die(STATE_UNKNOWN, "Perfdata type was None in json_serialise_pd_value");
+	}
+	cJSON_AddStringToObject(result, "value", pd_value_to_string(value));
+
+	return result;
+}
+
+static inline cJSON *json_serialise_range(mp_range range) {
+	cJSON *result = cJSON_CreateObject();
+
+	if (range.alert_on_inside_range) {
+		cJSON_AddBoolToObject(result, "alert_on_inside", true);
+	} else {
+		cJSON_AddBoolToObject(result, "alert_on_inside", false);
+	}
+
+	if (range.end_infinity) {
+		cJSON_AddStringToObject(result, "end", "inf");
+	} else {
+		cJSON_AddItemToObject(result, "end", json_serialise_pd_value(range.end));
+	}
+
+	if (range.start_infinity) {
+		cJSON_AddStringToObject(result, "start", "inf");
+	} else {
+		cJSON_AddItemToObject(result, "start", json_serialise_pd_value(range.end));
+	}
+
+	return result;
+}
+
+static inline cJSON *json_serialise_pd(mp_perfdata pd_val) {
+	cJSON *result = cJSON_CreateObject();
+
+	// Label
+	cJSON_AddStringToObject(result, "label", pd_val.label);
+
+	// Value
+	cJSON_AddItemToObject(result, "value", json_serialise_pd_value(pd_val.value));
+
+	// Uom
+	cJSON_AddStringToObject(result, "uom", pd_val.uom);
+
+	// Warn/Crit
+	if (pd_val.warn_present) {
+		cJSON *warn = json_serialise_range(pd_val.warn);
+		cJSON_AddItemToObject(result, "warn", warn);
+	}
+	if (pd_val.crit_present) {
+		cJSON *crit = json_serialise_range(pd_val.crit);
+		cJSON_AddItemToObject(result, "crit", crit);
+	}
+
+	if (pd_val.min_present) {
+		cJSON_AddItemToObject(result, "min", json_serialise_pd_value(pd_val.min));
+	}
+	if (pd_val.max_present) {
+		cJSON_AddItemToObject(result, "max", json_serialise_pd_value(pd_val.max));
+	}
+
+	return result;
+}
+
+static inline cJSON *json_serialise_pd_list(pd_list *list) {
+	cJSON *result = cJSON_CreateArray();
+
+	do {
+		cJSON *pd_value = json_serialise_pd(list->data);
+		cJSON_AddItemToArray(result, pd_value);
+		list = list->next;
+	} while (list != NULL);
+
+	return result;
+}
+
 static inline cJSON *json_serialize_subcheck(mp_subcheck subcheck) {
 	cJSON *result = cJSON_CreateObject();
+
+	// Human readable output
 	cJSON *output = cJSON_CreateString(subcheck.output);
 	cJSON_AddItemToObject(result, "output", output);
+
+	// Test state (aka Exit Code)
 	cJSON *state = cJSON_CreateString(state_text(mp_compute_subcheck_state(subcheck)));
 	cJSON_AddItemToObject(result, "state", state);
+
+	// Perfdata
+	if (subcheck.perfdata != NULL) {
+		cJSON *perfdata = json_serialise_pd_list(subcheck.perfdata);
+		cJSON_AddItemToObject(result, "perfdata", perfdata);
+	}
 
 	if (subcheck.subchecks != NULL) {
 		cJSON *subchecks = cJSON_CreateArray();
