@@ -195,4 +195,8 @@ The Monitoring Plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\n\
 copies of the plugins under the terms of the GNU General Public License.\n\
 For more information about these matters, see the file named COPYING.\n")
 
+#define UT_OUTPUT_FORMAT _("\
+ --output-format=OUTPUT_FORMAT\n\
+    Select output format. Valid values: \"icingaweb2\", \"mp-test-json\"\n")
+
 #endif /* NP_UTILS_H */

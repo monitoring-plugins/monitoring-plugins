@@ -381,8 +381,7 @@ void print_help(swap_config config) {
 		   _("Resulting state when there is no swap regardless of thresholds. "
 			 "Default:"),
 		   state_text(config.no_swap_state));
-	printf(" %s\n", "--output-format");
-	printf("    %s\n", _("Select output format. Valid values: \"icingaweb2\", \"mp-test-json\""));
+	printf(UT_OUTPUT_FORMAT);
 	printf(UT_VERBOSE);
 
 	printf("\n");
