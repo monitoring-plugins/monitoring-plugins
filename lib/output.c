@@ -235,35 +235,6 @@ char *mp_fmt_output(mp_check check) {
 	char *result = NULL;
 
 	switch (check.format) {
-	case MP_FORMAT_SUMMARY_ONLY:
-		if (check.summary == NULL) {
-			check.summary = get_subcheck_summary(check);
-		}
-
-		asprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
-		return result;
-
-	case MP_FORMAT_ONE_LINE: {
-		/* SERVICE STATUS: First line of output | First part of performance data
-		 * Any number of subsequent lines of output, but note that buffers
-		 * may have a limited size | Second part of performance data, which
-		 * may have continuation lines, too
-		 */
-		if (check.summary == NULL) {
-			check.summary = get_subcheck_summary(check);
-		}
-
-		asprintf(&result, "%s: %s", state_text(mp_compute_check_state(check)), check.summary);
-
-		mp_subcheck_list *subchecks = check.subchecks;
-
-		while (subchecks != NULL) {
-			asprintf(&result, "%s - %s", result, fmt_subcheck_output(MP_FORMAT_ONE_LINE, subchecks->subcheck, 1));
-			subchecks = subchecks->next;
-		}
-
-		return result;
-	}
 	case MP_FORMAT_ICINGA_WEB_2: {
 		if (check.summary == NULL) {
 			check.summary = get_subcheck_summary(check);
@@ -369,18 +340,6 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
 			subchecks = subchecks->next;
 		}
-		return result;
-	case MP_FORMAT_ONE_LINE:
-		asprintf(&result, "[%s] - %s", state_text(mp_compute_subcheck_state(check)), check.output);
-
-		subchecks = check.subchecks;
-
-		while (subchecks != NULL) {
-			asprintf(&result, " - %s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
-			subchecks = subchecks->next;
-		}
-		return result;
-	case MP_FORMAT_SUMMARY_ONLY:
 		return result;
 	default:
 		die(STATE_UNKNOWN, "Invalid format");
@@ -551,9 +510,7 @@ mp_subcheck mp_set_subcheck_default_state(mp_subcheck check, mp_state_enum state
 }
 
 char *mp_output_format_map[] = {
-	[MP_FORMAT_ONE_LINE] = "one-line",
 	[MP_FORMAT_ICINGA_WEB_2] = "icingaweb2",
-	[MP_FORMAT_SUMMARY_ONLY] = "summary-only",
 	[MP_FORMAT_TEST_JSON] = "mp-test-json",
 };
 

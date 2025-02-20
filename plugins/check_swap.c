@@ -382,7 +382,7 @@ void print_help(swap_config config) {
 			 "Default:"),
 		   state_text(config.no_swap_state));
 	printf(" %s\n", "--output-format");
-	printf("    %s\n", _("Select output format. Valid values: \"one-line\", \"icingaweb2\", \"summary-only\", \"mp-test-json\""));
+	printf("    %s\n", _("Select output format. Valid values: \"icingaweb2\", \"mp-test-json\""));
 	printf(UT_VERBOSE);
 
 	printf("\n");
