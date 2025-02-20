@@ -34,7 +34,7 @@ const char *progname = "check_mysql";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-#define SLAVERESULTSIZE 96
+#define REPLICA_RESULTSIZE 96
 
 #include "common.h"
 #include "utils.h"
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
 	char *result = NULL;
 	char *error = NULL;
-	char slaveresult[SLAVERESULTSIZE] = {0};
+	char replica_result[REPLICA_RESULTSIZE] = {0};
 	char *perf;
 
 	perf = strdup("");
@@ -200,20 +200,20 @@ int main(int argc, char **argv) {
 		if (mysql_query(&mysql, "show slave status") != 0) {
 			error = strdup(mysql_error(&mysql));
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("slave query error: %s\n"), error);
+			die(STATE_CRITICAL, _("replica query error: %s\n"), error);
 		}
 
 		/* store the result */
 		if ((res = mysql_store_result(&mysql)) == NULL) {
 			error = strdup(mysql_error(&mysql));
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("slave store_result error: %s\n"), error);
+			die(STATE_CRITICAL, _("replica store_result error: %s\n"), error);
 		}
 
 		/* Check there is some data */
 		if (mysql_num_rows(res) == 0) {
 			mysql_close(&mysql);
-			die(STATE_WARNING, "%s\n", _("No slaves defined"));
+			die(STATE_WARNING, "%s\n", _("No replicas defined"));
 		}
 
 		/* fetch the first row */
@@ -221,32 +221,32 @@ int main(int argc, char **argv) {
 			error = strdup(mysql_error(&mysql));
 			mysql_free_result(res);
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("slave fetch row error: %s\n"), error);
+			die(STATE_CRITICAL, _("replica fetch row error: %s\n"), error);
 		}
 
 		if (mysql_field_count(&mysql) == 12) {
 			/* mysql 3.23.x */
-			snprintf(slaveresult, SLAVERESULTSIZE, _("Slave running: %s"), row[6]);
+			snprintf(replica_result, REPLICA_RESULTSIZE, _("Replica running: %s"), row[6]);
 			if (strcmp(row[6], "Yes") != 0) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
-				die(STATE_CRITICAL, "%s\n", slaveresult);
+				die(STATE_CRITICAL, "%s\n", replica_result);
 			}
 
 		} else {
 			/* mysql 4.x.x and mysql 5.x.x */
-			int slave_io_field = -1, slave_sql_field = -1, seconds_behind_field = -1, i, num_fields;
+			int replica_io_field = -1, replica_sql_field = -1, seconds_behind_field = -1, i, num_fields;
 			MYSQL_FIELD *fields;
 
 			num_fields = mysql_num_fields(res);
 			fields = mysql_fetch_fields(res);
 			for (i = 0; i < num_fields; i++) {
 				if (strcmp(fields[i].name, "Slave_IO_Running") == 0) {
-					slave_io_field = i;
+					replica_io_field = i;
 					continue;
 				}
 				if (strcmp(fields[i].name, "Slave_SQL_Running") == 0) {
-					slave_sql_field = i;
+					replica_sql_field = i;
 					continue;
 				}
 				if (strcmp(fields[i].name, "Seconds_Behind_Master") == 0) {
@@ -255,19 +255,19 @@ int main(int argc, char **argv) {
 				}
 			}
 
-			/* Check if slave status is available */
-			if ((slave_io_field < 0) || (slave_sql_field < 0) || (num_fields == 0)) {
+			/* Check if replica status is available */
+			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0)) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
-				die(STATE_CRITICAL, "Slave status unavailable\n");
+				die(STATE_CRITICAL, "Replica status unavailable\n");
 			}
 
-			/* Save slave status in slaveresult */
-			snprintf(slaveresult, SLAVERESULTSIZE, "Slave IO: %s Slave SQL: %s Seconds Behind Master: %s", row[slave_io_field],
-					 row[slave_sql_field], seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
+			/* Save replica status in replica_result */
+			snprintf(replica_result, REPLICA_RESULTSIZE, "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s", row[replica_io_field],
+					 row[replica_sql_field], seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
 
 			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no mysqldump threads running */
-			if (strcmp(row[slave_io_field], "Yes") != 0 || strcmp(row[slave_sql_field], "Yes") != 0) {
+			if (strcmp(row[replica_io_field], "Yes") != 0 || strcmp(row[replica_sql_field], "Yes") != 0) {
 				MYSQL_RES *res_mysqldump;
 				MYSQL_ROW row_mysqldump;
 				unsigned int mysqldump_threads = 0;
@@ -286,9 +286,9 @@ int main(int argc, char **argv) {
 					mysql_close(&mysql);
 				}
 				if (mysqldump_threads == 0) {
-					die(STATE_CRITICAL, "%s\n", slaveresult);
+					die(STATE_CRITICAL, "%s\n", replica_result);
 				} else {
-					strncat(slaveresult, " Mysqldump: in progress", SLAVERESULTSIZE - 1);
+					strncat(replica_result, " Mysqldump: in progress", REPLICA_RESULTSIZE - 1);
 				}
 			}
 
@@ -312,10 +312,10 @@ int main(int argc, char **argv) {
 									false, 0));
 
 				if (status == STATE_WARNING) {
-					printf("SLOW_SLAVE %s: %s|%s\n", _("WARNING"), slaveresult, perf);
+					printf("SLOW_REPLICA %s: %s|%s\n", _("WARNING"), replica_result, perf);
 					exit(STATE_WARNING);
 				} else if (status == STATE_CRITICAL) {
-					printf("SLOW_SLAVE %s: %s|%s\n", _("CRITICAL"), slaveresult, perf);
+					printf("SLOW_REPLICA %s: %s|%s\n", _("CRITICAL"), replica_result, perf);
 					exit(STATE_CRITICAL);
 				}
 			}
@@ -330,13 +330,15 @@ int main(int argc, char **argv) {
 
 	/* print out the result of stats */
 	if (check_replica) {
-		printf("%s %s|%s\n", result, slaveresult, perf);
+		printf("%s %s|%s\n", result, replica_result, perf);
 	} else {
 		printf("%s|%s\n", result, perf);
 	}
 
 	return STATE_OK;
 }
+
+#define CHECK_REPLICA_OPT CHAR_MAX + 1
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
@@ -345,17 +347,29 @@ int process_arguments(int argc, char **argv) {
 	char *critical = NULL;
 
 	int option = 0;
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"socket", required_argument, 0, 's'},
-									   {"database", required_argument, 0, 'd'}, {"username", required_argument, 0, 'u'},
-									   {"password", required_argument, 0, 'p'}, {"file", required_argument, 0, 'f'},
-									   {"group", required_argument, 0, 'g'},    {"port", required_argument, 0, 'P'},
-									   {"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},
-									   {"check-slave", no_argument, 0, 'S'},    {"ignore-auth", no_argument, 0, 'n'},
-									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},           {"ssl", no_argument, 0, 'l'},
-									   {"ca-cert", optional_argument, 0, 'C'},  {"key", required_argument, 0, 'k'},
-									   {"cert", required_argument, 0, 'a'},     {"ca-dir", required_argument, 0, 'D'},
-									   {"ciphers", required_argument, 0, 'L'},  {0, 0, 0, 0}};
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"socket", required_argument, 0, 's'},
+									   {"database", required_argument, 0, 'd'},
+									   {"username", required_argument, 0, 'u'},
+									   {"password", required_argument, 0, 'p'},
+									   {"file", required_argument, 0, 'f'},
+									   {"group", required_argument, 0, 'g'},
+									   {"port", required_argument, 0, 'P'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"check-slave", no_argument, 0, 'S'},
+									   {"check-replica", no_argument, 0, CHECK_REPLICA_OPT},
+									   {"ignore-auth", no_argument, 0, 'n'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"ssl", no_argument, 0, 'l'},
+									   {"ca-cert", optional_argument, 0, 'C'},
+									   {"key", required_argument, 0, 'k'},
+									   {"cert", required_argument, 0, 'a'},
+									   {"ca-dir", required_argument, 0, 'D'},
+									   {"ciphers", required_argument, 0, 'L'},
+									   {0, 0, 0, 0}};
 
 	if (argc < 1) {
 		return ERROR;
@@ -424,6 +438,7 @@ int process_arguments(int argc, char **argv) {
 			db_port = atoi(optarg);
 			break;
 		case 'S':
+		case CHECK_REPLICA_OPT:
 			check_replica = true; /* check-slave */
 			break;
 		case 'n':
@@ -532,12 +547,15 @@ void print_help(void) {
 	printf("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
 	printf("    %s\n", _("Your clear-text password could be visible as a process table entry"));
 	printf(" %s\n", "-S, --check-slave");
-	printf("    %s\n", _("Check if the slave thread is running properly."));
+	printf("    %s\n",
+		   _("Check if the slave thread is running properly. This option is deprecated in favour of check-replica, which does the same"));
+	printf(" %s\n", "--check-replica");
+	printf("    %s\n", _("Check if the replica thread is running properly."));
 	printf(" %s\n", "-w, --warning");
-	printf("    %s\n", _("Exit with WARNING status if slave server is more than INTEGER seconds"));
+	printf("    %s\n", _("Exit with WARNING status if replica server is more than INTEGER seconds"));
 	printf("    %s\n", _("behind master"));
 	printf(" %s\n", "-c, --critical");
-	printf("    %s\n", _("Exit with CRITICAL status if slave server is more then INTEGER seconds"));
+	printf("    %s\n", _("Exit with CRITICAL status if replica server is more then INTEGER seconds"));
 	printf("    %s\n", _("behind master"));
 	printf(" %s\n", "-l, --ssl");
 	printf("    %s\n", _("Use ssl encryption"));
