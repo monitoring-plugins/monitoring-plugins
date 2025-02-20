@@ -29,11 +29,11 @@ typedef struct subcheck_list {
  * Possible output formats
  */
 typedef enum output_format {
-	MP_FORMAT_ICINGA_WEB_2,
+	MP_FORMAT_MULTI_LINE,
 	MP_FORMAT_TEST_JSON,
 } mp_output_format;
 
-#define MP_FORMAT_DEFAULT MP_FORMAT_ICINGA_WEB_2
+#define MP_FORMAT_DEFAULT MP_FORMAT_MULTI_LINE
 
 /*
  * The main state object of a plugin. Exists only ONCE per plugin.

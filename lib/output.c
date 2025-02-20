@@ -235,7 +235,7 @@ char *mp_fmt_output(mp_check check) {
 	char *result = NULL;
 
 	switch (check.format) {
-	case MP_FORMAT_ICINGA_WEB_2: {
+	case MP_FORMAT_MULTI_LINE: {
 		if (check.summary == NULL) {
 			check.summary = get_subcheck_summary(check);
 		}
@@ -245,7 +245,7 @@ char *mp_fmt_output(mp_check check) {
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_ICINGA_WEB_2, subchecks->subcheck, 1));
+			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
 			subchecks = subchecks->next;
 		}
 
@@ -330,7 +330,7 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 	mp_subcheck_list *subchecks = NULL;
 
 	switch (output_format) {
-	case MP_FORMAT_ICINGA_WEB_2:
+	case MP_FORMAT_MULTI_LINE:
 		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
 				 check.output);
 
@@ -510,7 +510,7 @@ mp_subcheck mp_set_subcheck_default_state(mp_subcheck check, mp_state_enum state
 }
 
 char *mp_output_format_map[] = {
-	[MP_FORMAT_ICINGA_WEB_2] = "icingaweb2",
+	[MP_FORMAT_MULTI_LINE] = "multi-line",
 	[MP_FORMAT_TEST_JSON] = "mp-test-json",
 };
 

@@ -197,6 +197,6 @@ For more information about these matters, see the file named COPYING.\n")
 
 #define UT_OUTPUT_FORMAT _("\
  --output-format=OUTPUT_FORMAT\n\
-    Select output format. Valid values: \"icingaweb2\", \"mp-test-json\"\n")
+    Select output format. Valid values: \"multi-line\", \"mp-test-json\"\n")
 
 #endif /* NP_UTILS_H */
