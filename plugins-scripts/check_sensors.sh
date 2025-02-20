@@ -20,7 +20,6 @@ print_help() {
 	echo "This plugin checks hardware status using the lm_sensors package."
 	echo ""
 	support
-	exit "$STATE_OK"
 }
 
 case "$1" in
