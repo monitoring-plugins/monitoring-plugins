@@ -59,7 +59,7 @@ static bool ssl = false;
 static char *opt_file = NULL;
 static char *opt_group = NULL;
 static unsigned int db_port = MYSQL_PORT;
-static bool check_slave = false;
+static bool check_replica = false;
 static bool ignore_auth = false;
 static int verbose = 0;
 
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (check_slave) {
+	if (check_replica) {
 		/* check the slave status */
 		if (mysql_query(&mysql, "show slave status") != 0) {
 			error = strdup(mysql_error(&mysql));
@@ -329,7 +329,7 @@ int main(int argc, char **argv) {
 	mysql_close(&mysql);
 
 	/* print out the result of stats */
-	if (check_slave) {
+	if (check_replica) {
 		printf("%s %s|%s\n", result, slaveresult, perf);
 	} else {
 		printf("%s|%s\n", result, perf);
@@ -424,7 +424,7 @@ int process_arguments(int argc, char **argv) {
 			db_port = atoi(optarg);
 			break;
 		case 'S':
-			check_slave = true; /* check-slave */
+			check_replica = true; /* check-slave */
 			break;
 		case 'n':
 			ignore_auth = true; /* ignore-auth */
