@@ -32,6 +32,7 @@
 #define _COMMON_H_
 
 #include "config.h"
+#include "../lib/monitoringplug.h"
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
@@ -176,14 +177,6 @@
 enum {
 	OK = 0,
 	ERROR = -1
-};
-
-enum {
-	STATE_OK,
-	STATE_WARNING,
-	STATE_CRITICAL,
-	STATE_UNKNOWN,
-	STATE_DEPENDENT
 };
 
 enum {

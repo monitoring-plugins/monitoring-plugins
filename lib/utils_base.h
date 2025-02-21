@@ -2,6 +2,13 @@
 #define _UTILS_BASE_
 /* Header file for Monitoring Plugins utils_base.c */
 
+#include "../config.h"
+#include <time.h>
+
+#include "./perfdata.h"
+#include "./thresholds.h"
+
+
 #ifndef USE_OPENSSL
 #	include "sha256.h"
 #endif
@@ -18,20 +25,6 @@
 
 #define OUTSIDE 0
 #define INSIDE  1
-
-typedef struct range_struct {
-	double start;
-	bool start_infinity;
-	double end;
-	int end_infinity;
-	int alert_on; /* OUTSIDE (default) or INSIDE */
-	char *text;   /* original unparsed text input */
-} range;
-
-typedef struct thresholds_struct {
-	range *warning;
-	range *critical;
-} thresholds;
 
 #define NP_STATE_FORMAT_VERSION 1
 
@@ -61,6 +54,7 @@ int _set_thresholds(thresholds **, char *, char *);
 void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
 bool check_range(double, range *);
+bool mp_check_range(mp_perfdata_value, mp_range);
 int get_status(double, thresholds *);
 
 /* Handle timeouts */
@@ -107,12 +101,12 @@ char *np_extract_value(const char *, const char *, char);
 int mp_translate_state(char *);
 
 void np_enable_state(char *, int);
-state_data *np_state_read();
+state_data *np_state_read(void);
 void np_state_write_string(time_t, char *);
 
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
-void np_cleanup();
+void np_cleanup(void);
 const char *state_text(int);
 
 #endif /* _UTILS_BASE_ */

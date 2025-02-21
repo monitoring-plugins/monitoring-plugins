@@ -103,6 +103,8 @@ NP-VERSION-FILE
 /lib/libmonitoringplug.a
 /lib/Makefile
 /lib/Makefile.in
+/lib/vendor/cJSON/.deps
+/lib/vendor/cJSON/.dirstamp
 
 # /lib/tests/
 /lib/tests/base64.Po

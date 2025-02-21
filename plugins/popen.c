@@ -40,7 +40,6 @@
 
 #include "./common.h"
 #include "./utils.h"
-#include "../lib/maxfd.h"
 
 /* extern so plugin has pid to kill exec'd process on timeouts */
 extern pid_t *childpid;

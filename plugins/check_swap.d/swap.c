@@ -14,6 +14,8 @@ swap_config swap_config_init(void) {
 	tmp.warn_is_set = false;
 	tmp.crit_is_set = false;
 
+	tmp.output_format_is_set = false;
+
 #ifdef _AIX
 	tmp.on_aix = true;
 #else
