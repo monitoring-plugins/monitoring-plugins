@@ -125,6 +125,7 @@ check_time_LDADD = $(NETLIBS)
 check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ups_LDADD = $(NETLIBS)
 check_users_LDADD = $(BASEOBJS) $(WTSAPI32LIBS) $(SYSTEMDLIBS)
+check_users_SOURCES = check_users.c check_users.d/users.c
 check_by_ssh_LDADD = $(NETLIBS)
 check_ide_smart_LDADD = $(BASEOBJS)
 negate_LDADD = $(BASEOBJS)
