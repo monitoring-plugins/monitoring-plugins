@@ -64,8 +64,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -95,20 +96,24 @@ int process_arguments(int argc, char **argv) {
 									   {"remote-protocol", required_argument, 0, 'P'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
-	for (int i = 1; i < argc; i++)
-		if (strcmp("-to", argv[i]) == 0)
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
+		}
+	}
 
 	int option_char;
 	while (true) {
 		int option = 0;
 		option_char = getopt_long(argc, argv, "+Vhv46t:r:H:p:P:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* help */
@@ -123,10 +128,11 @@ int process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				socket_timeout = atoi(optarg);
+			}
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -145,8 +151,9 @@ int process_arguments(int argc, char **argv) {
 			remote_protocol = optarg;
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
+			}
 			server_name = optarg;
 			break;
 		case 'p': /* port */
@@ -178,10 +185,12 @@ int process_arguments(int argc, char **argv) {
 }
 
 int validate_arguments(void) {
-	if (server_name == NULL)
+	if (server_name == NULL) {
 		return ERROR;
-	if (port == -1) /* funky, but allows -p to override stray integer in args */
+	}
+	if (port == -1) { /* funky, but allows -p to override stray integer in args */
 		port = SSH_DFL_PORT;
+	}
 	return OK;
 }
 
@@ -198,8 +207,9 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	int socket;
 	int result = my_tcp_connect(haddr, hport, &socket);
 
-	if (result != STATE_OK)
+	if (result != STATE_OK) {
 		return result;
+	}
 
 	char *output = (char *)calloc(BUFF_SZ + 1, sizeof(char));
 	char *buffer = NULL;
@@ -259,8 +269,9 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	 *		- RFC 4253:4.2
 	 */
 	strip(version_control_string);
-	if (verbose)
+	if (verbose) {
 		printf("%s\n", version_control_string);
+	}
 
 	char *ssh_proto = version_control_string + 4;
 
@@ -297,8 +308,9 @@ int ssh_connect(char *haddr, int hport, char *remote_version, char *remote_proto
 	static char *rev_no = VERSION;
 	xasprintf(&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
 	send(socket, buffer, strlen(buffer), MSG_DONTWAIT);
-	if (verbose)
+	if (verbose) {
 		printf("%s\n", buffer);
+	}
 
 	if (remote_version && strcmp(remote_version, ssh_server)) {
 		printf(_("SSH CRITICAL - %s (protocol %s) version mismatch, expected '%s'\n"), ssh_server, ssh_proto, remote_version);
