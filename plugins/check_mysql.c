@@ -196,8 +196,56 @@ int main(int argc, char **argv) {
 	}
 
 	if (check_replica) {
-		/* check the slave status */
-		if (mysql_query(&mysql, "show slave status") != 0) {
+
+		// Detect which version we are, on older version
+		// "show slave status" should work, on newer ones
+		// "show replica status"
+		// But first we have to find out whether this is
+		// MySQL or MariaDB since the version numbering scheme
+		// is different
+		bool use_deprecated_slave_status = false;
+		const char *server_version = mysql_get_server_info(&mysql);
+		unsigned long server_verion_int = mysql_get_server_version(&mysql);
+		unsigned long major_version = server_verion_int / 10000;
+		unsigned long minor_version = (server_verion_int % 10000) / 100;
+		unsigned long patch_version = (server_verion_int % 100);
+		if (verbose) {
+			printf("Found MariaDB: %s, main version: %lu, minor version: %lu, patch version: %lu\n", server_version, major_version,
+				   minor_version, patch_version);
+		}
+
+		if (strstr(server_version, "MariaDB") != NULL) {
+			// Looks like MariaDB, new commands should be available after 10.5.1
+			if (major_version < 10) {
+				use_deprecated_slave_status = true;
+			} else if (major_version == 10) {
+				if (minor_version < 5) {
+					use_deprecated_slave_status = true;
+				} else if (minor_version == 5 && patch_version < 1) {
+					use_deprecated_slave_status = true;
+				}
+			}
+		} else if (strstr(server_version, "MySQL") != NULL) {
+			// Looks like MySQL
+			if (major_version < 8) {
+				use_deprecated_slave_status = true;
+			} else if (major_version == 10 && minor_version < 4) {
+				use_deprecated_slave_status = true;
+			}
+		} else {
+			printf("Not a known sever implementation: %s\n", server_version);
+			exit(STATE_UNKNOWN);
+		}
+
+		char *replica_query = NULL;
+		if (use_deprecated_slave_status) {
+			replica_query = "show slave status";
+		} else {
+			replica_query = "show replica status";
+		}
+
+		/* check the replica status */
+		if (mysql_query(&mysql, replica_query) != 0) {
 			error = strdup(mysql_error(&mysql));
 			mysql_close(&mysql);
 			die(STATE_CRITICAL, _("replica query error: %s\n"), error);
