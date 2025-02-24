@@ -432,7 +432,6 @@ void print_help(void) {
 	printf("    %s\n", _("Tell ssh to use this configfile [optional]"));
 	printf(" %s\n", "-q, --quiet");
 	printf("    %s\n", _("Tell ssh to suppress warning and diagnostic messages [optional]"));
-	printf(UT_WARN_CRIT);
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(" %s\n", "-U, --unknown-timeout");
 	printf("    %s\n", _("Make connection problems return UNKNOWN instead of CRITICAL"));
