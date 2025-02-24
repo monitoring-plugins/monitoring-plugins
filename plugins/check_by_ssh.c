@@ -82,8 +82,9 @@ int main(int argc, char **argv) {
 	argv = np_extra_opts(&argc, argv, progname);
 
 	/* process arguments */
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage_va(_("Could not parse arguments"));
+	}
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -94,8 +95,9 @@ int main(int argc, char **argv) {
 	/* run the command */
 	if (verbose) {
 		printf("Command: %s\n", commargv[0]);
-		for (int i = 1; i < commargc; i++)
+		for (int i = 1; i < commargc; i++) {
 			printf("Argument %i: %s\n", i, commargv[i]);
+		}
 	}
 
 	result = cmd_run_array(commargv, &chld_out, &chld_err, 0);
@@ -107,33 +109,40 @@ int main(int argc, char **argv) {
 	}
 
 	if (verbose) {
-		for (size_t i = 0; i < chld_out.lines; i++)
+		for (size_t i = 0; i < chld_out.lines; i++) {
 			printf("stdout: %s\n", chld_out.line[i]);
-		for (size_t i = 0; i < chld_err.lines; i++)
+		}
+		for (size_t i = 0; i < chld_err.lines; i++) {
 			printf("stderr: %s\n", chld_err.line[i]);
+		}
 	}
 
-	if (skip_stdout == -1) /* --skip-stdout specified without argument */
+	if (skip_stdout == -1) { /* --skip-stdout specified without argument */
 		skip_stdout = chld_out.lines;
-	if (skip_stderr == -1) /* --skip-stderr specified without argument */
+	}
+	if (skip_stderr == -1) { /* --skip-stderr specified without argument */
 		skip_stderr = chld_err.lines;
+	}
 
 	/* UNKNOWN or worse if (non-skipped) output found on stderr */
 	if (chld_err.lines > (size_t)skip_stderr) {
 		printf(_("Remote command execution failed: %s\n"), chld_err.line[skip_stderr]);
-		if (warn_on_stderr)
+		if (warn_on_stderr) {
 			return max_state_alt(result, STATE_WARNING);
+		}
 		return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
 	 * Wrap up quickly and keep the tricks below */
 	if (!passive) {
-		if (chld_out.lines > (size_t)skip_stdout)
-			for (size_t i = skip_stdout; i < chld_out.lines; i++)
+		if (chld_out.lines > (size_t)skip_stdout) {
+			for (size_t i = skip_stdout; i < chld_out.lines; i++) {
 				puts(chld_out.line[i]);
-		else
+			}
+		} else {
 			printf(_("%s - check_by_ssh: Remote command '%s' returned status %d\n"), state_text(result), remotecmd, result);
+		}
 		return result; /* return error status from remote command */
 	}
 
@@ -151,8 +160,9 @@ int main(int argc, char **argv) {
 	commands = 0;
 	for (size_t i = skip_stdout; i < chld_out.lines; i++) {
 		status_text = chld_out.line[i++];
-		if (i == chld_out.lines || strstr(chld_out.line[i], "STATUS CODE: ") == NULL)
+		if (i == chld_out.lines || strstr(chld_out.line[i], "STATUS CODE: ") == NULL) {
 			die(STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
+		}
 
 		if (service[commands] && status_text && sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
 			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, host_shortname, service[commands++],
@@ -200,18 +210,22 @@ int process_arguments(int argc, char **argv) {
 									   {"configfile", optional_argument, 0, 'F'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
-	for (c = 1; c < argc; c++)
-		if (strcmp("-to", argv[c]) == 0)
+	for (c = 1; c < argc; c++) {
+		if (strcmp("-to", argv[c]) == 0) {
 			strcpy(argv[c], "-t");
+		}
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 'V': /* version */
@@ -224,10 +238,11 @@ int process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage_va(_("Timeout interval must be a positive integer"));
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 			break;
 		case 'U':
 			unknown_timeout = true;
@@ -236,8 +251,9 @@ int process_arguments(int argc, char **argv) {
 			hostname = optarg;
 			break;
 		case 'p': /* port number */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage_va(_("Port must be a positive integer"));
+			}
 			comm_append("-p");
 			comm_append(optarg);
 			break;
@@ -290,25 +306,28 @@ int process_arguments(int argc, char **argv) {
 			break;
 		case 'C': /* Command for remote machine */
 			commands++;
-			if (commands > 1)
+			if (commands > 1) {
 				xasprintf(&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+			}
 			xasprintf(&remotecmd, "%s%s", remotecmd, optarg);
 			break;
 		case 'S': /* skip n (or all) lines on stdout */
-			if (optarg == NULL)
+			if (optarg == NULL) {
 				skip_stdout = -1; /* skip all output on stdout */
-			else if (!is_integer(optarg))
+			} else if (!is_integer(optarg)) {
 				usage_va(_("skip-stdout argument must be an integer"));
-			else
+			} else {
 				skip_stdout = atoi(optarg);
+			}
 			break;
 		case 'E': /* skip n (or all) lines on stderr */
-			if (optarg == NULL)
+			if (optarg == NULL) {
 				skip_stderr = -1; /* skip all output on stderr */
-			else if (!is_integer(optarg))
+			} else if (!is_integer(optarg)) {
 				usage_va(_("skip-stderr argument must be an integer"));
-			else
+			} else {
 				skip_stderr = atoi(optarg);
+			}
 			break;
 		case 'W': /* exit with warning if there is an output on stderr */
 			warn_on_stderr = 1;
@@ -338,18 +357,22 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	if (strlen(remotecmd) == 0) {
-		for (; c < argc; c++)
-			if (strlen(remotecmd) > 0)
+		for (; c < argc; c++) {
+			if (strlen(remotecmd) > 0) {
 				xasprintf(&remotecmd, "%s %s", remotecmd, argv[c]);
-			else
+			} else {
 				xasprintf(&remotecmd, "%s", argv[c]);
+			}
+		}
 	}
 
-	if (commands > 1 || passive)
+	if (commands > 1 || passive) {
 		xasprintf(&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+	}
 
-	if (remotecmd == NULL || strlen(remotecmd) <= 1)
+	if (remotecmd == NULL || strlen(remotecmd) <= 1) {
 		usage_va(_("No remotecmd"));
+	}
 
 	comm_append(hostname);
 	comm_append(remotecmd);
@@ -359,25 +382,30 @@ int process_arguments(int argc, char **argv) {
 
 void comm_append(const char *str) {
 
-	if (++commargc > NP_MAXARGS)
+	if (++commargc > NP_MAXARGS) {
 		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, NP_MAXARGS);
+	}
 
-	if ((commargv = (char **)realloc(commargv, (commargc + 1) * sizeof(char *))) == NULL)
+	if ((commargv = (char **)realloc(commargv, (commargc + 1) * sizeof(char *))) == NULL) {
 		die(STATE_UNKNOWN, _("Can not (re)allocate 'commargv' buffer\n"));
+	}
 
 	commargv[commargc - 1] = strdup(str);
 	commargv[commargc] = NULL;
 }
 
 int validate_arguments(void) {
-	if (remotecmd == NULL || hostname == NULL)
+	if (remotecmd == NULL || hostname == NULL) {
 		return ERROR;
+	}
 
-	if (passive && commands != services)
+	if (passive && commands != services) {
 		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
+	}
 
-	if (passive && host_shortname == NULL)
+	if (passive && host_shortname == NULL) {
 		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the monitoring configs.\n"), progname);
+	}
 
 	return OK;
 }
