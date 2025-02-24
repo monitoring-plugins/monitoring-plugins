@@ -59,6 +59,7 @@ apt-get -y install perl \
 	mariadb-server \
 	mariadb-client \
 	libmariadb-dev \
+	libmariadb-dev-compat \
 	cron \
 	iputils-ping \
 	iproute2 \
