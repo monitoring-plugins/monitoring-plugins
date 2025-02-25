@@ -235,7 +235,11 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	int socket;
 	int result = my_tcp_connect(haddr, hport, &socket);
 
+	mp_subcheck connection_sc = mp_subcheck_init();
 	if (result != STATE_OK) {
+		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
+		xasprintf(&connection_sc.output, "Failed to establish TCP connection to Host %s and Port %d", haddr, hport);
+		mp_add_subcheck_to_check(overall, connection_sc);
 		return result;
 	}
 
@@ -280,7 +284,6 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 		}
 	}
 
-	mp_subcheck connection_sc = mp_subcheck_init();
 	if (recv_ret < 0) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
 		xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - %s", strerror(errno));
