@@ -35,6 +35,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "./common.h"
 #include "./netutils.h"
 #include "utils.h"
+#include "./check_ssh.d/config.h"
 
 #ifndef MSG_DONTWAIT
 #	define MSG_DONTWAIT 0
@@ -43,14 +44,14 @@ const char *email = "devel@monitoring-plugins.org";
 #define SSH_DFL_PORT 22
 #define BUFF_SZ      256
 
-static int port = -1;
-static char *server_name = NULL;
-static char *remote_version = NULL;
-static char *remote_protocol = NULL;
 static bool verbose = false;
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
+typedef struct process_arguments_wrapper {
+	int errorcode;
+	check_ssh_config config;
+} process_arguments_wrapper;
+
+static process_arguments_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -64,9 +65,13 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	process_arguments_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	check_ssh_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -74,7 +79,7 @@ int main(int argc, char **argv) {
 	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	int result = ssh_connect(server_name, port, remote_version, remote_protocol);
+	int result = ssh_connect(config.server_name, config.port, config.remote_version, config.remote_protocol);
 
 	alarm(0);
 
@@ -82,7 +87,7 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+process_arguments_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
 									   {"host", required_argument, 0, 'H'}, /* backward compatibility */
@@ -96,8 +101,14 @@ int process_arguments(int argc, char **argv) {
 									   {"remote-protocol", required_argument, 0, 'P'},
 									   {0, 0, 0, 0}};
 
+	process_arguments_wrapper result = {
+		.config = check_ssh_config_init(),
+		.errorcode = OK,
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	for (int i = 1; i < argc; i++) {
@@ -145,20 +156,20 @@ int process_arguments(int argc, char **argv) {
 #endif
 			break;
 		case 'r': /* remote version */
-			remote_version = optarg;
+			result.config.remote_version = optarg;
 			break;
 		case 'P': /* remote version */
-			remote_protocol = optarg;
+			result.config.remote_protocol = optarg;
 			break;
 		case 'H': /* host */
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
-			server_name = optarg;
+			result.config.server_name = optarg;
 			break;
 		case 'p': /* port */
 			if (is_intpos(optarg)) {
-				port = atoi(optarg);
+				result.config.port = atoi(optarg);
 			} else {
 				usage2(_("Port number must be a positive integer"), optarg);
 			}
@@ -166,32 +177,29 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	option_char = optind;
-	if (server_name == NULL && option_char < argc) {
+	if (result.config.server_name == NULL && option_char < argc) {
 		if (is_host(argv[option_char])) {
-			server_name = argv[option_char++];
+			result.config.server_name = argv[option_char++];
 		}
 	}
 
-	if (port == -1 && option_char < argc) {
+	if (result.config.port == -1 && option_char < argc) {
 		if (is_intpos(argv[option_char])) {
-			port = atoi(argv[option_char++]);
+			result.config.port = atoi(argv[option_char++]);
 		} else {
 			print_usage();
 			exit(STATE_UNKNOWN);
 		}
 	}
 
-	return validate_arguments();
-}
-
-int validate_arguments(void) {
-	if (server_name == NULL) {
-		return ERROR;
+	if (result.config.server_name == NULL) {
+		result.errorcode = ERROR;
+		return result;
 	}
-	if (port == -1) { /* funky, but allows -p to override stray integer in args */
-		port = SSH_DFL_PORT;
+	if (result.config.port == -1) { /* funky, but allows -p to override stray integer in args */
+		result.config.port = SSH_DFL_PORT;
 	}
-	return OK;
+	return result;
 }
 
 /************************************************************************
