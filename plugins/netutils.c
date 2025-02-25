@@ -28,6 +28,8 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "output.h"
+#include "states.h"
 #include "netutils.h"
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
@@ -43,12 +45,19 @@ int address_family = AF_INET;
 
 /* handles socket timeouts */
 void socket_timeout_alarm_handler(int sig) {
-	if (sig == SIGALRM)
-		printf(_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
-	else
-		printf(_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
+	mp_subcheck timeout_sc = mp_subcheck_init();
+	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 
-	exit(socket_timeout_state);
+	if (sig == SIGALRM) {
+		xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds\n"), socket_timeout);
+	} else {
+		xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds\n"), socket_timeout);
+	}
+
+	mp_check overall = mp_check_init();
+	mp_add_subcheck_to_check(&overall, timeout_sc);
+
+	mp_exit(overall);
 }
 
 /* connects to a host on a specified tcp port, sends a string, and gets a
@@ -65,12 +74,13 @@ int process_tcp_request2(const char *server_address, int server_port, const char
 	int recv_length = 0;
 
 	result = np_net_connect(server_address, server_port, &sd, IPPROTO_TCP);
-	if (result != STATE_OK)
+	if (result != STATE_OK) {
 		return STATE_CRITICAL;
+	}
 
 	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
 	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
-		printf("%s\n", _("Send failed"));
+		// printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -87,7 +97,7 @@ int process_tcp_request2(const char *server_address, int server_port, const char
 		if (!FD_ISSET(sd, &readfds)) { /* it hasn't */
 			if (!recv_length) {
 				strcpy(recv_buffer, "");
-				printf("%s\n", _("No data was received from host!"));
+				// printf("%s\n", _("No data was received from host!"));
 				result = STATE_WARNING;
 			} else { /* this one failed, but previous ones worked */
 				recv_buffer[recv_length] = 0;
@@ -130,8 +140,9 @@ int process_request(const char *server_address, int server_port, int proto, cons
 	result = STATE_OK;
 
 	result = np_net_connect(server_address, server_port, &sd, proto);
-	if (result != STATE_OK)
+	if (result != STATE_OK) {
 		return STATE_CRITICAL;
+	}
 
 	result = send_request(sd, proto, send_buffer, recv_buffer, recv_size);
 
@@ -169,15 +180,16 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			host_name++;
 			len -= 2;
 		}
-		if (len >= sizeof(host))
+		if (len >= sizeof(host)) {
 			return STATE_UNKNOWN;
+		}
 		memcpy(host, host_name, len);
 		host[len] = '\0';
 		snprintf(port_str, sizeof(port_str), "%d", port);
 		result = getaddrinfo(host, port_str, &hints, &res);
 
 		if (result != 0) {
-			printf("%s\n", gai_strerror(result));
+			// printf("%s\n", gai_strerror(result));
 			return STATE_UNKNOWN;
 		}
 
@@ -187,7 +199,7 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			*sd = socket(r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
-				printf("%s\n", _("Socket creation failed"));
+				// printf("%s\n", _("Socket creation failed"));
 				freeaddrinfo(r);
 				return STATE_UNKNOWN;
 			}
@@ -226,21 +238,23 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			die(STATE_UNKNOWN, _("Socket creation failed"));
 		}
 		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
-		if (result < 0 && errno == ECONNREFUSED)
+		if (result < 0 && errno == ECONNREFUSED) {
 			was_refused = true;
+		}
 	}
 
-	if (result == 0)
+	if (result == 0) {
 		return STATE_OK;
-	else if (was_refused) {
+	} else if (was_refused) {
 		switch (econn_refuse_state) { /* a user-defined expected outcome */
 		case STATE_OK:
 		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
 		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
-			if (is_socket)
-				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
-			else
-				printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+			if (is_socket) {
+				// printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+			} else {
+				// printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+			}
 			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
@@ -248,10 +262,11 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			break;
 		}
 	} else {
-		if (is_socket)
-			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
-		else
-			printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+		if (is_socket) {
+			// printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+		} else {
+			// printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+		}
 		return STATE_CRITICAL;
 	}
 }
@@ -265,7 +280,7 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 
 	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
 	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
-		printf("%s\n", _("Send failed"));
+		// printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
@@ -280,7 +295,7 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 	/* make sure some data has arrived */
 	if (!FD_ISSET(sd, &readfds)) {
 		strcpy(recv_buffer, "");
-		printf("%s\n", _("No data was received from host!"));
+		// printf("%s\n", _("No data was received from host!"));
 		result = STATE_WARNING;
 	}
 
@@ -288,11 +303,13 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 		recv_result = recv(sd, recv_buffer, (size_t)recv_size - 1, 0);
 		if (recv_result == -1) {
 			strcpy(recv_buffer, "");
-			if (proto != IPPROTO_TCP)
-				printf("%s\n", _("Receive failed"));
+			if (proto != IPPROTO_TCP) {
+				// printf("%s\n", _("Receive failed"));
+			}
 			result = STATE_WARNING;
-		} else
+		} else {
 			recv_buffer[recv_result] = 0;
+		}
 
 		/* die returned string */
 		recv_buffer[recv_size - 1] = 0;
@@ -301,26 +318,30 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 }
 
 bool is_host(const char *address) {
-	if (is_addr(address) || is_hostname(address))
+	if (is_addr(address) || is_hostname(address)) {
 		return (true);
+	}
 
 	return (false);
 }
 
 void host_or_die(const char *str) {
-	if (!str || (!is_addr(str) && !is_hostname(str)))
+	if (!str || (!is_addr(str) && !is_hostname(str))) {
 		usage_va(_("Invalid hostname/address - %s"), str);
+	}
 }
 
 bool is_addr(const char *address) {
 #ifdef USE_IPV6
-	if (address_family == AF_INET && is_inet_addr(address))
+	if (address_family == AF_INET && is_inet_addr(address)) {
 		return true;
-	else if (address_family == AF_INET6 && is_inet6_addr(address))
+	} else if (address_family == AF_INET6 && is_inet6_addr(address)) {
 		return true;
+	}
 #else
-	if (is_inet_addr(address))
+	if (is_inet_addr(address)) {
 		return (true);
+	}
 #endif
 
 	return (false);
@@ -335,11 +356,13 @@ int dns_lookup(const char *in, struct sockaddr_storage *ss, int family) {
 	hints.ai_family = family;
 
 	retval = getaddrinfo(in, NULL, &hints, &res);
-	if (retval != 0)
+	if (retval != 0) {
 		return false;
+	}
 
-	if (ss != NULL)
+	if (ss != NULL) {
 		memcpy(ss, res->ai_addr, res->ai_addrlen);
+	}
 	freeaddrinfo(res);
 	return true;
 }

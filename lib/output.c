@@ -11,6 +11,9 @@
 #include "perfdata.h"
 #include "states.h"
 
+// == Global variables
+static mp_output_format output_format = MP_FORMAT_DEFAULT;
+
 // == Prototypes ==
 static char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation);
 static inline cJSON *json_serialize_subcheck(mp_subcheck subcheck);
@@ -55,7 +58,6 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
  */
 mp_check mp_check_init(void) {
 	mp_check check = {0};
-	check.format = MP_FORMAT_DEFAULT;
 	return check;
 }
 
@@ -234,7 +236,7 @@ mp_state_enum mp_compute_check_state(const mp_check check) {
 char *mp_fmt_output(mp_check check) {
 	char *result = NULL;
 
-	switch (check.format) {
+	switch (output_format) {
 	case MP_FORMAT_MULTI_LINE: {
 		if (check.summary == NULL) {
 			check.summary = get_subcheck_summary(check);
@@ -482,7 +484,7 @@ void mp_print_output(mp_check check) { puts(mp_fmt_output(check)); }
  */
 void mp_exit(mp_check check) {
 	mp_print_output(check);
-	if (check.format == MP_FORMAT_TEST_JSON) {
+	if (output_format == MP_FORMAT_TEST_JSON) {
 		exit(0);
 	}
 
@@ -533,3 +535,7 @@ parsed_output_format mp_parse_output_format(char *format_string) {
 
 	return result;
 }
+
+void mp_set_format(mp_output_format format) { output_format = format; }
+
+mp_output_format mp_get_format(void) { return output_format; }

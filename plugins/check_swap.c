@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 	double percent_used;
 	mp_check overall = mp_check_init();
 	if (config.output_format_is_set) {
-		overall.format = config.output_format;
+		mp_set_format(config.output_format);
 	}
 	mp_subcheck sc1 = mp_subcheck_init();
 	sc1 = mp_set_subcheck_default_state(sc1, STATE_OK);
