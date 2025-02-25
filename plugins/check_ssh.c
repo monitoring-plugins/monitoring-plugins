@@ -434,5 +434,5 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] <host>\n", progname);
+	printf("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] --hostname <host>\n", progname);
 }
