@@ -5,10 +5,10 @@
 #
 
 use strict;
+use warnings;
 use Test::More;
 use NPTest;
-
-my $res;
+use JSON;
 
 # Required parameters
 my $ssh_host           = getTestParameter("NP_SSH_HOST",
@@ -23,30 +23,38 @@ my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID",
                                           "An invalid (not known to DNS) hostname",
                                           "nosuchhost" );
 
+	my $outputFormat = '--output-format mp-test-json';
 
-plan tests => 14 + 6;
+plan tests => 24;
+
+my $output;
+my $result;
 
 SKIP: {
 	skip "SSH_HOST must be defined", 6 unless $ssh_host;
+
+
 	my $result = NPTest->testCmd(
-		"./check_ssh -H $ssh_host"
+		"./check_ssh -H $ssh_host" ." ". $outputFormat
 		);
 	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
-	like($result->output, '/^SSH OK - /', "Status text if command returned none (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "OK", "State was correct");
 
 
 	$result = NPTest->testCmd(
-		"./check_ssh -H $host_nonresponsive -t 2"
+		"./check_ssh -H $host_nonresponsive -t 2" ." ". $outputFormat
 		);
-	cmp_ok($result->return_code, '==', 2, "Exit with return code 0 (OK)");
-	like($result->output, '/^CRITICAL - Socket timeout after 2 seconds/', "Status text if command returned none (OK)");
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "CRITICAL", "State was correct");
 
 
 
 	$result = NPTest->testCmd(
-		"./check_ssh -H $hostname_invalid -t 2"
+		"./check_ssh -H $hostname_invalid -t 2" ." ". $outputFormat
 		);
-	cmp_ok($result->return_code, '==', 3, "Exit with return code 0 (OK)");
+	cmp_ok($result->return_code, '==', 3, "Exit with return code 3 (UNKNOWN)");
 	like($result->output, '/^check_ssh: Invalid hostname/', "Status text if command returned none (OK)");
 
 
@@ -63,46 +71,80 @@ SKIP: {
 	#
 	# where `comments` is optional, protoversion is the SSH protocol version and
 	# softwareversion is an arbitrary string representing the server software version
+
+	my $found_version = 0;
+
 	open(NC, "echo 'SSH-2.0-nagiosplug.ssh.0.1' | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, '==', 0, "Got SSH protocol version control string");
-	like( $res->output, '/^SSH OK - nagiosplug.ssh.0.1 \(protocol 2.0\)/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "OK", "State was correct");
+
+	# looking for the version
+	for my $subcheck (@{$output->{'checks'}}) {
+		if ($subcheck->{'output'} =~ /.*nagiosplug.ssh.0.1 \(protocol version: 2.0\).*/ ){
+			$found_version = 1;
+		}
+ 	}
+	cmp_ok($found_version, '==', 1, "Output OK");
 	close NC;
 
 	open(NC, "echo 'SSH-2.0-3.2.9.1' | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, "==", 0, "Got SSH protocol version control string with non-alpha softwareversion string");
-	like( $res->output, '/^SSH OK - 3.2.9.1 \(protocol 2.0\)/', "Output OK for non-alpha softwareversion string");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "OK", "State was correct");
+
+	$found_version = 0;
+	for my $subcheck (@{$output->{'checks'}}) {
+		if ($subcheck->{'output'} =~ /3.2.9.1 \(protocol version: 2.0\)/ ){
+			$found_version = 1;
+		}
+ 	}
+	cmp_ok($found_version, '==', 1, "Output OK");
 	close NC;
 
 	open(NC, "echo 'SSH-2.0-nagiosplug.ssh.0.1 this is a comment' | nc ${nc_flags} |");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003 -r nagiosplug.ssh.0.1" );
-	cmp_ok( $res->return_code, '==', 0, "Got SSH protocol version control string, and parsed comment appropriately");
-	like( $res->output, '/^SSH OK - nagiosplug.ssh.0.1 \(protocol 2.0\)/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003 -r nagiosplug.ssh.0.1" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "OK", "State was correct");
+
+	# looking for the version
+	$found_version = 0;
+	for my $subcheck (@{$output->{'checks'}}) {
+		if ($subcheck->{'output'} =~ /nagiosplug.ssh.0.1 \(protocol version: 2.0\)/ ){
+			$found_version = 1;
+		}
+ 	}
+	cmp_ok($found_version, '==', 1, "Output OK");
 	close NC;
 
 	open(NC, "echo 'SSH-' | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, '==', 2, "Got invalid SSH protocol version control string");
-	like( $res->output, '/^SSH CRITICAL/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "CRITICAL", "Got invalid SSH protocol version control string");
 	close NC;
 
 	open(NC, "echo '' | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, '==', 2, "No version control string received");
-	like( $res->output, '/^SSH CRITICAL - No version control string received/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "CRITICAL", "No version control string received");
 	close NC;
 
 	open(NC, "echo 'Not a version control string' | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, '==', 2, "No version control string received");
-	like( $res->output, '/^SSH CRITICAL - No version control string received/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003"  ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "CRITICAL", "No version control string received");
 	close NC;
 
 
@@ -116,8 +158,18 @@ SKIP: {
 		echo 'Some\nPrepended\nData\nLines\n'; sleep 0.2;
 		echo 'SSH-2.0-nagiosplug.ssh.0.2';} | nc ${nc_flags}|");
 	sleep 0.1;
-	$res = NPTest->testCmd( "./check_ssh -H localhost -p 5003" );
-	cmp_ok( $res->return_code, '==', 0, "Got delayed SSH protocol version control string");
-	like( $res->output, '/^SSH OK - nagiosplug.ssh.0.2 \(protocol 2.0\)/', "Output OK");
+	$result = NPTest->testCmd( "./check_ssh -H localhost -p 5003" ." ". $outputFormat);
+	cmp_ok($result->return_code, '==', 0, "Exit with return code 0 (OK)");
+	$output = decode_json($result->output);
+	is($output->{'state'}, "OK", "State was correct");
+
+	# looking for the version
+	$found_version = 0;
+	for my $subcheck (@{$output->{'checks'}}) {
+		if ($subcheck->{'output'} =~ /nagiosplug.ssh.0.2 \(protocol version: 2.0\)/ ){
+			$found_version = 1;
+		}
+ 	}
+	cmp_ok($found_version, '==', 1, "Output OK");
 	close NC;
 }
