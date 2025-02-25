@@ -44,7 +44,7 @@ const char *email = "devel@monitoring-plugins.org";
 #	define MSG_DONTWAIT 0
 #endif
 
-#define BUFF_SZ      256
+#define BUFF_SZ 256
 
 static bool verbose = false;
 
@@ -151,7 +151,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (!is_intpos(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
-				socket_timeout = (unsigned int) atoi(optarg);
+				socket_timeout = (unsigned int)atoi(optarg);
 			}
 			break;
 		case '4':
@@ -248,7 +248,8 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	size_t recv_ret = 0;
 	char *version_control_string = NULL;
 	size_t byte_offset = 0;
-	while ((version_control_string == NULL) && (recv_ret = recv(socket, output + byte_offset, (unsigned long)( BUFF_SZ - byte_offset), 0) > 0)) {
+	while ((version_control_string == NULL) &&
+		   (recv_ret = recv(socket, output + byte_offset, (unsigned long)(BUFF_SZ - byte_offset), 0) > 0)) {
 
 		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
 			byte_offset = 0;
