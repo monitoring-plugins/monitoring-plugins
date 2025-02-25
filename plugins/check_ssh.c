@@ -295,7 +295,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	}
 
 	connection_sc = mp_set_subcheck_state(connection_sc, STATE_OK);
-	xasprintf(&connection_sc.output, "%s", "Initial connection succeded");
+	xasprintf(&connection_sc.output, "%s", "Initial connection succeeded");
 	mp_add_subcheck_to_check(overall, connection_sc);
 
 	/*
@@ -384,7 +384,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 				  desired_remote_protocol);
 	} else {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_OK);
-		xasprintf(&protocol_version_sc.output, "SSH server verison: %s (protocol version: %s)", ssh_server, ssh_proto);
+		xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)", ssh_server, ssh_proto);
 	}
 
 	mp_add_subcheck_to_check(overall, protocol_version_sc);
