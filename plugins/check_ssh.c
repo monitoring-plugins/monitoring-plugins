@@ -182,6 +182,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				usage2(_("Port number must be a positive integer"), optarg);
 			}
+			break;
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
