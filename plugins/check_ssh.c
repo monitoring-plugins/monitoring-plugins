@@ -75,15 +75,14 @@ int main(int argc, char **argv) {
 
 	check_ssh_config config = tmp_config.config;
 
-	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
-
-	alarm(socket_timeout);
-
 	mp_check overall = mp_check_init();
 	if (config.output_format_is_set) {
 		overall.format = config.output_format;
 	}
+
+	/* initialize alarm signal handling */
+	signal(SIGALRM, socket_timeout_alarm_handler);
+	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */
 	ssh_connect(&overall, config.server_name, config.port, config.remote_version, config.remote_protocol);
