@@ -7,8 +7,7 @@ EXTRA_DIST = config.rpath \
 	NP-VERSION-GEN REQUIREMENTS SUPPORT THANKS \
 	NPTest.pm pkg \
 	config_test/Makefile config_test/run_tests config_test/child_test.c \
-	perlmods tools/build_perl_modules \
-	tools/tinderbox_build
+	perlmods tools/build_perl_modules
 
 ACLOCAL_AMFLAGS = -I gl/m4 -I m4
 
