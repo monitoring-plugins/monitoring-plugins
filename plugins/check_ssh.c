@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 	if (config.output_format_is_set) {
-		overall.format = config.output_format;
+		mp_set_format(config.output_format);
 	}
 
 	/* initialize alarm signal handling */
