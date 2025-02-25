@@ -28,6 +28,8 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "output.h"
+#include "states.h"
 #include "netutils.h"
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
@@ -43,13 +45,19 @@ int address_family = AF_INET;
 
 /* handles socket timeouts */
 void socket_timeout_alarm_handler(int sig) {
+	mp_subcheck timeout_sc = mp_subcheck_init();
+	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
+
 	if (sig == SIGALRM) {
-		printf(_("%s - Socket timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
+		xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds\n"), socket_timeout);
 	} else {
-		printf(_("%s - Abnormal timeout after %d seconds\n"), state_text(socket_timeout_state), socket_timeout);
+		xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds\n"), socket_timeout);
 	}
 
-	exit(socket_timeout_state);
+	mp_check overall = mp_check_init();
+	mp_add_subcheck_to_check(&overall, timeout_sc);
+
+	mp_exit(overall);
 }
 
 /* connects to a host on a specified tcp port, sends a string, and gets a
