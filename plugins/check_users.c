@@ -3,7 +3,7 @@
  * Monitoring check_users plugin
  *
  * License: GPL
- * Copyright (c) 2000-2025 Monitoring Plugins Development Team
+ * Copyright (c) 2000-2024 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -30,19 +30,12 @@
  *
  *****************************************************************************/
 
-#include "check_users.d/config.h"
-#include "thresholds.h"
 const char *progname = "check_users";
-const char *copyright = "2000-2025";
+const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "check_users.d/users.h"
-#include "output.h"
-#include "perfdata.h"
-#include "states.h"
-#include "utils_base.h"
-#include "./common.h"
-#include "./utils.h"
+#include "common.h"
+#include "utils.h"
 
 #if HAVE_WTSAPI32_H
 #	include <windows.h>
@@ -60,16 +53,29 @@ const char *email = "devel@monitoring-plugins.org";
 #	include <systemd/sd-login.h>
 #endif
 
-typedef struct process_argument_wrapper {
-	int errorcode;
-	check_users_config config;
-} process_argument_wrapper;
+#define possibly_set(a, b) ((a) == 0 ? (b) : 0)
 
-process_argument_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-void print_help(void);
+static int process_arguments(int, char **);
+static void print_help(void);
 void print_usage(void);
 
+static char *warning_range = NULL;
+static char *critical_range = NULL;
+static thresholds *thlds = NULL;
+
 int main(int argc, char **argv) {
+	int users = -1;
+	int result = STATE_UNKNOWN;
+#if HAVE_WTSAPI32_H
+	WTS_SESSION_INFO *wtsinfo;
+	DWORD wtscount;
+	DWORD index;
+#elif HAVE_UTMPX_H
+	struct utmpx *putmpx;
+#else
+	char input_buffer[MAX_INPUT_BUFFER];
+#endif
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -77,106 +83,121 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	process_argument_wrapper tmp = process_arguments(argc, argv);
-
-	if (tmp.errorcode == ERROR) {
+	if (process_arguments(argc, argv) == ERROR)
 		usage4(_("Could not parse arguments"));
-	}
 
-	check_users_config config = tmp.config;
+	users = 0;
 
-#ifdef _WIN32
-#	if HAVE_WTSAPI32_H
-	get_num_of_users_wrapper user_wrapper = get_num_of_users_windows();
-#	else
-#		error Did not find WTSAPI32
-#	endif // HAVE_WTSAPI32_H
+#ifdef HAVE_LIBSYSTEMD
+	if (sd_booted() > 0)
+		users = sd_get_sessions(NULL);
+	else {
+#endif
+#if HAVE_WTSAPI32_H
+		if (!WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &wtsinfo, &wtscount)) {
+			printf(_("Could not enumerate RD sessions: %d\n"), GetLastError());
+			return STATE_UNKNOWN;
+		}
+
+		for (index = 0; index < wtscount; index++) {
+			LPTSTR username;
+			DWORD size;
+			int len;
+
+			if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, wtsinfo[index].SessionId, WTSUserName, &username, &size))
+				continue;
+
+			len = lstrlen(username);
+
+			WTSFreeMemory(username);
+
+			if (len == 0)
+				continue;
+
+			if (wtsinfo[index].State == WTSActive || wtsinfo[index].State == WTSDisconnected)
+				users++;
+		}
+
+		WTSFreeMemory(wtsinfo);
+#elif HAVE_UTMPX_H
+	/* get currently logged users from utmpx */
+	setutxent();
+
+	while ((putmpx = getutxent()) != NULL)
+		if (putmpx->ut_type == USER_PROCESS)
+			users++;
+
+	endutxent();
 #else
-#	ifdef HAVE_LIBSYSTEMD
-	get_num_of_users_wrapper user_wrapper = get_num_of_users_systemd();
-#	elif HAVE_UTMPX_H
-	get_num_of_users_wrapper user_wrapper = get_num_of_users_utmp();
-#	else  // !HAVE_LIBSYSTEMD && !HAVE_UTMPX_H
-	get_num_of_users_wrapper user_wrapper = get_num_of_users_who_command();
-#	endif // HAVE_LIBSYSTEMD
-#endif     // _WIN32
-
-	mp_check overall = mp_check_init();
-	mp_subcheck sc_users = mp_subcheck_init();
-
-	if (user_wrapper.errorcode != 0) {
-		sc_users = mp_set_subcheck_state(sc_users, STATE_UNKNOWN);
-		sc_users.output = "Failed to retrieve number of users";
-		mp_add_subcheck_to_check(&overall, sc_users);
-		mp_exit(overall);
+	/* run the command */
+	child_process = spopen(WHO_COMMAND);
+	if (child_process == NULL) {
+		printf(_("Could not open pipe: %s\n"), WHO_COMMAND);
+		return STATE_UNKNOWN;
 	}
+
+	child_stderr = fdopen(child_stderr_array[fileno(child_process)], "r");
+	if (child_stderr == NULL)
+		printf(_("Could not open stderr for %s\n"), WHO_COMMAND);
+
+	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
+		/* increment 'users' on all lines except total user count */
+		if (input_buffer[0] != '#') {
+			users++;
+			continue;
+		}
+
+		/* get total logged in users */
+		if (sscanf(input_buffer, _("# users=%d"), &users) == 1)
+			break;
+	}
+
+	/* check STDERR */
+	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
+		result = possibly_set(result, STATE_UNKNOWN);
+	(void)fclose(child_stderr);
+
+	/* close the pipe */
+	if (spclose(child_process))
+		result = possibly_set(result, STATE_UNKNOWN);
+#endif
+#ifdef HAVE_LIBSYSTEMD
+	}
+#endif
+
 	/* check the user count against warning and critical thresholds */
+	result = get_status((double)users, thlds);
 
-	mp_perfdata users_pd = {
-		.label = "users",
-		.value = mp_create_pd_value(user_wrapper.users),
-	};
-
-	users_pd = mp_pd_set_thresholds(users_pd, config.thresholds);
-	mp_add_perfdata_to_subcheck(&sc_users, users_pd);
-
-	int tmp_status = mp_get_pd_status(users_pd);
-	sc_users = mp_set_subcheck_state(sc_users, tmp_status);
-
-	switch (tmp_status) {
-	case STATE_WARNING:
-		xasprintf(&sc_users.output, "%d users currently logged in. This violates the warning threshold", user_wrapper.users);
-		break;
-	case STATE_CRITICAL:
-		xasprintf(&sc_users.output, "%d users currently logged in. This violates the critical threshold", user_wrapper.users);
-		break;
-	default:
-		xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
+	if (result == STATE_UNKNOWN)
+		printf("%s\n", _("Unable to read output"));
+	else {
+		printf(_("USERS %s - %d users currently logged in |%s\n"), state_text(result), users,
+			   sperfdata_int("users", users, "", warning_range, critical_range, true, 0, false, 0));
 	}
 
-	mp_add_subcheck_to_check(&overall, sc_users);
-	mp_exit(overall);
+	return result;
 }
 
-#define output_format_index CHAR_MAX + 1
-
 /* process command-line arguments */
-process_argument_wrapper process_arguments(int argc, char **argv) {
+int process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"critical", required_argument, 0, 'c'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
-									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2) {
+	if (argc < 2)
 		usage("\n");
-	}
 
-	char *warning_range = NULL;
-	char *critical_range = NULL;
-	check_users_config config = check_users_config_init();
-
+	int option_char;
 	while (true) {
-		int counter = getopt_long(argc, argv, "+hVvc:w:", longopts, NULL);
+		int option = 0;
+		option_char = getopt_long(argc, argv, "+hVvc:w:", longopts, &option);
 
-		if (counter == -1 || counter == EOF || counter == 1) {
+		if (option_char == -1 || option_char == EOF || option_char == 1)
 			break;
-		}
 
-		switch (counter) {
-		case output_format_index: {
-			parsed_output_format parser = mp_parse_output_format(optarg);
-			if (!parser.parsing_success) {
-				// TODO List all available formats here, maybe add anothoer usage function
-				printf("Invalid output format: %s\n", optarg);
-				exit(STATE_UNKNOWN);
-			}
-
-			config.output_format_is_set = true;
-			config.output_format = parser.output_format;
-			break;
-		}
+		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
@@ -194,35 +215,26 @@ process_argument_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	// TODO add proper verification for ranges here!
-	if (warning_range) {
-		mp_range_parsed tmp = mp_parse_range_string(warning_range);
-		if (tmp.error == MP_PARSING_SUCCES) {
-			config.thresholds.warning = tmp.range;
-			config.thresholds.warning_is_set = true;
-		} else {
-			printf("Failed to parse warning range: %s", warning_range);
-			exit(STATE_UNKNOWN);
-		}
+	option_char = optind;
+
+	if (warning_range == NULL && argc > option_char)
+		warning_range = argv[option_char++];
+
+	if (critical_range == NULL && argc > option_char)
+		critical_range = argv[option_char++];
+
+	/* this will abort in case of invalid ranges */
+	set_thresholds(&thlds, warning_range, critical_range);
+
+	if (!thlds->warning) {
+		usage4(_("Warning threshold must be a valid range expression"));
 	}
 
-	if (critical_range) {
-		mp_range_parsed tmp = mp_parse_range_string(critical_range);
-		if (tmp.error == MP_PARSING_SUCCES) {
-			config.thresholds.critical = tmp.range;
-			config.thresholds.critical_is_set = true;
-		} else {
-			printf("Failed to parse critical range: %s", critical_range);
-			exit(STATE_UNKNOWN);
-		}
+	if (!thlds->critical) {
+		usage4(_("Critical threshold must be a valid range expression"));
 	}
 
-	process_argument_wrapper result = {
-		.errorcode = OK,
-		.config = config,
-	};
-
-	return result;
+	return OK;
 }
 
 void print_help(void) {
@@ -245,7 +257,6 @@ void print_help(void) {
 	printf("    %s\n", _("Set WARNING status if number of logged in users violates RANGE_EXPRESSION"));
 	printf(" %s\n", "-c, --critical=RANGE_EXPRESSION");
 	printf("    %s\n", _("Set CRITICAL status if number of logged in users violates RANGE_EXPRESSION"));
-	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_SUPPORT);
 }
