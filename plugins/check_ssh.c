@@ -44,7 +44,6 @@ const char *email = "devel@monitoring-plugins.org";
 #	define MSG_DONTWAIT 0
 #endif
 
-#define SSH_DFL_PORT 22
 #define BUFF_SZ      256
 
 static bool verbose = false;
@@ -219,9 +218,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 		result.errorcode = ERROR;
 		return result;
 	}
-	if (result.config.port == -1) { /* funky, but allows -p to override stray integer in args */
-		result.config.port = SSH_DFL_PORT;
-	}
+
 	return result;
 }
 
@@ -398,7 +395,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", SSH_DFL_PORT);
+	xasprintf(&myport, "%d", default_ssh_port);
 
 	print_revision(progname, NP_VERSION);
 
