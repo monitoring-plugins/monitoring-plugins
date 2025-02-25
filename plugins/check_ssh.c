@@ -151,7 +151,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (!is_intpos(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
-				socket_timeout = atoi(optarg);
+				socket_timeout = (unsigned int) atoi(optarg);
 			}
 			break;
 		case '4':
@@ -240,16 +240,16 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	char *output = (char *)calloc(BUFF_SZ + 1, sizeof(char));
 	char *buffer = NULL;
-	ssize_t recv_ret = 0;
+	size_t recv_ret = 0;
 	char *version_control_string = NULL;
-	ssize_t byte_offset = 0;
-	while ((version_control_string == NULL) && (recv_ret = recv(socket, output + byte_offset, BUFF_SZ - byte_offset, 0) > 0)) {
+	size_t byte_offset = 0;
+	while ((version_control_string == NULL) && (recv_ret = recv(socket, output + byte_offset, (unsigned long)( BUFF_SZ - byte_offset), 0) > 0)) {
 
 		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
 			byte_offset = 0;
 
 			char *index = NULL;
-			int len = 0;
+			unsigned long len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
