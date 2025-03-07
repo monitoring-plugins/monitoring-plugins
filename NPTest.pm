@@ -15,6 +15,10 @@ use warnings;
 use Cwd;
 use File::Basename;
 
+use JSON;
+
+use Try::Tiny;
+
 use IO::File;
 use Data::Dumper;
 
@@ -616,6 +620,10 @@ sub testCmd {
     }
     chomp $output;
     $object->output($output);
+
+    try {
+      $object->{'mp_test_result'} = decode_json($output);
+    };
 
     alarm(0);
 
