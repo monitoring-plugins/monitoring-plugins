@@ -130,16 +130,17 @@ int main(int argc, char **argv) {
 		printf(_("CRITICAL - Game server timeout\n"));
 		result = STATE_CRITICAL;
 	} else {
-		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players], ret[config.qstat_game_players_max], ret[config.qstat_game_field],
-			   ret[config.qstat_map_field], ret[config.qstat_ping_field],
-			   perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0, true, 0, true, atol(ret[config.qstat_game_players_max])),
+		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players], ret[config.qstat_game_players_max],
+			   ret[config.qstat_game_field], ret[config.qstat_map_field], ret[config.qstat_ping_field],
+			   perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0, true, 0, true,
+						atol(ret[config.qstat_game_players_max])),
 			   fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0, true, 0, false, 0));
 	}
 
 	exit(result);
 }
 
-#define players_field_index 129
+#define players_field_index     129
 #define max_players_field_index 130
 
 check_game_config_wrapper process_arguments(int argc, char **argv) {
@@ -284,7 +285,8 @@ void print_help(void) {
 
 	printf(UT_HELP_VRSN);
 	printf(UT_EXTRA_OPTS);
-
+	printf(" -H, --hostname=ADDRESS\n"
+		  "    Host name, IP Address, or unix socket (must be an absolute path)\n");
 	printf(" %s\n", "-p");
 	printf("    %s\n", _("Optional port of which to connect"));
 	printf(" %s\n", "gf");
