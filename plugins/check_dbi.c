@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	check_dbi_config config = tmp.config;
+	const check_dbi_config config = tmp.config;
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
