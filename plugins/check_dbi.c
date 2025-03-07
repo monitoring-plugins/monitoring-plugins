@@ -33,6 +33,8 @@ const char *progname = "check_dbi";
 const char *copyright = "2011-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "../lib/monitoringplug.h"
+#include "check_dbi.d/config.h"
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
@@ -53,55 +55,24 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <stdarg.h>
 
-typedef enum {
-	METRIC_CONN_TIME,
-	METRIC_SERVER_VERSION,
-	METRIC_QUERY_RESULT,
-	METRIC_QUERY_TIME,
-} np_dbi_metric_t;
-
-typedef enum {
-	TYPE_NUMERIC,
-	TYPE_STRING,
-} np_dbi_type_t;
-
-typedef struct {
-	char *key;
-	char *value;
-} driver_option_t;
-
-static char *host = NULL;
 static int verbose = 0;
 
-static char *warning_range = NULL;
-static char *critical_range = NULL;
-static thresholds *dbi_thresholds = NULL;
+typedef struct {
+	int errorcode;
+	check_dbi_config config;
+} check_dbi_config_wrapper;
 
-static char *expect = NULL;
-
-static regex_t expect_re;
-static char *expect_re_str = NULL;
-static int expect_re_cflags = 0;
-
-static np_dbi_metric_t metric = METRIC_QUERY_RESULT;
-static np_dbi_type_t type = TYPE_NUMERIC;
-
-static char *np_dbi_driver = NULL;
-static driver_option_t *np_dbi_options = NULL;
-static int np_dbi_options_num = 0;
-static char *np_dbi_database = NULL;
-static char *np_dbi_query = NULL;
-
-static int process_arguments(int, char **);
-static int validate_arguments(void);
+static check_dbi_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_dbi_config_wrapper validate_arguments(check_dbi_config_wrapper /*config_wrapper*/);
 void print_usage(void);
 static void print_help(void);
 
-static double timediff(struct timeval, struct timeval);
+static double timediff(struct timeval /*start*/, struct timeval /*end*/);
 
-static void np_dbi_print_error(dbi_conn, char *, ...);
+static void np_dbi_print_error(dbi_conn /*conn*/, char * /*fmt*/, ...);
 
-static int do_query(dbi_conn, const char **, double *, double *);
+static mp_state_enum do_query(dbi_conn /*conn*/, const char ** /*res_val_str*/, double * /*res_val*/, double * /*res_time*/, mp_dbi_metric /*metric*/,
+					mp_dbi_type /*type*/, char * /*np_dbi_query*/);
 
 int main(int argc, char **argv) {
 	int status = STATE_UNKNOWN;
@@ -119,8 +90,6 @@ int main(int argc, char **argv) {
 	const char *query_val_str = NULL;
 	double query_val = 0.0;
 
-	int i;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -128,8 +97,13 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_dbi_config_wrapper tmp = process_arguments(argc, argv);
+
+	if (tmp.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
+
+	const check_dbi_config config = tmp.config;
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -137,8 +111,9 @@ int main(int argc, char **argv) {
 	}
 	alarm(timeout_interval);
 
-	if (verbose > 2)
+	if (verbose > 2) {
 		printf("Initializing DBI\n");
+	}
 
 	dbi_inst *instance_p = {0};
 
@@ -152,12 +127,13 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
-	if (verbose)
-		printf("Opening DBI driver '%s'\n", np_dbi_driver);
+	if (verbose) {
+		printf("Opening DBI driver '%s'\n", config.dbi_driver);
+	}
 
-	driver = dbi_driver_open_r(np_dbi_driver, instance_p);
+	driver = dbi_driver_open_r(config.dbi_driver, instance_p);
 	if (!driver) {
-		printf("UNKNOWN - failed to open DBI driver '%s'; possibly it's not installed.\n", np_dbi_driver);
+		printf("UNKNOWN - failed to open DBI driver '%s'; possibly it's not installed.\n", config.dbi_driver);
 
 		printf("Known drivers:\n");
 		for (driver = dbi_driver_list_r(NULL, instance_p); driver; driver = dbi_driver_list_r(driver, instance_p)) {
@@ -176,17 +152,19 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
-	for (i = 0; i < np_dbi_options_num; ++i) {
+	for (size_t i = 0; i < config.dbi_options_num; ++i) {
 		const char *opt;
 
-		if (verbose > 1)
-			printf("Setting DBI driver option '%s' to '%s'\n", np_dbi_options[i].key, np_dbi_options[i].value);
+		if (verbose > 1) {
+			printf("Setting DBI driver option '%s' to '%s'\n", config.dbi_options[i].key, config.dbi_options[i].value);
+		}
 
-		if (!dbi_conn_set_option(conn, np_dbi_options[i].key, np_dbi_options[i].value))
+		if (!dbi_conn_set_option(conn, config.dbi_options[i].key, config.dbi_options[i].value)) {
 			continue;
+		}
 		/* else: status != 0 */
 
-		np_dbi_print_error(conn, "UNKNOWN - failed to set option '%s' to '%s'", np_dbi_options[i].key, np_dbi_options[i].value);
+		np_dbi_print_error(conn, "UNKNOWN - failed to set option '%s' to '%s'", config.dbi_options[i].key, config.dbi_options[i].value);
 		printf("Known driver options:\n");
 
 		for (opt = dbi_conn_get_option_list(conn, NULL); opt; opt = dbi_conn_get_option_list(conn, opt)) {
@@ -196,10 +174,11 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
-	if (host) {
-		if (verbose > 1)
-			printf("Setting DBI driver option 'host' to '%s'\n", host);
-		dbi_conn_set_option(conn, "host", host);
+	if (config.host) {
+		if (verbose > 1) {
+			printf("Setting DBI driver option 'host' to '%s'\n", config.host);
+		}
+		dbi_conn_set_option(conn, "host", config.host);
 	}
 
 	if (verbose) {
@@ -209,10 +188,12 @@ int main(int argc, char **argv) {
 		dbname = dbi_conn_get_option(conn, "dbname");
 		host = dbi_conn_get_option(conn, "host");
 
-		if (!dbname)
+		if (!dbname) {
 			dbname = "<unspecified>";
-		if (!host)
+		}
+		if (!host) {
 			host = "<unspecified>";
+		}
 
 		printf("Connecting to database '%s' at host '%s'\n", dbname, host);
 	}
@@ -226,109 +207,122 @@ int main(int argc, char **argv) {
 	conn_time = timediff(start_timeval, end_timeval);
 
 	server_version = dbi_conn_get_engine_version(conn);
-	if (verbose)
+	if (verbose) {
 		printf("Connected to server version %u\n", server_version);
+	}
 
-	if (metric == METRIC_SERVER_VERSION)
-		status = get_status(server_version, dbi_thresholds);
+	if (config.metric == METRIC_SERVER_VERSION) {
+		status = get_status(server_version, config.dbi_thresholds);
+	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", conn_time);
+	}
 
-	if (metric == METRIC_CONN_TIME)
-		status = get_status(conn_time, dbi_thresholds);
+	if (config.metric == METRIC_CONN_TIME) {
+		status = get_status(conn_time, config.dbi_thresholds);
+	}
 
 	/* select a database */
-	if (np_dbi_database) {
-		if (verbose > 1)
-			printf("Selecting database '%s'\n", np_dbi_database);
+	if (config.dbi_database) {
+		if (verbose > 1) {
+			printf("Selecting database '%s'\n", config.dbi_database);
+		}
 
-		if (dbi_conn_select_db(conn, np_dbi_database)) {
-			np_dbi_print_error(conn, "UNKNOWN - failed to select database '%s'", np_dbi_database);
+		if (dbi_conn_select_db(conn, config.dbi_database)) {
+			np_dbi_print_error(conn, "UNKNOWN - failed to select database '%s'", config.dbi_database);
 			return STATE_UNKNOWN;
 		}
 	}
 
-	if (np_dbi_query) {
+	if (config.dbi_query) {
 		/* execute query */
-		status = do_query(conn, &query_val_str, &query_val, &query_time);
-		if (status != STATE_OK)
+		status = do_query(conn, &query_val_str, &query_val, &query_time, config.metric, config.type, config.dbi_query);
+		if (status != STATE_OK) {
 			/* do_query prints an error message in this case */
 			return status;
+		}
 
-		if (metric == METRIC_QUERY_RESULT) {
-			if (expect) {
-				if ((!query_val_str) || strcmp(query_val_str, expect))
+		if (config.metric == METRIC_QUERY_RESULT) {
+			if (config.expect) {
+				if ((!query_val_str) || strcmp(query_val_str, config.expect)) {
 					status = STATE_CRITICAL;
-				else
+				} else {
 					status = STATE_OK;
-			} else if (expect_re_str) {
+				}
+			} else if (config.expect_re_str) {
 				int err;
 
+				regex_t expect_re = {};
 				err = regexec(&expect_re, query_val_str, 0, NULL, /* flags = */ 0);
-				if (!err)
+				if (!err) {
 					status = STATE_OK;
-				else if (err == REG_NOMATCH)
+				} else if (err == REG_NOMATCH) {
 					status = STATE_CRITICAL;
-				else {
+				} else {
 					char errmsg[1024];
 					regerror(err, &expect_re, errmsg, sizeof(errmsg));
 					printf("ERROR - failed to execute regular expression: %s\n", errmsg);
 					status = STATE_CRITICAL;
 				}
-			} else
-				status = get_status(query_val, dbi_thresholds);
-		} else if (metric == METRIC_QUERY_TIME)
-			status = get_status(query_time, dbi_thresholds);
+			} else {
+				status = get_status(query_val, config.dbi_thresholds);
+			}
+		} else if (config.metric == METRIC_QUERY_TIME) {
+			status = get_status(query_time, config.dbi_thresholds);
+		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Closing connection\n");
+	}
 	dbi_conn_close(conn);
 
 	/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error
 	 * which should have been reported and handled (abort) before
 	 * ... unless we expected a string to be returned */
-	assert((metric != METRIC_QUERY_RESULT) || (!isnan(query_val)) || (type == TYPE_STRING));
+	assert((config.metric != METRIC_QUERY_RESULT) || (!isnan(query_val)) || (config.type == TYPE_STRING));
 
-	assert((type != TYPE_STRING) || (expect || expect_re_str));
+	assert((config.type != TYPE_STRING) || (config.expect || config.expect_re_str));
 
 	printf("%s - connection time: %fs", state_text(status), conn_time);
-	if (np_dbi_query) {
-		if (type == TYPE_STRING) {
-			assert(expect || expect_re_str);
-			printf(", '%s' returned '%s' in %fs", np_dbi_query, query_val_str ? query_val_str : "<nothing>", query_time);
+	if (config.dbi_query) {
+		if (config.type == TYPE_STRING) {
+			assert(config.expect || config.expect_re_str);
+			printf(", '%s' returned '%s' in %fs", config.dbi_query, query_val_str ? query_val_str : "<nothing>", query_time);
 			if (status != STATE_OK) {
-				if (expect)
-					printf(" (expected '%s')", expect);
-				else if (expect_re_str)
-					printf(" (expected regex /%s/%s)", expect_re_str, ((expect_re_cflags & REG_ICASE) ? "i" : ""));
+				if (config.expect) {
+					printf(" (expected '%s')", config.expect);
+				} else if (config.expect_re_str) {
+					printf(" (expected regex /%s/%s)", config.expect_re_str, ((config.expect_re_cflags & REG_ICASE) ? "i" : ""));
+				}
 			}
-		} else if (isnan(query_val))
-			printf(", '%s' query execution time: %fs", np_dbi_query, query_time);
-		else
-			printf(", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
+		} else if (isnan(query_val)) {
+			printf(", '%s' query execution time: %fs", config.dbi_query, query_time);
+		} else {
+			printf(", '%s' returned %f in %fs", config.dbi_query, query_val, query_time);
+		}
 	}
 
 	printf(" | conntime=%fs;%s;%s;0; server_version=%u;%s;%s;0;", conn_time,
-		   ((metric == METRIC_CONN_TIME) && warning_range) ? warning_range : "",
-		   ((metric == METRIC_CONN_TIME) && critical_range) ? critical_range : "", server_version,
-		   ((metric == METRIC_SERVER_VERSION) && warning_range) ? warning_range : "",
-		   ((metric == METRIC_SERVER_VERSION) && critical_range) ? critical_range : "");
-	if (np_dbi_query) {
-		if (!isnan(query_val)) /* this is also true when -e is used */
-			printf(" query=%f;%s;%s;;", query_val, ((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
-				   ((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "");
-		printf(" querytime=%fs;%s;%s;0;", query_time, ((metric == METRIC_QUERY_TIME) && warning_range) ? warning_range : "",
-			   ((metric == METRIC_QUERY_TIME) && critical_range) ? critical_range : "");
+		   ((config.metric == METRIC_CONN_TIME) && config.warning_range) ? config.warning_range : "",
+		   ((config.metric == METRIC_CONN_TIME) && config.critical_range) ? config.critical_range : "", server_version,
+		   ((config.metric == METRIC_SERVER_VERSION) && config.warning_range) ? config.warning_range : "",
+		   ((config.metric == METRIC_SERVER_VERSION) && config.critical_range) ? config.critical_range : "");
+	if (config.dbi_query) {
+		if (!isnan(query_val)) { /* this is also true when -e is used */
+			printf(" query=%f;%s;%s;;", query_val, ((config.metric == METRIC_QUERY_RESULT) && config.warning_range) ? config.warning_range : "",
+				   ((config.metric == METRIC_QUERY_RESULT) && config.critical_range) ? config.critical_range : "");
+		}
+		printf(" querytime=%fs;%s;%s;0;", query_time, ((config.metric == METRIC_QUERY_TIME) && config.warning_range) ? config.warning_range : "",
+			   ((config.metric == METRIC_QUERY_TIME) && config.critical_range) ? config.critical_range : "");
 	}
 	printf("\n");
 	return status;
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
+check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	static struct option longopts[] = {STD_LONG_OPTS,
@@ -343,13 +337,19 @@ int process_arguments(int argc, char **argv) {
 									   {"database", required_argument, 0, 'D'},
 									   {0, 0, 0, 0}};
 
-	while (1) {
-		c = getopt_long(argc, argv, "Vvht:c:w:e:r:R:m:H:d:o:q:D:", longopts, &option);
+	check_dbi_config_wrapper result = {
+		.config = check_dbi_config_init(),
+		.errorcode = OK,
+	};
+	int option_char;
+	while (true) {
+		option_char = getopt_long(argc, argv, "Vvht:c:w:e:r:R:m:H:d:o:q:D:", longopts, &option);
 
-		if (c == EOF)
+		if (option_char == EOF) {
 			break;
+		}
 
-		switch (c) {
+		switch (option_char) {
 		case '?': /* usage */
 			usage5();
 		case 'h': /* help */
@@ -360,135 +360,148 @@ int process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 
 		case 'c': /* critical range */
-			critical_range = optarg;
-			type = TYPE_NUMERIC;
+			result.config.critical_range = optarg;
+			result.config.type = TYPE_NUMERIC;
 			break;
 		case 'w': /* warning range */
-			warning_range = optarg;
-			type = TYPE_NUMERIC;
+			result.config.warning_range = optarg;
+			result.config.type = TYPE_NUMERIC;
 			break;
 		case 'e':
-			expect = optarg;
-			type = TYPE_STRING;
+			result.config.expect = optarg;
+			result.config.type = TYPE_STRING;
 			break;
 		case 'R':
-			expect_re_cflags = REG_ICASE;
+			result.config.expect_re_cflags = REG_ICASE;
 			/* fall through */
 		case 'r': {
 			int err;
 
-			expect_re_cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-			expect_re_str = optarg;
-			type = TYPE_STRING;
+			result.config.expect_re_cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+			result.config.expect_re_str = optarg;
+			result.config.type = TYPE_STRING;
 
-			err = regcomp(&expect_re, expect_re_str, expect_re_cflags);
+			regex_t expect_re = {};
+			err = regcomp(&expect_re, result.config.expect_re_str, result.config.expect_re_cflags);
 			if (err) {
 				char errmsg[1024];
 				regerror(err, &expect_re, errmsg, sizeof(errmsg));
 				printf("ERROR - failed to compile regular expression: %s\n", errmsg);
-				return ERROR;
+
+				result.errorcode = ERROR;
+				return result;
 			}
 			break;
 		}
 
 		case 'm':
-			if (!strcasecmp(optarg, "CONN_TIME"))
-				metric = METRIC_CONN_TIME;
-			else if (!strcasecmp(optarg, "SERVER_VERSION"))
-				metric = METRIC_SERVER_VERSION;
-			else if (!strcasecmp(optarg, "QUERY_RESULT"))
-				metric = METRIC_QUERY_RESULT;
-			else if (!strcasecmp(optarg, "QUERY_TIME"))
-				metric = METRIC_QUERY_TIME;
-			else
+			if (!strcasecmp(optarg, "CONN_TIME")) {
+				result.config.metric = METRIC_CONN_TIME;
+			} else if (!strcasecmp(optarg, "SERVER_VERSION")) {
+				result.config.metric = METRIC_SERVER_VERSION;
+			} else if (!strcasecmp(optarg, "QUERY_RESULT")) {
+				result.config.metric = METRIC_QUERY_RESULT;
+			} else if (!strcasecmp(optarg, "QUERY_TIME")) {
+				result.config.metric = METRIC_QUERY_TIME;
+			} else {
 				usage2(_("Invalid metric"), optarg);
+			}
 			break;
 		case 't': /* timeout */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
-			else
-				host = optarg;
+			} else {
+				result.config.host = optarg;
+			}
 			break;
 		case 'v':
 			verbose++;
 			break;
 
 		case 'd':
-			np_dbi_driver = optarg;
+			result.config.dbi_driver = optarg;
 			break;
 		case 'o': {
-			driver_option_t *new;
+			driver_option_t *new = NULL;
 
-			char *k;
-			char *v;
+			char *key = optarg;
+			char *value = strchr(key, '=');
 
-			k = optarg;
-			v = strchr(k, (int)'=');
-
-			if (!v)
+			if (!value) {
 				usage2(_("Option must be '<key>=<value>'"), optarg);
+			}
 
-			*v = '\0';
-			++v;
+			*value = '\0';
+			++value;
 
-			new = realloc(np_dbi_options, (np_dbi_options_num + 1) * sizeof(*new));
+			new = realloc(result.config.dbi_options, (result.config.dbi_options_num + 1) * sizeof(*new));
 			if (!new) {
 				printf("UNKNOWN - failed to reallocate memory\n");
 				exit(STATE_UNKNOWN);
 			}
 
-			np_dbi_options = new;
-			new = np_dbi_options + np_dbi_options_num;
-			++np_dbi_options_num;
+			result.config.dbi_options = new;
+			new = result.config.dbi_options + result.config.dbi_options_num;
+			result.config.dbi_options_num++;
 
-			new->key = k;
-			new->value = v;
+			new->key = key;
+			new->value = value;
 		} break;
 		case 'q':
-			np_dbi_query = optarg;
+			result.config.dbi_query = optarg;
 			break;
 		case 'D':
-			np_dbi_database = optarg;
+			result.config.dbi_database = optarg;
 			break;
 		}
 	}
 
-	set_thresholds(&dbi_thresholds, warning_range, critical_range);
+	set_thresholds(&result.config.dbi_thresholds, result.config.warning_range, result.config.critical_range);
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-int validate_arguments(void) {
-	if (!np_dbi_driver)
+check_dbi_config_wrapper validate_arguments(check_dbi_config_wrapper config_wrapper) {
+	if (!config_wrapper.config.dbi_driver) {
 		usage("Must specify a DBI driver");
+	}
 
-	if (((metric == METRIC_QUERY_RESULT) || (metric == METRIC_QUERY_TIME)) && (!np_dbi_query))
+	if (((config_wrapper.config.metric == METRIC_QUERY_RESULT) || (config_wrapper.config.metric == METRIC_QUERY_TIME)) &&
+		(!config_wrapper.config.dbi_query)) {
 		usage("Must specify a query to execute (metric == QUERY_RESULT)");
+	}
 
-	if ((metric != METRIC_CONN_TIME) && (metric != METRIC_SERVER_VERSION) && (metric != METRIC_QUERY_RESULT) &&
-		(metric != METRIC_QUERY_TIME))
+	if ((config_wrapper.config.metric != METRIC_CONN_TIME) && (config_wrapper.config.metric != METRIC_SERVER_VERSION) &&
+		(config_wrapper.config.metric != METRIC_QUERY_RESULT) && (config_wrapper.config.metric != METRIC_QUERY_TIME)) {
 		usage("Invalid metric specified");
+	}
 
-	if (expect && (warning_range || critical_range || expect_re_str))
+	if (config_wrapper.config.expect && (config_wrapper.config.warning_range || config_wrapper.config.critical_range || config_wrapper.config.expect_re_str)) {
 		usage("Do not mix -e and -w/-c/-r/-R");
+	}
 
-	if (expect_re_str && (warning_range || critical_range || expect))
+	if (config_wrapper.config.expect_re_str && (config_wrapper.config.warning_range || config_wrapper.config.critical_range || config_wrapper.config.expect)) {
 		usage("Do not mix -r/-R and -w/-c/-e");
+	}
 
-	if (expect && (metric != METRIC_QUERY_RESULT))
+	if (config_wrapper.config.expect && (config_wrapper.config.metric != METRIC_QUERY_RESULT)) {
 		usage("Option -e requires metric QUERY_RESULT");
+	}
 
-	if (expect_re_str && (metric != METRIC_QUERY_RESULT))
+	if (config_wrapper.config.expect_re_str && (config_wrapper.config.metric != METRIC_QUERY_RESULT)) {
 		usage("Options -r/-R require metric QUERY_RESULT");
+	}
 
-	return OK;
+	config_wrapper.errorcode = OK;
+	return config_wrapper;
 }
 
 void print_help(void) {
@@ -518,6 +531,8 @@ void print_help(void) {
 	printf("    %s\n", _("DBI driver options"));
 	printf(" %s\n", "-q, --query=STRING");
 	printf("    %s\n", _("query to execute"));
+	printf(" %s\n", "-H STRING");
+	printf("    %s\n", _("target database host"));
 	printf("\n");
 
 	printf(UT_WARN_CRIT_RANGE);
@@ -592,13 +607,7 @@ void print_usage(void) {
 	printf(" [-e <string>] [-r|-R <regex>]\n");
 }
 
-#define CHECK_IGNORE_ERROR(s)                                                                                                              \
-	do {                                                                                                                                   \
-		if (metric != METRIC_QUERY_RESULT)                                                                                                 \
-			return (s);                                                                                                                    \
-	} while (0)
-
-const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_type) {
+const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_type, mp_dbi_metric metric, mp_dbi_type type) {
 	const char *str;
 
 	if (field_type != DBI_TYPE_STRING) {
@@ -608,17 +617,20 @@ const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_ty
 
 	str = dbi_result_get_string_idx(res, 1);
 	if ((!str) || (strcmp(str, "ERROR") == 0)) {
-		CHECK_IGNORE_ERROR(NULL);
+		if (metric != METRIC_QUERY_RESULT) {
+			return NULL;
+		}
 		np_dbi_print_error(conn, "CRITICAL - failed to fetch string value");
 		return NULL;
 	}
 
-	if ((verbose && (type == TYPE_STRING)) || (verbose > 2))
+	if ((verbose && (type == TYPE_STRING)) || (verbose > 2)) {
 		printf("Query returned string '%s'\n", str);
+	}
 	return str;
 }
 
-double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type) {
+double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type, mp_dbi_metric metric, mp_dbi_type type) {
 	double val = NAN;
 
 	if (*field_type == DBI_TYPE_INTEGER) {
@@ -629,26 +641,33 @@ double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type) {
 		const char *val_str;
 		char *endptr = NULL;
 
-		val_str = get_field_str(conn, res, *field_type);
+		val_str = get_field_str(conn, res, *field_type, metric, type);
 		if (!val_str) {
-			CHECK_IGNORE_ERROR(NAN);
+			if (metric != METRIC_QUERY_RESULT) {
+				return NAN;
+			}
 			*field_type = DBI_TYPE_ERROR;
 			return NAN;
 		}
 
 		val = strtod(val_str, &endptr);
 		if (endptr == val_str) {
-			CHECK_IGNORE_ERROR(NAN);
+			if (metric != METRIC_QUERY_RESULT) {
+				return NAN;
+			}
 			printf("CRITICAL - result value is not a numeric: %s\n", val_str);
 			*field_type = DBI_TYPE_ERROR;
 			return NAN;
 		}
 		if ((endptr != NULL) && (*endptr != '\0')) {
-			if (verbose)
+			if (verbose) {
 				printf("Garbage after value: %s\n", endptr);
+			}
 		}
 	} else {
-		CHECK_IGNORE_ERROR(NAN);
+		if (metric != METRIC_QUERY_RESULT) {
+			return NAN;
+		}
 		printf("CRITICAL - cannot parse value of type %s (%i)\n",
 			   (*field_type == DBI_TYPE_BINARY)     ? "BINARY"
 			   : (*field_type == DBI_TYPE_DATETIME) ? "DATETIME"
@@ -660,53 +679,66 @@ double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type) {
 	return val;
 }
 
-double get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str, double *res_val) {
+mp_state_enum get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str, double *res_val, mp_dbi_metric metric, mp_dbi_type type) {
 	unsigned short field_type;
 	double val = NAN;
 
 	if (dbi_result_get_numrows(res) == DBI_ROW_ERROR) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		np_dbi_print_error(conn, "CRITICAL - failed to fetch rows");
 		return STATE_CRITICAL;
 	}
 
 	if (dbi_result_get_numrows(res) < 1) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		printf("WARNING - no rows returned\n");
 		return STATE_WARNING;
 	}
 
 	if (dbi_result_get_numfields(res) == DBI_FIELD_ERROR) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		np_dbi_print_error(conn, "CRITICAL - failed to fetch fields");
 		return STATE_CRITICAL;
 	}
 
 	if (dbi_result_get_numfields(res) < 1) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		printf("WARNING - no fields returned\n");
 		return STATE_WARNING;
 	}
 
 	if (dbi_result_first_row(res) != 1) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		np_dbi_print_error(conn, "CRITICAL - failed to fetch first row");
 		return STATE_CRITICAL;
 	}
 
 	field_type = dbi_result_get_field_type_idx(res, 1);
 	if (field_type != DBI_TYPE_ERROR) {
-		if (type == TYPE_STRING)
+		if (type == TYPE_STRING) {
 			/* the value will be freed in dbi_result_free */
-			*res_val_str = strdup(get_field_str(conn, res, field_type));
-		else
-			val = get_field(conn, res, &field_type);
+			*res_val_str = strdup(get_field_str(conn, res, field_type, metric, type));
+		} else {
+			val = get_field(conn, res, &field_type, metric, type);
+		}
 	}
 
 	*res_val = val;
 
 	if (field_type == DBI_TYPE_ERROR) {
-		CHECK_IGNORE_ERROR(STATE_OK);
+		if (metric != METRIC_QUERY_RESULT) {
+			return STATE_OK;
+		}
 		np_dbi_print_error(conn, "CRITICAL - failed to fetch data");
 		return STATE_CRITICAL;
 	}
@@ -715,19 +747,19 @@ double get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str,
 	return STATE_OK;
 }
 
-#undef CHECK_IGNORE_ERROR
-
-int do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *res_time) {
+mp_state_enum do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *res_time, mp_dbi_metric metric, mp_dbi_type type,
+			 char *np_dbi_query) {
 	dbi_result res;
 
 	struct timeval timeval_start;
 	struct timeval timeval_end;
-	int status = STATE_OK;
+	mp_state_enum status = STATE_OK;
 
 	assert(np_dbi_query);
 
-	if (verbose)
+	if (verbose) {
 		printf("Executing query '%s'\n", np_dbi_query);
+	}
 
 	gettimeofday(&timeval_start, NULL);
 
@@ -737,13 +769,14 @@ int do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *r
 		return STATE_CRITICAL;
 	}
 
-	status = get_query_result(conn, res, res_val_str, res_val);
+	status = get_query_result(conn, res, res_val_str, res_val, metric, type);
 
 	gettimeofday(&timeval_end, NULL);
 	*res_time = timediff(timeval_start, timeval_end);
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", *res_time);
+	}
 
 	return status;
 }
