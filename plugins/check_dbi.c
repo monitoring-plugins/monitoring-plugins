@@ -128,8 +128,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -137,8 +138,9 @@ int main(int argc, char **argv) {
 	}
 	alarm(timeout_interval);
 
-	if (verbose > 2)
+	if (verbose > 2) {
 		printf("Initializing DBI\n");
+	}
 
 	dbi_inst *instance_p = {0};
 
@@ -152,8 +154,9 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Opening DBI driver '%s'\n", np_dbi_driver);
+	}
 
 	driver = dbi_driver_open_r(np_dbi_driver, instance_p);
 	if (!driver) {
@@ -179,11 +182,13 @@ int main(int argc, char **argv) {
 	for (i = 0; i < np_dbi_options_num; ++i) {
 		const char *opt;
 
-		if (verbose > 1)
+		if (verbose > 1) {
 			printf("Setting DBI driver option '%s' to '%s'\n", np_dbi_options[i].key, np_dbi_options[i].value);
+		}
 
-		if (!dbi_conn_set_option(conn, np_dbi_options[i].key, np_dbi_options[i].value))
+		if (!dbi_conn_set_option(conn, np_dbi_options[i].key, np_dbi_options[i].value)) {
 			continue;
+		}
 		/* else: status != 0 */
 
 		np_dbi_print_error(conn, "UNKNOWN - failed to set option '%s' to '%s'", np_dbi_options[i].key, np_dbi_options[i].value);
@@ -197,8 +202,9 @@ int main(int argc, char **argv) {
 	}
 
 	if (host) {
-		if (verbose > 1)
+		if (verbose > 1) {
 			printf("Setting DBI driver option 'host' to '%s'\n", host);
+		}
 		dbi_conn_set_option(conn, "host", host);
 	}
 
@@ -209,10 +215,12 @@ int main(int argc, char **argv) {
 		dbname = dbi_conn_get_option(conn, "dbname");
 		host = dbi_conn_get_option(conn, "host");
 
-		if (!dbname)
+		if (!dbname) {
 			dbname = "<unspecified>";
-		if (!host)
+		}
+		if (!host) {
 			host = "<unspecified>";
+		}
 
 		printf("Connecting to database '%s' at host '%s'\n", dbname, host);
 	}
@@ -226,22 +234,27 @@ int main(int argc, char **argv) {
 	conn_time = timediff(start_timeval, end_timeval);
 
 	server_version = dbi_conn_get_engine_version(conn);
-	if (verbose)
+	if (verbose) {
 		printf("Connected to server version %u\n", server_version);
+	}
 
-	if (metric == METRIC_SERVER_VERSION)
+	if (metric == METRIC_SERVER_VERSION) {
 		status = get_status(server_version, dbi_thresholds);
+	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", conn_time);
+	}
 
-	if (metric == METRIC_CONN_TIME)
+	if (metric == METRIC_CONN_TIME) {
 		status = get_status(conn_time, dbi_thresholds);
+	}
 
 	/* select a database */
 	if (np_dbi_database) {
-		if (verbose > 1)
+		if (verbose > 1) {
 			printf("Selecting database '%s'\n", np_dbi_database);
+		}
 
 		if (dbi_conn_select_db(conn, np_dbi_database)) {
 			np_dbi_print_error(conn, "UNKNOWN - failed to select database '%s'", np_dbi_database);
@@ -252,38 +265,43 @@ int main(int argc, char **argv) {
 	if (np_dbi_query) {
 		/* execute query */
 		status = do_query(conn, &query_val_str, &query_val, &query_time);
-		if (status != STATE_OK)
+		if (status != STATE_OK) {
 			/* do_query prints an error message in this case */
 			return status;
+		}
 
 		if (metric == METRIC_QUERY_RESULT) {
 			if (expect) {
-				if ((!query_val_str) || strcmp(query_val_str, expect))
+				if ((!query_val_str) || strcmp(query_val_str, expect)) {
 					status = STATE_CRITICAL;
-				else
+				} else {
 					status = STATE_OK;
+				}
 			} else if (expect_re_str) {
 				int err;
 
 				err = regexec(&expect_re, query_val_str, 0, NULL, /* flags = */ 0);
-				if (!err)
+				if (!err) {
 					status = STATE_OK;
-				else if (err == REG_NOMATCH)
+				} else if (err == REG_NOMATCH) {
 					status = STATE_CRITICAL;
-				else {
+				} else {
 					char errmsg[1024];
 					regerror(err, &expect_re, errmsg, sizeof(errmsg));
 					printf("ERROR - failed to execute regular expression: %s\n", errmsg);
 					status = STATE_CRITICAL;
 				}
-			} else
+			} else {
 				status = get_status(query_val, dbi_thresholds);
-		} else if (metric == METRIC_QUERY_TIME)
+			}
+		} else if (metric == METRIC_QUERY_TIME) {
 			status = get_status(query_time, dbi_thresholds);
+		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Closing connection\n");
+	}
 	dbi_conn_close(conn);
 
 	/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error
@@ -299,15 +317,17 @@ int main(int argc, char **argv) {
 			assert(expect || expect_re_str);
 			printf(", '%s' returned '%s' in %fs", np_dbi_query, query_val_str ? query_val_str : "<nothing>", query_time);
 			if (status != STATE_OK) {
-				if (expect)
+				if (expect) {
 					printf(" (expected '%s')", expect);
-				else if (expect_re_str)
+				} else if (expect_re_str) {
 					printf(" (expected regex /%s/%s)", expect_re_str, ((expect_re_cflags & REG_ICASE) ? "i" : ""));
+				}
 			}
-		} else if (isnan(query_val))
+		} else if (isnan(query_val)) {
 			printf(", '%s' query execution time: %fs", np_dbi_query, query_time);
-		else
+		} else {
 			printf(", '%s' returned %f in %fs", np_dbi_query, query_val, query_time);
+		}
 	}
 
 	printf(" | conntime=%fs;%s;%s;0; server_version=%u;%s;%s;0;", conn_time,
@@ -316,9 +336,10 @@ int main(int argc, char **argv) {
 		   ((metric == METRIC_SERVER_VERSION) && warning_range) ? warning_range : "",
 		   ((metric == METRIC_SERVER_VERSION) && critical_range) ? critical_range : "");
 	if (np_dbi_query) {
-		if (!isnan(query_val)) /* this is also true when -e is used */
+		if (!isnan(query_val)) { /* this is also true when -e is used */
 			printf(" query=%f;%s;%s;;", query_val, ((metric == METRIC_QUERY_RESULT) && warning_range) ? warning_range : "",
 				   ((metric == METRIC_QUERY_RESULT) && critical_range) ? critical_range : "");
+		}
 		printf(" querytime=%fs;%s;%s;0;", query_time, ((metric == METRIC_QUERY_TIME) && warning_range) ? warning_range : "",
 			   ((metric == METRIC_QUERY_TIME) && critical_range) ? critical_range : "");
 	}
@@ -346,8 +367,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		c = getopt_long(argc, argv, "Vvht:c:w:e:r:R:m:H:d:o:q:D:", longopts, &option);
 
-		if (c == EOF)
+		if (c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case '?': /* usage */
@@ -392,29 +414,32 @@ int process_arguments(int argc, char **argv) {
 		}
 
 		case 'm':
-			if (!strcasecmp(optarg, "CONN_TIME"))
+			if (!strcasecmp(optarg, "CONN_TIME")) {
 				metric = METRIC_CONN_TIME;
-			else if (!strcasecmp(optarg, "SERVER_VERSION"))
+			} else if (!strcasecmp(optarg, "SERVER_VERSION")) {
 				metric = METRIC_SERVER_VERSION;
-			else if (!strcasecmp(optarg, "QUERY_RESULT"))
+			} else if (!strcasecmp(optarg, "QUERY_RESULT")) {
 				metric = METRIC_QUERY_RESULT;
-			else if (!strcasecmp(optarg, "QUERY_TIME"))
+			} else if (!strcasecmp(optarg, "QUERY_TIME")) {
 				metric = METRIC_QUERY_TIME;
-			else
+			} else {
 				usage2(_("Invalid metric"), optarg);
+			}
 			break;
 		case 't': /* timeout */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
-			else
+			} else {
 				host = optarg;
+			}
 			break;
 		case 'v':
 			verbose++;
@@ -432,8 +457,9 @@ int process_arguments(int argc, char **argv) {
 			k = optarg;
 			v = strchr(k, (int)'=');
 
-			if (!v)
+			if (!v) {
 				usage2(_("Option must be '<key>=<value>'"), optarg);
+			}
 
 			*v = '\0';
 			++v;
@@ -466,27 +492,34 @@ int process_arguments(int argc, char **argv) {
 }
 
 int validate_arguments(void) {
-	if (!np_dbi_driver)
+	if (!np_dbi_driver) {
 		usage("Must specify a DBI driver");
+	}
 
-	if (((metric == METRIC_QUERY_RESULT) || (metric == METRIC_QUERY_TIME)) && (!np_dbi_query))
+	if (((metric == METRIC_QUERY_RESULT) || (metric == METRIC_QUERY_TIME)) && (!np_dbi_query)) {
 		usage("Must specify a query to execute (metric == QUERY_RESULT)");
+	}
 
 	if ((metric != METRIC_CONN_TIME) && (metric != METRIC_SERVER_VERSION) && (metric != METRIC_QUERY_RESULT) &&
-		(metric != METRIC_QUERY_TIME))
+		(metric != METRIC_QUERY_TIME)) {
 		usage("Invalid metric specified");
+	}
 
-	if (expect && (warning_range || critical_range || expect_re_str))
+	if (expect && (warning_range || critical_range || expect_re_str)) {
 		usage("Do not mix -e and -w/-c/-r/-R");
+	}
 
-	if (expect_re_str && (warning_range || critical_range || expect))
+	if (expect_re_str && (warning_range || critical_range || expect)) {
 		usage("Do not mix -r/-R and -w/-c/-e");
+	}
 
-	if (expect && (metric != METRIC_QUERY_RESULT))
+	if (expect && (metric != METRIC_QUERY_RESULT)) {
 		usage("Option -e requires metric QUERY_RESULT");
+	}
 
-	if (expect_re_str && (metric != METRIC_QUERY_RESULT))
+	if (expect_re_str && (metric != METRIC_QUERY_RESULT)) {
 		usage("Options -r/-R require metric QUERY_RESULT");
+	}
 
 	return OK;
 }
@@ -613,8 +646,9 @@ const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_ty
 		return NULL;
 	}
 
-	if ((verbose && (type == TYPE_STRING)) || (verbose > 2))
+	if ((verbose && (type == TYPE_STRING)) || (verbose > 2)) {
 		printf("Query returned string '%s'\n", str);
+	}
 	return str;
 }
 
@@ -644,8 +678,9 @@ double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type) {
 			return NAN;
 		}
 		if ((endptr != NULL) && (*endptr != '\0')) {
-			if (verbose)
+			if (verbose) {
 				printf("Garbage after value: %s\n", endptr);
+			}
 		}
 	} else {
 		CHECK_IGNORE_ERROR(NAN);
@@ -696,11 +731,12 @@ double get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str,
 
 	field_type = dbi_result_get_field_type_idx(res, 1);
 	if (field_type != DBI_TYPE_ERROR) {
-		if (type == TYPE_STRING)
+		if (type == TYPE_STRING) {
 			/* the value will be freed in dbi_result_free */
 			*res_val_str = strdup(get_field_str(conn, res, field_type));
-		else
+		} else {
 			val = get_field(conn, res, &field_type);
+		}
 	}
 
 	*res_val = val;
@@ -726,8 +762,9 @@ int do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *r
 
 	assert(np_dbi_query);
 
-	if (verbose)
+	if (verbose) {
 		printf("Executing query '%s'\n", np_dbi_query);
+	}
 
 	gettimeofday(&timeval_start, NULL);
 
@@ -742,8 +779,9 @@ int do_query(dbi_conn conn, const char **res_val_str, double *res_val, double *r
 	gettimeofday(&timeval_end, NULL);
 	*res_time = timediff(timeval_start, timeval_end);
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", *res_time);
+	}
 
 	return status;
 }
