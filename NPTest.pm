@@ -17,7 +17,7 @@ use File::Basename;
 
 use JSON;
 
-use feature 'try';
+use Try::Tiny;
 
 use IO::File;
 use Data::Dumper;
@@ -623,7 +623,7 @@ sub testCmd {
 
     try {
       $object->{'mp_test_result'} = decode_json($output);
-    }
+    };
 
     alarm(0);
 
