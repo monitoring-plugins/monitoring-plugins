@@ -46,7 +46,11 @@ SUBDIRS = picohttpparser
 
 np_test_scripts = tests/test_check_swap.t
 
-EXTRA_DIST = t tests $(np_test_scripts) check_swap.d
+EXTRA_DIST = t \
+			 tests \
+			 $(np_test_scripts) \
+			 check_swap.d \
+			 check_game.d
 
 PLUGINHDRS = common.h
 
