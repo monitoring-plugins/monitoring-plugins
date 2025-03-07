@@ -144,7 +144,6 @@ int main(int argc, char **argv) {
 #define max_players_field_index 130
 
 check_game_config_wrapper process_arguments(int argc, char **argv) {
-	int opt_index = 0;
 	static struct option long_opts[] = {{"help", no_argument, 0, 'h'},
 										{"version", no_argument, 0, 'V'},
 										{"verbose", no_argument, 0, 'v'},
@@ -179,7 +178,8 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	while (1) {
+	int opt_index = 0;
+	while (true) {
 		int option_index = getopt_long(argc, argv, "hVvt:H:P:G:g:p:m:", long_opts, &opt_index);
 
 		if (option_index == -1 || option_index == EOF) {
