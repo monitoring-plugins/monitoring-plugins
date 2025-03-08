@@ -107,8 +107,9 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 	gettimeofday(&tv, NULL);
 
-	if (verbose)
+	if (verbose) {
 		printf("%s\n", command_line);
+	}
 
 	/* run the command */
 	if ((np_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
@@ -118,18 +119,20 @@ int main(int argc, char **argv) {
 
 	/* scan stdout */
 	for (size_t i = 0; i < chld_out.lines; i++) {
-		if (addresses == NULL)
+		if (addresses == NULL) {
 			addresses = malloc(sizeof(*addresses) * 10);
-		else if (!(n_addresses % 10))
+		} else if (!(n_addresses % 10)) {
 			addresses = realloc(addresses, sizeof(*addresses) * (n_addresses + 10));
+		}
 
-		if (verbose)
+		if (verbose) {
 			puts(chld_out.line[i]);
+		}
 
 		if (strcasestr(chld_out.line[i], ".in-addr.arpa") || strcasestr(chld_out.line[i], ".ip6.arpa")) {
-			if ((temp_buffer = strstr(chld_out.line[i], "name = ")))
+			if ((temp_buffer = strstr(chld_out.line[i], "name = "))) {
 				addresses[n_addresses++] = strdup(temp_buffer + 7);
-			else {
+			} else {
 				msg = (char *)_("Warning plugin error");
 				result = STATE_WARNING;
 			}
@@ -156,15 +159,16 @@ int main(int argc, char **argv) {
 		}
 
 		/* the server is responding, we just got the host name... */
-		if (strstr(chld_out.line[i], "Name:"))
+		if (strstr(chld_out.line[i], "Name:")) {
 			parse_address = true;
-		else if (parse_address && (strstr(chld_out.line[i], "Address:") || strstr(chld_out.line[i], "Addresses:"))) {
+		} else if (parse_address && (strstr(chld_out.line[i], "Address:") || strstr(chld_out.line[i], "Addresses:"))) {
 			temp_buffer = index(chld_out.line[i], ':');
 			temp_buffer++;
 
 			/* Strip leading spaces */
-			while (*temp_buffer == ' ')
+			while (*temp_buffer == ' ') {
 				temp_buffer++;
+			}
 
 			strip(temp_buffer);
 			if (temp_buffer == NULL || strlen(temp_buffer) == 0) {
@@ -179,24 +183,27 @@ int main(int argc, char **argv) {
 		result = error_scan(chld_out.line[i], &is_nxdomain);
 		if (result != STATE_OK) {
 			msg = strchr(chld_out.line[i], ':');
-			if (msg)
+			if (msg) {
 				msg++;
+			}
 			break;
 		}
 	}
 
 	/* scan stderr */
 	for (size_t i = 0; i < chld_err.lines; i++) {
-		if (verbose)
+		if (verbose) {
 			puts(chld_err.line[i]);
+		}
 
 		if (error_scan(chld_err.line[i], &is_nxdomain) != STATE_OK) {
 			result = max_state(result, error_scan(chld_err.line[i], &is_nxdomain));
 			msg = strchr(input_buffer, ':');
-			if (msg)
+			if (msg) {
 				msg++;
-			else
+			} else {
 				msg = input_buffer;
+			}
 		}
 	}
 
@@ -214,14 +221,16 @@ int main(int argc, char **argv) {
 		}
 		adrp = address = malloc(slen);
 		for (i = 0; i < n_addresses; i++) {
-			if (i)
+			if (i) {
 				*adrp++ = ',';
+			}
 			strcpy(adrp, addresses[i]);
 			adrp += strlen(addresses[i]);
 		}
 		*adrp = 0;
-	} else
+	} else {
 		die(STATE_CRITICAL, _("DNS CRITICAL - '%s' msg parsing exited with no address\n"), NSLOOKUP_COMMAND);
+	}
 
 	/* compare to expected address */
 	if (result == STATE_OK && expected_address_cnt > 0) {
@@ -245,8 +254,9 @@ int main(int argc, char **argv) {
 			xasprintf(&temp_buffer, "%s%s; ", temp_buffer, expected_address[i]);
 		}
 		/* check if expected_address must cover all in addresses and none may be missing */
-		if (all_match && (expect_match != 0 || addr_match != 0))
+		if (all_match && (expect_match != 0 || addr_match != 0)) {
 			result = STATE_CRITICAL;
+		}
 		if (result == STATE_CRITICAL) {
 			/* Strip off last semicolon... */
 			temp_buffer[strlen(temp_buffer) - 2] = '\0';
@@ -259,8 +269,9 @@ int main(int argc, char **argv) {
 			result = STATE_CRITICAL;
 			xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), query_address, address);
 		} else {
-			if (address != NULL)
+			if (address != NULL) {
 				free(address);
+			}
 			address = "NXDOMAIN";
 		}
 	}
@@ -292,14 +303,16 @@ int main(int argc, char **argv) {
 			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, true, time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((time_thresholds->warning != NULL) && (time_thresholds->critical == NULL)) {
 			printf("|%s\n", fperfdata("time", elapsed_time, "s", true, time_thresholds->warning->end, false, 0, true, 0, false, 0));
-		} else
+		} else {
 			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
-	} else if (result == STATE_WARNING)
+		}
+	} else if (result == STATE_WARNING) {
 		printf(_("DNS WARNING - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
-	else if (result == STATE_CRITICAL)
+	} else if (result == STATE_CRITICAL) {
 		printf(_("DNS CRITICAL - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
-	else
+	} else {
 		printf(_("DNS UNKNOWN - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
+	}
 
 	return result;
 }
@@ -333,49 +346,59 @@ int error_scan(char *input_buffer, bool *is_nxdomain) {
 
 	const int nxdomain = strstr(input_buffer, "Non-existent") || strstr(input_buffer, "** server can't find") ||
 						 strstr(input_buffer, "** Can't find") || strstr(input_buffer, "NXDOMAIN");
-	if (nxdomain)
+	if (nxdomain) {
 		*is_nxdomain = true;
+	}
 
 	/* the DNS lookup timed out */
 	if (strstr(input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
 		strstr(input_buffer, _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
-		strstr(input_buffer, _("the `-sil[ent]' option to prevent this message from appearing.")))
+		strstr(input_buffer, _("the `-sil[ent]' option to prevent this message from appearing."))) {
 		return STATE_OK;
+	}
 
 	/* DNS server is not running... */
-	else if (strstr(input_buffer, "No response from server"))
+	else if (strstr(input_buffer, "No response from server")) {
 		die(STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
-	else if (strstr(input_buffer, "no servers could be reached"))
+	} else if (strstr(input_buffer, "no servers could be reached")) {
 		die(STATE_CRITICAL, _("No response from DNS %s\n"), dns_server);
+	}
 
 	/* Host name is valid, but server doesn't have records... */
-	else if (strstr(input_buffer, "No records"))
+	else if (strstr(input_buffer, "No records")) {
 		die(STATE_CRITICAL, _("DNS %s has no records\n"), dns_server);
+	}
 
 	/* Connection was refused */
 	else if (strstr(input_buffer, "Connection refused") || strstr(input_buffer, "Couldn't find server") ||
-			 strstr(input_buffer, "Refused") || (strstr(input_buffer, "** server can't find") && strstr(input_buffer, ": REFUSED")))
+			 strstr(input_buffer, "Refused") || (strstr(input_buffer, "** server can't find") && strstr(input_buffer, ": REFUSED"))) {
 		die(STATE_CRITICAL, _("Connection to DNS %s was refused\n"), dns_server);
+	}
 
 	/* Query refused (usually by an ACL in the namserver) */
-	else if (strstr(input_buffer, "Query refused"))
+	else if (strstr(input_buffer, "Query refused")) {
 		die(STATE_CRITICAL, _("Query was refused by DNS server at %s\n"), dns_server);
+	}
 
 	/* No information (e.g. nameserver IP has two PTR records) */
-	else if (strstr(input_buffer, "No information"))
+	else if (strstr(input_buffer, "No information")) {
 		die(STATE_CRITICAL, _("No information returned by DNS server at %s\n"), dns_server);
+	}
 
 	/* Network is unreachable */
-	else if (strstr(input_buffer, "Network is unreachable"))
+	else if (strstr(input_buffer, "Network is unreachable")) {
 		die(STATE_CRITICAL, _("Network is unreachable\n"));
+	}
 
 	/* Internal server failure */
-	else if (strstr(input_buffer, "Server failure"))
+	else if (strstr(input_buffer, "Server failure")) {
 		die(STATE_CRITICAL, _("DNS failure for %s\n"), dns_server);
+	}
 
 	/* Request error or the DNS lookup timed out */
-	else if (strstr(input_buffer, "Format error") || strstr(input_buffer, "Timed out"))
+	else if (strstr(input_buffer, "Format error") || strstr(input_buffer, "Timed out")) {
 		return STATE_WARNING;
+	}
 
 	return STATE_OK;
 }
@@ -402,18 +425,22 @@ int process_arguments(int argc, char **argv) {
 										{"critical", required_argument, 0, 'c'},
 										{0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
-	for (c = 1; c < argc; c++)
-		if (strcmp("-to", argv[c]) == 0)
+	for (c = 1; c < argc; c++) {
+		if (strcmp("-to", argv[c]) == 0) {
 			strcpy(argv[c], "-t");
+		}
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "hVvALnt:H:s:r:a:w:c:", long_opts, &opt_index);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 'h': /* help */
@@ -429,28 +456,32 @@ int process_arguments(int argc, char **argv) {
 			timeout_interval = atoi(optarg);
 			break;
 		case 'H': /* hostname */
-			if (strlen(optarg) >= ADDRESS_LENGTH)
+			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+			}
 			strcpy(query_address, optarg);
 			break;
 		case 's': /* server name */
 			/* TODO: this host_or_die check is probably unnecessary.
 			 * Better to confirm nslookup response matches */
 			host_or_die(optarg);
-			if (strlen(optarg) >= ADDRESS_LENGTH)
+			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+			}
 			strcpy(dns_server, optarg);
 			break;
 		case 'r': /* reverse server name */
 			/* TODO: Is this host_or_die necessary? */
 			host_or_die(optarg);
-			if (strlen(optarg) >= ADDRESS_LENGTH)
+			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+			}
 			strcpy(ptr_server, optarg);
 			break;
 		case 'a': /* expected address */
-			if (strlen(optarg) >= ADDRESS_LENGTH)
+			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+			}
 			if (strchr(optarg, ',') != NULL) {
 				char *comma = strchr(optarg, ',');
 				while (comma != NULL) {
@@ -491,16 +522,18 @@ int process_arguments(int argc, char **argv) {
 
 	c = optind;
 	if (strlen(query_address) == 0 && c < argc) {
-		if (strlen(argv[c]) >= ADDRESS_LENGTH)
+		if (strlen(argv[c]) >= ADDRESS_LENGTH) {
 			die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+		}
 		strcpy(query_address, argv[c++]);
 	}
 
 	if (strlen(dns_server) == 0 && c < argc) {
 		/* TODO: See -s option */
 		host_or_die(argv[c]);
-		if (strlen(argv[c]) >= ADDRESS_LENGTH)
+		if (strlen(argv[c]) >= ADDRESS_LENGTH) {
 			die(STATE_UNKNOWN, _("Input buffer overflow\n"));
+		}
 		strcpy(dns_server, argv[c++]);
 	}
 
