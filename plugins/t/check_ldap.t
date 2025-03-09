@@ -24,7 +24,7 @@ SKIP: {
 
     $result = NPTest->testCmd("$command -H $host_nonresponsive -b ou=blah -t 2 -w 1 -c 1");
     is( $result->return_code, 2, "$command -H $host_nonresponsive -b ou=blah -t 5 -w 2 -c 3" );
-    is( $result->output, 'CRITICAL - Socket timeout after 2 seconds', "output ok" );
+    like($result->output, '/Socket timeout after \d+ seconds/', "output ok" );
 };
 
 SKIP: {

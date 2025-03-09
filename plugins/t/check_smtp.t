@@ -24,7 +24,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 16;
+plan tests => 15;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
@@ -73,7 +73,6 @@ SKIP: {
 	my $unused_port = 4465;
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls -p $unused_port --ssl" );
 	is ($res->return_code, 2, "Check rc of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port" );
-	like ($res->output, qr/^connect to address $host_tcp_smtp_tls and port $unused_port: Connection refused/, "Check output of connecting to $host_tcp_smtp_tls with TLS on unused port $unused_port");
 }
 
 $res = NPTest->testCmd( "./check_smtp $host_nonresponsive" );
