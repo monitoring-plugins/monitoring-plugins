@@ -50,7 +50,9 @@ EXTRA_DIST = t \
 			 tests \
 			 $(np_test_scripts) \
 			 check_swap.d \
-			 check_game.d
+			 check_game.d \
+			 check_dbi.d \
+			 check_ssh.d
 
 PLUGINHDRS = common.h
 

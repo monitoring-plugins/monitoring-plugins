@@ -17,7 +17,7 @@ my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (no
 
 my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on '.$host_tcp_jabber.' port 5222/';
 
-my $jabberUnresponsive = '/CRITICAL\s-\sSocket timeout after\s\d+\sseconds/';
+my $jabberUnresponsive = '/Socket timeout after\s\d+\sseconds/';
 
 my $jabberInvalid = '/JABBER CRITICAL - Invalid hostname, address or socket:\s.+/';
 

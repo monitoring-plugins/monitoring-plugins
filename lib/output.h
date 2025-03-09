@@ -36,13 +36,18 @@ typedef enum output_format {
 #define MP_FORMAT_DEFAULT MP_FORMAT_MULTI_LINE
 
 /*
+ * Format related functions
+ */
+ void mp_set_format(mp_output_format format);
+ mp_output_format mp_get_format(void);
+
+/*
  * The main state object of a plugin. Exists only ONCE per plugin.
  * This is the "root" of a tree of singular checks.
  * The final result is always derived from the children and the "worst" state
  * in the first layer of subchecks
  */
 typedef struct {
-	mp_output_format format; // The output format
 	char *summary;           // Overall summary, if not set a summary will be automatically generated
 	mp_subcheck_list *subchecks;
 } mp_check;

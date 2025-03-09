@@ -15,6 +15,8 @@ use warnings;
 use Cwd;
 use File::Basename;
 
+use JSON;
+
 use IO::File;
 use Data::Dumper;
 
@@ -616,6 +618,8 @@ sub testCmd {
     }
     chomp $output;
     $object->output($output);
+
+    eval { $object->{'mp_test_result'} = decode_json($output) };
 
     alarm(0);
 
