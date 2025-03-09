@@ -128,6 +128,9 @@ int main(int argc, char **argv) {
 		}
 
 		if (strcasestr(chld_out.line[i], ".in-addr.arpa") || strcasestr(chld_out.line[i], ".ip6.arpa")) {
+			if ((strstr(chld_out.line[i], "canonical name = ") != NULL)) {
+				continue;
+			}
 			char *temp_buffer = NULL;
 			if ((temp_buffer = strstr(chld_out.line[i], "name = "))) {
 				addresses[n_addresses++] = strdup(temp_buffer + 7);
