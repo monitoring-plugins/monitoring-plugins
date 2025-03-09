@@ -24,7 +24,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 16;
+plan tests => 15;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
