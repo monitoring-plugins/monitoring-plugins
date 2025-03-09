@@ -106,14 +106,16 @@ int main(int argc, char **argv) {
 		result = STATE_WARNING;
 	}
 
-	char *address = NULL; /* comma separated str with addrs/ptrs (sorted) */
-	char **addresses = NULL;
-	size_t n_addresses = 0;
+	/* =====
+	 * scan stdout, main results get retrieved here
+	 * =====
+	 */
+	char *address = NULL;    /* comma separated str with addrs/ptrs (sorted) */
+	char **addresses = NULL; // All addresses parsed from stdout
+	size_t n_addresses = 0;  // counter for retrieved addresses
 	bool non_authoritative = false;
 	bool is_nxdomain = false;
-	char *temp_buffer = NULL;
 	bool parse_address = false; /* This flag scans for Address: but only after Name: */
-	/* scan stdout */
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (addresses == NULL) {
 			addresses = malloc(sizeof(*addresses) * 10);
@@ -126,6 +128,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (strcasestr(chld_out.line[i], ".in-addr.arpa") || strcasestr(chld_out.line[i], ".ip6.arpa")) {
+			char *temp_buffer = NULL;
 			if ((temp_buffer = strstr(chld_out.line[i], "name = "))) {
 				addresses[n_addresses++] = strdup(temp_buffer + 7);
 			} else {
@@ -137,6 +140,7 @@ int main(int argc, char **argv) {
 		/* bug ID: 2946553 - Older versions of bind will use all available dns
 							 servers, we have to match the one specified */
 		if (strstr(chld_out.line[i], "Server:") && strlen(config.dns_server) > 0) {
+			char *temp_buffer = NULL;
 			temp_buffer = strchr(chld_out.line[i], ':');
 			temp_buffer++;
 
@@ -159,6 +163,7 @@ int main(int argc, char **argv) {
 		if (strstr(chld_out.line[i], "Name:")) {
 			parse_address = true;
 		} else if (parse_address && (strstr(chld_out.line[i], "Address:") || strstr(chld_out.line[i], "Addresses:"))) {
+			char *temp_buffer = NULL;
 			temp_buffer = index(chld_out.line[i], ':');
 			temp_buffer++;
 
@@ -216,6 +221,8 @@ int main(int argc, char **argv) {
 		for (size_t i = 0; i < n_addresses; i++) {
 			slen += strlen(addresses[i]) + 1;
 		}
+
+		// Temporary pointer adrp gets moved, address stays on the beginning
 		adrp = address = malloc(slen);
 		for (size_t i = 0; i < n_addresses; i++) {
 			if (i) {
@@ -232,7 +239,7 @@ int main(int argc, char **argv) {
 	/* compare to expected address */
 	if (result == STATE_OK && config.expected_address_cnt > 0) {
 		result = STATE_CRITICAL;
-		temp_buffer = "";
+		char *temp_buffer = "";
 		unsigned long expect_match = (1 << config.expected_address_cnt) - 1;
 		unsigned long addr_match = (1 << n_addresses) - 1;
 
