@@ -140,8 +140,11 @@ int main(int argc, char **argv) {
 		/* bug ID: 2946553 - Older versions of bind will use all available dns
 							 servers, we have to match the one specified */
 		if (strstr(chld_out.line[i], "Server:") && strlen(config.dns_server) > 0) {
-			char *temp_buffer = NULL;
-			temp_buffer = strchr(chld_out.line[i], ':');
+			char *temp_buffer = strchr(chld_out.line[i], ':');
+			if (temp_buffer == NULL) {
+				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Server line\n"), NSLOOKUP_COMMAND);
+			}
+
 			temp_buffer++;
 
 			/* Strip leading tabs */
@@ -150,7 +153,7 @@ int main(int argc, char **argv) {
 			}
 
 			strip(temp_buffer);
-			if (temp_buffer == NULL || strlen(temp_buffer) == 0) {
+			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty server string\n"), NSLOOKUP_COMMAND);
 			}
 
@@ -163,8 +166,11 @@ int main(int argc, char **argv) {
 		if (strstr(chld_out.line[i], "Name:")) {
 			parse_address = true;
 		} else if (parse_address && (strstr(chld_out.line[i], "Address:") || strstr(chld_out.line[i], "Addresses:"))) {
-			char *temp_buffer = NULL;
-			temp_buffer = index(chld_out.line[i], ':');
+			char *temp_buffer = strchr(chld_out.line[i], ':');
+			if (temp_buffer == NULL) {
+				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Address line\n"), NSLOOKUP_COMMAND);
+			}
+
 			temp_buffer++;
 
 			/* Strip leading spaces */
@@ -173,7 +179,7 @@ int main(int argc, char **argv) {
 			}
 
 			strip(temp_buffer);
-			if (temp_buffer == NULL || strlen(temp_buffer) == 0) {
+			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"), NSLOOKUP_COMMAND);
 			}
 
