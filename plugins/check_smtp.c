@@ -517,6 +517,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	int command_size = 0;
 	int response_size = 0;
 	bool implicit_tls = false;
+	int server_port_option = 0;
 	while (true) {
 		int opt_index = getopt_long(argc, argv, "+hVv46Lrt:p:f:e:c:w:H:C:R:sSD:F:A:U:P:q", longopts, &option);
 
@@ -534,7 +535,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* port */
 			if (is_intpos(optarg)) {
-				result.config.server_port = atoi(optarg);
+				server_port_option = atoi(optarg);
 			} else {
 				usage4(_("Port must be a positive integer"));
 			}
@@ -708,6 +709,10 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 		} else {
 			usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
 		}
+	}
+
+	if (server_port_option != 0) {
+		result.config.server_port = server_port_option;
 	}
 
 	return result;
