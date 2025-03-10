@@ -91,11 +91,6 @@ static int my_close(int /*socket_descriptor*/);
 
 static int verbose = 0;
 
-enum {
-	TCP_PROTOCOL = 1,
-	UDP_PROTOCOL = 2,
-};
-
 int main(int argc, char **argv) {
 	/* Catch pipe errors in read/write - sometimes occurs when writing QUIT */
 	(void)signal(SIGPIPE, SIG_IGN);
