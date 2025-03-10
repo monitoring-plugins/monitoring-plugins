@@ -53,7 +53,8 @@ EXTRA_DIST = t \
 			 check_game.d \
 			 check_dbi.d \
 			 check_ssh.d \
-			 check_dns.d
+			 check_dns.d \
+			 check_apt.d
 
 PLUGINHDRS = common.h
 
