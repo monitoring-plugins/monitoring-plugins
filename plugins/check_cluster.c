@@ -60,11 +60,6 @@ static int verbose = 0;
 static int process_arguments(int /*argc*/, char ** /*argv*/);
 
 int main(int argc, char **argv) {
-	char *ptr;
-	int data_val;
-	int return_code = STATE_OK;
-	thresholds *thresholds = NULL;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -76,14 +71,16 @@ int main(int argc, char **argv) {
 		usage(_("Could not parse arguments"));
 	}
 
+	thresholds *thresholds = NULL;
 	/* Initialize the thresholds */
 	set_thresholds(&thresholds, warn_threshold, crit_threshold);
 	if (verbose) {
 		print_thresholds("check_cluster", thresholds);
 	}
 
+	int data_val;
 	/* check the data values */
-	for (ptr = strtok(data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
+	for (char *ptr = strtok(data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
 
 		data_val = atoi(ptr);
 
@@ -121,6 +118,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	int return_code = STATE_OK;
 	/* return the status of the cluster */
 	if (check_type == CHECK_SERVICES) {
 		return_code = get_status(total_services_warning + total_services_unknown + total_services_critical, thresholds);
@@ -133,13 +131,10 @@ int main(int argc, char **argv) {
 			   total_hosts_up, total_hosts_down, total_hosts_unreachable);
 	}
 
-	return return_code;
+	exit(return_code);
 }
 
 int process_arguments(int argc, char **argv) {
-	int c;
-	char *ptr;
-	int option = 0;
 	static struct option longopts[] = {{"data", required_argument, 0, 'd'},     {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'}, {"label", required_argument, 0, 'l'},
 									   {"host", no_argument, 0, 'h'},           {"service", no_argument, 0, 's'},
@@ -151,36 +146,31 @@ int process_arguments(int argc, char **argv) {
 		return ERROR;
 	}
 
-	while (1) {
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "hHsvVw:c:d:l:", longopts, &option);
 
-		c = getopt_long(argc, argv, "hHsvVw:c:d:l:", longopts, &option);
-
-		if (c == -1 || c == EOF || c == 1) {
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
 		}
 
-		switch (c) {
-
+		switch (option_index) {
 		case 'h': /* host cluster */
 			check_type = CHECK_HOSTS;
 			break;
-
 		case 's': /* service cluster */
 			check_type = CHECK_SERVICES;
 			break;
-
 		case 'w': /* warning threshold */
 			warn_threshold = strdup(optarg);
 			break;
-
 		case 'c': /* warning threshold */
 			crit_threshold = strdup(optarg);
 			break;
-
 		case 'd': /* data values */
-			data_vals = (char *)strdup(optarg);
+			data_vals = strdup(optarg);
 			/* validate data */
-			for (ptr = data_vals; ptr != NULL; ptr += 2) {
+			for (char *ptr = data_vals; ptr != NULL; ptr += 2) {
 				if (ptr[0] < '0' || ptr[0] > '3') {
 					return ERROR;
 				}
@@ -192,25 +182,20 @@ int process_arguments(int argc, char **argv) {
 				}
 			}
 			break;
-
 		case 'l': /* text label */
-			label = (char *)strdup(optarg);
+			label = strdup(optarg);
 			break;
-
 		case 'v': /* verbose */
 			verbose++;
 			break;
-
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 			break;
-
 		case 'H': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 			break;
-
 		default:
 			return ERROR;
 			break;
