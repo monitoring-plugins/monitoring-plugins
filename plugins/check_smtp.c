@@ -28,7 +28,6 @@
  *
  *****************************************************************************/
 
-#include "states.h"
 const char *progname = "check_smtp";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -41,6 +40,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <ctype.h>
 #include "check_smtp.d/config.h"
+#include "../lib/states.h"
 
 #define PROXY_PREFIX    "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_HELO       "HELO "
@@ -92,9 +92,6 @@ static int my_close(int /*socket_descriptor*/);
 static int verbose = 0;
 
 int main(int argc, char **argv) {
-	/* Catch pipe errors in read/write - sometimes occurs when writing QUIT */
-	(void)signal(SIGPIPE, SIG_IGN);
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -123,6 +120,7 @@ int main(int argc, char **argv) {
 			exit(STATE_CRITICAL);
 		}
 	}
+
 	char *helocmd = NULL;
 	if (config.use_lhlo) {
 		xasprintf(&helocmd, "%s%s%s", SMTP_LHLO, localhostname, "\r\n");
@@ -137,7 +135,6 @@ int main(int argc, char **argv) {
 	}
 
 	char *mail_command = strdup("MAIL ");
-
 	char *cmd_str = NULL;
 	/* initialize the MAIL command with optional FROM command  */
 	xasprintf(&cmd_str, "%sFROM:<%s>%s", mail_command, config.from_arg, "\r\n");
@@ -145,6 +142,9 @@ int main(int argc, char **argv) {
 	if (verbose && config.send_mail_from) {
 		printf("FROM CMD: %s", cmd_str);
 	}
+
+	/* Catch pipe errors in read/write - sometimes occurs when writing QUIT */
+	(void)signal(SIGPIPE, SIG_IGN);
 
 	/* initialize alarm signal handling */
 	(void)signal(SIGALRM, socket_timeout_alarm_handler);
@@ -204,6 +204,7 @@ int main(int argc, char **argv) {
 			printf(_("recv() failed\n"));
 			exit(STATE_WARNING);
 		}
+
 		bool supports_tls = false;
 		if (config.use_ehlo || config.use_lhlo) {
 			if (strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) {
@@ -228,6 +229,7 @@ int main(int argc, char **argv) {
 				smtp_quit(config, buffer, socket_descriptor, ssl_established);
 				exit(STATE_UNKNOWN);
 			}
+
 			result = np_net_ssl_init_with_hostname(socket_descriptor, (config.use_sni ? config.server_address : NULL));
 			if (result != STATE_OK) {
 				printf(_("CRITICAL - Cannot create SSL context.\n"));
@@ -235,6 +237,7 @@ int main(int argc, char **argv) {
 				np_net_ssl_cleanup();
 				exit(STATE_CRITICAL);
 			}
+
 			ssl_established = true;
 
 			/*
