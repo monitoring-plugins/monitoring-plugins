@@ -32,48 +32,28 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
-#include "netutils.h"
 #include "utils_cmd.h"
+#include "check_by_ssh.d/config.h"
+#include "states.h"
 
 #ifndef NP_MAXARGS
 #	define NP_MAXARGS 1024
 #endif
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
-static void comm_append(const char * /*str*/);
+typedef struct {
+	int errorcode;
+	check_by_ssh_config config;
+} check_by_ssh_config_wrapper;
+static check_by_ssh_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_by_ssh_config_wrapper validate_arguments(check_by_ssh_config_wrapper /*config_wrapper*/);
+
+static command_construct comm_append(command_construct /*cmd*/, const char * /*str*/);
 static void print_help(void);
 void print_usage(void);
 
-static unsigned int commands = 0;
-static unsigned int services = 0;
-static int skip_stdout = 0;
-static int skip_stderr = 0;
-static int warn_on_stderr = 0;
-static bool unknown_timeout = false;
-static char *remotecmd = NULL;
-static char **commargv = NULL;
-static int commargc = 0;
-static char *hostname = NULL;
-static char *outputfile = NULL;
-static char *host_shortname = NULL;
-static char **service;
-static bool passive = false;
 static bool verbose = false;
 
 int main(int argc, char **argv) {
-
-	char *status_text;
-	int cresult;
-	int result = STATE_UNKNOWN;
-	time_t local_time;
-	FILE *file_pointer = NULL;
-	output chld_out;
-	output chld_err;
-
-	remotecmd = "";
-	comm_append(SSH_COMMAND);
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -81,10 +61,14 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
+	check_by_ssh_config_wrapper tmp_config = process_arguments(argc, argv);
+
 	/* process arguments */
-	if (process_arguments(argc, argv) == ERROR) {
+	if (tmp_config.errorcode == ERROR) {
 		usage_va(_("Could not parse arguments"));
 	}
+
+	const check_by_ssh_config config = tmp_config.config;
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -94,16 +78,18 @@ int main(int argc, char **argv) {
 
 	/* run the command */
 	if (verbose) {
-		printf("Command: %s\n", commargv[0]);
-		for (int i = 1; i < commargc; i++) {
-			printf("Argument %i: %s\n", i, commargv[i]);
+		printf("Command: %s\n", config.cmd.commargv[0]);
+		for (int i = 1; i < config.cmd.commargc; i++) {
+			printf("Argument %i: %s\n", i, config.cmd.commargv[i]);
 		}
 	}
 
-	result = cmd_run_array(commargv, &chld_out, &chld_err, 0);
+	output chld_out;
+	output chld_err;
+	mp_state_enum result = cmd_run_array(config.cmd.commargv, &chld_out, &chld_err, 0);
 
 	/* SSH returns 255 if connection attempt fails; include the first line of error output */
-	if (result == 255 && unknown_timeout) {
+	if (result == 255 && config.unknown_timeout) {
 		printf(_("SSH connection failed: %s\n"), chld_err.lines > 0 ? chld_err.line[0] : "(no error output)");
 		return STATE_UNKNOWN;
 	}
@@ -117,17 +103,24 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (skip_stdout == -1) { /* --skip-stdout specified without argument */
+	size_t skip_stdout = 0;
+	if (config.skip_stdout == -1) { /* --skip-stdout specified without argument */
 		skip_stdout = chld_out.lines;
+	} else {
+		skip_stdout = config.skip_stdout;
 	}
-	if (skip_stderr == -1) { /* --skip-stderr specified without argument */
+
+	size_t skip_stderr = 0;
+	if (config.skip_stderr == -1) { /* --skip-stderr specified without argument */
 		skip_stderr = chld_err.lines;
+	} else {
+		skip_stderr = config.skip_stderr;
 	}
 
 	/* UNKNOWN or worse if (non-skipped) output found on stderr */
 	if (chld_err.lines > (size_t)skip_stderr) {
 		printf(_("Remote command execution failed: %s\n"), chld_err.line[skip_stderr]);
-		if (warn_on_stderr) {
+		if (config.warn_on_stderr) {
 			return max_state_alt(result, STATE_WARNING);
 		}
 		return max_state_alt(result, STATE_UNKNOWN);
@@ -135,13 +128,13 @@ int main(int argc, char **argv) {
 
 	/* this is simple if we're not supposed to be passive.
 	 * Wrap up quickly and keep the tricks below */
-	if (!passive) {
+	if (!config.passive) {
 		if (chld_out.lines > (size_t)skip_stdout) {
 			for (size_t i = skip_stdout; i < chld_out.lines; i++) {
 				puts(chld_out.line[i]);
 			}
 		} else {
-			printf(_("%s - check_by_ssh: Remote command '%s' returned status %d\n"), state_text(result), remotecmd, result);
+			printf(_("%s - check_by_ssh: Remote command '%s' returned status %d\n"), state_text(result), config.remotecmd, result);
 		}
 		return result; /* return error status from remote command */
 	}
@@ -151,36 +144,34 @@ int main(int argc, char **argv) {
 	 */
 
 	/* process output */
-	if (!(file_pointer = fopen(outputfile, "a"))) {
-		printf(_("SSH WARNING: could not open %s\n"), outputfile);
+	FILE *file_pointer = NULL;
+	if (!(file_pointer = fopen(config.outputfile, "a"))) {
+		printf(_("SSH WARNING: could not open %s\n"), config.outputfile);
 		exit(STATE_UNKNOWN);
 	}
 
-	local_time = time(NULL);
-	commands = 0;
+	time_t local_time = time(NULL);
+	unsigned int commands = 0;
+	char *status_text;
+	int cresult;
 	for (size_t i = skip_stdout; i < chld_out.lines; i++) {
 		status_text = chld_out.line[i++];
 		if (i == chld_out.lines || strstr(chld_out.line[i], "STATUS CODE: ") == NULL) {
 			die(STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
 		}
 
-		if (service[commands] && status_text && sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
-			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, host_shortname, service[commands++],
-					cresult, status_text);
+		if (config.service[commands] && status_text && sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
+			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, config.host_shortname,
+					config.service[commands++], cresult, status_text);
 		}
 	}
 
 	/* Multiple commands and passive checking should always return OK */
-	return result;
+	exit(result);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
-	char *p1;
-	char *p2;
-
-	int option = 0;
+check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -210,24 +201,33 @@ int process_arguments(int argc, char **argv) {
 									   {"configfile", optional_argument, 0, 'F'},
 									   {0, 0, 0, 0}};
 
+	check_by_ssh_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_by_ssh_config_init(),
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
+	for (int index = 1; index < argc; index++) {
+		if (strcmp("-to", argv[index]) == 0) {
+			strcpy(argv[index], "-t");
 		}
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts, &option);
+	result.config.cmd = comm_append(result.config.cmd, SSH_COMMAND);
 
-		if (c == -1 || c == EOF) {
+	int option = 0;
+	while (true) {
+		int opt_index = getopt_long(argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts, &option);
+
+		if (opt_index == -1 || opt_index == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (opt_index) {
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
@@ -245,169 +245,182 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'U':
-			unknown_timeout = true;
+			result.config.unknown_timeout = true;
 			break;
 		case 'H': /* host */
-			hostname = optarg;
+			result.config.hostname = optarg;
 			break;
 		case 'p': /* port number */
 			if (!is_integer(optarg)) {
 				usage_va(_("Port must be a positive integer"));
 			}
-			comm_append("-p");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-p");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 		case 'O': /* output file */
-			outputfile = optarg;
-			passive = true;
+			result.config.outputfile = optarg;
+			result.config.passive = true;
 			break;
-		case 's': /* description of service to check */
+		case 's': /* description of service to check */ {
+			char *p1;
+			char *p2;
+
 			p1 = optarg;
-			service = realloc(service, (++services) * sizeof(char *));
+			result.config.service = realloc(result.config.service, (++result.config.number_of_services) * sizeof(char *));
 			while ((p2 = index(p1, ':'))) {
 				*p2 = '\0';
-				service[services - 1] = p1;
-				service = realloc(service, (++services) * sizeof(char *));
+				result.config.service[result.config.number_of_services - 1] = p1;
+				result.config.service = realloc(result.config.service, (++result.config.number_of_services) * sizeof(char *));
 				p1 = p2 + 1;
 			}
-			service[services - 1] = p1;
+			result.config.service[result.config.number_of_services - 1] = p1;
 			break;
 		case 'n': /* short name of host in the monitoring configuration */
-			host_shortname = optarg;
-			break;
-
+			result.config.host_shortname = optarg;
+		} break;
 		case 'u':
-			comm_append("-l");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-l");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 		case 'l': /* login name */
-			comm_append("-l");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-l");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 		case 'i': /* identity */
-			comm_append("-i");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-i");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 
 		case '1': /* Pass these switches directly to ssh */
-			comm_append("-1");
+			result.config.cmd = comm_append(result.config.cmd, "-1");
 			break;
 		case '2': /* 1 to force version 1, 2 to force version 2 */
-			comm_append("-2");
+			result.config.cmd = comm_append(result.config.cmd, "-2");
 			break;
 		case '4': /* -4 for IPv4 */
-			comm_append("-4");
+			result.config.cmd = comm_append(result.config.cmd, "-4");
 			break;
 		case '6': /* -6 for IPv6 */
-			comm_append("-6");
+			result.config.cmd = comm_append(result.config.cmd, "-6");
 			break;
 		case 'f': /* fork to background */
-			comm_append("-f");
+			result.config.cmd = comm_append(result.config.cmd, "-f");
 			break;
 		case 'C': /* Command for remote machine */
-			commands++;
-			if (commands > 1) {
-				xasprintf(&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+			result.config.commands++;
+			if (result.config.commands > 1) {
+				xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;", result.config.remotecmd);
 			}
-			xasprintf(&remotecmd, "%s%s", remotecmd, optarg);
+			xasprintf(&result.config.remotecmd, "%s%s", result.config.remotecmd, optarg);
 			break;
 		case 'S': /* skip n (or all) lines on stdout */
 			if (optarg == NULL) {
-				skip_stdout = -1; /* skip all output on stdout */
+				result.config.skip_stdout = -1; /* skip all output on stdout */
 			} else if (!is_integer(optarg)) {
 				usage_va(_("skip-stdout argument must be an integer"));
 			} else {
-				skip_stdout = atoi(optarg);
+				result.config.skip_stdout = atoi(optarg);
 			}
 			break;
 		case 'E': /* skip n (or all) lines on stderr */
 			if (optarg == NULL) {
-				skip_stderr = -1; /* skip all output on stderr */
+				result.config.skip_stderr = -1; /* skip all output on stderr */
 			} else if (!is_integer(optarg)) {
 				usage_va(_("skip-stderr argument must be an integer"));
 			} else {
-				skip_stderr = atoi(optarg);
+				result.config.skip_stderr = atoi(optarg);
 			}
 			break;
 		case 'W': /* exit with warning if there is an output on stderr */
-			warn_on_stderr = 1;
+			result.config.warn_on_stderr = true;
 			break;
 		case 'o': /* Extra options for the ssh command */
-			comm_append("-o");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-o");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 		case 'q': /* Tell the ssh command to be quiet */
-			comm_append("-q");
+			result.config.cmd = comm_append(result.config.cmd, "-q");
 			break;
 		case 'F': /* ssh configfile */
-			comm_append("-F");
-			comm_append(optarg);
+			result.config.cmd = comm_append(result.config.cmd, "-F");
+			result.config.cmd = comm_append(result.config.cmd, optarg);
 			break;
 		default: /* help */
 			usage5();
 		}
 	}
 
-	c = optind;
-	if (hostname == NULL) {
+	int c = optind;
+	if (result.config.hostname == NULL) {
 		if (c <= argc) {
 			die(STATE_UNKNOWN, _("%s: You must provide a host name\n"), progname);
 		}
-		hostname = argv[c++];
+		result.config.hostname = argv[c++];
 	}
 
-	if (strlen(remotecmd) == 0) {
+	if (strlen(result.config.remotecmd) == 0) {
 		for (; c < argc; c++) {
-			if (strlen(remotecmd) > 0) {
-				xasprintf(&remotecmd, "%s %s", remotecmd, argv[c]);
+			if (strlen(result.config.remotecmd) > 0) {
+				xasprintf(&result.config.remotecmd, "%s %s", result.config.remotecmd, argv[c]);
 			} else {
-				xasprintf(&remotecmd, "%s", argv[c]);
+				xasprintf(&result.config.remotecmd, "%s", argv[c]);
 			}
 		}
 	}
 
-	if (commands > 1 || passive) {
-		xasprintf(&remotecmd, "%s;echo STATUS CODE: $?;", remotecmd);
+	if (result.config.commands > 1 || result.config.passive) {
+		xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;", result.config.remotecmd);
 	}
 
-	if (remotecmd == NULL || strlen(remotecmd) <= 1) {
+	if (result.config.remotecmd == NULL || strlen(result.config.remotecmd) <= 1) {
 		usage_va(_("No remotecmd"));
 	}
 
-	comm_append(hostname);
-	comm_append(remotecmd);
+	result.config.cmd = comm_append(result.config.cmd, result.config.hostname);
+	result.config.cmd = comm_append(result.config.cmd, result.config.remotecmd);
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-void comm_append(const char *str) {
+command_construct comm_append(command_construct cmd, const char *str) {
 
-	if (++commargc > NP_MAXARGS) {
+	if (verbose) {
+		for (int i = 0; i < cmd.commargc; i++) {
+			printf("Current command: [%i] %s\n", i, cmd.commargv[i]);
+		}
+
+		printf("Appending: %s\n", str);
+	}
+
+	if (++cmd.commargc > NP_MAXARGS) {
 		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, NP_MAXARGS);
 	}
 
-	if ((commargv = (char **)realloc(commargv, (commargc + 1) * sizeof(char *))) == NULL) {
+	if ((cmd.commargv = (char **)realloc(cmd.commargv, (cmd.commargc + 1) * sizeof(char *))) == NULL) {
 		die(STATE_UNKNOWN, _("Can not (re)allocate 'commargv' buffer\n"));
 	}
 
-	commargv[commargc - 1] = strdup(str);
-	commargv[commargc] = NULL;
+	cmd.commargv[cmd.commargc - 1] = strdup(str);
+	cmd.commargv[cmd.commargc] = NULL;
+
+	return cmd;
 }
 
-int validate_arguments(void) {
-	if (remotecmd == NULL || hostname == NULL) {
-		return ERROR;
+check_by_ssh_config_wrapper validate_arguments(check_by_ssh_config_wrapper config_wrapper) {
+	if (config_wrapper.config.remotecmd == NULL || config_wrapper.config.hostname == NULL) {
+		config_wrapper.errorcode = ERROR;
+		return config_wrapper;
 	}
 
-	if (passive && commands != services) {
+	if (config_wrapper.config.passive && config_wrapper.config.commands != config_wrapper.config.number_of_services) {
 		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
 	}
 
-	if (passive && host_shortname == NULL) {
+	if (config_wrapper.config.passive && config_wrapper.config.host_shortname == NULL) {
 		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the monitoring configs.\n"), progname);
 	}
 
-	return OK;
+	return config_wrapper;
 }
 
 void print_help(void) {

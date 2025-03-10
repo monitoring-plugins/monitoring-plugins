@@ -29,6 +29,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "check_apt";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -37,13 +38,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "runcmd.h"
 #include "utils.h"
 #include "regex.h"
-
-/* some constants */
-typedef enum {
-	UPGRADE,
-	DIST_UPGRADE,
-	NO_UPGRADE
-} upgrade_type;
+#include "check_apt.d/config.h"
 
 /* Character for hidden input file option (for testing). */
 #define INPUT_FILE_OPT CHAR_MAX + 1
@@ -61,14 +56,18 @@ typedef enum {
 #define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
 
 /* some standard functions */
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+typedef struct {
+	int errorcode;
+	check_apt_config config;
+} check_apt_config_wrapper;
+static check_apt_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
 /* construct the appropriate apt-get cmdline */
-static char *construct_cmdline(upgrade_type u, const char *opts);
+static char *construct_cmdline(upgrade_type /*u*/, const char * /*opts*/);
 /* run an apt-get update */
-static int run_update(void);
+static int run_update(char * /*update_opts*/);
 
 typedef struct {
 	int errorcode;
@@ -79,41 +78,34 @@ typedef struct {
 } run_upgrade_result;
 
 /* run an apt-get upgrade */
-static run_upgrade_result run_upgrade(void);
+run_upgrade_result run_upgrade(upgrade_type upgrade, const char *do_include, const char *do_exclude, const char *do_critical,
+							   const char *upgrade_opts, const char *input_filename);
 
 /* add another clause to a regexp */
-static char *add_to_regexp(char *expr, const char *next);
+static char *add_to_regexp(char * /*expr*/, const char * /*next*/);
 /* extract package name from Inst line */
-static char *pkg_name(char *line);
+static char *pkg_name(char * /*line*/);
 /* string comparison function for qsort */
-static int cmpstringp(const void *p1, const void *p2);
+static int cmpstringp(const void * /*p1*/, const void * /*p2*/);
 
 /* configuration variables */
-static int verbose = 0;                /* -v */
-static bool list = false;              /* list packages available for upgrade */
-static bool do_update = false;         /* whether to call apt-get update */
-static bool only_critical = false;     /* whether to warn about non-critical updates */
-static upgrade_type upgrade = UPGRADE; /* which type of upgrade to do */
-static char *upgrade_opts = NULL;      /* options to override defaults for upgrade */
-static char *update_opts = NULL;       /* options to override defaults for update */
-static char *do_include = NULL;        /* regexp to only include certain packages */
-static char *do_exclude = NULL;        /* regexp to only exclude certain packages */
-static char *do_critical = NULL;       /* regexp specifying critical packages */
-static char *input_filename = NULL;    /* input filename for testing */
-/* number of packages available for upgrade to return WARNING status */
-static int packages_warning = 1;
+static int verbose = 0; /* -v */
 
 /* other global variables */
-static int stderr_warning = 0; /* if a cmd issued output on stderr */
-static int exec_warning = 0;   /* if a cmd exited non-zero */
+static bool stderr_warning = false; /* if a cmd issued output on stderr */
+static bool exec_warning = false;   /* if a cmd exited non-zero */
 
 int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_apt_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
 		usage_va(_("Could not parse arguments"));
 	}
+
+	const check_apt_config config = tmp_config.config;
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -123,14 +115,15 @@ int main(int argc, char **argv) {
 	/* handle timeouts gracefully... */
 	alarm(timeout_interval);
 
-	int result = STATE_UNKNOWN;
+	mp_state_enum result = STATE_UNKNOWN;
 	/* if they want to run apt-get update first... */
-	if (do_update) {
-		result = run_update();
+	if (config.do_update) {
+		result = run_update(config.update_opts);
 	}
 
 	/* apt-get upgrade */
-	run_upgrade_result upgrad_res = run_upgrade();
+	run_upgrade_result upgrad_res =
+		run_upgrade(config.upgrade, config.do_include, config.do_exclude, config.do_critical, config.upgrade_opts, config.input_filename);
 
 	result = max_state(result, upgrad_res.errorcode);
 	int packages_available = upgrad_res.package_count;
@@ -140,18 +133,18 @@ int main(int argc, char **argv) {
 
 	if (sec_count > 0) {
 		result = max_state(result, STATE_CRITICAL);
-	} else if (packages_available >= packages_warning && only_critical == false) {
+	} else if (packages_available >= config.packages_warning && !config.only_critical) {
 		result = max_state(result, STATE_WARNING);
 	} else if (result > STATE_UNKNOWN) {
 		result = STATE_UNKNOWN;
 	}
 
 	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s|available_upgrades=%d;;;0 critical_updates=%d;;;0\n"),
-		   state_text(result), packages_available, (upgrade == DIST_UPGRADE) ? "dist-upgrade" : "upgrade", sec_count,
+		   state_text(result), packages_available, (config.upgrade == DIST_UPGRADE) ? "dist-upgrade" : "upgrade", sec_count,
 		   (stderr_warning) ? " warnings detected" : "", (stderr_warning && exec_warning) ? "," : "",
 		   (exec_warning) ? " errors detected" : "", (stderr_warning || exec_warning) ? "." : "", packages_available, sec_count);
 
-	if (list) {
+	if (config.list) {
 		qsort(secpackages_list, sec_count, sizeof(char *), cmpstringp);
 		qsort(packages_list, packages_available - sec_count, sizeof(char *), cmpstringp);
 
@@ -159,7 +152,7 @@ int main(int argc, char **argv) {
 			printf("%s (security)\n", secpackages_list[i]);
 		}
 
-		if (only_critical == false) {
+		if (!config.only_critical) {
 			for (int i = 0; i < packages_available - sec_count; i++) {
 				printf("%s\n", packages_list[i]);
 			}
@@ -170,7 +163,7 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_apt_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -179,7 +172,7 @@ int process_arguments(int argc, char **argv) {
 									   {"upgrade", optional_argument, 0, 'U'},
 									   {"no-upgrade", no_argument, 0, 'n'},
 									   {"dist-upgrade", optional_argument, 0, 'd'},
-									   {"list", no_argument, false, 'l'},
+									   {"list", no_argument, 0, 'l'},
 									   {"include", required_argument, 0, 'i'},
 									   {"exclude", required_argument, 0, 'e'},
 									   {"critical", required_argument, 0, 'c'},
@@ -187,6 +180,11 @@ int process_arguments(int argc, char **argv) {
 									   {"input-file", required_argument, 0, INPUT_FILE_OPT},
 									   {"packages-warning", required_argument, 0, 'w'},
 									   {0, 0, 0, 0}};
+
+	check_apt_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_apt_config_init(),
+	};
 
 	while (true) {
 		int option_char = getopt_long(argc, argv, "hVvt:u::U::d::nli:e:c:ow:", longopts, NULL);
@@ -209,55 +207,55 @@ int process_arguments(int argc, char **argv) {
 			timeout_interval = atoi(optarg);
 			break;
 		case 'd':
-			upgrade = DIST_UPGRADE;
+			result.config.upgrade = DIST_UPGRADE;
 			if (optarg != NULL) {
-				upgrade_opts = strdup(optarg);
-				if (upgrade_opts == NULL) {
+				result.config.upgrade_opts = strdup(optarg);
+				if (result.config.upgrade_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
 				}
 			}
 			break;
 		case 'U':
-			upgrade = UPGRADE;
+			result.config.upgrade = UPGRADE;
 			if (optarg != NULL) {
-				upgrade_opts = strdup(optarg);
-				if (upgrade_opts == NULL) {
+				result.config.upgrade_opts = strdup(optarg);
+				if (result.config.upgrade_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
 				}
 			}
 			break;
 		case 'n':
-			upgrade = NO_UPGRADE;
+			result.config.upgrade = NO_UPGRADE;
 			break;
 		case 'u':
-			do_update = true;
+			result.config.do_update = true;
 			if (optarg != NULL) {
-				update_opts = strdup(optarg);
-				if (update_opts == NULL) {
+				result.config.update_opts = strdup(optarg);
+				if (result.config.update_opts == NULL) {
 					die(STATE_UNKNOWN, "strdup failed");
 				}
 			}
 			break;
 		case 'l':
-			list = true;
+			result.config.list = true;
 			break;
 		case 'i':
-			do_include = add_to_regexp(do_include, optarg);
+			result.config.do_include = add_to_regexp(result.config.do_include, optarg);
 			break;
 		case 'e':
-			do_exclude = add_to_regexp(do_exclude, optarg);
+			result.config.do_exclude = add_to_regexp(result.config.do_exclude, optarg);
 			break;
 		case 'c':
-			do_critical = add_to_regexp(do_critical, optarg);
+			result.config.do_critical = add_to_regexp(result.config.do_critical, optarg);
 			break;
 		case 'o':
-			only_critical = true;
+			result.config.only_critical = true;
 			break;
 		case INPUT_FILE_OPT:
-			input_filename = optarg;
+			result.config.input_filename = optarg;
 			break;
 		case 'w':
-			packages_warning = atoi(optarg);
+			result.config.packages_warning = atoi(optarg);
 			break;
 		default:
 			/* print short usage statement if args not parsable */
@@ -265,11 +263,12 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	return OK;
+	return result;
 }
 
 /* run an apt-get upgrade */
-run_upgrade_result run_upgrade(void) {
+run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_include, const char *do_exclude, const char *do_critical,
+							   const char *upgrade_opts, const char *input_filename) {
 	regex_t ereg;
 	/* initialize ereg as it is possible it is printed while uninitialized */
 	memset(&ereg, '\0', sizeof(ereg.buffer));
@@ -332,7 +331,7 @@ run_upgrade_result run_upgrade(void) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
 
-  char **pkglist = malloc(sizeof(char *) * chld_out.lines);
+	char **pkglist = malloc(sizeof(char *) * chld_out.lines);
 	if (!pkglist) {
 		die(STATE_UNKNOWN, "malloc failed!\n");
 	}
@@ -385,7 +384,7 @@ run_upgrade_result run_upgrade(void) {
 
 	/* If we get anything on stderr, at least set warning */
 	if (input_filename == NULL && chld_err.buflen) {
-		stderr_warning = 1;
+		stderr_warning = true;
 		result.errorcode = max_state(result.errorcode, STATE_WARNING);
 		if (verbose) {
 			for (size_t i = 0; i < chld_err.lines; i++) {
@@ -405,7 +404,7 @@ run_upgrade_result run_upgrade(void) {
 }
 
 /* run an apt-get update (needs root) */
-int run_update(void) {
+int run_update(char *update_opts) {
 	int result = STATE_UNKNOWN;
 	char *cmdline;
 	/* run the update */
@@ -418,7 +417,7 @@ int run_update(void) {
 	 * since we were explicitly asked to do so, this is treated as
 	 * a critical error. */
 	if (result != 0) {
-		exec_warning = 1;
+		exec_warning = true;
 		result = STATE_CRITICAL;
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
@@ -446,7 +445,7 @@ int run_update(void) {
 char *pkg_name(char *line) {
 	char *start = line + strlen(PKGINST_PREFIX);
 
-	int len = strlen(start);
+	size_t len = strlen(start);
 
 	char *space = index(start, ' ');
 	if (space != NULL) {
@@ -464,35 +463,37 @@ char *pkg_name(char *line) {
 	return pkg;
 }
 
-int cmpstringp(const void *p1, const void *p2) { return strcmp(*(char *const *)p1, *(char *const *)p2); }
+int cmpstringp(const void *left_string, const void *right_string) {
+	return strcmp(*(char *const *)left_string, *(char *const *)right_string);
+}
 
 char *add_to_regexp(char *expr, const char *next) {
-	char *re = NULL;
+	char *regex_string = NULL;
 
 	if (expr == NULL) {
-		re = malloc(sizeof(char) * (strlen("()") + strlen(next) + 1));
-		if (!re) {
+		regex_string = malloc(sizeof(char) * (strlen("()") + strlen(next) + 1));
+		if (!regex_string) {
 			die(STATE_UNKNOWN, "malloc failed!\n");
 		}
-		sprintf(re, "(%s)", next);
+		sprintf(regex_string, "(%s)", next);
 	} else {
 		/* resize it, adding an extra char for the new '|' separator */
-		re = realloc(expr, sizeof(char) * (strlen(expr) + 1 + strlen(next) + 1));
-		if (!re) {
+		regex_string = realloc(expr, sizeof(char) * (strlen(expr) + 1 + strlen(next) + 1));
+		if (!regex_string) {
 			die(STATE_UNKNOWN, "realloc failed!\n");
 		}
 		/* append it starting at ')' in the old re */
-		sprintf((char *)(re + strlen(re) - 1), "|%s)", next);
+		sprintf((char *)(regex_string + strlen(regex_string) - 1), "|%s)", next);
 	}
 
-	return re;
+	return regex_string;
 }
 
-char *construct_cmdline(upgrade_type u, const char *opts) {
+char *construct_cmdline(upgrade_type upgrade, const char *opts) {
 	const char *opts_ptr = NULL;
 	const char *aptcmd = NULL;
 
-	switch (u) {
+	switch (upgrade) {
 	case UPGRADE:
 		if (opts == NULL) {
 			opts_ptr = UPGRADE_DEFAULT_OPTS;
