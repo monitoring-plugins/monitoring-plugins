@@ -29,35 +29,18 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 #include "utils_base.h"
-
-enum {
-	CHECK_SERVICES = 1,
-	CHECK_HOSTS = 2
-};
+#include "check_cluster.d/config.h"
 
 static void print_help(void);
 void print_usage(void);
 
-static int total_services_ok = 0;
-static int total_services_warning = 0;
-static int total_services_unknown = 0;
-static int total_services_critical = 0;
-
-static int total_hosts_up = 0;
-static int total_hosts_down = 0;
-static int total_hosts_unreachable = 0;
-
-static char *warn_threshold;
-static char *crit_threshold;
-
-static int check_type = CHECK_SERVICES;
-
-static char *data_vals = NULL;
-static char *label = NULL;
-
 static int verbose = 0;
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+typedef struct {
+	int errorcode;
+	check_cluster_config config;
+} check_cluster_config_wrapper;
+static check_cluster_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -67,24 +50,32 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_cluster_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage(_("Could not parse arguments"));
 	}
 
-	thresholds *thresholds = NULL;
+	const check_cluster_config config = tmp_config.config;
+
 	/* Initialize the thresholds */
-	set_thresholds(&thresholds, warn_threshold, crit_threshold);
 	if (verbose) {
-		print_thresholds("check_cluster", thresholds);
+		print_thresholds("check_cluster", config.thresholds);
 	}
 
 	int data_val;
+	int total_services_ok = 0;
+	int total_services_warning = 0;
+	int total_services_unknown = 0;
+	int total_services_critical = 0;
+	int total_hosts_up = 0;
+	int total_hosts_down = 0;
+	int total_hosts_unreachable = 0;
 	/* check the data values */
-	for (char *ptr = strtok(data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
+	for (char *ptr = strtok(config.data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
 
 		data_val = atoi(ptr);
 
-		if (check_type == CHECK_SERVICES) {
+		if (config.check_type == CHECK_SERVICES) {
 			switch (data_val) {
 			case 0:
 				total_services_ok++;
@@ -120,33 +111,41 @@ int main(int argc, char **argv) {
 
 	int return_code = STATE_OK;
 	/* return the status of the cluster */
-	if (check_type == CHECK_SERVICES) {
-		return_code = get_status(total_services_warning + total_services_unknown + total_services_critical, thresholds);
+	if (config.check_type == CHECK_SERVICES) {
+		return_code = get_status(total_services_warning + total_services_unknown + total_services_critical, config.thresholds);
 		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n", state_text(return_code),
-			   (label == NULL) ? "Service cluster" : label, total_services_ok, total_services_warning, total_services_unknown,
+			   (config.label == NULL) ? "Service cluster" : config.label, total_services_ok, total_services_warning, total_services_unknown,
 			   total_services_critical);
 	} else {
-		return_code = get_status(total_hosts_down + total_hosts_unreachable, thresholds);
-		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n", state_text(return_code), (label == NULL) ? "Host cluster" : label,
-			   total_hosts_up, total_hosts_down, total_hosts_unreachable);
+		return_code = get_status(total_hosts_down + total_hosts_unreachable, config.thresholds);
+		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n", state_text(return_code),
+			   (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up, total_hosts_down, total_hosts_unreachable);
 	}
 
 	exit(return_code);
 }
 
-int process_arguments(int argc, char **argv) {
+check_cluster_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"data", required_argument, 0, 'd'},     {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'}, {"label", required_argument, 0, 'l'},
 									   {"host", no_argument, 0, 'h'},           {"service", no_argument, 0, 's'},
 									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'H'},           {0, 0, 0, 0}};
 
+	check_cluster_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_cluster_config_init(),
+	};
+
 	/* no options were supplied */
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	int option = 0;
+	char *warn_threshold = NULL;
+	char *crit_threshold = NULL;
 	while (true) {
 		int option_index = getopt_long(argc, argv, "hHsvVw:c:d:l:", longopts, &option);
 
@@ -156,10 +155,10 @@ int process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case 'h': /* host cluster */
-			check_type = CHECK_HOSTS;
+			result.config.check_type = CHECK_HOSTS;
 			break;
 		case 's': /* service cluster */
-			check_type = CHECK_SERVICES;
+			result.config.check_type = CHECK_SERVICES;
 			break;
 		case 'w': /* warning threshold */
 			warn_threshold = strdup(optarg);
@@ -168,22 +167,24 @@ int process_arguments(int argc, char **argv) {
 			crit_threshold = strdup(optarg);
 			break;
 		case 'd': /* data values */
-			data_vals = strdup(optarg);
+			result.config.data_vals = strdup(optarg);
 			/* validate data */
-			for (char *ptr = data_vals; ptr != NULL; ptr += 2) {
+			for (char *ptr = result.config.data_vals; ptr != NULL; ptr += 2) {
 				if (ptr[0] < '0' || ptr[0] > '3') {
-					return ERROR;
+					result.errorcode = ERROR;
+					return result;
 				}
 				if (ptr[1] == '\0') {
 					break;
 				}
 				if (ptr[1] != ',') {
-					return ERROR;
+					result.errorcode = ERROR;
+					return result;
 				}
 			}
 			break;
 		case 'l': /* text label */
-			label = strdup(optarg);
+			result.config.label = strdup(optarg);
 			break;
 		case 'v': /* verbose */
 			verbose++;
@@ -197,16 +198,19 @@ int process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		default:
-			return ERROR;
+			result.errorcode = ERROR;
+			return result;
 			break;
 		}
 	}
 
-	if (data_vals == NULL) {
-		return ERROR;
+	if (result.config.data_vals == NULL) {
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	return OK;
+	set_thresholds(&result.config.thresholds, warn_threshold, crit_threshold);
+	return result;
 }
 
 void print_help(void) {
