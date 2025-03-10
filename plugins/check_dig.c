@@ -41,97 +41,93 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "runcmd.h"
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
+#include "check_dig.d/config.h"
+#include "states.h"
+
+typedef struct {
+	int errorcode;
+	check_dig_config config;
+} check_dig_config_wrapper;
+static check_dig_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_dig_config_wrapper validate_arguments(check_dig_config_wrapper /*config_wrapper*/);
+
 static void print_help(void);
 void print_usage(void);
 
-#define UNDEFINED     0
-#define DEFAULT_PORT  53
-#define DEFAULT_TRIES 2
-
-static char *query_address = NULL;
-static char *record_type = "A";
-static char *expected_address = NULL;
-static char *dns_server = NULL;
-static char *dig_args = "";
-static char *query_transport = "";
-static bool verbose = false;
-static int server_port = DEFAULT_PORT;
-static int number_tries = DEFAULT_TRIES;
-static double warning_interval = UNDEFINED;
-static double critical_interval = UNDEFINED;
-static struct timeval tv;
+static int verbose = 0;
 
 int main(int argc, char **argv) {
-	char *command_line;
-	output chld_out;
-	output chld_err;
-	char *msg = NULL;
-	size_t i;
-	char *t;
-	long microsec;
-	double elapsed_time;
-	int result = STATE_UNKNOWN;
-	int timeout_interval_dig;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR)
+	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
 		usage_va(_("Cannot catch SIGALRM"));
+	}
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_dig_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage_va(_("Could not parse arguments"));
+	}
+
+	const check_dig_config config = tmp_config.config;
 
 	/* dig applies the timeout to each try, so we need to work around this */
-	timeout_interval_dig = timeout_interval / number_tries + number_tries;
+	int timeout_interval_dig = ((int)timeout_interval / config.number_tries) + config.number_tries;
 
+	char *command_line;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG, dig_args, query_transport, server_port, dns_server,
-			  query_address, record_type, number_tries, timeout_interval_dig);
+	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG, config.dig_args, config.query_transport,
+			  config.server_port, config.dns_server, config.query_address, config.record_type, config.number_tries, timeout_interval_dig);
 
 	alarm(timeout_interval);
-	gettimeofday(&tv, NULL);
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
 
 	if (verbose) {
 		printf("%s\n", command_line);
-		if (expected_address != NULL) {
-			printf(_("Looking for: '%s'\n"), expected_address);
+		if (config.expected_address != NULL) {
+			printf(_("Looking for: '%s'\n"), config.expected_address);
 		} else {
-			printf(_("Looking for: '%s'\n"), query_address);
+			printf(_("Looking for: '%s'\n"), config.query_address);
 		}
 	}
 
+	output chld_out;
+	output chld_err;
+	char *msg = NULL;
+	mp_state_enum result = STATE_UNKNOWN;
 	/* run the command */
 	if (np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
 		result = STATE_WARNING;
 		msg = (char *)_("dig returned an error status");
 	}
 
-	for (i = 0; i < chld_out.lines; i++) {
+	for (size_t i = 0; i < chld_out.lines; i++) {
 		/* the server is responding, we just got the host name... */
 		if (strstr(chld_out.line[i], ";; ANSWER SECTION:")) {
 
 			/* loop through the whole 'ANSWER SECTION' */
 			for (; i < chld_out.lines; i++) {
 				/* get the host address */
-				if (verbose)
+				if (verbose) {
 					printf("%s\n", chld_out.line[i]);
+				}
 
-				if (strcasestr(chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
+				if (strcasestr(chld_out.line[i], (config.expected_address == NULL ? config.query_address : config.expected_address)) !=
+					NULL) {
 					msg = chld_out.line[i];
 					result = STATE_OK;
 
 					/* Translate output TAB -> SPACE */
-					t = msg;
-					while ((t = strchr(t, '\t')) != NULL)
-						*t = ' ';
+					char *temp = msg;
+					while ((temp = strchr(temp, '\t')) != NULL) {
+						*temp = ' ';
+					}
 					break;
 				}
 			}
@@ -154,37 +150,37 @@ int main(int argc, char **argv) {
 	/* If we get anything on STDERR, at least set warning */
 	if (chld_err.buflen > 0) {
 		result = max_state(result, STATE_WARNING);
-		if (!msg)
-			for (i = 0; i < chld_err.lines; i++) {
+		if (!msg) {
+			for (size_t i = 0; i < chld_err.lines; i++) {
 				msg = strchr(chld_err.line[0], ':');
 				if (msg) {
 					msg++;
 					break;
 				}
 			}
+		}
 	}
 
-	microsec = deltime(tv);
-	elapsed_time = (double)microsec / 1.0e6;
+	long microsec = deltime(start_time);
+	double elapsed_time = (double)microsec / 1.0e6;
 
-	if (critical_interval > UNDEFINED && elapsed_time > critical_interval)
+	if (config.critical_interval > UNDEFINED && elapsed_time > config.critical_interval) {
 		result = STATE_CRITICAL;
+	}
 
-	else if (warning_interval > UNDEFINED && elapsed_time > warning_interval)
+	else if (config.warning_interval > UNDEFINED && elapsed_time > config.warning_interval) {
 		result = STATE_WARNING;
+	}
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
-		   fperfdata("time", elapsed_time, "s", (warning_interval > UNDEFINED ? true : false), warning_interval,
-					 (critical_interval > UNDEFINED ? true : false), critical_interval, true, 0, false, 0));
-	return result;
+		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED), config.warning_interval,
+					 (config.critical_interval > UNDEFINED), config.critical_interval, true, 0, false, 0));
+	exit(result);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
+check_dig_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"query_address", required_argument, 0, 'l'},
 									   {"warning", required_argument, 0, 'w'},
@@ -201,16 +197,25 @@ int process_arguments(int argc, char **argv) {
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
-		return ERROR;
+	check_dig_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_dig_config_init(),
+	};
 
-	while (1) {
-		c = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:46", longopts, &option);
+	if (argc < 2) {
+		result.errorcode = ERROR;
+		return result;
+	}
 
-		if (c == -1 || c == EOF)
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:46", longopts, &option);
+
+		if (option_index == -1 || option_index == EOF) {
 			break;
+		}
 
-		switch (c) {
+		switch (option_index) {
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -219,28 +224,28 @@ int process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
 			host_or_die(optarg);
-			dns_server = optarg;
+			result.config.dns_server = optarg;
 			break;
 		case 'p': /* server port */
 			if (is_intpos(optarg)) {
-				server_port = atoi(optarg);
+				result.config.server_port = atoi(optarg);
 			} else {
 				usage_va(_("Port must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'l': /* address to lookup */
-			query_address = optarg;
+			result.config.query_address = optarg;
 			break;
 		case 'w': /* warning */
 			if (is_nonnegative(optarg)) {
-				warning_interval = strtod(optarg, NULL);
+				result.config.warning_interval = strtod(optarg, NULL);
 			} else {
 				usage_va(_("Warning interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'c': /* critical */
 			if (is_nonnegative(optarg)) {
-				critical_interval = strtod(optarg, NULL);
+				result.config.critical_interval = strtod(optarg, NULL);
 			} else {
 				usage_va(_("Critical interval must be a positive integer - %s"), optarg);
 			}
@@ -253,48 +258,50 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'A': /* dig arguments */
-			dig_args = strdup(optarg);
+			result.config.dig_args = strdup(optarg);
 			break;
 		case 'v': /* verbose */
-			verbose = true;
+			verbose++;
 			break;
 		case 'T':
-			record_type = optarg;
+			result.config.record_type = optarg;
 			break;
 		case 'a':
-			expected_address = optarg;
+			result.config.expected_address = optarg;
 			break;
 		case '4':
-			query_transport = "-4";
+			result.config.query_transport = "-4";
 			break;
 		case '6':
-			query_transport = "-6";
+			result.config.query_transport = "-6";
 			break;
 		default: /* usage5 */
 			usage5();
 		}
 	}
 
-	c = optind;
-	if (dns_server == NULL) {
-		if (c < argc) {
-			host_or_die(argv[c]);
-			dns_server = argv[c];
+	int index = optind;
+	if (result.config.dns_server == NULL) {
+		if (index < argc) {
+			host_or_die(argv[index]);
+			result.config.dns_server = argv[index];
 		} else {
-			if (strcmp(query_transport, "-6") == 0)
-				dns_server = strdup("::1");
-			else
-				dns_server = strdup("127.0.0.1");
+			if (strcmp(result.config.query_transport, "-6") == 0) {
+				result.config.dns_server = strdup("::1");
+			} else {
+				result.config.dns_server = strdup("127.0.0.1");
+			}
 		}
 	}
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-int validate_arguments(void) {
-	if (query_address != NULL)
-		return OK;
-	return ERROR;
+check_dig_config_wrapper validate_arguments(check_dig_config_wrapper config_wrapper) {
+	if (config_wrapper.config.query_address == NULL) {
+		config_wrapper.errorcode = ERROR;
+	}
+	return config_wrapper;
 }
 
 void print_help(void) {
