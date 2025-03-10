@@ -33,7 +33,6 @@ check_apt_config check_apt_config_init() {
 							.list = false,
 							.packages_warning = 1,
 							.update_opts = NULL,
-							.update_opts = NULL,
 							.do_include = NULL,
 							.do_exclude = NULL,
 							.do_critical = NULL,
