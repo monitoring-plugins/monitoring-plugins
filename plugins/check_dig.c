@@ -80,14 +80,16 @@ int main(int argc, char **argv) {
 	textdomain(PACKAGE);
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR)
+	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
 		usage_va(_("Cannot catch SIGALRM"));
+	}
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage_va(_("Could not parse arguments"));
+	}
 
 	/* dig applies the timeout to each try, so we need to work around this */
 	timeout_interval_dig = timeout_interval / number_tries + number_tries;
@@ -121,8 +123,9 @@ int main(int argc, char **argv) {
 			/* loop through the whole 'ANSWER SECTION' */
 			for (; i < chld_out.lines; i++) {
 				/* get the host address */
-				if (verbose)
+				if (verbose) {
 					printf("%s\n", chld_out.line[i]);
+				}
 
 				if (strcasestr(chld_out.line[i], (expected_address == NULL ? query_address : expected_address)) != NULL) {
 					msg = chld_out.line[i];
@@ -130,8 +133,9 @@ int main(int argc, char **argv) {
 
 					/* Translate output TAB -> SPACE */
 					t = msg;
-					while ((t = strchr(t, '\t')) != NULL)
+					while ((t = strchr(t, '\t')) != NULL) {
 						*t = ' ';
+					}
 					break;
 				}
 			}
@@ -154,7 +158,7 @@ int main(int argc, char **argv) {
 	/* If we get anything on STDERR, at least set warning */
 	if (chld_err.buflen > 0) {
 		result = max_state(result, STATE_WARNING);
-		if (!msg)
+		if (!msg) {
 			for (i = 0; i < chld_err.lines; i++) {
 				msg = strchr(chld_err.line[0], ':');
 				if (msg) {
@@ -162,16 +166,19 @@ int main(int argc, char **argv) {
 					break;
 				}
 			}
+		}
 	}
 
 	microsec = deltime(tv);
 	elapsed_time = (double)microsec / 1.0e6;
 
-	if (critical_interval > UNDEFINED && elapsed_time > critical_interval)
+	if (critical_interval > UNDEFINED && elapsed_time > critical_interval) {
 		result = STATE_CRITICAL;
+	}
 
-	else if (warning_interval > UNDEFINED && elapsed_time > warning_interval)
+	else if (warning_interval > UNDEFINED && elapsed_time > warning_interval) {
 		result = STATE_WARNING;
+	}
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
@@ -201,14 +208,16 @@ int process_arguments(int argc, char **argv) {
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:46", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 'h': /* help */
@@ -281,10 +290,11 @@ int process_arguments(int argc, char **argv) {
 			host_or_die(argv[c]);
 			dns_server = argv[c];
 		} else {
-			if (strcmp(query_transport, "-6") == 0)
+			if (strcmp(query_transport, "-6") == 0) {
 				dns_server = strdup("::1");
-			else
+			} else {
 				dns_server = strdup("127.0.0.1");
+			}
 		}
 	}
 
@@ -292,8 +302,9 @@ int process_arguments(int argc, char **argv) {
 }
 
 int validate_arguments(void) {
-	if (query_address != NULL)
+	if (query_address != NULL) {
 		return OK;
+	}
 	return ERROR;
 }
 
