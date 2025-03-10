@@ -423,7 +423,7 @@ int main(int argc, char **argv) {
 						break;
 					}
 					break;
-				} while (0);
+				} while (false);
 			} else {
 				result = STATE_CRITICAL;
 				xasprintf(&error_msg, _("only authtype LOGIN is supported, "));
@@ -462,7 +462,7 @@ int main(int argc, char **argv) {
 /* process command-line arguments */
 check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
-		SNI_OPTION
+		SNI_OPTION = CHAR_MAX + 1
 	};
 
 	int option = 0;
