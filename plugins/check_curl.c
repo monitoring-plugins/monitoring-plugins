@@ -32,8 +32,8 @@
  *
  *
  *****************************************************************************/
-const char *progname = "check_curl";
 
+const char *progname = "check_curl";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
@@ -63,7 +63,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <netdb.h>
 
-#define MAKE_LIBCURL_VERSION(major, minor, patch) ((major)*0x10000 + (minor)*0x100 + (patch))
+#define MAKE_LIBCURL_VERSION(major, minor, patch) ((major) * 0x10000 + (minor) * 0x100 + (patch))
 
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL  "/"
@@ -275,12 +275,14 @@ int main(int argc, char **argv) {
 	snprintf(user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)", progname, NP_VERSION, VERSION, curl_version());
 
 	/* parse arguments */
-	if (process_arguments(argc, argv) == false)
+	if (process_arguments(argc, argv) == false) {
 		usage4(_("Could not parse arguments"));
+	}
 
-	if (display_html)
+	if (display_html) {
 		printf("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">", use_ssl ? "https" : "http", host_name ? host_name : server_address,
 			   virtual_port ? virtual_port : server_port, server_url);
+	}
 
 	result = check_http();
 	return result;
@@ -361,14 +363,16 @@ static int expected_statuscode(const char *reply, const char *statuscodes) {
 	char *code;
 	int result = 0;
 
-	if ((expected = strdup(statuscodes)) == NULL)
+	if ((expected = strdup(statuscodes)) == NULL) {
 		die(STATE_UNKNOWN, _("HTTP UNKNOWN - Memory allocation error\n"));
+	}
 
-	for (code = strtok(expected, ","); code != NULL; code = strtok(NULL, ","))
+	for (code = strtok(expected, ","); code != NULL; code = strtok(NULL, ",")) {
 		if (strstr(reply, code) != NULL) {
 			result = 1;
 			break;
 		}
+	}
 
 	free(expected);
 	return result;
@@ -396,8 +400,9 @@ int lookup_host(const char *host, char *buf, size_t buflen) {
 	hints.ai_flags |= AI_CANONNAME;
 
 	errcode = getaddrinfo(host, NULL, &hints, &result);
-	if (errcode != 0)
+	if (errcode != 0) {
 		return errcode;
+	}
 
 	strcpy(buf, "");
 	res = result;
@@ -437,23 +442,29 @@ int lookup_host(const char *host, char *buf, size_t buflen) {
 }
 
 static void cleanup(void) {
-	if (status_line_initialized)
+	if (status_line_initialized) {
 		curlhelp_free_statusline(&status_line);
+	}
 	status_line_initialized = false;
-	if (curl_easy_initialized)
+	if (curl_easy_initialized) {
 		curl_easy_cleanup(curl);
+	}
 	curl_easy_initialized = false;
-	if (curl_global_initialized)
+	if (curl_global_initialized) {
 		curl_global_cleanup();
+	}
 	curl_global_initialized = false;
-	if (body_buf_initialized)
+	if (body_buf_initialized) {
 		curlhelp_freewritebuffer(&body_buf);
+	}
 	body_buf_initialized = false;
-	if (header_buf_initialized)
+	if (header_buf_initialized) {
 		curlhelp_freewritebuffer(&header_buf);
+	}
 	header_buf_initialized = false;
-	if (put_buf_initialized)
+	if (put_buf_initialized) {
 		curlhelp_freereadbuffer(&put_buf);
+	}
 	put_buf_initialized = false;
 }
 
@@ -468,8 +479,9 @@ int check_http(void) {
 	char dnscache[DEFAULT_BUFFER_SIZE];
 
 	/* initialize curl */
-	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
+	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
 		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
+	}
 	curl_global_initialized = true;
 
 	if ((curl = curl_easy_init()) == NULL) {
@@ -480,8 +492,9 @@ int check_http(void) {
 	/* register cleanup function to shut down libcurl properly */
 	atexit(cleanup);
 
-	if (verbose >= 1)
+	if (verbose >= 1) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), "CURLOPT_VERBOSE");
+	}
 
 	/* print everything on stdout like check_http would do */
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_STDERR, stdout), "CURLOPT_STDERR");
@@ -494,16 +507,18 @@ int check_http(void) {
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
 
 	/* initialize buffer for body of the answer */
-	if (curlhelp_initwritebuffer(&body_buf) < 0)
+	if (curlhelp_initwritebuffer(&body_buf) < 0) {
 		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
+	}
 	body_buf_initialized = true;
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback),
 								   "CURLOPT_WRITEFUNCTION");
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&body_buf), "CURLOPT_WRITEDATA");
 
 	/* initialize buffer for header of the answer */
-	if (curlhelp_initwritebuffer(&header_buf) < 0)
+	if (curlhelp_initwritebuffer(&header_buf) < 0) {
 		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n");
+	}
 	header_buf_initialized = true;
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, (curl_write_callback)curlhelp_buffer_write_callback),
 								   "CURLOPT_HEADERFUNCTION");
@@ -532,8 +547,9 @@ int check_http(void) {
 		snprintf(dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", host_name, server_port, addrstr);
 		host = curl_slist_append(NULL, dnscache);
 		curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
-		if (verbose >= 1)
+		if (verbose >= 1) {
 			printf("* curl CURLOPT_RESOLVE: %s\n", dnscache);
+		}
 	}
 
 	// If server_address is an IPv6 address it must be surround by square brackets
@@ -552,16 +568,18 @@ int check_http(void) {
 	snprintf(url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", use_ssl ? "https" : "http",
 			 (use_ssl & (host_name != NULL)) ? host_name : server_address, server_port, server_url);
 
-	if (verbose >= 1)
+	if (verbose >= 1) {
 		printf("* curl CURLOPT_URL: %s\n", url);
+	}
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_URL, url), "CURLOPT_URL");
 
 	/* extract proxy information for legacy proxy https requests */
 	if (!strcmp(http_method, "CONNECT") || strstr(server_url, "http") == server_url) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_PROXY, server_address), "CURLOPT_PROXY");
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_PROXYPORT, (long)server_port), "CURLOPT_PROXYPORT");
-		if (verbose >= 2)
+		if (verbose >= 2) {
 			printf("* curl CURLOPT_PROXY: %s:%d\n", server_address, server_port);
+		}
 		http_method = "GET";
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_URL, server_url), "CURLOPT_URL");
 	}
@@ -576,12 +594,13 @@ int check_http(void) {
 
 	/* set HTTP method */
 	if (http_method) {
-		if (!strcmp(http_method, "POST"))
+		if (!strcmp(http_method, "POST")) {
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_POST, 1), "CURLOPT_POST");
-		else if (!strcmp(http_method, "PUT"))
+		} else if (!strcmp(http_method, "PUT")) {
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_UPLOAD, 1), "CURLOPT_UPLOAD");
-		else
+		} else {
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, http_method), "CURLOPT_CUSTOMREQUEST");
+		}
 	}
 
 	/* check if Host header is explicitly set in options */
@@ -629,10 +648,12 @@ int check_http(void) {
 	}
 
 	/* client certificate and key to present to server (SSL) */
-	if (client_cert)
+	if (client_cert) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_SSLCERT, client_cert), "CURLOPT_SSLCERT");
-	if (client_privkey)
+	}
+	if (client_privkey) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_SSLKEY, client_privkey), "CURLOPT_SSLKEY");
+	}
 	if (ca_cert) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_CAINFO, ca_cert), "CURLOPT_CAINFO");
 	}
@@ -700,18 +721,20 @@ int check_http(void) {
 		}
 #	else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
 		/* old libcurl, our only hope is OpenSSL, otherwise we are out of luck */
-		if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL || ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL)
+		if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL || ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL) {
 			add_sslctx_verify_fun = true;
-		else
+		} else {
 			die(STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl "
 								"too old and has no CURLOPT_CERTINFO)\n");
+		}
 #	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
 	}
 
 #	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 10, 6) /* required for CURLOPT_SSL_CTX_FUNCTION */
 	// ssl ctx function is not available with all ssl backends
-	if (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, NULL) != CURLE_UNKNOWN_OPTION)
+	if (curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, NULL) != CURLE_UNKNOWN_OPTION) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun), "CURLOPT_SSL_CTX_FUNCTION");
+	}
 #	endif
 
 #endif /* LIBCURL_FEATURE_SSL */
@@ -720,12 +743,14 @@ int check_http(void) {
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent), "CURLOPT_USERAGENT");
 
 	/* proxy-authentication */
-	if (strcmp(proxy_auth, ""))
+	if (strcmp(proxy_auth, "")) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, proxy_auth), "CURLOPT_PROXYUSERPWD");
+	}
 
 	/* authentication */
-	if (strcmp(user_auth, ""))
+	if (strcmp(user_auth, "")) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_USERPWD, user_auth), "CURLOPT_USERPWD");
+	}
 
 	/* TODO: parameter auth method, bitfield of following methods:
 	 * CURLAUTH_BASIC (default)
@@ -774,20 +799,23 @@ int check_http(void) {
 	}
 
 	/* no-body */
-	if (no_body)
+	if (no_body) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_NOBODY, 1), "CURLOPT_NOBODY");
+	}
 
 	/* IPv4 or IPv6 forced DNS resolution */
-	if (address_family == AF_UNSPEC)
+	if (address_family == AF_UNSPEC) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER),
 									   "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
-	else if (address_family == AF_INET)
+	} else if (address_family == AF_INET) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4),
 									   "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
+	}
 #if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
-	else if (address_family == AF_INET6)
+	else if (address_family == AF_INET6) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
 									   "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
+	}
 #endif
 
 	/* either send http POST data (any data, not only POST)*/
@@ -799,16 +827,18 @@ int check_http(void) {
 		}
 		/* NULL indicates "HTTP Continue" in libcurl, provide an empty string
 		 * in case of no POST/PUT data */
-		if (!http_post_data)
+		if (!http_post_data) {
 			http_post_data = "";
+		}
 		if (!strcmp(http_method, "POST")) {
 			/* POST method, set payload with CURLOPT_POSTFIELDS */
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_POSTFIELDS, http_post_data), "CURLOPT_POSTFIELDS");
 		} else if (!strcmp(http_method, "PUT")) {
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_READFUNCTION, (curl_read_callback)curlhelp_buffer_read_callback),
 										   "CURLOPT_READFUNCTION");
-			if (curlhelp_initreadbuffer(&put_buf, http_post_data, strlen(http_post_data)) < 0)
+			if (curlhelp_initreadbuffer(&put_buf, http_post_data, strlen(http_post_data)) < 0) {
 				die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating read buffer for PUT\n");
+			}
 			put_buf_initialized = true;
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_READDATA, (void *)&put_buf), "CURLOPT_READDATA");
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_INFILESIZE, (curl_off_t)strlen(http_post_data)),
@@ -821,15 +851,17 @@ int check_http(void) {
 		/* enable reading cookies from a file, and if the filename is an empty string, only enable the curl cookie engine */
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookie_jar_file), "CURLOPT_COOKIEFILE");
 		/* now enable saving cookies to a file, but only if the filename is not an empty string, since writing it would fail */
-		if (*cookie_jar_file)
+		if (*cookie_jar_file) {
 			handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookie_jar_file), "CURLOPT_COOKIEJAR");
+		}
 	}
 
 	/* do the request */
 	res = curl_easy_perform(curl);
 
-	if (verbose >= 2 && http_post_data)
+	if (verbose >= 2 && http_post_data) {
 		printf("**** REQUEST CONTENT ****\n%s\n", http_post_data);
+	}
 
 	/* free header and server IP resolve lists, we don't need it anymore */
 	curl_slist_free_all(header_list);
@@ -879,8 +911,9 @@ int check_http(void) {
 					const char *raw_cert = NULL;
 					for (i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
 						for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
-							if (verbose >= 2)
+							if (verbose >= 2) {
 								printf("%d ** %s\n", i, slist->data);
+							}
 							if (strncmp(slist->data, "Cert:", 5) == 0) {
 								raw_cert = &slist->data[5];
 								goto GOT_FIRST_CERT;
@@ -944,8 +977,9 @@ int check_http(void) {
 	}
 
 	/* return a CRITICAL status if we couldn't read any data */
-	if (strlen(header_buf.buf) == 0 && strlen(body_buf.buf) == 0)
+	if (strlen(header_buf.buf) == 0 && strlen(body_buf.buf) == 0) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - No header received from host\n"));
+	}
 
 	/* get status line of answer, check sanity of HTTP code */
 	if (curlhelp_parse_statusline(header_buf.buf, &status_line) < 0) {
@@ -957,8 +991,9 @@ int check_http(void) {
 
 	/* get result code from cURL */
 	handle_curl_option_return_code(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code), "CURLINFO_RESPONSE_CODE");
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf("* curl CURLINFO_RESPONSE_CODE is %ld\n", code);
+	}
 
 	/* print status line, header, body if verbose */
 	if (verbose >= 2) {
@@ -967,18 +1002,20 @@ int check_http(void) {
 
 	/* make sure the status line matches the response we are looking for */
 	if (!expected_statuscode(status_line.first_line, server_expect)) {
-		if (server_port == HTTP_PORT)
+		if (server_port == HTTP_PORT) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"), status_line.first_line);
-		else
+		} else {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host on port %d: %s\n"), server_port,
 					 status_line.first_line);
+		}
 		die(STATE_CRITICAL, "HTTP CRITICAL - %s%s%s", msg, show_body ? "\n" : "", show_body ? body_buf.buf : "");
 	}
 
 	if (server_expect_yn) {
 		snprintf(msg, DEFAULT_BUFFER_SIZE, _("Status line output matched \"%s\" - "), server_expect);
-		if (verbose)
+		if (verbose) {
 			printf("%s\n", msg);
+		}
 		result = STATE_OK;
 	} else {
 		/* illegal return codes result in a critical state */
@@ -1017,8 +1054,9 @@ int check_http(void) {
 	/* libcurl redirection internally, handle error states here */
 	if (followmethod == FOLLOW_LIBCURL) {
 		handle_curl_option_return_code(curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT, &redir_depth), "CURLINFO_REDIRECT_COUNT");
-		if (verbose >= 2)
+		if (verbose >= 2) {
 			printf(_("* curl LIBINFO_REDIRECT_COUNT is %d\n"), redir_depth);
+		}
 		if (redir_depth > max_depth) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, "maximum redirection depth %d exceeded in libcurl", max_depth);
 			die(STATE_WARNING, "HTTP WARNING - %s", msg);
@@ -1130,10 +1168,11 @@ int check_http(void) {
 
 	/* Cut-off trailing characters */
 	if (strlen(msg) >= 2) {
-		if (msg[strlen(msg) - 2] == ',')
+		if (msg[strlen(msg) - 2] == ',') {
 			msg[strlen(msg) - 2] = '\0';
-		else
+		} else {
 			msg[strlen(msg) - 3] = '\0';
+		}
 	}
 
 	/* TODO: separate _() msg and status code: die (result, "HTTP %s: %s\n", state_text(result), msg); */
@@ -1146,16 +1185,19 @@ int check_http(void) {
 }
 
 int uri_strcmp(const UriTextRangeA range, const char *s) {
-	if (!range.first)
+	if (!range.first) {
 		return -1;
-	if ((size_t)(range.afterLast - range.first) < strlen(s))
+	}
+	if ((size_t)(range.afterLast - range.first) < strlen(s)) {
 		return -1;
+	}
 	return strncmp(s, range.first, min((size_t)(range.afterLast - range.first), strlen(s)));
 }
 
 char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
-	if (!range.first)
+	if (!range.first) {
 		return "(null)";
+	}
 	strncpy(buf, range.first, max(buflen - 1, (size_t)(range.afterLast - range.first)));
 	buf[max(buflen - 1, (size_t)(range.afterLast - range.first))] = '\0';
 	buf[range.afterLast - range.first] = '\0';
@@ -1183,12 +1225,14 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 
 	location = get_header_value(headers, nof_headers, "location");
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf(_("* Seen redirect location %s\n"), location);
+	}
 
-	if (++redir_depth > max_depth)
+	if (++redir_depth > max_depth) {
 		die(STATE_WARNING, _("HTTP WARNING - maximum redirection depth %d exceeded - %s%s\n"), max_depth, location,
 			(display_html ? "</A>" : ""));
+	}
 
 	UriParserStateA state;
 	UriUriA uri;
@@ -1230,10 +1274,11 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 	}
 
 	if (uri.scheme.first) {
-		if (!uri_strcmp(uri.scheme, "https"))
+		if (!uri_strcmp(uri.scheme, "https")) {
 			use_ssl = true;
-		else
+		} else {
 			use_ssl = false;
+		}
 	}
 
 	/* we do a sloppy test here only, because uriparser would have failed
@@ -1243,11 +1288,13 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 		new_port = atoi(uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE));
 	} else {
 		new_port = HTTP_PORT;
-		if (use_ssl)
+		if (use_ssl) {
 			new_port = HTTPS_PORT;
+		}
 	}
-	if (new_port > MAX_PORT)
+	if (new_port > MAX_PORT) {
 		die(STATE_UNKNOWN, _("HTTP UNKNOWN - Redirection to port above %d - %s%s\n"), MAX_PORT, location, display_html ? "</A>" : "");
+	}
 
 	/* by RFC 7231 relative URLs in Location should be taken relative to
 	 * the original URL, so we try to form a new absolute URL here
@@ -1255,8 +1302,9 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 	if (!uri.scheme.first && !uri.hostText.first) {
 		new_host = strdup(host_name ? host_name : server_address);
 		new_port = server_port;
-		if (use_ssl)
+		if (use_ssl) {
 			uri_string(uri.scheme, "https", DEFAULT_BUFFER_SIZE);
+		}
 	} else {
 		new_host = strdup(uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE));
 	}
@@ -1273,9 +1321,10 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 	}
 
 	if (server_port == new_port && !strncmp(server_address, new_host, MAX_IPV4_HOSTLENGTH) &&
-		(host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) && !strcmp(server_url, new_url))
+		(host_name && !strncmp(host_name, new_host, MAX_IPV4_HOSTLENGTH)) && !strcmp(server_url, new_url)) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"), use_ssl ? "https" : "http",
 			new_host, new_port, new_url, (display_html ? "</A>" : ""));
+	}
 
 	/* set new values for redirected request */
 
@@ -1299,9 +1348,10 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 
 	uriFreeUriMembersA(&uri);
 
-	if (verbose)
+	if (verbose) {
 		printf(_("Redirection to %s://%s:%d%s\n"), use_ssl ? "https" : "http", host_name ? host_name : server_address, server_port,
 			   server_url);
+	}
 
 	/* TODO: the hash component MUST be taken from the original URL and
 	 * attached to the URL in Location
@@ -1313,8 +1363,9 @@ void redir(curlhelp_write_curlbuf *header_buf) {
 
 /* check whether a file exists */
 void test_file(char *path) {
-	if (access(path, R_OK) == 0)
+	if (access(path, R_OK) == 0) {
 		return;
+	}
 	usage2(_("file does not exist or is not readable"), path);
 }
 
@@ -1383,29 +1434,36 @@ bool process_arguments(int argc, char **argv) {
 									   {"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return false;
+	}
 
 	/* support check_http compatible arguments */
 	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
+		if (strcmp("-to", argv[c]) == 0) {
 			strcpy(argv[c], "-t");
-		if (strcmp("-hn", argv[c]) == 0)
+		}
+		if (strcmp("-hn", argv[c]) == 0) {
 			strcpy(argv[c], "-H");
-		if (strcmp("-wt", argv[c]) == 0)
+		}
+		if (strcmp("-wt", argv[c]) == 0) {
 			strcpy(argv[c], "-w");
-		if (strcmp("-ct", argv[c]) == 0)
+		}
+		if (strcmp("-ct", argv[c]) == 0) {
 			strcpy(argv[c], "-c");
-		if (strcmp("-nohtml", argv[c]) == 0)
+		}
+		if (strcmp("-nohtml", argv[c]) == 0) {
 			strcpy(argv[c], "-n");
+		}
 	}
 
 	server_url = strdup(DEFAULT_SERVER_URL);
 
 	while (1) {
 		c = getopt_long(argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB", longopts, &option);
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 		case 'h':
@@ -1421,10 +1479,11 @@ bool process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 't': /* timeout period */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				socket_timeout = (int)strtol(optarg, NULL, 10);
+			}
 			break;
 		case 'c': /* critical time threshold */
 			critical_thresholds = optarg;
@@ -1457,11 +1516,12 @@ bool process_arguments(int argc, char **argv) {
 			server_url = strdup(optarg);
 			break;
 		case 'p': /* Server port */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Invalid port number, expecting a non-negative number"), optarg);
-			else {
-				if (strtol(optarg, NULL, 10) > MAX_PORT)
+			} else {
+				if (strtol(optarg, NULL, 10) > MAX_PORT) {
 					usage2(_("Invalid port number, supplied port number is too big"), optarg);
+				}
 				server_port = (unsigned short)strtol(optarg, NULL, 10);
 				specify_port = true;
 			}
@@ -1475,14 +1535,17 @@ bool process_arguments(int argc, char **argv) {
 			proxy_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
-			if (!http_post_data)
+			if (!http_post_data) {
 				http_post_data = strdup(optarg);
-			if (!http_method)
+			}
+			if (!http_method) {
 				http_method = strdup("POST");
+			}
 			break;
 		case 'j': /* Set HTTP method */
-			if (http_method)
+			if (http_method) {
 				free(http_method);
+			}
 			http_method = strdup(optarg);
 			break;
 		case 'A': /* useragent */
@@ -1490,10 +1553,11 @@ bool process_arguments(int argc, char **argv) {
 			user_agent[DEFAULT_BUFFER_SIZE - 1] = '\0';
 			break;
 		case 'k': /* Additional headers */
-			if (http_opt_headers_count == 0)
+			if (http_opt_headers_count == 0) {
 				http_opt_headers = malloc(sizeof(char *) * (++http_opt_headers_count));
-			else
+			} else {
 				http_opt_headers = realloc(http_opt_headers, sizeof(char *) * (++http_opt_headers_count));
+			}
 			http_opt_headers[http_opt_headers_count - 1] = optarg;
 			break;
 		case 'L': /* show html link */
@@ -1506,18 +1570,21 @@ bool process_arguments(int argc, char **argv) {
 #ifdef LIBCURL_FEATURE_SSL
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg))
+				if (!is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
+				}
 				days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp))
+				if (!is_intnonneg(temp)) {
 					usage2(_("Invalid certificate expiration period"), temp);
+				}
 				days_till_exp_crit = atoi(temp);
 			} else {
 				days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg))
+				if (!is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
+				}
 				days_till_exp_warn = atoi(optarg);
 			}
 			check_cert = true;
@@ -1566,11 +1633,11 @@ bool process_arguments(int argc, char **argv) {
 					*plus_ptr = '\0';
 				}
 
-				if (optarg[0] == '2')
+				if (optarg[0] == '2') {
 					ssl_version = CURL_SSLVERSION_SSLv2;
-				else if (optarg[0] == '3')
+				} else if (optarg[0] == '3') {
 					ssl_version = CURL_SSLVERSION_SSLv3;
-				else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0"))
+				} else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0"))
 #	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
 					ssl_version = CURL_SSLVERSION_TLSv1_0;
 #	else
@@ -1594,8 +1661,9 @@ bool process_arguments(int argc, char **argv) {
 #	else
 					ssl_version = CURL_SSLVERSION_DEFAULT;
 #	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
-				else
+				else {
 					usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 (with optional '+' suffix)"));
+				}
 			}
 #	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
 			if (got_plus) {
@@ -1626,10 +1694,12 @@ bool process_arguments(int argc, char **argv) {
 				}
 			}
 #	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
-			if (verbose >= 2)
+			if (verbose >= 2) {
 				printf(_("* Set SSL/TLS version to %d\n"), ssl_version);
-			if (!specify_port)
+			}
+			if (!specify_port) {
 				server_port = HTTPS_PORT;
+			}
 			break;
 #else  /* LIBCURL_FEATURE_SSL */
 			/* -C -J and -K fall through to here without SSL */
@@ -1640,35 +1710,37 @@ bool process_arguments(int argc, char **argv) {
 			break;
 #endif /* LIBCURL_FEATURE_SSL */
 		case MAX_REDIRS_OPTION:
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Invalid max_redirs count"), optarg);
-			else {
+			} else {
 				max_depth = atoi(optarg);
 			}
 			break;
 		case 'f': /* onredirect */
-			if (!strcmp(optarg, "ok"))
+			if (!strcmp(optarg, "ok")) {
 				onredirect = STATE_OK;
-			else if (!strcmp(optarg, "warning"))
+			} else if (!strcmp(optarg, "warning")) {
 				onredirect = STATE_WARNING;
-			else if (!strcmp(optarg, "critical"))
+			} else if (!strcmp(optarg, "critical")) {
 				onredirect = STATE_CRITICAL;
-			else if (!strcmp(optarg, "unknown"))
+			} else if (!strcmp(optarg, "unknown")) {
 				onredirect = STATE_UNKNOWN;
-			else if (!strcmp(optarg, "follow"))
+			} else if (!strcmp(optarg, "follow")) {
 				onredirect = STATE_DEPENDENT;
-			else if (!strcmp(optarg, "stickyport"))
+			} else if (!strcmp(optarg, "stickyport")) {
 				onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_HOST | STICKY_PORT;
-			else if (!strcmp(optarg, "sticky"))
+			} else if (!strcmp(optarg, "sticky")) {
 				onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_HOST;
-			else if (!strcmp(optarg, "follow"))
+			} else if (!strcmp(optarg, "follow")) {
 				onredirect = STATE_DEPENDENT, followmethod = FOLLOW_HTTP_CURL, followsticky = STICKY_NONE;
-			else if (!strcmp(optarg, "curl"))
+			} else if (!strcmp(optarg, "curl")) {
 				onredirect = STATE_DEPENDENT, followmethod = FOLLOW_LIBCURL;
-			else
+			} else {
 				usage2(_("Invalid onredirect option"), optarg);
-			if (verbose >= 2)
+			}
+			if (verbose >= 2) {
 				printf(_("* Following redirects set to %s\n"), state_text(onredirect));
+			}
 			break;
 		case 'd': /* string or substring */
 			strncpy(header_expect, optarg, MAX_INPUT_BUFFER - 1);
@@ -1706,12 +1778,13 @@ bool process_arguments(int argc, char **argv) {
 			invert_regex = true;
 			break;
 		case STATE_REGEX:
-			if (!strcasecmp(optarg, "critical"))
+			if (!strcasecmp(optarg, "critical")) {
 				state_regex = STATE_CRITICAL;
-			else if (!strcasecmp(optarg, "warning"))
+			} else if (!strcasecmp(optarg, "warning")) {
 				state_regex = STATE_WARNING;
-			else
+			} else {
 				usage2(_("Invalid state-regex option"), optarg);
+			}
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -1732,17 +1805,20 @@ bool process_arguments(int argc, char **argv) {
 				if (tmp == NULL) {
 					printf("Bad format: try \"-m min:max\"\n");
 					exit(STATE_WARNING);
-				} else
+				} else {
 					min_page_len = atoi(tmp);
+				}
 
 				tmp = strtok(NULL, ":");
 				if (tmp == NULL) {
 					printf("Bad format: try \"-m min:max\"\n");
 					exit(STATE_WARNING);
-				} else
+				} else {
 					max_page_len = atoi(tmp);
-			} else
+				}
+			} else {
 				min_page_len = atoi(optarg);
+			}
 			break;
 		}
 		case 'N': /* no-body */
@@ -1751,20 +1827,21 @@ bool process_arguments(int argc, char **argv) {
 		case 'M': /* max-age */
 		{
 			int L = strlen(optarg);
-			if (L && optarg[L - 1] == 'm')
+			if (L && optarg[L - 1] == 'm') {
 				maximum_age = atoi(optarg) * 60;
-			else if (L && optarg[L - 1] == 'h')
+			} else if (L && optarg[L - 1] == 'h') {
 				maximum_age = atoi(optarg) * 60 * 60;
-			else if (L && optarg[L - 1] == 'd')
+			} else if (L && optarg[L - 1] == 'd') {
 				maximum_age = atoi(optarg) * 60 * 60 * 24;
-			else if (L && (optarg[L - 1] == 's' || isdigit(optarg[L - 1])))
+			} else if (L && (optarg[L - 1] == 's' || isdigit(optarg[L - 1]))) {
 				maximum_age = atoi(optarg);
-			else {
+			} else {
 				fprintf(stderr, "unparsable max-age: %s\n", optarg);
 				exit(STATE_WARNING);
 			}
-			if (verbose >= 2)
+			if (verbose >= 2) {
 				printf("* Maximal age of document set to %d seconds\n", maximum_age);
+			}
 		} break;
 		case 'E': /* show extended perfdata */
 			show_extended_perfdata = true;
@@ -1807,38 +1884,47 @@ bool process_arguments(int argc, char **argv) {
 
 	c = optind;
 
-	if (server_address == NULL && c < argc)
+	if (server_address == NULL && c < argc) {
 		server_address = strdup(argv[c++]);
+	}
 
-	if (host_name == NULL && c < argc)
+	if (host_name == NULL && c < argc) {
 		host_name = strdup(argv[c++]);
+	}
 
 	if (server_address == NULL) {
-		if (host_name == NULL)
+		if (host_name == NULL) {
 			usage4(_("You must specify a server address or host name"));
-		else
+		} else {
 			server_address = strdup(host_name);
+		}
 	}
 
 	set_thresholds(&thlds, warning_thresholds, critical_thresholds);
 
-	if (critical_thresholds && thlds->critical->end > (double)socket_timeout)
+	if (critical_thresholds && thlds->critical->end > (double)socket_timeout) {
 		socket_timeout = (int)thlds->critical->end + 1;
-	if (verbose >= 2)
+	}
+	if (verbose >= 2) {
 		printf("* Socket timeout set to %ld seconds\n", socket_timeout);
+	}
 
-	if (http_method == NULL)
+	if (http_method == NULL) {
 		http_method = strdup("GET");
+	}
 
-	if (client_cert && !client_privkey)
+	if (client_cert && !client_privkey) {
 		usage4(_("If you use a client certificate you must also specify a private key file"));
+	}
 
-	if (virtual_port == 0)
+	if (virtual_port == 0) {
 		virtual_port = server_port;
-	else {
-		if ((use_ssl && server_port == HTTPS_PORT) || (!use_ssl && server_port == HTTP_PORT))
-			if (!specify_port)
+	} else {
+		if ((use_ssl && server_port == HTTPS_PORT) || (!use_ssl && server_port == HTTP_PORT)) {
+			if (!specify_port) {
 				server_port = virtual_port;
+			}
+		}
 	}
 
 	return true;
@@ -2113,8 +2199,9 @@ int curlhelp_initwritebuffer(curlhelp_write_curlbuf *buf) {
 	buf->bufsize = DEFAULT_BUFFER_SIZE;
 	buf->buflen = 0;
 	buf->buf = (char *)malloc((size_t)buf->bufsize);
-	if (buf->buf == NULL)
+	if (buf->buf == NULL) {
 		return -1;
+	}
 	return 0;
 }
 
@@ -2156,8 +2243,9 @@ void curlhelp_freewritebuffer(curlhelp_write_curlbuf *buf) {
 int curlhelp_initreadbuffer(curlhelp_read_curlbuf *buf, const char *data, size_t datalen) {
 	buf->buflen = datalen;
 	buf->buf = (char *)malloc((size_t)buf->buflen);
-	if (buf->buf == NULL)
+	if (buf->buf == NULL) {
 		return -1;
+	}
 	memcpy(buf->buf, data, datalen);
 	buf->pos = 0;
 	return 0;
@@ -2176,11 +2264,13 @@ const char *strrstr2(const char *haystack, const char *needle) {
 	const char *prev_pos;
 	const char *pos;
 
-	if (haystack == NULL || needle == NULL)
+	if (haystack == NULL || needle == NULL) {
 		return NULL;
+	}
 
-	if (haystack[0] == '\0' || needle[0] == '\0')
+	if (haystack[0] == '\0' || needle[0] == '\0') {
 		return NULL;
+	}
 
 	counter = 0;
 	prev_pos = NULL;
@@ -2189,15 +2279,17 @@ const char *strrstr2(const char *haystack, const char *needle) {
 	for (;;) {
 		pos = strstr(pos, needle);
 		if (pos == NULL) {
-			if (counter == 0)
+			if (counter == 0) {
 				return NULL;
+			}
 			return prev_pos;
 		}
 		counter++;
 		prev_pos = pos;
 		pos += len;
-		if (*pos == '\0')
+		if (*pos == '\0') {
 			return prev_pos;
+		}
 	}
 }
 
@@ -2217,13 +2309,15 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 	}
 
 	first_line_end = strstr(buf, "\r\n");
-	if (first_line_end == NULL)
+	if (first_line_end == NULL) {
 		return -1;
+	}
 
 	first_line_len = (size_t)(first_line_end - buf);
 	status_line->first_line = (char *)malloc(first_line_len + 1);
-	if (status_line->first_line == NULL)
+	if (status_line->first_line == NULL) {
 		return -1;
+	}
 	memcpy(status_line->first_line, buf, first_line_len);
 	status_line->first_line[first_line_len] = '\0';
 	first_line_buf = strdup(status_line->first_line);
@@ -2362,8 +2456,9 @@ int check_document_dates(const curlhelp_write_curlbuf *header_buf, char (*msg)[D
 	} else {
 		time_t srv_data = curl_getdate(server_date, NULL);
 		time_t doc_data = curl_getdate(document_date, NULL);
-		if (verbose >= 2)
+		if (verbose >= 2) {
 			printf("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, (int)srv_data, document_date, (int)doc_data);
+		}
 		if (srv_data <= 0) {
 			char tmp[DEFAULT_BUFFER_SIZE];
 
@@ -2405,10 +2500,12 @@ int check_document_dates(const curlhelp_write_curlbuf *header_buf, char (*msg)[D
 		}
 	}
 
-	if (server_date)
+	if (server_date) {
 		free(server_date);
-	if (document_date)
+	}
+	if (document_date) {
 		free(document_date);
+	}
 
 	return date_result;
 }
@@ -2438,8 +2535,9 @@ int get_content_length(const curlhelp_write_curlbuf *header_buf, const curlhelp_
 		/* TODO: should we warn if the actual and the reported body length don't match? */
 	}
 
-	if (content_length_s)
+	if (content_length_s) {
 		free(content_length_s);
+	}
 
 	return header_buf->buflen + body_buf->buflen;
 }
@@ -2452,28 +2550,33 @@ curlhelp_ssl_library curlhelp_get_ssl_library(void) {
 	curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 
 	version_data = curl_version_info(CURLVERSION_NOW);
-	if (version_data == NULL)
+	if (version_data == NULL) {
 		return CURLHELP_SSL_LIBRARY_UNKNOWN;
+	}
 
 	ssl_version = strdup(version_data->ssl_version);
-	if (ssl_version == NULL)
+	if (ssl_version == NULL) {
 		return CURLHELP_SSL_LIBRARY_UNKNOWN;
+	}
 
 	library = strtok(ssl_version, "/");
-	if (library == NULL)
+	if (library == NULL) {
 		return CURLHELP_SSL_LIBRARY_UNKNOWN;
+	}
 
-	if (strcmp(library, "OpenSSL") == 0)
+	if (strcmp(library, "OpenSSL") == 0) {
 		ssl_library = CURLHELP_SSL_LIBRARY_OPENSSL;
-	else if (strcmp(library, "LibreSSL") == 0)
+	} else if (strcmp(library, "LibreSSL") == 0) {
 		ssl_library = CURLHELP_SSL_LIBRARY_LIBRESSL;
-	else if (strcmp(library, "GnuTLS") == 0)
+	} else if (strcmp(library, "GnuTLS") == 0) {
 		ssl_library = CURLHELP_SSL_LIBRARY_GNUTLS;
-	else if (strcmp(library, "NSS") == 0)
+	} else if (strcmp(library, "NSS") == 0) {
 		ssl_library = CURLHELP_SSL_LIBRARY_NSS;
+	}
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf("* SSL library string is : %s %s (%d)\n", version_data->ssl_version, library, ssl_library);
+	}
 
 	free(ssl_version);
 
@@ -2503,14 +2606,16 @@ time_t parse_cert_date(const char *s) {
 	time_t date;
 	char *res;
 
-	if (!s)
+	if (!s) {
 		return -1;
+	}
 
 	/* Jan 17 14:25:12 2020 GMT */
 	res = strptime(s, "%Y-%m-%d %H:%M:%S GMT", &tm);
 	/* Sep 11 12:00:00 2020 GMT */
-	if (res == NULL)
+	if (res == NULL) {
 		strptime(s, "%Y %m %d %H:%M:%S GMT", &tm);
+	}
 	date = mktime(&tm);
 
 	return date;
@@ -2534,8 +2639,9 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 	char timestamp[50] = "";
 	int status = STATE_UNKNOWN;
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf("**** REQUEST CERTIFICATES ****\n");
+	}
 
 	for (i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
 		for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
@@ -2563,14 +2669,16 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 			} else if (strncasecmp(slist->data, "Cert:", 5) == 0) {
 				goto HAVE_FIRST_CERT;
 			}
-			if (verbose >= 2)
+			if (verbose >= 2) {
 				printf("%d ** %s\n", i, slist->data);
+			}
 		}
 	}
 HAVE_FIRST_CERT:
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf("**** REQUEST CERTIFICATES ****\n");
+	}
 
 	if (!cname_found) {
 		printf("%s\n", _("CRITICAL - Cannot retrieve certificate subject."));
@@ -2597,42 +2705,47 @@ HAVE_FIRST_CERT:
 	setenv("TZ", "GMT", 1);
 	tzset();
 	strftime(timestamp, 50, "%c %z", localtime(&end_date));
-	if (tz)
+	if (tz) {
 		setenv("TZ", tz, 1);
-	else
+	} else {
 		unsetenv("TZ");
+	}
 	tzset();
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf(_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL",
 			   host_name, days_left, timestamp);
-		if (days_left > days_till_exp_crit)
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else if (days_left == 0 && time_left > 0) {
-		if (time_left >= 3600)
+		if (time_left >= 3600) {
 			time_remaining = (int)time_left / 3600;
-		else
+		} else {
 			time_remaining = (int)time_left / 60;
+		}
 
 		printf(_("%s - Certificate '%s' expires in %u %s (%s)\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", host_name,
 			   time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
 
-		if (days_left > days_till_exp_crit)
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else if (time_left < 0) {
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), host_name, timestamp);
 		status = STATE_CRITICAL;
 	} else if (days_left == 0) {
 		printf(_("%s - Certificate '%s' just expired (%s).\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", host_name,
 			   timestamp);
-		if (days_left > days_till_exp_crit)
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else {
 		printf(_("OK - Certificate '%s' will expire on %s.\n"), host_name, timestamp);
 		status = STATE_OK;
