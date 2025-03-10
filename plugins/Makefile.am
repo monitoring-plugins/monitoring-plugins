@@ -56,7 +56,8 @@ EXTRA_DIST = t \
 			 check_dns.d \
 			 check_apt.d \
 			 check_by_ssh.d \
-			 check_smtp.d
+			 check_smtp.d \
+			 check_dig.d
 
 PLUGINHDRS = common.h
 
