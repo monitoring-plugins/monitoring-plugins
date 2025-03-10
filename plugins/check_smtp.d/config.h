@@ -52,7 +52,7 @@ typedef struct {
 check_smtp_config check_smtp_config_init() {
 	check_smtp_config tmp = {
 		.server_port = SMTP_PORT,
-		.server_address = strdup("localhost"),
+		.server_address = NULL,
 		.localhostname = NULL,
 
 		.server_expect = SMTP_EXPECT,

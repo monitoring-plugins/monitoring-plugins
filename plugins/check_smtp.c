@@ -697,6 +697,8 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				usage2(_("Invalid hostname/address"), argv[c]);
 			}
+		} else {
+			result.config.server_address = strdup("localhost");
 		}
 	}
 
