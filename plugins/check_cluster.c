@@ -72,13 +72,15 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage(_("Could not parse arguments"));
+	}
 
 	/* Initialize the thresholds */
 	set_thresholds(&thresholds, warn_threshold, crit_threshold);
-	if (verbose)
+	if (verbose) {
 		print_thresholds("check_cluster", thresholds);
+	}
 
 	/* check the data values */
 	for (ptr = strtok(data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
@@ -145,15 +147,17 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'H'},           {0, 0, 0, 0}};
 
 	/* no options were supplied */
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	while (1) {
 
 		c = getopt_long(argc, argv, "hHsvVw:c:d:l:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 
@@ -177,12 +181,15 @@ int process_arguments(int argc, char **argv) {
 			data_vals = (char *)strdup(optarg);
 			/* validate data */
 			for (ptr = data_vals; ptr != NULL; ptr += 2) {
-				if (ptr[0] < '0' || ptr[0] > '3')
+				if (ptr[0] < '0' || ptr[0] > '3') {
 					return ERROR;
-				if (ptr[1] == '\0')
+				}
+				if (ptr[1] == '\0') {
 					break;
-				if (ptr[1] != ',')
+				}
+				if (ptr[1] != ',') {
 					return ERROR;
+				}
 			}
 			break;
 
@@ -210,8 +217,9 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (data_vals == NULL)
+	if (data_vals == NULL) {
 		return ERROR;
+	}
 
 	return OK;
 }
