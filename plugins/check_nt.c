@@ -39,42 +39,22 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-enum checkvars {
-	CHECK_NONE,
-	CHECK_CLIENTVERSION,
-	CHECK_CPULOAD,
-	CHECK_UPTIME,
-	CHECK_USEDDISKSPACE,
-	CHECK_SERVICESTATE,
-	CHECK_PROCSTATE,
-	CHECK_MEMUSE,
-	CHECK_COUNTER,
-	CHECK_FILEAGE,
-	CHECK_INSTANCES
-};
+#include "check_nt.d/config.h"
 
 enum {
 	MAX_VALUE_LIST = 30,
-	PORT = 1248
 };
-
-static char *server_address = NULL;
-static int server_port = PORT;
-static char *value_list = NULL;
-static char *req_password = NULL;
-static unsigned long lvalue_list[MAX_VALUE_LIST];
-static unsigned long warning_value = 0L;
-static unsigned long critical_value = 0L;
-static bool check_warning_value = false;
-static bool check_critical_value = false;
-static enum checkvars vars_to_check = CHECK_NONE;
-static bool show_all = false;
 
 static char recv_buffer[MAX_INPUT_BUFFER];
 
 static void fetch_data(const char *address, int port, const char *sendb);
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+
+typedef struct {
+	int errorcode;
+	check_nt_config config;
+} check_nt_config_wrapper;
+static check_nt_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+
 static void preparelist(char *string);
 static bool strtoularray(unsigned long *array, char *string, const char *delim);
 static void print_help(void);
@@ -88,9 +68,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_nt_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	const check_nt_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -107,12 +90,13 @@ int main(int argc, char **argv) {
 	char *description = NULL;
 	char *counter_unit = NULL;
 	char *errcvt = NULL;
-	switch (vars_to_check) {
+	unsigned long lvalue_list[MAX_VALUE_LIST];
+	switch (config.vars_to_check) {
 	case CHECK_CLIENTVERSION:
-		xasprintf(&send_buffer, "%s&1", req_password);
-		fetch_data(server_address, server_port, send_buffer);
-		if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
-			xasprintf(&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, value_list);
+		xasprintf(&send_buffer, "%s&1", config.req_password);
+		fetch_data(config.server_address, config.server_port, send_buffer);
+		if (config.value_list != NULL && strcmp(recv_buffer, config.value_list) != 0) {
+			xasprintf(&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, config.value_list);
 			return_code = STATE_WARNING;
 		} else {
 			xasprintf(&output_message, "%s", recv_buffer);
@@ -120,9 +104,9 @@ int main(int argc, char **argv) {
 		}
 		break;
 	case CHECK_CPULOAD:
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("missing -l parameters"));
-		} else if (!strtoularray(lvalue_list, value_list, ",")) {
+		} else if (!strtoularray(lvalue_list, config.value_list, ",")) {
 			output_message = strdup(_("wrong -l parameter."));
 		} else {
 			/* -l parameters is present with only integers */
@@ -137,8 +121,8 @@ int main(int argc, char **argv) {
 				   lvalue_list[2 + offset] > (unsigned long)0 && lvalue_list[2 + offset] <= (unsigned long)100) {
 
 				/* Send request and retrieve data */
-				xasprintf(&send_buffer, "%s&2&%lu", req_password, lvalue_list[0 + offset]);
-				fetch_data(server_address, server_port, send_buffer);
+				xasprintf(&send_buffer, "%s&2&%lu", config.req_password, lvalue_list[0 + offset]);
+				fetch_data(config.server_address, config.server_port, send_buffer);
 
 				unsigned long utilization = strtoul(recv_buffer, NULL, 10);
 
@@ -165,27 +149,28 @@ int main(int argc, char **argv) {
 			}
 		}
 		break;
-	case CHECK_UPTIME:
-		if (value_list == NULL) {
-			value_list = "minutes";
+	case CHECK_UPTIME: {
+		char *tmp_value_list = config.value_list;
+		if (config.value_list == NULL) {
+			tmp_value_list = "minutes";
 		}
-		if (strncmp(value_list, "seconds", strlen("seconds") + 1) && strncmp(value_list, "minutes", strlen("minutes") + 1) &&
-			strncmp(value_list, "hours", strlen("hours") + 1) && strncmp(value_list, "days", strlen("days") + 1)) {
+		if (strncmp(tmp_value_list, "seconds", strlen("seconds") + 1) && strncmp(tmp_value_list, "minutes", strlen("minutes") + 1) &&
+			strncmp(config.value_list, "hours", strlen("hours") + 1) && strncmp(tmp_value_list, "days", strlen("days") + 1)) {
 
 			output_message = strdup(_("wrong -l argument"));
 		} else {
-			xasprintf(&send_buffer, "%s&3", req_password);
-			fetch_data(server_address, server_port, send_buffer);
+			xasprintf(&send_buffer, "%s&3", config.req_password);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			unsigned long uptime = strtoul(recv_buffer, NULL, 10);
 			int updays = uptime / 86400;
 			int uphours = (uptime % 86400) / 3600;
 			int upminutes = ((uptime % 86400) % 3600) / 60;
 
-			if (!strncmp(value_list, "minutes", strlen("minutes"))) {
+			if (!strncmp(tmp_value_list, "minutes", strlen("minutes"))) {
 				uptime = uptime / 60;
-			} else if (!strncmp(value_list, "hours", strlen("hours"))) {
+			} else if (!strncmp(tmp_value_list, "hours", strlen("hours"))) {
 				uptime = uptime / 3600;
-			} else if (!strncmp(value_list, "days", strlen("days"))) {
+			} else if (!strncmp(tmp_value_list, "days", strlen("days"))) {
 				uptime = uptime / 86400;
 			}
 			/* else uptime in seconds, nothing to do */
@@ -193,23 +178,23 @@ int main(int argc, char **argv) {
 			xasprintf(&output_message, _("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"), updays, uphours, upminutes,
 					  uptime);
 
-			if (check_critical_value && uptime <= critical_value) {
+			if (config.check_critical_value && uptime <= config.critical_value) {
 				return_code = STATE_CRITICAL;
-			} else if (check_warning_value && uptime <= warning_value) {
+			} else if (config.check_warning_value && uptime <= config.warning_value) {
 				return_code = STATE_WARNING;
 			} else {
 				return_code = STATE_OK;
 			}
 		}
-		break;
+	} break;
 	case CHECK_USEDDISKSPACE:
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("missing -l parameters"));
-		} else if (strlen(value_list) != 1) {
+		} else if (strlen(config.value_list) != 1) {
 			output_message = strdup(_("wrong -l argument"));
 		} else {
-			xasprintf(&send_buffer, "%s&4&%s", req_password, value_list);
-			fetch_data(server_address, server_port, send_buffer);
+			xasprintf(&send_buffer, "%s&4&%s", config.req_password, config.value_list);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			char *fds = strtok(recv_buffer, "&");
 			char *tds = strtok(NULL, "&");
 			double total_disk_space = 0;
@@ -223,19 +208,19 @@ int main(int argc, char **argv) {
 
 			if (total_disk_space > 0 && free_disk_space >= 0) {
 				double percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
-				double warning_used_space = ((float)warning_value / 100) * total_disk_space;
-				double critical_used_space = ((float)critical_value / 100) * total_disk_space;
+				double warning_used_space = ((float)config.warning_value / 100) * total_disk_space;
+				double critical_used_space = ((float)config.critical_value / 100) * total_disk_space;
 
-				xasprintf(&temp_string, _("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"), value_list,
+				xasprintf(&temp_string, _("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"), config.value_list,
 						  total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
 						  free_disk_space / 1073741824, (free_disk_space / total_disk_space) * 100);
-				xasprintf(&temp_string_perf, _("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), value_list,
+				xasprintf(&temp_string_perf, _("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), config.value_list,
 						  (total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
 						  critical_used_space / 1073741824, total_disk_space / 1073741824);
 
-				if (check_critical_value && percent_used_space >= critical_value) {
+				if (config.check_critical_value && percent_used_space >= config.critical_value) {
 					return_code = STATE_CRITICAL;
-				} else if (check_warning_value && percent_used_space >= warning_value) {
+				} else if (config.check_warning_value && percent_used_space >= config.warning_value) {
 					return_code = STATE_WARNING;
 				} else {
 					return_code = STATE_OK;
@@ -251,13 +236,13 @@ int main(int argc, char **argv) {
 		break;
 	case CHECK_SERVICESTATE:
 	case CHECK_PROCSTATE:
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("No service/process specified"));
 		} else {
-			preparelist(value_list); /* replace , between services with & to send the request */
-			xasprintf(&send_buffer, "%s&%u&%s&%s", req_password, (vars_to_check == CHECK_SERVICESTATE) ? 5 : 6,
-					  (show_all) ? "ShowAll" : "ShowFail", value_list);
-			fetch_data(server_address, server_port, send_buffer);
+			preparelist(config.value_list); /* replace , between services with & to send the request */
+			xasprintf(&send_buffer, "%s&%u&%s&%s", config.req_password, (config.vars_to_check == CHECK_SERVICESTATE) ? 5 : 6,
+					  (config.show_all) ? "ShowAll" : "ShowFail", config.value_list);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			char *numstr = strtok(recv_buffer, "&");
 			if (numstr == NULL) {
 				die(STATE_UNKNOWN, _("could not fetch information from server\n"));
@@ -268,8 +253,8 @@ int main(int argc, char **argv) {
 		}
 		break;
 	case CHECK_MEMUSE:
-		xasprintf(&send_buffer, "%s&7", req_password);
-		fetch_data(server_address, server_port, send_buffer);
+		xasprintf(&send_buffer, "%s&7", config.req_password);
+		fetch_data(config.server_address, config.server_port, send_buffer);
 		char *numstr = strtok(recv_buffer, "&");
 		if (numstr == NULL) {
 			die(STATE_UNKNOWN, _("could not fetch information from server\n"));
@@ -281,8 +266,8 @@ int main(int argc, char **argv) {
 		}
 		double mem_commitByte = atof(numstr);
 		double percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
-		double warning_used_space = ((float)warning_value / 100) * mem_commitLimit;
-		double critical_used_space = ((float)critical_value / 100) * mem_commitLimit;
+		double warning_used_space = ((float)config.warning_value / 100) * mem_commitLimit;
+		double critical_used_space = ((float)config.critical_value / 100) * mem_commitLimit;
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
@@ -293,14 +278,14 @@ int main(int argc, char **argv) {
 				  critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code = STATE_OK;
-		if (check_critical_value && percent_used_space >= critical_value) {
+		if (config.check_critical_value && percent_used_space >= config.critical_value) {
 			return_code = STATE_CRITICAL;
-		} else if (check_warning_value && percent_used_space >= warning_value) {
+		} else if (config.check_warning_value && percent_used_space >= config.warning_value) {
 			return_code = STATE_WARNING;
 		}
 
 		break;
-	case CHECK_COUNTER:
+	case CHECK_COUNTER: {
 		/*
 		CHECK_COUNTER has been modified to provide extensive perfdata information.
 		In order to do this, some modifications have been done to the code
@@ -323,17 +308,17 @@ int main(int argc, char **argv) {
 		*/
 
 		double counter_value = 0.0;
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
-			preparelist(value_list); /* replace , between services with & to send the request */
-			bool isPercent = (strchr(value_list, '%') != NULL);
+			preparelist(config.value_list); /* replace , between services with & to send the request */
+			bool isPercent = (strchr(config.value_list, '%') != NULL);
 
-			strtok(value_list, "&"); /* burn the first parameters */
+			strtok(config.value_list, "&"); /* burn the first parameters */
 			description = strtok(NULL, "&");
 			counter_unit = strtok(NULL, "&");
-			xasprintf(&send_buffer, "%s&8&%s", req_password, value_list);
-			fetch_data(server_address, server_port, send_buffer);
+			xasprintf(&send_buffer, "%s&8&%s", config.req_password, config.value_list);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			counter_value = atof(recv_buffer);
 
 			bool allRight = false;
@@ -380,52 +365,51 @@ int main(int argc, char **argv) {
 				}
 				xasprintf(&output_message, "%s |", output_message);
 				xasprintf(&output_message, "%s %s", output_message,
-						  fperfdata(description, counter_value, counter_unit, 1, warning_value, 1, critical_value,
+						  fperfdata(description, counter_value, counter_unit, 1, config.warning_value, 1, config.critical_value,
 									(!(isPercent) && (minval != NULL)), fminval, (!(isPercent) && (minval != NULL)), fmaxval));
 			}
 		}
 
-		if (critical_value > warning_value) { /* Normal thresholds */
-			if (check_critical_value && counter_value >= critical_value) {
+		if (config.critical_value > config.warning_value) { /* Normal thresholds */
+			if (config.check_critical_value && counter_value >= config.critical_value) {
 				return_code = STATE_CRITICAL;
-			} else if (check_warning_value && counter_value >= warning_value) {
+			} else if (config.check_warning_value && counter_value >= config.warning_value) {
 				return_code = STATE_WARNING;
 			} else {
 				return_code = STATE_OK;
 			}
 		} else { /* inverse thresholds */
 			return_code = STATE_OK;
-			if (check_critical_value && counter_value <= critical_value) {
+			if (config.check_critical_value && counter_value <= config.critical_value) {
 				return_code = STATE_CRITICAL;
-			} else if (check_warning_value && counter_value <= warning_value) {
+			} else if (config.check_warning_value && counter_value <= config.warning_value) {
 				return_code = STATE_WARNING;
 			}
 		}
-		break;
-
+	} break;
 	case CHECK_FILEAGE:
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
-			preparelist(value_list); /* replace , between services with & to send the request */
-			xasprintf(&send_buffer, "%s&9&%s", req_password, value_list);
-			fetch_data(server_address, server_port, send_buffer);
+			preparelist(config.value_list); /* replace , between services with & to send the request */
+			xasprintf(&send_buffer, "%s&9&%s", config.req_password, config.value_list);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			unsigned long age_in_minutes = atoi(strtok(recv_buffer, "&"));
 			description = strtok(NULL, "&");
 			output_message = strdup(description);
 
-			if (critical_value > warning_value) { /* Normal thresholds */
-				if (check_critical_value && age_in_minutes >= critical_value) {
+			if (config.critical_value > config.warning_value) { /* Normal thresholds */
+				if (config.check_critical_value && age_in_minutes >= config.critical_value) {
 					return_code = STATE_CRITICAL;
-				} else if (check_warning_value && age_in_minutes >= warning_value) {
+				} else if (config.check_warning_value && age_in_minutes >= config.warning_value) {
 					return_code = STATE_WARNING;
 				} else {
 					return_code = STATE_OK;
 				}
 			} else { /* inverse thresholds */
-				if (check_critical_value && age_in_minutes <= critical_value) {
+				if (config.check_critical_value && age_in_minutes <= config.critical_value) {
 					return_code = STATE_CRITICAL;
-				} else if (check_warning_value && age_in_minutes <= warning_value) {
+				} else if (config.check_warning_value && age_in_minutes <= config.warning_value) {
 					return_code = STATE_WARNING;
 				} else {
 					return_code = STATE_OK;
@@ -435,11 +419,11 @@ int main(int argc, char **argv) {
 		break;
 
 	case CHECK_INSTANCES:
-		if (value_list == NULL) {
+		if (config.value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
-			xasprintf(&send_buffer, "%s&10&%s", req_password, value_list);
-			fetch_data(server_address, server_port, send_buffer);
+			xasprintf(&send_buffer, "%s&10&%s", config.req_password, config.value_list);
+			fetch_data(config.server_address, config.server_port, send_buffer);
 			if (!strncmp(recv_buffer, "ERROR", 5)) {
 				printf("NSClient - %s\n", recv_buffer);
 				exit(STATE_UNKNOWN);
@@ -467,7 +451,7 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_nt_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"port", required_argument, 0, 'p'},
 									   {"timeout", required_argument, 0, 't'},
 									   {"critical", required_argument, 0, 'c'},
@@ -482,14 +466,20 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
+	check_nt_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_nt_config_init(),
+	};
+
 	/* no options were supplied */
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	/* backwards compatibility */
 	if (!is_option(argv[1])) {
-		server_address = strdup(argv[1]);
+		result.config.server_address = strdup(argv[1]);
 		argv[1] = argv[0];
 		argv = &argv[1];
 		argc--;
@@ -523,60 +513,62 @@ int process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
-			server_address = optarg;
+			result.config.server_address = optarg;
 			break;
 		case 's': /* password */
-			req_password = optarg;
+			result.config.req_password = optarg;
 			break;
 		case 'p': /* port */
 			if (is_intnonneg(optarg)) {
-				server_port = atoi(optarg);
+				result.config.server_port = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Server port must be an integer\n"));
 			}
 			break;
 		case 'v':
 			if (strlen(optarg) < 4) {
-				return ERROR;
+				result.errorcode = ERROR;
+				return result;
 			}
 			if (!strcmp(optarg, "CLIENTVERSION")) {
-				vars_to_check = CHECK_CLIENTVERSION;
+				result.config.vars_to_check = CHECK_CLIENTVERSION;
 			} else if (!strcmp(optarg, "CPULOAD")) {
-				vars_to_check = CHECK_CPULOAD;
+				result.config.vars_to_check = CHECK_CPULOAD;
 			} else if (!strcmp(optarg, "UPTIME")) {
-				vars_to_check = CHECK_UPTIME;
+				result.config.vars_to_check = CHECK_UPTIME;
 			} else if (!strcmp(optarg, "USEDDISKSPACE")) {
-				vars_to_check = CHECK_USEDDISKSPACE;
+				result.config.vars_to_check = CHECK_USEDDISKSPACE;
 			} else if (!strcmp(optarg, "SERVICESTATE")) {
-				vars_to_check = CHECK_SERVICESTATE;
+				result.config.vars_to_check = CHECK_SERVICESTATE;
 			} else if (!strcmp(optarg, "PROCSTATE")) {
-				vars_to_check = CHECK_PROCSTATE;
+				result.config.vars_to_check = CHECK_PROCSTATE;
 			} else if (!strcmp(optarg, "MEMUSE")) {
-				vars_to_check = CHECK_MEMUSE;
+				result.config.vars_to_check = CHECK_MEMUSE;
 			} else if (!strcmp(optarg, "COUNTER")) {
-				vars_to_check = CHECK_COUNTER;
+				result.config.vars_to_check = CHECK_COUNTER;
 			} else if (!strcmp(optarg, "FILEAGE")) {
-				vars_to_check = CHECK_FILEAGE;
+				result.config.vars_to_check = CHECK_FILEAGE;
 			} else if (!strcmp(optarg, "INSTANCES")) {
-				vars_to_check = CHECK_INSTANCES;
+				result.config.vars_to_check = CHECK_INSTANCES;
 			} else {
-				return ERROR;
+				result.errorcode = ERROR;
+				return result;
 			}
 			break;
 		case 'l': /* value list */
-			value_list = optarg;
+			result.config.value_list = optarg;
 			break;
 		case 'w': /* warning threshold */
-			warning_value = strtoul(optarg, NULL, 10);
-			check_warning_value = true;
+			result.config.warning_value = strtoul(optarg, NULL, 10);
+			result.config.check_warning_value = true;
 			break;
 		case 'c': /* critical threshold */
-			critical_value = strtoul(optarg, NULL, 10);
-			check_critical_value = true;
+			result.config.critical_value = strtoul(optarg, NULL, 10);
+			result.config.check_critical_value = true;
 			break;
 		case 'd': /* Display select for services */
 			if (!strcmp(optarg, "SHOWALL")) {
-				show_all = true;
+				result.config.show_all = true;
 			}
 			break;
 		case 'u':
@@ -585,23 +577,25 @@ int process_arguments(int argc, char **argv) {
 		case 't': /* timeout */
 			socket_timeout = atoi(optarg);
 			if (socket_timeout <= 0) {
-				return ERROR;
+				result.errorcode = ERROR;
+				return result;
 			}
 		}
 	}
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		usage4(_("You must provide a server address or host name"));
 	}
 
-	if (vars_to_check == CHECK_NONE) {
-		return ERROR;
+	if (result.config.vars_to_check == CHECK_NONE) {
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	if (req_password == NULL) {
-		req_password = strdup(_("None"));
+	if (result.config.req_password == NULL) {
+		result.config.req_password = strdup(_("None"));
 	}
 
-	return OK;
+	return result;
 }
 
 void fetch_data(const char *address, int port, const char *sendb) {
