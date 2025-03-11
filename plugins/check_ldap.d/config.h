@@ -2,7 +2,6 @@
 
 #include "../../config.h"
 #include "thresholds.h"
-#include <mysql/udf_registration_types.h>
 #include <stddef.h>
 
 static char ld_defattr[] = "(objectclass=*)";
