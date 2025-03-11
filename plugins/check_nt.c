@@ -13,7 +13,7 @@
  * This plugin collects data from the NSClient service running on a
  * Windows NT/2000/XP/2003 server.
  * This plugin requires NSClient software to run on NT
- * (http://nsclient.ready2run.nl/)
+ * (https://nsclient.org/)
  *
  *
  * This program is free software: you can redistribute it and/or modify
