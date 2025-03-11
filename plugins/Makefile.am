@@ -53,6 +53,7 @@ EXTRA_DIST = t \
 			 check_ldap.d \
 			 check_hpjd.d \
 			 check_game.d \
+			 check_nagios.d \
 			 check_dbi.d \
 			 check_ssh.d \
 			 check_dns.d \
