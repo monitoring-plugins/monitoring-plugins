@@ -87,8 +87,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage_va(_("Could not parse arguments"));
+	}
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -113,18 +114,21 @@ int main(int argc, char **argv) {
 		}
 		if ((temp_ptr = strtok(input_buffer, "]")) != NULL) {
 			temp_entry_time = strtoul(temp_ptr + 1, NULL, 10);
-			if (temp_entry_time > latest_entry_time)
+			if (temp_entry_time > latest_entry_time) {
 				latest_entry_time = temp_entry_time;
+			}
 		}
 	}
 	fclose(fp);
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		printf("command: %s\n", PS_COMMAND);
+	}
 
 	/* run the command to check for the Nagios process.. */
-	if ((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0)
+	if ((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
 		result = STATE_WARNING;
+	}
 
 	/* count the number of matching Nagios processes... */
 	for (i = 0; i < chld_out.lines; i++) {
@@ -159,8 +163,9 @@ int main(int argc, char **argv) {
 	}
 
 	/* If we get anything on stderr, at least set warning */
-	if (chld_err.buflen)
+	if (chld_err.buflen) {
 		result = max_state(result, STATE_WARNING);
+	}
 
 	/* reset the alarm handler */
 	alarm(0);
@@ -200,15 +205,17 @@ int process_arguments(int argc, char **argv) {
 									   {"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},        {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	if (!is_option(argv[1])) {
 		status_log = argv[1];
-		if (is_intnonneg(argv[2]))
+		if (is_intnonneg(argv[2])) {
 			expire_minutes = atoi(argv[2]);
-		else
+		} else {
 			die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
+		}
 		process_string = argv[3];
 		return OK;
 	}
@@ -216,8 +223,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		c = getopt_long(argc, argv, "+hVvF:C:e:t:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 		case 'h': /* help */
@@ -233,16 +241,18 @@ int process_arguments(int argc, char **argv) {
 			process_string = optarg;
 			break;
 		case 'e': /* expiry time */
-			if (is_intnonneg(optarg))
+			if (is_intnonneg(optarg)) {
 				expire_minutes = atoi(optarg);
-			else
+			} else {
 				die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
+			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg))
+			if (is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
-			else
+			} else {
 				die(STATE_UNKNOWN, _("Timeout must be an integer (seconds)\n"));
+			}
 			break;
 		case 'v':
 			verbose++;
@@ -252,11 +262,13 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (status_log == NULL)
+	if (status_log == NULL) {
 		die(STATE_UNKNOWN, _("You must provide the status_log\n"));
+	}
 
-	if (process_string == NULL)
+	if (process_string == NULL) {
 		die(STATE_UNKNOWN, _("You must provide a process string\n"));
+	}
 
 	return OK;
 }
