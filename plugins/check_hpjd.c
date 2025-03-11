@@ -97,8 +97,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
@@ -127,8 +128,9 @@ int main(int argc, char **argv) {
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 
 		/* strip the newline character from the end of the input */
-		if (input_buffer[strlen(input_buffer) - 1] == '\n')
+		if (input_buffer[strlen(input_buffer) - 1] == '\n') {
 			input_buffer[strlen(input_buffer) - 1] = 0;
+		}
 
 		line++;
 
@@ -186,16 +188,18 @@ int main(int argc, char **argv) {
 		}
 
 		/* break out of the read loop if we encounter an error */
-		if (result != STATE_OK)
+		if (result != STATE_OK) {
 			break;
+		}
 	}
 
 	/* WARNING if output found on stderr */
 	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		result = max_state(result, STATE_WARNING);
 		/* remove CRLF */
-		if (input_buffer[strlen(input_buffer) - 1] == '\n')
+		if (input_buffer[strlen(input_buffer) - 1] == '\n') {
 			input_buffer[strlen(input_buffer) - 1] = 0;
+		}
 		sprintf(errmsg, "%s", input_buffer);
 	}
 
@@ -203,8 +207,9 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process))
+	if (spclose(child_process)) {
 		result = max_state(result, STATE_WARNING);
+	}
 
 	/* if there wasn't any output, display an error */
 	if (line == 0) {
@@ -221,8 +226,9 @@ int main(int argc, char **argv) {
 			result = STATE_WARNING;
 			strcpy(errmsg, _("Paper Jam"));
 		} else if (paper_out) {
-			if (check_paper_out)
+			if (check_paper_out) {
 				result = STATE_WARNING;
+			}
 			strcpy(errmsg, _("Out of Paper"));
 		} else if (line_status == OFFLINE) {
 			if (strcmp(errmsg, "POWERSAVE ON") != 0) {
@@ -256,20 +262,23 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (result == STATE_OK)
+	if (result == STATE_OK) {
 		printf(_("Printer ok - (%s)\n"), display_message);
+	}
 
 	else if (result == STATE_UNKNOWN) {
 
 		printf("%s\n", errmsg);
 
 		/* if printer could not be reached, escalate to critical */
-		if (strstr(errmsg, "Timeout"))
+		if (strstr(errmsg, "Timeout")) {
 			result = STATE_CRITICAL;
+		}
 	}
 
-	else if (result == STATE_WARNING)
+	else if (result == STATE_WARNING) {
 		printf("%s (%s)\n", errmsg, display_message);
+	}
 
 	return result;
 }
@@ -288,14 +297,16 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "+hVH:C:p:D", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 		case 'H': /* hostname */
@@ -309,10 +320,11 @@ int process_arguments(int argc, char **argv) {
 			community = strscpy(community, optarg);
 			break;
 		case 'p':
-			if (!is_intpos(optarg))
+			if (!is_intpos(optarg)) {
 				usage2(_("Port must be a positive short integer"), optarg);
-			else
+			} else {
 				port = atoi(optarg);
+			}
 			break;
 		case 'D': /* disable paper out check*/
 			check_paper_out = 0;
@@ -338,10 +350,11 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	if (community == NULL) {
-		if (argv[c] != NULL)
+		if (argv[c] != NULL) {
 			community = argv[c];
-		else
+		} else {
 			community = strdup(DEFAULT_COMMUNITY);
+		}
 	}
 
 	if (port == 0) {
