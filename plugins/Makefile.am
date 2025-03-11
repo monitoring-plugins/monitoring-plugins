@@ -51,6 +51,7 @@ EXTRA_DIST = t \
 			 $(np_test_scripts) \
 			 check_swap.d \
 			 check_ldap.d \
+			 check_hpjd.d \
 			 check_game.d \
 			 check_dbi.d \
 			 check_ssh.d \
@@ -59,7 +60,8 @@ EXTRA_DIST = t \
 			 check_by_ssh.d \
 			 check_smtp.d \
 			 check_dig.d \
-			 check_cluster.d
+			 check_cluster.d \
+			 check_fping.d
 
 PLUGINHDRS = common.h
 
