@@ -58,8 +58,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments\n"));
+	}
 
 	/* open the MRTG log file for reading */
 	FILE *mtrg_log_file = fopen(log_file, "r");
@@ -78,12 +79,14 @@ int main(int argc, char **argv) {
 		line++;
 
 		/* skip the first line of the log file */
-		if (line == 1)
+		if (line == 1) {
 			continue;
+		}
 
 		/* break out of read loop if we've passed the number of entries we want to read */
-		if (line > 2)
+		if (line > 2) {
 			break;
+		}
 
 		/* grab the timestamp */
 		char *temp_buffer = strtok(input_buffer, " ");
@@ -91,23 +94,27 @@ int main(int argc, char **argv) {
 
 		/* grab the average value 1 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 1)
+		if (variable_number == 1) {
 			average_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the average value 2 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 2)
+		if (variable_number == 2) {
 			average_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the maximum value 1 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 1)
+		if (variable_number == 1) {
 			maximum_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the maximum value 2 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 2)
+		if (variable_number == 2) {
 			maximum_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 	}
 
 	/* close the log file */
@@ -129,16 +136,18 @@ int main(int argc, char **argv) {
 
 	unsigned long rate = 0L;
 	/* else check the incoming/outgoing rates */
-	if (use_average)
+	if (use_average) {
 		rate = average_value_rate;
-	else
+	} else {
 		rate = maximum_value_rate;
+	}
 
 	int result = STATE_OK;
-	if (rate > value_critical_threshold)
+	if (rate > value_critical_threshold) {
 		result = STATE_CRITICAL;
-	else if (rate > value_warning_threshold)
+	} else if (rate > value_warning_threshold) {
 		result = STATE_WARNING;
+	}
 
 	printf("%s. %s = %lu %s|%s\n", (use_average) ? _("Avg") : _("Max"), label, rate, units,
 		   perfdata(label, (long)rate, units, (int)value_warning_threshold, (long)value_warning_threshold, (int)value_critical_threshold,
@@ -155,16 +164,18 @@ int process_arguments(int argc, char **argv) {
 		{"label", required_argument, 0, 'l'},    {"units", required_argument, 0, 'u'},    {"variable", required_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
+		}
 	}
 
 	int option_char;
@@ -172,8 +183,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		option_char = getopt_long(argc, argv, "hVF:e:a:v:c:w:l:u:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'F': /* input file */
@@ -183,15 +195,17 @@ int process_arguments(int argc, char **argv) {
 			expire_minutes = atoi(optarg);
 			break;
 		case 'a': /* port */
-			if (!strcmp(optarg, "MAX"))
+			if (!strcmp(optarg, "MAX")) {
 				use_average = false;
-			else
+			} else {
 				use_average = true;
+			}
 			break;
 		case 'v':
 			variable_number = atoi(optarg);
-			if (variable_number < 1 || variable_number > 2)
+			if (variable_number < 1 || variable_number > 2) {
 				usage4(_("Invalid variable number"));
+			}
 			break;
 		case 'w': /* critical time threshold */
 			value_warning_threshold = strtoul(optarg, NULL, 10);
@@ -222,10 +236,11 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	if (expire_minutes <= 0 && argc > option_char) {
-		if (is_intpos(argv[option_char]))
+		if (is_intpos(argv[option_char])) {
 			expire_minutes = atoi(argv[option_char++]);
-		else
+		} else {
 			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[option_char], progname);
+		}
 	}
 
 	if (argc > option_char && strcmp(argv[option_char], "MAX") == 0) {
@@ -264,14 +279,17 @@ int process_arguments(int argc, char **argv) {
 }
 
 int validate_arguments(void) {
-	if (variable_number == -1)
+	if (variable_number == -1) {
 		usage4(_("You must supply the variable number"));
+	}
 
-	if (label == NULL)
+	if (label == NULL) {
 		label = strdup("value");
+	}
 
-	if (units == NULL)
+	if (units == NULL) {
 		units = strdup("");
+	}
 
 	return OK;
 }
