@@ -91,39 +91,47 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	server = strscpy(server, server_name);
 
 	/* compose the command */
-	if (target_timeout)
+	if (target_timeout) {
 		xasprintf(&option_string, "%s-t %d ", option_string, target_timeout);
-	if (packet_interval)
+	}
+	if (packet_interval) {
 		xasprintf(&option_string, "%s-p %d ", option_string, packet_interval);
-	if (sourceip)
+	}
+	if (sourceip) {
 		xasprintf(&option_string, "%s-S %s ", option_string, sourceip);
-	if (sourceif)
+	}
+	if (sourceif) {
 		xasprintf(&option_string, "%s-I %s ", option_string, sourceif);
-	if (dontfrag)
+	}
+	if (dontfrag) {
 		xasprintf(&option_string, "%s-M ", option_string);
-	if (randomize_packet_data)
+	}
+	if (randomize_packet_data) {
 		xasprintf(&option_string, "%s-R ", option_string);
-
+	}
 
 #ifdef PATH_TO_FPING6
-	if (address_family != AF_INET && is_inet6_addr(server))
+	if (address_family != AF_INET && is_inet6_addr(server)) {
 		fping_prog = strdup(PATH_TO_FPING6);
-	else
+	} else {
 		fping_prog = strdup(PATH_TO_FPING);
+	}
 #else
 	fping_prog = strdup(PATH_TO_FPING);
 #endif
 
 	xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, packet_size, packet_count, server);
 
-	if (verbose)
+	if (verbose) {
 		printf("%s\n", command_line);
+	}
 
 	/* run the command */
 	child_process = spopen(command_line);
@@ -138,16 +146,18 @@ int main(int argc, char **argv) {
 	}
 
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-		if (verbose)
+		if (verbose) {
 			printf("%s", input_buffer);
+		}
 		status = max_state(status, textscan(input_buffer));
 	}
 
 	/* If we get anything on STDERR, at least set warning */
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		status = max_state(status, STATE_WARNING);
-		if (verbose)
+		if (verbose) {
 			printf("%s", input_buffer);
+		}
 		status = max_state(status, textscan(input_buffer));
 	}
 	(void)fclose(child_stderr);
@@ -221,16 +231,17 @@ int textscan(char *buf) {
 		rtastr = 1 + index(rtastr, '/');
 		loss = strtod(losstr, NULL);
 		rta = strtod(rtastr, NULL);
-		if (cpl_p && loss > cpl)
+		if (cpl_p && loss > cpl) {
 			status = STATE_CRITICAL;
-		else if (crta_p && rta > crta)
+		} else if (crta_p && rta > crta) {
 			status = STATE_CRITICAL;
-		else if (wpl_p && loss > wpl)
+		} else if (wpl_p && loss > wpl) {
 			status = STATE_WARNING;
-		else if (wrta_p && rta > wrta)
+		} else if (wrta_p && rta > wrta) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_OK;
+		}
 		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status), server_name, loss, rta,
 			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100),
 			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0, false, 0));
@@ -241,19 +252,21 @@ int textscan(char *buf) {
 		losstr = strstr(buf, "=");
 		xmtstr = 1 + losstr;
 		xmt = strtod(xmtstr, NULL);
-		if (xmt == 0)
+		if (xmt == 0) {
 			die(STATE_CRITICAL, _("FPING CRITICAL - %s is down\n"), server_name);
+		}
 		losstr = 1 + strstr(losstr, "/");
 		losstr = 1 + strstr(losstr, "/");
 		loss = strtod(losstr, NULL);
-		if (atoi(losstr) == 100)
+		if (atoi(losstr) == 100) {
 			status = STATE_CRITICAL;
-		else if (cpl_p && loss > cpl)
+		} else if (cpl_p && loss > cpl) {
 			status = STATE_CRITICAL;
-		else if (wpl_p && loss > wpl)
+		} else if (wpl_p && loss > wpl) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_OK;
+		}
 		/* loss=%.0f%%;%d;%d;0;100 */
 		die(status, _("FPING %s - %s (loss=%.0f%% )|%s\n"), state_text(status), server_name, loss,
 			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100));
@@ -271,30 +284,20 @@ int process_arguments(int argc, char **argv) {
 	char *rv[2];
 
 	int option = 0;
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
-									   {"sourceip", required_argument, 0, 'S'},
-									   {"sourceif", required_argument, 0, 'I'},
-									   {"critical", required_argument, 0, 'c'},
-									   {"warning", required_argument, 0, 'w'},
-									   {"alive", no_argument, 0, 'a'},
-									   {"bytes", required_argument, 0, 'b'},
-									   {"number", required_argument, 0, 'n'},
-									   {"target-timeout", required_argument, 0, 'T'},
-									   {"interval", required_argument, 0, 'i'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"dontfrag", no_argument, 0, 'M'},
-									   {"random", no_argument, 0, 'R'},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"hostname", required_argument, 0, 'H'}, {"sourceip", required_argument, 0, 'S'}, {"sourceif", required_argument, 0, 'I'},
+		{"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},  {"alive", no_argument, 0, 'a'},
+		{"bytes", required_argument, 0, 'b'},    {"number", required_argument, 0, 'n'},   {"target-timeout", required_argument, 0, 'T'},
+		{"interval", required_argument, 0, 'i'}, {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},           {"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},
+		{"dontfrag", no_argument, 0, 'M'},       {"random", no_argument, 0, 'R'},         {0, 0, 0, 0}};
 
 	rv[PL] = NULL;
 	rv[RTA] = NULL;
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	if (!is_option(argv[1])) {
 		server_name = argv[1];
@@ -306,8 +309,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		c = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1)
+		if (c == -1 || c == EOF || c == 1) {
 			break;
+		}
 
 		switch (c) {
 		case '?': /* print short usage statement if args not parsable */
@@ -376,28 +380,32 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'b': /* bytes per packet */
-			if (is_intpos(optarg))
+			if (is_intpos(optarg)) {
 				packet_size = atoi(optarg);
-			else
+			} else {
 				usage(_("Packet size must be a positive integer"));
+			}
 			break;
 		case 'n': /* number of packets */
-			if (is_intpos(optarg))
+			if (is_intpos(optarg)) {
 				packet_count = atoi(optarg);
-			else
+			} else {
 				usage(_("Packet count must be a positive integer"));
+			}
 			break;
 		case 'T': /* timeout in msec */
-			if (is_intpos(optarg))
+			if (is_intpos(optarg)) {
 				target_timeout = atoi(optarg);
-			else
+			} else {
 				usage(_("Target timeout must be a positive integer"));
+			}
 			break;
 		case 'i': /* interval in msec */
-			if (is_intpos(optarg))
+			if (is_intpos(optarg)) {
 				packet_interval = atoi(optarg);
-			else
+			} else {
 				usage(_("Interval must be a positive integer"));
+			}
 			break;
 		case 'R':
 			randomize_packet_data = true;
@@ -408,8 +416,9 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server_name == NULL)
+	if (server_name == NULL) {
 		usage4(_("Hostname was not supplied"));
+	}
 
 	return OK;
 }
@@ -419,15 +428,18 @@ int get_threshold(char *arg, char *rv[2]) {
 	char *arg2 = NULL;
 
 	arg1 = strscpy(arg1, arg);
-	if (strpbrk(arg1, ",:"))
+	if (strpbrk(arg1, ",:")) {
 		arg2 = 1 + strpbrk(arg1, ",:");
+	}
 
 	if (arg2) {
 		arg1[strcspn(arg1, ",:")] = 0;
-		if (strstr(arg1, "%") && strstr(arg2, "%"))
+		if (strstr(arg1, "%") && strstr(arg2, "%")) {
 			die(STATE_UNKNOWN, _("%s: Only one threshold may be packet loss (%s)\n"), progname, arg);
-		if (!strstr(arg1, "%") && !strstr(arg2, "%"))
+		}
+		if (!strstr(arg1, "%") && !strstr(arg2, "%")) {
 			die(STATE_UNKNOWN, _("%s: Only one threshold must be packet loss (%s)\n"), progname, arg);
+		}
 	}
 
 	if (arg2 && strstr(arg2, "%")) {
