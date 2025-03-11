@@ -81,40 +81,6 @@ static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {
-
-	/* should be 	int result = STATE_UNKNOWN; */
-
-	int return_code = STATE_UNKNOWN;
-	char *send_buffer = NULL;
-	char *output_message = NULL;
-	char *perfdata = NULL;
-	char *temp_string = NULL;
-	char *temp_string_perf = NULL;
-	char *description = NULL, *counter_unit = NULL;
-	char *minval = NULL, *maxval = NULL, *errcvt = NULL;
-	char *fds = NULL, *tds = NULL;
-	char *numstr;
-
-	double total_disk_space = 0;
-	double free_disk_space = 0;
-	double percent_used_space = 0;
-	double warning_used_space = 0;
-	double critical_used_space = 0;
-	double mem_commitLimit = 0;
-	double mem_commitByte = 0;
-	double fminval = 0, fmaxval = 0;
-	unsigned long utilization;
-	unsigned long uptime;
-	unsigned long age_in_minutes;
-	double counter_value = 0.0;
-	int offset = 0;
-	int updays = 0;
-	int uphours = 0;
-	int upminutes = 0;
-
-	bool isPercent = false;
-	bool allRight = false;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -132,10 +98,17 @@ int main(int argc, char **argv) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
+	int return_code = STATE_UNKNOWN;
+	char *send_buffer = NULL;
+	char *output_message = NULL;
+	char *perfdata = NULL;
+	char *temp_string = NULL;
+	char *temp_string_perf = NULL;
+	char *description = NULL;
+	char *counter_unit = NULL;
+	char *errcvt = NULL;
 	switch (vars_to_check) {
-
 	case CHECK_CLIENTVERSION:
-
 		xasprintf(&send_buffer, "%s&1", req_password);
 		fetch_data(server_address, server_port, send_buffer);
 		if (value_list != NULL && strcmp(recv_buffer, value_list) != 0) {
@@ -146,9 +119,7 @@ int main(int argc, char **argv) {
 			return_code = STATE_OK;
 		}
 		break;
-
 	case CHECK_CPULOAD:
-
 		if (value_list == NULL) {
 			output_message = strdup(_("missing -l parameters"));
 		} else if (!strtoularray(lvalue_list, value_list, ",")) {
@@ -160,6 +131,7 @@ int main(int argc, char **argv) {
 			temp_string_perf = strdup(" ");
 
 			/* loop until one of the parameters is wrong or not present */
+			int offset = 0;
 			while (lvalue_list[0 + offset] > (unsigned long)0 && lvalue_list[0 + offset] <= (unsigned long)17280 &&
 				   lvalue_list[1 + offset] > (unsigned long)0 && lvalue_list[1 + offset] <= (unsigned long)100 &&
 				   lvalue_list[2 + offset] > (unsigned long)0 && lvalue_list[2 + offset] <= (unsigned long)100) {
@@ -168,7 +140,7 @@ int main(int argc, char **argv) {
 				xasprintf(&send_buffer, "%s&2&%lu", req_password, lvalue_list[0 + offset]);
 				fetch_data(server_address, server_port, send_buffer);
 
-				utilization = strtoul(recv_buffer, NULL, 10);
+				unsigned long utilization = strtoul(recv_buffer, NULL, 10);
 
 				/* Check if any of the request is in a warning or critical state */
 				if (utilization >= lvalue_list[2 + offset]) {
@@ -193,9 +165,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		break;
-
 	case CHECK_UPTIME:
-
 		if (value_list == NULL) {
 			value_list = "minutes";
 		}
@@ -206,10 +176,10 @@ int main(int argc, char **argv) {
 		} else {
 			xasprintf(&send_buffer, "%s&3", req_password);
 			fetch_data(server_address, server_port, send_buffer);
-			uptime = strtoul(recv_buffer, NULL, 10);
-			updays = uptime / 86400;
-			uphours = (uptime % 86400) / 3600;
-			upminutes = ((uptime % 86400) % 3600) / 60;
+			unsigned long uptime = strtoul(recv_buffer, NULL, 10);
+			int updays = uptime / 86400;
+			int uphours = (uptime % 86400) / 3600;
+			int upminutes = ((uptime % 86400) % 3600) / 60;
 
 			if (!strncmp(value_list, "minutes", strlen("minutes"))) {
 				uptime = uptime / 60;
@@ -232,9 +202,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		break;
-
 	case CHECK_USEDDISKSPACE:
-
 		if (value_list == NULL) {
 			output_message = strdup(_("missing -l parameters"));
 		} else if (strlen(value_list) != 1) {
@@ -242,8 +210,10 @@ int main(int argc, char **argv) {
 		} else {
 			xasprintf(&send_buffer, "%s&4&%s", req_password, value_list);
 			fetch_data(server_address, server_port, send_buffer);
-			fds = strtok(recv_buffer, "&");
-			tds = strtok(NULL, "&");
+			char *fds = strtok(recv_buffer, "&");
+			char *tds = strtok(NULL, "&");
+			double total_disk_space = 0;
+			double free_disk_space = 0;
 			if (fds != NULL) {
 				free_disk_space = atof(fds);
 			}
@@ -252,9 +222,9 @@ int main(int argc, char **argv) {
 			}
 
 			if (total_disk_space > 0 && free_disk_space >= 0) {
-				percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
-				warning_used_space = ((float)warning_value / 100) * total_disk_space;
-				critical_used_space = ((float)critical_value / 100) * total_disk_space;
+				double percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
+				double warning_used_space = ((float)warning_value / 100) * total_disk_space;
+				double critical_used_space = ((float)critical_value / 100) * total_disk_space;
 
 				xasprintf(&temp_string, _("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"), value_list,
 						  total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
@@ -279,10 +249,8 @@ int main(int argc, char **argv) {
 			}
 		}
 		break;
-
 	case CHECK_SERVICESTATE:
 	case CHECK_PROCSTATE:
-
 		if (value_list == NULL) {
 			output_message = strdup(_("No service/process specified"));
 		} else {
@@ -290,7 +258,7 @@ int main(int argc, char **argv) {
 			xasprintf(&send_buffer, "%s&%u&%s&%s", req_password, (vars_to_check == CHECK_SERVICESTATE) ? 5 : 6,
 					  (show_all) ? "ShowAll" : "ShowFail", value_list);
 			fetch_data(server_address, server_port, send_buffer);
-			numstr = strtok(recv_buffer, "&");
+			char *numstr = strtok(recv_buffer, "&");
 			if (numstr == NULL) {
 				die(STATE_UNKNOWN, _("could not fetch information from server\n"));
 			}
@@ -299,24 +267,22 @@ int main(int argc, char **argv) {
 			output_message = strdup(temp_string);
 		}
 		break;
-
 	case CHECK_MEMUSE:
-
 		xasprintf(&send_buffer, "%s&7", req_password);
 		fetch_data(server_address, server_port, send_buffer);
-		numstr = strtok(recv_buffer, "&");
+		char *numstr = strtok(recv_buffer, "&");
 		if (numstr == NULL) {
 			die(STATE_UNKNOWN, _("could not fetch information from server\n"));
 		}
-		mem_commitLimit = atof(numstr);
+		double mem_commitLimit = atof(numstr);
 		numstr = strtok(NULL, "&");
 		if (numstr == NULL) {
 			die(STATE_UNKNOWN, _("could not fetch information from server\n"));
 		}
-		mem_commitByte = atof(numstr);
-		percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
-		warning_used_space = ((float)warning_value / 100) * mem_commitLimit;
-		critical_used_space = ((float)critical_value / 100) * mem_commitLimit;
+		double mem_commitByte = atof(numstr);
+		double percent_used_space = (mem_commitByte / mem_commitLimit) * 100;
+		double warning_used_space = ((float)warning_value / 100) * mem_commitLimit;
+		double critical_used_space = ((float)critical_value / 100) * mem_commitLimit;
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
@@ -334,9 +300,7 @@ int main(int argc, char **argv) {
 		}
 
 		break;
-
 	case CHECK_COUNTER:
-
 		/*
 		CHECK_COUNTER has been modified to provide extensive perfdata information.
 		In order to do this, some modifications have been done to the code
@@ -358,11 +322,12 @@ int main(int argc, char **argv) {
 		 strange things will happen when you make graphs of your data.
 		*/
 
+		double counter_value = 0.0;
 		if (value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
 			preparelist(value_list); /* replace , between services with & to send the request */
-			isPercent = (strchr(value_list, '%') != NULL);
+			bool isPercent = (strchr(value_list, '%') != NULL);
 
 			strtok(value_list, "&"); /* burn the first parameters */
 			description = strtok(NULL, "&");
@@ -371,6 +336,7 @@ int main(int argc, char **argv) {
 			fetch_data(server_address, server_port, send_buffer);
 			counter_value = atof(recv_buffer);
 
+			bool allRight = false;
 			if (description == NULL) {
 				xasprintf(&output_message, "%.f", counter_value);
 			} else if (isPercent) {
@@ -378,6 +344,10 @@ int main(int argc, char **argv) {
 				allRight = true;
 			}
 
+			char *minval = NULL;
+			char *maxval = NULL;
+			double fminval = 0;
+			double fmaxval = 0;
 			if ((counter_unit != NULL) && (!allRight)) {
 				minval = strtok(NULL, "&");
 				maxval = strtok(NULL, "&");
@@ -434,14 +404,13 @@ int main(int argc, char **argv) {
 		break;
 
 	case CHECK_FILEAGE:
-
 		if (value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
 			preparelist(value_list); /* replace , between services with & to send the request */
 			xasprintf(&send_buffer, "%s&9&%s", req_password, value_list);
 			fetch_data(server_address, server_port, send_buffer);
-			age_in_minutes = atoi(strtok(recv_buffer, "&"));
+			unsigned long age_in_minutes = atoi(strtok(recv_buffer, "&"));
 			description = strtok(NULL, "&");
 			output_message = strdup(description);
 
@@ -499,9 +468,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"port", required_argument, 0, 'p'},
 									   {"timeout", required_argument, 0, 't'},
 									   {"critical", required_argument, 0, 'c'},
@@ -529,24 +495,25 @@ int process_arguments(int argc, char **argv) {
 		argc--;
 	}
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
-		} else if (strcmp("-wv", argv[c]) == 0) {
-			strcpy(argv[c], "-w");
-		} else if (strcmp("-cv", argv[c]) == 0) {
-			strcpy(argv[c], "-c");
+	for (int index = 1; index < argc; index++) {
+		if (strcmp("-to", argv[index]) == 0) {
+			strcpy(argv[index], "-t");
+		} else if (strcmp("-wv", argv[index]) == 0) {
+			strcpy(argv[index], "-w");
+		} else if (strcmp("-cv", argv[index]) == 0) {
+			strcpy(argv[index], "-c");
 		}
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hVH:t:c:w:p:v:l:s:d:u", longopts, &option);
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "+hVH:t:c:w:p:v:l:s:d:u", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1) {
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
@@ -638,9 +605,7 @@ int process_arguments(int argc, char **argv) {
 }
 
 void fetch_data(const char *address, int port, const char *sendb) {
-	int result;
-
-	result = process_tcp_request(address, port, sendb, recv_buffer, sizeof(recv_buffer));
+	int result = process_tcp_request(address, port, sendb, recv_buffer, sizeof(recv_buffer));
 
 	if (result != STATE_OK) {
 		die(result, _("could not fetch information from server\n"));
@@ -653,15 +618,12 @@ void fetch_data(const char *address, int port, const char *sendb) {
 
 bool strtoularray(unsigned long *array, char *string, const char *delim) {
 	/* split a <delim> delimited string into a long array */
-	int idx = 0;
-	char *t1;
-
-	for (idx = 0; idx < MAX_VALUE_LIST; idx++) {
+	for (int idx = 0; idx < MAX_VALUE_LIST; idx++) {
 		array[idx] = 0;
 	}
 
-	idx = 0;
-	for (t1 = strtok(string, delim); t1 != NULL; t1 = strtok(NULL, delim)) {
+	int idx = 0;
+	for (char *t1 = strtok(string, delim); t1 != NULL; t1 = strtok(NULL, delim)) {
 		if (is_numeric(t1) && idx < MAX_VALUE_LIST) {
 			array[idx] = strtoul(t1, NULL, 10);
 			idx++;
@@ -674,9 +636,7 @@ bool strtoularray(unsigned long *array, char *string, const char *delim) {
 
 void preparelist(char *string) {
 	/* Replace all , with & which is the delimiter for the request */
-	int i;
-
-	for (i = 0; (size_t)i < strlen(string); i++) {
+	for (int i = 0; (size_t)i < strlen(string); i++) {
 		if (string[i] == ',') {
 			string[i] = '&';
 		}
