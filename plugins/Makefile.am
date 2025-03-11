@@ -50,12 +50,14 @@ EXTRA_DIST = t \
 			 tests \
 			 $(np_test_scripts) \
 			 check_swap.d \
+			 check_ldap.d \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_dbi.d \
 			 check_ssh.d \
 			 check_dns.d \
 			 check_mrtgraf.d \
+			 check_mrtg.d \
 			 check_apt.d \
 			 check_by_ssh.d \
 			 check_smtp.d \

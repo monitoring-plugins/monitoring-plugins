@@ -35,20 +35,17 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
+#include "check_mrtg.d/config.h"
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
+typedef struct {
+	int errorcode;
+	check_mrtg_config config;
+} check_mrtg_config_wrapper;
+static check_mrtg_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper /*config_wrapper*/);
+
 static void print_help(void);
 void print_usage(void);
-
-static char *log_file = NULL;
-static int expire_minutes = 0;
-static bool use_average = true;
-static int variable_number = -1;
-static unsigned long value_warning_threshold = 0L;
-static unsigned long value_critical_threshold = 0L;
-static char *label;
-static char *units;
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -58,32 +55,37 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_mrtg_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments\n"));
+	}
+
+	const check_mrtg_config config = tmp_config.config;
 
 	/* open the MRTG log file for reading */
-	FILE *mtrg_log_file = fopen(log_file, "r");
+	FILE *mtrg_log_file = fopen(config.log_file, "r");
 	if (mtrg_log_file == NULL) {
 		printf(_("Unable to open MRTG log file\n"));
 		return STATE_UNKNOWN;
 	}
 
-	time_t timestamp = 0L;
-	unsigned long average_value_rate = 0L;
-	unsigned long maximum_value_rate = 0L;
+	time_t timestamp = 0;
+	unsigned long average_value_rate = 0;
+	unsigned long maximum_value_rate = 0;
 	char input_buffer[MAX_INPUT_BUFFER];
 	int line = 0;
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, mtrg_log_file)) {
-
 		line++;
 
 		/* skip the first line of the log file */
-		if (line == 1)
+		if (line == 1) {
 			continue;
+		}
 
 		/* break out of read loop if we've passed the number of entries we want to read */
-		if (line > 2)
+		if (line > 2) {
 			break;
+		}
 
 		/* grab the timestamp */
 		char *temp_buffer = strtok(input_buffer, " ");
@@ -91,23 +93,27 @@ int main(int argc, char **argv) {
 
 		/* grab the average value 1 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 1)
+		if (config.variable_number == 1) {
 			average_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the average value 2 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 2)
+		if (config.variable_number == 2) {
 			average_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the maximum value 1 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 1)
+		if (config.variable_number == 1) {
 			maximum_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 
 		/* grab the maximum value 2 rate */
 		temp_buffer = strtok(NULL, " ");
-		if (variable_number == 2)
+		if (config.variable_number == 2) {
 			maximum_value_rate = strtoul(temp_buffer, NULL, 10);
+		}
 	}
 
 	/* close the log file */
@@ -122,49 +128,59 @@ int main(int argc, char **argv) {
 	/* make sure the MRTG data isn't too old */
 	time_t current_time;
 	time(&current_time);
-	if (expire_minutes > 0 && (current_time - timestamp) > (expire_minutes * 60)) {
+	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
 		printf(_("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
 		return STATE_WARNING;
 	}
 
 	unsigned long rate = 0L;
 	/* else check the incoming/outgoing rates */
-	if (use_average)
+	if (config.use_average) {
 		rate = average_value_rate;
-	else
+	} else {
 		rate = maximum_value_rate;
+	}
 
 	int result = STATE_OK;
-	if (rate > value_critical_threshold)
+	if (config.value_critical_threshold_set && rate > config.value_critical_threshold) {
 		result = STATE_CRITICAL;
-	else if (rate > value_warning_threshold)
+	} else if (config.value_warning_threshold_set && rate > config.value_warning_threshold) {
 		result = STATE_WARNING;
+	}
 
-	printf("%s. %s = %lu %s|%s\n", (use_average) ? _("Avg") : _("Max"), label, rate, units,
-		   perfdata(label, (long)rate, units, (int)value_warning_threshold, (long)value_warning_threshold, (int)value_critical_threshold,
-					(long)value_critical_threshold, 0, 0, 0, 0));
+	printf("%s. %s = %lu %s|%s\n", (config.use_average) ? _("Avg") : _("Max"), config.label, rate, config.units,
+		   perfdata(config.label, (long)rate, config.units, config.value_warning_threshold_set, (long)config.value_warning_threshold,
+					config.value_critical_threshold_set, (long)config.value_critical_threshold, 0, 0, 0, 0));
 
 	return result;
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {
 		{"logfile", required_argument, 0, 'F'},  {"expires", required_argument, 0, 'e'},  {"aggregation", required_argument, 0, 'a'},
 		{"variable", required_argument, 0, 'v'}, {"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},
 		{"label", required_argument, 0, 'l'},    {"units", required_argument, 0, 'u'},    {"variable", required_argument, 0, 'v'},
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
-	if (argc < 2)
-		return ERROR;
+	check_mrtg_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_mrtg_config_init(),
+	};
+
+	if (argc < 2) {
+		result.errorcode = ERROR;
+		return result;
+	}
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
+		}
 	}
 
 	int option_char;
@@ -172,38 +188,39 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		option_char = getopt_long(argc, argv, "hVF:e:a:v:c:w:l:u:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'F': /* input file */
-			log_file = optarg;
+			result.config.log_file = optarg;
 			break;
 		case 'e': /* ups name */
-			expire_minutes = atoi(optarg);
+			result.config.expire_minutes = atoi(optarg);
 			break;
 		case 'a': /* port */
-			if (!strcmp(optarg, "MAX"))
-				use_average = false;
-			else
-				use_average = true;
+			result.config.use_average = (bool)(strcmp(optarg, "MAX"));
 			break;
 		case 'v':
-			variable_number = atoi(optarg);
-			if (variable_number < 1 || variable_number > 2)
+			result.config.variable_number = atoi(optarg);
+			if (result.config.variable_number < 1 || result.config.variable_number > 2) {
 				usage4(_("Invalid variable number"));
+			}
 			break;
 		case 'w': /* critical time threshold */
-			value_warning_threshold = strtoul(optarg, NULL, 10);
+			result.config.value_warning_threshold_set = true;
+			result.config.value_warning_threshold = strtoul(optarg, NULL, 10);
 			break;
 		case 'c': /* warning time threshold */
-			value_critical_threshold = strtoul(optarg, NULL, 10);
+			result.config.value_critical_threshold_set = true;
+			result.config.value_critical_threshold = strtoul(optarg, NULL, 10);
 			break;
 		case 'l': /* label */
-			label = optarg;
+			result.config.label = optarg;
 			break;
 		case 'u': /* timeout */
-			units = optarg;
+			result.config.units = optarg;
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -217,63 +234,69 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	option_char = optind;
-	if (log_file == NULL && argc > option_char) {
-		log_file = argv[option_char++];
+	if (result.config.log_file == NULL && argc > option_char) {
+		result.config.log_file = argv[option_char++];
 	}
 
-	if (expire_minutes <= 0 && argc > option_char) {
-		if (is_intpos(argv[option_char]))
-			expire_minutes = atoi(argv[option_char++]);
-		else
+	if (result.config.expire_minutes <= 0 && argc > option_char) {
+		if (is_intpos(argv[option_char])) {
+			result.config.expire_minutes = atoi(argv[option_char++]);
+		} else {
 			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[option_char], progname);
+		}
 	}
 
 	if (argc > option_char && strcmp(argv[option_char], "MAX") == 0) {
-		use_average = false;
+		result.config.use_average = false;
 		option_char++;
 	} else if (argc > option_char && strcmp(argv[option_char], "AVG") == 0) {
-		use_average = true;
+		result.config.use_average = true;
 		option_char++;
 	}
 
-	if (argc > option_char && variable_number == -1) {
-		variable_number = atoi(argv[option_char++]);
-		if (variable_number < 1 || variable_number > 2) {
+	if (argc > option_char && result.config.variable_number == -1) {
+		result.config.variable_number = atoi(argv[option_char++]);
+		if (result.config.variable_number < 1 || result.config.variable_number > 2) {
 			printf("%s :", argv[option_char]);
 			usage(_("Invalid variable number\n"));
 		}
 	}
 
-	if (argc > option_char && value_warning_threshold == 0) {
-		value_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && !result.config.value_warning_threshold_set) {
+		result.config.value_warning_threshold_set = true;
+		result.config.value_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > option_char && value_critical_threshold == 0) {
-		value_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && !result.config.value_critical_threshold_set) {
+		result.config.value_critical_threshold_set = true;
+		result.config.value_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > option_char && strlen(label) == 0) {
-		label = argv[option_char++];
+	if (argc > option_char && strlen(result.config.label) == 0) {
+		result.config.label = argv[option_char++];
 	}
 
-	if (argc > option_char && strlen(units) == 0) {
-		units = argv[option_char++];
+	if (argc > option_char && strlen(result.config.units) == 0) {
+		result.config.units = argv[option_char++];
 	}
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-int validate_arguments(void) {
-	if (variable_number == -1)
+check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper config_wrapper) {
+	if (config_wrapper.config.variable_number == -1) {
 		usage4(_("You must supply the variable number"));
+	}
 
-	if (label == NULL)
-		label = strdup("value");
+	if (config_wrapper.config.label == NULL) {
+		config_wrapper.config.label = strdup("value");
+	}
 
-	if (units == NULL)
-		units = strdup("");
+	if (config_wrapper.config.units == NULL) {
+		config_wrapper.config.units = strdup("");
+	}
 
-	return OK;
+	return config_wrapper;
 }
 
 void print_help(void) {
