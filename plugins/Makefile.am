@@ -50,6 +50,7 @@ EXTRA_DIST = t \
 			 tests \
 			 $(np_test_scripts) \
 			 check_swap.d \
+			 check_ldap.d \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_dbi.d \
