@@ -67,35 +67,39 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
 
-	if (opt_file != NULL)
+	if (opt_file != NULL) {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_FILE, opt_file);
+	}
 
-	if (opt_group != NULL)
+	if (opt_group != NULL) {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, opt_group);
-	else
+	} else {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "client");
+	}
 
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql, db_host, db_user, db_pass, db, db_port, db_socket, 0)) {
-		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST)
+		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_VERSION_ERROR)
+		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY)
+		} else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR)
+		} else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR)
+		} else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else
+		} else {
 			die(STATE_CRITICAL, "QUERY %s: %s\n", _("CRITICAL"), mysql_error(&mysql));
+		}
 	}
 
 	char *error = NULL;
@@ -140,8 +144,9 @@ int main(int argc, char **argv) {
 	/* close the connection */
 	mysql_close(&mysql);
 
-	if (verbose >= 3)
+	if (verbose >= 3) {
 		printf("mysql result: %f\n", value);
+	}
 
 	int status = get_status(value, my_thresholds);
 
@@ -170,8 +175,9 @@ int process_arguments(int argc, char **argv) {
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"query", required_argument, 0, 'q'},
 		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {0, 0, 0, 0}};
 
-	if (argc < 1)
+	if (argc < 1) {
 		return ERROR;
+	}
 
 	char *warning = NULL;
 	char *critical = NULL;
@@ -180,8 +186,9 @@ int process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "hvVP:p:u:d:H:s:q:w:c:f:g:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'H': /* hostname */
@@ -247,17 +254,21 @@ int process_arguments(int argc, char **argv) {
 }
 
 int validate_arguments(void) {
-	if (sql_query == NULL)
+	if (sql_query == NULL) {
 		usage("Must specify a SQL query to run");
+	}
 
-	if (db_user == NULL)
+	if (db_user == NULL) {
 		db_user = strdup("");
+	}
 
-	if (db_host == NULL)
+	if (db_host == NULL) {
 		db_host = strdup("");
+	}
 
-	if (db == NULL)
+	if (db == NULL) {
 		db = strdup("");
+	}
 
 	return OK;
 }
