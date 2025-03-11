@@ -255,22 +255,26 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 			/* Attempt to read the largest size packet possible */
 			req.count = htons(MAX_CM_SIZE);
 			DBG(printf("receiving READSTAT response"))
-			if (read(conn, &req, SIZEOF_NTPCM(req)) == -1)
+			if (read(conn, &req, SIZEOF_NTPCM(req)) == -1) {
 				die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
+			}
 			DBG(print_ntp_control_message(&req));
 			/* discard obviously invalid packets */
-			if (ntohs(req.count) > MAX_CM_SIZE)
+			if (ntohs(req.count) > MAX_CM_SIZE) {
 				die(STATE_CRITICAL, "NTP CRITICAL: Invalid packet received from NTP server\n");
+			}
 		} while (!(req.op & OP_READSTAT && ntohs(req.seq) == 1));
 
-		if (LI(req.flags) == LI_ALARM)
+		if (LI(req.flags) == LI_ALARM) {
 			li_alarm = true;
+		}
 		/* Each peer identifier is 4 bytes in the data section, which
 		 * we represent as a ntp_assoc_status_pair datatype.
 		 */
 		peers_size += ntohs(req.count);
-		if ((tmp = realloc(peers, peers_size)) == NULL)
+		if ((tmp = realloc(peers, peers_size)) == NULL) {
 			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
+		}
 		peers = tmp;
 		memcpy((void *)((ptrdiff_t)peers + peer_offset), (void *)req.data, ntohs(req.count));
 		npeers = peers_size / sizeof(ntp_assoc_status_pair);
@@ -293,21 +297,25 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("%d candidate peers available\n", num_candidates);
-	if (verbose && syncsource_found)
+	}
+	if (verbose && syncsource_found) {
 		printf("synchronization source found\n");
+	}
 
 	int status = STATE_OK;
 	if (!syncsource_found) {
 		status = STATE_WARNING;
-		if (verbose)
+		if (verbose) {
 			printf("warning: no synchronization source found\n");
+		}
 	}
 	if (li_alarm) {
 		status = STATE_WARNING;
-		if (verbose)
+		if (verbose) {
 			printf("warning: LI_ALARM bit is set\n");
+		}
 	}
 
 	const char *getvar = "stratum,offset,jitter";
@@ -316,8 +324,9 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 		/* Only query this server if it is the current sync source */
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel) {
-			if (verbose)
+			if (verbose) {
 				printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
+			}
 			xasprintf(&data, "");
 			do {
 				setup_control_request(&req, OP_READVAR, 2);
@@ -342,50 +351,58 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 					DBG(print_ntp_control_message(&req));
 				} while (!(req.op & OP_READVAR && ntohs(req.seq) == 2));
 
-				if (!(req.op & REM_ERROR))
+				if (!(req.op & REM_ERROR)) {
 					xasprintf(&data, "%s%s", data, req.data);
+				}
 			} while (req.op & REM_MORE);
 
 			if (req.op & REM_ERROR) {
 				if (strstr(getvar, "jitter")) {
-					if (verbose)
+					if (verbose) {
 						printf("The command failed. This is usually caused by servers refusing the 'jitter'\nvariable. Restarting with "
 							   "'dispersion'...\n");
+					}
 					getvar = "stratum,offset,dispersion";
 					i--;
 					continue;
 				}
 				if (strlen(getvar)) {
-					if (verbose)
+					if (verbose) {
 						printf("Server didn't like dispersion either; will retrieve everything\n");
+					}
 					getvar = "";
 					i--;
 					continue;
 				}
 			}
 
-			if (verbose > 1)
+			if (verbose > 1) {
 				printf("Server responded: >>>%s<<<\n", data);
+			}
 
 			double tmp_offset = 0;
 			char *value;
 			char *nptr;
 			/* get the offset */
-			if (verbose)
+			if (verbose) {
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
+			}
 
 			value = np_extract_ntpvar(data, "offset");
 			nptr = NULL;
 			/* Convert the value if we have one */
-			if (value != NULL)
+			if (value != NULL) {
 				tmp_offset = strtod(value, &nptr) / 1000;
+			}
 			/* If value is null or no conversion was performed */
 			if (value == NULL || value == nptr) {
-				if (verbose)
+				if (verbose) {
 					printf("error: unable to read server offset response.\n");
+				}
 			} else {
-				if (verbose)
+				if (verbose) {
 					printf("%.10g\n", tmp_offset);
+				}
 				if (*offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(*offset)) {
 					*offset = tmp_offset;
 					*offset_result = STATE_OK;
@@ -404,12 +421,14 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				nptr = NULL;
 				/* Convert the value if we have one */
-				if (value != NULL)
+				if (value != NULL) {
 					*jitter = strtod(value, &nptr);
+				}
 				/* If value is null or no conversion was performed */
 				if (value == NULL || value == nptr) {
-					if (verbose)
+					if (verbose) {
 						printf("error: unable to read server jitter/dispersion response.\n");
+					}
 					*jitter = -1;
 				} else if (verbose) {
 					printf("%.10g\n", *jitter);
@@ -424,23 +443,27 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				value = np_extract_ntpvar(data, "stratum");
 				nptr = NULL;
 				/* Convert the value if we have one */
-				if (value != NULL)
+				if (value != NULL) {
 					*stratum = strtol(value, &nptr, 10);
+				}
 				if (value == NULL || value == nptr) {
-					if (verbose)
+					if (verbose) {
 						printf("error: unable to read server stratum response.\n");
+					}
 					*stratum = -1;
 				} else {
-					if (verbose)
+					if (verbose) {
 						printf("%i\n", *stratum);
+					}
 				}
 			}
 		} /* if (PEER_SEL(peers[i].status) >= min_peer_sel) */
-	}     /* for (i = 0; i < npeers; i++) */
+	} /* for (i = 0; i < npeers; i++) */
 
 	close(conn);
-	if (peers != NULL)
+	if (peers != NULL) {
 		free(peers);
+	}
 
 	return status;
 }
@@ -454,14 +477,16 @@ int process_arguments(int argc, char **argv) {
 		{"twarn", required_argument, 0, 'm'},    {"tcrit", required_argument, 0, 'n'},    {"timeout", required_argument, 0, 't'},
 		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'p'},     {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage("\n");
+	}
 
 	while (true) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
-		if (option_char == -1 || option_char == EOF || option_char == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'h':
@@ -509,8 +534,9 @@ int process_arguments(int argc, char **argv) {
 			tcrit = optarg;
 			break;
 		case 'H':
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
+			}
 			server_address = strdup(optarg);
 			break;
 		case 'p':
@@ -571,8 +597,9 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	set_thresholds(&offset_thresholds, owarn, ocrit);
 	set_thresholds(&jitter_thresholds, jwarn, jcrit);
@@ -598,8 +625,9 @@ int main(int argc, char *argv[]) {
 		result = (quiet ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (quiet && result == STATE_WARNING)
+		if (quiet && result == STATE_WARNING) {
 			result = STATE_UNKNOWN;
+		}
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
 
@@ -641,10 +669,11 @@ int main(int argc, char *argv[]) {
 		xasprintf(&result_line, _("NTP UNKNOWN:"));
 		break;
 	}
-	if (!syncsource_found)
+	if (!syncsource_found) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
-	else if (li_alarm)
+	} else if (li_alarm) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
+	}
 
 	char *perfdata_line;
 	if (offset_result == STATE_UNKNOWN) {
@@ -691,8 +720,9 @@ int main(int argc, char *argv[]) {
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
-	if (server_address != NULL)
+	if (server_address != NULL) {
 		free(server_address);
+	}
 	return result;
 }
 
