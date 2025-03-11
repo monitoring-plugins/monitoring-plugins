@@ -56,13 +56,15 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* open the MRTG log file for reading */
 	FILE *mrtg_log_file_ptr = fopen(log_file, "r");
-	if (mrtg_log_file_ptr == NULL)
+	if (mrtg_log_file_ptr == NULL) {
 		usage4(_("Unable to open MRTG log file"));
+	}
 
 	time_t timestamp = 0L;
 	char input_buffer[MAX_INPUT_BUFFER];
@@ -76,13 +78,15 @@ int main(int argc, char **argv) {
 		line++;
 
 		/* skip the first line of the log file */
-		if (line == 1)
+		if (line == 1) {
 			continue;
+		}
 
 		/* break out of read loop */
 		/* if we've passed the number of entries we want to read */
-		if (line > 2)
+		if (line > 2) {
 			break;
+		}
 
 		/* grab the timestamp */
 		char *temp_buffer = strtok(input_buffer, " ");
@@ -109,14 +113,16 @@ int main(int argc, char **argv) {
 	fclose(mrtg_log_file_ptr);
 
 	/* if we couldn't read enough data, return an unknown error */
-	if (line <= 2)
+	if (line <= 2) {
 		usage4(_("Unable to process MRTG log file"));
+	}
 
 	/* make sure the MRTG data isn't too old */
 	time_t current_time;
 	time(&current_time);
-	if ((expire_minutes > 0) && (current_time - timestamp) > (expire_minutes * 60))
+	if ((expire_minutes > 0) && (current_time - timestamp) > (expire_minutes * 60)) {
 		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
+	}
 
 	unsigned long incoming_rate = 0L;
 	unsigned long outgoing_rate = 0L;
@@ -201,16 +207,18 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
+		}
 	}
 
 	int option_char;
@@ -218,8 +226,9 @@ int process_arguments(int argc, char **argv) {
 	while (1) {
 		option_char = getopt_long(argc, argv, "hVF:e:a:c:w:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'F': /* input file */
@@ -229,10 +238,11 @@ int process_arguments(int argc, char **argv) {
 			expire_minutes = atoi(optarg);
 			break;
 		case 'a': /* aggregation (AVE or MAX) */
-			if (!strcmp(optarg, "MAX"))
+			if (!strcmp(optarg, "MAX")) {
 				use_average = false;
-			else
+			} else {
 				use_average = true;
+			}
 			break;
 		case 'c': /* warning threshold */
 			sscanf(optarg, "%lu,%lu", &incoming_critical_threshold, &outgoing_critical_threshold);
