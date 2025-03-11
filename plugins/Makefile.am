@@ -60,6 +60,7 @@ EXTRA_DIST = t \
 			 check_apt.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
+			 check_mysql.d \
 			 check_dig.d \
 			 check_cluster.d \
 			 check_fping.d
