@@ -33,16 +33,16 @@ const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "check_mrtgraf.d/config.h"
+#include "check_mrtgtraf.d/config.h"
 #include "common.h"
 #include "utils.h"
 
 typedef struct {
 	int errorcode;
-	check_mrtgraf_config config;
-} check_mrtgraf_config_wrapper;
+	check_mrtgtraf_config config;
+} check_mrtgtraf_config_wrapper;
 
-static check_mrtgraf_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_mrtgtraf_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -54,12 +54,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	check_mrtgraf_config_wrapper tmp_config = process_arguments(argc, argv);
+	check_mrtgtraf_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	const check_mrtgraf_config config = tmp_config.config;
+	const check_mrtgtraf_config config = tmp_config.config;
 
 	/* open the MRTG log file for reading */
 	FILE *mrtg_log_file_ptr = fopen(config.log_file, "r");
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-check_mrtgraf_config_wrapper process_arguments(int argc, char **argv) {
+check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"filename", required_argument, 0, 'F'},
 									   {"expires", required_argument, 0, 'e'},
 									   {"aggregation", required_argument, 0, 'a'},
@@ -210,9 +210,9 @@ check_mrtgraf_config_wrapper process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	check_mrtgraf_config_wrapper result = {
+	check_mrtgtraf_config_wrapper result = {
 		.errorcode = OK,
-		.config = check_mrtgraf_config_init(),
+		.config = check_mrtgtraf_config_init(),
 	};
 	if (argc < 2) {
 		result.errorcode = ERROR;
