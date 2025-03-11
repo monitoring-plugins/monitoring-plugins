@@ -59,7 +59,8 @@ EXTRA_DIST = t \
 			 check_by_ssh.d \
 			 check_smtp.d \
 			 check_dig.d \
-			 check_cluster.d
+			 check_cluster.d \
+			 check_fping.d
 
 PLUGINHDRS = common.h
 
