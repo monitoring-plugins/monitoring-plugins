@@ -55,6 +55,7 @@ EXTRA_DIST = t \
 			 check_dbi.d \
 			 check_ssh.d \
 			 check_dns.d \
+			 check_mrtgraf.d \
 			 check_apt.d \
 			 check_by_ssh.d \
 			 check_smtp.d \

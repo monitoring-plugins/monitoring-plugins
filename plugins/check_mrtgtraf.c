@@ -29,24 +29,22 @@
  *
  *****************************************************************************/
 
-#include "common.h"
-#include "utils.h"
-
 const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+#include "check_mrtgraf.d/config.h"
+#include "common.h"
+#include "utils.h"
+
+typedef struct {
+	int errorcode;
+	check_mrtgraf_config config;
+} check_mrtgraf_config_wrapper;
+
+static check_mrtgraf_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
-
-static char *log_file = NULL;
-static int expire_minutes = -1;
-static bool use_average = true;
-static unsigned long incoming_warning_threshold = 0L;
-static unsigned long incoming_critical_threshold = 0L;
-static unsigned long outgoing_warning_threshold = 0L;
-static unsigned long outgoing_critical_threshold = 0L;
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -56,12 +54,15 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_mrtgraf_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
+	const check_mrtgraf_config config = tmp_config.config;
+
 	/* open the MRTG log file for reading */
-	FILE *mrtg_log_file_ptr = fopen(log_file, "r");
+	FILE *mrtg_log_file_ptr = fopen(config.log_file, "r");
 	if (mrtg_log_file_ptr == NULL) {
 		usage4(_("Unable to open MRTG log file"));
 	}
@@ -120,14 +121,14 @@ int main(int argc, char **argv) {
 	/* make sure the MRTG data isn't too old */
 	time_t current_time;
 	time(&current_time);
-	if ((expire_minutes > 0) && (current_time - timestamp) > (expire_minutes * 60)) {
+	if ((config.expire_minutes > 0) && (current_time - timestamp) > (config.expire_minutes * 60)) {
 		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
 	}
 
 	unsigned long incoming_rate = 0L;
 	unsigned long outgoing_rate = 0L;
 	/* else check the incoming/outgoing rates */
-	if (use_average) {
+	if (config.use_average) {
 		incoming_rate = average_incoming_rate;
 		outgoing_rate = average_outgoing_rate;
 	} else {
@@ -172,24 +173,26 @@ int main(int argc, char **argv) {
 	/* report outgoing traffic in MBytes/sec */
 	else {
 		strcpy(outgoing_speed_rating, "MB");
-		adjusted_outgoing_rate = (double)(outgoing_rate / 1024.0 / 1024.0);
+		adjusted_outgoing_rate = (outgoing_rate / 1024.0 / 1024.0);
 	}
 
 	int result = STATE_OK;
-	if (incoming_rate > incoming_critical_threshold || outgoing_rate > outgoing_critical_threshold) {
+	if (incoming_rate > config.incoming_critical_threshold || outgoing_rate > config.outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-	} else if (incoming_rate > incoming_warning_threshold || outgoing_rate > outgoing_warning_threshold) {
+	} else if (incoming_rate > config.incoming_warning_threshold || outgoing_rate > config.outgoing_warning_threshold) {
 		result = STATE_WARNING;
 	}
 
 	char *error_message;
-	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"), (use_average) ? _("Avg") : _("Max"),
-			  adjusted_incoming_rate, incoming_speed_rating, (use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
+	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"), (config.use_average) ? _("Avg") : _("Max"),
+			  adjusted_incoming_rate, incoming_speed_rating, (config.use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
 			  outgoing_speed_rating,
-			  fperfdata("in", adjusted_incoming_rate, incoming_speed_rating, (int)incoming_warning_threshold, incoming_warning_threshold,
-						(int)incoming_critical_threshold, incoming_critical_threshold, true, 0, false, 0),
-			  fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating, (int)outgoing_warning_threshold, outgoing_warning_threshold,
-						(int)outgoing_critical_threshold, outgoing_critical_threshold, true, 0, false, 0));
+			  fperfdata("in", adjusted_incoming_rate, incoming_speed_rating, (int)config.incoming_warning_threshold,
+						config.incoming_warning_threshold, (int)config.incoming_critical_threshold, config.incoming_critical_threshold,
+						true, 0, false, 0),
+			  fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating, (int)config.outgoing_warning_threshold,
+						config.outgoing_warning_threshold, (int)config.outgoing_critical_threshold, config.outgoing_critical_threshold,
+						true, 0, false, 0));
 
 	printf(_("Traffic %s - %s\n"), state_text(result), error_message);
 
@@ -197,7 +200,7 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_mrtgraf_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"filename", required_argument, 0, 'F'},
 									   {"expires", required_argument, 0, 'e'},
 									   {"aggregation", required_argument, 0, 'a'},
@@ -207,8 +210,13 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
+	check_mrtgraf_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_mrtgraf_config_init(),
+	};
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	for (int i = 1; i < argc; i++) {
@@ -223,7 +231,7 @@ int process_arguments(int argc, char **argv) {
 
 	int option_char;
 	int option = 0;
-	while (1) {
+	while (true) {
 		option_char = getopt_long(argc, argv, "hVF:e:a:c:w:", longopts, &option);
 
 		if (option_char == -1 || option_char == EOF) {
@@ -232,23 +240,19 @@ int process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case 'F': /* input file */
-			log_file = optarg;
+			result.config.log_file = optarg;
 			break;
 		case 'e': /* expiration time */
-			expire_minutes = atoi(optarg);
+			result.config.expire_minutes = atoi(optarg);
 			break;
 		case 'a': /* aggregation (AVE or MAX) */
-			if (!strcmp(optarg, "MAX")) {
-				use_average = false;
-			} else {
-				use_average = true;
-			}
+			result.config.use_average = (bool)(strcmp(optarg, "MAX"));
 			break;
 		case 'c': /* warning threshold */
-			sscanf(optarg, "%lu,%lu", &incoming_critical_threshold, &outgoing_critical_threshold);
+			sscanf(optarg, "%lu,%lu", &result.config.incoming_critical_threshold, &result.config.outgoing_critical_threshold);
 			break;
 		case 'w': /* critical threshold */
-			sscanf(optarg, "%lu,%lu", &incoming_warning_threshold, &outgoing_warning_threshold);
+			sscanf(optarg, "%lu,%lu", &result.config.incoming_warning_threshold, &result.config.outgoing_warning_threshold);
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -262,39 +266,39 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	option_char = optind;
-	if (argc > option_char && log_file == NULL) {
-		log_file = argv[option_char++];
+	if (argc > option_char && result.config.log_file == NULL) {
+		result.config.log_file = argv[option_char++];
 	}
 
-	if (argc > option_char && expire_minutes == -1) {
-		expire_minutes = atoi(argv[option_char++]);
+	if (argc > option_char && result.config.expire_minutes == -1) {
+		result.config.expire_minutes = atoi(argv[option_char++]);
 	}
 
 	if (argc > option_char && strcmp(argv[option_char], "MAX") == 0) {
-		use_average = false;
+		result.config.use_average = false;
 		option_char++;
 	} else if (argc > option_char && strcmp(argv[option_char], "AVG") == 0) {
-		use_average = true;
+		result.config.use_average = true;
 		option_char++;
 	}
 
-	if (argc > option_char && incoming_warning_threshold == 0) {
-		incoming_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && result.config.incoming_warning_threshold == 0) {
+		result.config.incoming_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > option_char && incoming_critical_threshold == 0) {
-		incoming_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && result.config.incoming_critical_threshold == 0) {
+		result.config.incoming_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > option_char && outgoing_warning_threshold == 0) {
-		outgoing_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && result.config.outgoing_warning_threshold == 0) {
+		result.config.outgoing_warning_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	if (argc > option_char && outgoing_critical_threshold == 0) {
-		outgoing_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && result.config.outgoing_critical_threshold == 0) {
+		result.config.outgoing_critical_threshold = strtoul(argv[option_char++], NULL, 10);
 	}
 
-	return OK;
+	return result;
 }
 
 void print_help(void) {
