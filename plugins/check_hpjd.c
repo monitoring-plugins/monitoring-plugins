@@ -37,9 +37,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include "popen.h"
 #include "utils.h"
 #include "netutils.h"
+#include "states.h"
+#include "check_hpjd.d/config.h"
 
 #define DEFAULT_COMMUNITY "public"
-#define DEFAULT_PORT      "161"
 
 #define HPJD_LINE_STATUS           ".1.3.6.1.4.1.11.2.3.9.1.1.2.1"
 #define HPJD_PAPER_STATUS          ".1.3.6.1.4.1.11.2.3.9.1.1.2.2"
@@ -57,39 +58,15 @@ const char *email = "devel@monitoring-plugins.org";
 #define ONLINE  0
 #define OFFLINE 1
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
+typedef struct {
+	int errorcode;
+	check_hpjd_config config;
+} check_hpjd_config_wrapper;
+static check_hpjd_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
-static char *community = NULL;
-static char *address = NULL;
-static unsigned int port = 0;
-static int check_paper_out = 1;
-
 int main(int argc, char **argv) {
-	char command_line[1024];
-	int result = STATE_UNKNOWN;
-	int line;
-	char input_buffer[MAX_INPUT_BUFFER];
-	char query_string[512];
-	char *errmsg;
-	char *temp_buffer;
-	int line_status = ONLINE;
-	int paper_status = 0;
-	int intervention_required = 0;
-	int peripheral_error = 0;
-	int paper_jam = 0;
-	int paper_out = 0;
-	int toner_low = 0;
-	int page_punt = 0;
-	int memory_out = 0;
-	int door_open = 0;
-	int paper_output = 0;
-	char display_message[MAX_INPUT_BUFFER];
-
-	errmsg = malloc(MAX_INPUT_BUFFER);
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -97,9 +74,15 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
-		usage4(_("Could not parse arguments"));
+	check_hpjd_config_wrapper tmp_config = process_arguments(argc, argv);
 
+	if (tmp_config.errorcode == ERROR) {
+		usage4(_("Could not parse arguments"));
+	}
+
+	const check_hpjd_config config = tmp_config.config;
+
+	char query_string[512];
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
 	sprintf(query_string, "%s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0", HPJD_LINE_STATUS, HPJD_PAPER_STATUS,
@@ -107,7 +90,8 @@ int main(int argc, char **argv) {
 			HPJD_GD_PAGE_PUNT, HPJD_GD_MEMORY_OUT, HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
-	sprintf(command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s", PATH_TO_SNMPGET, community, address, port, query_string);
+	char command_line[1024];
+	sprintf(command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s", PATH_TO_SNMPGET, config.community, config.address, config.port, query_string);
 
 	/* run the command */
 	child_process = spopen(command_line);
@@ -121,29 +105,41 @@ int main(int argc, char **argv) {
 		printf(_("Could not open stderr for %s\n"), command_line);
 	}
 
-	result = STATE_OK;
+	mp_state_enum result = STATE_OK;
 
-	line = 0;
+	int line_status = ONLINE;
+	int paper_status = 0;
+	int intervention_required = 0;
+	int peripheral_error = 0;
+	int paper_jam = 0;
+	int paper_out = 0;
+	int toner_low = 0;
+	int page_punt = 0;
+	int memory_out = 0;
+	int door_open = 0;
+	int paper_output = 0;
+	char display_message[MAX_INPUT_BUFFER];
+
+	char input_buffer[MAX_INPUT_BUFFER];
+	char *errmsg = malloc(MAX_INPUT_BUFFER);
+	int line = 0;
+
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-
 		/* strip the newline character from the end of the input */
-		if (input_buffer[strlen(input_buffer) - 1] == '\n')
+		if (input_buffer[strlen(input_buffer) - 1] == '\n') {
 			input_buffer[strlen(input_buffer) - 1] = 0;
+		}
 
 		line++;
 
-		temp_buffer = strtok(input_buffer, "=");
+		char *temp_buffer = strtok(input_buffer, "=");
 		temp_buffer = strtok(NULL, "=");
 
 		if (temp_buffer == NULL && line < 13) {
-
 			result = STATE_UNKNOWN;
 			strcpy(errmsg, input_buffer);
-
 		} else {
-
 			switch (line) {
-
 			case 1: /* 1st line should contain the line status */
 				line_status = atoi(temp_buffer);
 				break;
@@ -186,16 +182,18 @@ int main(int argc, char **argv) {
 		}
 
 		/* break out of the read loop if we encounter an error */
-		if (result != STATE_OK)
+		if (result != STATE_OK) {
 			break;
+		}
 	}
 
 	/* WARNING if output found on stderr */
 	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		result = max_state(result, STATE_WARNING);
 		/* remove CRLF */
-		if (input_buffer[strlen(input_buffer) - 1] == '\n')
+		if (input_buffer[strlen(input_buffer) - 1] == '\n') {
 			input_buffer[strlen(input_buffer) - 1] = 0;
+		}
 		sprintf(errmsg, "%s", input_buffer);
 	}
 
@@ -203,15 +201,15 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process))
+	if (spclose(child_process)) {
 		result = max_state(result, STATE_WARNING);
+	}
 
 	/* if there wasn't any output, display an error */
 	if (line == 0) {
-
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN;
-		xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, address);
+		xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, config.address);
 	}
 
 	/* if we had no read errors, check the printer status results... */
@@ -221,8 +219,9 @@ int main(int argc, char **argv) {
 			result = STATE_WARNING;
 			strcpy(errmsg, _("Paper Jam"));
 		} else if (paper_out) {
-			if (check_paper_out)
+			if (config.check_paper_out) {
 				result = STATE_WARNING;
+			}
 			strcpy(errmsg, _("Out of Paper"));
 		} else if (line_status == OFFLINE) {
 			if (strcmp(errmsg, "POWERSAVE ON") != 0) {
@@ -256,29 +255,23 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (result == STATE_OK)
+	if (result == STATE_OK) {
 		printf(_("Printer ok - (%s)\n"), display_message);
-
-	else if (result == STATE_UNKNOWN) {
-
+	} else if (result == STATE_UNKNOWN) {
 		printf("%s\n", errmsg);
-
 		/* if printer could not be reached, escalate to critical */
-		if (strstr(errmsg, "Timeout"))
+		if (strstr(errmsg, "Timeout")) {
 			result = STATE_CRITICAL;
+		}
+	} else if (result == STATE_WARNING) {
+		printf("%s (%s)\n", errmsg, display_message);
 	}
 
-	else if (result == STATE_WARNING)
-		printf("%s (%s)\n", errmsg, display_message);
-
-	return result;
+	exit(result);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
+check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"community", required_argument, 0, 'C'},
 									   /*  		{"critical",       required_argument,0,'c'}, */
@@ -288,34 +281,44 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
-		return ERROR;
+	check_hpjd_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_hpjd_config_init(),
+	};
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hVH:C:p:D", longopts, &option);
+	if (argc < 2) {
+		result.errorcode = ERROR;
+		return result;
+	}
 
-		if (c == -1 || c == EOF || c == 1)
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "+hVH:C:p:D", longopts, &option);
+
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
+		}
 
-		switch (c) {
+		switch (option_index) {
 		case 'H': /* hostname */
 			if (is_host(optarg)) {
-				address = strscpy(address, optarg);
+				result.config.address = strscpy(result.config.address, optarg);
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'C': /* community */
-			community = strscpy(community, optarg);
+			result.config.community = strscpy(result.config.community, optarg);
 			break;
 		case 'p':
-			if (!is_intpos(optarg))
+			if (!is_intpos(optarg)) {
 				usage2(_("Port must be a positive short integer"), optarg);
-			else
-				port = atoi(optarg);
+			} else {
+				result.config.port = atoi(optarg);
+			}
 			break;
 		case 'D': /* disable paper out check*/
-			check_paper_out = 0;
+			result.config.check_paper_out = false;
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -328,30 +331,25 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (address == NULL) {
+	int c = optind;
+	if (result.config.address == NULL) {
 		if (is_host(argv[c])) {
-			address = argv[c++];
+			result.config.address = argv[c++];
 		} else {
 			usage2(_("Invalid hostname/address"), argv[c]);
 		}
 	}
 
-	if (community == NULL) {
-		if (argv[c] != NULL)
-			community = argv[c];
-		else
-			community = strdup(DEFAULT_COMMUNITY);
+	if (result.config.community == NULL) {
+		if (argv[c] != NULL) {
+			result.config.community = argv[c];
+		} else {
+			result.config.community = strdup(DEFAULT_COMMUNITY);
+		}
 	}
 
-	if (port == 0) {
-		port = atoi(DEFAULT_PORT);
-	}
-
-	return validate_arguments();
+	return result;
 }
-
-int validate_arguments(void) { return OK; }
 
 void print_help(void) {
 	print_revision(progname, NP_VERSION);
