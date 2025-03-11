@@ -34,70 +34,33 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "check_ldap.d/config.h"
 
+#include "states.h"
 #include <lber.h>
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 
 enum {
-	UNDEFINED = 0,
-#ifdef HAVE_LDAP_SET_OPTION
-	DEFAULT_PROTOCOL = 2,
-#endif
 	DEFAULT_PORT = 389
 };
 
-static int process_arguments(int, char **);
-static int validate_arguments(void);
+typedef struct {
+	int errorcode;
+	check_ldap_config config;
+} check_ldap_config_wrapper;
+static check_ldap_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_ldap_config_wrapper validate_arguments(check_ldap_config_wrapper /*config_wrapper*/);
+
 static void print_help(void);
 void print_usage(void);
 
-static char ld_defattr[] = "(objectclass=*)";
-static char *ld_attr = ld_defattr;
-static char *ld_host = NULL;
-static char *ld_base = NULL;
-static char *ld_passwd = NULL;
-static char *ld_binddn = NULL;
-static int ld_port = -1;
-#ifdef HAVE_LDAP_SET_OPTION
-static int ld_protocol = DEFAULT_PROTOCOL;
-#endif
 #ifndef LDAP_OPT_SUCCESS
 #	define LDAP_OPT_SUCCESS LDAP_SUCCESS
 #endif
-static double warn_time = UNDEFINED;
-static double crit_time = UNDEFINED;
-static thresholds *entries_thresholds = NULL;
-static struct timeval tv;
-static char *warn_entries = NULL;
-static char *crit_entries = NULL;
-static bool starttls = false;
-static bool ssl_on_connect = false;
-static bool verbose = false;
-
-/* for ldap tls */
-
-static char *SERVICE = "LDAP";
+static int verbose = 0;
 
 int main(int argc, char *argv[]) {
-
-	LDAP *ld;
-	LDAPMessage *result;
-
-	/* should be 	int result = STATE_UNKNOWN; */
-
-	int status = STATE_UNKNOWN;
-	long microsec;
-	double elapsed_time;
-
-	/* for ldap tls */
-
-	int tls;
-	int version = 3;
-
-	int status_entries = STATE_OK;
-	int num_entries = 0;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -109,13 +72,12 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_ldap_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	if (strstr(argv[0], "check_ldaps") && !starttls && !ssl_on_connect) {
-		starttls = true;
-	}
+	const check_ldap_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -124,65 +86,67 @@ int main(int argc, char *argv[]) {
 	alarm(socket_timeout);
 
 	/* get the start time */
-	gettimeofday(&tv, NULL);
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
 
+	LDAP *ldap_connection;
 	/* initialize ldap */
 #ifdef HAVE_LDAP_INIT
-	if (!(ld = ldap_init(ld_host, ld_port))) {
-		printf("Could not connect to the server at port %i\n", ld_port);
+	if (!(ldap_connection = ldap_init(config.ld_host, config.ld_port))) {
+		printf("Could not connect to the server at port %i\n", config.ld_port);
 		return STATE_CRITICAL;
 	}
 #else
-	if (!(ld = ldap_open(ld_host, ld_port))) {
+	if (!(ld = ldap_open(config.ld_host, config.ld_port))) {
 		if (verbose) {
-			ldap_perror(ld, "ldap_open");
+			ldap_perror(ldap_connection, "ldap_open");
 		}
-		printf(_("Could not connect to the server at port %i\n"), ld_port);
+		printf(_("Could not connect to the server at port %i\n"), config.ld_port);
 		return STATE_CRITICAL;
 	}
 #endif /* HAVE_LDAP_INIT */
 
 #ifdef HAVE_LDAP_SET_OPTION
 	/* set ldap options */
-	if (ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ld_protocol) != LDAP_OPT_SUCCESS) {
-		printf(_("Could not set protocol version %d\n"), ld_protocol);
+	if (ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &config.ld_protocol) != LDAP_OPT_SUCCESS) {
+		printf(_("Could not set protocol version %d\n"), config.ld_protocol);
 		return STATE_CRITICAL;
 	}
 #endif
 
-	if (ld_port == LDAPS_PORT || ssl_on_connect) {
-		xasprintf(&SERVICE, "LDAPS");
+	int version = 3;
+	int tls;
+	if (config.ld_port == LDAPS_PORT || config.ssl_on_connect) {
 #if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
 		/* ldaps: set option tls */
 		tls = LDAP_OPT_X_TLS_HARD;
 
-		if (ldap_set_option(ld, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS) {
+		if (ldap_set_option(ldap_connection, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS) {
 			if (verbose) {
-				ldap_perror(ld, "ldaps_option");
+				ldap_perror(ldap_connection, "ldaps_option");
 			}
-			printf(_("Could not init TLS at port %i!\n"), ld_port);
+			printf(_("Could not init TLS at port %i!\n"), config.ld_port);
 			return STATE_CRITICAL;
 		}
 #else
 		printf(_("TLS not supported by the libraries!\n"));
 		return STATE_CRITICAL;
 #endif /* LDAP_OPT_X_TLS */
-	} else if (starttls) {
-		xasprintf(&SERVICE, "LDAP-TLS");
+	} else if (config.starttls) {
 #if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
 		/* ldap with startTLS: set option version */
-		if (ldap_get_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS) {
+		if (ldap_get_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS) {
 			if (version < LDAP_VERSION3) {
 				version = LDAP_VERSION3;
-				ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+				ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version);
 			}
 		}
 		/* call start_tls */
-		if (ldap_start_tls_s(ld, NULL, NULL) != LDAP_SUCCESS) {
+		if (ldap_start_tls_s(ldap_connection, NULL, NULL) != LDAP_SUCCESS) {
 			if (verbose) {
-				ldap_perror(ld, "ldap_start_tls");
+				ldap_perror(ldap_connection, "ldap_start_tls");
 			}
-			printf(_("Could not init startTLS at port %i!\n"), ld_port);
+			printf(_("Could not init startTLS at port %i!\n"), config.ld_port);
 			return STATE_CRITICAL;
 		}
 #else
@@ -192,51 +156,56 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* bind to the ldap server */
-	if (ldap_bind_s(ld, ld_binddn, ld_passwd, LDAP_AUTH_SIMPLE) != LDAP_SUCCESS) {
+	if (ldap_bind_s(ldap_connection, config.ld_binddn, config.ld_passwd, LDAP_AUTH_SIMPLE) != LDAP_SUCCESS) {
 		if (verbose) {
-			ldap_perror(ld, "ldap_bind");
+			ldap_perror(ldap_connection, "ldap_bind");
 		}
 		printf(_("Could not bind to the LDAP server\n"));
 		return STATE_CRITICAL;
 	}
 
+	LDAPMessage *result;
+	int num_entries = 0;
 	/* do a search of all objectclasses in the base dn */
-	if (ldap_search_s(ld, ld_base, (crit_entries != NULL || warn_entries != NULL) ? LDAP_SCOPE_SUBTREE : LDAP_SCOPE_BASE, ld_attr, NULL, 0,
-					  &result) != LDAP_SUCCESS) {
+	if (ldap_search_s(ldap_connection, config.ld_base,
+					  (config.crit_entries != NULL || config.warn_entries != NULL) ? LDAP_SCOPE_SUBTREE : LDAP_SCOPE_BASE, config.ld_attr,
+					  NULL, 0, &result) != LDAP_SUCCESS) {
 		if (verbose) {
-			ldap_perror(ld, "ldap_search");
+			ldap_perror(ldap_connection, "ldap_search");
 		}
-		printf(_("Could not search/find objectclasses in %s\n"), ld_base);
+		printf(_("Could not search/find objectclasses in %s\n"), config.ld_base);
 		return STATE_CRITICAL;
-	} else if (crit_entries != NULL || warn_entries != NULL) {
-		num_entries = ldap_count_entries(ld, result);
+	}
+
+	if (config.crit_entries != NULL || config.warn_entries != NULL) {
+		num_entries = ldap_count_entries(ldap_connection, result);
 	}
 
 	/* unbind from the ldap server */
-	ldap_unbind(ld);
+	ldap_unbind(ldap_connection);
 
 	/* reset the alarm handler */
 	alarm(0);
 
 	/* calculate the elapsed time and compare to thresholds */
 
-	microsec = deltime(tv);
-	elapsed_time = (double)microsec / 1.0e6;
-
-	if (crit_time != UNDEFINED && elapsed_time > crit_time) {
+	long microsec = deltime(start_time);
+	double elapsed_time = (double)microsec / 1.0e6;
+	mp_state_enum status = STATE_UNKNOWN;
+	if (config.crit_time_set && elapsed_time > config.crit_time) {
 		status = STATE_CRITICAL;
-	} else if (warn_time != UNDEFINED && elapsed_time > warn_time) {
+	} else if (config.warn_time_set && elapsed_time > config.warn_time) {
 		status = STATE_WARNING;
 	} else {
 		status = STATE_OK;
 	}
 
-	if (entries_thresholds != NULL) {
+	if (config.entries_thresholds != NULL) {
 		if (verbose) {
 			printf("entries found: %d\n", num_entries);
-			print_thresholds("entry thresholds", entries_thresholds);
+			print_thresholds("entry thresholds", config.entries_thresholds);
 		}
-		status_entries = get_status(num_entries, entries_thresholds);
+		mp_state_enum status_entries = get_status(num_entries, config.entries_thresholds);
 		if (status_entries == STATE_CRITICAL) {
 			status = STATE_CRITICAL;
 		} else if (status != STATE_CRITICAL) {
@@ -245,23 +214,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* print out the result */
-	if (crit_entries != NULL || warn_entries != NULL) {
+	if (config.crit_entries != NULL || config.warn_entries != NULL) {
 		printf(_("LDAP %s - found %d entries in %.3f seconds|%s %s\n"), state_text(status), num_entries, elapsed_time,
-			   fperfdata("time", elapsed_time, "s", (int)warn_time, warn_time, (int)crit_time, crit_time, true, 0, false, 0),
-			   sperfdata("entries", (double)num_entries, "", warn_entries, crit_entries, true, 0.0, false, 0.0));
+			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time, config.crit_time_set, config.crit_time, true, 0,
+						 false, 0),
+			   sperfdata("entries", (double)num_entries, "", config.warn_entries, config.crit_entries, true, 0.0, false, 0.0));
 	} else {
 		printf(_("LDAP %s - %.3f seconds response time|%s\n"), state_text(status), elapsed_time,
-			   fperfdata("time", elapsed_time, "s", (int)warn_time, warn_time, (int)crit_time, crit_time, true, 0, false, 0));
+			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time, config.crit_time_set, config.crit_time, true, 0,
+						 false, 0));
 	}
 
-	return status;
+	exit(status);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
+check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 	/* initialize the long option struct */
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
@@ -287,24 +255,31 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},
 									   {0, 0, 0, 0}};
 
+	check_ldap_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ldap_config_init(),
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
+	for (int index = 1; index < argc; index++) {
+		if (strcmp("-to", argv[index]) == 0) {
+			strcpy(argv[index], "-t");
 		}
 	}
 
+	int option = 0;
 	while (true) {
-		c = getopt_long(argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
+		int option_index = getopt_long(argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
 
-		if (c == -1 || c == EOF) {
+		if (option_index == -1 || option_index == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -319,61 +294,63 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'H':
-			ld_host = optarg;
+			result.config.ld_host = optarg;
 			break;
 		case 'b':
-			ld_base = optarg;
+			result.config.ld_base = optarg;
 			break;
 		case 'p':
-			ld_port = atoi(optarg);
+			result.config.ld_port = atoi(optarg);
 			break;
 		case 'a':
-			ld_attr = optarg;
+			result.config.ld_attr = optarg;
 			break;
 		case 'D':
-			ld_binddn = optarg;
+			result.config.ld_binddn = optarg;
 			break;
 		case 'P':
-			ld_passwd = optarg;
+			result.config.ld_passwd = optarg;
 			break;
 		case 'w':
-			warn_time = strtod(optarg, NULL);
+			result.config.warn_time_set = true;
+			result.config.warn_time = strtod(optarg, NULL);
 			break;
 		case 'c':
-			crit_time = strtod(optarg, NULL);
+			result.config.crit_time_set = true;
+			result.config.crit_time = strtod(optarg, NULL);
 			break;
 		case 'W':
-			warn_entries = optarg;
+			result.config.warn_entries = optarg;
 			break;
 		case 'C':
-			crit_entries = optarg;
+			result.config.crit_entries = optarg;
 			break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':
-			ld_protocol = 2;
+			result.config.ld_protocol = 2;
 			break;
 		case '3':
-			ld_protocol = 3;
+			result.config.ld_protocol = 3;
 			break;
-#endif
+#endif // HAVE_LDAP_SET_OPTION
 		case '4':
 			address_family = AF_INET;
 			break;
 		case 'v':
-			verbose = true;
+			verbose++;
 			break;
 		case 'T':
-			if (!ssl_on_connect) {
-				starttls = true;
+			if (!result.config.ssl_on_connect) {
+				result.config.starttls = true;
 			} else {
 				usage_va(_("%s cannot be combined with %s"), "-T/--starttls", "-S/--ssl");
 			}
 			break;
 		case 'S':
-			if (!starttls) {
-				ssl_on_connect = true;
-				if (ld_port == -1) {
-					ld_port = LDAPS_PORT;
+			if (!result.config.starttls) {
+				result.config.ssl_on_connect = true;
+				if (result.config.ld_port == -1) {
+					result.config.ld_port = LDAPS_PORT;
 				}
 			} else {
 				usage_va(_("%s cannot be combined with %s"), "-S/--ssl", "-T/--starttls");
@@ -391,39 +368,44 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (ld_host == NULL && is_host(argv[c])) {
-		ld_host = strdup(argv[c++]);
+	int index = optind;
+	if ((result.config.ld_host == NULL) && is_host(argv[index])) {
+		result.config.ld_host = strdup(argv[index++]);
 	}
 
-	if (ld_base == NULL && argv[c]) {
-		ld_base = strdup(argv[c++]);
+	if ((result.config.ld_base == NULL) && argv[index]) {
+		result.config.ld_base = strdup(argv[index++]);
 	}
 
-	if (ld_port == -1) {
-		ld_port = DEFAULT_PORT;
+	if (result.config.ld_port == -1) {
+		result.config.ld_port = DEFAULT_PORT;
 	}
 
-	return validate_arguments();
+	if (strstr(argv[0], "check_ldaps") && !result.config.starttls && !result.config.ssl_on_connect) {
+		result.config.starttls = true;
+	}
+
+	return validate_arguments(result);
 }
 
-int validate_arguments() {
-	if (ld_host == NULL || strlen(ld_host) == 0) {
+check_ldap_config_wrapper validate_arguments(check_ldap_config_wrapper config_wrapper) {
+	if (config_wrapper.config.ld_host == NULL || strlen(config_wrapper.config.ld_host) == 0) {
 		usage4(_("Please specify the host name\n"));
 	}
 
-	if (ld_base == NULL) {
+	if (config_wrapper.config.ld_base == NULL) {
 		usage4(_("Please specify the LDAP base\n"));
 	}
 
-	if (crit_entries != NULL || warn_entries != NULL) {
-		set_thresholds(&entries_thresholds, warn_entries, crit_entries);
-	}
-	if (ld_passwd == NULL) {
-		ld_passwd = getenv("LDAP_PASSWORD");
+	if (config_wrapper.config.crit_entries != NULL || config_wrapper.config.warn_entries != NULL) {
+		set_thresholds(&config_wrapper.config.entries_thresholds, config_wrapper.config.warn_entries, config_wrapper.config.crit_entries);
 	}
 
-	return OK;
+	if (config_wrapper.config.ld_passwd == NULL) {
+		config_wrapper.config.ld_passwd = getenv("LDAP_PASSWORD");
+	}
+
+	return config_wrapper;
 }
 
 void print_help(void) {
