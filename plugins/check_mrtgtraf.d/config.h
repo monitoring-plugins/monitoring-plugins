@@ -13,10 +13,10 @@ typedef struct {
 	unsigned long outgoing_warning_threshold;
 	unsigned long outgoing_critical_threshold;
 
-} check_mrtgraf_config;
+} check_mrtgtraf_config;
 
-check_mrtgraf_config check_mrtgraf_config_init() {
-	check_mrtgraf_config tmp = {
+check_mrtgtraf_config check_mrtgtraf_config_init() {
+	check_mrtgtraf_config tmp = {
 		.log_file = NULL,
 		.expire_minutes = -1,
 		.use_average = true,
