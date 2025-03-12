@@ -66,18 +66,12 @@ static int max_addr = 1;
 static int max_packets = -1;
 static int verbose = 0;
 
-static float rta = UNKNOWN_TRIP_TIME;
-static int pl = UNKNOWN_PACKET_LOSS;
+static float round_trip_average = UNKNOWN_TRIP_TIME;
+static int packet_loss = UNKNOWN_PACKET_LOSS;
 
 static char *warn_text;
 
 int main(int argc, char **argv) {
-	char *cmd = NULL;
-	char *rawcmd = NULL;
-	int result = STATE_UNKNOWN;
-	int this_result = STATE_UNKNOWN;
-	int i;
-
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -106,8 +100,9 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 #endif
 
-	for (i = 0; i < n_addresses; i++) {
-
+	int result = STATE_UNKNOWN;
+	char *rawcmd = NULL;
+	for (int i = 0; i < n_addresses; i++) {
 #ifdef PING6_COMMAND
 		if (address_family != AF_INET && is_inet6_addr(addresses[i])) {
 			rawcmd = strdup(PING6_COMMAND);
@@ -117,6 +112,8 @@ int main(int argc, char **argv) {
 #else
 		rawcmd = strdup(PING_COMMAND);
 #endif
+
+		char *cmd = NULL;
 
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
@@ -134,18 +131,18 @@ int main(int argc, char **argv) {
 		}
 
 		/* run the command */
-		this_result = run_ping(cmd, addresses[i]);
+		int this_result = run_ping(cmd, addresses[i]);
 
-		if (pl == UNKNOWN_PACKET_LOSS || rta < 0.0) {
+		if (packet_loss == UNKNOWN_PACKET_LOSS || round_trip_average < 0.0) {
 			printf("%s\n", cmd);
 			die(STATE_UNKNOWN, _("CRITICAL - Could not interpret output from ping command\n"));
 		}
 
-		if (pl >= cpl || rta >= crta || rta < 0) {
+		if (packet_loss >= cpl || round_trip_average >= crta || round_trip_average < 0) {
 			this_result = STATE_CRITICAL;
-		} else if (pl >= wpl || rta >= wrta) {
+		} else if (packet_loss >= wpl || round_trip_average >= wrta) {
 			this_result = STATE_WARNING;
-		} else if (pl >= 0 && rta >= 0) {
+		} else if (packet_loss >= 0 && round_trip_average >= 0) {
 			this_result = max_state(STATE_OK, this_result);
 		}
 
@@ -153,26 +150,28 @@ int main(int argc, char **argv) {
 			die(STATE_OK, "%s is alive\n", addresses[i]);
 		}
 
-		if (display_html == true) {
+		if (display_html) {
 			printf("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
 		}
-		if (pl == 100) {
-			printf(_("PING %s - %sPacket loss = %d%%"), state_text(this_result), warn_text, pl);
+		if (packet_loss == 100) {
+			printf(_("PING %s - %sPacket loss = %d%%"), state_text(this_result), warn_text, packet_loss);
 		} else {
-			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(this_result), warn_text, pl, rta);
+			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(this_result), warn_text, packet_loss,
+				   round_trip_average);
 		}
-		if (display_html == true) {
+		if (display_html) {
 			printf("</A>");
 		}
 
 		/* Print performance data */
-		if (pl != 100) {
+		if (packet_loss != 100) {
 			printf("|%s",
-				   fperfdata("rta", (double)rta, "ms", wrta > 0 ? true : false, wrta, crta > 0 ? true : false, crta, true, 0, false, 0));
+				   fperfdata("rta", (double)round_trip_average, "ms", (bool)(wrta > 0), wrta, (bool)(crta > 0), crta, true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", wrta, crta);
 		}
-		printf(" %s\n", perfdata("pl", (long)pl, "%", wpl > 0 ? true : false, wpl, cpl > 0 ? true : false, cpl, true, 0, false, 0));
+
+		printf(" %s\n", perfdata("pl", (long)packet_loss, "%", (bool)(wpl > 0), wpl, (bool)(cpl > 0), cpl, true, 0, false, 0));
 
 		if (verbose >= 2) {
 			printf("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
@@ -188,10 +187,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c = 1;
-	char *ptr;
-
-	int option = 0;
 	static struct option longopts[] = {STD_LONG_OPTS,
 									   {"packets", required_argument, 0, 'p'},
 									   {"nohtml", no_argument, 0, 'n'},
@@ -204,23 +199,24 @@ int process_arguments(int argc, char **argv) {
 		return ERROR;
 	}
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
+	for (int index = 1; index < argc; index++) {
+		if (strcmp("-to", argv[index]) == 0) {
+			strcpy(argv[index], "-t");
 		}
-		if (strcmp("-nohtml", argv[c]) == 0) {
-			strcpy(argv[c], "-n");
+		if (strcmp("-nohtml", argv[index]) == 0) {
+			strcpy(argv[index], "-n");
 		}
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
 
-		if (c == -1 || c == EOF) {
+		if (option_index == -1 || option_index == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case '?': /* usage */
 			usage5();
 		case 'h': /* help */
@@ -247,9 +243,9 @@ int process_arguments(int argc, char **argv) {
 			usage(_("IPv6 support not available\n"));
 #endif
 			break;
-		case 'H': /* hostname */
-			ptr = optarg;
-			while (1) {
+		case 'H': /* hostname */ {
+			char *ptr = optarg;
+			while (true) {
 				n_addresses++;
 				if (n_addresses > max_addr) {
 					max_addr *= 2;
@@ -266,7 +262,7 @@ int process_arguments(int argc, char **argv) {
 					break;
 				}
 			}
-			break;
+		} break;
 		case 'p': /* number of packets to send */
 			if (is_intnonneg(optarg)) {
 				max_packets = atoi(optarg);
@@ -289,76 +285,72 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if (c == argc) {
+	int arg_counter = optind;
+	if (arg_counter == argc) {
 		return validate_arguments();
 	}
 
 	if (addresses[0] == NULL) {
-		if (!is_host(argv[c])) {
-			usage2(_("Invalid hostname/address"), argv[c]);
+		if (!is_host(argv[arg_counter])) {
+			usage2(_("Invalid hostname/address"), argv[arg_counter]);
 		} else {
-			addresses[0] = argv[c++];
+			addresses[0] = argv[arg_counter++];
 			n_addresses++;
-			if (c == argc) {
+			if (arg_counter == argc) {
 				return validate_arguments();
 			}
 		}
 	}
 
 	if (wpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[c])) {
-			printf(_("<wpl> (%s) must be an integer percentage\n"), argv[c]);
+		if (!is_intpercent(argv[arg_counter])) {
+			printf(_("<wpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			return ERROR;
-		} else {
-			wpl = atoi(argv[c++]);
-			if (c == argc) {
-				return validate_arguments();
-			}
+		}
+		wpl = atoi(argv[arg_counter++]);
+		if (arg_counter == argc) {
+			return validate_arguments();
 		}
 	}
 
 	if (cpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[c])) {
-			printf(_("<cpl> (%s) must be an integer percentage\n"), argv[c]);
+		if (!is_intpercent(argv[arg_counter])) {
+			printf(_("<cpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			return ERROR;
-		} else {
-			cpl = atoi(argv[c++]);
-			if (c == argc) {
-				return validate_arguments();
-			}
+		}
+		cpl = atoi(argv[arg_counter++]);
+		if (arg_counter == argc) {
+			return validate_arguments();
 		}
 	}
 
 	if (wrta < 0.0) {
-		if (is_negative(argv[c])) {
-			printf(_("<wrta> (%s) must be a non-negative number\n"), argv[c]);
+		if (is_negative(argv[arg_counter])) {
+			printf(_("<wrta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			return ERROR;
-		} else {
-			wrta = atof(argv[c++]);
-			if (c == argc) {
-				return validate_arguments();
-			}
+		}
+		wrta = atof(argv[arg_counter++]);
+		if (arg_counter == argc) {
+			return validate_arguments();
 		}
 	}
 
 	if (crta < 0.0) {
-		if (is_negative(argv[c])) {
-			printf(_("<crta> (%s) must be a non-negative number\n"), argv[c]);
+		if (is_negative(argv[arg_counter])) {
+			printf(_("<crta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			return ERROR;
-		} else {
-			crta = atof(argv[c++]);
-			if (c == argc) {
-				return validate_arguments();
-			}
+		}
+		crta = atof(argv[arg_counter++]);
+		if (arg_counter == argc) {
+			return validate_arguments();
 		}
 	}
 
 	if (max_packets == -1) {
-		if (is_intnonneg(argv[c])) {
-			max_packets = atoi(argv[c++]);
+		if (is_intnonneg(argv[arg_counter])) {
+			max_packets = atoi(argv[arg_counter++]);
 		} else {
-			printf(_("<max_packets> (%s) must be a non-negative number\n"), argv[c]);
+			printf(_("<max_packets> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			return ERROR;
 		}
 	}
@@ -369,9 +361,13 @@ int process_arguments(int argc, char **argv) {
 int get_threshold(char *arg, float *trta, int *tpl) {
 	if (is_intnonneg(arg) && sscanf(arg, "%f", trta) == 1) {
 		return OK;
-	} else if (strpbrk(arg, ",:") && strstr(arg, "%") && sscanf(arg, "%f%*[:,]%d%%", trta, tpl) == 2) {
+	}
+
+	if (strpbrk(arg, ",:") && strstr(arg, "%") && sscanf(arg, "%f%*[:,]%d%%", trta, tpl) == 2) {
 		return OK;
-	} else if (strstr(arg, "%") && sscanf(arg, "%d%%", tpl) == 1) {
+	}
+
+	if (strstr(arg, "%") && sscanf(arg, "%d%%", tpl) == 1) {
 		return OK;
 	}
 
@@ -380,25 +376,32 @@ int get_threshold(char *arg, float *trta, int *tpl) {
 }
 
 int validate_arguments() {
-	float max_seconds;
-	int i;
-
 	if (wrta < 0.0) {
 		printf(_("<wrta> was not set\n"));
 		return ERROR;
-	} else if (crta < 0.0) {
+	}
+
+	if (crta < 0.0) {
 		printf(_("<crta> was not set\n"));
 		return ERROR;
-	} else if (wpl == UNKNOWN_PACKET_LOSS) {
+	}
+
+	if (wpl == UNKNOWN_PACKET_LOSS) {
 		printf(_("<wpl> was not set\n"));
 		return ERROR;
-	} else if (cpl == UNKNOWN_PACKET_LOSS) {
+	}
+
+	if (cpl == UNKNOWN_PACKET_LOSS) {
 		printf(_("<cpl> was not set\n"));
 		return ERROR;
-	} else if (wrta > crta) {
+	}
+
+	if (wrta > crta) {
 		printf(_("<wrta> (%f) cannot be larger than <crta> (%f)\n"), wrta, crta);
 		return ERROR;
-	} else if (wpl > cpl) {
+	}
+
+	if (wpl > cpl) {
 		printf(_("<wpl> (%d) cannot be larger than <cpl> (%d)\n"), wpl, cpl);
 		return ERROR;
 	}
@@ -407,12 +410,12 @@ int validate_arguments() {
 		max_packets = DEFAULT_MAX_PACKETS;
 	}
 
-	max_seconds = crta / 1000.0 * max_packets + max_packets;
+	float max_seconds = (crta / 1000.0 * max_packets) + max_packets;
 	if (max_seconds > timeout_interval) {
-		timeout_interval = (int)max_seconds;
+		timeout_interval = (unsigned int)max_seconds;
 	}
 
-	for (i = 0; i < n_addresses; i++) {
+	for (int i = 0; i < n_addresses; i++) {
 		if (!is_host(addresses[i])) {
 			usage2(_("Invalid hostname/address"), addresses[i]);
 		}
@@ -426,10 +429,6 @@ int validate_arguments() {
 }
 
 int run_ping(const char *cmd, const char *addr) {
-	char buf[MAX_INPUT_BUFFER];
-	int result = STATE_UNKNOWN;
-	int match;
-
 	if ((child_process = spopen(cmd)) == NULL) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 	}
@@ -439,8 +438,9 @@ int run_ping(const char *cmd, const char *addr) {
 		printf(_("Cannot open stderr for %s\n"), cmd);
 	}
 
+	char buf[MAX_INPUT_BUFFER];
+	int result = STATE_UNKNOWN;
 	while (fgets(buf, MAX_INPUT_BUFFER - 1, child_process)) {
-
 		if (verbose >= 3) {
 			printf("Output: %s", buf);
 		}
@@ -448,37 +448,39 @@ int run_ping(const char *cmd, const char *addr) {
 		result = max_state(result, error_scan(buf, addr));
 
 		/* get the percent loss statistics */
-		match = 0;
-		if ((sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &pl, &match) && match)) {
+		int match = 0;
+		if ((sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n", &packet_loss, &match) &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss%n", &packet_loss, &match) &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &packet_loss, &match) && match) ||
+			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &packet_loss, &match) && match)) {
 			continue;
 		}
 
 		/* get the round trip average */
-		else if ((sscanf(buf, "round-trip min/avg/max = %*f/%f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip min/avg/max/mdev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip min/avg/max/sdev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip min/avg/max/stddev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip (ms) min/avg/max = %*f/%f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
-				 (sscanf(buf, "rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n", &rta, &match) && match) ||
-				 (sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %fms%n", &rta, &match) && match)) {
+		if ((sscanf(buf, "round-trip min/avg/max = %*f/%f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip min/avg/max/mdev = %*f/%f/%*f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip min/avg/max/sdev = %*f/%f/%*f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip min/avg/max/stddev = %*f/%f/%*f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%f/%*f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max = %*f/%f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n", &round_trip_average, &match) && match) ||
+			(sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %fms%n", &round_trip_average, &match) && match)) {
 			continue;
 		}
 	}
 
 	/* this is needed because there is no rta if all packets are lost */
-	if (pl == 100) {
-		rta = crta;
+	if (packet_loss == 100) {
+		round_trip_average = crta;
 	}
 
 	/* check stderr, setting at least WARNING if there is output here */
