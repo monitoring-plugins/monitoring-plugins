@@ -56,6 +56,7 @@ EXTRA_DIST = t \
 			 check_radius.d \
 			 check_nagios.d \
 			 check_dbi.d \
+			 check_real.d \
 			 check_ssh.d \
 			 check_nt.d \
 			 check_dns.d \
