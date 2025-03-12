@@ -27,7 +27,7 @@ MATHLIBS = @MATHLIBS@
 #AM_CFLAGS = -Wall
 
 libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http check_load \
-	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_nwstat check_overcr check_ping \
+	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_nwstat check_ping \
 	check_real check_smtp check_ssh check_tcp check_time check_ntp_time \
 	check_ups check_users negate \
 	urlize @EXTRAS@
@@ -132,7 +132,6 @@ check_nt_LDADD = $(NETLIBS)
 check_ntp_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ntp_peer_LDADD = $(NETLIBS) $(MATHLIBS)
 check_nwstat_LDADD = $(NETLIBS)
-check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
 check_ping_LDADD = $(NETLIBS)
 check_procs_LDADD = $(BASEOBJS)
