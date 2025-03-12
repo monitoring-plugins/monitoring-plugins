@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
-#include "states.h"
 char *progname;
 const char *copyright = "1999-2025";
 const char *email = "devel@monitoring-plugins.org";
@@ -37,6 +36,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "./netutils.h"
 #include "./utils.h"
 #include "./check_tcp.d/config.h"
+#include "states.h"
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -61,10 +61,10 @@ ssize_t my_send(char *buf, size_t len) {
 typedef struct process_arguments_wrapper {
 	int errorcode;
 	check_tcp_config config;
-} process_arguments_wrapper;
+} check_tcp_config_wrapper;
 
 /* int my_recv(char *, size_t); */
-static process_arguments_wrapper process_arguments(int /*argc*/, char ** /*argv*/, check_tcp_config /*config*/);
+static check_tcp_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/, check_tcp_config /*config*/);
 void print_help(const char *service);
 void print_usage(void);
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	process_arguments_wrapper paw = process_arguments(argc, argv, config);
+	check_tcp_config_wrapper paw = process_arguments(argc, argv, config);
 	if (paw.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
@@ -229,6 +229,9 @@ int main(int argc, char **argv) {
 
 	// Initialize check stuff before setting timers
 	mp_check overall = mp_check_init();
+	if (config.output_format_set) {
+		overall.format = config.output_format;
+	}
 
 	/* set up the timer */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -452,12 +455,12 @@ int main(int argc, char **argv) {
 }
 
 /* process command-line arguments */
-static process_arguments_wrapper process_arguments(int argc, char **argv, check_tcp_config config) {
+static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_tcp_config config) {
 	enum {
-		SNI_OPTION = CHAR_MAX + 1
+		SNI_OPTION = CHAR_MAX + 1,
+		output_format_index,
 	};
 
-	int option = 0;
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"warning", required_argument, 0, 'w'},
@@ -484,6 +487,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv, check_
 									   {"ssl", no_argument, 0, 'S'},
 									   {"sni", required_argument, 0, SNI_OPTION},
 									   {"certificate", required_argument, 0, 'D'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -497,17 +501,17 @@ static process_arguments_wrapper process_arguments(int argc, char **argv, check_
 		argc--;
 	}
 
-	int c;
 	bool escape = false;
 
 	while (true) {
-		c = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
+		int option = 0;
+		int option_index = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1) {
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
@@ -674,12 +678,24 @@ static process_arguments_wrapper process_arguments(int argc, char **argv, check_
 		case 'A':
 			config.match_flags |= NP_MATCH_ALL;
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			config.output_format_set = true;
+			config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
-	c = optind;
-	if (!config.host_specified && c < argc) {
-		config.server_address = strdup(argv[c++]);
+	int index = optind;
+	if (!config.host_specified && index < argc) {
+		config.server_address = strdup(argv[index++]);
 	}
 
 	if (config.server_address == NULL) {
@@ -689,7 +705,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv, check_
 			config.server_address);
 	}
 
-	process_arguments_wrapper result = {
+	check_tcp_config_wrapper result = {
 		.config = config,
 		.errorcode = OK,
 	};

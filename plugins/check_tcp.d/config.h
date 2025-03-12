@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../common.h"
 #include "../../lib/utils_tcp.h"
+#include "output.h"
 #include <netinet/in.h>
 
-typedef struct check_tcp_config {
+typedef struct {
 	char *server_address;
 	bool host_specified;
 	int server_port; // TODO can this be a uint16?
@@ -37,6 +37,9 @@ typedef struct check_tcp_config {
 	ssize_t maxbytes;
 
 	bool hide_output;
+
+	bool output_format_set;
+	mp_output_format output_format;
 } check_tcp_config;
 
 check_tcp_config check_tcp_config_init() {
@@ -73,6 +76,8 @@ check_tcp_config check_tcp_config_init() {
 		.maxbytes = 0,
 
 		.hide_output = false,
+
+		.output_format_set = false,
 	};
 	return result;
 }
