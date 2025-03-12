@@ -177,7 +177,7 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 		result = getaddrinfo(host, port_str, &hints, &res);
 
 		if (result != 0) {
-			printf("%s\n", gai_strerror(result));
+			// printf("%s\n", gai_strerror(result));
 			return STATE_UNKNOWN;
 		}
 
@@ -187,7 +187,7 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			*sd = socket(r->ai_family, socktype, r->ai_protocol);
 
 			if (*sd < 0) {
-				printf("%s\n", _("Socket creation failed"));
+				// printf("%s\n", _("Socket creation failed"));
 				freeaddrinfo(r);
 				return STATE_UNKNOWN;
 			}
@@ -237,10 +237,11 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 		case STATE_OK:
 		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
 		case STATE_CRITICAL: /* user did not set econn_refuse_state, or wanted critical */
-			if (is_socket)
-				printf("connect to file socket %s: %s\n", host_name, strerror(errno));
-			else
-				printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+			if (is_socket) {
+				// printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+			} else {
+				// printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+			}
 			return STATE_CRITICAL;
 			break;
 		default: /* it's a logic error if we do not end up in STATE_(OK|WARNING|CRITICAL) */
@@ -248,10 +249,11 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			break;
 		}
 	} else {
-		if (is_socket)
-			printf("connect to file socket %s: %s\n", host_name, strerror(errno));
-		else
-			printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+		if (is_socket) {
+			// printf("connect to file socket %s: %s\n", host_name, strerror(errno));
+		} else {
+			// printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+		}
 		return STATE_CRITICAL;
 	}
 }
