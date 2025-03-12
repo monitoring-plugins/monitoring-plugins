@@ -29,7 +29,6 @@
  *
  *****************************************************************************/
 
-#include "states.h"
 const char *progname = "negate";
 const char *copyright = "2002-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -40,6 +39,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "utils_cmd.h"
 #include "negate.d/config.h"
+#include "../lib/states.h"
 
 typedef struct {
 	int errorcode;
