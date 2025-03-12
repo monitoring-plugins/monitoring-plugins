@@ -83,15 +83,16 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	users = 0;
 
 #ifdef HAVE_LIBSYSTEMD
-	if (sd_booted() > 0)
+	if (sd_booted() > 0) {
 		users = sd_get_sessions(NULL);
-	else {
+	} else {
 #endif
 #if HAVE_WTSAPI32_H
 		if (!WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &wtsinfo, &wtscount)) {
@@ -104,18 +105,21 @@ int main(int argc, char **argv) {
 			DWORD size;
 			int len;
 
-			if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, wtsinfo[index].SessionId, WTSUserName, &username, &size))
+			if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, wtsinfo[index].SessionId, WTSUserName, &username, &size)) {
 				continue;
+			}
 
 			len = lstrlen(username);
 
 			WTSFreeMemory(username);
 
-			if (len == 0)
+			if (len == 0) {
 				continue;
+			}
 
-			if (wtsinfo[index].State == WTSActive || wtsinfo[index].State == WTSDisconnected)
+			if (wtsinfo[index].State == WTSActive || wtsinfo[index].State == WTSDisconnected) {
 				users++;
+			}
 		}
 
 		WTSFreeMemory(wtsinfo);
@@ -123,9 +127,11 @@ int main(int argc, char **argv) {
 	/* get currently logged users from utmpx */
 	setutxent();
 
-	while ((putmpx = getutxent()) != NULL)
-		if (putmpx->ut_type == USER_PROCESS)
+	while ((putmpx = getutxent()) != NULL) {
+		if (putmpx->ut_type == USER_PROCESS) {
 			users++;
+		}
+	}
 
 	endutxent();
 #else
@@ -137,8 +143,9 @@ int main(int argc, char **argv) {
 	}
 
 	child_stderr = fdopen(child_stderr_array[fileno(child_process)], "r");
-	if (child_stderr == NULL)
+	if (child_stderr == NULL) {
 		printf(_("Could not open stderr for %s\n"), WHO_COMMAND);
+	}
 
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
 		/* increment 'users' on all lines except total user count */
@@ -148,18 +155,21 @@ int main(int argc, char **argv) {
 		}
 
 		/* get total logged in users */
-		if (sscanf(input_buffer, _("# users=%d"), &users) == 1)
+		if (sscanf(input_buffer, _("# users=%d"), &users) == 1) {
 			break;
+		}
 	}
 
 	/* check STDERR */
-	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr))
+	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		result = possibly_set(result, STATE_UNKNOWN);
+	}
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process))
+	if (spclose(child_process)) {
 		result = possibly_set(result, STATE_UNKNOWN);
+	}
 #endif
 #ifdef HAVE_LIBSYSTEMD
 	}
@@ -168,9 +178,9 @@ int main(int argc, char **argv) {
 	/* check the user count against warning and critical thresholds */
 	result = get_status((double)users, thlds);
 
-	if (result == STATE_UNKNOWN)
+	if (result == STATE_UNKNOWN) {
 		printf("%s\n", _("Unable to read output"));
-	else {
+	} else {
 		printf(_("USERS %s - %d users currently logged in |%s\n"), state_text(result), users,
 			   sperfdata_int("users", users, "", warning_range, critical_range, true, 0, false, 0));
 	}
@@ -186,16 +196,18 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage("\n");
+	}
 
 	int option_char;
 	while (true) {
 		int option = 0;
 		option_char = getopt_long(argc, argv, "+hVvc:w:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF || option_char == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
@@ -217,11 +229,13 @@ int process_arguments(int argc, char **argv) {
 
 	option_char = optind;
 
-	if (warning_range == NULL && argc > option_char)
+	if (warning_range == NULL && argc > option_char) {
 		warning_range = argv[option_char++];
+	}
 
-	if (critical_range == NULL && argc > option_char)
+	if (critical_range == NULL && argc > option_char) {
 		critical_range = argv[option_char++];
+	}
 
 	/* this will abort in case of invalid ranges */
 	set_thresholds(&thlds, warning_range, critical_range);
