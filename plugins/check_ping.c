@@ -89,8 +89,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
@@ -108,15 +109,16 @@ int main(int argc, char **argv) {
 	for (i = 0; i < n_addresses; i++) {
 
 #ifdef PING6_COMMAND
-		if (address_family != AF_INET && is_inet6_addr(addresses[i]))
+		if (address_family != AF_INET && is_inet6_addr(addresses[i])) {
 			rawcmd = strdup(PING6_COMMAND);
-		else
+		} else {
 			rawcmd = strdup(PING_COMMAND);
+		}
 #else
 		rawcmd = strdup(PING_COMMAND);
 #endif
 
-			/* does the host address of number of packets argument come first? */
+		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 #	ifdef PING_HAS_TIMEOUT
 		xasprintf(&cmd, rawcmd, timeout_interval, max_packets, addresses[i]);
@@ -127,8 +129,9 @@ int main(int argc, char **argv) {
 		xasprintf(&cmd, rawcmd, addresses[i], max_packets);
 #endif
 
-		if (verbose >= 2)
+		if (verbose >= 2) {
 			printf("CMD: %s\n", cmd);
+		}
 
 		/* run the command */
 		this_result = run_ping(cmd, addresses[i]);
@@ -138,24 +141,29 @@ int main(int argc, char **argv) {
 			die(STATE_UNKNOWN, _("CRITICAL - Could not interpret output from ping command\n"));
 		}
 
-		if (pl >= cpl || rta >= crta || rta < 0)
+		if (pl >= cpl || rta >= crta || rta < 0) {
 			this_result = STATE_CRITICAL;
-		else if (pl >= wpl || rta >= wrta)
+		} else if (pl >= wpl || rta >= wrta) {
 			this_result = STATE_WARNING;
-		else if (pl >= 0 && rta >= 0)
+		} else if (pl >= 0 && rta >= 0) {
 			this_result = max_state(STATE_OK, this_result);
+		}
 
-		if (n_addresses > 1 && this_result != STATE_UNKNOWN)
+		if (n_addresses > 1 && this_result != STATE_UNKNOWN) {
 			die(STATE_OK, "%s is alive\n", addresses[i]);
+		}
 
-		if (display_html == true)
+		if (display_html == true) {
 			printf("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, addresses[i]);
-		if (pl == 100)
+		}
+		if (pl == 100) {
 			printf(_("PING %s - %sPacket loss = %d%%"), state_text(this_result), warn_text, pl);
-		else
+		} else {
 			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(this_result), warn_text, pl, rta);
-		if (display_html == true)
+		}
+		if (display_html == true) {
 			printf("</A>");
+		}
 
 		/* Print performance data */
 		if (pl != 100) {
@@ -166,8 +174,9 @@ int main(int argc, char **argv) {
 		}
 		printf(" %s\n", perfdata("pl", (long)pl, "%", wpl > 0 ? true : false, wpl, cpl > 0 ? true : false, cpl, true, 0, false, 0));
 
-		if (verbose >= 2)
+		if (verbose >= 2) {
 			printf("%f:%d%% %f:%d%%\n", wrta, wpl, crta, cpl);
+		}
 
 		result = max_state(result, this_result);
 		free(rawcmd);
@@ -191,21 +200,25 @@ int process_arguments(int argc, char **argv) {
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0)
+		if (strcmp("-to", argv[c]) == 0) {
 			strcpy(argv[c], "-t");
-		if (strcmp("-nohtml", argv[c]) == 0)
+		}
+		if (strcmp("-nohtml", argv[c]) == 0) {
 			strcpy(argv[c], "-n");
+		}
 	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case '?': /* usage */
@@ -241,8 +254,9 @@ int process_arguments(int argc, char **argv) {
 				if (n_addresses > max_addr) {
 					max_addr *= 2;
 					addresses = realloc(addresses, sizeof(char *) * max_addr);
-					if (addresses == NULL)
+					if (addresses == NULL) {
 						die(STATE_UNKNOWN, _("Could not realloc() addresses\n"));
+					}
 				}
 				addresses[n_addresses - 1] = ptr;
 				if ((ptr = index(ptr, ','))) {
@@ -254,10 +268,11 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'p': /* number of packets to send */
-			if (is_intnonneg(optarg))
+			if (is_intnonneg(optarg)) {
 				max_packets = atoi(optarg);
-			else
+			} else {
 				usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
+			}
 			break;
 		case 'n': /* no HTML */
 			display_html = false;
@@ -275,8 +290,9 @@ int process_arguments(int argc, char **argv) {
 	}
 
 	c = optind;
-	if (c == argc)
+	if (c == argc) {
 		return validate_arguments();
+	}
 
 	if (addresses[0] == NULL) {
 		if (!is_host(argv[c])) {
@@ -284,8 +300,9 @@ int process_arguments(int argc, char **argv) {
 		} else {
 			addresses[0] = argv[c++];
 			n_addresses++;
-			if (c == argc)
+			if (c == argc) {
 				return validate_arguments();
+			}
 		}
 	}
 
@@ -295,8 +312,9 @@ int process_arguments(int argc, char **argv) {
 			return ERROR;
 		} else {
 			wpl = atoi(argv[c++]);
-			if (c == argc)
+			if (c == argc) {
 				return validate_arguments();
+			}
 		}
 	}
 
@@ -306,8 +324,9 @@ int process_arguments(int argc, char **argv) {
 			return ERROR;
 		} else {
 			cpl = atoi(argv[c++]);
-			if (c == argc)
+			if (c == argc) {
 				return validate_arguments();
+			}
 		}
 	}
 
@@ -317,8 +336,9 @@ int process_arguments(int argc, char **argv) {
 			return ERROR;
 		} else {
 			wrta = atof(argv[c++]);
-			if (c == argc)
+			if (c == argc) {
 				return validate_arguments();
+			}
 		}
 	}
 
@@ -328,8 +348,9 @@ int process_arguments(int argc, char **argv) {
 			return ERROR;
 		} else {
 			crta = atof(argv[c++]);
-			if (c == argc)
+			if (c == argc) {
 				return validate_arguments();
+			}
 		}
 	}
 
@@ -346,12 +367,13 @@ int process_arguments(int argc, char **argv) {
 }
 
 int get_threshold(char *arg, float *trta, int *tpl) {
-	if (is_intnonneg(arg) && sscanf(arg, "%f", trta) == 1)
+	if (is_intnonneg(arg) && sscanf(arg, "%f", trta) == 1) {
 		return OK;
-	else if (strpbrk(arg, ",:") && strstr(arg, "%") && sscanf(arg, "%f%*[:,]%d%%", trta, tpl) == 2)
+	} else if (strpbrk(arg, ",:") && strstr(arg, "%") && sscanf(arg, "%f%*[:,]%d%%", trta, tpl) == 2) {
 		return OK;
-	else if (strstr(arg, "%") && sscanf(arg, "%d%%", tpl) == 1)
+	} else if (strstr(arg, "%") && sscanf(arg, "%d%%", tpl) == 1) {
 		return OK;
+	}
 
 	usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
 	return STATE_UNKNOWN;
@@ -381,16 +403,19 @@ int validate_arguments() {
 		return ERROR;
 	}
 
-	if (max_packets == -1)
+	if (max_packets == -1) {
 		max_packets = DEFAULT_MAX_PACKETS;
+	}
 
 	max_seconds = crta / 1000.0 * max_packets + max_packets;
-	if (max_seconds > timeout_interval)
+	if (max_seconds > timeout_interval) {
 		timeout_interval = (int)max_seconds;
+	}
 
 	for (i = 0; i < n_addresses; i++) {
-		if (!is_host(addresses[i]))
+		if (!is_host(addresses[i])) {
 			usage2(_("Invalid hostname/address"), addresses[i]);
+		}
 	}
 
 	if (n_addresses == 0) {
@@ -405,17 +430,20 @@ int run_ping(const char *cmd, const char *addr) {
 	int result = STATE_UNKNOWN;
 	int match;
 
-	if ((child_process = spopen(cmd)) == NULL)
+	if ((child_process = spopen(cmd)) == NULL) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
+	}
 
 	child_stderr = fdopen(child_stderr_array[fileno(child_process)], "r");
-	if (child_stderr == NULL)
+	if (child_stderr == NULL) {
 		printf(_("Cannot open stderr for %s\n"), cmd);
+	}
 
 	while (fgets(buf, MAX_INPUT_BUFFER - 1, child_process)) {
 
-		if (verbose >= 3)
+		if (verbose >= 3) {
 			printf("Output: %s", buf);
+		}
 
 		result = max_state(result, error_scan(buf, addr));
 
@@ -430,8 +458,9 @@ int run_ping(const char *cmd, const char *addr) {
 			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &pl, &match) && match) ||
 			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &pl, &match) && match) ||
 			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &pl, &match) && match) ||
-			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &pl, &match) && match))
+			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &pl, &match) && match)) {
 			continue;
+		}
 
 		/* get the round trip average */
 		else if ((sscanf(buf, "round-trip min/avg/max = %*f/%f/%*f%n", &rta, &match) && match) ||
@@ -442,13 +471,15 @@ int run_ping(const char *cmd, const char *addr) {
 				 (sscanf(buf, "round-trip (ms) min/avg/max = %*f/%f/%*f%n", &rta, &match) && match) ||
 				 (sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%f/%*f/%*f%n", &rta, &match) && match) ||
 				 (sscanf(buf, "rtt min/avg/max/mdev = %*f/%f/%*f/%*f ms%n", &rta, &match) && match) ||
-				 (sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %fms%n", &rta, &match) && match))
+				 (sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %fms%n", &rta, &match) && match)) {
 			continue;
+		}
 	}
 
 	/* this is needed because there is no rta if all packets are lost */
-	if (pl == 100)
+	if (pl == 100) {
 		rta = crta;
+	}
 
 	/* check stderr, setting at least WARNING if there is output here */
 	/* Add warning into warn_text */
@@ -474,39 +505,42 @@ int run_ping(const char *cmd, const char *addr) {
 
 	spclose(child_process);
 
-	if (warn_text == NULL)
+	if (warn_text == NULL) {
 		warn_text = strdup("");
+	}
 
 	return result;
 }
 
 int error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
-	if (strstr(buf, "Network is unreachable") || strstr(buf, "Destination Net Unreachable") || strstr(buf, "No route"))
+	if (strstr(buf, "Network is unreachable") || strstr(buf, "Destination Net Unreachable") || strstr(buf, "No route")) {
 		die(STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)\n"), addr);
-	else if (strstr(buf, "Destination Host Unreachable") || strstr(buf, "Address unreachable"))
+	} else if (strstr(buf, "Destination Host Unreachable") || strstr(buf, "Address unreachable")) {
 		die(STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)\n"), addr);
-	else if (strstr(buf, "Destination Port Unreachable") || strstr(buf, "Port unreachable"))
+	} else if (strstr(buf, "Destination Port Unreachable") || strstr(buf, "Port unreachable")) {
 		die(STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Port Unreachable (%s)\n"), addr);
-	else if (strstr(buf, "Destination Protocol Unreachable"))
+	} else if (strstr(buf, "Destination Protocol Unreachable")) {
 		die(STATE_CRITICAL, _("CRITICAL - Bogus ICMP: Protocol Unreachable (%s)\n"), addr);
-	else if (strstr(buf, "Destination Net Prohibited"))
+	} else if (strstr(buf, "Destination Net Prohibited")) {
 		die(STATE_CRITICAL, _("CRITICAL - Network Prohibited (%s)\n"), addr);
-	else if (strstr(buf, "Destination Host Prohibited"))
+	} else if (strstr(buf, "Destination Host Prohibited")) {
 		die(STATE_CRITICAL, _("CRITICAL - Host Prohibited (%s)\n"), addr);
-	else if (strstr(buf, "Packet filtered") || strstr(buf, "Administratively prohibited"))
+	} else if (strstr(buf, "Packet filtered") || strstr(buf, "Administratively prohibited")) {
 		die(STATE_CRITICAL, _("CRITICAL - Packet Filtered (%s)\n"), addr);
-	else if (strstr(buf, "unknown host"))
+	} else if (strstr(buf, "unknown host")) {
 		die(STATE_CRITICAL, _("CRITICAL - Host not found (%s)\n"), addr);
-	else if (strstr(buf, "Time to live exceeded") || strstr(buf, "Time exceeded"))
+	} else if (strstr(buf, "Time to live exceeded") || strstr(buf, "Time exceeded")) {
 		die(STATE_CRITICAL, _("CRITICAL - Time to live exceeded (%s)\n"), addr);
-	else if (strstr(buf, "Destination unreachable: "))
+	} else if (strstr(buf, "Destination unreachable: ")) {
 		die(STATE_CRITICAL, _("CRITICAL - Destination Unreachable (%s)\n"), addr);
+	}
 
 	if (strstr(buf, "(DUP!)") || strstr(buf, "DUPLICATES FOUND")) {
-		if (warn_text == NULL)
+		if (warn_text == NULL) {
 			warn_text = strdup(_(WARN_DUPLICATES));
-		else if (!strstr(warn_text, _(WARN_DUPLICATES)) && xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1)
+		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) && xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
 			die(STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
+		}
 		return (STATE_WARNING);
 	}
 
