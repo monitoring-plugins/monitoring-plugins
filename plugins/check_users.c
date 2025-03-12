@@ -200,27 +200,42 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
+	int option_char = optind;
+
+	if (warning_range == NULL && argc > option_char) {
+		warning_range = argv[option_char++];
+	}
+
+	if (critical_range == NULL && argc > option_char) {
+		critical_range = argv[option_char++];
+	}
+
 	// TODO add proper verification for ranges here!
+	mp_range_parsed tmp;
 	if (warning_range) {
-		mp_range_parsed tmp = mp_parse_range_string(warning_range);
-		if (tmp.error == MP_PARSING_SUCCES) {
-			result.config.thresholds.warning = tmp.range;
-			result.config.thresholds.warning_is_set = true;
-		} else {
-			printf("Failed to parse warning range: %s", warning_range);
-			exit(STATE_UNKNOWN);
-		}
+		tmp = mp_parse_range_string(warning_range);
+	} else {
+		tmp = mp_parse_range_string(argv[option_char++]);
+	}
+	if (tmp.error == MP_PARSING_SUCCES) {
+		result.config.thresholds.warning = tmp.range;
+		result.config.thresholds.warning_is_set = true;
+	} else {
+		printf("Failed to parse warning range: %s", warning_range);
+		exit(STATE_UNKNOWN);
 	}
 
 	if (critical_range) {
-		mp_range_parsed tmp = mp_parse_range_string(critical_range);
-		if (tmp.error == MP_PARSING_SUCCES) {
-			result.config.thresholds.critical = tmp.range;
-			result.config.thresholds.critical_is_set = true;
-		} else {
-			printf("Failed to parse critical range: %s", critical_range);
-			exit(STATE_UNKNOWN);
-		}
+		tmp = mp_parse_range_string(critical_range);
+	} else {
+		tmp = mp_parse_range_string(argv[option_char++]);
+	}
+	if (tmp.error == MP_PARSING_SUCCES) {
+		result.config.thresholds.critical = tmp.range;
+		result.config.thresholds.critical_is_set = true;
+	} else {
+		printf("Failed to parse critical range: %s", critical_range);
+		exit(STATE_UNKNOWN);
 	}
 
 	return result;
