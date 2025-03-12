@@ -28,6 +28,8 @@
  *
  *****************************************************************************/
 
+#include "states.h"
+#include <stdio.h>
 const char *progname = "check_real";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -35,27 +37,20 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-enum {
-	PORT = 554
-};
+#include "check_real.d/config.h"
 
 #define EXPECT "RTSP/1."
 #define URL    ""
 
-static int process_arguments(int, char **);
+typedef struct {
+	int errorcode;
+	check_real_config config;
+} check_real_config_wrapper;
+static check_real_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+
 static void print_help(void);
 void print_usage(void);
 
-static int server_port = PORT;
-static char *server_address;
-static char *host_name;
-static char *server_url = NULL;
-static char *server_expect;
-static int warning_time = 0;
-static bool check_warning_time = false;
-static int critical_time = 0;
-static bool check_critical_time = false;
 static bool verbose = false;
 
 int main(int argc, char **argv) {
@@ -66,9 +61,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_real_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	const check_real_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -79,40 +77,50 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	int socket;
-	if (my_tcp_connect(server_address, server_port, &socket) != STATE_OK) {
-		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), server_address, server_port);
+	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
+		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), config.server_address, config.server_port);
 	}
 
 	/* Part I - Server Check */
 
 	/* send the OPTIONS request */
 	char buffer[MAX_INPUT_BUFFER];
-	sprintf(buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", host_name, server_port);
-	int result = send(socket, buffer, strlen(buffer), 0);
+	sprintf(buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", config.host_name, config.server_port);
+	ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	if (sent_bytes == -1) {
+		die(STATE_CRITICAL, _("Sending options to %s failed\n"), config.host_name);
+	}
 
 	/* send the header sync */
 	sprintf(buffer, "CSeq: 1\r\n");
-	result = send(socket, buffer, strlen(buffer), 0);
+	sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	if (sent_bytes == -1) {
+		die(STATE_CRITICAL, _("Sending header sync to %s failed\n"), config.host_name);
+	}
 
 	/* send a newline so the server knows we're done with the request */
 	sprintf(buffer, "\r\n");
-	result = send(socket, buffer, strlen(buffer), 0);
-
-	/* watch for the REAL connection string */
-	result = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
-
-	/* return a CRITICAL status if we couldn't read any data */
-	if (result == -1) {
-		die(STATE_CRITICAL, _("No data received from %s\n"), host_name);
+	sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	if (sent_bytes == -1) {
+		die(STATE_CRITICAL, _("Sending newline to %s failed\n"), config.host_name);
 	}
 
+	/* watch for the REAL connection string */
+	ssize_t received_bytes = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
+
+	/* return a CRITICAL status if we couldn't read any data */
+	if (received_bytes == -1) {
+		die(STATE_CRITICAL, _("No data received from %s\n"), config.host_name);
+	}
+
+	mp_state_enum result = STATE_OK;
 	char *status_line = NULL;
 	/* make sure we find the response we are looking for */
-	if (!strstr(buffer, server_expect)) {
-		if (server_port == PORT) {
+	if (!strstr(buffer, config.server_expect)) {
+		if (config.server_port == PORT) {
 			printf("%s\n", _("Invalid REAL response received from host"));
 		} else {
-			printf(_("Invalid REAL response received from host on port %d\n"), server_port);
+			printf(_("Invalid REAL response received from host on port %d\n"), config.server_port);
 		}
 	} else {
 		/* else we got the REAL string, so check the return code */
@@ -121,7 +129,7 @@ int main(int argc, char **argv) {
 
 		result = STATE_OK;
 
-		status_line = (char *)strtok(buffer, "\n");
+		status_line = strtok(buffer, "\n");
 
 		if (strstr(status_line, "200")) {
 			result = STATE_OK;
@@ -138,10 +146,8 @@ int main(int argc, char **argv) {
 			result = STATE_WARNING;
 		} else if (strstr(status_line, "404")) {
 			result = STATE_WARNING;
-		}
-
-		/* server errors result in a critical state */
-		else if (strstr(status_line, "500")) {
+		} else if (strstr(status_line, "500")) {
+			/* server errors result in a critical state */
 			result = STATE_CRITICAL;
 		} else if (strstr(status_line, "501")) {
 			result = STATE_CRITICAL;
@@ -149,45 +155,52 @@ int main(int argc, char **argv) {
 			result = STATE_CRITICAL;
 		} else if (strstr(status_line, "503")) {
 			result = STATE_CRITICAL;
-		}
-
-		else {
+		} else {
 			result = STATE_UNKNOWN;
 		}
 	}
 
 	/* Part II - Check stream exists and is ok */
-	if ((result == STATE_OK) && (server_url != NULL)) {
+	if ((result == STATE_OK) && (config.server_url != NULL)) {
 
 		/* Part I - Server Check */
 
 		/* send the DESCRIBE request */
-		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", host_name, server_port, server_url);
-		result = send(socket, buffer, strlen(buffer), 0);
+		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name, config.server_port, config.server_url);
+
+		ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		if (sent_bytes == -1) {
+			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+		}
 
 		/* send the header sync */
 		sprintf(buffer, "CSeq: 2\r\n");
-		result = send(socket, buffer, strlen(buffer), 0);
+		sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		if (sent_bytes == -1) {
+			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+		}
 
 		/* send a newline so the server knows we're done with the request */
 		sprintf(buffer, "\r\n");
-		result = send(socket, buffer, strlen(buffer), 0);
+		sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		if (sent_bytes == -1) {
+			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+		}
 
 		/* watch for the REAL connection string */
-		result = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
-		buffer[result] = '\0'; /* null terminate received buffer */
-
-		/* return a CRITICAL status if we couldn't read any data */
-		if (result == -1) {
+		ssize_t recv_bytes = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
+		if (recv_bytes == -1) {
+			/* return a CRITICAL status if we couldn't read any data */
 			printf(_("No data received from host\n"));
 			result = STATE_CRITICAL;
 		} else {
+			buffer[result] = '\0'; /* null terminate received buffer */
 			/* make sure we find the response we are looking for */
-			if (!strstr(buffer, server_expect)) {
-				if (server_port == PORT) {
+			if (!strstr(buffer, config.server_expect)) {
+				if (config.server_port == PORT) {
 					printf("%s\n", _("Invalid REAL response received from host"));
 				} else {
-					printf(_("Invalid REAL response received from host on port %d\n"), server_port);
+					printf(_("Invalid REAL response received from host on port %d\n"), config.server_port);
 				}
 			} else {
 
@@ -197,7 +210,7 @@ int main(int argc, char **argv) {
 
 				result = STATE_OK;
 
-				status_line = (char *)strtok(buffer, "\n");
+				status_line = strtok(buffer, "\n");
 
 				if (strstr(status_line, "200")) {
 					result = STATE_OK;
@@ -236,10 +249,9 @@ int main(int argc, char **argv) {
 
 	/* Return results */
 	if (result == STATE_OK) {
-
-		if (check_critical_time && (end_time - start_time) > critical_time) {
+		if (config.check_critical_time && (end_time - start_time) > config.critical_time) {
 			result = STATE_CRITICAL;
-		} else if (check_warning_time && (end_time - start_time) > warning_time) {
+		} else if (config.check_warning_time && (end_time - start_time) > config.warning_time) {
 			result = STATE_WARNING;
 		}
 
@@ -255,11 +267,11 @@ int main(int argc, char **argv) {
 	/* reset the alarm */
 	alarm(0);
 
-	return result;
+	exit(result);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_real_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"IPaddress", required_argument, 0, 'I'},
 									   {"expect", required_argument, 0, 'e'},   {"url", required_argument, 0, 'u'},
 									   {"port", required_argument, 0, 'p'},     {"critical", required_argument, 0, 'c'},
@@ -267,8 +279,14 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
+	check_real_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_real_config_init(),
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	for (int i = 1; i < argc; i++) {
@@ -281,10 +299,9 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	int option_char;
 	while (true) {
 		int option = 0;
-		option_char = getopt_long(argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts, &option);
+		int option_char = getopt_long(argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts, &option);
 
 		if (option_char == -1 || option_char == EOF) {
 			break;
@@ -293,39 +310,39 @@ int process_arguments(int argc, char **argv) {
 		switch (option_char) {
 		case 'I': /* hostname */
 		case 'H': /* hostname */
-			if (server_address) {
+			if (result.config.server_address) {
 				break;
 			} else if (is_host(optarg)) {
-				server_address = optarg;
+				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'e': /* string to expect in response header */
-			server_expect = optarg;
+			result.config.server_expect = optarg;
 			break;
 		case 'u': /* server URL */
-			server_url = optarg;
+			result.config.server_url = optarg;
 			break;
 		case 'p': /* port */
 			if (is_intpos(optarg)) {
-				server_port = atoi(optarg);
+				result.config.server_port = atoi(optarg);
 			} else {
 				usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'w': /* warning time threshold */
 			if (is_intnonneg(optarg)) {
-				warning_time = atoi(optarg);
-				check_warning_time = true;
+				result.config.warning_time = atoi(optarg);
+				result.config.check_warning_time = true;
 			} else {
 				usage4(_("Warning time must be a positive integer"));
 			}
 			break;
 		case 'c': /* critical time threshold */
 			if (is_intnonneg(optarg)) {
-				critical_time = atoi(optarg);
-				check_critical_time = true;
+				result.config.critical_time = atoi(optarg);
+				result.config.check_critical_time = true;
 			} else {
 				usage4(_("Critical time must be a positive integer"));
 			}
@@ -351,28 +368,28 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	option_char = optind;
-	if (server_address == NULL && argc > option_char) {
+	int option_char = optind;
+	if (result.config.server_address == NULL && argc > option_char) {
 		if (is_host(argv[option_char])) {
-			server_address = argv[option_char++];
+			result.config.server_address = argv[option_char++];
 		} else {
 			usage2(_("Invalid hostname/address"), argv[option_char]);
 		}
 	}
 
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		usage4(_("You must provide a server to check"));
 	}
 
-	if (host_name == NULL) {
-		host_name = strdup(server_address);
+	if (result.config.host_name == NULL) {
+		result.config.host_name = strdup(result.config.server_address);
 	}
 
-	if (server_expect == NULL) {
-		server_expect = strdup(EXPECT);
+	if (result.config.server_expect == NULL) {
+		result.config.server_expect = strdup(EXPECT);
 	}
 
-	return OK;
+	return result;
 }
 
 void print_help(void) {

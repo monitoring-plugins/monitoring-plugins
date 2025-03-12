@@ -55,6 +55,7 @@ EXTRA_DIST = t \
 			 check_game.d \
 			 check_nagios.d \
 			 check_dbi.d \
+			 check_real.d \
 			 check_ssh.d \
 			 check_nt.d \
 			 check_dns.d \
