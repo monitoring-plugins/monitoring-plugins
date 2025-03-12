@@ -150,10 +150,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
-	if (verbose > 2)
+	}
+	if (verbose > 2) {
 		printf("Arguments initialized\n");
+	}
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -162,25 +164,32 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 
 	char *conninfo = NULL;
-	if (pgparams)
+	if (pgparams) {
 		asprintf(&conninfo, "%s ", pgparams);
+	}
 
 	asprintf(&conninfo, "%sdbname = '%s'", conninfo ? conninfo : "", dbName);
-	if (pghost)
+	if (pghost) {
 		asprintf(&conninfo, "%s host = '%s'", conninfo, pghost);
-	if (pgport)
+	}
+	if (pgport) {
 		asprintf(&conninfo, "%s port = '%s'", conninfo, pgport);
-	if (pgoptions)
+	}
+	if (pgoptions) {
 		asprintf(&conninfo, "%s options = '%s'", conninfo, pgoptions);
+	}
 	/* if (pgtty) -- ignored by PQconnectdb */
-	if (pguser)
+	if (pguser) {
 		asprintf(&conninfo, "%s user = '%s'", conninfo, pguser);
+	}
 
-	if (verbose) /* do not include password (see right below) in output */
+	if (verbose) { /* do not include password (see right below) in output */
 		printf("Connecting to PostgreSQL using conninfo: %s%s\n", conninfo, pgpasswd ? " password = <hidden>" : "");
+	}
 
-	if (pgpasswd)
+	if (pgpasswd) {
 		asprintf(&conninfo, "%s password = '%s'", conninfo, pgpasswd);
+	}
 
 	/* make a connection to the database */
 	struct timeval start_timeval;
@@ -196,12 +205,14 @@ int main(int argc, char **argv) {
 	double elapsed_time =
 		(double)(end_timeval.tv_sec - start_timeval.tv_sec) + (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", elapsed_time);
+	}
 
 	/* check to see that the backend connection was successfully made */
-	if (verbose)
+	if (verbose) {
 		printf("Verifying connection\n");
+	}
 	if (PQstatus(conn) == CONNECTION_BAD) {
 		printf(_("CRITICAL - no connection to '%s' (%s).\n"), dbName, PQerrorMessage(conn));
 		PQfinish(conn);
@@ -232,11 +243,13 @@ int main(int argc, char **argv) {
 		   fperfdata("time", elapsed_time, "s", !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, true, 0, false, 0));
 
 	int query_status = STATE_UNKNOWN;
-	if (pgquery)
+	if (pgquery) {
 		query_status = do_query(conn, pgquery);
+	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Closing connection\n");
+	}
 	PQfinish(conn);
 	return (pgquery && query_status > status) ? query_status : status;
 }
@@ -266,8 +279,9 @@ int process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v", longopts, &option);
 
-		if (option_char == EOF)
+		if (option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* usage */
@@ -279,22 +293,25 @@ int process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 			break;
 		case 'c': /* critical time threshold */
-			if (!is_nonnegative(optarg))
+			if (!is_nonnegative(optarg)) {
 				usage2(_("Critical threshold must be a positive integer"), optarg);
-			else
+			} else {
 				tcrit = strtod(optarg, NULL);
+			}
 			break;
 		case 'w': /* warning time threshold */
-			if (!is_nonnegative(optarg))
+			if (!is_nonnegative(optarg)) {
 				usage2(_("Warning threshold must be a positive integer"), optarg);
-			else
+			} else {
 				twarn = strtod(optarg, NULL);
+			}
 			break;
 		case 'C': /* critical query threshold */
 			query_critical = optarg;
@@ -303,16 +320,18 @@ int process_arguments(int argc, char **argv) {
 			query_warning = optarg;
 			break;
 		case 'H': /* host */
-			if ((*optarg != '/') && (!is_host(optarg)))
+			if ((*optarg != '/') && (!is_host(optarg))) {
 				usage2(_("Invalid hostname/address"), optarg);
-			else
+			} else {
 				pghost = optarg;
+			}
 			break;
 		case 'P': /* port */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Port must be a positive integer"), optarg);
-			else
+			} else {
 				pgport = optarg;
+			}
 			break;
 		case 'd': /* database name */
 			if (strlen(optarg) >= NAMEDATALEN) {
@@ -321,20 +340,22 @@ int process_arguments(int argc, char **argv) {
 			snprintf(dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l': /* login name */
-			if (!is_pg_logname(optarg))
+			if (!is_pg_logname(optarg)) {
 				usage2(_("User name is not valid"), optarg);
-			else
+			} else {
 				pguser = optarg;
+			}
 			break;
 		case 'p': /* authentication password */
 		case 'a':
 			pgpasswd = optarg;
 			break;
 		case 'o':
-			if (pgparams)
+			if (pgparams) {
 				asprintf(&pgparams, "%s %s", pgparams, optarg);
-			else
+			} else {
 				asprintf(&pgparams, "%s", optarg);
+			}
 			break;
 		case 'q':
 			pgquery = optarg;
@@ -378,8 +399,9 @@ should be added.</para>
 ******************************************************************************/
 
 bool is_pg_logname(char *username) {
-	if (strlen(username) > NAMEDATALEN - 1)
+	if (strlen(username) > NAMEDATALEN - 1) {
 		return (false);
+	}
 	return (true);
 }
 
@@ -483,8 +505,9 @@ void print_usage(void) {
 }
 
 int do_query(PGconn *conn, char *query) {
-	if (verbose)
+	if (verbose) {
 		printf("Executing SQL query \"%s\".\n", query);
+	}
 	PGresult *res = PQexec(conn, query);
 
 	if (PGRES_TUPLES_OK != PQresultStatus(res)) {
@@ -510,8 +533,9 @@ int do_query(PGconn *conn, char *query) {
 
 	char *endptr = NULL;
 	double value = strtod(val_str, &endptr);
-	if (verbose)
+	if (verbose) {
 		printf("Query result: %f\n", value);
+	}
 
 	if (endptr == val_str) {
 		printf("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
@@ -519,8 +543,9 @@ int do_query(PGconn *conn, char *query) {
 	}
 
 	if ((endptr != NULL) && (*endptr != '\0')) {
-		if (verbose)
+		if (verbose) {
 			printf("Garbage after value: %s.\n", endptr);
+		}
 	}
 
 	int my_status = get_status(value, qthresholds);
