@@ -62,6 +62,7 @@ EXTRA_DIST = t \
 			 check_mysql_query.d \
 			 check_mrtg.d \
 			 check_apt.d \
+			 check_pgsql.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
 			 check_mysql.d \
