@@ -35,7 +35,6 @@
  *
  *****************************************************************************/
 
-#include "states.h"
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -43,6 +42,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "../lib/states.h"
 #include "check_ntp_peer.d/config.h"
 
 static int verbose = 0;
