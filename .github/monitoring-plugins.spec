@@ -193,7 +193,6 @@ Requires: %{name}-ntp_peer
 Requires: %{name}-ntp_time
 Requires: %{name}-nwstat
 Requires: %{name}-oracle
-Requires: %{name}-overcr
 Requires: %{name}-pgsql
 Requires: %{name}-ping
 Requires: %{name}-procs
@@ -726,19 +725,6 @@ Provides check_oracle of the Monitoring Plugins.
 
 %files oracle
 %{plugindir}/check_oracle
-
-
-
-# check_overcr
-%package overcr
-Summary:  Monitoring Plugins - check_overcr
-Requires: %{name} = %{version}-%{release}
-
-%description overcr
-Provides check_overcr of the Monitoring Plugins.
-
-%files overcr
-%{plugindir}/check_overcr
 
 
 
