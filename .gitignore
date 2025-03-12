@@ -178,7 +178,6 @@ NP-VERSION-FILE
 /plugins/check_ntp_peer
 /plugins/check_ntp_time
 /plugins/check_nwstat
-/plugins/check_overcr
 /plugins/check_pgsql
 /plugins/check_ping
 /plugins/check_pop

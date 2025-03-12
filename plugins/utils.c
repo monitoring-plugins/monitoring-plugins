@@ -89,41 +89,46 @@ bool is_numeric(char *number) {
 	char tmp[1];
 	float x;
 
-	if (!number)
+	if (!number) {
 		return false;
-	else if (sscanf(number, "%f%c", &x, tmp) == 1)
+	} else if (sscanf(number, "%f%c", &x, tmp) == 1) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_positive(char *number) {
-	if (is_numeric(number) && atof(number) > 0.0)
+	if (is_numeric(number) && atof(number) > 0.0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_negative(char *number) {
-	if (is_numeric(number) && atof(number) < 0.0)
+	if (is_numeric(number) && atof(number) < 0.0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_nonnegative(char *number) {
-	if (is_numeric(number) && atof(number) >= 0.0)
+	if (is_numeric(number) && atof(number) >= 0.0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_percentage(char *number) {
 	int x;
-	if (is_numeric(number) && (x = atof(number)) >= 0 && x <= 100)
+	if (is_numeric(number) && (x = atof(number)) >= 0 && x <= 100) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_percentage_expression(const char str[]) {
@@ -156,36 +161,41 @@ bool is_percentage_expression(const char str[]) {
 bool is_integer(char *number) {
 	long int n;
 
-	if (!number || (strspn(number, "-0123456789 ") != strlen(number)))
+	if (!number || (strspn(number, "-0123456789 ") != strlen(number))) {
 		return false;
+	}
 
 	n = strtol(number, NULL, 10);
 
-	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX)
+	if (errno != ERANGE && n >= INT_MIN && n <= INT_MAX) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_intpos(char *number) {
-	if (is_integer(number) && atoi(number) > 0)
+	if (is_integer(number) && atoi(number) > 0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_intneg(char *number) {
-	if (is_integer(number) && atoi(number) < 0)
+	if (is_integer(number) && atoi(number) < 0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_intnonneg(char *number) {
-	if (is_integer(number) && atoi(number) >= 0)
+	if (is_integer(number) && atoi(number) >= 0) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 /*
@@ -247,19 +257,21 @@ bool is_uint64(char *number, uint64_t *target) {
 
 bool is_intpercent(char *number) {
 	int i;
-	if (is_integer(number) && (i = atoi(number)) >= 0 && i <= 100)
+	if (is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 bool is_option(char *str) {
-	if (!str)
+	if (!str) {
 		return false;
-	else if (strspn(str, "-") == 1 || strspn(str, "-") == 2)
+	} else if (strspn(str, "-") == 1 || strspn(str, "-") == 2) {
 		return true;
-	else
+	} else {
 		return false;
+	}
 }
 
 #ifdef NEED_GETTIMEOFDAY
@@ -288,10 +300,11 @@ void strip(char *buffer) {
 
 	for (x = strlen(buffer); x >= 1; x--) {
 		i = x - 1;
-		if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t')
+		if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\t') {
 			buffer[i] = '\0';
-		else
+		} else {
 			break;
+		}
 	}
 	return;
 }
@@ -309,8 +322,9 @@ void strip(char *buffer) {
  *****************************************************************************/
 
 char *strscpy(char *dest, const char *src) {
-	if (src == NULL)
+	if (src == NULL) {
 		return NULL;
+	}
 
 	xasprintf(&dest, "%s", src);
 
@@ -369,17 +383,21 @@ char *strscpy(char *dest, const char *src) {
 
 char *strnl(char *str) {
 	size_t len;
-	if (str == NULL)
+	if (str == NULL) {
 		return NULL;
+	}
 	str = strpbrk(str, "\r\n");
-	if (str == NULL)
+	if (str == NULL) {
 		return NULL;
+	}
 	len = strspn(str, "\r\n");
-	if (str[len] == '\0')
+	if (str[len] == '\0') {
 		return NULL;
+	}
 	str += len;
-	if (strlen(str) == 0)
+	if (strlen(str) == 0) {
 		return NULL;
+	}
 	return str;
 }
 
@@ -402,15 +420,18 @@ char *strnl(char *str) {
 char *strpcpy(char *dest, const char *src, const char *str) {
 	size_t len;
 
-	if (src)
+	if (src) {
 		len = strcspn(src, str);
-	else
+	} else {
 		return NULL;
+	}
 
-	if (dest == NULL || strlen(dest) < len)
+	if (dest == NULL || strlen(dest) < len) {
 		dest = realloc(dest, len + 1);
-	if (dest == NULL)
+	}
+	if (dest == NULL) {
 		die(STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
+	}
 
 	strncpy(dest, src, len);
 	dest[len] = '\0';
@@ -434,10 +455,11 @@ char *strpcpy(char *dest, const char *src, const char *str) {
 char *strpcat(char *dest, const char *src, const char *str) {
 	size_t len, l2;
 
-	if (dest)
+	if (dest) {
 		len = strlen(dest);
-	else
+	} else {
 		len = 0;
+	}
 
 	if (src) {
 		l2 = strcspn(src, str);
@@ -446,8 +468,9 @@ char *strpcat(char *dest, const char *src, const char *str) {
 	}
 
 	dest = realloc(dest, len + l2 + 1);
-	if (dest == NULL)
+	if (dest == NULL) {
 		die(STATE_UNKNOWN, _("failed malloc in strscat\n"));
+	}
 
 	strncpy(dest + len, src, l2);
 	dest[len + l2] = '\0';
@@ -463,8 +486,9 @@ char *strpcat(char *dest, const char *src, const char *str) {
 
 int xvasprintf(char **strp, const char *fmt, va_list ap) {
 	int result = vasprintf(strp, fmt, ap);
-	if (result == -1 || *strp == NULL)
+	if (result == -1 || *strp == NULL) {
 		die(STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
+	}
 	return result;
 }
 
@@ -483,126 +507,145 @@ int xasprintf(char **strp, const char *fmt, ...) {
  *
  ******************************************************************************/
 
-char *perfdata(const char *label, long int val, const char *uom, int warnp, long int warn, int critp, long int crit, int minp,
-			   long int minv, int maxp, long int maxv) {
+char *perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn, bool critp, long int crit, bool minp,
+			   long int minv, bool maxp, long int maxv) {
 	char *data = NULL;
 
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=%ld%s;", label, val, uom);
-	else
+	} else {
 		xasprintf(&data, "%s=%ld%s;", label, val, uom);
+	}
 
-	if (warnp)
+	if (warnp) {
 		xasprintf(&data, "%s%ld;", data, warn);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (critp)
+	if (critp) {
 		xasprintf(&data, "%s%ld;", data, crit);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%ld;", data, minv);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (maxp)
+	if (maxp) {
 		xasprintf(&data, "%s%ld", data, maxv);
+	}
 
 	return data;
 }
 
-char *perfdata_uint64(const char *label, uint64_t val, const char *uom, int warnp, /* Warning present */
-					  uint64_t warn, int critp,                                    /* Critical present */
-					  uint64_t crit, int minp,                                     /* Minimum present */
-					  uint64_t minv, int maxp,                                     /* Maximum present */
+char *perfdata_uint64(const char *label, uint64_t val, const char *uom, bool warnp, /* Warning present */
+					  uint64_t warn, bool critp,                                    /* Critical present */
+					  uint64_t crit, bool minp,                                     /* Minimum present */
+					  uint64_t minv, bool maxp,                                     /* Maximum present */
 					  uint64_t maxv) {
 	char *data = NULL;
 
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
-	else
+	} else {
 		xasprintf(&data, "%s=%" PRIu64 "%s;", label, val, uom);
+	}
 
-	if (warnp)
+	if (warnp) {
 		xasprintf(&data, "%s%" PRIu64 ";", data, warn);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (critp)
+	if (critp) {
 		xasprintf(&data, "%s%" PRIu64 ";", data, crit);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%" PRIu64 ";", data, minv);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (maxp)
+	if (maxp) {
 		xasprintf(&data, "%s%" PRIu64, data, maxv);
+	}
 
 	return data;
 }
 
-char *perfdata_int64(const char *label, int64_t val, const char *uom, int warnp, /* Warning present */
-					 int64_t warn, int critp,                                    /* Critical present */
-					 int64_t crit, int minp,                                     /* Minimum present */
-					 int64_t minv, int maxp,                                     /* Maximum present */
+char *perfdata_int64(const char *label, int64_t val, const char *uom, bool warnp, /* Warning present */
+					 int64_t warn, bool critp,                                    /* Critical present */
+					 int64_t crit, bool minp,                                     /* Minimum present */
+					 int64_t minv, bool maxp,                                     /* Maximum present */
 					 int64_t maxv) {
 	char *data = NULL;
 
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=%" PRId64 "%s;", label, val, uom);
-	else
+	} else {
 		xasprintf(&data, "%s=%" PRId64 "%s;", label, val, uom);
+	}
 
-	if (warnp)
+	if (warnp) {
 		xasprintf(&data, "%s%" PRId64 ";", data, warn);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (critp)
+	if (critp) {
 		xasprintf(&data, "%s%" PRId64 ";", data, crit);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%" PRId64 ";", data, minv);
-	else
+	} else {
 		xasprintf(&data, "%s;", data);
+	}
 
-	if (maxp)
+	if (maxp) {
 		xasprintf(&data, "%s%" PRId64, data, maxv);
+	}
 
 	return data;
 }
 
-char *fperfdata(const char *label, double val, const char *uom, int warnp, double warn, int critp, double crit, int minp, double minv,
-				int maxp, double maxv) {
+char *fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp, double crit, bool minp, double minv,
+				bool maxp, double maxv) {
 	char *data = NULL;
 
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=", label);
-	else
+	} else {
 		xasprintf(&data, "%s=", label);
+	}
 
 	xasprintf(&data, "%s%f", data, val);
 	xasprintf(&data, "%s%s;", data, uom);
 
-	if (warnp)
+	if (warnp) {
 		xasprintf(&data, "%s%f", data, warn);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (critp)
+	if (critp) {
 		xasprintf(&data, "%s%f", data, crit);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%f", data, minv);
+	}
 
 	if (maxp) {
 		xasprintf(&data, "%s;", data);
@@ -612,28 +655,32 @@ char *fperfdata(const char *label, double val, const char *uom, int warnp, doubl
 	return data;
 }
 
-char *sperfdata(const char *label, double val, const char *uom, char *warn, char *crit, int minp, double minv, int maxp, double maxv) {
+char *sperfdata(const char *label, double val, const char *uom, char *warn, char *crit, bool minp, double minv, bool maxp, double maxv) {
 	char *data = NULL;
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=", label);
-	else
+	} else {
 		xasprintf(&data, "%s=", label);
+	}
 
 	xasprintf(&data, "%s%f", data, val);
 	xasprintf(&data, "%s%s;", data, uom);
 
-	if (warn != NULL)
+	if (warn != NULL) {
 		xasprintf(&data, "%s%s", data, warn);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (crit != NULL)
+	if (crit != NULL) {
 		xasprintf(&data, "%s%s", data, crit);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%f", data, minv);
+	}
 
 	if (maxp) {
 		xasprintf(&data, "%s;", data);
@@ -643,28 +690,32 @@ char *sperfdata(const char *label, double val, const char *uom, char *warn, char
 	return data;
 }
 
-char *sperfdata_int(const char *label, int val, const char *uom, char *warn, char *crit, int minp, int minv, int maxp, int maxv) {
+char *sperfdata_int(const char *label, int val, const char *uom, char *warn, char *crit, bool minp, int minv, bool maxp, int maxv) {
 	char *data = NULL;
-	if (strpbrk(label, "'= "))
+	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=", label);
-	else
+	} else {
 		xasprintf(&data, "%s=", label);
+	}
 
 	xasprintf(&data, "%s%d", data, val);
 	xasprintf(&data, "%s%s;", data, uom);
 
-	if (warn != NULL)
+	if (warn != NULL) {
 		xasprintf(&data, "%s%s", data, warn);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (crit != NULL)
+	if (crit != NULL) {
 		xasprintf(&data, "%s%s", data, crit);
+	}
 
 	xasprintf(&data, "%s;", data);
 
-	if (minp)
+	if (minp) {
 		xasprintf(&data, "%s%d", data, minv);
+	}
 
 	if (maxp) {
 		xasprintf(&data, "%s;", data);

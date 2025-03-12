@@ -28,6 +28,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "check_pgsql";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -35,12 +36,13 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
+#include "check_pgsql.d/config.h"
+#include "thresholds.h"
 
 #include "netutils.h"
 #include <libpq-fe.h>
 #include <pg_config_manual.h>
 
-#define DEFAULT_DB   "template1"
 #define DEFAULT_HOST "127.0.0.1"
 
 /* return the PSQL server version as a 3-tuple */
@@ -53,33 +55,18 @@ const char *email = "devel@monitoring-plugins.org";
 #define PSQL_SOCKET3(host, port)                                                                                                           \
 	((NULL == (host)) || ('\0' == *(host))) ? DEFAULT_PGSOCKET_DIR : host, PSQL_IS_UNIX_DOMAIN_SOCKET(host) ? "/.s.PGSQL." : ":", port
 
-enum {
-	DEFAULT_PORT = 5432,
-	DEFAULT_WARN = 2,
-	DEFAULT_CRIT = 8
-};
+typedef struct {
+	int errorcode;
+	check_pgsql_config config;
+} check_pgsql_config_wrapper;
+static check_pgsql_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 static bool is_pg_logname(char * /*username*/);
-static int do_query(PGconn * /*conn*/, char * /*query*/);
+static mp_state_enum do_query(PGconn * /*conn*/, char * /*query*/, const char /*pgqueryname*/[], thresholds * /*qthresholds*/,
+							  char * /*query_warning*/, char * /*query_critical*/);
 void print_usage(void);
 
-static char *pghost = NULL; /* host name of the backend server */
-static char *pgport = NULL; /* port of the backend server */
-static char *pgoptions = NULL;
-static char *pgtty = NULL;
-static char dbName[NAMEDATALEN] = DEFAULT_DB;
-static char *pguser = NULL;
-static char *pgpasswd = NULL;
-static char *pgparams = NULL;
-static double twarn = (double)DEFAULT_WARN;
-static double tcrit = (double)DEFAULT_CRIT;
-static char *pgquery = NULL;
-static char *pgqueryname = NULL;
-static char *query_warning = NULL;
-static char *query_critical = NULL;
-static thresholds *qthresholds = NULL;
 static int verbose = 0;
 
 #define OPTID_QUERYNAME -1000
@@ -139,21 +126,19 @@ int main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	/* begin, by setting the parameters for a backend connection if the
-	 * parameters are null, then the system will try to use reasonable
-	 * defaults by looking up environment variables or, failing that,
-	 * using hardwired constants */
-
-	pgoptions = NULL; /* special options to start up the backend server */
-	pgtty = NULL;     /* debugging tty for the backend server */
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_pgsql_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
-	if (verbose > 2)
+	}
+
+	const check_pgsql_config config = tmp_config.config;
+
+	if (verbose > 2) {
 		printf("Arguments initialized\n");
+	}
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
@@ -162,25 +147,32 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 
 	char *conninfo = NULL;
-	if (pgparams)
-		asprintf(&conninfo, "%s ", pgparams);
+	if (config.pgparams) {
+		asprintf(&conninfo, "%s ", config.pgparams);
+	}
 
-	asprintf(&conninfo, "%sdbname = '%s'", conninfo ? conninfo : "", dbName);
-	if (pghost)
-		asprintf(&conninfo, "%s host = '%s'", conninfo, pghost);
-	if (pgport)
-		asprintf(&conninfo, "%s port = '%s'", conninfo, pgport);
-	if (pgoptions)
-		asprintf(&conninfo, "%s options = '%s'", conninfo, pgoptions);
+	asprintf(&conninfo, "%sdbname = '%s'", conninfo ? conninfo : "", config.dbName);
+	if (config.pghost) {
+		asprintf(&conninfo, "%s host = '%s'", conninfo, config.pghost);
+	}
+	if (config.pgport) {
+		asprintf(&conninfo, "%s port = '%s'", conninfo, config.pgport);
+	}
+	if (config.pgoptions) {
+		asprintf(&conninfo, "%s options = '%s'", conninfo, config.pgoptions);
+	}
 	/* if (pgtty) -- ignored by PQconnectdb */
-	if (pguser)
-		asprintf(&conninfo, "%s user = '%s'", conninfo, pguser);
+	if (config.pguser) {
+		asprintf(&conninfo, "%s user = '%s'", conninfo, config.pguser);
+	}
 
-	if (verbose) /* do not include password (see right below) in output */
-		printf("Connecting to PostgreSQL using conninfo: %s%s\n", conninfo, pgpasswd ? " password = <hidden>" : "");
+	if (verbose) { /* do not include password (see right below) in output */
+		printf("Connecting to PostgreSQL using conninfo: %s%s\n", conninfo, config.pgpasswd ? " password = <hidden>" : "");
+	}
 
-	if (pgpasswd)
-		asprintf(&conninfo, "%s password = '%s'", conninfo, pgpasswd);
+	if (config.pgpasswd) {
+		asprintf(&conninfo, "%s password = '%s'", conninfo, config.pgpasswd);
+	}
 
 	/* make a connection to the database */
 	struct timeval start_timeval;
@@ -194,24 +186,26 @@ int main(int argc, char **argv) {
 		end_timeval.tv_usec += 1000000;
 	}
 	double elapsed_time =
-		(double)(end_timeval.tv_sec - start_timeval.tv_sec) + (double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0;
+		(double)(end_timeval.tv_sec - start_timeval.tv_sec) + ((double)(end_timeval.tv_usec - start_timeval.tv_usec) / 1000000.0);
 
-	if (verbose)
+	if (verbose) {
 		printf("Time elapsed: %f\n", elapsed_time);
+	}
 
 	/* check to see that the backend connection was successfully made */
-	if (verbose)
+	if (verbose) {
 		printf("Verifying connection\n");
+	}
 	if (PQstatus(conn) == CONNECTION_BAD) {
-		printf(_("CRITICAL - no connection to '%s' (%s).\n"), dbName, PQerrorMessage(conn));
+		printf(_("CRITICAL - no connection to '%s' (%s).\n"), config.dbName, PQerrorMessage(conn));
 		PQfinish(conn);
 		return STATE_CRITICAL;
 	}
 
-	int status = STATE_UNKNOWN;
-	if (elapsed_time > tcrit) {
+	mp_state_enum status = STATE_UNKNOWN;
+	if (elapsed_time > config.tcrit) {
 		status = STATE_CRITICAL;
-	} else if (elapsed_time > twarn) {
+	} else if (elapsed_time > config.twarn) {
 		status = STATE_WARNING;
 	} else {
 		status = STATE_OK;
@@ -228,21 +222,23 @@ int main(int argc, char **argv) {
 			   PQprotocolVersion(conn), PQbackendPID(conn));
 	}
 
-	printf(_(" %s - database %s (%f sec.)|%s\n"), state_text(status), dbName, elapsed_time,
-		   fperfdata("time", elapsed_time, "s", !!(twarn > 0.0), twarn, !!(tcrit > 0.0), tcrit, true, 0, false, 0));
+	printf(_(" %s - database %s (%f sec.)|%s\n"), state_text(status), config.dbName, elapsed_time,
+		   fperfdata("time", elapsed_time, "s", (config.twarn > 0.0), config.twarn, (config.tcrit > 0.0), config.tcrit, true, 0, false, 0));
 
-	int query_status = STATE_UNKNOWN;
-	if (pgquery)
-		query_status = do_query(conn, pgquery);
+	mp_state_enum query_status = STATE_UNKNOWN;
+	if (config.pgquery) {
+		query_status = do_query(conn, config.pgquery, config.pgqueryname, config.qthresholds, config.query_warning, config.query_critical);
+	}
 
-	if (verbose)
+	if (verbose) {
 		printf("Closing connection\n");
+	}
 	PQfinish(conn);
-	return (pgquery && query_status > status) ? query_status : status;
+	return (config.pgquery && query_status > status) ? query_status : status;
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
 									   {"timeout", required_argument, 0, 't'},
@@ -262,12 +258,18 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},
 									   {0, 0, 0, 0}};
 
+	check_pgsql_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_pgsql_config_init(),
+	};
+
 	while (true) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "hVt:c:w:H:P:d:l:p:a:o:q:C:W:v", longopts, &option);
 
-		if (option_char == EOF)
+		if (option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* usage */
@@ -279,68 +281,75 @@ int process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 			break;
 		case 'c': /* critical time threshold */
-			if (!is_nonnegative(optarg))
+			if (!is_nonnegative(optarg)) {
 				usage2(_("Critical threshold must be a positive integer"), optarg);
-			else
-				tcrit = strtod(optarg, NULL);
+			} else {
+				result.config.tcrit = strtod(optarg, NULL);
+			}
 			break;
 		case 'w': /* warning time threshold */
-			if (!is_nonnegative(optarg))
+			if (!is_nonnegative(optarg)) {
 				usage2(_("Warning threshold must be a positive integer"), optarg);
-			else
-				twarn = strtod(optarg, NULL);
+			} else {
+				result.config.twarn = strtod(optarg, NULL);
+			}
 			break;
 		case 'C': /* critical query threshold */
-			query_critical = optarg;
+			result.config.query_critical = optarg;
 			break;
 		case 'W': /* warning query threshold */
-			query_warning = optarg;
+			result.config.query_warning = optarg;
 			break;
 		case 'H': /* host */
-			if ((*optarg != '/') && (!is_host(optarg)))
+			if ((*optarg != '/') && (!is_host(optarg))) {
 				usage2(_("Invalid hostname/address"), optarg);
-			else
-				pghost = optarg;
+			} else {
+				result.config.pghost = optarg;
+			}
 			break;
 		case 'P': /* port */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Port must be a positive integer"), optarg);
-			else
-				pgport = optarg;
+			} else {
+				result.config.pgport = optarg;
+			}
 			break;
 		case 'd': /* database name */
 			if (strlen(optarg) >= NAMEDATALEN) {
 				usage2(_("Database name exceeds the maximum length"), optarg);
 			}
-			snprintf(dbName, NAMEDATALEN, "%s", optarg);
+			snprintf(result.config.dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l': /* login name */
-			if (!is_pg_logname(optarg))
+			if (!is_pg_logname(optarg)) {
 				usage2(_("User name is not valid"), optarg);
-			else
-				pguser = optarg;
+			} else {
+				result.config.pguser = optarg;
+			}
 			break;
 		case 'p': /* authentication password */
 		case 'a':
-			pgpasswd = optarg;
+			result.config.pgpasswd = optarg;
 			break;
 		case 'o':
-			if (pgparams)
-				asprintf(&pgparams, "%s %s", pgparams, optarg);
-			else
-				asprintf(&pgparams, "%s", optarg);
+			if (result.config.pgparams) {
+				asprintf(&result.config.pgparams, "%s %s", result.config.pgparams, optarg);
+			} else {
+				asprintf(&result.config.pgparams, "%s", optarg);
+			}
 			break;
 		case 'q':
-			pgquery = optarg;
+			result.config.pgquery = optarg;
 			break;
 		case OPTID_QUERYNAME:
-			pgqueryname = optarg;
+			result.config.pgqueryname = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -348,9 +357,9 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	set_thresholds(&qthresholds, query_warning, query_critical);
+	set_thresholds(&result.config.qthresholds, result.config.query_warning, result.config.query_critical);
 
-	return OK;
+	return result;
 }
 
 /**
@@ -378,8 +387,9 @@ should be added.</para>
 ******************************************************************************/
 
 bool is_pg_logname(char *username) {
-	if (strlen(username) > NAMEDATALEN - 1)
+	if (strlen(username) > NAMEDATALEN - 1) {
 		return (false);
+	}
 	return (true);
 }
 
@@ -394,7 +404,7 @@ bool is_pg_logname(char *username) {
 void print_help(void) {
 	char *myport;
 
-	xasprintf(&myport, "%d", DEFAULT_PORT);
+	xasprintf(&myport, "%d", 5432);
 
 	print_revision(progname, NP_VERSION);
 
@@ -482,9 +492,11 @@ void print_usage(void) {
 		   "[-q <query>] [-C <critical query range>] [-W <warning query range>]\n");
 }
 
-int do_query(PGconn *conn, char *query) {
-	if (verbose)
+mp_state_enum do_query(PGconn *conn, char *query, const char pgqueryname[], thresholds *qthresholds, char *query_warning,
+					   char *query_critical) {
+	if (verbose) {
 		printf("Executing SQL query \"%s\".\n", query);
+	}
 	PGresult *res = PQexec(conn, query);
 
 	if (PGRES_TUPLES_OK != PQresultStatus(res)) {
@@ -510,8 +522,9 @@ int do_query(PGconn *conn, char *query) {
 
 	char *endptr = NULL;
 	double value = strtod(val_str, &endptr);
-	if (verbose)
+	if (verbose) {
 		printf("Query result: %f\n", value);
+	}
 
 	if (endptr == val_str) {
 		printf("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
@@ -519,11 +532,12 @@ int do_query(PGconn *conn, char *query) {
 	}
 
 	if ((endptr != NULL) && (*endptr != '\0')) {
-		if (verbose)
+		if (verbose) {
 			printf("Garbage after value: %s.\n", endptr);
+		}
 	}
 
-	int my_status = get_status(value, qthresholds);
+	mp_state_enum my_status = get_status(value, qthresholds);
 	printf("QUERY %s - ", (my_status == STATE_OK)         ? _("OK")
 						  : (my_status == STATE_WARNING)  ? _("WARNING")
 						  : (my_status == STATE_CRITICAL) ? _("CRITICAL")
