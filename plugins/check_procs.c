@@ -43,6 +43,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "utils_cmd.h"
 #include "regex.h"
+#include "states.h"
 
 #include <pwd.h>
 #include <errno.h>
@@ -91,7 +92,7 @@ enum metric {
 enum metric metric = METRIC_PROCS;
 
 static int verbose = 0;
-static int uid;
+static uid_t uid;
 static pid_t ppid;
 static int vsz;
 static int rss;
@@ -107,62 +108,22 @@ static regex_t re_args;
 static char *fmt;
 static char *fails;
 static char tmp[MAX_INPUT_BUFFER];
-static int kthread_filter = 0;
-static int usepid = 0; /* whether to test for pid or /proc/pid/exe */
+static bool kthread_filter = false;
+static bool usepid = false; /* whether to test for pid or /proc/pid/exe */
 
 static int stat_exe(const pid_t pid, struct stat *buf) {
 	char *path;
-	int ret;
 	xasprintf(&path, "/proc/%d/exe", pid);
-	ret = stat(path, buf);
+	int ret = stat(path, buf);
 	free(path);
 	return ret;
 }
 
 int main(int argc, char **argv) {
-	char *input_buffer;
-	char *input_line;
-	char *procprog;
-
-	pid_t mypid = 0;
-	pid_t myppid = 0;
-	struct stat statbuf;
-	dev_t mydev = 0;
-	ino_t myino = 0;
-	int procuid = 0;
-	pid_t procpid = 0;
-	pid_t procppid = 0;
-	pid_t kthread_ppid = 0;
-	int procvsz = 0;
-	int procrss = 0;
-	int procseconds = 0;
-	float procpcpu = 0;
-	char procstat[8];
-	char procetime[MAX_INPUT_BUFFER] = {'\0'};
-	char *procargs;
-
-	const char *zombie = "Z";
-
-	int resultsum = 0; /* bitmask of the filter criteria met by a process */
-	int found = 0;     /* counter for number of lines returned in `ps` output */
-	int procs = 0;     /* counter for number of processes meeting filter criteria */
-	int pos;           /* number of spaces before 'args' in `ps` output */
-	int cols;          /* number of columns in ps output */
-	int expected_cols = PS_COLS - 1;
-	int warn = 0; /* number of processes in warn state */
-	int crit = 0; /* number of processes in crit state */
-	int i = 0;
-	int result = STATE_UNKNOWN;
-	int ret = 0;
-	output chld_out, chld_err;
-
 	setlocale(LC_ALL, "");
+	setlocale(LC_NUMERIC, "POSIX");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	setlocale(LC_NUMERIC, "POSIX");
-
-	input_buffer = malloc(MAX_INPUT_BUFFER);
-	procprog = malloc(MAX_INPUT_BUFFER);
 
 	xasprintf(&metric_name, "PROCS");
 	metric = METRIC_PROCS;
@@ -175,13 +136,16 @@ int main(int argc, char **argv) {
 	}
 
 	/* find ourself */
-	mypid = getpid();
-	myppid = getppid();
+	pid_t mypid = getpid();
+	pid_t myppid = getppid();
+	dev_t mydev = 0;
+	ino_t myino = 0;
+	struct stat statbuf;
 	if (usepid || stat_exe(mypid, &statbuf) == -1) {
 		/* usepid might have been set by -T */
-		usepid = 1;
+		usepid = true;
 	} else {
-		usepid = 0;
+		usepid = false;
 		mydev = statbuf.st_dev;
 		myino = statbuf.st_ino;
 	}
@@ -190,12 +154,15 @@ int main(int argc, char **argv) {
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		die(STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 	}
-	(void)alarm((unsigned)timeout_interval);
+	(void)alarm(timeout_interval);
 
 	if (verbose >= 2) {
 		printf(_("CMD: %s\n"), PS_COMMAND);
 	}
 
+	output chld_out;
+	output chld_err;
+	mp_state_enum result = STATE_UNKNOWN;
 	if (input_filename == NULL) {
 		result = cmd_run(PS_COMMAND, &chld_out, &chld_err, 0);
 		if (chld_err.lines > 0) {
@@ -206,20 +173,43 @@ int main(int argc, char **argv) {
 		result = cmd_file_read(input_filename, &chld_out, 0);
 	}
 
+	int pos; /* number of spaces before 'args' in `ps` output */
+	uid_t procuid = 0;
+	pid_t procpid = 0;
+	pid_t procppid = 0;
+	pid_t kthread_ppid = 0;
+	int warn = 0; /* number of processes in warn state */
+	int crit = 0; /* number of processes in crit state */
+	int procvsz = 0;
+	int procrss = 0;
+	int procseconds = 0;
+	float procpcpu = 0;
+	char procstat[8];
+	char procetime[MAX_INPUT_BUFFER] = {'\0'};
+	int resultsum = 0; /* bitmask of the filter criteria met by a process */
+	int found = 0;     /* counter for number of lines returned in `ps` output */
+	int procs = 0;     /* counter for number of processes meeting filter criteria */
+	char *input_buffer = malloc(MAX_INPUT_BUFFER);
+	char *procprog = malloc(MAX_INPUT_BUFFER);
+	const int expected_cols = PS_COLS - 1;
+
 	/* flush first line: j starts at 1 */
 	for (size_t j = 1; j < chld_out.lines; j++) {
-		input_line = chld_out.line[j];
+		char *input_line = chld_out.line[j];
 
 		if (verbose >= 3) {
 			printf("%s", input_line);
 		}
 
 		strcpy(procprog, "");
+		char *procargs;
 		xasprintf(&procargs, "%s", "");
 
-		cols = sscanf(input_line, PS_FORMAT, PS_VARLIST);
+		/* number of columns in ps output */
+		int cols = sscanf(input_line, PS_FORMAT, PS_VARLIST);
 
 		/* Zombie processes do not give a procprog command */
+		const char *zombie = "Z";
 		if (cols < expected_cols && strstr(procstat, zombie)) {
 			cols = expected_cols;
 		}
@@ -240,6 +230,7 @@ int main(int argc, char **argv) {
 			}
 
 			/* Ignore self */
+			int ret = 0;
 			if ((usepid && mypid == procpid) ||
 				(((!usepid) && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino)) ||
 				 (ret == -1 && errno == ENOENT))) {
@@ -249,7 +240,7 @@ int main(int argc, char **argv) {
 				continue;
 			}
 			/* Ignore parent*/
-			else if (myppid == procpid) {
+			if (myppid == procpid) {
 				if (verbose >= 3) {
 					printf("not considering - is parent\n");
 				}
@@ -266,15 +257,13 @@ int main(int argc, char **argv) {
 
 			/* Ignore excluded processes by name */
 			if (options & EXCLUDE_PROGS) {
-				int found = 0;
-				int i = 0;
-
-				for (i = 0; i < (exclude_progs_counter); i++) {
+				bool found = false;
+				for (int i = 0; i < (exclude_progs_counter); i++) {
 					if (!strcmp(procprog, exclude_progs_arr[i])) {
-						found = 1;
+						found = true;
 					}
 				}
-				if (found == 0) {
+				if (!found) {
 					resultsum |= EXCLUDE_PROGS;
 				} else {
 					if (verbose >= 3) {
@@ -286,7 +275,7 @@ int main(int argc, char **argv) {
 			/* filter kernel threads (children of KTHREAD_PARENT)*/
 			/* TODO adapt for other OSes than GNU/Linux
 					sorry for not doing that, but I've no other OSes to test :-( */
-			if (kthread_filter == 1) {
+			if (kthread_filter) {
 				/* get pid KTHREAD_PARENT */
 				if (kthread_ppid == 0 && !strcmp(procprog, KTHREAD_PARENT)) {
 					kthread_ppid = procpid;
@@ -341,28 +330,29 @@ int main(int argc, char **argv) {
 					   procrss, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
 			}
 
+			mp_state_enum temporary_result = STATE_OK;
 			if (metric == METRIC_VSZ) {
-				i = get_status((double)procvsz, procs_thresholds);
+				temporary_result = get_status((double)procvsz, procs_thresholds);
 			} else if (metric == METRIC_RSS) {
-				i = get_status((double)procrss, procs_thresholds);
+				temporary_result = get_status((double)procrss, procs_thresholds);
 			}
 			/* TODO? float thresholds for --metric=CPU */
 			else if (metric == METRIC_CPU) {
-				i = get_status(procpcpu, procs_thresholds);
+				temporary_result = get_status(procpcpu, procs_thresholds);
 			} else if (metric == METRIC_ELAPSED) {
-				i = get_status((double)procseconds, procs_thresholds);
+				temporary_result = get_status((double)procseconds, procs_thresholds);
 			}
 
 			if (metric != METRIC_PROCS) {
-				if (i == STATE_WARNING) {
+				if (temporary_result == STATE_WARNING) {
 					warn++;
 					xasprintf(&fails, "%s%s%s", fails, (strcmp(fails, "") ? ", " : ""), procprog);
-					result = max_state(result, i);
+					result = max_state(result, temporary_result);
 				}
-				if (i == STATE_CRITICAL) {
+				if (temporary_result == STATE_CRITICAL) {
 					crit++;
 					xasprintf(&fails, "%s%s%s", fails, (strcmp(fails, "") ? ", " : ""), procprog);
-					result = max_state(result, i);
+					result = max_state(result, temporary_result);
 				}
 			}
 		}
@@ -416,20 +406,11 @@ int main(int argc, char **argv) {
 	}
 
 	printf("\n");
-	return result;
+	exit(result);
 }
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c = 1;
-	char *user;
-	struct passwd *pw;
-	int option = 0;
-	int err;
-	int cflags = REG_NOSUB | REG_EXTENDED;
-	char errbuf[MAX_INPUT_BUFFER];
-	char *temp_string;
-	int i = 0;
 	static struct option longopts[] = {{"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"metric", required_argument, 0, 'm'},
@@ -453,20 +434,21 @@ int process_arguments(int argc, char **argv) {
 									   {"exclude-process", required_argument, 0, 'X'},
 									   {0, 0, 0, 0}};
 
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
+	for (int index = 1; index < argc; index++) {
+		if (strcmp("-to", argv[index]) == 0) {
+			strcpy(argv[index], "-t");
 		}
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
+	while (true) {
+		int option = 0;
+		int option_index = getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
 
-		if (c == -1 || c == EOF) {
+		if (option_index == -1 || option_index == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case '?': /* help */
 			usage5();
 		case 'h': /* help */
@@ -504,10 +486,11 @@ int process_arguments(int argc, char **argv) {
 			xasprintf(&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 			options |= STAT;
 			break;
-		case 'u': /* user or user id */
+		case 'u': /* user or user id */ {
+			struct passwd *pw;
 			if (is_integer(optarg)) {
 				uid = atoi(optarg);
-				pw = getpwuid((uid_t)uid);
+				pw = getpwuid(uid);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
 					usage2(_("UID was not found"), optarg);
@@ -521,10 +504,11 @@ int process_arguments(int argc, char **argv) {
 				/*  then get uid */
 				uid = pw->pw_uid;
 			}
-			user = pw->pw_name;
+
+			char *user = pw->pw_name;
 			xasprintf(&fmt, "%s%sUID = %d (%s)", (fmt ? fmt : ""), (options ? ", " : ""), uid, user);
 			options |= USER;
-			break;
+		} break;
 		case 'C': /* command */
 			/* TODO: allow this to be passed in with --metric */
 			if (prog) {
@@ -542,12 +526,12 @@ int process_arguments(int argc, char **argv) {
 				exclude_progs = optarg;
 			}
 			xasprintf(&fmt, _("%s%sexclude progs '%s'"), (fmt ? fmt : ""), (options ? ", " : ""), exclude_progs);
-			char *p = strtok(exclude_progs, ",");
+			char *tmp_pointer = strtok(exclude_progs, ",");
 
-			while (p) {
+			while (tmp_pointer) {
 				exclude_progs_arr = realloc(exclude_progs_arr, sizeof(char *) * ++exclude_progs_counter);
-				exclude_progs_arr[exclude_progs_counter - 1] = p;
-				p = strtok(NULL, ",");
+				exclude_progs_arr[exclude_progs_counter - 1] = tmp_pointer;
+				tmp_pointer = strtok(NULL, ",");
 			}
 
 			options |= EXCLUDE_PROGS;
@@ -562,23 +546,26 @@ int process_arguments(int argc, char **argv) {
 			xasprintf(&fmt, "%s%sargs '%s'", (fmt ? fmt : ""), (options ? ", " : ""), args);
 			options |= ARGS;
 			break;
-		case CHAR_MAX + 1:
-			err = regcomp(&re_args, optarg, cflags);
+		case CHAR_MAX + 1: {
+			int cflags = REG_NOSUB | REG_EXTENDED;
+			int err = regcomp(&re_args, optarg, cflags);
 			if (err != 0) {
+				char errbuf[MAX_INPUT_BUFFER];
 				regerror(err, &re_args, errbuf, MAX_INPUT_BUFFER);
 				die(STATE_UNKNOWN, "PROCS %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
 			}
 			/* Strip off any | within the regex optarg */
-			temp_string = strdup(optarg);
-			while (temp_string[i] != '\0') {
-				if (temp_string[i] == '|') {
-					temp_string[i] = ',';
+			char *temp_string = strdup(optarg);
+			int index = 0;
+			while (temp_string[index] != '\0') {
+				if (temp_string[index] == '|') {
+					temp_string[index] = ',';
 				}
-				i++;
+				index++;
 			}
 			xasprintf(&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
 			options |= EREG_ARGS;
-			break;
+		} break;
 		case 'r': /* RSS */
 			if (sscanf(optarg, "%d%[^0-9]", &rss, tmp) == 1) {
 				xasprintf(&fmt, "%s%sRSS >= %d", (fmt ? fmt : ""), (options ? ", " : ""), rss);
@@ -606,29 +593,33 @@ int process_arguments(int argc, char **argv) {
 			if (strcmp(optarg, "PROCS") == 0) {
 				metric = METRIC_PROCS;
 				break;
-			} else if (strcmp(optarg, "VSZ") == 0) {
+			}
+			if (strcmp(optarg, "VSZ") == 0) {
 				metric = METRIC_VSZ;
 				break;
-			} else if (strcmp(optarg, "RSS") == 0) {
+			}
+			if (strcmp(optarg, "RSS") == 0) {
 				metric = METRIC_RSS;
 				break;
-			} else if (strcmp(optarg, "CPU") == 0) {
+			}
+			if (strcmp(optarg, "CPU") == 0) {
 				metric = METRIC_CPU;
 				break;
-			} else if (strcmp(optarg, "ELAPSED") == 0) {
+			}
+			if (strcmp(optarg, "ELAPSED") == 0) {
 				metric = METRIC_ELAPSED;
 				break;
 			}
 
 			usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k': /* linux kernel thread filter */
-			kthread_filter = 1;
+			kthread_filter = true;
 			break;
 		case 'v': /* command */
 			verbose++;
 			break;
 		case 'T':
-			usepid = 1;
+			usepid = true;
 			break;
 		case CHAR_MAX + 2:
 			input_filename = optarg;
@@ -636,15 +627,15 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
-	if ((!warning_range) && argv[c]) {
-		warning_range = argv[c++];
+	int index = optind;
+	if ((!warning_range) && argv[index]) {
+		warning_range = argv[index++];
 	}
-	if ((!critical_range) && argv[c]) {
-		critical_range = argv[c++];
+	if ((!critical_range) && argv[index]) {
+		critical_range = argv[index++];
 	}
-	if (statopts == NULL && argv[c]) {
-		xasprintf(&statopts, "%s", argv[c++]);
+	if (statopts == NULL && argv[index]) {
+		xasprintf(&statopts, "%s", argv[index++]);
 		xasprintf(&fmt, _("%s%sSTATE = %s"), (fmt ? fmt : ""), (options ? ", " : ""), statopts);
 		options |= STAT;
 	}
@@ -685,25 +676,9 @@ int validate_arguments() {
 
 /* convert the elapsed time to seconds */
 int convert_to_seconds(char *etime) {
-
-	char *ptr;
-	int total;
-
-	int hyphcnt;
-	int coloncnt;
-	int days;
-	int hours;
-	int minutes;
-	int seconds;
-
-	hyphcnt = 0;
-	coloncnt = 0;
-	days = 0;
-	hours = 0;
-	minutes = 0;
-	seconds = 0;
-
-	for (ptr = etime; *ptr != '\0'; ptr++) {
+	int hyphcnt = 0;
+	int coloncnt = 0;
+	for (char *ptr = etime; *ptr != '\0'; ptr++) {
 
 		if (*ptr == '-') {
 			hyphcnt++;
@@ -715,6 +690,10 @@ int convert_to_seconds(char *etime) {
 		}
 	}
 
+	int days = 0;
+	int hours = 0;
+	int minutes = 0;
+	int seconds = 0;
 	if (hyphcnt > 0) {
 		sscanf(etime, "%d-%d:%d:%d", &days, &hours, &minutes, &seconds);
 		/* linux 2.6.5/2.6.6 reporting some processes with infinite
@@ -730,7 +709,7 @@ int convert_to_seconds(char *etime) {
 		}
 	}
 
-	total = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+	int total = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
 
 	if (verbose >= 3 && metric == METRIC_ELAPSED) {
 		printf("seconds: %d\n", total);
