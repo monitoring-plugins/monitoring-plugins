@@ -55,6 +55,7 @@ EXTRA_DIST = t \
 			 check_game.d \
 			 check_radius.d \
 			 check_time.d \
+			 check_users.d \
 			 check_nagios.d \
 			 check_dbi.d \
 			 check_real.d \
@@ -152,6 +153,7 @@ check_tcp_LDADD = $(SSLOBJS)
 check_time_LDADD = $(NETLIBS)
 check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ups_LDADD = $(NETLIBS)
+check_users_SOURCES = check_users.c check_users.d/users.c
 check_users_LDADD = $(BASEOBJS) $(WTSAPI32LIBS) $(SYSTEMDLIBS)
 check_by_ssh_LDADD = $(NETLIBS)
 check_ide_smart_LDADD = $(BASEOBJS)
