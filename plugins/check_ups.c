@@ -39,69 +39,29 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-enum {
-	PORT = 3493
-};
-
-#define UPS_NONE      0  /* no supported options */
-#define UPS_UTILITY   1  /* supports utility line    */
-#define UPS_BATTPCT   2  /* supports percent battery remaining */
-#define UPS_STATUS    4  /* supports UPS status */
-#define UPS_TEMP      8  /* supports UPS temperature */
-#define UPS_LOADPCT   16 /* supports load percent */
-#define UPS_REALPOWER 32 /* supports real power */
-
-#define UPSSTATUS_NONE    0
-#define UPSSTATUS_OFF     1
-#define UPSSTATUS_OL      2
-#define UPSSTATUS_OB      4
-#define UPSSTATUS_LB      8
-#define UPSSTATUS_CAL     16
-#define UPSSTATUS_RB      32 /*Replace Battery */
-#define UPSSTATUS_BYPASS  64
-#define UPSSTATUS_OVER    128
-#define UPSSTATUS_TRIM    256
-#define UPSSTATUS_BOOST   512
-#define UPSSTATUS_CHRG    1024
-#define UPSSTATUS_DISCHRG 2048
-#define UPSSTATUS_UNKNOWN 4096
-#define UPSSTATUS_ALARM   8192
+#include "check_ups.d/config.h"
+#include "states.h"
 
 enum {
 	NOSUCHVAR = ERROR - 1
 };
 
-typedef struct ups_config {
-	unsigned int server_port;
-	char *server_address;
-	char *ups_name;
-	double warning_value;
-	double critical_value;
-	bool check_warn;
-	bool check_crit;
-	int check_variable;
-	int status;
-	bool temp_output_c;
-} ups_config;
-
-ups_config ups_config_init(void) {
-	ups_config tmp = {0};
-	tmp.server_port = PORT;
-	tmp.server_address = NULL;
-	tmp.ups_name = NULL;
-	tmp.check_variable = UPS_NONE;
-	tmp.status = UPSSTATUS_NONE;
-
-	return tmp;
-}
-
 // Forward declarations
-static int determine_status(ups_config * /*config*/, int *supported_options);
-static int get_ups_variable(const char * /*varname*/, char * /*buf*/, ups_config config);
+typedef struct {
+	int errorcode;
+	int ups_status;
+	int supported_options;
+} determine_status_result;
+static determine_status_result determine_status(check_ups_config /*config*/);
+static int get_ups_variable(const char * /*varname*/, char * /*buf*/, check_ups_config config);
 
-static int process_arguments(int /*argc*/, char ** /*argv*/, ups_config * /*config*/);
-static int validate_arguments(ups_config /*config*/);
+typedef struct {
+	int errorcode;
+	check_ups_config config;
+} check_ups_config_wrapper;
+static check_ups_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_ups_config_wrapper validate_arguments(check_ups_config_wrapper /*config_wrapper*/);
+
 static void print_help(void);
 void print_usage(void);
 
@@ -109,28 +69,16 @@ int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-
-	char *ups_status;
-	ups_status = strdup("N/A");
-
-	char *data;
-	data = strdup("");
-
-	char *message;
-	message = strdup("");
-
-	// Exit result
-	int result = STATE_UNKNOWN;
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	// Config from commandline
-	ups_config config = ups_config_init();
+	check_ups_config_wrapper tmp_config = process_arguments(argc, argv);
 
-	if (process_arguments(argc, argv, &config) == ERROR) {
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+	// Config from commandline
+	check_ups_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -138,71 +86,75 @@ int main(int argc, char **argv) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	int supported_options = UPS_NONE;
-
 	/* get the ups status if possible */
-	if (determine_status(&config, &supported_options) != OK) {
+	determine_status_result query_result = determine_status(config);
+	if (query_result.errorcode != OK) {
 		return STATE_CRITICAL;
 	}
 
+	int ups_status_flags = query_result.ups_status;
+	int supported_options = query_result.supported_options;
+
+	// Exit result
+	mp_state_enum result = STATE_UNKNOWN;
+	char *message = NULL;
+
 	if (supported_options & UPS_STATUS) {
-
-		ups_status = strdup("");
-
+		char *ups_status = strdup("");
 		result = STATE_OK;
 
-		if (config.status & UPSSTATUS_OFF) {
+		if (ups_status_flags & UPSSTATUS_OFF) {
 			xasprintf(&ups_status, "Off");
 			result = STATE_CRITICAL;
-		} else if ((config.status & (UPSSTATUS_OB | UPSSTATUS_LB)) == (UPSSTATUS_OB | UPSSTATUS_LB)) {
+		} else if ((ups_status_flags & (UPSSTATUS_OB | UPSSTATUS_LB)) == (UPSSTATUS_OB | UPSSTATUS_LB)) {
 			xasprintf(&ups_status, _("On Battery, Low Battery"));
 			result = STATE_CRITICAL;
 		} else {
-			if (config.status & UPSSTATUS_OL) {
+			if (ups_status_flags & UPSSTATUS_OL) {
 				xasprintf(&ups_status, "%s%s", ups_status, _("Online"));
 			}
-			if (config.status & UPSSTATUS_OB) {
+			if (ups_status_flags & UPSSTATUS_OB) {
 				xasprintf(&ups_status, "%s%s", ups_status, _("On Battery"));
 				result = max_state(result, STATE_WARNING);
 			}
-			if (config.status & UPSSTATUS_LB) {
+			if (ups_status_flags & UPSSTATUS_LB) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Low Battery"));
 				result = max_state(result, STATE_WARNING);
 			}
-			if (config.status & UPSSTATUS_CAL) {
+			if (ups_status_flags & UPSSTATUS_CAL) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Calibrating"));
 			}
-			if (config.status & UPSSTATUS_RB) {
+			if (ups_status_flags & UPSSTATUS_RB) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Replace Battery"));
 				result = max_state(result, STATE_WARNING);
 			}
-			if (config.status & UPSSTATUS_BYPASS) {
+			if (ups_status_flags & UPSSTATUS_BYPASS) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", On Bypass"));
 				// Bypassing the battery is likely a bad thing
 				result = STATE_CRITICAL;
 			}
-			if (config.status & UPSSTATUS_OVER) {
+			if (ups_status_flags & UPSSTATUS_OVER) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Overload"));
 				result = max_state(result, STATE_WARNING);
 			}
-			if (config.status & UPSSTATUS_TRIM) {
+			if (ups_status_flags & UPSSTATUS_TRIM) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Trimming"));
 			}
-			if (config.status & UPSSTATUS_BOOST) {
+			if (ups_status_flags & UPSSTATUS_BOOST) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Boosting"));
 			}
-			if (config.status & UPSSTATUS_CHRG) {
+			if (ups_status_flags & UPSSTATUS_CHRG) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Charging"));
 			}
-			if (config.status & UPSSTATUS_DISCHRG) {
+			if (ups_status_flags & UPSSTATUS_DISCHRG) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Discharging"));
 				result = max_state(result, STATE_WARNING);
 			}
-			if (config.status & UPSSTATUS_ALARM) {
+			if (ups_status_flags & UPSSTATUS_ALARM) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", ALARM"));
 				result = STATE_CRITICAL;
 			}
-			if (config.status & UPSSTATUS_UNKNOWN) {
+			if (ups_status_flags & UPSSTATUS_UNKNOWN) {
 				xasprintf(&ups_status, "%s%s", ups_status, _(", Unknown"));
 			}
 		}
@@ -211,7 +163,7 @@ int main(int argc, char **argv) {
 
 	int res;
 	char temp_buffer[MAX_INPUT_BUFFER];
-
+	char *performance_data = strdup("");
 	/* get the ups utility voltage if possible */
 	res = get_ups_variable("input.voltage", temp_buffer, config);
 	if (res == NOSUCHVAR) {
@@ -239,11 +191,12 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_utility_deviation >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s",
+			xasprintf(&performance_data, "%s",
 					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", config.check_warn, (long)(1000 * config.warning_value),
 							   config.check_crit, (long)(1000 * config.critical_value), true, 0, false, 0));
 		} else {
-			xasprintf(&data, "%s", perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false, 0, true, 0, false, 0));
+			xasprintf(&performance_data, "%s",
+					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -266,11 +219,12 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_battery_percent <= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
+			xasprintf(&performance_data, "%s %s", performance_data,
 					  perfdata("battery", (long)ups_battery_percent, "%", config.check_warn, (long)(config.warning_value),
 							   config.check_crit, (long)(config.critical_value), true, 0, true, 100));
 		} else {
-			xasprintf(&data, "%s %s", data, perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true, 0, true, 100));
+			xasprintf(&performance_data, "%s %s", performance_data,
+					  perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
@@ -293,11 +247,12 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_load_percent >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
+			xasprintf(&performance_data, "%s %s", performance_data,
 					  perfdata("load", (long)ups_load_percent, "%", config.check_warn, (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, true, 100));
 		} else {
-			xasprintf(&data, "%s %s", data, perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0, true, 100));
+			xasprintf(&performance_data, "%s %s", performance_data,
+					  perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0, true, 100));
 		}
 	}
 
@@ -329,11 +284,12 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_temperature >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
+			xasprintf(&performance_data, "%s %s", performance_data,
 					  perfdata("temp", (long)ups_temperature, tunits, config.check_warn, (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, false, 0));
 		} else {
-			xasprintf(&data, "%s %s", data, perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0, false, 0));
+			xasprintf(&performance_data, "%s %s", performance_data,
+					  perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -355,11 +311,12 @@ int main(int argc, char **argv) {
 			} else if (config.check_warn && ups_realpower >= config.warning_value) {
 				result = max_state(result, STATE_WARNING);
 			}
-			xasprintf(&data, "%s %s", data,
+			xasprintf(&performance_data, "%s %s", performance_data,
 					  perfdata("realpower", (long)ups_realpower, "W", config.check_warn, (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, false, 0));
 		} else {
-			xasprintf(&data, "%s %s", data, perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0, false, 0));
+			xasprintf(&performance_data, "%s %s", performance_data,
+					  perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0, false, 0));
 		}
 	}
 
@@ -373,66 +330,73 @@ int main(int argc, char **argv) {
 	/* reset timeout */
 	alarm(0);
 
-	printf("UPS %s - %s|%s\n", state_text(result), message, data);
-	return result;
+	printf("UPS %s - %s|%s\n", state_text(result), message, performance_data);
+	exit(result);
 }
 
 /* determines what options are supported by the UPS */
-int determine_status(ups_config *config, int *supported_options) {
-	char recv_buffer[MAX_INPUT_BUFFER];
+determine_status_result determine_status(const check_ups_config config) {
 
-	int res = get_ups_variable("ups.status", recv_buffer, *config);
+	determine_status_result result = {
+		.errorcode = OK,
+		.ups_status = UPSSTATUS_NONE,
+		.supported_options = 0,
+	};
+
+	char recv_buffer[MAX_INPUT_BUFFER];
+	int res = get_ups_variable("ups.status", recv_buffer, config);
 	if (res == NOSUCHVAR) {
-		return OK;
+		return result;
 	}
 
 	if (res != STATE_OK) {
 		printf("%s\n", _("Invalid response received from host"));
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	*supported_options |= UPS_STATUS;
+	result.supported_options |= UPS_STATUS;
 
 	char temp_buffer[MAX_INPUT_BUFFER];
 
 	strcpy(temp_buffer, recv_buffer);
-	for (char *ptr = (char *)strtok(temp_buffer, " "); ptr != NULL; ptr = (char *)strtok(NULL, " ")) {
+	for (char *ptr = strtok(temp_buffer, " "); ptr != NULL; ptr = strtok(NULL, " ")) {
 		if (!strcmp(ptr, "OFF")) {
-			config->status |= UPSSTATUS_OFF;
+			result.ups_status |= UPSSTATUS_OFF;
 		} else if (!strcmp(ptr, "OL")) {
-			config->status |= UPSSTATUS_OL;
+			result.ups_status |= UPSSTATUS_OL;
 		} else if (!strcmp(ptr, "OB")) {
-			config->status |= UPSSTATUS_OB;
+			result.ups_status |= UPSSTATUS_OB;
 		} else if (!strcmp(ptr, "LB")) {
-			config->status |= UPSSTATUS_LB;
+			result.ups_status |= UPSSTATUS_LB;
 		} else if (!strcmp(ptr, "CAL")) {
-			config->status |= UPSSTATUS_CAL;
+			result.ups_status |= UPSSTATUS_CAL;
 		} else if (!strcmp(ptr, "RB")) {
-			config->status |= UPSSTATUS_RB;
+			result.ups_status |= UPSSTATUS_RB;
 		} else if (!strcmp(ptr, "BYPASS")) {
-			config->status |= UPSSTATUS_BYPASS;
+			result.ups_status |= UPSSTATUS_BYPASS;
 		} else if (!strcmp(ptr, "OVER")) {
-			config->status |= UPSSTATUS_OVER;
+			result.ups_status |= UPSSTATUS_OVER;
 		} else if (!strcmp(ptr, "TRIM")) {
-			config->status |= UPSSTATUS_TRIM;
+			result.ups_status |= UPSSTATUS_TRIM;
 		} else if (!strcmp(ptr, "BOOST")) {
-			config->status |= UPSSTATUS_BOOST;
+			result.ups_status |= UPSSTATUS_BOOST;
 		} else if (!strcmp(ptr, "CHRG")) {
-			config->status |= UPSSTATUS_CHRG;
+			result.ups_status |= UPSSTATUS_CHRG;
 		} else if (!strcmp(ptr, "DISCHRG")) {
-			config->status |= UPSSTATUS_DISCHRG;
+			result.ups_status |= UPSSTATUS_DISCHRG;
 		} else if (!strcmp(ptr, "ALARM")) {
-			config->status |= UPSSTATUS_ALARM;
+			result.ups_status |= UPSSTATUS_ALARM;
 		} else {
-			config->status |= UPSSTATUS_UNKNOWN;
+			result.ups_status |= UPSSTATUS_UNKNOWN;
 		}
 	}
 
-	return OK;
+	return result;
 }
 
 /* gets a variable value for a specific UPS  */
-int get_ups_variable(const char *varname, char *buf, const ups_config config) {
+int get_ups_variable(const char *varname, char *buf, const check_ups_config config) {
 	char send_buffer[MAX_INPUT_BUFFER];
 
 	/* create the command string to send to the UPS daemon */
@@ -500,7 +464,7 @@ int get_ups_variable(const char *varname, char *buf, const ups_config config) {
 			   [-wv warn_value] [-cv crit_value] [-to to_sec] */
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv, ups_config *config) {
+check_ups_config_wrapper process_arguments(int argc, char **argv) {
 
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"ups", required_argument, 0, 'u'},
@@ -514,8 +478,14 @@ int process_arguments(int argc, char **argv, ups_config *config) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
+	check_ups_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ups_config_init(),
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	int c;
@@ -542,52 +512,52 @@ int process_arguments(int argc, char **argv, ups_config *config) {
 			usage5();
 		case 'H': /* hostname */
 			if (is_host(optarg)) {
-				config->server_address = optarg;
+				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for
 					 Fahrenheit) */
-			config->temp_output_c = true;
+			result.config.temp_output_c = true;
 			break;
 		case 'u': /* ups name */
-			config->ups_name = optarg;
+			result.config.ups_name = optarg;
 			break;
 		case 'p': /* port */
 			if (is_intpos(optarg)) {
-				config->server_port = atoi(optarg);
+				result.config.server_port = atoi(optarg);
 			} else {
 				usage2(_("Port must be a positive integer"), optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
 			if (is_intnonneg(optarg)) {
-				config->critical_value = atoi(optarg);
-				config->check_crit = true;
+				result.config.critical_value = atoi(optarg);
+				result.config.check_crit = true;
 			} else {
 				usage2(_("Critical time must be a positive integer"), optarg);
 			}
 			break;
 		case 'w': /* warning time threshold */
 			if (is_intnonneg(optarg)) {
-				config->warning_value = atoi(optarg);
-				config->check_warn = true;
+				result.config.warning_value = atoi(optarg);
+				result.config.check_warn = true;
 			} else {
 				usage2(_("Warning time must be a positive integer"), optarg);
 			}
 			break;
 		case 'v': /* variable */
 			if (!strcmp(optarg, "LINE")) {
-				config->check_variable = UPS_UTILITY;
+				result.config.check_variable = UPS_UTILITY;
 			} else if (!strcmp(optarg, "TEMP")) {
-				config->check_variable = UPS_TEMP;
+				result.config.check_variable = UPS_TEMP;
 			} else if (!strcmp(optarg, "BATTPCT")) {
-				config->check_variable = UPS_BATTPCT;
+				result.config.check_variable = UPS_BATTPCT;
 			} else if (!strcmp(optarg, "LOADPCT")) {
-				config->check_variable = UPS_LOADPCT;
+				result.config.check_variable = UPS_LOADPCT;
 			} else if (!strcmp(optarg, "REALPOWER")) {
-				config->check_variable = UPS_REALPOWER;
+				result.config.check_variable = UPS_REALPOWER;
 			} else {
 				usage2(_("Unrecognized UPS variable"), optarg);
 			}
@@ -608,27 +578,27 @@ int process_arguments(int argc, char **argv, ups_config *config) {
 		}
 	}
 
-	if (config->server_address == NULL && argc > optind) {
+	if (result.config.server_address == NULL && argc > optind) {
 		if (is_host(argv[optind])) {
-			config->server_address = argv[optind++];
+			result.config.server_address = argv[optind++];
 		} else {
 			usage2(_("Invalid hostname/address"), optarg);
 		}
 	}
 
-	if (config->server_address == NULL) {
-		config->server_address = strdup("127.0.0.1");
+	if (result.config.server_address == NULL) {
+		result.config.server_address = strdup("127.0.0.1");
 	}
 
-	return validate_arguments(*config);
+	return validate_arguments(result);
 }
 
-int validate_arguments(ups_config config) {
-	if (!config.ups_name) {
+check_ups_config_wrapper validate_arguments(check_ups_config_wrapper config_wrapper) {
+	if (config_wrapper.config.ups_name) {
 		printf("%s\n", _("Error : no UPS indicated"));
-		return ERROR;
+		config_wrapper.errorcode = ERROR;
 	}
-	return OK;
+	return config_wrapper;
 }
 
 void print_help(void) {

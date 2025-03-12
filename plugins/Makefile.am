@@ -73,6 +73,7 @@ EXTRA_DIST = t \
 			 check_ntp_time.d \
 			 check_dig.d \
 			 check_cluster.d \
+			 check_ups.d \
 			 check_fping.d
 
 PLUGINHDRS = common.h
