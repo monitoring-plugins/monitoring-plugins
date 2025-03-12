@@ -36,6 +36,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "netutils.h"
 #include "states.h"
+#include "check_radius.d/config.h"
 
 #if defined(HAVE_LIBRADCLI)
 #	include <radcli/radcli.h>
@@ -47,7 +48,11 @@ const char *email = "devel@monitoring-plugins.org";
 #	include <radiusclient.h>
 #endif
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+typedef struct {
+	int errorcode;
+	check_radius_config config;
+} check_radius_config_wrapper;
+static check_radius_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -79,21 +84,8 @@ void print_usage(void);
 #	define REJECT_RC BADRESP_RC
 #endif
 
-static int my_rc_read_config(char * /*a*/);
+static int my_rc_read_config(char * /*a*/, rc_handle ** /*rch*/);
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
-static rc_handle *rch = NULL;
-#endif
-
-static char *server = NULL;
-static char *username = NULL;
-static char *password = NULL;
-static char *nasid = NULL;
-static char *nasipaddress = NULL;
-static char *expect = NULL;
-static char *config_file = NULL;
-static unsigned short port = PW_AUTH_UDP_PORT;
-static int retries = 1;
 static bool verbose = false;
 
 /******************************************************************************
@@ -157,12 +149,20 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_radius_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
+	check_radius_config config = tmp_config.config;
+
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
+	rc_handle *rch = NULL;
+#endif
+
 	char *str = strdup("dictionary");
-	if ((config_file && my_rc_read_config(config_file)) || my_rc_read_dictionary(my_rc_conf_str(str))) {
+	if ((config.config_file && my_rc_read_config(config.config_file, &rch)) || my_rc_read_dictionary(my_rc_conf_str(str))) {
 		die(STATE_UNKNOWN, _("Config file error\n"));
 	}
 
@@ -171,36 +171,36 @@ int main(int argc, char **argv) {
 	SEND_DATA data;
 	memset(&data, 0, sizeof(data));
 	if (!(my_rc_avpair_add(&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
-		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, username, 0) &&
-		  my_rc_avpair_add(&data.send_pairs, PW_USER_PASSWORD, password, 0))) {
+		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, config.username, 0) &&
+		  my_rc_avpair_add(&data.send_pairs, PW_USER_PASSWORD, config.password, 0))) {
 		die(STATE_UNKNOWN, _("Out of Memory?\n"));
 	}
 
-	if (nasid != NULL) {
-		if (!(my_rc_avpair_add(&data.send_pairs, PW_NAS_IDENTIFIER, nasid, 0))) {
+	if (config.nas_id != NULL) {
+		if (!(my_rc_avpair_add(&data.send_pairs, PW_NAS_IDENTIFIER, config.nas_id, 0))) {
 			die(STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
 		}
 	}
 
 	char name[HOST_NAME_MAX];
-	if (nasipaddress == NULL) {
+	if (config.nas_ip_address == NULL) {
 		if (gethostname(name, sizeof(name)) != 0) {
 			die(STATE_UNKNOWN, _("gethostname() failed!\n"));
 		}
-		nasipaddress = name;
+		config.nas_ip_address = name;
 	}
 
-	struct sockaddr_storage ss;
-	if (!dns_lookup(nasipaddress, &ss, AF_INET)) { /* TODO: Support IPv6. */
+	struct sockaddr_storage radius_server_socket;
+	if (!dns_lookup(config.nas_ip_address, &radius_server_socket, AF_INET)) { /* TODO: Support IPv6. */
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
 
-	uint32_t client_id = ntohl(((struct sockaddr_in *)&ss)->sin_addr.s_addr);
+	uint32_t client_id = ntohl(((struct sockaddr_in *)&radius_server_socket)->sin_addr.s_addr);
 	if (my_rc_avpair_add(&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL) {
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
 
-	my_rc_buildreq(&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval, retries);
+	my_rc_buildreq(&data, PW_ACCESS_REQUEST, config.server, config.port, (int)timeout_interval, config.retries);
 
 #ifdef RC_BUFFER_LEN
 	char msg[RC_BUFFER_LEN];
@@ -208,36 +208,49 @@ int main(int argc, char **argv) {
 	char msg[BUFFER_LEN];
 #endif
 
-	mp_state_enum result = my_rc_send_server(&data, msg);
+	int result = my_rc_send_server(&data, msg);
 	rc_avpair_free(data.send_pairs);
 	if (data.receive_pairs) {
 		rc_avpair_free(data.receive_pairs);
 	}
 
 	if (result == TIMEOUT_RC) {
-		die(STATE_CRITICAL, _("Timeout\n"));
+		printf("Timeout\n");
+		exit(STATE_CRITICAL);
 	}
+
 	if (result == ERROR_RC) {
-		die(STATE_CRITICAL, _("Auth Error\n"));
+		printf(_("Auth Error\n"));
+		exit(STATE_CRITICAL);
 	}
+
 	if (result == REJECT_RC) {
-		die(STATE_WARNING, _("Auth Failed\n"));
+		printf(_("Auth Failed\n"));
+		exit(STATE_WARNING);
 	}
+
 	if (result == BADRESP_RC) {
-		die(STATE_WARNING, _("Bad Response\n"));
+		printf(_("Bad Response\n"));
+		exit(STATE_WARNING);
 	}
-	if (expect && !strstr(msg, expect)) {
-		die(STATE_WARNING, "%s\n", msg);
+
+	if (config.expect && !strstr(msg, config.expect)) {
+		printf("%s\n", msg);
+		exit(STATE_WARNING);
 	}
+
 	if (result == OK_RC) {
-		die(STATE_OK, _("Auth OK\n"));
+		printf(_("Auth OK\n"));
+		exit(STATE_OK);
 	}
+
 	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	die(STATE_UNKNOWN, "%s\n", msg);
+	printf("%s\n", msg);
+	exit(STATE_UNKNOWN);
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_radius_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'P'},
 									   {"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'},
 									   {"nas-id", required_argument, 0, 'n'},   {"nas-ip-address", required_argument, 0, 'N'},
@@ -245,6 +258,11 @@ int process_arguments(int argc, char **argv) {
 									   {"retries", required_argument, 0, 'r'},  {"timeout", required_argument, 0, 't'},
 									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+
+	check_radius_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_radius_config_init(),
+	};
 
 	while (true) {
 		int option = 0;
@@ -270,20 +288,20 @@ int process_arguments(int argc, char **argv) {
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
-			server = optarg;
+			result.config.server = optarg;
 			break;
 		case 'P': /* port */
 			if (is_intnonneg(optarg)) {
-				port = (unsigned short)atoi(optarg);
+				result.config.port = (unsigned short)atoi(optarg);
 			} else {
 				usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'u': /* username */
-			username = optarg;
+			result.config.username = optarg;
 			break;
 		case 'p': /* password */
-			password = strdup(optarg);
+			result.config.password = strdup(optarg);
 
 			/* Delete the password from process list */
 			while (*optarg != '\0') {
@@ -292,20 +310,20 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'n': /* nas id */
-			nasid = optarg;
+			result.config.nas_id = optarg;
 			break;
 		case 'N': /* nas ip address */
-			nasipaddress = optarg;
+			result.config.nas_ip_address = optarg;
 			break;
 		case 'F': /* configuration file */
-			config_file = optarg;
+			result.config.config_file = optarg;
 			break;
 		case 'e': /* expect */
-			expect = optarg;
+			result.config.expect = optarg;
 			break;
 		case 'r': /* retries */
 			if (is_intpos(optarg)) {
-				retries = atoi(optarg);
+				result.config.retries = atoi(optarg);
 			} else {
 				usage4(_("Number of retries must be a positive integer"));
 			}
@@ -320,20 +338,20 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server == NULL) {
+	if (result.config.server == NULL) {
 		usage4(_("Hostname was not supplied"));
 	}
-	if (username == NULL) {
+	if (result.config.username == NULL) {
 		usage4(_("User not specified"));
 	}
-	if (password == NULL) {
+	if (result.config.password == NULL) {
 		usage4(_("Password not specified"));
 	}
-	if (config_file == NULL) {
+	if (result.config.config_file == NULL) {
 		usage4(_("Configuration file not specified"));
 	}
 
-	return OK;
+	return result;
 }
 
 void print_help(void) {
@@ -395,11 +413,11 @@ void print_usage(void) {
 		   progname);
 }
 
-int my_rc_read_config(char *a) {
+int my_rc_read_config(char *config_file_name, rc_handle **rch) {
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
-	rch = rc_read_config(a);
+	*rch = rc_read_config(config_file_name);
 	return (rch == NULL) ? 1 : 0;
 #else
-	return rc_read_config(a);
+	return rc_read_config(config_file_name);
 #endif
 }
