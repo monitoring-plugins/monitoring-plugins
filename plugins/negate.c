@@ -29,6 +29,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "negate";
 const char *copyright = "2002-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -38,21 +39,17 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
+#include "negate.d/config.h"
 
-#include <ctype.h>
+typedef struct {
+	int errorcode;
+	negate_config config;
+} negate_config_wrapper;
+static negate_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static negate_config_wrapper validate_arguments(negate_config_wrapper /*config_wrapper*/);
 
-static const char **process_arguments(int /*argc*/, char ** /*argv*/);
-static void validate_arguments(char ** /*command_line*/);
 static void print_help(void);
 void print_usage(void);
-static bool subst_text = false;
-
-static int state[4] = {
-	STATE_OK,
-	STATE_WARNING,
-	STATE_CRITICAL,
-	STATE_UNKNOWN,
-};
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -61,16 +58,24 @@ int main(int argc, char **argv) {
 
 	timeout_interval = DEFAULT_TIMEOUT;
 
-	char **command_line = (char **)process_arguments(argc, argv);
+	negate_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
+		die(STATE_UNKNOWN, _("negate: Failed to parse input"));
+	}
+
+	negate_config config = tmp_config.config;
+
+	char **command_line = config.command_line;
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		die(STATE_UNKNOWN, _("Cannot catch SIGALRM"));
 	}
 
-	(void)alarm((unsigned)timeout_interval);
+	(void)alarm(timeout_interval);
 
-	int result = STATE_UNKNOWN;
+	mp_state_enum result = STATE_UNKNOWN;
 	output chld_out;
 	output chld_err;
 
@@ -93,34 +98,38 @@ int main(int argc, char **argv) {
 
 	char *sub;
 	for (size_t i = 0; i < chld_out.lines; i++) {
-		if (subst_text && result >= 0 && result <= 4 && result != state[result]) {
+		if (config.subst_text && result >= 0 && result <= 4 && result != config.state[result]) {
 			/* Loop over each match found */
 			while ((sub = strstr(chld_out.line[i], state_text(result)))) {
 				/* Terminate the first part and skip over the string we'll substitute */
 				*sub = '\0';
 				sub += strlen(state_text(result));
 				/* then put everything back together */
-				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text(state[result]), sub);
+				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text(config.state[result]), sub);
 			}
 		}
 		printf("%s\n", chld_out.line[i]);
 	}
 
 	if (result >= 0 && result <= 4) {
-		exit(state[result]);
+		exit(config.state[result]);
 	} else {
 		exit(result);
 	}
 }
 
 /* process command-line arguments */
-static const char **process_arguments(int argc, char **argv) {
+static negate_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},           {"version", no_argument, 0, 'V'},
 									   {"timeout", required_argument, 0, 't'},  {"timeout-result", required_argument, 0, 'T'},
 									   {"ok", required_argument, 0, 'o'},       {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'}, {"unknown", required_argument, 0, 'u'},
 									   {"substitute", no_argument, 0, 's'},     {0, 0, 0, 0}};
 
+	negate_config_wrapper result = {
+		.errorcode = OK,
+		.config = negate_config_init(),
+	};
 	bool permute = true;
 	while (true) {
 		int option = 0;
@@ -154,54 +163,56 @@ static const char **process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'o': /* replacement for OK */
-			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR) {
+			if ((result.config.state[STATE_OK] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			permute = false;
 			break;
 
 		case 'w': /* replacement for WARNING */
-			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR) {
+			if ((result.config.state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'c': /* replacement for CRITICAL */
-			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR) {
+			if ((result.config.state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'u': /* replacement for UNKNOWN */
-			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR) {
+			if ((result.config.state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 's': /* Substitute status text */
-			subst_text = true;
+			result.config.subst_text = true;
 			break;
 		}
 	}
 
-	validate_arguments(&argv[optind]);
-
 	if (permute) { /* No [owcu] switch specified, default to this */
-		state[STATE_OK] = STATE_CRITICAL;
-		state[STATE_CRITICAL] = STATE_OK;
+		result.config.state[STATE_OK] = STATE_CRITICAL;
+		result.config.state[STATE_CRITICAL] = STATE_OK;
 	}
 
-	return (const char **)&argv[optind];
+	result.config.command_line = &argv[optind];
+
+	return validate_arguments(result);
 }
 
-void validate_arguments(char **command_line) {
-	if (command_line[0] == NULL) {
+negate_config_wrapper validate_arguments(negate_config_wrapper config_wrapper) {
+	if (config_wrapper.config.command_line[0] == NULL) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	if (strncmp(command_line[0], "/", 1) != 0 && strncmp(command_line[0], "./", 2) != 0) {
+	if (strncmp(config_wrapper.config.command_line[0], "/", 1) != 0 && strncmp(config_wrapper.config.command_line[0], "./", 2) != 0) {
 		usage4(_("Require path to command"));
 	}
+
+	return config_wrapper;
 }
 
 void print_help(void) {
