@@ -481,7 +481,8 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &result.packet_loss, &match) == 1 && match) ||
 			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
 			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &result.packet_loss, &match) && match) == 1 ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &result.packet_loss, &match) == 1 && match) ==
+				1 ||
 			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
 			 match) ||
 			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
