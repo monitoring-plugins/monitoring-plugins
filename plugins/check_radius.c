@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 	}
 
 	struct sockaddr_storage radius_server_socket;
-	if (!dns_lookup(config.nas_ip_address, &radius_server_socket, AF_INET)) { /* TODO: Support IPv6. */
+	if (!dns_lookup(config.nas_ip_address, &radius_server_socket, AF_UNSPEC)) {
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
 
