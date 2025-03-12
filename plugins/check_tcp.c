@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
+#include "output.h"
 char *progname;
 const char *copyright = "1999-2025";
 const char *email = "devel@monitoring-plugins.org";
@@ -230,7 +231,7 @@ int main(int argc, char **argv) {
 	// Initialize check stuff before setting timers
 	mp_check overall = mp_check_init();
 	if (config.output_format_set) {
-		overall.format = config.output_format;
+		mp_set_format(config.output_format);
 	}
 
 	/* set up the timer */
