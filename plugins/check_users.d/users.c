@@ -50,6 +50,7 @@ get_num_of_users_wrapper get_num_of_users_windows() {
 #else // _WIN32
 
 #	include "../../config.h"
+#	include <stddef.h>
 
 #	ifdef HAVE_LIBSYSTEMD
 #		include <systemd/sd-daemon.h>
