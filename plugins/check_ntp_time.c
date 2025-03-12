@@ -42,17 +42,17 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "utils.h"
 #include "states.h"
+#include "thresholds.h"
+#include "check_ntp_time.d/config.h"
 
-static char *server_address = NULL;
-static char *port = "123";
 static int verbose = 0;
-static bool quiet = false;
-static char *owarn = "60";
-static char *ocrit = "120";
-static int time_offset = 0;
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static thresholds *offset_thresholds = NULL;
+typedef struct {
+	int errorcode;
+	check_ntp_time_config config;
+} check_ntp_time_config_wrapper;
+static check_ntp_time_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+
 static void print_help(void);
 void print_usage(void);
 
@@ -321,7 +321,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
  *   we don't waste time sitting around waiting for single packets.
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host, mp_state_enum *status) {
+double offset_request(const char *host, const char *port, mp_state_enum *status, int time_offset) {
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -392,7 +392,7 @@ double offset_request(const char *host, mp_state_enum *status) {
 	time_t start_ts = 0;
 	time_t now_time = 0;
 	now_time = start_ts = time(NULL);
-	int servers_completed = 0;
+	size_t servers_completed = 0;
 	bool one_read = false;
 	while (servers_completed < num_hosts && now_time - start_ts <= socket_timeout / 2) {
 		/* loop through each server and find each one which hasn't
@@ -401,13 +401,13 @@ double offset_request(const char *host, mp_state_enum *status) {
 		 * and update the "waiting" timestamp with the current time. */
 		now_time = time(NULL);
 
-		for (int i = 0; i < num_hosts; i++) {
+		for (size_t i = 0; i < num_hosts; i++) {
 			if (servers[i].waiting < now_time && servers[i].num_responses < AVG_NUM) {
 				if (verbose && servers[i].waiting != 0) {
 					printf("re-");
 				}
 				if (verbose) {
-					printf("sending request to peer %d\n", i);
+					printf("sending request to peer %zu\n", i);
 				}
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
@@ -488,7 +488,7 @@ double offset_request(const char *host, mp_state_enum *status) {
 	return avg_offset;
 }
 
-int process_arguments(int argc, char **argv) {
+check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -506,6 +506,14 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2) {
 		usage("\n");
 	}
+
+	check_ntp_time_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ntp_time_config_init(),
+	};
+
+	char *owarn = "60";
+	char *ocrit = "120";
 
 	while (true) {
 		int option = 0;
@@ -527,7 +535,7 @@ int process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'q':
-			quiet = true;
+			result.config.quiet = true;
 			break;
 		case 'w':
 			owarn = optarg;
@@ -539,16 +547,16 @@ int process_arguments(int argc, char **argv) {
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
-			server_address = strdup(optarg);
+			result.config.server_address = strdup(optarg);
 			break;
 		case 'p':
-			port = strdup(optarg);
+			result.config.port = strdup(optarg);
 			break;
 		case 't':
 			socket_timeout = atoi(optarg);
 			break;
 		case 'o':
-			time_offset = atoi(optarg);
+			result.config.time_offset = atoi(optarg);
 			break;
 		case '4':
 			address_family = AF_INET;
@@ -567,14 +575,16 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	return 0;
+	set_thresholds(&result.config.offset_thresholds, owarn, ocrit);
+
+	return result;
 }
 
-char *perfd_offset(double offset) {
+char *perfd_offset(double offset, thresholds *offset_thresholds) {
 	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
 					 0);
 }
@@ -587,11 +597,13 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_ntp_time_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	set_thresholds(&offset_thresholds, owarn, ocrit);
+	const check_ntp_time_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -601,11 +613,11 @@ int main(int argc, char *argv[]) {
 
 	mp_state_enum offset_result = STATE_OK;
 	mp_state_enum result = STATE_OK;
-	double offset = offset_request(server_address, &offset_result);
+	double offset = offset_request(config.server_address, config.port, &offset_result, config.time_offset);
 	if (offset_result == STATE_UNKNOWN) {
-		result = ((!quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = ((!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
-		result = get_status(fabs(offset), offset_thresholds);
+		result = get_status(fabs(offset), config.offset_thresholds);
 	}
 
 	char *result_line;
@@ -630,12 +642,12 @@ int main(int argc, char *argv[]) {
 		xasprintf(&perfdata_line, "");
 	} else {
 		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		xasprintf(&perfdata_line, "%s", perfd_offset(offset));
+		xasprintf(&perfdata_line, "%s", perfd_offset(offset, config.offset_thresholds));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
-	if (server_address != NULL) {
-		free(server_address);
+	if (config.server_address != NULL) {
+		free(config.server_address);
 	}
 	exit(result);
 }
