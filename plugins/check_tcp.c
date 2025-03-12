@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
 		tls_connection_result = mp_set_subcheck_state(tls_connection_result, result);
 
 		if (result == STATE_OK) {
-			xasprintf(&tls_connection_result.output, "TLS connection succeded");
+			xasprintf(&tls_connection_result.output, "TLS connection succeeded");
 
 			if (config.check_cert) {
 				result = np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
