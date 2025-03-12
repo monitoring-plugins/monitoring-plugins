@@ -215,8 +215,11 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 	if (warning_range) {
 		tmp = mp_parse_range_string(warning_range);
 	} else {
-		tmp = mp_parse_range_string(argv[option_char++]);
-	}
+		printf("Warning threshold missing\n");
+		print_usage();
+		exit(STATE_UNKNOWN);
+		}
+
 	if (tmp.error == MP_PARSING_SUCCES) {
 		result.config.thresholds.warning = tmp.range;
 		result.config.thresholds.warning_is_set = true;
@@ -228,8 +231,11 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 	if (critical_range) {
 		tmp = mp_parse_range_string(critical_range);
 	} else {
-		tmp = mp_parse_range_string(argv[option_char++]);
+		printf("Critical threshold missing\n");
+		print_usage();
+		exit(STATE_UNKNOWN);
 	}
+
 	if (tmp.error == MP_PARSING_SUCCES) {
 		result.config.thresholds.critical = tmp.range;
 		result.config.thresholds.critical_is_set = true;
