@@ -54,6 +54,7 @@ EXTRA_DIST = t \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_radius.d \
+			 check_time.d \
 			 check_nagios.d \
 			 check_dbi.d \
 			 check_real.d \
