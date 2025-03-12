@@ -162,8 +162,8 @@ int main(int argc, char **argv) {
 
 		/* Print performance data */
 		if (pinged.packet_loss != 100) {
-			printf("|%s", fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0), config.wrta,
-									(bool)(config.crta > 0), config.crta, true, 0, false, 0));
+			printf("|%s", fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0), config.wrta, (bool)(config.crta > 0),
+									config.crta, true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", config.wrta, config.crta);
 		}
@@ -470,33 +470,36 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 
 		/* get the percent loss statistics */
 		int match = 0;
-		if ((sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) &&
+		if ((sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) ==
+				 1 &&
 			 match) ||
 			(sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss%n", &result.packet_loss,
-					&match) &&
+					&match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n", &result.packet_loss, &match) &&
+			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) && match) ||
-			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &result.packet_loss, &match) && match)) {
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &result.packet_loss, &match) == 1 && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &result.packet_loss, &match) && match) == 1 ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &result.packet_loss, &match) == 1 && match)) {
 			continue;
 		}
 
 		/* get the round trip average */
-		if ((sscanf(buf, "round-trip min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip min/avg/max/mdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip min/avg/max/sdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip (ms) min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "rtt min/avg/max/mdev = %*f/%lf/%*f/%*f ms%n", &result.round_trip_average, &match) && match) ||
-			(sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %lfms%n", &result.round_trip_average, &match) && match)) {
+		if ((sscanf(buf, "round-trip min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip min/avg/max/mdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip min/avg/max/sdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "rtt min/avg/max/mdev = %*f/%lf/%*f/%*f ms%n", &result.round_trip_average, &match) == 1 && match) ||
+			(sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %lfms%n", &result.round_trip_average, &match) == 1 && match)) {
 			continue;
 		}
 	}
@@ -610,9 +613,7 @@ void print_help(void) {
 
 	printf("\n");
 	printf("%s\n", _("This plugin uses the ping command to probe the specified host for packet loss"));
-	printf("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output"));
-	printf("%s\n", _("linking to a traceroute CGI contributed by Ian Cass. The CGI can be found in"));
-	printf("%s\n", _("the contrib area of the downloads section at http://www.nagios.org/"));
+	printf("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output."));
 
 	printf(UT_SUPPORT);
 }
