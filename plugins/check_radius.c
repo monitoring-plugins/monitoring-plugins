@@ -35,6 +35,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "utils.h"
 #include "netutils.h"
+#include "states.h"
 
 #if defined(HAVE_LIBRADCLI)
 #	include <radcli/radcli.h>
@@ -149,18 +150,6 @@ Please note that all tags must be lowercase to use the DocBook XML DTD.
 ******************************************************************************/
 
 int main(int argc, char **argv) {
-	struct sockaddr_storage ss;
-	char name[HOST_NAME_MAX];
-#ifdef RC_BUFFER_LEN
-	char msg[RC_BUFFER_LEN];
-#else
-	char msg[BUFFER_LEN];
-#endif
-	SEND_DATA data;
-	int result = STATE_UNKNOWN;
-	uint32_t client_id, service;
-	char *str;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -172,13 +161,14 @@ int main(int argc, char **argv) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	str = strdup("dictionary");
+	char *str = strdup("dictionary");
 	if ((config_file && my_rc_read_config(config_file)) || my_rc_read_dictionary(my_rc_conf_str(str))) {
 		die(STATE_UNKNOWN, _("Config file error\n"));
 	}
 
-	service = PW_AUTHENTICATE_ONLY;
+	uint32_t service = PW_AUTHENTICATE_ONLY;
 
+	SEND_DATA data;
 	memset(&data, 0, sizeof(data));
 	if (!(my_rc_avpair_add(&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, username, 0) &&
@@ -192,23 +182,33 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	char name[HOST_NAME_MAX];
 	if (nasipaddress == NULL) {
 		if (gethostname(name, sizeof(name)) != 0) {
 			die(STATE_UNKNOWN, _("gethostname() failed!\n"));
 		}
 		nasipaddress = name;
 	}
+
+	struct sockaddr_storage ss;
 	if (!dns_lookup(nasipaddress, &ss, AF_INET)) { /* TODO: Support IPv6. */
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
-	client_id = ntohl(((struct sockaddr_in *)&ss)->sin_addr.s_addr);
+
+	uint32_t client_id = ntohl(((struct sockaddr_in *)&ss)->sin_addr.s_addr);
 	if (my_rc_avpair_add(&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL) {
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
 
 	my_rc_buildreq(&data, PW_ACCESS_REQUEST, server, port, (int)timeout_interval, retries);
 
-	result = my_rc_send_server(&data, msg);
+#ifdef RC_BUFFER_LEN
+	char msg[RC_BUFFER_LEN];
+#else
+	char msg[BUFFER_LEN];
+#endif
+
+	mp_state_enum result = my_rc_send_server(&data, msg);
 	rc_avpair_free(data.send_pairs);
 	if (data.receive_pairs) {
 		rc_avpair_free(data.receive_pairs);
@@ -238,9 +238,6 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 int process_arguments(int argc, char **argv) {
-	int c;
-
-	int option = 0;
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'P'},
 									   {"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'},
 									   {"nas-id", required_argument, 0, 'n'},   {"nas-ip-address", required_argument, 0, 'N'},
@@ -249,14 +246,15 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
-	while (1) {
-		c = getopt_long(argc, argv, "+hVvH:P:F:u:p:n:N:t:r:e:", longopts, &option);
+	while (true) {
+		int option = 0;
+		int option_index = getopt_long(argc, argv, "+hVvH:P:F:u:p:n:N:t:r:e:", longopts, &option);
 
-		if (c == -1 || c == EOF || c == 1) {
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
