@@ -64,8 +64,9 @@ int main(int argc, char **argv) {
 	char **command_line = (char **)process_arguments(argc, argv);
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR)
+	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		die(STATE_UNKNOWN, _("Cannot catch SIGALRM"));
+	}
 
 	(void)alarm((unsigned)timeout_interval);
 
@@ -86,8 +87,9 @@ int main(int argc, char **argv) {
 	}
 
 	/* Return UNKNOWN or worse if no output is returned */
-	if (chld_out.lines == 0)
+	if (chld_out.lines == 0) {
 		die(max_state_alt(result, STATE_UNKNOWN), _("No data returned from command\n"));
+	}
 
 	char *sub;
 	for (size_t i = 0; i < chld_out.lines; i++) {
@@ -124,8 +126,9 @@ static const char **process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "+hVt:T:o:w:c:u:s", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* help */
@@ -139,34 +142,40 @@ static const char **process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg))
+			if (!is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				timeout_interval = atoi(optarg);
+			}
 			break;
 		case 'T': /* Result to return on timeouts */
-			if ((timeout_state = mp_translate_state(optarg)) == ERROR)
+			if ((timeout_state = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 			break;
 		case 'o': /* replacement for OK */
-			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR)
+			if ((state[STATE_OK] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 			permute = false;
 			break;
 
 		case 'w': /* replacement for WARNING */
-			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR)
+			if ((state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 			permute = false;
 			break;
 		case 'c': /* replacement for CRITICAL */
-			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR)
+			if ((state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 			permute = false;
 			break;
 		case 'u': /* replacement for UNKNOWN */
-			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR)
+			if ((state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR) {
 				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+			}
 			permute = false;
 			break;
 		case 's': /* Substitute status text */
@@ -186,11 +195,13 @@ static const char **process_arguments(int argc, char **argv) {
 }
 
 void validate_arguments(char **command_line) {
-	if (command_line[0] == NULL)
+	if (command_line[0] == NULL) {
 		usage4(_("Could not parse arguments"));
+	}
 
-	if (strncmp(command_line[0], "/", 1) != 0 && strncmp(command_line[0], "./", 2) != 0)
+	if (strncmp(command_line[0], "/", 1) != 0 && strncmp(command_line[0], "./", 2) != 0) {
 		usage4(_("Require path to command"));
+	}
 }
 
 void print_help(void) {
