@@ -66,8 +66,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -78,8 +79,9 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	int socket;
-	if (my_tcp_connect(server_address, server_port, &socket) != STATE_OK)
+	if (my_tcp_connect(server_address, server_port, &socket) != STATE_OK) {
 		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), server_address, server_port);
+	}
 
 	/* Part I - Server Check */
 
@@ -100,16 +102,18 @@ int main(int argc, char **argv) {
 	result = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
 
 	/* return a CRITICAL status if we couldn't read any data */
-	if (result == -1)
+	if (result == -1) {
 		die(STATE_CRITICAL, _("No data received from %s\n"), host_name);
+	}
 
 	char *status_line = NULL;
 	/* make sure we find the response we are looking for */
 	if (!strstr(buffer, server_expect)) {
-		if (server_port == PORT)
+		if (server_port == PORT) {
 			printf("%s\n", _("Invalid REAL response received from host"));
-		else
+		} else {
 			printf(_("Invalid REAL response received from host on port %d\n"), server_port);
+		}
 	} else {
 		/* else we got the REAL string, so check the return code */
 
@@ -119,33 +123,37 @@ int main(int argc, char **argv) {
 
 		status_line = (char *)strtok(buffer, "\n");
 
-		if (strstr(status_line, "200"))
+		if (strstr(status_line, "200")) {
 			result = STATE_OK;
+		}
 
 		/* client errors result in a warning state */
-		else if (strstr(status_line, "400"))
+		else if (strstr(status_line, "400")) {
 			result = STATE_WARNING;
-		else if (strstr(status_line, "401"))
+		} else if (strstr(status_line, "401")) {
 			result = STATE_WARNING;
-		else if (strstr(status_line, "402"))
+		} else if (strstr(status_line, "402")) {
 			result = STATE_WARNING;
-		else if (strstr(status_line, "403"))
+		} else if (strstr(status_line, "403")) {
 			result = STATE_WARNING;
-		else if (strstr(status_line, "404"))
+		} else if (strstr(status_line, "404")) {
 			result = STATE_WARNING;
+		}
 
 		/* server errors result in a critical state */
-		else if (strstr(status_line, "500"))
+		else if (strstr(status_line, "500")) {
 			result = STATE_CRITICAL;
-		else if (strstr(status_line, "501"))
+		} else if (strstr(status_line, "501")) {
 			result = STATE_CRITICAL;
-		else if (strstr(status_line, "502"))
+		} else if (strstr(status_line, "502")) {
 			result = STATE_CRITICAL;
-		else if (strstr(status_line, "503"))
+		} else if (strstr(status_line, "503")) {
 			result = STATE_CRITICAL;
+		}
 
-		else
+		else {
 			result = STATE_UNKNOWN;
+		}
 	}
 
 	/* Part II - Check stream exists and is ok */
@@ -176,10 +184,11 @@ int main(int argc, char **argv) {
 		} else {
 			/* make sure we find the response we are looking for */
 			if (!strstr(buffer, server_expect)) {
-				if (server_port == PORT)
+				if (server_port == PORT) {
 					printf("%s\n", _("Invalid REAL response received from host"));
-				else
+				} else {
 					printf(_("Invalid REAL response received from host on port %d\n"), server_port);
+				}
 			} else {
 
 				/* else we got the REAL string, so check the return code */
@@ -190,33 +199,37 @@ int main(int argc, char **argv) {
 
 				status_line = (char *)strtok(buffer, "\n");
 
-				if (strstr(status_line, "200"))
+				if (strstr(status_line, "200")) {
 					result = STATE_OK;
+				}
 
 				/* client errors result in a warning state */
-				else if (strstr(status_line, "400"))
+				else if (strstr(status_line, "400")) {
 					result = STATE_WARNING;
-				else if (strstr(status_line, "401"))
+				} else if (strstr(status_line, "401")) {
 					result = STATE_WARNING;
-				else if (strstr(status_line, "402"))
+				} else if (strstr(status_line, "402")) {
 					result = STATE_WARNING;
-				else if (strstr(status_line, "403"))
+				} else if (strstr(status_line, "403")) {
 					result = STATE_WARNING;
-				else if (strstr(status_line, "404"))
+				} else if (strstr(status_line, "404")) {
 					result = STATE_WARNING;
+				}
 
 				/* server errors result in a critical state */
-				else if (strstr(status_line, "500"))
+				else if (strstr(status_line, "500")) {
 					result = STATE_CRITICAL;
-				else if (strstr(status_line, "501"))
+				} else if (strstr(status_line, "501")) {
 					result = STATE_CRITICAL;
-				else if (strstr(status_line, "502"))
+				} else if (strstr(status_line, "502")) {
 					result = STATE_CRITICAL;
-				else if (strstr(status_line, "503"))
+				} else if (strstr(status_line, "503")) {
 					result = STATE_CRITICAL;
+				}
 
-				else
+				else {
 					result = STATE_UNKNOWN;
+				}
 			}
 		}
 	}
@@ -224,15 +237,17 @@ int main(int argc, char **argv) {
 	/* Return results */
 	if (result == STATE_OK) {
 
-		if (check_critical_time && (end_time - start_time) > critical_time)
+		if (check_critical_time && (end_time - start_time) > critical_time) {
 			result = STATE_CRITICAL;
-		else if (check_warning_time && (end_time - start_time) > warning_time)
+		} else if (check_warning_time && (end_time - start_time) > warning_time) {
 			result = STATE_WARNING;
+		}
 
 		/* Put some HTML in here to create a dynamic link */
 		printf(_("REAL %s - %d second response time\n"), state_text(result), (int)(end_time - start_time));
-	} else
+	} else {
 		printf("%s\n", status_line);
+	}
 
 	/* close the connection */
 	close(socket);
@@ -252,16 +267,18 @@ int process_arguments(int argc, char **argv) {
 									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
+		}
 	}
 
 	int option_char;
@@ -269,18 +286,20 @@ int process_arguments(int argc, char **argv) {
 		int option = 0;
 		option_char = getopt_long(argc, argv, "+hvVI:H:e:u:p:w:c:t:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'I': /* hostname */
 		case 'H': /* hostname */
-			if (server_address)
+			if (server_address) {
 				break;
-			else if (is_host(optarg))
+			} else if (is_host(optarg)) {
 				server_address = optarg;
-			else
+			} else {
 				usage2(_("Invalid hostname/address"), optarg);
+			}
 			break;
 		case 'e': /* string to expect in response header */
 			server_expect = optarg;
@@ -341,14 +360,17 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server_address == NULL)
+	if (server_address == NULL) {
 		usage4(_("You must provide a server to check"));
+	}
 
-	if (host_name == NULL)
+	if (host_name == NULL) {
 		host_name = strdup(server_address);
+	}
 
-	if (server_expect == NULL)
+	if (server_expect == NULL) {
 		server_expect = strdup(EXPECT);
+	}
 
 	return OK;
 }
