@@ -56,6 +56,7 @@ EXTRA_DIST = t \
 			 check_nagios.d \
 			 check_dbi.d \
 			 check_ssh.d \
+			 check_nt.d \
 			 check_dns.d \
 			 check_mrtgtraf.d \
 			 check_mysql_query.d \
