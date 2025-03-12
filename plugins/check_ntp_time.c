@@ -273,14 +273,16 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
 		 * stratum 0 is for reference clocks so no NTP server should ever report
 		 * a stratum 0 */
 		if (slist[cserver].stratum == 0) {
-			if (verbose)
+			if (verbose) {
 				printf("discarding peer %d: stratum=%d\n", cserver, slist[cserver].stratum);
+			}
 			continue;
 		}
 		/* Sort out servers with error flags */
 		if (LI(slist[cserver].flags) == LI_ALARM) {
-			if (verbose)
+			if (verbose) {
 				printf("discarding peer %d: flags=%d\n", cserver, LI(slist[cserver].flags));
+			}
 			continue;
 		}
 
@@ -345,20 +347,24 @@ double offset_request(const char *host, int *status) {
 
 	ntp_message *req = (ntp_message *)malloc(sizeof(ntp_message) * num_hosts);
 
-	if (req == NULL)
+	if (req == NULL) {
 		die(STATE_UNKNOWN, "can not allocate ntp message array");
+	}
 	int *socklist = (int *)malloc(sizeof(int) * num_hosts);
 
-	if (socklist == NULL)
+	if (socklist == NULL) {
 		die(STATE_UNKNOWN, "can not allocate socket array");
+	}
 
 	struct pollfd *ufds = (struct pollfd *)malloc(sizeof(struct pollfd) * num_hosts);
-	if (ufds == NULL)
+	if (ufds == NULL) {
 		die(STATE_UNKNOWN, "can not allocate socket array");
+	}
 
 	ntp_server_results *servers = (ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
-	if (servers == NULL)
+	if (servers == NULL) {
 		die(STATE_UNKNOWN, "can not allocate server array");
+	}
 	memset(servers, 0, sizeof(ntp_server_results) * num_hosts);
 	DBG(printf("Found %d peers to check\n", num_hosts));
 
@@ -400,10 +406,12 @@ double offset_request(const char *host, int *status) {
 
 		for (int i = 0; i < num_hosts; i++) {
 			if (servers[i].waiting < now_time && servers[i].num_responses < AVG_NUM) {
-				if (verbose && servers[i].waiting != 0)
+				if (verbose && servers[i].waiting != 0) {
 					printf("re-");
-				if (verbose)
+				}
+				if (verbose) {
 					printf("sending request to peer %d\n", i);
+				}
 				setup_request(&req[i]);
 				write(socklist[i], &req[i], sizeof(ntp_message));
 				servers[i].waiting = now_time;
@@ -442,8 +450,9 @@ double offset_request(const char *host, int *status) {
 				servers[i].flags = req[i].flags;
 				servers_readable--;
 				one_read = true;
-				if (servers[i].num_responses == AVG_NUM)
+				if (servers[i].num_responses == AVG_NUM) {
 					servers_completed++;
+				}
 			}
 		}
 		/* lather, rinse, repeat. */
@@ -476,8 +485,9 @@ double offset_request(const char *host, int *status) {
 	free(req);
 	freeaddrinfo(ai);
 
-	if (verbose)
+	if (verbose) {
 		printf("overall average offset: %.10g\n", avg_offset);
+	}
 	return avg_offset;
 }
 
@@ -496,14 +506,16 @@ int process_arguments(int argc, char **argv) {
 									   {"port", required_argument, 0, 'p'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage("\n");
+	}
 
 	while (true) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
-		if (option_char == -1 || option_char == EOF || option_char == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'h':
@@ -527,8 +539,9 @@ int process_arguments(int argc, char **argv) {
 			ocrit = optarg;
 			break;
 		case 'H':
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
+			}
 			server_address = strdup(optarg);
 			break;
 		case 'p':
@@ -577,8 +590,9 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	set_thresholds(&offset_thresholds, owarn, ocrit);
 
@@ -623,8 +637,9 @@ int main(int argc, char *argv[]) {
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
-	if (server_address != NULL)
+	if (server_address != NULL) {
 		free(server_address);
+	}
 	return result;
 }
 
