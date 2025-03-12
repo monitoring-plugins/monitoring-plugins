@@ -41,6 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "states.h"
 
 static char *server_address = NULL;
 static char *port = "123";
@@ -50,7 +51,7 @@ static char *owarn = "60";
 static char *ocrit = "120";
 static int time_offset = 0;
 
-static int process_arguments(int, char **);
+static int process_arguments(int /*argc*/, char ** /*argv*/);
 static thresholds *offset_thresholds = NULL;
 static void print_help(void);
 void print_usage(void);
@@ -159,7 +160,7 @@ typedef struct {
 #define EPOCHDIFF 0x83aa7e80UL
 
 /* extract a 32-bit ntp fixed point number into a double */
-#define NTP32asDOUBLE(x) (ntohs(L16(x)) + (double)ntohs(R16(x)) / 65536.0)
+#define NTP32asDOUBLE(x) (ntohs(L16(x)) + ((double)ntohs(R16(x)) / 65536.0))
 
 /* likewise for a 64-bit ntp fp number */
 #define NTP64asDOUBLE(n)                                                                                                                   \
@@ -208,56 +209,52 @@ typedef struct {
 	} while (0);
 
 /* calculate the offset of the local clock */
-static inline double calc_offset(const ntp_message *m, const struct timeval *t) {
-	double client_tx = NTP64asDOUBLE(m->origts);
-	double peer_rx = NTP64asDOUBLE(m->rxts);
-	double peer_tx = NTP64asDOUBLE(m->txts);
-	double client_rx = TVasDOUBLE((*t));
-	return (.5 * ((peer_tx - client_rx) + (peer_rx - client_tx)));
+static inline double calc_offset(const ntp_message *message, const struct timeval *time_value) {
+	double client_tx = NTP64asDOUBLE(message->origts);
+	double peer_rx = NTP64asDOUBLE(message->rxts);
+	double peer_tx = NTP64asDOUBLE(message->txts);
+	double client_rx = TVasDOUBLE((*time_value));
+	return (((peer_tx - client_rx) + (peer_rx - client_tx)) / 2);
 }
 
 /* print out a ntp packet in human readable/debuggable format */
-void print_ntp_message(const ntp_message *p) {
+void print_ntp_message(const ntp_message *message) {
 	struct timeval ref;
 	struct timeval orig;
-	struct timeval rx;
-	struct timeval tx;
 
-	NTP64toTV(p->refts, ref);
-	NTP64toTV(p->origts, orig);
-	NTP64toTV(p->rxts, rx);
-	NTP64toTV(p->txts, tx);
+	NTP64toTV(message->refts, ref);
+	NTP64toTV(message->origts, orig);
 
 	printf("packet contents:\n");
-	printf("\tflags: 0x%.2x\n", p->flags);
-	printf("\t  li=%d (0x%.2x)\n", LI(p->flags), p->flags & LI_MASK);
-	printf("\t  vn=%d (0x%.2x)\n", VN(p->flags), p->flags & VN_MASK);
-	printf("\t  mode=%d (0x%.2x)\n", MODE(p->flags), p->flags & MODE_MASK);
-	printf("\tstratum = %d\n", p->stratum);
-	printf("\tpoll = %g\n", pow(2, p->poll));
-	printf("\tprecision = %g\n", pow(2, p->precision));
-	printf("\trtdelay = %-.16g\n", NTP32asDOUBLE(p->rtdelay));
-	printf("\trtdisp = %-.16g\n", NTP32asDOUBLE(p->rtdisp));
-	printf("\trefid = %x\n", p->refid);
-	printf("\trefts = %-.16g\n", NTP64asDOUBLE(p->refts));
-	printf("\torigts = %-.16g\n", NTP64asDOUBLE(p->origts));
-	printf("\trxts = %-.16g\n", NTP64asDOUBLE(p->rxts));
-	printf("\ttxts = %-.16g\n", NTP64asDOUBLE(p->txts));
+	printf("\tflags: 0x%.2x\n", message->flags);
+	printf("\t  li=%d (0x%.2x)\n", LI(message->flags), message->flags & LI_MASK);
+	printf("\t  vn=%d (0x%.2x)\n", VN(message->flags), message->flags & VN_MASK);
+	printf("\t  mode=%d (0x%.2x)\n", MODE(message->flags), message->flags & MODE_MASK);
+	printf("\tstratum = %d\n", message->stratum);
+	printf("\tpoll = %g\n", pow(2, message->poll));
+	printf("\tprecision = %g\n", pow(2, message->precision));
+	printf("\trtdelay = %-.16g\n", NTP32asDOUBLE(message->rtdelay));
+	printf("\trtdisp = %-.16g\n", NTP32asDOUBLE(message->rtdisp));
+	printf("\trefid = %x\n", message->refid);
+	printf("\trefts = %-.16g\n", NTP64asDOUBLE(message->refts));
+	printf("\torigts = %-.16g\n", NTP64asDOUBLE(message->origts));
+	printf("\trxts = %-.16g\n", NTP64asDOUBLE(message->rxts));
+	printf("\ttxts = %-.16g\n", NTP64asDOUBLE(message->txts));
 }
 
-void setup_request(ntp_message *p) {
-	memset(p, 0, sizeof(ntp_message));
-	LI_SET(p->flags, LI_ALARM);
-	VN_SET(p->flags, 4);
-	MODE_SET(p->flags, MODE_CLIENT);
-	p->poll = 4;
-	p->precision = (int8_t)0xfa;
-	L16(p->rtdelay) = htons(1);
-	L16(p->rtdisp) = htons(1);
+void setup_request(ntp_message *message) {
+	memset(message, 0, sizeof(ntp_message));
+	LI_SET(message->flags, LI_ALARM);
+	VN_SET(message->flags, 4);
+	MODE_SET(message->flags, MODE_CLIENT);
+	message->poll = 4;
+	message->precision = (int8_t)0xfa;
+	L16(message->rtdelay) = htons(1);
+	L16(message->rtdisp) = htons(1);
 
 	struct timeval t;
 	gettimeofday(&t, NULL);
-	TVtoNTP64(t, p->txts);
+	TVtoNTP64(t, message->txts);
 }
 
 /* select the "best" server from a list of servers, and return its index.
@@ -324,7 +321,7 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
  *   we don't waste time sitting around waiting for single packets.
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host, int *status) {
+double offset_request(const char *host, mp_state_enum *status) {
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -333,15 +330,15 @@ double offset_request(const char *host, int *status) {
 	hints.ai_socktype = SOCK_DGRAM;
 
 	/* fill in ai with the list of hosts resolved by the host name */
-	struct addrinfo *ai = NULL;
-	int ga_result = getaddrinfo(host, port, &hints, &ai);
+	struct addrinfo *addresses = NULL;
+	int ga_result = getaddrinfo(host, port, &hints, &addresses);
 	if (ga_result != 0) {
 		die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
 	}
 
 	/* count the number of returned hosts, and allocate stuff accordingly */
-	int num_hosts = 0;
-	for (struct addrinfo *ai_tmp = ai; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
+	size_t num_hosts = 0;
+	for (struct addrinfo *ai_tmp = addresses; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
 		num_hosts++;
 	}
 
@@ -366,10 +363,10 @@ double offset_request(const char *host, int *status) {
 		die(STATE_UNKNOWN, "can not allocate server array");
 	}
 	memset(servers, 0, sizeof(ntp_server_results) * num_hosts);
-	DBG(printf("Found %d peers to check\n", num_hosts));
+	DBG(printf("Found %zu peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
-	struct addrinfo *ai_tmp = ai;
+	struct addrinfo *ai_tmp = addresses;
 	for (int i = 0; ai_tmp; i++) {
 		socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 		if (socklist[i] == -1) {
@@ -427,10 +424,10 @@ double offset_request(const char *host, int *status) {
 		}
 
 		/* read from any sockets with pending data */
-		for (int i = 0; servers_readable && i < num_hosts; i++) {
+		for (size_t i = 0; servers_readable && i < num_hosts; i++) {
 			if (ufds[i].revents & POLLIN && servers[i].num_responses < AVG_NUM) {
 				if (verbose) {
-					printf("response from peer %d: ", i);
+					printf("response from peer %zu: ", i);
 				}
 
 				read(ufds[i].fd, &req[i], sizeof(ntp_message));
@@ -458,7 +455,7 @@ double offset_request(const char *host, int *status) {
 		/* lather, rinse, repeat. */
 	}
 
-	if (one_read == false) {
+	if (!one_read) {
 		die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 	}
 
@@ -476,14 +473,14 @@ double offset_request(const char *host, int *status) {
 	}
 
 	/* cleanup */
-	for (int j = 0; j < num_hosts; j++) {
+	for (size_t j = 0; j < num_hosts; j++) {
 		close(socklist[j]);
 	}
 	free(socklist);
 	free(ufds);
 	free(servers);
 	free(req);
-	freeaddrinfo(ai);
+	freeaddrinfo(addresses);
 
 	if (verbose) {
 		printf("overall average offset: %.10g\n", avg_offset);
@@ -602,8 +599,8 @@ int main(int argc, char *argv[]) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	int offset_result = STATE_OK;
-	int result = STATE_OK;
+	mp_state_enum offset_result = STATE_OK;
+	mp_state_enum result = STATE_OK;
 	double offset = offset_request(server_address, &offset_result);
 	if (offset_result == STATE_UNKNOWN) {
 		result = ((!quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
@@ -640,7 +637,7 @@ int main(int argc, char *argv[]) {
 	if (server_address != NULL) {
 		free(server_address);
 	}
-	return result;
+	exit(result);
 }
 
 void print_help(void) {
