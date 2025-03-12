@@ -35,6 +35,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -42,26 +43,17 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "check_ntp_peer.d/config.h"
 
-static char *server_address = NULL;
-static int port = 123;
 static int verbose = 0;
-static bool quiet = false;
-static char *owarn = "60";
-static char *ocrit = "120";
-static bool do_stratum = false;
-static char *swarn = "-1:16";
-static char *scrit = "-1:16";
-static bool do_jitter = false;
-static char *jwarn = "-1:5000";
-static char *jcrit = "-1:10000";
-static bool do_truechimers = false;
-static char *twarn = "0:";
-static char *tcrit = "0:";
 static bool syncsource_found = false;
 static bool li_alarm = false;
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
+typedef struct {
+	int errorcode;
+	check_ntp_peer_config config;
+} check_ntp_peer_config_wrapper;
+static check_ntp_peer_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static thresholds *offset_thresholds = NULL;
 static thresholds *jitter_thresholds = NULL;
 static thresholds *stratum_thresholds = NULL;
@@ -211,7 +203,8 @@ void setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq)
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
-int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers) {
+mp_state_enum ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers,
+						  const check_ntp_peer_config config) {
 	*offset_result = STATE_UNKNOWN;
 	*jitter = *stratum = -1;
 	*num_truechimers = 0;
@@ -240,7 +233,7 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	int peers_size = 0;
 	int npeers = 0;
 	int conn = -1;
-	my_udp_connect(server_address, port, &conn);
+	my_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
@@ -412,7 +405,7 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				}
 			}
 
-			if (do_jitter) {
+			if (config.do_jitter) {
 				/* get the jitter */
 				if (verbose) {
 					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
@@ -435,7 +428,7 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				}
 			}
 
-			if (do_stratum) {
+			if (config.do_stratum) {
 				/* get the stratum */
 				if (verbose) {
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
@@ -468,7 +461,7 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	return status;
 }
 
-int process_arguments(int argc, char **argv) {
+check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},       {"quiet", no_argument, 0, 'q'},
@@ -480,6 +473,11 @@ int process_arguments(int argc, char **argv) {
 	if (argc < 2) {
 		usage("\n");
 	}
+
+	check_ntp_peer_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ntp_peer_config_init(),
+	};
 
 	while (true) {
 		int option = 0;
@@ -501,46 +499,46 @@ int process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'q':
-			quiet = true;
+			result.config.quiet = true;
 			break;
 		case 'w':
-			owarn = optarg;
+			result.config.owarn = optarg;
 			break;
 		case 'c':
-			ocrit = optarg;
+			result.config.ocrit = optarg;
 			break;
 		case 'W':
-			do_stratum = true;
-			swarn = optarg;
+			result.config.do_stratum = true;
+			result.config.swarn = optarg;
 			break;
 		case 'C':
-			do_stratum = true;
-			scrit = optarg;
+			result.config.do_stratum = true;
+			result.config.scrit = optarg;
 			break;
 		case 'j':
-			do_jitter = true;
-			jwarn = optarg;
+			result.config.do_jitter = true;
+			result.config.jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter = true;
-			jcrit = optarg;
+			result.config.do_jitter = true;
+			result.config.jcrit = optarg;
 			break;
 		case 'm':
-			do_truechimers = true;
-			twarn = optarg;
+			result.config.do_truechimers = true;
+			result.config.twarn = optarg;
 			break;
 		case 'n':
-			do_truechimers = true;
-			tcrit = optarg;
+			result.config.do_truechimers = true;
+			result.config.tcrit = optarg;
 			break;
 		case 'H':
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
-			server_address = strdup(optarg);
+			result.config.server_address = strdup(optarg);
 			break;
 		case 'p':
-			port = atoi(optarg);
+			result.config.port = atoi(optarg);
 			break;
 		case 't':
 			socket_timeout = atoi(optarg);
@@ -562,11 +560,11 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	return 0;
+	return result;
 }
 
 char *perfd_offset(double offset) {
@@ -574,17 +572,17 @@ char *perfd_offset(double offset) {
 					 0);
 }
 
-char *perfd_jitter(double jitter) {
+char *perfd_jitter(double jitter, bool do_jitter) {
 	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter, jitter_thresholds->critical->end, true, 0,
 					 false, 0);
 }
 
-char *perfd_stratum(int stratum) {
+char *perfd_stratum(int stratum, bool do_stratum) {
 	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end, do_stratum,
 					(int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
-char *perfd_truechimers(int num_truechimers) {
+char *perfd_truechimers(int num_truechimers, const bool do_truechimers) {
 	return perfdata("truechimers", num_truechimers, "", do_truechimers, (int)truechimer_thresholds->warning->end, do_truechimers,
 					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
@@ -597,14 +595,18 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_ntp_peer_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	set_thresholds(&offset_thresholds, owarn, ocrit);
-	set_thresholds(&jitter_thresholds, jwarn, jcrit);
-	set_thresholds(&stratum_thresholds, swarn, scrit);
-	set_thresholds(&truechimer_thresholds, twarn, tcrit);
+	const check_ntp_peer_config config = tmp_config.config;
+
+	set_thresholds(&offset_thresholds, config.owarn, config.ocrit);
+	set_thresholds(&jitter_thresholds, config.jwarn, config.jcrit);
+	set_thresholds(&stratum_thresholds, config.swarn, config.scrit);
+	set_thresholds(&truechimer_thresholds, config.twarn, config.tcrit);
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -618,38 +620,37 @@ int main(int argc, char *argv[]) {
 	double offset = 0;
 	double jitter = 0;
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
-	int result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	mp_state_enum result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers, config);
 
 	if (offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
-		result = (quiet ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (quiet && result == STATE_WARNING) {
+		if (config.quiet && result == STATE_WARNING) {
 			result = STATE_UNKNOWN;
 		}
 		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
 	}
 
-	int oresult = result;
+	mp_state_enum oresult = result;
+	mp_state_enum tresult = STATE_UNKNOWN;
 
-	int tresult = STATE_UNKNOWN;
-
-	if (do_truechimers) {
+	if (config.do_truechimers) {
 		tresult = get_status(num_truechimers, truechimer_thresholds);
 		result = max_state_alt(result, tresult);
 	}
 
-	int sresult = STATE_UNKNOWN;
+	mp_state_enum sresult = STATE_UNKNOWN;
 
-	if (do_stratum) {
+	if (config.do_stratum) {
 		sresult = get_status(stratum, stratum_thresholds);
 		result = max_state_alt(result, sresult);
 	}
 
-	int jresult = STATE_UNKNOWN;
+	mp_state_enum jresult = STATE_UNKNOWN;
 
-	if (do_jitter) {
+	if (config.do_jitter) {
 		jresult = get_status(jitter, jitter_thresholds);
 		result = max_state_alt(result, jresult);
 	}
@@ -669,6 +670,7 @@ int main(int argc, char *argv[]) {
 		xasprintf(&result_line, _("NTP UNKNOWN:"));
 		break;
 	}
+
 	if (!syncsource_found) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
 	} else if (li_alarm) {
@@ -688,7 +690,7 @@ int main(int argc, char *argv[]) {
 	}
 	xasprintf(&perfdata_line, "%s", perfd_offset(offset));
 
-	if (do_jitter) {
+	if (config.do_jitter) {
 		if (jresult == STATE_WARNING) {
 			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, jitter);
 		} else if (jresult == STATE_CRITICAL) {
@@ -696,9 +698,10 @@ int main(int argc, char *argv[]) {
 		} else {
 			xasprintf(&result_line, "%s, jitter=%f", result_line, jitter);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter, config.do_jitter));
 	}
-	if (do_stratum) {
+
+	if (config.do_stratum) {
 		if (sresult == STATE_WARNING) {
 			xasprintf(&result_line, "%s, stratum=%i (WARNING)", result_line, stratum);
 		} else if (sresult == STATE_CRITICAL) {
@@ -706,9 +709,10 @@ int main(int argc, char *argv[]) {
 		} else {
 			xasprintf(&result_line, "%s, stratum=%i", result_line, stratum);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum, config.do_stratum));
 	}
-	if (do_truechimers) {
+
+	if (config.do_truechimers) {
 		if (tresult == STATE_WARNING) {
 			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, num_truechimers);
 		} else if (tresult == STATE_CRITICAL) {
@@ -716,14 +720,15 @@ int main(int argc, char *argv[]) {
 		} else {
 			xasprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers, config.do_truechimers));
 	}
 	printf("%s|%s\n", result_line, perfdata_line);
 
-	if (server_address != NULL) {
-		free(server_address);
+	if (config.server_address != NULL) {
+		free(config.server_address);
 	}
-	return result;
+
+	exit(result);
 }
 
 void print_help(void) {

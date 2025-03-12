@@ -60,6 +60,7 @@ EXTRA_DIST = t \
 			 check_mrtgtraf.d \
 			 check_mysql_query.d \
 			 check_mrtg.d \
+			 check_ntp_peer.d \
 			 check_apt.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
