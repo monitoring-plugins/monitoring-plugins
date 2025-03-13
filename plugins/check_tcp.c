@@ -493,6 +493,17 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		usage4(_("No arguments found"));
 	}
 
+	/* backwards compatibility */
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0) {
+			strcpy(argv[i], "-t");
+		} else if (strcmp("-wt", argv[i]) == 0) {
+			strcpy(argv[i], "-w");
+		} else if (strcmp("-ct", argv[i]) == 0) {
+			strcpy(argv[i], "-c");
+		}
+	}
+
 	if (!is_option(argv[1])) {
 		config.server_address = argv[1];
 		argv[1] = argv[0];
