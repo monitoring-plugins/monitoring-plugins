@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_SSL
 	if (config.use_tls) {
 		mp_subcheck tls_connection_result = mp_subcheck_init();
-		int result = np_net_ssl_init_with_hostname(socket_descriptor, (config.sni_specified ? config.sni : NULL));
+		mp_state_enum result = np_net_ssl_init_with_hostname(socket_descriptor, (config.sni_specified ? config.sni : NULL));
 		tls_connection_result = mp_set_subcheck_state(tls_connection_result, result);
 
 		if (result == STATE_OK) {
@@ -447,6 +447,10 @@ int main(int argc, char **argv) {
 	if (match == NP_MATCH_FAILURE) {
 		expected_data_result = mp_set_subcheck_state(expected_data_result, config.expect_mismatch_state);
 		xasprintf(&expected_data_result.output, "Answer failed to match expectation");
+		mp_add_subcheck_to_check(&overall, expected_data_result);
+	} else if (match == NP_MATCH_SUCCESS) {
+		expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_OK);
+		xasprintf(&expected_data_result.output, "The answer of the server matched the expectation");
 		mp_add_subcheck_to_check(&overall, expected_data_result);
 	}
 
