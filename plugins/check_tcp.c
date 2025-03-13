@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
 	if (config.use_tls) {
 		mp_subcheck tls_connection_result = mp_subcheck_init();
 		mp_state_enum result = np_net_ssl_init_with_hostname(socket_descriptor, (config.sni_specified ? config.sni : NULL));
-		tls_connection_result = mp_set_subcheck_state(tls_connection_result, result);
+		tls_connection_result = mp_set_subcheck_default_state(tls_connection_result, result);
 
 		if (result == STATE_OK) {
 			xasprintf(&tls_connection_result.output, "TLS connection succeeded");
