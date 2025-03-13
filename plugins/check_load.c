@@ -28,27 +28,23 @@
  *
  *****************************************************************************/
 
-#include "output.h"
-#include "perfdata.h"
-#include "thresholds.h"
 const char *progname = "check_load";
 const char *copyright = "1999-2022";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "./common.h"
+#include <string.h>
 #include "./runcmd.h"
 #include "./utils.h"
 #include "./popen.h"
-#include "states.h"
+#include "../lib/states.h"
+#include "../lib/output.h"
+#include "../lib/perfdata.h"
+#include "../lib/thresholds.h"
 #include "check_load.d/config.h"
 
+// getloadavg comes from gnulib
 #include "../gl/stdlib.h"
-
-#include <string.h>
-
-#ifdef HAVE_SYS_LOADAVG_H
-#	include <sys/loadavg.h>
-#endif
 
 /* needed for compilation under NetBSD, as suggested by Andy Doran */
 #ifndef LOADAVG_1MIN
@@ -136,6 +132,7 @@ int main(int argc, char **argv) {
 
 	double load_values[3] = {0, 0, 0};
 
+	// this should be getloadavg from gnulib, should work everywhere™
 	int error = getloadavg(load_values, 3);
 	if (error != 3) {
 		die(STATE_UNKNOWN, _("Failed to retrieve load values"));
