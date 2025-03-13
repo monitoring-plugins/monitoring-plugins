@@ -256,12 +256,18 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 static check_load_config_wrapper process_arguments(int argc, char **argv) {
+
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"percpu", no_argument, 0, 'r'},
 									   {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"procs-to-show", required_argument, 0, 'n'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_load_config_wrapper result = {
@@ -283,6 +289,18 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		}
 
 		switch (option_index) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case 'w': /* warning time threshold */ {
 			parsed_thresholds warning_range = get_threshold(optarg);
 			result.config.th_load[0].warning = warning_range.load[0];
@@ -381,6 +399,7 @@ void print_help(void) {
 	printf("    %s\n", _("Number of processes to show when printing the top consuming processes."));
 	printf("    %s\n", _("NUMBER_OF_PROCS=0 disables this feature. Default value is 0"));
 
+	printf(UT_OUTPUT_FORMAT);
 	printf(UT_SUPPORT);
 }
 
