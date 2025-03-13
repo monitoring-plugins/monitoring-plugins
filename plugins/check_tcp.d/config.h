@@ -2,6 +2,7 @@
 
 #include "../../lib/utils_tcp.h"
 #include "output.h"
+#include "states.h"
 #include <netinet/in.h>
 
 typedef struct {
@@ -15,8 +16,8 @@ typedef struct {
 	char *quit;
 	char **server_expect;
 	size_t server_expect_count;
-#ifdef HAVE_SSL
 	bool use_tls;
+#ifdef HAVE_SSL
 	char *sni;
 	bool sni_specified;
 	bool check_cert;
@@ -24,7 +25,7 @@ typedef struct {
 	int days_till_exp_crit;
 #endif // HAVE_SSL
 	int match_flags;
-	int expect_mismatch_state;
+	mp_state_enum expect_mismatch_state;
 	unsigned int delay;
 
 	bool warning_time_set;
@@ -32,7 +33,7 @@ typedef struct {
 	bool critical_time_set;
 	double critical_time;
 
-	int econn_refuse_state;
+	mp_state_enum econn_refuse_state;
 
 	ssize_t maxbytes;
 
@@ -54,8 +55,8 @@ check_tcp_config check_tcp_config_init() {
 		.quit = NULL,
 		.server_expect = NULL,
 		.server_expect_count = 0,
-#ifdef HAVE_SSL
 		.use_tls = false,
+#ifdef HAVE_SSL
 		.sni = NULL,
 		.sni_specified = false,
 		.check_cert = false,
