@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 /* progname "check_tcp" changes depending on symlink called */
-#include "output.h"
 char *progname;
 const char *copyright = "1999-2025";
 const char *email = "devel@monitoring-plugins.org";
@@ -37,6 +36,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "./netutils.h"
 #include "./utils.h"
 #include "./check_tcp.d/config.h"
+#include "output.h"
 #include "states.h"
 
 #include <sys/types.h>
@@ -59,12 +59,10 @@ ssize_t my_send(char *buf, size_t len) {
 #endif // HAVE_SSL
 }
 
-typedef struct process_arguments_wrapper {
+typedef struct {
 	int errorcode;
 	check_tcp_config config;
 } check_tcp_config_wrapper;
-
-/* int my_recv(char *, size_t); */
 static check_tcp_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/, check_tcp_config /*config*/);
 void print_help(const char *service);
 void print_usage(void);
