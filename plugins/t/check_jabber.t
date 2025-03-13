@@ -15,11 +15,11 @@ my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname
 my $hostname_invalid   = getTestParameter("NP_HOSTNAME_INVALID", "An invalid (not known to DNS) hostname", "nosuchhost");
 
 
-my $jabberOK = '/JABBER OK\s-\s\d+\.\d+\ssecond response time on '.$host_tcp_jabber.' port 5222/';
+my $jabberOK = '/Connection to '.$host_tcp_jabber.' on port 5222/';
 
 my $jabberUnresponsive = '/Socket timeout after\s\d+\sseconds/';
 
-my $jabberInvalid = '/JABBER CRITICAL - Invalid hostname, address or socket:\s.+/';
+my $jabberInvalid = '/Invalid hostname, address or socket:\s.+/';
 
 my $r;
 
