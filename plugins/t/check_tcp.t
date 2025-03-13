@@ -23,7 +23,7 @@ my $internet_access    = getTestParameter("NP_INTERNET_ACCESS", "Is this system 
 
 my $successOutput = '/Connection time\s+[0-9]?\.?[0-9]+s is within thresholds+/';
 
-my $failedExpect = '/\sUnexpected response from host/socket on port [0-9]+/';
+my $failedExpect = '/Answer failed to match/';
 
 my $t;
 
