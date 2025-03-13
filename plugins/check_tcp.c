@@ -43,20 +43,22 @@ const char *email = "devel@monitoring-plugins.org";
 #include <ctype.h>
 #include <sys/select.h>
 
-ssize_t my_recv(char *buf, size_t len) {
+ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
-	return np_net_ssl_read(buf, (int)len);
-#else
+	if (use_tls) {
+		return np_net_ssl_read(buf, (int)len);
+	}
+#endif
 	return read(socket_descriptor, buf, len);
-#endif // HAVE_SSL
 }
 
-ssize_t my_send(char *buf, size_t len) {
+ssize_t my_send(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
-	return np_net_ssl_write(buf, (int)len);
-#else
+	if (use_tls) {
+		return np_net_ssl_write(buf, (int)len);
+	}
+#endif
 	return write(socket_descriptor, buf, len);
-#endif // HAVE_SSL
 }
 
 typedef struct {
@@ -302,7 +304,7 @@ int main(int argc, char **argv) {
 #endif /* HAVE_SSL */
 
 	if (config.send != NULL) { /* Something to send? */
-		my_send(config.send, strlen(config.send));
+		my_send(socket_descriptor, config.send, strlen(config.send), config.use_tls);
 	}
 
 	if (config.delay > 0) {
@@ -325,8 +327,8 @@ int main(int argc, char **argv) {
 
 	/* if(len) later on, we know we have a non-NULL response */
 	ssize_t len = 0;
-	char *status = NULL;
-	int match = -1;
+	char *received_buffer = NULL;
+	enum np_match_result match = NP_MATCH_NONE;
 	mp_subcheck expected_data_result = mp_subcheck_init();
 
 	if (config.server_expect_count) {
@@ -334,23 +336,24 @@ int main(int argc, char **argv) {
 		char buffer[MAXBUF];
 
 		/* watch for the expect string */
-		while ((received = my_recv(buffer, sizeof(buffer))) > 0) {
-			status = realloc(status, len + received + 1);
+		while ((received = my_recv(socket_descriptor, buffer, sizeof(buffer), config.use_tls)) > 0) {
+			received_buffer = realloc(received_buffer, len + received + 1);
 
-			if (status == NULL) {
+			if (received_buffer == NULL) {
 				die(STATE_UNKNOWN, _("Allocation failed"));
 			}
 
-			memcpy(&status[len], buffer, received);
+			memcpy(&received_buffer[len], buffer, received);
 			len += received;
-			status[len] = '\0';
+			received_buffer[len] = '\0';
 
 			/* stop reading if user-forced */
 			if (config.maxbytes && len >= config.maxbytes) {
 				break;
 			}
 
-			if ((match = np_expect_match(status, config.server_expect, config.server_expect_count, config.match_flags)) != NP_MATCH_RETRY) {
+			if ((match = np_expect_match(received_buffer, config.server_expect, config.server_expect_count, config.match_flags)) !=
+				NP_MATCH_RETRY) {
 				break;
 			}
 
@@ -382,16 +385,16 @@ int main(int argc, char **argv) {
 
 		/* print raw output if we're debugging */
 		if (verbosity > 0) {
-			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n", (int)len + 1, status);
+			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n", (int)len + 1, received_buffer);
 		}
 		/* strip whitespace from end of output */
-		while (--len > 0 && isspace(status[len])) {
-			status[len] = '\0';
+		while (--len > 0 && isspace(received_buffer[len])) {
+			received_buffer[len] = '\0';
 		}
 	}
 
 	if (config.quit != NULL) {
-		my_send(config.quit, strlen(config.quit));
+		my_send(socket_descriptor, config.quit, strlen(config.quit), config.use_tls);
 	}
 
 	if (socket_descriptor) {
