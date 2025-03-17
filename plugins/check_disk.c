@@ -62,10 +62,10 @@ const char *email = "devel@monitoring-plugins.org";
 static int show_all_fs = 1;
 
 /* If nonzero, show only local filesystems.  */
-static int show_local_fs = 0;
+static bool show_local_fs = false;
 
 /* If nonzero, show only local filesystems but call stat() on remote ones. */
-static int stat_remote_fs = 0;
+static bool stat_remote_fs = false;
 
 /* If positive, the units to use when printing sizes;
    if negative, the human-readable base.  */
@@ -121,7 +121,7 @@ static int process_arguments(int /*argc*/, char ** /*argv*/);
 static void set_all_thresholds(struct parameter_list *path);
 static void print_help(void);
 void print_usage(void);
-static double calculate_percent(uintmax_t, uintmax_t);
+static double calculate_percent(uintmax_t /*value*/, uintmax_t /*total*/);
 static bool stat_path(struct parameter_list *p);
 static void get_stats(struct parameter_list *p, struct fs_usage *fsp);
 static void get_path_stats(struct parameter_list *p, struct fs_usage *fsp);
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 	/* If a list of paths has not been selected, find entire
 	   mount list and create list of paths
 	 */
-	if (path_selected == false && path_ignored == false) {
+	if (!path_selected && !path_ignored) {
 		for (me = mount_list; me; me = me->me_next) {
 			if (!(path = np_find_parameter(path_select_list, me->me_mountdir))) {
 				path = np_add_parameter(&path_select_list, me->me_mountdir);
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (path_ignored == false) {
+	if (!path_ignored) {
 		np_set_best_match(path_select_list, mount_list, exact_match);
 	}
 
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
 	temp_list = path_select_list;
 
 	while (path_select_list) {
-		if (!path_select_list->best_match && ignore_missing == true) {
+		if (!path_select_list->best_match && ignore_missing) {
 			/* If the first element will be deleted, the temp_list must be updated with the new start address as well */
 			if (path_select_list == temp_list) {
 				temp_list = path_select_list->name_next;
@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
 
 	path_select_list = temp_list;
 
-	if (!path_select_list && ignore_missing == true) {
+	if (!path_select_list && ignore_missing) {
 		result = STATE_OK;
 		if (verbose >= 2) {
 			printf("None of the provided paths were found\n");
@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
 			/* Skip remote filesystems if we're not interested in them */
 			if (me->me_remote && show_local_fs) {
 				if (stat_remote_fs) {
-					if (!stat_path(path) && ignore_missing == true) {
+					if (!stat_path(path) && ignore_missing) {
 						result = STATE_OK;
 						xasprintf(&ignored, "%s %s;", ignored, path->name);
 					}
@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (!stat_path(path)) {
-			if (ignore_missing == true) {
+			if (ignore_missing) {
 				result = STATE_OK;
 				xasprintf(&ignored, "%s %s;", ignored, path->name);
 			}
@@ -398,8 +398,8 @@ int main(int argc, char **argv) {
 			/* Nb: *_high_tide are unset when == UINT64_MAX */
 			xasprintf(&perf, "%s %s", perf,
 					  perfdata_uint64((!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir,
-									  path->dused_units * mult, "B", (warning_high_tide == UINT64_MAX ? false : true), warning_high_tide,
-									  (critical_high_tide == UINT64_MAX ? false : true), critical_high_tide, true, 0, true,
+									  path->dused_units * mult, "B", (warning_high_tide != UINT64_MAX ), warning_high_tide,
+									  (critical_high_tide != UINT64_MAX ), critical_high_tide, true, 0, true,
 									  path->dtotal_units * mult));
 
 			if (display_inodes_perfdata) {
@@ -420,8 +420,8 @@ int main(int argc, char **argv) {
 						  (!strcmp(me->me_mountdir, "none") || display_mntp) ? me->me_devname : me->me_mountdir);
 				/* Nb: *_high_tide are unset when == UINT64_MAX */
 				xasprintf(&perf, "%s %s", perf,
-						  perfdata_uint64(perf_ilabel, path->inodes_used, "", (warning_high_tide != UINT64_MAX ? true : false),
-										  warning_high_tide, (critical_high_tide != UINT64_MAX ? true : false), critical_high_tide, true, 0,
+						  perfdata_uint64(perf_ilabel, path->inodes_used, "", (warning_high_tide != UINT64_MAX),
+										  warning_high_tide, (critical_high_tide != UINT64_MAX), critical_high_tide, true, 0,
 										  true, path->inodes_total));
 			}
 
@@ -669,13 +669,13 @@ int process_arguments(int argc, char **argv) {
 			units = strdup("MiB");
 			break;
 		case 'L':
-			stat_remote_fs = 1;
+			stat_remote_fs = true;
 			/* fallthrough */
 		case 'l':
-			show_local_fs = 1;
+			show_local_fs = true;
 			break;
 		case 'P':
-			display_inodes_perfdata = 1;
+			display_inodes_perfdata = true;
 			break;
 		case 'p': /* select path */
 			if (!(warn_freespace_units || crit_freespace_units || warn_freespace_percent || crit_freespace_percent ||
@@ -688,7 +688,7 @@ int process_arguments(int argc, char **argv) {
 			if (!(se = np_find_parameter(path_select_list, optarg))) {
 				se = np_add_parameter(&path_select_list, optarg);
 
-				if (stat(optarg, &stat_buf[0]) && ignore_missing == true) {
+				if (stat(optarg, &stat_buf[0]) && ignore_missing) {
 					path_ignored = true;
 					break;
 				}
@@ -832,7 +832,7 @@ int process_arguments(int argc, char **argv) {
 				}
 			}
 
-			if (!fnd && ignore_missing == true) {
+			if (!fnd && ignore_missing) {
 				path_ignored = true;
 				path_selected = true;
 				break;
@@ -852,7 +852,7 @@ int process_arguments(int argc, char **argv) {
 			break;
 		case 'C':
 			/* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
-			if (path_selected == false) {
+			if (!path_selected) {
 				struct parameter_list *path;
 				for (me = mount_list; me; me = me->me_next) {
 					if (!(path = np_find_parameter(path_select_list, me->me_mountdir))) {
@@ -1055,7 +1055,7 @@ bool stat_path(struct parameter_list *p) {
 		if (verbose >= 3) {
 			printf("stat failed on %s\n", p->name);
 		}
-		if (ignore_missing == true) {
+		if (ignore_missing) {
 			return false;
 		}
 		printf("DISK %s - ", _("CRITICAL"));
