@@ -56,7 +56,6 @@ void print_usage(void);
 #	include <sys/device.h>
 #	include <sys/param.h>
 #	include <sys/sysctl.h>
-#	include <sys/videoio.h> /* for __u8 and friends */
 #	include <sys/scsiio.h>
 #	include <sys/ataio.h>
 #	include <dev/ata/atareg.h>
@@ -79,48 +78,47 @@ void print_usage(void);
 #define UNKNOWN     -1
 
 typedef struct threshold_s {
-	__u8 id;
-	__u8 threshold;
-	__u8 reserved[10];
+	uint8_t id;
+	uint8_t threshold;
+	uint8_t reserved[10];
 } __attribute__((packed)) threshold_t;
 
 typedef struct thresholds_s {
-	__u16 revision;
+	uint16_t revision;
 	threshold_t thresholds[NR_ATTRIBUTES];
-	__u8 reserved[18];
-	__u8 vendor[131];
-	__u8 checksum;
+	uint8_t reserved[18];
+	uint8_t vendor[131];
+	uint8_t checksum;
 } __attribute__((packed)) thresholds_t;
 
 typedef struct value_s {
-	__u8 id;
-	__u16 status;
-	__u8 value;
-	__u8 vendor[8];
+	uint8_t id;
+	uint16_t status;
+	uint8_t value;
+	uint8_t vendor[8];
 } __attribute__((packed)) value_t;
 
 typedef struct values_s {
-	__u16 revision;
+	uint16_t revision;
 	value_t values[NR_ATTRIBUTES];
-	__u8 offline_status;
-	__u8 vendor1;
-	__u16 offline_timeout;
-	__u8 vendor2;
-	__u8 offline_capability;
-	__u16 smart_capability;
-	__u8 reserved[16];
-	__u8 vendor[125];
-	__u8 checksum;
+	uint8_t offline_status;
+	uint8_t vendor1;
+	uint16_t offline_timeout;
+	uint8_t vendor2;
+	uint8_t offline_capability;
+	uint16_t smart_capability;
+	uint8_t reserved[16];
+	uint8_t vendor[125];
+	uint8_t checksum;
 } __attribute__((packed)) values_t;
 
 static struct {
-	__u8 value;
+	uint8_t value;
 	char *text;
-} offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"},
-								{0x05, "Aborted"},      {0x06, "Failed"},    {0, 0}};
+} offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"}, {0x05, "Aborted"}, {0x06, "Failed"}, {0, 0}};
 
 static struct {
-	__u8 value;
+	uint8_t value;
 	char *text;
 } smart_command[] = {{SMART_ENABLE, "SMART_ENABLE"},
 					 {SMART_DISABLE, "SMART_DISABLE"},
@@ -140,7 +138,7 @@ static int smart_read_values(int, values_t *);
 static int nagios(values_t *, thresholds_t *);
 static void print_value(value_t *, threshold_t *);
 static void print_values(values_t *, thresholds_t *);
-static int smart_cmd_simple(int, enum SmartCommand, __u8, bool);
+static int smart_cmd_simple(int, enum SmartCommand, uint8_t, bool);
 static int smart_read_thresholds(int, thresholds_t *);
 static bool verbose = false;
 
@@ -175,8 +173,9 @@ int main(int argc, char *argv[]) {
 
 		o = getopt_long(argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
-		if (o == -1 || o == EOF || o == 1)
+		if (o == -1 || o == EOF || o == 1) {
 			break;
+		}
 
 		switch (o) {
 		case 'd':
@@ -234,8 +233,9 @@ int main(int argc, char *argv[]) {
 	smart_read_values(fd, &values);
 	smart_read_thresholds(fd, &thresholds);
 	retval = nagios(&values, &thresholds);
-	if (verbose)
+	if (verbose) {
 		print_values(&values, &thresholds);
+	}
 
 	close(fd);
 	return retval;
@@ -254,7 +254,7 @@ char *get_offline_text(int status) {
 int smart_read_values(int fd, values_t *values) {
 #ifdef __linux__
 	int e;
-	__u8 args[4 + 512];
+	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_VALUES;
@@ -282,8 +282,9 @@ int smart_read_values(int fd, values_t *values) {
 	req.cylinder = WDSMART_CYL;
 
 	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
-		if (req.retsts != ATACMD_OK)
+		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
+		}
 	}
 
 	if (errno != 0) {
@@ -370,22 +371,24 @@ void print_values(values_t *p, thresholds_t *t) {
 		   p->smart_capability & 1 ? "SaveOnStandBy" : "", p->smart_capability & 2 ? "AutoSave" : "");
 }
 
-int smart_cmd_simple(int fd, enum SmartCommand command, __u8 val0, bool show_error) {
+int smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_error) {
 	int e = STATE_UNKNOWN;
 #ifdef __linux__
-	__u8 args[4];
+	uint8_t args[4];
 	args[0] = WIN_SMART;
 	args[1] = val0;
 	args[2] = smart_command[command].value;
 	args[3] = 0;
 	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
 		e = STATE_CRITICAL;
-		if (show_error)
+		if (show_error) {
 			printf(_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror(errno));
+		}
 	} else {
 		e = STATE_OK;
-		if (show_error)
+		if (show_error) {
 			printf(_("OK - Command sent (%s)\n"), smart_command[command].text);
+		}
 	}
 
 #endif /* __linux__ */
@@ -401,20 +404,24 @@ int smart_cmd_simple(int fd, enum SmartCommand command, __u8 val0, bool show_err
 	req.sec_count = val0;
 
 	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
-		if (req.retsts != ATACMD_OK)
+		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
-		if (req.cylinder != WDSMART_CYL)
+		}
+		if (req.cylinder != WDSMART_CYL) {
 			errno = ENODEV;
+		}
 	}
 
 	if (errno != 0) {
 		e = STATE_CRITICAL;
-		if (show_error)
+		if (show_error) {
 			printf(_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror(errno));
+		}
 	} else {
 		e = STATE_OK;
-		if (show_error)
+		if (show_error) {
 			printf(_("OK - Command sent (%s)\n"), smart_command[command].text);
+		}
 	}
 
 #endif /* __NetBSD__ */
@@ -424,7 +431,7 @@ int smart_cmd_simple(int fd, enum SmartCommand command, __u8 val0, bool show_err
 int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 #ifdef __linux__
 	int e;
-	__u8 args[4 + 512];
+	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_THRESHOLDS;
@@ -452,8 +459,9 @@ int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 	req.cylinder = WDSMART_CYL;
 
 	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
-		if (req.retsts != ATACMD_OK)
+		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
+		}
 	}
 
 	if (errno != 0) {
