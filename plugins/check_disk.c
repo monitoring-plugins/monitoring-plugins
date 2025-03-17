@@ -217,6 +217,9 @@ int main(int argc, char **argv) {
 			printf("Group of %s: %s\n", path->name, path->group);
 		}
 
+		// reset disk result
+		disk_result = STATE_UNKNOWN;
+
 		struct mount_entry *mount_entry = path->best_match;
 
 		if (!mount_entry) {
