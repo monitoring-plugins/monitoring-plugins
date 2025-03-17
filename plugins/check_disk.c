@@ -191,8 +191,9 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	if (process_arguments(argc, argv) == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
 
 	/* If a list of paths has not been selected, find entire
 	   mount list and create list of paths
@@ -245,12 +246,14 @@ int main(int argc, char **argv) {
 
 	/* Process for every path in list */
 	for (path = path_select_list; path; path = path->name_next) {
-		if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL)
+		if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL) {
 			printf("Thresholds(pct) for %s warn: %f crit %f\n", path->name, path->freespace_percent->warning->end,
 				   path->freespace_percent->critical->end);
+		}
 
-		if (verbose >= 3 && path->group != NULL)
+		if (verbose >= 3 && path->group != NULL) {
 			printf("Group of %s: %s\n", path->name, path->group);
+		}
 
 		/* reset disk result */
 		disk_result = STATE_UNKNOWN;
@@ -262,11 +265,13 @@ int main(int argc, char **argv) {
 		}
 
 #ifdef __CYGWIN__
-		if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11)
+		if (strncmp(path->name, "/cygdrive/", 10) != 0 || strlen(path->name) > 11) {
 			continue;
+		}
 		snprintf(mountdir, sizeof(mountdir), "%s:\\", me->me_mountdir + 10);
-		if (GetDriveType(mountdir) != DRIVE_FIXED)
+		if (GetDriveType(mountdir) != DRIVE_FIXED) {
 			me->me_remote = 1;
+		}
 #endif
 		/* Filters */
 
@@ -327,33 +332,39 @@ int main(int argc, char **argv) {
 			/* Threshold comparisons */
 
 			temp_result = get_status(path->dfree_units, path->freespace_units);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Freespace_units result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			temp_result = get_status(path->dfree_pct, path->freespace_percent);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Freespace%% result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			temp_result = get_status(path->dused_units, path->usedspace_units);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Usedspace_units result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			temp_result = get_status(path->dused_pct, path->usedspace_percent);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Usedspace_percent result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			temp_result = get_status(path->dused_inodes_percent, path->usedinodes_percent);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Usedinodes_percent result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			temp_result = get_status(path->dfree_inodes_percent, path->freeinodes_percent);
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Freeinodes_percent result=%d\n", temp_result);
+			}
 			disk_result = max_state(disk_result, temp_result);
 
 			result = max_state(result, disk_result);
@@ -414,8 +425,9 @@ int main(int argc, char **argv) {
 										  true, path->inodes_total));
 			}
 
-			if (disk_result == STATE_OK && erronly && !verbose)
+			if (disk_result == STATE_OK && erronly && !verbose) {
 				continue;
+			}
 
 			if (disk_result && verbose >= 1) {
 				xasprintf(&flag_header, " %s [", state_text(disk_result));
@@ -434,8 +446,9 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (verbose >= 2)
+	if (verbose >= 2) {
 		xasprintf(&output, "%s%s", output, details);
+	}
 
 	if (strcmp(output, "") == 0 && !erronly) {
 		preamble = "";
@@ -509,20 +522,24 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		return ERROR;
+	}
 
 	np_add_regex(&fs_exclude_list, "iso9660", REG_EXTENDED);
 
-	for (c = 1; c < argc; c++)
-		if (strcmp("-to", argv[c]) == 0)
+	for (c = 1; c < argc; c++) {
+		if (strcmp("-to", argv[c]) == 0) {
 			strcpy(argv[c], "-t");
+		}
+	}
 
 	while (1) {
 		c = getopt_long(argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEAn", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 't': /* timeout period */
@@ -594,8 +611,9 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'u':
-			if (units)
+			if (units) {
 				free(units);
+			}
 			if (!strcasecmp(optarg, "bytes")) {
 				mult = (uintmax_t)1;
 				units = strdup("B");
@@ -632,19 +650,22 @@ int process_arguments(int argc, char **argv) {
 			} else {
 				die(STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
-			if (units == NULL)
+			if (units == NULL) {
 				die(STATE_UNKNOWN, _("failed allocating storage for '%s'\n"), "units");
+			}
 			break;
 		case 'k': /* display mountpoint */
 			mult = 1024;
-			if (units)
+			if (units) {
 				free(units);
+			}
 			units = strdup("kiB");
 			break;
 		case 'm': /* display mountpoint */
 			mult = 1024 * 1024;
-			if (units)
+			if (units) {
 				free(units);
+			}
 			units = strdup("MiB");
 			break;
 		case 'L':
@@ -715,25 +736,28 @@ int process_arguments(int argc, char **argv) {
 			erronly = true;
 			break;
 		case 'E':
-			if (path_selected)
+			if (path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting paths\n"));
+			}
 			exact_match = true;
 			break;
 		case 'f':
 			freespace_ignore_reserved = true;
 			break;
 		case 'g':
-			if (path_selected)
+			if (path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before selecting paths\n"));
+			}
 			group = optarg;
 			break;
 		case 'I':
 			cflags |= REG_ICASE;
 			// Intentional fallthrough
 		case 'i':
-			if (!path_selected)
+			if (!path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"),
 					_("Paths need to be selected before using -i/-I. Use -A to select all paths explicitly"));
+			}
 			err = regcomp(&re, optarg, cflags);
 			if (err != 0) {
 				regerror(err, &re, errbuf, MAX_INPUT_BUFFER);
@@ -747,13 +771,15 @@ int process_arguments(int argc, char **argv) {
 				if (temp_list->best_match) {
 					if (np_regex_match_mount_entry(temp_list->best_match, &re)) {
 
-						if (verbose >= 3)
+						if (verbose >= 3) {
 							printf("ignoring %s matching regex\n", temp_list->name);
+						}
 
 						temp_list = np_del_parameter(temp_list, previous);
 						/* pointer to first element needs to be updated if first item gets deleted */
-						if (previous == NULL)
+						if (previous == NULL) {
 							path_select_list = temp_list;
+						}
 					} else {
 						previous = temp_list;
 						temp_list = temp_list->name_next;
@@ -793,8 +819,9 @@ int process_arguments(int argc, char **argv) {
 			for (me = mount_list; me; me = me->me_next) {
 				if (np_regex_match_mount_entry(me, &re)) {
 					fnd = true;
-					if (verbose >= 3)
+					if (verbose >= 3) {
 						printf("%s %s matching expression %s\n", me->me_devname, me->me_mountdir, optarg);
+					}
 
 					/* add parameter if not found. overwrite thresholds if path has already been added  */
 					if (!(se = np_find_parameter(path_select_list, me->me_mountdir))) {
@@ -810,8 +837,9 @@ int process_arguments(int argc, char **argv) {
 				path_selected = true;
 				break;
 			}
-			if (!fnd)
+			if (!fnd) {
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Regular expression did not match any path or disk"), optarg);
+			}
 
 			fnd = false;
 			path_selected = true;
@@ -827,8 +855,9 @@ int process_arguments(int argc, char **argv) {
 			if (path_selected == false) {
 				struct parameter_list *path;
 				for (me = mount_list; me; me = me->me_next) {
-					if (!(path = np_find_parameter(path_select_list, me->me_mountdir)))
+					if (!(path = np_find_parameter(path_select_list, me->me_mountdir))) {
 						path = np_add_parameter(&path_select_list, me->me_mountdir);
+					}
 					path->best_match = me;
 					path->group = group;
 					set_all_thresholds(path);
@@ -863,11 +892,13 @@ int process_arguments(int argc, char **argv) {
 
 	/* Support for "check_disk warn crit [fs]" with thresholds at used% level */
 	c = optind;
-	if (warn_usedspace_percent == NULL && argc > c && is_intnonneg(argv[c]))
+	if (warn_usedspace_percent == NULL && argc > c && is_intnonneg(argv[c])) {
 		warn_usedspace_percent = argv[c++];
+	}
 
-	if (crit_usedspace_percent == NULL && argc > c && is_intnonneg(argv[c]))
+	if (crit_usedspace_percent == NULL && argc > c && is_intnonneg(argv[c])) {
 		crit_usedspace_percent = argv[c++];
+	}
 
 	if (argc > c) {
 		se = np_add_parameter(&path_select_list, strdup(argv[c++]));
@@ -884,23 +915,29 @@ int process_arguments(int argc, char **argv) {
 }
 
 void set_all_thresholds(struct parameter_list *path) {
-	if (path->freespace_units != NULL)
+	if (path->freespace_units != NULL) {
 		free(path->freespace_units);
+	}
 	set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
-	if (path->freespace_percent != NULL)
+	if (path->freespace_percent != NULL) {
 		free(path->freespace_percent);
+	}
 	set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
-	if (path->usedspace_units != NULL)
+	if (path->usedspace_units != NULL) {
 		free(path->usedspace_units);
+	}
 	set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
-	if (path->usedspace_percent != NULL)
+	if (path->usedspace_percent != NULL) {
 		free(path->usedspace_percent);
+	}
 	set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
-	if (path->usedinodes_percent != NULL)
+	if (path->usedinodes_percent != NULL) {
 		free(path->usedinodes_percent);
+	}
 	set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
-	if (path->freeinodes_percent != NULL)
+	if (path->freeinodes_percent != NULL) {
 		free(path->freeinodes_percent);
+	}
 	set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
 }
 
@@ -1011,11 +1048,13 @@ void print_usage(void) {
 
 bool stat_path(struct parameter_list *p) {
 	/* Stat entry to check that dir exists and is accessible */
-	if (verbose >= 3)
+	if (verbose >= 3) {
 		printf("calling stat on %s\n", p->name);
+	}
 	if (stat(p->name, &stat_buf[0])) {
-		if (verbose >= 3)
+		if (verbose >= 3) {
 			printf("stat failed on %s\n", p->name);
+		}
 		if (ignore_missing == true) {
 			return false;
 		}
@@ -1036,18 +1075,21 @@ void get_stats(struct parameter_list *p, struct fs_usage *fsp) {
 		/* find all group members */
 		for (p_list = path_select_list; p_list; p_list = p_list->name_next) {
 #ifdef __CYGWIN__
-			if (strncmp(p_list->name, "/cygdrive/", 10) != 0)
+			if (strncmp(p_list->name, "/cygdrive/", 10) != 0) {
 				continue;
+			}
 #endif
 			if (p_list->group && !(strcmp(p_list->group, p->group))) {
-				if (!stat_path(p_list))
+				if (!stat_path(p_list)) {
 					continue;
+				}
 				get_fs_usage(p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
 				get_path_stats(p_list, &tmpfsp);
-				if (verbose >= 3)
+				if (verbose >= 3) {
 					printf("Group %s: adding %lu blocks sized %lu, (%s) used_units=%lu free_units=%lu total_units=%lu mult=%lu\n",
 						   p_list->group, tmpfsp.fsu_blocks, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units,
 						   p_list->dfree_units, p_list->dtotal_units, mult);
+				}
 
 				/* prevent counting the first FS of a group twice since its parameter_list entry
 				 * is used to carry the information of all file systems of the entire group */
@@ -1067,9 +1109,10 @@ void get_stats(struct parameter_list *p, struct fs_usage *fsp) {
 				}
 				first = 0;
 			}
-			if (verbose >= 3)
+			if (verbose >= 3) {
 				printf("Group %s now has: used_units=%lu free_units=%lu total_units=%lu fsu_blocksize=%lu mult=%lu\n", p->group,
 					   p->dused_units, p->dfree_units, p->dtotal_units, tmpfsp.fsu_blocksize, mult);
+			}
 		}
 		/* modify devname and mountdir for output */
 		p->best_match->me_mountdir = p->best_match->me_devname = p->group;
