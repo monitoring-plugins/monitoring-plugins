@@ -80,30 +80,30 @@ void print_usage(void);
 #define OPERATIONAL 0
 #define UNKNOWN     -1
 
-typedef struct threshold_s {
+typedef struct {
 	uint8_t id;
 	uint8_t threshold;
 	uint8_t reserved[10];
-} __attribute__((packed)) threshold_t;
+} __attribute__((packed)) smart_threshold;
 
-typedef struct thresholds_s {
+typedef struct {
 	uint16_t revision;
-	threshold_t thresholds[NR_ATTRIBUTES];
+	smart_threshold thresholds[NR_ATTRIBUTES];
 	uint8_t reserved[18];
 	uint8_t vendor[131];
 	uint8_t checksum;
-} __attribute__((packed)) thresholds_t;
+} __attribute__((packed)) smart_thresholds;
 
-typedef struct value_s {
+typedef struct {
 	uint8_t id;
 	uint16_t status;
 	uint8_t value;
 	uint8_t vendor[8];
-} __attribute__((packed)) value_t;
+} __attribute__((packed)) smart_value;
 
-typedef struct values_s {
+typedef struct {
 	uint16_t revision;
-	value_t values[NR_ATTRIBUTES];
+	smart_value values[NR_ATTRIBUTES];
 	uint8_t offline_status;
 	uint8_t vendor1;
 	uint16_t offline_timeout;
@@ -113,7 +113,7 @@ typedef struct values_s {
 	uint8_t reserved[16];
 	uint8_t vendor[125];
 	uint8_t checksum;
-} __attribute__((packed)) values_t;
+} __attribute__((packed)) smart_values;
 
 static struct {
 	uint8_t value;
@@ -137,12 +137,12 @@ enum SmartCommand {
 };
 
 static char *get_offline_text(int /*status*/);
-static int smart_read_values(int /*fd*/, values_t * /*values*/);
-static mp_state_enum compare_values_and_thresholds(values_t * /*p*/, thresholds_t * /*t*/);
-static void print_value(value_t * /*p*/, threshold_t * /*t*/);
-static void print_values(values_t * /*p*/, thresholds_t * /*t*/);
+static int smart_read_values(int /*fd*/, smart_values * /*values*/);
+static mp_state_enum compare_values_and_thresholds(smart_values * /*p*/, smart_thresholds * /*t*/);
+static void print_value(smart_value * /*p*/, smart_threshold * /*t*/);
+static void print_values(smart_values * /*p*/, smart_thresholds * /*t*/);
 static mp_state_enum smart_cmd_simple(int /*fd*/, enum SmartCommand /*command*/, uint8_t /*val0*/, bool /*show_error*/);
-static int smart_read_thresholds(int /*fd*/, thresholds_t * /*thresholds*/);
+static int smart_read_thresholds(int /*fd*/, smart_thresholds * /*thresholds*/);
 static int verbose = 0;
 
 typedef struct {
@@ -246,9 +246,9 @@ int main(int argc, char *argv[]) {
 		return STATE_CRITICAL;
 	}
 
-	values_t values;
+	smart_values values;
 	smart_read_values(device_file_descriptor, &values);
-	thresholds_t thresholds;
+	smart_thresholds thresholds;
 	smart_read_thresholds(device_file_descriptor, &thresholds);
 	mp_state_enum retval = compare_values_and_thresholds(&values, &thresholds);
 	if (verbose) {
@@ -268,22 +268,20 @@ char *get_offline_text(int status) {
 	return "UNKNOWN";
 }
 
-int smart_read_values(int fd, values_t *values) {
+int smart_read_values(int file_descriptor, smart_values *values) {
 #ifdef __linux__
-	int errno_storage;
 	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_VALUES;
 	args[3] = 1;
-	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
-		errno_storage = errno;
+	if (ioctl(file_descriptor, HDIO_DRIVE_CMD, &args)) {
+		int errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_VALUES: %s\n"), strerror(errno));
 		return errno_storage;
 	}
 	memcpy(values, args + 4, 512);
-#endif /* __linux__ */
-#ifdef __NetBSD__
+#elif defined __NetBSD__
 	struct atareq req;
 	unsigned char inbuf[DEV_BSIZE];
 
@@ -298,26 +296,30 @@ int smart_read_values(int fd, values_t *values) {
 	req.datalen = sizeof(inbuf);
 	req.cylinder = WDSMART_CYL;
 
-	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+	if (ioctl(file_descriptor, ATAIOCCOMMAND, &req) == 0) {
 		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
 		}
 	}
 
 	if (errno != 0) {
-		int e = errno;
+		int errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_VALUES: %s\n"), strerror(errno));
-		return e;
+		return errno_storage;
 	}
 
 	(void)memcpy(values, inbuf, 512);
-#endif /* __NetBSD__ */
+#else // __linux__ || __NetBSD__
+#	error Not implemented for this OS
+#endif
+
 	return 0;
 }
 
-mp_state_enum compare_values_and_thresholds(values_t *p, thresholds_t *t) {
-	value_t *value = p->values;
-	threshold_t *threshold = t->thresholds;
+mp_state_enum compare_values_and_thresholds(smart_values *values, smart_thresholds *thresholds) {
+	smart_value *value = values->values;
+	smart_threshold *threshold = thresholds->thresholds;
+
 	int status = OPERATIONAL;
 	int prefailure = 0;
 	int advisory = 0;
@@ -366,37 +368,39 @@ mp_state_enum compare_values_and_thresholds(values_t *p, thresholds_t *t) {
 	return status;
 }
 
-void print_value(value_t *p, threshold_t *t) {
-	printf("Id=%3d, Status=%2d {%s , %s}, Value=%3d, Threshold=%3d, %s\n", p->id, p->status, p->status & 1 ? "PreFailure" : "Advisory   ",
-		   p->status & 2 ? "OnLine " : "OffLine", p->value, t->threshold, p->value >= t->threshold ? "Passed" : "Failed");
+void print_value(smart_value *value_pointer, smart_threshold *threshold_pointer) {
+	printf("Id=%3d, Status=%2d {%s , %s}, Value=%3d, Threshold=%3d, %s\n", value_pointer->id, value_pointer->status,
+		   value_pointer->status & 1 ? "PreFailure" : "Advisory   ", value_pointer->status & 2 ? "OnLine " : "OffLine",
+		   value_pointer->value, threshold_pointer->threshold, value_pointer->value >= threshold_pointer->threshold ? "Passed" : "Failed");
 }
 
-void print_values(values_t *p, thresholds_t *t) {
-	value_t *value = p->values;
-	threshold_t *threshold = t->thresholds;
-	int i;
-	for (i = 0; i < NR_ATTRIBUTES; i++) {
+void print_values(smart_values *values, smart_thresholds *thresholds) {
+	smart_value *value = values->values;
+	smart_threshold *threshold = thresholds->thresholds;
+	for (int i = 0; i < NR_ATTRIBUTES; i++) {
 		if (value->id && threshold->id && value->id == threshold->id) {
 			print_value(value++, threshold++);
 		}
 	}
-	printf(_("OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"), p->offline_status,
-		   get_offline_text(p->offline_status & 0x7f), (p->offline_status & 0x80 ? "Yes" : "No"), p->offline_timeout / 60);
-	printf(_("OffLineCapability=%d {%s %s %s}\n"), p->offline_capability, p->offline_capability & 1 ? "Immediate" : "",
-		   p->offline_capability & 2 ? "Auto" : "", p->offline_capability & 4 ? "AbortOnCmd" : "SuspendOnCmd");
-	printf(_("SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"), p->revision, p->checksum, p->smart_capability,
-		   p->smart_capability & 1 ? "SaveOnStandBy" : "", p->smart_capability & 2 ? "AutoSave" : "");
+	printf(_("OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"), values->offline_status,
+		   get_offline_text(values->offline_status & 0x7f), (values->offline_status & 0x80 ? "Yes" : "No"), values->offline_timeout / 60);
+	printf(_("OffLineCapability=%d {%s %s %s}\n"), values->offline_capability, values->offline_capability & 1 ? "Immediate" : "",
+		   values->offline_capability & 2 ? "Auto" : "", values->offline_capability & 4 ? "AbortOnCmd" : "SuspendOnCmd");
+	printf(_("SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"), values->revision, values->checksum, values->smart_capability,
+		   values->smart_capability & 1 ? "SaveOnStandBy" : "", values->smart_capability & 2 ? "AutoSave" : "");
 }
 
-mp_state_enum smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_error) {
+mp_state_enum smart_cmd_simple(int file_descriptor, enum SmartCommand command, uint8_t val0, bool show_error) {
 	mp_state_enum result = STATE_UNKNOWN;
 #ifdef __linux__
-	uint8_t args[4];
-	args[0] = WIN_SMART;
-	args[1] = val0;
-	args[2] = smart_command[command].value;
-	args[3] = 0;
-	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
+	uint8_t args[4] = {
+		WIN_SMART,
+		val0,
+		smart_command[command].value,
+		0,
+	};
+
+	if (ioctl(file_descriptor, HDIO_DRIVE_CMD, &args)) {
 		result = STATE_CRITICAL;
 		if (show_error) {
 			printf(_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror(errno));
@@ -408,8 +412,7 @@ mp_state_enum smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, 
 		}
 	}
 
-#endif /* __linux__ */
-#ifdef __NetBSD__
+#elif defined __NetBSD__
 	struct atareq req;
 
 	memset(&req, 0, sizeof(req));
@@ -420,7 +423,7 @@ mp_state_enum smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, 
 	req.cylinder = WDSMART_CYL;
 	req.sec_count = val0;
 
-	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+	if (ioctl(file_descriptor, ATAIOCCOMMAND, &req) == 0) {
 		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
 		}
@@ -440,32 +443,32 @@ mp_state_enum smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, 
 			printf(_("OK - Command sent (%s)\n"), smart_command[command].text);
 		}
 	}
-
+#else
+#	error Not implemented for this OS
 #endif /* __NetBSD__ */
+
 	return result;
 }
 
-int smart_read_thresholds(int fd, thresholds_t *thresholds) {
+int smart_read_thresholds(int file_descriptor, smart_thresholds *thresholds) {
 #ifdef __linux__
-	int errno_storage;
 	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_THRESHOLDS;
 	args[3] = 1;
-	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
-		errno_storage = errno;
+	if (ioctl(file_descriptor, HDIO_DRIVE_CMD, &args)) {
+		int errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_THRESHOLDS: %s\n"), strerror(errno));
 		return errno_storage;
 	}
 	memcpy(thresholds, args + 4, 512);
-#endif /* __linux__ */
-#ifdef __NetBSD__
+#elif defined __NetBSD__
 	struct atareq req;
-	unsigned char inbuf[DEV_BSIZE];
-
 	memset(&req, 0, sizeof(req));
 	req.timeout = 1000;
+
+	unsigned char inbuf[DEV_BSIZE];
 	memset(&inbuf, 0, sizeof(inbuf));
 
 	req.flags = ATACMD_READ;
@@ -475,7 +478,7 @@ int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 	req.datalen = sizeof(inbuf);
 	req.cylinder = WDSMART_CYL;
 
-	if (ioctl(fd, ATAIOCCOMMAND, &req) == 0) {
+	if (ioctl(file_descriptor, ATAIOCCOMMAND, &req) == 0) {
 		if (req.retsts != ATACMD_OK) {
 			errno = ENODEV;
 		}
@@ -488,7 +491,10 @@ int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 	}
 
 	(void)memcpy(thresholds, inbuf, 512);
+#else
+#	error Not implemented for this OS
 #endif /* __NetBSD__ */
+
 	return 0;
 }
 
