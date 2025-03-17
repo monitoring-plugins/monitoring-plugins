@@ -101,9 +101,9 @@ static void set_all_thresholds(struct parameter_list *path);
 static void print_help(void);
 void print_usage(void);
 static double calculate_percent(uintmax_t /*value*/, uintmax_t /*total*/);
-static bool stat_path(struct parameter_list *p);
-static void get_stats(struct parameter_list *p, struct fs_usage *fsp);
-static void get_path_stats(struct parameter_list *p, struct fs_usage *fsp);
+static bool stat_path(struct parameter_list * /*parameters*/);
+static void get_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp);
+static void get_path_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp);
 
 static char *units;
 static uintmax_t mult = 1024 * 1024;
@@ -624,7 +624,7 @@ int process_arguments(int argc, char **argv) {
 		case 'P':
 			display_inodes_perfdata = true;
 			break;
-		case 'p': /* select path */
+		case 'p': /* select path */ {
 			if (!(warn_freespace_units || crit_freespace_units || warn_freespace_percent || crit_freespace_percent ||
 				  warn_usedspace_units || crit_usedspace_units || warn_usedspace_percent || crit_usedspace_percent ||
 				  warn_usedinodes_percent || crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent)) {
@@ -656,7 +656,7 @@ int process_arguments(int argc, char **argv) {
 			np_set_best_match(se, mount_list, exact_match);
 
 			path_selected = true;
-			break;
+		} break;
 		case 'x': /* exclude path or partition */
 			np_add_name(&dp_exclude_list, optarg);
 			break;
@@ -778,6 +778,7 @@ int process_arguments(int argc, char **argv) {
 					}
 
 					/* add parameter if not found. overwrite thresholds if path has already been added  */
+					struct parameter_list *se = NULL;
 					if (!(se = np_find_parameter(path_select_list, me->me_mountdir))) {
 						se = np_add_parameter(&path_select_list, me->me_mountdir);
 					}
@@ -804,7 +805,7 @@ int process_arguments(int argc, char **argv) {
 		case 'M': /* display mountpoint */
 			display_mntp = true;
 			break;
-		case 'C':
+		case 'C': {
 			/* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
 			if (!path_selected) {
 				struct parameter_list *path;
@@ -832,7 +833,7 @@ int process_arguments(int argc, char **argv) {
 
 			path_selected = false;
 			group = NULL;
-			break;
+		} break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
@@ -843,18 +844,31 @@ int process_arguments(int argc, char **argv) {
 			usage(_("Unknown argument"));
 		}
 	}
+		if (verbose > 0) {
+			printf("ping\n");
+		}
 
 	/* Support for "check_disk warn crit [fs]" with thresholds at used% level */
 	int index = optind;
+
 	if (warn_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
+		if (verbose > 0) {
+			printf("Got an positional warn threshold: %s\n", argv[index]);
+		}
 		warn_usedspace_percent = argv[index++];
 	}
 
 	if (crit_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
+		if (verbose > 0) {
+			printf("Got an positional crit threshold: %s\n", argv[index]);
+		}
 		crit_usedspace_percent = argv[index++];
 	}
 
 	if (argc > index) {
+		if (verbose > 0) {
+			printf("Got an positional filesystem: %s\n", argv[index]);
+		}
 		struct parameter_list *se = np_add_parameter(&path_select_list, strdup(argv[index++]));
 		path_selected = true;
 		set_all_thresholds(se);
@@ -1081,7 +1095,8 @@ void get_stats(struct parameter_list *parameters, struct fs_usage *fsp) {
 		parameters->best_match->me_mountdir = parameters->best_match->me_devname = parameters->group;
 	}
 	/* finally calculate percentages for either plain FS or summed up group */
-	parameters->dused_pct = calculate_percent(parameters->used, parameters->used + parameters->available); /* used + available can never be > uintmax */
+	parameters->dused_pct =
+		calculate_percent(parameters->used, parameters->used + parameters->available); /* used + available can never be > uintmax */
 	parameters->dfree_pct = 100.0 - parameters->dused_pct;
 	parameters->dused_inodes_percent = calculate_percent(parameters->inodes_total - parameters->inodes_free, parameters->inodes_total);
 	parameters->dfree_inodes_percent = 100 - parameters->dused_inodes_percent;
