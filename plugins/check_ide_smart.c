@@ -39,6 +39,8 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "common.h"
 #include "utils.h"
+#include "check_ide_smart.d/config.h"
+#include "states.h"
 
 static void print_help(void);
 void print_usage(void);
@@ -46,6 +48,7 @@ void print_usage(void);
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+
 #ifdef __linux__
 #	include <linux/hdreg.h>
 #	include <linux/types.h>
@@ -133,25 +136,20 @@ enum SmartCommand {
 	SMART_CMD_AUTO_OFFLINE
 };
 
-static char *get_offline_text(int);
-static int smart_read_values(int, values_t *);
-static int nagios(values_t *, thresholds_t *);
-static void print_value(value_t *, threshold_t *);
-static void print_values(values_t *, thresholds_t *);
-static int smart_cmd_simple(int, enum SmartCommand, uint8_t, bool);
-static int smart_read_thresholds(int, thresholds_t *);
-static bool verbose = false;
+static char *get_offline_text(int /*status*/);
+static int smart_read_values(int /*fd*/, values_t * /*values*/);
+static mp_state_enum compare_values_and_thresholds(values_t * /*p*/, thresholds_t * /*t*/);
+static void print_value(value_t * /*p*/, threshold_t * /*t*/);
+static void print_values(values_t * /*p*/, thresholds_t * /*t*/);
+static mp_state_enum smart_cmd_simple(int /*fd*/, enum SmartCommand /*command*/, uint8_t /*val0*/, bool /*show_error*/);
+static int smart_read_thresholds(int /*fd*/, thresholds_t * /*thresholds*/);
+static int verbose = 0;
 
-int main(int argc, char *argv[]) {
-	char *device = NULL;
-	int o;
-	int longindex;
-	int retval = 0;
-
-	thresholds_t thresholds;
-	values_t values;
-	int fd;
-
+typedef struct {
+	int errorcode;
+	check_ide_smart_config config;
+} check_ide_smart_config_wrapper;
+static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"device", required_argument, 0, 'd'},
 									   {"immediate", no_argument, 0, 'i'},
 									   {"quiet-check", no_argument, 0, 'q'},
@@ -162,24 +160,22 @@ int main(int argc, char *argv[]) {
 									   {"version", no_argument, 0, 'V'},
 									   {0, 0, 0, 0}};
 
-	/* Parse extra opts if any */
-	argv = np_extra_opts(&argc, argv, progname);
-
-	setlocale(LC_ALL, "");
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
+	check_ide_smart_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ide_smart_init(),
+	};
 
 	while (true) {
+		int longindex = 0;
+		int option_index = getopt_long(argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
-		o = getopt_long(argc, argv, "+d:iq10nhVv", longopts, &longindex);
-
-		if (o == -1 || o == EOF || o == 1) {
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
 		}
 
-		switch (o) {
+		switch (option_index) {
 		case 'd':
-			device = optarg;
+			result.config.device = optarg;
 			break;
 		case 'q':
 			fprintf(stderr, "%s\n", _("DEPRECATION WARNING: the -q switch (quiet output) is no longer \"quiet\"."));
@@ -189,63 +185,82 @@ int main(int argc, char *argv[]) {
 		case '1':
 		case '0':
 			printf("%s\n", _("SMART commands are broken and have been disabled (See Notes in --help)."));
-			return STATE_CRITICAL;
+			result.errorcode = ERROR;
+			return result;
 			break;
 		case 'n':
 			fprintf(stderr, "%s\n", _("DEPRECATION WARNING: the -n switch (Nagios-compatible output) is now the"));
 			fprintf(stderr, "%s\n", _("default and will be removed from future releases."));
 			break;
 		case 'v': /* verbose */
-			verbose = true;
+			verbose++;
 			break;
 		case 'h':
 			print_help();
-			return STATE_UNKNOWN;
+			exit(STATE_UNKNOWN);
 		case 'V':
 			print_revision(progname, NP_VERSION);
-			return STATE_UNKNOWN;
+			exit(STATE_UNKNOWN);
 		default:
 			usage5();
 		}
+		if (optind < argc) {
+			result.config.device = argv[optind];
+		}
+
+		if (!result.config.device) {
+			print_help();
+			exit(STATE_UNKNOWN);
+		}
+	}
+	return result;
+}
+
+int main(int argc, char *argv[]) {
+	setlocale(LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+
+	/* Parse extra opts if any */
+	argv = np_extra_opts(&argc, argv, progname);
+
+	check_ide_smart_config_wrapper tmp_config = process_arguments(argc, argv);
+
+	if (tmp_config.errorcode != OK) {
+		die(STATE_UNKNOWN, _("Failed to parse commandline"));
 	}
 
-	if (optind < argc) {
-		device = argv[optind];
-	}
+	check_ide_smart_config config = tmp_config.config;
 
-	if (!device) {
-		print_help();
-		return STATE_UNKNOWN;
-	}
+	int device_file_descriptor = open(config.device, OPEN_MODE);
 
-	fd = open(device, OPEN_MODE);
-
-	if (fd < 0) {
-		printf(_("CRITICAL - Couldn't open device %s: %s\n"), device, strerror(errno));
+	if (device_file_descriptor < 0) {
+		printf(_("CRITICAL - Couldn't open device %s: %s\n"), config.device, strerror(errno));
 		return STATE_CRITICAL;
 	}
 
-	if (smart_cmd_simple(fd, SMART_CMD_ENABLE, 0, false)) {
+	if (smart_cmd_simple(device_file_descriptor, SMART_CMD_ENABLE, 0, false)) {
 		printf(_("CRITICAL - SMART_CMD_ENABLE\n"));
 		return STATE_CRITICAL;
 	}
 
-	smart_read_values(fd, &values);
-	smart_read_thresholds(fd, &thresholds);
-	retval = nagios(&values, &thresholds);
+	values_t values;
+	smart_read_values(device_file_descriptor, &values);
+	thresholds_t thresholds;
+	smart_read_thresholds(device_file_descriptor, &thresholds);
+	mp_state_enum retval = compare_values_and_thresholds(&values, &thresholds);
 	if (verbose) {
 		print_values(&values, &thresholds);
 	}
 
-	close(fd);
+	close(device_file_descriptor);
 	return retval;
 }
 
 char *get_offline_text(int status) {
-	int i;
-	for (i = 0; offline_status_text[i].text; i++) {
-		if (offline_status_text[i].value == status) {
-			return offline_status_text[i].text;
+	for (int index = 0; offline_status_text[index].text; index++) {
+		if (offline_status_text[index].value == status) {
+			return offline_status_text[index].text;
 		}
 	}
 	return "UNKNOWN";
@@ -253,16 +268,16 @@ char *get_offline_text(int status) {
 
 int smart_read_values(int fd, values_t *values) {
 #ifdef __linux__
-	int e;
+	int errno_storage;
 	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_VALUES;
 	args[3] = 1;
 	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
-		e = errno;
+		errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_VALUES: %s\n"), strerror(errno));
-		return e;
+		return errno_storage;
 	}
 	memcpy(values, args + 4, 512);
 #endif /* __linux__ */
@@ -298,7 +313,7 @@ int smart_read_values(int fd, values_t *values) {
 	return 0;
 }
 
-int nagios(values_t *p, thresholds_t *t) {
+mp_state_enum compare_values_and_thresholds(values_t *p, thresholds_t *t) {
 	value_t *value = p->values;
 	threshold_t *threshold = t->thresholds;
 	int status = OPERATIONAL;
@@ -307,8 +322,7 @@ int nagios(values_t *p, thresholds_t *t) {
 	int failed = 0;
 	int passed = 0;
 	int total = 0;
-	int i;
-	for (i = 0; i < NR_ATTRIBUTES; i++) {
+	for (int i = 0; i < NR_ATTRIBUTES; i++) {
 		if (value->id && threshold->id && value->id == threshold->id) {
 			if (value->value < threshold->threshold) {
 				++failed;
@@ -327,6 +341,7 @@ int nagios(values_t *p, thresholds_t *t) {
 		++value;
 		++threshold;
 	}
+
 	switch (status) {
 	case PREFAILURE:
 		printf(_("CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"), prefailure, prefailure > 1 ? 's' : ' ', failed,
@@ -371,8 +386,8 @@ void print_values(values_t *p, thresholds_t *t) {
 		   p->smart_capability & 1 ? "SaveOnStandBy" : "", p->smart_capability & 2 ? "AutoSave" : "");
 }
 
-int smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_error) {
-	int e = STATE_UNKNOWN;
+mp_state_enum smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_error) {
+	mp_state_enum result = STATE_UNKNOWN;
 #ifdef __linux__
 	uint8_t args[4];
 	args[0] = WIN_SMART;
@@ -380,12 +395,12 @@ int smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_
 	args[2] = smart_command[command].value;
 	args[3] = 0;
 	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
-		e = STATE_CRITICAL;
+		result = STATE_CRITICAL;
 		if (show_error) {
 			printf(_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror(errno));
 		}
 	} else {
-		e = STATE_OK;
+		result = STATE_OK;
 		if (show_error) {
 			printf(_("OK - Command sent (%s)\n"), smart_command[command].text);
 		}
@@ -413,33 +428,33 @@ int smart_cmd_simple(int fd, enum SmartCommand command, uint8_t val0, bool show_
 	}
 
 	if (errno != 0) {
-		e = STATE_CRITICAL;
+		result = STATE_CRITICAL;
 		if (show_error) {
 			printf(_("CRITICAL - %s: %s\n"), smart_command[command].text, strerror(errno));
 		}
 	} else {
-		e = STATE_OK;
+		result = STATE_OK;
 		if (show_error) {
 			printf(_("OK - Command sent (%s)\n"), smart_command[command].text);
 		}
 	}
 
 #endif /* __NetBSD__ */
-	return e;
+	return result;
 }
 
 int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 #ifdef __linux__
-	int e;
+	int errno_storage;
 	uint8_t args[4 + 512];
 	args[0] = WIN_SMART;
 	args[1] = 0;
 	args[2] = SMART_READ_THRESHOLDS;
 	args[3] = 1;
 	if (ioctl(fd, HDIO_DRIVE_CMD, &args)) {
-		e = errno;
+		errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_THRESHOLDS: %s\n"), strerror(errno));
-		return e;
+		return errno_storage;
 	}
 	memcpy(thresholds, args + 4, 512);
 #endif /* __linux__ */
@@ -465,9 +480,9 @@ int smart_read_thresholds(int fd, thresholds_t *thresholds) {
 	}
 
 	if (errno != 0) {
-		int e = errno;
+		int errno_storage = errno;
 		printf(_("CRITICAL - SMART_READ_THRESHOLDS: %s\n"), strerror(errno));
-		return e;
+		return errno_storage;
 	}
 
 	(void)memcpy(thresholds, inbuf, 512);
