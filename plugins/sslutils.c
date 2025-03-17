@@ -201,7 +201,7 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 	time_t tm_t;
 
 	if (!certificate) {
-		printf("%s\n", _("CRITICAL - Cannot retrieve server certificate."));
+		printf("%s\n", _("CRITICAL - No server certificate present to inspect."));
 		return STATE_CRITICAL;
 	}
 
