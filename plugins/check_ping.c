@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
 #	ifdef PING_HAS_TIMEOUT
 		xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
 #	else
-		xasprintf(&cmd, rawcmd, config.max_packets, addresses[i]);
+		xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
 #	endif
 #else
-		xasprintf(&cmd, rawcmd, addresses[i], config.max_packets);
+		xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
 #endif
 
 		if (verbose >= 2) {

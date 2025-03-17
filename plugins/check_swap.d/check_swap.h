@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../common.h"
-#include "output.h"
+#include "../../lib/output.h"
+#include "../../lib/states.h"
 
 #ifndef SWAP_CONVERSION
 #	define SWAP_CONVERSION 1
@@ -26,7 +27,7 @@ typedef struct {
 
 typedef struct {
 	bool allswaps;
-	int no_swap_state;
+	mp_state_enum no_swap_state;
 	bool warn_is_set;
 	check_swap_threshold warn;
 	bool crit_is_set;
