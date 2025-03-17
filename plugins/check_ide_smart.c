@@ -204,15 +204,17 @@ static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 		default:
 			usage5();
 		}
-		if (optind < argc) {
-			result.config.device = argv[optind];
-		}
-
-		if (!result.config.device) {
-			print_help();
-			exit(STATE_UNKNOWN);
-		}
 	}
+
+	if (optind < argc) {
+		result.config.device = argv[optind];
+	}
+
+	if (result.config.device == NULL) {
+		print_help();
+		exit(STATE_UNKNOWN);
+	}
+
 	return result;
 }
 
