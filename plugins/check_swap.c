@@ -90,6 +90,14 @@ int main(int argc, char **argv) {
 		exit(STATE_UNKNOWN);
 	}
 
+	if (verbose) {
+		printf("Swap retrieval result:\n"
+			   "\tFree: %llu\n"
+			   "\tUsed: %llu\n"
+			   "\tTotal: %llu\n",
+			   data.metrics.free, data.metrics.used, data.metrics.total);
+	}
+
 	double percent_used;
 	mp_check overall = mp_check_init();
 	if (config.output_format_is_set) {
