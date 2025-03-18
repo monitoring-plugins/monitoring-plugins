@@ -153,6 +153,8 @@ NP-VERSION-FILE
 /plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
+plugins/check_disk.d/.deps/
+plugins/check_disk.d/.dirstamp
 /plugins/check_dns
 /plugins/check_dummy
 /plugins/check_fping
