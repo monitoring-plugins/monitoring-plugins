@@ -65,14 +65,6 @@ const char *email = "devel@monitoring-plugins.org";
 #	define ERROR -1
 #endif
 
-/* For long options that have no equivalent short option, use a
-   non-character as a pseudo short option, starting with CHAR_MAX + 1.  */
-enum {
-	SYNC_OPTION = CHAR_MAX + 1,
-	NO_SYNC_OPTION,
-	BLOCK_SIZE_OPTION
-};
-
 #ifdef _AIX
 #	pragma alloca
 #endif
