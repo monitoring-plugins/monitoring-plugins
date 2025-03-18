@@ -878,34 +878,22 @@ void set_all_thresholds(struct parameter_list *path, char *warn_freespace_units,
 						char *crit_freespace_percent, char *warn_usedspace_units, char *crit_usedspace_units, char *warn_usedspace_percent,
 						char *crit_usedspace_percent, char *warn_usedinodes_percent, char *crit_usedinodes_percent,
 						char *warn_freeinodes_percent, char *crit_freeinodes_percent) {
-	if (path->freespace_units != NULL) {
-		free(path->freespace_units);
-	}
+	free(path->freespace_units);
 	set_thresholds(&path->freespace_units, warn_freespace_units, crit_freespace_units);
 
-	if (path->freespace_percent != NULL) {
-		free(path->freespace_percent);
-	}
+	free(path->freespace_percent);
 	set_thresholds(&path->freespace_percent, warn_freespace_percent, crit_freespace_percent);
 
-	if (path->usedspace_units != NULL) {
-		free(path->usedspace_units);
-	}
+	free(path->usedspace_units);
 	set_thresholds(&path->usedspace_units, warn_usedspace_units, crit_usedspace_units);
 
-	if (path->usedspace_percent != NULL) {
-		free(path->usedspace_percent);
-	}
+	free(path->usedspace_percent);
 	set_thresholds(&path->usedspace_percent, warn_usedspace_percent, crit_usedspace_percent);
 
-	if (path->usedinodes_percent != NULL) {
-		free(path->usedinodes_percent);
-	}
+	free(path->usedinodes_percent);
 	set_thresholds(&path->usedinodes_percent, warn_usedinodes_percent, crit_usedinodes_percent);
 
-	if (path->freeinodes_percent != NULL) {
-		free(path->freeinodes_percent);
-	}
+	free(path->freeinodes_percent);
 	set_thresholds(&path->freeinodes_percent, warn_freeinodes_percent, crit_freeinodes_percent);
 }
 
