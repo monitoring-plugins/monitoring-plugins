@@ -63,12 +63,46 @@ int np_add_regex(struct regex_list **list, const char *regex, int cflags) {
 		*list = new_entry;
 
 		return 0;
-	} else {
-		// regcomp failed
-		free(new_entry);
-
-		return regcomp_result;
 	}
+	// regcomp failed
+	free(new_entry);
+
+	return regcomp_result;
+}
+
+struct parameter_list parameter_list_init(const char *name) {
+	struct parameter_list result = {
+		.name = strdup(name),
+		.best_match = NULL,
+
+		.name_next = NULL,
+		.name_prev = NULL,
+
+		.freespace_units = NULL,
+		.freespace_percent = NULL,
+		.usedspace_units = NULL,
+		.usedspace_percent = NULL,
+		.usedinodes_percent = NULL,
+		.freeinodes_percent = NULL,
+
+		.group = NULL,
+		.dfree_pct = -1,
+		.dused_pct = -1,
+		.total = 0,
+		.available = 0,
+		.available_to_root = 0,
+		.used = 0,
+		.dused_units = 0,
+		.dfree_units = 0,
+		.dtotal_units = 0,
+		.inodes_total = 0,
+		.inodes_free = 0,
+		.inodes_free_to_root = 0,
+		.inodes_used = 0,
+		.dused_inodes_percent = 0,
+		.dfree_inodes_percent = 0,
+	};
+	return result;
 }
 
 /* Initialises a new parameter at the end of list */
@@ -76,36 +110,8 @@ struct parameter_list *np_add_parameter(struct parameter_list **list, const char
 	struct parameter_list *current = *list;
 	struct parameter_list *new_path;
 	new_path = (struct parameter_list *)malloc(sizeof *new_path);
-	new_path->name = (char *)malloc(strlen(name) + 1);
-	new_path->best_match = NULL;
-	new_path->name_next = NULL;
-	new_path->name_prev = NULL;
-	new_path->freespace_bytes = NULL;
-	new_path->freespace_units = NULL;
-	new_path->freespace_percent = NULL;
-	new_path->usedspace_bytes = NULL;
-	new_path->usedspace_units = NULL;
-	new_path->usedspace_percent = NULL;
-	new_path->usedinodes_percent = NULL;
-	new_path->freeinodes_percent = NULL;
-	new_path->group = NULL;
-	new_path->dfree_pct = -1;
-	new_path->dused_pct = -1;
-	new_path->total = 0;
-	new_path->available = 0;
-	new_path->available_to_root = 0;
-	new_path->used = 0;
-	new_path->dused_units = 0;
-	new_path->dfree_units = 0;
-	new_path->dtotal_units = 0;
-	new_path->inodes_total = 0;
-	new_path->inodes_free = 0;
-	new_path->inodes_free_to_root = 0;
-	new_path->inodes_used = 0;
-	new_path->dused_inodes_percent = 0;
-	new_path->dfree_inodes_percent = 0;
 
-	strcpy(new_path->name, name);
+	*new_path = parameter_list_init(name);
 
 	if (current == NULL) {
 		*list = new_path;
@@ -125,18 +131,22 @@ struct parameter_list *np_del_parameter(struct parameter_list *item, struct para
 	if (item == NULL) {
 		return NULL;
 	}
+
 	struct parameter_list *next;
 
-	if (item->name_next)
+	if (item->name_next) {
 		next = item->name_next;
-	else
+	} else {
 		next = NULL;
+	}
 
-	if (next)
+	if (next) {
 		next->name_prev = prev;
+	}
 
-	if (prev)
+	if (prev) {
 		prev->name_next = next;
+	}
 
 	if (item->name) {
 		free(item->name);
@@ -148,43 +158,42 @@ struct parameter_list *np_del_parameter(struct parameter_list *item, struct para
 
 /* returns a pointer to the struct found in the list */
 struct parameter_list *np_find_parameter(struct parameter_list *list, const char *name) {
-	struct parameter_list *temp_list;
-	for (temp_list = list; temp_list; temp_list = temp_list->name_next) {
-		if (!strcmp(temp_list->name, name))
+	for (struct parameter_list *temp_list = list; temp_list; temp_list = temp_list->name_next) {
+		if (!strcmp(temp_list->name, name)) {
 			return temp_list;
+		}
 	}
 
 	return NULL;
 }
 
 void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount_list, bool exact) {
-	struct parameter_list *d;
-	for (d = desired; d; d = d->name_next) {
+	for (struct parameter_list *d = desired; d; d = d->name_next) {
 		if (!d->best_match) {
-			struct mount_entry *me;
+			struct mount_entry *mount_entry;
 			size_t name_len = strlen(d->name);
 			size_t best_match_len = 0;
 			struct mount_entry *best_match = NULL;
 			struct fs_usage fsp;
 
 			/* set best match if path name exactly matches a mounted device name */
-			for (me = mount_list; me; me = me->me_next) {
-				if (strcmp(me->me_devname, d->name) == 0) {
-					if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
-						best_match = me;
+			for (mount_entry = mount_list; mount_entry; mount_entry = mount_entry->me_next) {
+				if (strcmp(mount_entry->me_devname, d->name) == 0) {
+					if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >= 0) {
+						best_match = mount_entry;
 					}
 				}
 			}
 
 			/* set best match by directory name if no match was found by devname */
 			if (!best_match) {
-				for (me = mount_list; me; me = me->me_next) {
-					size_t len = strlen(me->me_mountdir);
-					if ((!exact &&
-						 (best_match_len <= len && len <= name_len && (len == 1 || strncmp(me->me_mountdir, d->name, len) == 0))) ||
-						(exact && strcmp(me->me_mountdir, d->name) == 0)) {
-						if (get_fs_usage(me->me_mountdir, me->me_devname, &fsp) >= 0) {
-							best_match = me;
+				for (mount_entry = mount_list; mount_entry; mount_entry = mount_entry->me_next) {
+					size_t len = strlen(mount_entry->me_mountdir);
+					if ((!exact && (best_match_len <= len && len <= name_len &&
+									(len == 1 || strncmp(mount_entry->me_mountdir, d->name, len) == 0))) ||
+						(exact && strcmp(mount_entry->me_mountdir, d->name) == 0)) {
+						if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >= 0) {
+							best_match = mount_entry;
 							best_match_len = len;
 						}
 					}
@@ -202,12 +211,10 @@ void np_set_best_match(struct parameter_list *desired, struct mount_entry *mount
 
 /* Returns true if name is in list */
 bool np_find_name(struct name_list *list, const char *name) {
-	const struct name_list *n;
-
 	if (list == NULL || name == NULL) {
 		return false;
 	}
-	for (n = list; n; n = n->next) {
+	for (struct name_list *n = list; n; n = n->next) {
 		if (!strcmp(name, n->name)) {
 			return true;
 		}
@@ -217,18 +224,16 @@ bool np_find_name(struct name_list *list, const char *name) {
 
 /* Returns true if name is in list */
 bool np_find_regmatch(struct regex_list *list, const char *name) {
-	int len;
-	regmatch_t m;
-
 	if (name == NULL) {
 		return false;
 	}
 
-	len = strlen(name);
+	int len = strlen(name);
 
 	for (; list; list = list->next) {
 		/* Emulate a full match as if surrounded with ^( )$
 		   by checking whether the match spans the whole name */
+		regmatch_t m;
 		if (!regexec(&list->regex, name, 1, &m, 0) && m.rm_so == 0 && m.rm_eo == len) {
 			return true;
 		}
@@ -238,8 +243,7 @@ bool np_find_regmatch(struct regex_list *list, const char *name) {
 }
 
 bool np_seen_name(struct name_list *list, const char *name) {
-	const struct name_list *s;
-	for (s = list; s; s = s->next) {
+	for (struct name_list *s = list; s; s = s->next) {
 		if (!strcmp(s->name, name)) {
 			return true;
 		}
@@ -248,8 +252,5 @@ bool np_seen_name(struct name_list *list, const char *name) {
 }
 
 bool np_regex_match_mount_entry(struct mount_entry *me, regex_t *re) {
-	if (regexec(re, me->me_devname, (size_t)0, NULL, 0) == 0 || regexec(re, me->me_mountdir, (size_t)0, NULL, 0) == 0) {
-		return true;
-	}
-	return false;
+	return ((regexec(re, me->me_devname, (size_t)0, NULL, 0) == 0) || (regexec(re, me->me_mountdir, (size_t)0, NULL, 0) == 0));
 }
