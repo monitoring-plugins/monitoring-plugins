@@ -55,6 +55,7 @@ EXTRA_DIST = t \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_radius.d \
+			 check_disk.d \
 			 check_time.d \
 			 check_nagios.d \
 			 check_dbi.d \
@@ -119,6 +120,7 @@ check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) $(URIPARSERLIBS) picohtt
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)
+check_disk_SOURCES = check_disk.c check_disk.d/utils_disk.c
 check_dns_LDADD = $(NETLIBS)
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS)
