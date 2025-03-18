@@ -24,21 +24,9 @@
 void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc);
 
 int main(int argc, char **argv) {
-	struct name_list *exclude_filesystem = NULL;
-	struct name_list *exclude_fstype = NULL;
-	struct name_list *dummy_mountlist = NULL;
-	struct name_list *temp_name;
-	struct parameter_list *paths = NULL;
-	struct parameter_list *p, *prev = NULL, *last = NULL;
-
-	struct mount_entry *dummy_mount_list;
-	struct mount_entry *me;
-	struct mount_entry **mtail = &dummy_mount_list;
-	int cflags = REG_NOSUB | REG_EXTENDED;
-	int found = 0, count = 0;
-
 	plan_tests(33);
 
+	struct name_list *exclude_filesystem = NULL;
 	ok(np_find_name(exclude_filesystem, "/var/log") == false, "/var/log not in list");
 	np_add_name(&exclude_filesystem, "/var/log");
 	ok(np_find_name(exclude_filesystem, "/var/log") == true, "is in list now");
@@ -47,6 +35,7 @@ int main(int argc, char **argv) {
 	ok(np_find_name(exclude_filesystem, "/home") == true, "is in list now");
 	ok(np_find_name(exclude_filesystem, "/var/log") == true, "/var/log still in list");
 
+	struct name_list *exclude_fstype = NULL;
 	ok(np_find_name(exclude_fstype, "iso9660") == false, "iso9660 not in list");
 	np_add_name(&exclude_fstype, "iso9660");
 	ok(np_find_name(exclude_fstype, "iso9660") == true, "is in list now");
@@ -59,7 +48,9 @@ int main(int argc, char **argv) {
 	}
 	*/
 
-	me = (struct mount_entry *)malloc(sizeof *me);
+	struct mount_entry *dummy_mount_list;
+	struct mount_entry **mtail = &dummy_mount_list;
+	struct mount_entry *me = (struct mount_entry *)malloc(sizeof *me);
 	me->me_devname = strdup("/dev/c0t0d0s0");
 	me->me_mountdir = strdup("/");
 	*mtail = me;
@@ -77,6 +68,7 @@ int main(int argc, char **argv) {
 	*mtail = me;
 	mtail = &me->me_next;
 
+	int cflags = REG_NOSUB | REG_EXTENDED;
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/"), cflags, 3, strdup("a"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/dev"), cflags, 3, strdup("regex on dev names:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/foo"), cflags, 0, strdup("regex on non existent dev/path:"));
@@ -89,6 +81,7 @@ int main(int argc, char **argv) {
 	np_test_mount_entry_regex(dummy_mount_list, strdup("(/home)|(/var)"), cflags, 2, strdup("grouped regex pathname match:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("(/homE)|(/Var)"), cflags | REG_ICASE, 2, strdup("grouped regi pathname match:"));
 
+	struct parameter_list *paths = NULL;
 	np_add_parameter(&paths, "/home/groups");
 	np_add_parameter(&paths, "/var");
 	np_add_parameter(&paths, "/tmp");
@@ -96,7 +89,7 @@ int main(int argc, char **argv) {
 	np_add_parameter(&paths, "/dev/c2t0d0s0");
 
 	np_set_best_match(paths, dummy_mount_list, false);
-	for (p = paths; p; p = p->name_next) {
+	for (struct parameter_list *p = paths; p; p = p->name_next) {
 		struct mount_entry *temp_me;
 		temp_me = p->best_match;
 		if (!strcmp(p->name, "/home/groups")) {
@@ -120,7 +113,7 @@ int main(int argc, char **argv) {
 	np_add_parameter(&paths, "/home");
 
 	np_set_best_match(paths, dummy_mount_list, true);
-	for (p = paths; p; p = p->name_next) {
+	for (struct parameter_list *p = paths; p; p = p->name_next) {
 		if (!strcmp(p->name, "/home/groups")) {
 			ok(!p->best_match, "/home/groups correctly not found");
 		} else if (!strcmp(p->name, "/var")) {
@@ -134,59 +127,68 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	bool found = false;
 	/* test deleting first element in paths */
 	paths = np_del_parameter(paths, NULL);
-	for (p = paths; p; p = p->name_next) {
-		if (!strcmp(p->name, "/home/groups"))
-			found = 1;
+	for (struct parameter_list *p = paths; p; p = p->name_next) {
+		if (!strcmp(p->name, "/home/groups")) {
+			found = true;
+		}
 	}
-	ok(found == 0, "first element successfully deleted");
-	found = 0;
+	ok(!found, "first element successfully deleted");
+	found = false;
 
-	p = paths;
+	struct parameter_list *prev = NULL;
+	struct parameter_list *p = paths;
 	while (p) {
-		if (!strcmp(p->name, "/tmp"))
+		if (!strcmp(p->name, "/tmp")) {
 			p = np_del_parameter(p, prev);
-		else {
+		} else {
 			prev = p;
 			p = p->name_next;
 		}
 	}
 
-	for (p = paths; p; p = p->name_next) {
-		if (!strcmp(p->name, "/tmp"))
-			found = 1;
-		if (p->name_next)
-			prev = p;
-		else
-			last = p;
+	struct parameter_list *last = NULL;
+	for (struct parameter_list *path = paths; path; path = path->name_next) {
+		if (!strcmp(path->name, "/tmp")) {
+			found = true;
+		}
+		if (path->name_next) {
+			prev = path;
+		} else {
+			last = path;
+		}
 	}
-	ok(found == 0, "/tmp element successfully deleted");
+	ok(!found, "/tmp element successfully deleted");
 
+	int count = 0;
 	p = np_del_parameter(last, prev);
 	for (p = paths; p; p = p->name_next) {
-		if (!strcmp(p->name, "/home"))
-			found = 1;
+		if (!strcmp(p->name, "/home")) {
+			found = true;
+		}
 		last = p;
 		count++;
 	}
-	ok(found == 0, "last (/home) element successfully deleted");
+	ok(!found, "last (/home) element successfully deleted");
 	ok(count == 2, "two elements remaining");
 
 	return exit_status();
 }
 
 void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc) {
-	int matches = 0;
-	regex_t re;
-	struct mount_entry *me;
-	if (regcomp(&re, regstr, cflags) == 0) {
-		for (me = dummy_mount_list; me; me = me->me_next) {
-			if (np_regex_match_mount_entry(me, &re))
+	regex_t regex;
+	if (regcomp(&regex, regstr, cflags) == 0) {
+		int matches = 0;
+		for (struct mount_entry *me = dummy_mount_list; me; me = me->me_next) {
+			if (np_regex_match_mount_entry(me, &regex)) {
 				matches++;
+			}
 		}
 		ok(matches == expect, "%s '%s' matched %i/3 entries. ok: %i/3", desc, regstr, expect, matches);
 
-	} else
+	} else {
 		ok(false, "regex '%s' not compilable", regstr);
+	}
 }
