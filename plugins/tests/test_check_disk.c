@@ -17,8 +17,8 @@
  *****************************************************************************/
 
 #include "common.h"
-#include "utils_disk.h"
-#include "tap.h"
+#include "../check_disk.d/utils_disk.h"
+#include "../../tap/tap.h"
 #include "regex.h"
 
 void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc);

@@ -26,9 +26,9 @@
  *
  *****************************************************************************/
 
-#include "common.h"
+#include "../common.h"
 #include "utils_disk.h"
-#include "gl/fsusage.h"
+#include "../../gl/fsusage.h"
 #include <string.h>
 
 void np_add_name(struct name_list **list, const char *name) {
