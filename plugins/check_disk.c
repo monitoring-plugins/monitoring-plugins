@@ -43,13 +43,15 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 #include <assert.h>
-#include "popen.h"
-#include "utils.h"
-#include "utils_disk.h"
 #include <stdarg.h>
-#include "fsusage.h"
-#include "mountlist.h"
+#include <stdint.h>
 #include <float.h>
+#include "./popen.h"
+#include "./utils.h"
+#include "./check_disk.d/utils_disk.h"
+#include "../gl/fsusage.h"
+#include "../gl/mountlist.h"
+#include "check_disk.d/config.h"
 
 #if HAVE_LIMITS_H
 #	include <limits.h>
@@ -63,27 +65,6 @@ const char *email = "devel@monitoring-plugins.org";
 #	define ERROR -1
 #endif
 
-/* If nonzero, show only local filesystems.  */
-static bool show_local_fs = false;
-
-/* If nonzero, show only local filesystems but call stat() on remote ones. */
-static bool stat_remote_fs = false;
-
-/* Linked list of filesystem types to omit.
-   If the list is empty, don't exclude any types.  */
-static struct regex_list *fs_exclude_list = NULL;
-
-/* Linked list of filesystem types to check.
-   If the list is empty, include all types.  */
-static struct regex_list *fs_include_list;
-
-static struct name_list *dp_exclude_list;
-
-static struct parameter_list *path_select_list = NULL;
-
-/* Linked list of mounted filesystems. */
-static struct mount_entry *mount_list;
-
 /* For long options that have no equivalent short option, use a
    non-character as a pseudo short option, starting with CHAR_MAX + 1.  */
 enum {
@@ -96,40 +77,27 @@ enum {
 #	pragma alloca
 #endif
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static void set_all_thresholds(struct parameter_list *path);
+typedef struct {
+	int errorcode;
+	check_disk_config config;
+} check_disk_config_wrapper;
+static check_disk_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static void set_all_thresholds(struct parameter_list *path, char * /*warn_freespace_units*/, char * /*crit_freespace_units*/,
+							   char * /*warn_freespace_percent*/, char * /*crit_freespace_percent*/, char * /*warn_usedspace_units*/,
+							   char * /*crit_usedspace_units*/, char * /*warn_usedspace_percent*/, char * /*crit_usedspace_percent*/,
+							   char * /*warn_usedinodes_percent*/, char * /*crit_usedinodes_percent*/, char * /*warn_freeinodes_percent*/,
+							   char * /*crit_freeinodes_percent*/);
 static void print_help(void);
 void print_usage(void);
 static double calculate_percent(uintmax_t /*value*/, uintmax_t /*total*/);
-static bool stat_path(struct parameter_list * /*parameters*/);
-static void get_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp);
-static void get_path_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp);
+static bool stat_path(struct parameter_list * /*parameters*/, bool /*ignore_missing*/);
+static void get_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp, bool /*ignore_missing*/,
+					  bool /*freespace_ignore_reserved*/, uintmax_t /*mult*/, struct parameter_list * /*path_select_list*/,
+					  struct name_list * /*seen*/);
+static void get_path_stats(struct parameter_list * /*parameters*/, struct fs_usage *fsp, bool /*freespace_ignore_reserved*/,
+						   uintmax_t /*mult*/, struct name_list * /*seen*/);
 
-static char *units;
-static uintmax_t mult = 1024 * 1024;
 static int verbose = 0;
-static bool erronly = false;
-static bool display_mntp = false;
-static bool exact_match = false;
-static bool ignore_missing = false;
-static bool freespace_ignore_reserved = false;
-static bool display_inodes_perfdata = false;
-static char *warn_freespace_units = NULL;
-static char *crit_freespace_units = NULL;
-static char *warn_freespace_percent = NULL;
-static char *crit_freespace_percent = NULL;
-static char *warn_usedspace_units = NULL;
-static char *crit_usedspace_units = NULL;
-static char *warn_usedspace_percent = NULL;
-static char *crit_usedspace_percent = NULL;
-static char *warn_usedinodes_percent = NULL;
-static char *crit_usedinodes_percent = NULL;
-static char *warn_freeinodes_percent = NULL;
-static char *crit_freeinodes_percent = NULL;
-static bool path_selected = false;
-static bool path_ignored = false;
-static char *group = NULL;
-static struct name_list *seen = NULL;
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -140,74 +108,78 @@ int main(int argc, char **argv) {
 	char mountdir[32];
 #endif
 
-	mount_list = read_file_system_list(false);
-
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_disk_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+	check_disk_config config = tmp_config.config;
 
 	/* If a list of paths has not been selected, find entire
 	   mount list and create list of paths
 	 */
-	if (!path_selected && !path_ignored) {
-		for (struct mount_entry *me = mount_list; me; me = me->me_next) {
+	if (!config.path_selected && !config.path_ignored) {
+		for (struct mount_entry *me = config.mount_list; me; me = me->me_next) {
 			struct parameter_list *path = NULL;
-			if (!(path = np_find_parameter(path_select_list, me->me_mountdir))) {
-				path = np_add_parameter(&path_select_list, me->me_mountdir);
+			if (!(path = np_find_parameter(config.path_select_list, me->me_mountdir))) {
+				path = np_add_parameter(&config.path_select_list, me->me_mountdir);
 			}
 			path->best_match = me;
-			path->group = group;
-			set_all_thresholds(path);
+			path->group = config.group;
+			set_all_thresholds(path, config.warn_freespace_units, config.crit_freespace_units, config.warn_freespace_percent,
+							   config.crit_freespace_percent, config.warn_usedspace_units, config.crit_usedspace_units,
+							   config.warn_usedspace_percent, config.crit_usedspace_percent, config.warn_usedinodes_percent,
+							   config.crit_usedinodes_percent, config.warn_freeinodes_percent, config.crit_freeinodes_percent);
 		}
 	}
 
-	if (!path_ignored) {
-		np_set_best_match(path_select_list, mount_list, exact_match);
+	if (!config.path_ignored) {
+		np_set_best_match(config.path_select_list, config.mount_list, config.exact_match);
 	}
 
 	/* Error if no match found for specified paths */
-	struct parameter_list *temp_list = path_select_list;
+	struct parameter_list *temp_list = config.path_select_list;
 
 	char *ignored = strdup("");
-	while (path_select_list) {
-		if (!path_select_list->best_match && ignore_missing) {
+	while (config.path_select_list) {
+		if (!config.path_select_list->best_match && config.ignore_missing) {
 			/* If the first element will be deleted, the temp_list must be updated with the new start address as well */
-			if (path_select_list == temp_list) {
-				temp_list = path_select_list->name_next;
+			if (config.path_select_list == temp_list) {
+				temp_list = config.path_select_list->name_next;
 			}
 			/* Add path argument to list of ignored paths to inform about missing paths being ignored and not alerted */
-			xasprintf(&ignored, "%s %s;", ignored, path_select_list->name);
+			xasprintf(&ignored, "%s %s;", ignored, config.path_select_list->name);
 			/* Delete the path from the list so that it is not stat-checked later in the code. */
-			path_select_list = np_del_parameter(path_select_list, path_select_list->name_prev);
-		} else if (!path_select_list->best_match) {
+			config.path_select_list = np_del_parameter(config.path_select_list, config.path_select_list->name_prev);
+		} else if (!config.path_select_list->best_match) {
 			/* Without --ignore-missing option, exit with Critical state. */
-			die(STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), path_select_list->name);
+			die(STATE_CRITICAL, _("DISK %s: %s not found\n"), _("CRITICAL"), config.path_select_list->name);
 		} else {
 			/* Continue jumping through the list */
-			path_select_list = path_select_list->name_next;
+			config.path_select_list = config.path_select_list->name_next;
 		}
 	}
 
-	path_select_list = temp_list;
+	config.path_select_list = temp_list;
 
-	int result = STATE_UNKNOWN;
-	if (!path_select_list && ignore_missing) {
+	mp_state_enum result = STATE_UNKNOWN;
+	if (!config.path_select_list && config.ignore_missing) {
 		result = STATE_OK;
 		if (verbose >= 2) {
 			printf("None of the provided paths were found\n");
 		}
 	}
 
-	mp_state_enum disk_result = STATE_UNKNOWN;
+	mp_state_enum filesystem_result = STATE_UNKNOWN;
 	char *perf = strdup("");
 	char *perf_ilabel = strdup("");
 	char *output = strdup("");
 	struct parameter_list *path = NULL;
 	/* Process for every path in list */
-	for (path = path_select_list; path; path = path->name_next) {
+	for (path = config.path_select_list; path; path = path->name_next) {
 		if (verbose >= 3 && path->freespace_percent->warning != NULL && path->freespace_percent->critical != NULL) {
 			printf("Thresholds(pct) for %s warn: %f crit %f\n", path->name, path->freespace_percent->warning->end,
 				   path->freespace_percent->critical->end);
@@ -217,8 +189,8 @@ int main(int argc, char **argv) {
 			printf("Group of %s: %s\n", path->name, path->group);
 		}
 
-		// reset disk result
-		disk_result = STATE_UNKNOWN;
+		// reset filesystem result
+		filesystem_result = STATE_UNKNOWN;
 
 		struct mount_entry *mount_entry = path->best_match;
 
@@ -238,16 +210,16 @@ int main(int argc, char **argv) {
 		/* Filters */
 
 		/* Remove filesystems already seen */
-		if (np_seen_name(seen, mount_entry->me_mountdir)) {
+		if (np_seen_name(config.seen, mount_entry->me_mountdir)) {
 			continue;
 		}
-		np_add_name(&seen, mount_entry->me_mountdir);
+		np_add_name(&config.seen, mount_entry->me_mountdir);
 
 		if (path->group == NULL) {
 			/* Skip remote filesystems if we're not interested in them */
-			if (mount_entry->me_remote && show_local_fs) {
-				if (stat_remote_fs) {
-					if (!stat_path(path) && ignore_missing) {
+			if (mount_entry->me_remote && config.show_local_fs) {
+				if (config.stat_remote_fs) {
+					if (!stat_path(path, config.ignore_missing) && config.ignore_missing) {
 						result = STATE_OK;
 						xasprintf(&ignored, "%s %s;", ignored, path->name);
 					}
@@ -255,22 +227,22 @@ int main(int argc, char **argv) {
 				continue;
 				/* Skip pseudo fs's if we haven't asked for all fs's */
 			}
-			if (fs_exclude_list && np_find_regmatch(fs_exclude_list, mount_entry->me_type)) {
+			if (config.fs_exclude_list && np_find_regmatch(config.fs_exclude_list, mount_entry->me_type)) {
 				continue;
 				/* Skip excluded fs's */
 			}
-			if (dp_exclude_list &&
-				(np_find_name(dp_exclude_list, mount_entry->me_devname) || np_find_name(dp_exclude_list, mount_entry->me_mountdir))) {
+			if (config.device_path_exclude_list && (np_find_name(config.device_path_exclude_list, mount_entry->me_devname) ||
+													np_find_name(config.device_path_exclude_list, mount_entry->me_mountdir))) {
 				continue;
 				/* Skip not included fstypes */
 			}
-			if (fs_include_list && !np_find_regmatch(fs_include_list, mount_entry->me_type)) {
+			if (config.fs_include_list && !np_find_regmatch(config.fs_include_list, mount_entry->me_type)) {
 				continue;
 			}
 		}
 
-		if (!stat_path(path)) {
-			if (ignore_missing) {
+		if (!stat_path(path, config.ignore_missing)) {
+			if (config.ignore_missing) {
 				result = STATE_OK;
 				xasprintf(&ignored, "%s %s;", ignored, path->name);
 			}
@@ -281,13 +253,14 @@ int main(int argc, char **argv) {
 		get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp);
 
 		if (fsp.fsu_blocks && strcmp("none", mount_entry->me_mountdir)) {
-			get_stats(path, &fsp);
+			get_stats(path, &fsp, config.ignore_missing, config.freespace_ignore_reserved, config.mult, config.path_select_list,
+					  config.seen);
 
 			if (verbose >= 3) {
 				printf("For %s, used_pct=%f free_pct=%f used_units=%lu free_units=%lu total_units=%lu used_inodes_pct=%f "
 					   "free_inodes_pct=%f fsp.fsu_blocksize=%lu mult=%lu\n",
 					   mount_entry->me_mountdir, path->dused_pct, path->dfree_pct, path->dused_units, path->dfree_units, path->dtotal_units,
-					   path->dused_inodes_percent, path->dfree_inodes_percent, fsp.fsu_blocksize, mult);
+					   path->dused_inodes_percent, path->dfree_inodes_percent, fsp.fsu_blocksize, config.mult);
 			}
 
 			/* Threshold comparisons */
@@ -296,39 +269,39 @@ int main(int argc, char **argv) {
 			if (verbose >= 3) {
 				printf("Freespace_units result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
 			temp_result = get_status(path->dfree_pct, path->freespace_percent);
 			if (verbose >= 3) {
 				printf("Freespace%% result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
 			temp_result = get_status(path->dused_units, path->usedspace_units);
 			if (verbose >= 3) {
 				printf("Usedspace_units result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
 			temp_result = get_status(path->dused_pct, path->usedspace_percent);
 			if (verbose >= 3) {
 				printf("Usedspace_percent result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
 			temp_result = get_status(path->dused_inodes_percent, path->usedinodes_percent);
 			if (verbose >= 3) {
 				printf("Usedinodes_percent result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
 			temp_result = get_status(path->dfree_inodes_percent, path->freeinodes_percent);
 			if (verbose >= 3) {
 				printf("Freeinodes_percent result=%d\n", temp_result);
 			}
-			disk_result = max_state(disk_result, temp_result);
+			filesystem_result = max_state(filesystem_result, temp_result);
 
-			result = max_state(result, disk_result);
+			result = max_state(result, filesystem_result);
 
 			/* What a mess of units. The output shows free space, the perf data shows used space. Yikes!
 			   Hack here. Trying to get warn/crit levels from freespace_(units|percent) for perf
@@ -339,31 +312,32 @@ int main(int argc, char **argv) {
 			uint64_t warning_high_tide = UINT64_MAX;
 
 			if (path->freespace_units->warning != NULL) {
-				warning_high_tide = (path->dtotal_units - path->freespace_units->warning->end) * mult;
+				warning_high_tide = (path->dtotal_units - path->freespace_units->warning->end) * config.mult;
 			}
 			if (path->freespace_percent->warning != NULL) {
-				warning_high_tide =
-					min(warning_high_tide, (uint64_t)((1.0 - path->freespace_percent->warning->end / 100) * (path->dtotal_units * mult)));
+				warning_high_tide = min(warning_high_tide, (uint64_t)((1.0 - path->freespace_percent->warning->end / 100) *
+																	  (path->dtotal_units * config.mult)));
 			}
 
 			uint64_t critical_high_tide = UINT64_MAX;
 
 			if (path->freespace_units->critical != NULL) {
-				critical_high_tide = (path->dtotal_units - path->freespace_units->critical->end) * mult;
+				critical_high_tide = (path->dtotal_units - path->freespace_units->critical->end) * config.mult;
 			}
 			if (path->freespace_percent->critical != NULL) {
-				critical_high_tide =
-					min(critical_high_tide, (uint64_t)((1.0 - path->freespace_percent->critical->end / 100) * (path->dtotal_units * mult)));
+				critical_high_tide = min(critical_high_tide, (uint64_t)((1.0 - path->freespace_percent->critical->end / 100) *
+																		(path->dtotal_units * config.mult)));
 			}
 
 			/* Nb: *_high_tide are unset when == UINT64_MAX */
 			xasprintf(&perf, "%s %s", perf,
-					  perfdata_uint64((!strcmp(mount_entry->me_mountdir, "none") || display_mntp) ? mount_entry->me_devname
-																								  : mount_entry->me_mountdir,
-									  path->dused_units * mult, "B", (warning_high_tide != UINT64_MAX), warning_high_tide,
-									  (critical_high_tide != UINT64_MAX), critical_high_tide, true, 0, true, path->dtotal_units * mult));
+					  perfdata_uint64((!strcmp(mount_entry->me_mountdir, "none") || config.display_mntp) ? mount_entry->me_devname
+																										 : mount_entry->me_mountdir,
+									  path->dused_units * config.mult, "B", (warning_high_tide != UINT64_MAX), warning_high_tide,
+									  (critical_high_tide != UINT64_MAX), critical_high_tide, true, 0, true,
+									  path->dtotal_units * config.mult));
 
-			if (display_inodes_perfdata) {
+			if (config.display_inodes_perfdata) {
 				/* *_high_tide must be reinitialized at each run */
 				warning_high_tide = UINT64_MAX;
 				critical_high_tide = UINT64_MAX;
@@ -378,43 +352,46 @@ int main(int argc, char **argv) {
 				}
 
 				xasprintf(&perf_ilabel, "%s (inodes)",
-						  (!strcmp(mount_entry->me_mountdir, "none") || display_mntp) ? mount_entry->me_devname : mount_entry->me_mountdir);
+						  (!strcmp(mount_entry->me_mountdir, "none") || config.display_mntp) ? mount_entry->me_devname
+																							 : mount_entry->me_mountdir);
 				/* Nb: *_high_tide are unset when == UINT64_MAX */
 				xasprintf(&perf, "%s %s", perf,
 						  perfdata_uint64(perf_ilabel, path->inodes_used, "", (warning_high_tide != UINT64_MAX), warning_high_tide,
 										  (critical_high_tide != UINT64_MAX), critical_high_tide, true, 0, true, path->inodes_total));
 			}
 
-			if (disk_result == STATE_OK && erronly && !verbose) {
+			if (filesystem_result == STATE_OK && config.erronly && !verbose) {
 				continue;
 			}
 
 			char *flag_header = NULL;
-			if (disk_result && verbose >= 1) {
-				xasprintf(&flag_header, " %s [", state_text(disk_result));
+			if (filesystem_result && verbose >= 1) {
+				xasprintf(&flag_header, " %s [", state_text(filesystem_result));
 			} else {
 				xasprintf(&flag_header, "");
 			}
 			xasprintf(&output, "%s%s %s %llu%s (%.1f%%", output, flag_header,
-					  (!strcmp(mount_entry->me_mountdir, "none") || display_mntp) ? mount_entry->me_devname : mount_entry->me_mountdir,
-					  path->dfree_units, units, path->dfree_pct);
+					  (!strcmp(mount_entry->me_mountdir, "none") || config.display_mntp) ? mount_entry->me_devname
+																						 : mount_entry->me_mountdir,
+					  path->dfree_units, config.units, path->dfree_pct);
 			if (path->dused_inodes_percent < 0) {
-				xasprintf(&output, "%s inode=-)%s;", output, (disk_result ? "]" : ""));
+				xasprintf(&output, "%s inode=-)%s;", output, (filesystem_result ? "]" : ""));
 			} else {
-				xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent, ((disk_result && verbose >= 1) ? "]" : ""));
+				xasprintf(&output, "%s inode=%.0f%%)%s;", output, path->dfree_inodes_percent,
+						  ((filesystem_result && verbose >= 1) ? "]" : ""));
 			}
 			free(flag_header);
 		}
 	}
 
 	char *preamble = " - free space:";
-	if (strcmp(output, "") == 0 && !erronly) {
+	if (strcmp(output, "") == 0 && !config.erronly) {
 		preamble = "";
 		xasprintf(&output, " - No disks were found for provided parameters");
 	}
 
 	char *ignored_preamble = " - ignored paths:";
-	printf("DISK %s%s%s%s%s|%s\n", state_text(result), ((erronly && result == STATE_OK)) ? "" : preamble, output,
+	printf("DISK %s%s%s%s%s|%s\n", state_text(result), (config.erronly && (result == STATE_OK)) ? "" : preamble, output,
 		   (strcmp(ignored, "") == 0) ? "" : ignored_preamble, ignored, perf);
 	return result;
 }
@@ -428,9 +405,16 @@ double calculate_percent(uintmax_t value, uintmax_t total) {
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_disk_config_wrapper process_arguments(int argc, char **argv) {
+
+	check_disk_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_disk_config_init(),
+	};
+
 	if (argc < 2) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	static struct option longopts[] = {{"timeout", required_argument, 0, 't'},
@@ -480,8 +464,9 @@ int process_arguments(int argc, char **argv) {
 
 	int cflags = REG_NOSUB | REG_EXTENDED;
 	int default_cflags = cflags;
+	result.config.mount_list = read_file_system_list(false);
 
-	np_add_regex(&fs_exclude_list, "iso9660", REG_EXTENDED);
+	np_add_regex(&result.config.fs_exclude_list, "iso9660", REG_EXTENDED);
 
 	while (true) {
 		int option = 0;
@@ -508,15 +493,15 @@ int process_arguments(int argc, char **argv) {
 
 			if (strstr(optarg, "%")) {
 				if (*optarg == '@') {
-					warn_freespace_percent = optarg;
+					result.config.warn_freespace_percent = optarg;
 				} else {
-					xasprintf(&warn_freespace_percent, "@%s", optarg);
+					xasprintf(&result.config.warn_freespace_percent, "@%s", optarg);
 				}
 			} else {
 				if (*optarg == '@') {
-					warn_freespace_units = optarg;
+					result.config.warn_freespace_units = optarg;
 				} else {
-					xasprintf(&warn_freespace_units, "@%s", optarg);
+					xasprintf(&result.config.warn_freespace_units, "@%s", optarg);
 				}
 			}
 			break;
@@ -533,149 +518,149 @@ int process_arguments(int argc, char **argv) {
 
 			if (strstr(optarg, "%")) {
 				if (*optarg == '@') {
-					crit_freespace_percent = optarg;
+					result.config.crit_freespace_percent = optarg;
 				} else {
-					xasprintf(&crit_freespace_percent, "@%s", optarg);
+					xasprintf(&result.config.crit_freespace_percent, "@%s", optarg);
 				}
 			} else {
 				if (*optarg == '@') {
-					crit_freespace_units = optarg;
+					result.config.crit_freespace_units = optarg;
 				} else {
-					xasprintf(&crit_freespace_units, "@%s", optarg);
+					xasprintf(&result.config.crit_freespace_units, "@%s", optarg);
 				}
 			}
 			break;
 
 		case 'W': /* warning inode threshold */
 			if (*optarg == '@') {
-				warn_freeinodes_percent = optarg;
+				result.config.warn_freeinodes_percent = optarg;
 			} else {
-				xasprintf(&warn_freeinodes_percent, "@%s", optarg);
+				xasprintf(&result.config.warn_freeinodes_percent, "@%s", optarg);
 			}
 			break;
 		case 'K': /* critical inode threshold */
 			if (*optarg == '@') {
-				crit_freeinodes_percent = optarg;
+				result.config.crit_freeinodes_percent = optarg;
 			} else {
-				xasprintf(&crit_freeinodes_percent, "@%s", optarg);
+				xasprintf(&result.config.crit_freeinodes_percent, "@%s", optarg);
 			}
 			break;
 		case 'u':
-			if (units) {
-				free(units);
-			}
+			free(result.config.units);
 			if (!strcasecmp(optarg, "bytes")) {
-				mult = (uintmax_t)1;
-				units = strdup("B");
+				result.config.mult = (uintmax_t)1;
+				result.config.units = strdup("B");
 			} else if (!strcmp(optarg, "KiB")) {
-				mult = (uintmax_t)1024;
-				units = strdup("KiB");
+				result.config.mult = (uintmax_t)1024;
+				result.config.units = strdup("KiB");
 			} else if (!strcmp(optarg, "kB")) {
-				mult = (uintmax_t)1000;
-				units = strdup("kB");
+				result.config.mult = (uintmax_t)1000;
+				result.config.units = strdup("kB");
 			} else if (!strcmp(optarg, "MiB")) {
-				mult = (uintmax_t)1024 * 1024;
-				units = strdup("MiB");
+				result.config.mult = (uintmax_t)1024 * 1024;
+				result.config.units = strdup("MiB");
 			} else if (!strcmp(optarg, "MB")) {
-				mult = (uintmax_t)1000 * 1000;
-				units = strdup("MB");
+				result.config.mult = (uintmax_t)1000 * 1000;
+				result.config.units = strdup("MB");
 			} else if (!strcmp(optarg, "GiB")) {
-				mult = (uintmax_t)1024 * 1024 * 1024;
-				units = strdup("GiB");
+				result.config.mult = (uintmax_t)1024 * 1024 * 1024;
+				result.config.units = strdup("GiB");
 			} else if (!strcmp(optarg, "GB")) {
-				mult = (uintmax_t)1000 * 1000 * 1000;
-				units = strdup("GB");
+				result.config.mult = (uintmax_t)1000 * 1000 * 1000;
+				result.config.units = strdup("GB");
 			} else if (!strcmp(optarg, "TiB")) {
-				mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
-				units = strdup("TiB");
+				result.config.mult = (uintmax_t)1024 * 1024 * 1024 * 1024;
+				result.config.units = strdup("TiB");
 			} else if (!strcmp(optarg, "TB")) {
-				mult = (uintmax_t)1000 * 1000 * 1000 * 1000;
-				units = strdup("TB");
+				result.config.mult = (uintmax_t)1000 * 1000 * 1000 * 1000;
+				result.config.units = strdup("TB");
 			} else if (!strcmp(optarg, "PiB")) {
-				mult = (uintmax_t)1024 * 1024 * 1024 * 1024 * 1024;
-				units = strdup("PiB");
+				result.config.mult = (uintmax_t)1024 * 1024 * 1024 * 1024 * 1024;
+				result.config.units = strdup("PiB");
 			} else if (!strcmp(optarg, "PB")) {
-				mult = (uintmax_t)1000 * 1000 * 1000 * 1000 * 1000;
-				units = strdup("PB");
+				result.config.mult = (uintmax_t)1000 * 1000 * 1000 * 1000 * 1000;
+				result.config.units = strdup("PB");
 			} else {
 				die(STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
-			if (units == NULL) {
+			if (result.config.units == NULL) {
 				die(STATE_UNKNOWN, _("failed allocating storage for '%s'\n"), "units");
 			}
 			break;
 		case 'k': /* display mountpoint */
-			mult = 1024;
-			if (units) {
-				free(units);
-			}
-			units = strdup("kiB");
+			result.config.mult = 1024;
+			free(result.config.units);
+			result.config.units = strdup("kiB");
 			break;
 		case 'm': /* display mountpoint */
-			mult = 1024 * 1024;
-			if (units) {
-				free(units);
-			}
-			units = strdup("MiB");
+			result.config.mult = 1024 * 1024;
+			free(result.config.units);
+			result.config.units = strdup("MiB");
 			break;
 		case 'L':
-			stat_remote_fs = true;
+			result.config.stat_remote_fs = true;
 			/* fallthrough */
 		case 'l':
-			show_local_fs = true;
+			result.config.show_local_fs = true;
 			break;
 		case 'P':
-			display_inodes_perfdata = true;
+			result.config.display_inodes_perfdata = true;
 			break;
 		case 'p': /* select path */ {
-			if (!(warn_freespace_units || crit_freespace_units || warn_freespace_percent || crit_freespace_percent ||
-				  warn_usedspace_units || crit_usedspace_units || warn_usedspace_percent || crit_usedspace_percent ||
-				  warn_usedinodes_percent || crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent)) {
+			if (!(result.config.warn_freespace_units || result.config.crit_freespace_units || result.config.warn_freespace_percent ||
+				  result.config.crit_freespace_percent || result.config.warn_usedspace_units || result.config.crit_usedspace_units ||
+				  result.config.warn_usedspace_percent || result.config.crit_usedspace_percent || result.config.warn_usedinodes_percent ||
+				  result.config.crit_usedinodes_percent || result.config.warn_freeinodes_percent ||
+				  result.config.crit_freeinodes_percent)) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set a threshold value before using -p\n"));
 			}
 
 			/* add parameter if not found. overwrite thresholds if path has already been added  */
 			struct parameter_list *se;
-			if (!(se = np_find_parameter(path_select_list, optarg))) {
-				se = np_add_parameter(&path_select_list, optarg);
+			if (!(se = np_find_parameter(result.config.path_select_list, optarg))) {
+				se = np_add_parameter(&result.config.path_select_list, optarg);
 
 				struct stat stat_buf = {};
-				if (stat(optarg, &stat_buf) && ignore_missing) {
-					path_ignored = true;
+				if (stat(optarg, &stat_buf) && result.config.ignore_missing) {
+					result.config.path_ignored = true;
 					break;
 				}
 			}
-			se->group = group;
-			set_all_thresholds(se);
+			se->group = result.config.group;
+			set_all_thresholds(
+				se, result.config.warn_freespace_units, result.config.crit_freespace_units, result.config.warn_freespace_percent,
+				result.config.crit_freespace_percent, result.config.warn_usedspace_units, result.config.crit_usedspace_units,
+				result.config.warn_usedspace_percent, result.config.crit_usedspace_percent, result.config.warn_usedinodes_percent,
+				result.config.crit_usedinodes_percent, result.config.warn_freeinodes_percent, result.config.crit_freeinodes_percent);
 
 			/* With autofs, it is required to stat() the path before re-populating the mount_list */
-			if (!stat_path(se)) {
+			if (!stat_path(se, result.config.ignore_missing)) {
 				break;
 			}
 			/* NB: We can't free the old mount_list "just like that": both list pointers and struct
 			 * pointers are copied around. One of the reason it wasn't done yet is that other parts
 			 * of check_disk need the same kind of cleanup so it'd better be done as a whole */
-			mount_list = read_file_system_list(false);
-			np_set_best_match(se, mount_list, exact_match);
+			result.config.mount_list = read_file_system_list(false);
+			np_set_best_match(se, result.config.mount_list, result.config.exact_match);
 
-			path_selected = true;
+			result.config.path_selected = true;
 		} break;
 		case 'x': /* exclude path or partition */
-			np_add_name(&dp_exclude_list, optarg);
+			np_add_name(&result.config.device_path_exclude_list, optarg);
 			break;
 		case 'X': /* exclude file system type */ {
-			int err = np_add_regex(&fs_exclude_list, optarg, REG_EXTENDED);
+			int err = np_add_regex(&result.config.fs_exclude_list, optarg, REG_EXTENDED);
 			if (err != 0) {
 				char errbuf[MAX_INPUT_BUFFER];
-				regerror(err, &fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
+				regerror(err, &result.config.fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
 			}
 			break;
 		case 'N': /* include file system type */
-			err = np_add_regex(&fs_include_list, optarg, REG_EXTENDED);
+			err = np_add_regex(&result.config.fs_include_list, optarg, REG_EXTENDED);
 			if (err != 0) {
 				char errbuf[MAX_INPUT_BUFFER];
-				regerror(err, &fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
+				regerror(err, &result.config.fs_exclude_list->regex, errbuf, MAX_INPUT_BUFFER);
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
 			}
 		} break;
@@ -684,31 +669,31 @@ int process_arguments(int argc, char **argv) {
 			break;
 		case 'q': /* TODO: this function should eventually go away (removed 2007-09-20) */
 			/* verbose--; **replaced by line below**. -q was only a broken way of implementing -e */
-			erronly = true;
+			result.config.erronly = true;
 			break;
 		case 'e':
-			erronly = true;
+			result.config.erronly = true;
 			break;
 		case 'E':
-			if (path_selected) {
+			if (result.config.path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set -E before selecting paths\n"));
 			}
-			exact_match = true;
+			result.config.exact_match = true;
 			break;
 		case 'f':
-			freespace_ignore_reserved = true;
+			result.config.freespace_ignore_reserved = true;
 			break;
 		case 'g':
-			if (path_selected) {
+			if (result.config.path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"), _("Must set group value before selecting paths\n"));
 			}
-			group = optarg;
+			result.config.group = optarg;
 			break;
 		case 'I':
 			cflags |= REG_ICASE;
 			// Intentional fallthrough
 		case 'i': {
-			if (!path_selected) {
+			if (!result.config.path_selected) {
 				die(STATE_UNKNOWN, "DISK %s: %s\n", _("UNKNOWN"),
 					_("Paths need to be selected before using -i/-I. Use -A to select all paths explicitly"));
 			}
@@ -720,7 +705,7 @@ int process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
 			}
 
-			struct parameter_list *temp_list = path_select_list;
+			struct parameter_list *temp_list = result.config.path_select_list;
 			struct parameter_list *previous = NULL;
 			while (temp_list) {
 				if (temp_list->best_match) {
@@ -733,7 +718,7 @@ int process_arguments(int argc, char **argv) {
 						temp_list = np_del_parameter(temp_list, previous);
 						/* pointer to first element needs to be updated if first item gets deleted */
 						if (previous == NULL) {
-							path_select_list = temp_list;
+							result.config.path_select_list = temp_list;
 						}
 					} else {
 						previous = temp_list;
@@ -748,7 +733,7 @@ int process_arguments(int argc, char **argv) {
 			cflags = default_cflags;
 		} break;
 		case 'n':
-			ignore_missing = true;
+			result.config.ignore_missing = true;
 			break;
 		case 'A':
 			optarg = strdup(".*");
@@ -757,9 +742,11 @@ int process_arguments(int argc, char **argv) {
 			cflags |= REG_ICASE;
 			// Intentional fallthrough
 		case 'r': {
-			if (!(warn_freespace_units || crit_freespace_units || warn_freespace_percent || crit_freespace_percent ||
-				  warn_usedspace_units || crit_usedspace_units || warn_usedspace_percent || crit_usedspace_percent ||
-				  warn_usedinodes_percent || crit_usedinodes_percent || warn_freeinodes_percent || crit_freeinodes_percent)) {
+			if (!(result.config.warn_freespace_units || result.config.crit_freespace_units || result.config.warn_freespace_percent ||
+				  result.config.crit_freespace_percent || result.config.warn_usedspace_units || result.config.crit_usedspace_units ||
+				  result.config.warn_usedspace_percent || result.config.crit_usedspace_percent || result.config.warn_usedinodes_percent ||
+				  result.config.crit_usedinodes_percent || result.config.warn_freeinodes_percent ||
+				  result.config.crit_freeinodes_percent)) {
 				die(STATE_UNKNOWN, "DISK %s: %s", _("UNKNOWN"),
 					_("Must set a threshold value before using -r/-R/-A (--ereg-path/--eregi-path/--all)\n"));
 			}
@@ -773,7 +760,7 @@ int process_arguments(int argc, char **argv) {
 			}
 
 			bool found = false;
-			for (struct mount_entry *me = mount_list; me; me = me->me_next) {
+			for (struct mount_entry *me = result.config.mount_list; me; me = me->me_next) {
 				if (np_regex_match_mount_entry(me, &regex)) {
 					found = true;
 					if (verbose >= 3) {
@@ -782,60 +769,69 @@ int process_arguments(int argc, char **argv) {
 
 					/* add parameter if not found. overwrite thresholds if path has already been added  */
 					struct parameter_list *se = NULL;
-					if (!(se = np_find_parameter(path_select_list, me->me_mountdir))) {
-						se = np_add_parameter(&path_select_list, me->me_mountdir);
+					if (!(se = np_find_parameter(result.config.path_select_list, me->me_mountdir))) {
+						se = np_add_parameter(&result.config.path_select_list, me->me_mountdir);
 					}
-					se->group = group;
-					set_all_thresholds(se);
+					se->group = result.config.group;
+					set_all_thresholds(se, result.config.warn_freespace_units, result.config.crit_freespace_units,
+									   result.config.warn_freespace_percent, result.config.crit_freespace_percent,
+									   result.config.warn_usedspace_units, result.config.crit_usedspace_units,
+									   result.config.warn_usedspace_percent, result.config.crit_usedspace_percent,
+									   result.config.warn_usedinodes_percent, result.config.crit_usedinodes_percent,
+									   result.config.warn_freeinodes_percent, result.config.crit_freeinodes_percent);
 				}
 			}
 
-			if (!found && ignore_missing) {
-				path_ignored = true;
-				path_selected = true;
+			if (!found && result.config.ignore_missing) {
+				result.config.path_ignored = true;
+				result.config.path_selected = true;
 				break;
 			}
 			if (!found) {
 				die(STATE_UNKNOWN, "DISK %s: %s - %s\n", _("UNKNOWN"), _("Regular expression did not match any path or disk"), optarg);
 			}
 
-			found = false;
-			path_selected = true;
-			np_set_best_match(path_select_list, mount_list, exact_match);
+			result.config.path_selected = true;
+			np_set_best_match(result.config.path_select_list, result.config.mount_list, result.config.exact_match);
 			cflags = default_cflags;
 
 		} break;
 		case 'M': /* display mountpoint */
-			display_mntp = true;
+			result.config.display_mntp = true;
 			break;
 		case 'C': {
 			/* add all mount entries to path_select list if no partitions have been explicitly defined using -p */
-			if (!path_selected) {
+			if (!result.config.path_selected) {
 				struct parameter_list *path;
-				for (struct mount_entry *me = mount_list; me; me = me->me_next) {
-					if (!(path = np_find_parameter(path_select_list, me->me_mountdir))) {
-						path = np_add_parameter(&path_select_list, me->me_mountdir);
+				for (struct mount_entry *me = result.config.mount_list; me; me = me->me_next) {
+					if (!(path = np_find_parameter(result.config.path_select_list, me->me_mountdir))) {
+						path = np_add_parameter(&result.config.path_select_list, me->me_mountdir);
 					}
 					path->best_match = me;
-					path->group = group;
-					set_all_thresholds(path);
+					path->group = result.config.group;
+					set_all_thresholds(path, result.config.warn_freespace_units, result.config.crit_freespace_units,
+									   result.config.warn_freespace_percent, result.config.crit_freespace_percent,
+									   result.config.warn_usedspace_units, result.config.crit_usedspace_units,
+									   result.config.warn_usedspace_percent, result.config.crit_usedspace_percent,
+									   result.config.warn_usedinodes_percent, result.config.crit_usedinodes_percent,
+									   result.config.warn_freeinodes_percent, result.config.crit_freeinodes_percent);
 				}
 			}
-			warn_freespace_units = NULL;
-			crit_freespace_units = NULL;
-			warn_usedspace_units = NULL;
-			crit_usedspace_units = NULL;
-			warn_freespace_percent = NULL;
-			crit_freespace_percent = NULL;
-			warn_usedspace_percent = NULL;
-			crit_usedspace_percent = NULL;
-			warn_usedinodes_percent = NULL;
-			crit_usedinodes_percent = NULL;
-			warn_freeinodes_percent = NULL;
-			crit_freeinodes_percent = NULL;
+			result.config.warn_freespace_units = NULL;
+			result.config.crit_freespace_units = NULL;
+			result.config.warn_usedspace_units = NULL;
+			result.config.crit_usedspace_units = NULL;
+			result.config.warn_freespace_percent = NULL;
+			result.config.crit_freespace_percent = NULL;
+			result.config.warn_usedspace_percent = NULL;
+			result.config.crit_usedspace_percent = NULL;
+			result.config.warn_usedinodes_percent = NULL;
+			result.config.crit_usedinodes_percent = NULL;
+			result.config.warn_freeinodes_percent = NULL;
+			result.config.crit_freeinodes_percent = NULL;
 
-			path_selected = false;
-			group = NULL;
+			result.config.path_selected = false;
+			result.config.group = NULL;
 		} break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -847,45 +843,49 @@ int process_arguments(int argc, char **argv) {
 			usage(_("Unknown argument"));
 		}
 	}
-		if (verbose > 0) {
-			printf("ping\n");
-		}
 
 	/* Support for "check_disk warn crit [fs]" with thresholds at used% level */
 	int index = optind;
 
-	if (warn_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
+	if (result.config.warn_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional warn threshold: %s\n", argv[index]);
 		}
-		warn_usedspace_percent = argv[index++];
+		result.config.warn_usedspace_percent = argv[index++];
 	}
 
-	if (crit_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
+	if (result.config.crit_usedspace_percent == NULL && argc > index && is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional crit threshold: %s\n", argv[index]);
 		}
-		crit_usedspace_percent = argv[index++];
+		result.config.crit_usedspace_percent = argv[index++];
 	}
 
 	if (argc > index) {
 		if (verbose > 0) {
 			printf("Got an positional filesystem: %s\n", argv[index]);
 		}
-		struct parameter_list *se = np_add_parameter(&path_select_list, strdup(argv[index++]));
-		path_selected = true;
-		set_all_thresholds(se);
+		struct parameter_list *se = np_add_parameter(&result.config.path_select_list, strdup(argv[index++]));
+		result.config.path_selected = true;
+		set_all_thresholds(se, result.config.warn_freespace_units, result.config.crit_freespace_units, result.config.warn_freespace_percent,
+						   result.config.crit_freespace_percent, result.config.warn_usedspace_units, result.config.crit_usedspace_units,
+						   result.config.warn_usedspace_percent, result.config.crit_usedspace_percent,
+						   result.config.warn_usedinodes_percent, result.config.crit_usedinodes_percent,
+						   result.config.warn_freeinodes_percent, result.config.crit_freeinodes_percent);
 	}
 
-	if (units == NULL) {
-		units = strdup("MiB");
-		mult = (uintmax_t)1024 * 1024;
+	if (result.config.units == NULL) {
+		result.config.units = strdup("MiB");
+		result.config.mult = (uintmax_t)1024 * 1024;
 	}
 
-	return 0;
+	return result;
 }
 
-void set_all_thresholds(struct parameter_list *path) {
+void set_all_thresholds(struct parameter_list *path, char *warn_freespace_units, char *crit_freespace_units, char *warn_freespace_percent,
+						char *crit_freespace_percent, char *warn_usedspace_units, char *crit_usedspace_units, char *warn_usedspace_percent,
+						char *crit_usedspace_percent, char *warn_usedinodes_percent, char *crit_usedinodes_percent,
+						char *warn_freeinodes_percent, char *crit_freeinodes_percent) {
 	if (path->freespace_units != NULL) {
 		free(path->freespace_units);
 	}
@@ -1022,7 +1022,7 @@ void print_usage(void) {
 	printf("[-t timeout] [-u unit] [-v] [-X type_regex] [-N type]\n");
 }
 
-bool stat_path(struct parameter_list *parameters) {
+bool stat_path(struct parameter_list *parameters, bool ignore_missing) {
 	/* Stat entry to check that dir exists and is accessible */
 	if (verbose >= 3) {
 		printf("calling stat on %s\n", parameters->name);
@@ -1043,12 +1043,13 @@ bool stat_path(struct parameter_list *parameters) {
 	return true;
 }
 
-void get_stats(struct parameter_list *parameters, struct fs_usage *fsp) {
+void get_stats(struct parameter_list *parameters, struct fs_usage *fsp, bool ignore_missing, bool freespace_ignore_reserved, uintmax_t mult,
+			   struct parameter_list *path_select_list, struct name_list *seen) {
 	struct fs_usage tmpfsp;
 	bool first = true;
 
 	if (parameters->group == NULL) {
-		get_path_stats(parameters, fsp);
+		get_path_stats(parameters, fsp, freespace_ignore_reserved, mult, seen);
 	} else {
 		/* find all group members */
 		for (struct parameter_list *p_list = path_select_list; p_list; p_list = p_list->name_next) {
@@ -1060,11 +1061,11 @@ void get_stats(struct parameter_list *parameters, struct fs_usage *fsp) {
 #endif
 
 			if (p_list->group && !(strcmp(p_list->group, parameters->group))) {
-				if (!stat_path(p_list)) {
+				if (!stat_path(p_list, ignore_missing)) {
 					continue;
 				}
 				get_fs_usage(p_list->best_match->me_mountdir, p_list->best_match->me_devname, &tmpfsp);
-				get_path_stats(p_list, &tmpfsp);
+				get_path_stats(p_list, &tmpfsp, freespace_ignore_reserved, mult, seen);
 				if (verbose >= 3) {
 					printf("Group %s: adding %lu blocks sized %lu, (%s) used_units=%lu free_units=%lu total_units=%lu mult=%lu\n",
 						   p_list->group, tmpfsp.fsu_blocks, tmpfsp.fsu_blocksize, p_list->best_match->me_mountdir, p_list->dused_units,
@@ -1105,7 +1106,8 @@ void get_stats(struct parameter_list *parameters, struct fs_usage *fsp) {
 	parameters->dfree_inodes_percent = 100 - parameters->dused_inodes_percent;
 }
 
-void get_path_stats(struct parameter_list *parameters, struct fs_usage *fsp) {
+void get_path_stats(struct parameter_list *parameters, struct fs_usage *fsp, bool freespace_ignore_reserved, uintmax_t mult,
+					struct name_list *seen) {
 	parameters->available = fsp->fsu_bavail;
 	parameters->available_to_root = fsp->fsu_bfree;
 	parameters->used = fsp->fsu_blocks - fsp->fsu_bfree;
