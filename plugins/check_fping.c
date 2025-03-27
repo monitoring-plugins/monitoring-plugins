@@ -79,7 +79,29 @@ int main(int argc, char **argv) {
 	server = strscpy(server, config.server_name);
 
 	char *option_string = "";
+	char *fping_prog = NULL;
+
 	/* compose the command */
+#ifdef PATH_TO_FPING6
+	if (address_family != AF_INET && is_inet6_addr(server)) {
+		fping_prog = strdup(PATH_TO_FPING6);
+	} else {
+		xasprintf(&option_string, "%s-4 ", option_string);
+		fping_prog = strdup(PATH_TO_FPING);
+	}
+#else
+	if (address_family != AF_INET) {
+		// -4 / -6 must be set explicitly as when a host has dual stack
+		// if we don't specify -4 then fping selects ipv6 which can mess
+		// with some checks.
+		xasprintf(&option_string, "%s-6 ", option_string);
+	} else {
+		xasprintf(&option_string, "%s-4 ", option_string);
+	}
+
+	fping_prog = strdup(PATH_TO_FPING);
+#endif
+
 	if (config.target_timeout) {
 		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
 	}
@@ -98,17 +120,6 @@ int main(int argc, char **argv) {
 	if (config.randomize_packet_data) {
 		xasprintf(&option_string, "%s-R ", option_string);
 	}
-
-	char *fping_prog = NULL;
-#ifdef PATH_TO_FPING6
-	if (address_family != AF_INET && is_inet6_addr(server)) {
-		fping_prog = strdup(PATH_TO_FPING6);
-	} else {
-		fping_prog = strdup(PATH_TO_FPING);
-	}
-#else
-	fping_prog = strdup(PATH_TO_FPING);
-#endif
 
 	char *command_line = NULL;
 	xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
