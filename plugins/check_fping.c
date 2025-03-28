@@ -83,14 +83,14 @@ int main(int argc, char **argv) {
 
 	/* compose the command */
 #ifdef PATH_TO_FPING6
-	if (address_family != AF_INET && is_inet6_addr(server)) {
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && is_inet6_addr(server))) {
 		fping_prog = strdup(PATH_TO_FPING6);
 	} else {
 		xasprintf(&option_string, "%s-4 ", option_string);
 		fping_prog = strdup(PATH_TO_FPING);
 	}
 #else
-	if (address_family != AF_INET) {
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && is_inet6_addr(server))) {
 		// -4 / -6 must be set explicitly as when a host has dual stack
 		// if we don't specify -4 then fping selects ipv6 which can mess
 		// with some checks.
