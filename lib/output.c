@@ -253,7 +253,9 @@ char *mp_fmt_output(mp_check check) {
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
+			if (level_of_detail == MP_DETAIL_ALL || mp_compute_subcheck_state(subchecks->subcheck) != STATE_OK) {
+				asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
+			}
 			subchecks = subchecks->next;
 		}
 
@@ -545,3 +547,7 @@ parsed_output_format mp_parse_output_format(char *format_string) {
 void mp_set_format(mp_output_format format) { output_format = format; }
 
 mp_output_format mp_get_format(void) { return output_format; }
+
+void mp_set_level_of_detail(mp_output_detail_level level) { level_of_detail = level; }
+
+mp_output_detail_level mp_get_level_of_detail(void) { return level_of_detail; }

@@ -38,8 +38,18 @@ typedef enum output_format {
 /*
  * Format related functions
  */
- void mp_set_format(mp_output_format format);
- mp_output_format mp_get_format(void);
+void mp_set_format(mp_output_format format);
+mp_output_format mp_get_format(void);
+
+// Output detail level
+
+typedef enum output_detail_level {
+	MP_DETAIL_ALL,
+	MP_DETAIL_NON_OK_ONLY,
+} mp_output_detail_level;
+
+void mp_set_level_of_detail(mp_output_detail_level level);
+mp_output_detail_level mp_get_level_of_detail(void);
 
 /*
  * The main state object of a plugin. Exists only ONCE per plugin.
@@ -48,7 +58,7 @@ typedef enum output_format {
  * in the first layer of subchecks
  */
 typedef struct {
-	char *summary;           // Overall summary, if not set a summary will be automatically generated
+	char *summary; // Overall summary, if not set a summary will be automatically generated
 	mp_subcheck_list *subchecks;
 } mp_check;
 
