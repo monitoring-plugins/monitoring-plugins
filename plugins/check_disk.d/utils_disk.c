@@ -309,7 +309,7 @@ measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem fil
 
 #define RANDOM_STRING_LENGTH 64
 
-char *humanize_byte_value(uintmax_t value, bool use_si_units) {
+char *humanize_byte_value(unsigned long long value, bool use_si_units) {
 	// Idea: A reasonable output should have at most 3 orders of magnitude
 	// before the decimal separator
 	// 353GiB is ok, 2444 GiB should be 2.386 TiB
@@ -317,36 +317,52 @@ char *humanize_byte_value(uintmax_t value, bool use_si_units) {
 	if (result == NULL) {
 		die(STATE_UNKNOWN, _("allocation failed"));
 	}
+	const byte_unit KibiBytes_factor = 1024;
+	const byte_unit MebiBytes_factor = 1048576;
+	const byte_unit GibiBytes_factor = 1073741824;
+	const byte_unit TebiBytes_factor = 1099511627776;
+	const byte_unit PebiBytes_factor = 1125899906842624;
+	const byte_unit ExbiBytes_factor = 1152921504606846976;
+	const byte_unit KiloBytes_factor = 1000;
+	const byte_unit MegaBytes_factor = 1000000;
+	const byte_unit GigaBytes_factor = 1000000000;
+	const byte_unit TeraBytes_factor = 1000000000000;
+	const byte_unit PetaBytes_factor = 1000000000000000;
+	const byte_unit ExaBytes_factor = 1000000000000000000;
 
 	if (use_si_units) {
 		// SI units, powers of 10
-		if (value < KiloBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju B", value);
-		} else if (value < MegaBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju KB", value / KiloBytes);
-		} else if (value < GigaBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju MB", value / MegaBytes);
-		} else if (value < TeraBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju GB", value / GigaBytes);
-		} else if (value < PetaBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju TB", value / TeraBytes);
+		if (value < KiloBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu B", value);
+		} else if (value < MegaBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu KB", value / KiloBytes_factor);
+		} else if (value < GigaBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu MB", value / MegaBytes_factor);
+		} else if (value < TeraBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu GB", value / GigaBytes_factor);
+		} else if (value < PetaBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu TB", value / TeraBytes_factor);
+		} else if (value < ExaBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu PB", value / PetaBytes_factor);
 		} else {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju PB", value / PetaBytes);
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu EB", value / ExaBytes_factor);
 		}
 	} else {
 		// IEC units, powers of 2 ^ 10
-		if (value < KibiBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju B", value);
-		} else if (value < MebiBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju KiB", value / KibiBytes);
-		} else if (value < GibiBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju MiB", value / MebiBytes);
-		} else if (value < TebiBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju GiB", value / GibiBytes);
-		} else if (value < PebiBytes) {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju TiB", value / TebiBytes);
+		if (value < KibiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu B", value);
+		} else if (value < MebiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu KiB", value / KibiBytes_factor);
+		} else if (value < GibiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu MiB", value / MebiBytes_factor);
+		} else if (value < TebiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu GiB", value / GibiBytes_factor);
+		} else if (value < PebiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu TiB", value / TebiBytes_factor);
+		} else if (value < ExbiBytes_factor) {
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu PiB", value / PebiBytes_factor);
 		} else {
-			snprintf(result, RANDOM_STRING_LENGTH, "%ju PiB", value / PebiBytes);
+			snprintf(result, RANDOM_STRING_LENGTH, "%llu EiB", value / ExbiBytes_factor);
 		}
 	}
 

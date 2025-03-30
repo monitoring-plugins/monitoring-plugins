@@ -154,4 +154,4 @@ bool np_regex_match_mount_entry(struct mount_entry *, regex_t *);
 char *get_unit_string(byte_unit_enum);
 check_disk_config check_disk_config_init();
 
-char *humanize_byte_value(uintmax_t value, bool use_si_units);
+char *humanize_byte_value(unsigned long long value, bool use_si_units);

@@ -1112,7 +1112,7 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 				  get_unit_string(unit), (uintmax_t)(measurement_unit.total_bytes / unit), get_unit_string(unit));
 	} else {
 		xasprintf(&freespace_bytes_sc.output, "Free space absolute: %s (of %s)", humanize_byte_value(measurement_unit.free_bytes, false),
-				  humanize_byte_value(measurement_unit.total_bytes, false));
+				  humanize_byte_value((unsigned long long)measurement_unit.total_bytes, false));
 	}
 
 	mp_perfdata used_space = perfdata_init();
