@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
 				unit.name = strdup(filesystem->group);
 				measurements = current = add_measurement_list(NULL, unit);
 			} else {
-				// if this is the first element of a group, the name of the previos entry is different
+				// if this is the first element of a group, the name of the previous entry is different
 				if (strcmp(filesystem->group, current->unit.name) != 0) {
 					// so, this must be the first element of a group
 					measurement_unit unit = create_measurement_unit_from_filesystem(*filesystem, config.display_mntp);
@@ -310,7 +310,7 @@ int main(int argc, char **argv) {
 			mp_add_subcheck_to_check(&overall, unit_sc);
 		}
 	} else {
-		// Aparently no machting fs found
+		// Apparently no machting fs found
 		mp_subcheck none_sc = mp_subcheck_init();
 		xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
 
@@ -833,7 +833,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 						   warn_freeinodes_percent, crit_freeinodes_percent);
 	}
 
-	// If a list of paths has not been explicitely selected, find entire
+	// If a list of paths has not been explicitly selected, find entire
 	// mount list and create list of paths
 	if (!path_selected && !result.config.path_ignored) {
 		for (struct mount_entry *me = result.config.mount_list; me; me = me->me_next) {

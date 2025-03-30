@@ -39,13 +39,13 @@ like($result->{'mp_test_result'}->{'checks'}->[0]->{'state'}, "/OK/", "First sub
 like($result->{'mp_test_result'}->{'checks'}->[1]->{'state'}, "/OK/", "Second sub result is OK");
 
 my $absolut_space_mp1 = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}->[0]->{'perfdata'}->[0]->{'max'}->{'value'};
-# print("absolut space on mp1: ". $absolut_space_mp1 . "\n");
+# print("absolute space on mp1: ". $absolut_space_mp1 . "\n");
 
 my $free_percent_on_mp1 = ($result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}->[0]->{'perfdata'}->[0]->{'value'}->{'value'} / ($absolut_space_mp1/100));
 print("free percent on mp1: ". $free_percent_on_mp1 . "\n");
 
 my $absolut_space_mp2 = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0]->{'max'}->{'value'};
-# print("absolut space on mp2: ". $absolut_space_mp2 . "\n");
+# print("absolute space on mp2: ". $absolut_space_mp2 . "\n");
 
 my $free_percent_on_mp2 = ($result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0]->{'value'}->{'value'}/ ($absolut_space_mp2/100));
 print("free percent on mp2: ". $free_percent_on_mp2 . "\n");
