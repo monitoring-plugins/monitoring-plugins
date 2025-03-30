@@ -51,7 +51,7 @@ mp_state_enum mp_get_pd_status(mp_perfdata perfdata) {
 	}
 	if (perfdata.warn_present) {
 		if (mp_check_range(perfdata.value, perfdata.warn)) {
-			return STATE_CRITICAL;
+			return STATE_WARNING;
 		}
 	}
 
