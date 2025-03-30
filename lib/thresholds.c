@@ -57,3 +57,15 @@ mp_state_enum mp_get_pd_status(mp_perfdata perfdata) {
 
 	return STATE_OK;
 }
+
+mp_thresholds mp_thresholds_set_warn(mp_thresholds thlds, mp_range warn) {
+	thlds.warning = warn;
+	thlds.warning_is_set = true;
+	return thlds;
+}
+
+mp_thresholds mp_thresholds_set_crit(mp_thresholds thlds, mp_range crit) {
+	thlds.critical = crit;
+	thlds.critical_is_set = true;
+	return thlds;
+}
