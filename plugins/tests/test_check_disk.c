@@ -24,7 +24,7 @@
 void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc);
 
 int main(int argc, char **argv) {
-	plan_tests(33);
+	plan_tests(35);
 
 	struct name_list *exclude_filesystem = NULL;
 	ok(np_find_name(exclude_filesystem, "/var/log") == false, "/var/log not in list");
@@ -81,15 +81,16 @@ int main(int argc, char **argv) {
 	np_test_mount_entry_regex(dummy_mount_list, strdup("(/home)|(/var)"), cflags, 2, strdup("grouped regex pathname match:"));
 	np_test_mount_entry_regex(dummy_mount_list, strdup("(/homE)|(/Var)"), cflags | REG_ICASE, 2, strdup("grouped regi pathname match:"));
 
-	struct parameter_list *paths = NULL;
-	np_add_parameter(&paths, "/home/groups");
-	np_add_parameter(&paths, "/var");
-	np_add_parameter(&paths, "/tmp");
-	np_add_parameter(&paths, "/home/tonvoon");
-	np_add_parameter(&paths, "/dev/c2t0d0s0");
+	filesystem_list test_paths = filesystem_list_init();
+	mp_int_fs_list_append(&test_paths, "/home/groups");
+	mp_int_fs_list_append(&test_paths, "/var");
+	mp_int_fs_list_append(&test_paths, "/tmp");
+	mp_int_fs_list_append(&test_paths, "/home/tonvoon");
+	mp_int_fs_list_append(&test_paths, "/dev/c2t0d0s0");
+	ok(test_paths.length == 5, "List counter works correctly with appends");
 
-	np_set_best_match(paths, dummy_mount_list, false);
-	for (struct parameter_list *p = paths; p; p = p->name_next) {
+	mp_int_fs_list_set_best_match(test_paths, dummy_mount_list, false);
+	for (parameter_list_elem *p = test_paths.first; p; p = mp_int_fs_list_get_next(p)) {
 		struct mount_entry *temp_me;
 		temp_me = p->best_match;
 		if (!strcmp(p->name, "/home/groups")) {
@@ -105,15 +106,19 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	paths = NULL; /* Bad boy - should free, but this is a test suite */
-	np_add_parameter(&paths, "/home/groups");
-	np_add_parameter(&paths, "/var");
-	np_add_parameter(&paths, "/tmp");
-	np_add_parameter(&paths, "/home/tonvoon");
-	np_add_parameter(&paths, "/home");
+	for (parameter_list_elem *p = test_paths.first; p; p = mp_int_fs_list_get_next(p)) {
+		mp_int_fs_list_del(&test_paths, p);
+	}
+	ok(test_paths.length == 0, "List delete sets counter properly");
 
-	np_set_best_match(paths, dummy_mount_list, true);
-	for (struct parameter_list *p = paths; p; p = p->name_next) {
+	mp_int_fs_list_append(&test_paths, "/home/groups");
+	mp_int_fs_list_append(&test_paths, "/var");
+	mp_int_fs_list_append(&test_paths, "/tmp");
+	mp_int_fs_list_append(&test_paths, "/home/tonvoon");
+	mp_int_fs_list_append(&test_paths, "/home");
+
+	mp_int_fs_list_set_best_match(test_paths, dummy_mount_list, true);
+	for (parameter_list_elem *p = test_paths.first; p; p = mp_int_fs_list_get_next(p)) {
 		if (!strcmp(p->name, "/home/groups")) {
 			ok(!p->best_match, "/home/groups correctly not found");
 		} else if (!strcmp(p->name, "/var")) {
@@ -129,8 +134,8 @@ int main(int argc, char **argv) {
 
 	bool found = false;
 	/* test deleting first element in paths */
-	paths = np_del_parameter(paths, NULL);
-	for (struct parameter_list *p = paths; p; p = p->name_next) {
+	mp_int_fs_list_del(&test_paths, NULL);
+	for (parameter_list_elem *p = test_paths.first; p; p = mp_int_fs_list_get_next(p)) {
 		if (!strcmp(p->name, "/home/groups")) {
 			found = true;
 		}
@@ -138,23 +143,21 @@ int main(int argc, char **argv) {
 	ok(!found, "first element successfully deleted");
 	found = false;
 
-	struct parameter_list *prev = NULL;
-	struct parameter_list *p = paths;
-	while (p) {
-		if (!strcmp(p->name, "/tmp")) {
-			p = np_del_parameter(p, prev);
-		} else {
-			prev = p;
-			p = p->name_next;
+	parameter_list_elem *prev = NULL;
+	parameter_list_elem *p = NULL;
+	for (parameter_list_elem *path = test_paths.first; path; path = mp_int_fs_list_get_next(path)) {
+		if (!strcmp(path->name, "/tmp")) {
+			mp_int_fs_list_del(&test_paths, path);
 		}
+		p = path;
 	}
 
-	struct parameter_list *last = NULL;
-	for (struct parameter_list *path = paths; path; path = path->name_next) {
+	parameter_list_elem *last = NULL;
+	for (parameter_list_elem *path = test_paths.first; path; path = mp_int_fs_list_get_next(path)) {
 		if (!strcmp(path->name, "/tmp")) {
 			found = true;
 		}
-		if (path->name_next) {
+		if (path->next) {
 			prev = path;
 		} else {
 			last = path;
@@ -163,8 +166,8 @@ int main(int argc, char **argv) {
 	ok(!found, "/tmp element successfully deleted");
 
 	int count = 0;
-	p = np_del_parameter(last, prev);
-	for (p = paths; p; p = p->name_next) {
+	mp_int_fs_list_del(&test_paths, p);
+	for (p = test_paths.first; p; p = p->next) {
 		if (!strcmp(p->name, "/home")) {
 			found = true;
 		}
