@@ -129,6 +129,9 @@ my $warn_percth_data = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[
 my $crit_percth_data = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[0]->{'perfdata'}->[0]->{'crit'}->{'end'}->{'value'};
 my $total_percth_data = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[0]->{'perfdata'}->[0]->{'max'}->{'value'};
 
+print("warn_percth_data: " . $warn_percth_data . "\n");
+print("crit_percth_data: " . $crit_percth_data . "\n");
+
 is ($warn_percth_data <=> int((20/100)*$total_percth_data), 0, "Wrong warning in perf data using percent thresholds");
 is ($crit_percth_data <=> int((10/100)*$total_percth_data), 0, "Wrong critical in perf data using percent thresholds");
 
