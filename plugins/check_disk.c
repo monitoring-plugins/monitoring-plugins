@@ -96,6 +96,22 @@ static void print_help(void);
 
 static int verbose = 0;
 
+// This would not be necessary in C23!!
+const byte_unit Bytes_Factor = 1;
+const byte_unit KibiBytes_factor = 1024;
+const byte_unit MebiBytes_factor = 1048576;
+const byte_unit GibiBytes_factor = 1073741824;
+const byte_unit TebiBytes_factor = 1099511627776;
+const byte_unit PebiBytes_factor = 1125899906842624;
+const byte_unit ExbiBytes_factor = 1152921504606846976;
+const byte_unit KiloBytes_factor = 1000;
+const byte_unit MegaBytes_factor = 1000000;
+const byte_unit GigaBytes_factor = 1000000000;
+const byte_unit TeraBytes_factor = 1000000000000;
+const byte_unit PetaBytes_factor = 1000000000000000;
+const byte_unit ExaBytes_factor = 1000000000000000000;
+
+
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -409,7 +425,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 
 	bool path_selected = false;
 	char *group = NULL;
-	byte_unit unit = MebiBytes;
+	byte_unit unit = MebiBytes_factor;
 
 	result.config.mount_list = read_file_system_list(false);
 
@@ -494,25 +510,25 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'u':
 			if (!strcasecmp(optarg, "bytes")) {
-				unit = Bytes;
+				unit = Bytes_Factor;
 			} else if (!strcmp(optarg, "KiB")) {
-				unit = KibiBytes;
+				unit = KibiBytes_factor;
 			} else if (!strcmp(optarg, "kB")) {
-				unit = KiloBytes;
+				unit = KiloBytes_factor;
 			} else if (!strcmp(optarg, "MiB")) {
-				unit = MebiBytes;
+				unit = MebiBytes_factor;
 			} else if (!strcmp(optarg, "MB")) {
-				unit = MegaBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "GiB")) {
-				unit = GibiBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "GB")) {
-				unit = GigaBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "TiB")) {
-				unit = TebiBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "TB")) {
-				unit = TeraBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "PiB")) {
-				unit = PebiBytes;
+				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "PB")) {
 				unit = PetaBytes;
 			} else {
@@ -520,10 +536,10 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'k':
-			unit = KibiBytes;
+			unit = KibiBytes_factor;
 			break;
 		case 'm':
-			unit = MebiBytes;
+			unit = MebiBytes_factor;
 			break;
 		case display_unit_index:
 			if (!strcasecmp(optarg, "bytes")) {

@@ -8,22 +8,24 @@
 #include "regex.h"
 #include <stdint.h>
 
-typedef enum : unsigned long {
-	Humanized = 0,
-	Bytes = 1,
-	KibiBytes = 1024,
-	MebiBytes = 1024 * KibiBytes,
-	GibiBytes = 1024 * MebiBytes,
-	TebiBytes = 1024 * GibiBytes,
-	PebiBytes = 1024 * TebiBytes,
-	ExbiBytes = 1024 * PebiBytes,
-	KiloBytes = 1000,
-	MegaBytes = 1000 * KiloBytes,
-	GigaBytes = 1000 * MegaBytes,
-	TeraBytes = 1000 * GigaBytes,
-	PetaBytes = 1000 * TeraBytes,
-	ExaBytes = 1000 * PetaBytes
-} byte_unit;
+typedef unsigned long long byte_unit;
+
+typedef enum {
+	Humanized,
+	Bytes,
+	KibiBytes,
+	MebiBytes,
+	GibiBytes,
+	TebiBytes,
+	PebiBytes,
+	ExbiBytes,
+	KiloBytes,
+	MegaBytes,
+	GigaBytes,
+	TeraBytes,
+	PetaBytes,
+	ExaBytes,
+} byte_unit_enum;
 
 typedef struct name_list string_list;
 struct name_list {
@@ -120,7 +122,7 @@ typedef struct {
 	struct mount_entry *mount_list;
 	struct name_list *seen;
 
-	byte_unit display_unit;
+	byte_unit_enum display_unit;
 	// byte_unit unit;
 
 	bool output_format_is_set;
@@ -149,7 +151,7 @@ measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem fil
 int search_parameter_list(parameter_list_elem *list, const char *name);
 bool np_regex_match_mount_entry(struct mount_entry *, regex_t *);
 
-char *get_unit_string(byte_unit);
+char *get_unit_string(byte_unit_enum);
 check_disk_config check_disk_config_init();
 
 char *humanize_byte_value(uintmax_t value, bool use_si_units);

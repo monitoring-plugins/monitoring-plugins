@@ -180,7 +180,7 @@ check_disk_config check_disk_config_init() {
 	return tmp;
 }
 
-char *get_unit_string(byte_unit unit) {
+char *get_unit_string(byte_unit_enum unit) {
 	switch (unit) {
 	case Bytes:
 		return "Bytes";
