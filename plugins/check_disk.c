@@ -520,17 +520,17 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "MB")) {
 				unit = MegaBytes_factor;
 			} else if (!strcmp(optarg, "GiB")) {
-				unit = MegaBytes_factor;
+				unit = GibiBytes_factor;
 			} else if (!strcmp(optarg, "GB")) {
-				unit = MegaBytes_factor;
+				unit = GigaBytes_factor;
 			} else if (!strcmp(optarg, "TiB")) {
-				unit = MegaBytes_factor;
+				unit = TebiBytes_factor;
 			} else if (!strcmp(optarg, "TB")) {
-				unit = MegaBytes_factor;
+				unit = TeraBytes_factor;
 			} else if (!strcmp(optarg, "PiB")) {
-				unit = MegaBytes_factor;
+				unit = PebiBytes_factor;
 			} else if (!strcmp(optarg, "PB")) {
-				unit = PetaBytes;
+				unit = PetaBytes_factor;
 			} else {
 				die(STATE_UNKNOWN, _("unit type %s not known\n"), optarg);
 			}
