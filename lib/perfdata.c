@@ -33,7 +33,7 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 char *pd_to_string(mp_perfdata pd) {
 	assert(pd.label != NULL);
 	char *result = NULL;
-	asprintf(&result, "%s=", pd.label);
+	asprintf(&result, "'%s'=", pd.label);
 
 	asprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
 
