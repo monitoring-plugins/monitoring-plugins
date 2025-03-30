@@ -569,9 +569,6 @@ mp_perfdata_value mp_pd_value_multiply(mp_perfdata_value left, mp_perfdata_value
 		left.pd_double = (double)left.pd_uint;
 		left.type = PD_TYPE_DOUBLE;
 		break;
-	case PD_TYPE_DOUBLE:
-	default:
-		// already there
 	}
 
 	switch (right.type) {
@@ -583,9 +580,6 @@ mp_perfdata_value mp_pd_value_multiply(mp_perfdata_value left, mp_perfdata_value
 		right.pd_double = (double)right.pd_uint;
 		right.type = PD_TYPE_DOUBLE;
 		break;
-	case PD_TYPE_DOUBLE:
-	default:
-		// already there
 	}
 
 	left.pd_double *= right.pd_double;
