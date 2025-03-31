@@ -40,11 +40,13 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl \
 	\
-	tests/test_check_swap
+	tests/test_check_swap \
+	tests/test_check_disk
 
 SUBDIRS = picohttpparser
 
-np_test_scripts = tests/test_check_swap.t
+np_test_scripts = tests/test_check_swap.t \
+				  tests/test_check_disk.t
 
 EXTRA_DIST = t \
 			 tests \
@@ -55,6 +57,7 @@ EXTRA_DIST = t \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_radius.d \
+			 check_disk.d \
 			 check_time.d \
 			 check_nagios.d \
 			 check_dbi.d \
@@ -119,6 +122,7 @@ check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) $(URIPARSERLIBS) picohtt
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)
+check_disk_SOURCES = check_disk.c check_disk.d/utils_disk.c
 check_dns_LDADD = $(NETLIBS)
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS)
@@ -165,6 +169,8 @@ endif
 
 tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
+tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
+tests_test_check_disk_SOURCES = tests/test_check_disk.c
 
 ##############################################################################
 # secondary dependencies

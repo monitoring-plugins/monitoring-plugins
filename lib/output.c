@@ -13,6 +13,7 @@
 
 // == Global variables
 static mp_output_format output_format = MP_FORMAT_DEFAULT;
+static mp_output_detail_level level_of_detail = MP_DETAIL_ALL;
 
 // == Prototypes ==
 static char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation);
@@ -202,7 +203,12 @@ mp_state_enum mp_compute_subcheck_state(const mp_subcheck check) {
 	}
 
 	mp_subcheck_list *scl = check.subchecks;
-	mp_state_enum result = check.default_state;
+
+	if (scl == NULL) {
+		return check.default_state;
+	}
+
+	mp_state_enum result = STATE_OK;
 
 	while (scl != NULL) {
 		result = max_state_alt(result, mp_compute_subcheck_state(scl->subcheck));
@@ -247,7 +253,9 @@ char *mp_fmt_output(mp_check check) {
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
+			if (level_of_detail == MP_DETAIL_ALL || mp_compute_subcheck_state(subchecks->subcheck) != STATE_OK) {
+				asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
+			}
 			subchecks = subchecks->next;
 		}
 
@@ -539,3 +547,7 @@ parsed_output_format mp_parse_output_format(char *format_string) {
 void mp_set_format(mp_output_format format) { output_format = format; }
 
 mp_output_format mp_get_format(void) { return output_format; }
+
+void mp_set_level_of_detail(mp_output_detail_level level) { level_of_detail = level; }
+
+mp_output_detail_level mp_get_level_of_detail(void) { return level_of_detail; }

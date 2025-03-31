@@ -24,5 +24,8 @@ mp_perfdata mp_pd_set_thresholds(mp_perfdata /* pd */, mp_thresholds /* th */);
 
 mp_state_enum mp_get_pd_status(mp_perfdata /* pd */);
 
+mp_thresholds mp_thresholds_set_warn(mp_thresholds thlds, mp_range warn);
+mp_thresholds mp_thresholds_set_crit(mp_thresholds thlds, mp_range crit);
+
 char *fmt_threshold_warning(thresholds th);
 char *fmt_threshold_critical(thresholds th);
