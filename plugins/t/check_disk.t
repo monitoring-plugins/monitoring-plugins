@@ -54,6 +54,10 @@ my @perfdata;
 @perfdata[0] = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0];
 @perfdata[1] = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}->[0]->{'perfdata'}->[0];
 
+# Decrease precision of numbers since the the fs might be modified between the two runs
+$perfdata[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
+$perfdata[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
+
 # Calculate avg_free free on mountpoint1 and mountpoint2
 # because if you check in the middle, you should get different errors
 my $avg_free_percent = ceil(($free_percent_on_mp1+$free_percent_on_mp2)/2);
@@ -144,8 +148,11 @@ cmp_ok( $result->return_code, "==", 0, "with JSON test format result should alwa
 
 # write comparison set for perfdata here, but in reversed order, maybe there is a smarter way
 my @perfdata2;
-@perfdata2[1] = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0];
 @perfdata2[0] = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}->[0]->{'perfdata'}->[0];
+@perfdata2[1] = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0];
+# Decrease precision of numbers since the the fs might be modified between the two runs
+$perfdata2[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
+$perfdata2[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
 is_deeply(\@perfdata, \@perfdata2, "perf data for both filesystems same when reversed");
 
 # Basic filesystem checks for sizes
