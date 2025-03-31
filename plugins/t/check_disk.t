@@ -26,7 +26,7 @@ my $output_format = "--output-format mp-test-json";
 if ($mountpoint_valid eq "" or $mountpoint2_valid eq "") {
 	plan skip_all => "Need 2 mountpoints to test";
 } else {
-	plan tests => 96;
+	plan tests => 97;
 }
 
 $result = NPTest->testCmd(
@@ -56,7 +56,7 @@ my @perfdata;
 
 # Decrease precision of numbers since the the fs might be modified between the two runs
 $perfdata[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
-$perfdata[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
+$perfdata[1]->{'value'}->{'value'} = int($perfdata[1]->{'value'}->{'value'} / 1000000);
 
 # Calculate avg_free free on mountpoint1 and mountpoint2
 # because if you check in the middle, you should get different errors
@@ -136,8 +136,8 @@ my $total_percth_data = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}
 print("warn_percth_data: " . $warn_percth_data . "\n");
 print("crit_percth_data: " . $crit_percth_data . "\n");
 
-is ($warn_percth_data <=> int((20/100)*$total_percth_data), 0, "Wrong warning in perf data using percent thresholds");
-is ($crit_percth_data <=> int((10/100)*$total_percth_data), 0, "Wrong critical in perf data using percent thresholds");
+is (int($warn_percth_data), int((20/100)*$total_percth_data), "Wrong warning in perf data using percent thresholds. Got " . $warn_percth_data . " with total " . $total_percth_data);
+is (int($crit_percth_data), int((10/100)*$total_percth_data), "Wrong critical in perf data using percent thresholds. Got " . $crit_percth_data . " with total " . $total_percth_data);
 
 
 # Check when order of mount points are reversed, that perf data remains same
@@ -151,8 +151,8 @@ my @perfdata2;
 @perfdata2[0] = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}->[0]->{'perfdata'}->[0];
 @perfdata2[1] = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}->[0]->{'perfdata'}->[0];
 # Decrease precision of numbers since the the fs might be modified between the two runs
-$perfdata2[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
-$perfdata2[0]->{'value'}->{'value'} = int($perfdata[0]->{'value'}->{'value'} / 1000000);
+$perfdata2[0]->{'value'}->{'value'} = int($perfdata2[0]->{'value'}->{'value'} / 1000000);
+$perfdata2[1]->{'value'}->{'value'} = int($perfdata2[1]->{'value'}->{'value'} / 1000000);
 is_deeply(\@perfdata, \@perfdata2, "perf data for both filesystems same when reversed");
 
 # Basic filesystem checks for sizes
@@ -174,8 +174,9 @@ my $free_mb_on_all = $free_mb_on_mp1 + $free_mb_on_mp2;
 $result = NPTest->testCmd( "./check_disk -e -w 1 -c 1 -p $more_free $output_format" );
 cmp_ok( $result->return_code, "==", 0, "with JSON test format result should always be OK");
 
-$result = NPTest->testCmd( "./check_disk 100 100 $more_free" );
-cmp_ok( $result->return_code, '==', 0, "Old syntax okay" );
+$result = NPTest->testCmd( "./check_disk 101 101 $more_free" );
+like($result->output, "/OK/", "OK in Output");
+cmp_ok( $result->return_code, '==', 0, "Old syntax okay, output was: ". $result->output . "\n" );
 
 $result = NPTest->testCmd( "./check_disk -w 1% -c 1% -p $more_free" );
 cmp_ok( $result->return_code, "==", 0, "At least 1% free" );
