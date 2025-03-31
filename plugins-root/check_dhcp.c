@@ -972,7 +972,7 @@ mp_subcheck get_results(bool exclusive, const int requested_servers, const struc
 	/* we didn't receive any DHCPOFFERs */
 	if (dhcp_offer_list == NULL) {
 		sc_dhcp_results = mp_set_subcheck_state(sc_dhcp_results, STATE_CRITICAL);
-		xasprintf(&sc_dhcp_results.output, "%s", "No DHCP offers were received");
+		xasprintf(&sc_dhcp_results.output, "%s", "No DHCPOFFERs were received");
 		return sc_dhcp_results;
 	}
 
