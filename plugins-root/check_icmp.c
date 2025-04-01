@@ -65,6 +65,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
 #include <math.h>
+#include <netdb.h>
 
 /** sometimes undefined system macros (quite a few, actually) **/
 #ifndef MAXTTL
@@ -261,10 +262,10 @@ static bool order_mode = false;
 
 /** code start **/
 static void crash(const char *fmt, ...) {
-	va_list ap;
 
 	printf("%s: ", progname);
 
+	va_list ap;
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
@@ -383,9 +384,6 @@ static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icm
 
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr) {
 	struct icmp p;
-	struct icmp sent_icmp;
-	struct rta_host *host = NULL;
-
 	memcpy(&p, packet, sizeof(p));
 	if (p.icmp_type == ICMP_ECHO && ntohs(p.icmp_id) == pid) {
 		/* echo request from us to us (pinging localhost) */
@@ -412,6 +410,7 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 
 	/* might be for us. At least it holds the original package (according
 	 * to RFC 792). If it isn't, just ignore it */
+	struct icmp sent_icmp;
 	memcpy(&sent_icmp, packet + 28, sizeof(sent_icmp));
 	if (sent_icmp.icmp_type != ICMP_ECHO || ntohs(sent_icmp.icmp_id) != pid || ntohs(sent_icmp.icmp_seq) >= targets * packets) {
 		if (debug) {
@@ -421,7 +420,7 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	}
 
 	/* it is indeed a response for us */
-	host = table[ntohs(sent_icmp.icmp_seq) / packets];
+	struct rta_host *host = table[ntohs(sent_icmp.icmp_seq) / packets];
 	if (debug) {
 		char address[INET6_ADDRSTRLEN];
 		parse_address(addr, address, sizeof(address));
@@ -463,28 +462,15 @@ void parse_address(struct sockaddr_storage *addr, char *address, int size) {
 }
 
 int main(int argc, char **argv) {
-	int i;
-	char *ptr;
-	long int arg;
-	int icmp_sockerrno;
-	int udp_sockerrno;
-	int tcp_sockerrno;
-	int result;
-	struct rta_host *host;
-#ifdef HAVE_SIGACTION
-	struct sigaction sig_action;
-#endif
-#ifdef SO_TIMESTAMP
-	int on = 1;
-#endif
-	char *source_ip = NULL;
-	char *opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O64";
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
 	/* we only need to be setsuid when we get the sockets, so do
 	 * that before pointer magic (esp. on network data) */
+	int icmp_sockerrno;
+	int udp_sockerrno;
+	int tcp_sockerrno;
 	icmp_sockerrno = udp_sockerrno = tcp_sockerrno = sockets = 0;
 
 	address_family = -1;
@@ -492,7 +478,7 @@ int main(int argc, char **argv) {
 
 	/* get calling name the old-fashioned way for portability instead
 	 * of relying on the glibc-ism __progname */
-	ptr = strrchr(argv[0], '/');
+	char *ptr = strrchr(argv[0], '/');
 	if (ptr) {
 		progname = &ptr[1];
 	} else {
@@ -549,7 +535,9 @@ int main(int argc, char **argv) {
 	}
 
 	/* Parse protocol arguments first */
-	for (i = 1; i < argc; i++) {
+	char *opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O64";
+	for (int i = 1; i < argc; i++) {
+		long int arg;
 		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
 			switch (arg) {
 			case '4':
@@ -578,7 +566,9 @@ int main(int argc, char **argv) {
 	unsigned long size;
 	bool err;
 	/* parse the arguments */
-	for (i = 1; i < argc; i++) {
+	char *source_ip = NULL;
+	for (int i = 1; i < argc; i++) {
+		long int arg;
 		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
 			switch (arg) {
 			case 'v':
@@ -732,6 +722,7 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef SO_TIMESTAMP
+	int on = 1;
 	if (setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on))) {
 		if (debug) {
 			printf("Warning: no SO_TIMESTAMP support\n");
@@ -767,7 +758,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (icmp_sock) {
-		result = setsockopt(icmp_sock, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
+		int result = setsockopt(icmp_sock, SOL_IP, IP_TTL, &ttl, sizeof(ttl));
 		if (debug) {
 			if (result == -1) {
 				printf("setsockopt failed\n");
@@ -801,6 +792,7 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef HAVE_SIGACTION
+	struct sigaction sig_action;
 	sig_action.sa_sigaction = NULL;
 	sig_action.sa_handler = finish;
 	sigfillset(&sig_action.sa_mask);
@@ -856,13 +848,13 @@ int main(int argc, char **argv) {
 		crash("minimum alive hosts is negative (%i)", min_hosts_alive);
 	}
 
-	host = list;
+	struct rta_host *host = list;
 	table = malloc(sizeof(struct rta_host *) * targets);
 	if (!table) {
 		crash("main(): malloc failed for host table");
 	}
 
-	i = 0;
+	int i = 0;
 	while (host) {
 		host->id = i * packets;
 		table[i] = host;
@@ -879,16 +871,11 @@ int main(int argc, char **argv) {
 }
 
 static void run_checks(void) {
-	u_int i;
-	u_int t;
-	u_int final_wait;
-	u_int time_passed;
-
 	/* this loop might actually violate the pkt_interval or target_interval
 	 * settings, but only if there aren't any packets on the wire which
 	 * indicates that the target can handle an increased packet rate */
-	for (i = 0; i < packets; i++) {
-		for (t = 0; t < targets; t++) {
+	for (u_int i = 0; i < packets; i++) {
+		for (u_int t = 0; t < targets; t++) {
 			/* don't send useless packets */
 			if (!targets_alive) {
 				finish(0);
@@ -908,8 +895,8 @@ static void run_checks(void) {
 	}
 
 	if (icmp_pkts_en_route && targets_alive) {
-		time_passed = get_timevaldiff(NULL, NULL);
-		final_wait = max_completion_time - time_passed;
+		u_int time_passed = get_timevaldiff(NULL, NULL);
+		u_int final_wait = max_completion_time - time_passed;
 
 		if (debug) {
 			printf("time_passed: %u  final_wait: %u  max_completion_time: %llu\n", time_passed, final_wait, max_completion_time);
@@ -941,21 +928,7 @@ static void run_checks(void) {
  * icmp echo reply : the rest
  */
 static int wait_for_reply(int sock, u_int t) {
-	int n;
-	int hlen;
-	static unsigned char buf[65536];
-	struct sockaddr_storage resp_addr;
-	union ip_hdr *ip;
 	union icmp_packet packet;
-	struct rta_host *host;
-	struct icmp_ping_data data;
-	struct timeval wait_start;
-	struct timeval now;
-	u_int tdiff;
-	u_int i;
-	u_int per_pkt_wait;
-	double jitter_tmp;
-
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
 		crash("send_icmp_ping(): failed to malloc %d bytes for send buffer", icmp_pkt_size);
 		return -1; /* might be reached if we're in debug mode */
@@ -969,10 +942,15 @@ static int wait_for_reply(int sock, u_int t) {
 		return 0;
 	}
 
+	struct timeval wait_start;
 	gettimeofday(&wait_start, &tz);
 
-	i = t;
-	per_pkt_wait = t / icmp_pkts_en_route;
+	u_int i = t;
+	struct sockaddr_storage resp_addr;
+	u_int per_pkt_wait = t / icmp_pkts_en_route;
+	static unsigned char buf[65536];
+	union ip_hdr *ip;
+	struct timeval now;
 	while (icmp_pkts_en_route && get_timevaldiff(&wait_start, NULL) < i) {
 		t = per_pkt_wait;
 
@@ -982,7 +960,7 @@ static int wait_for_reply(int sock, u_int t) {
 		}
 
 		/* reap responses until we hit a timeout */
-		n = recvfrom_wto(sock, buf, sizeof(buf), (struct sockaddr *)&resp_addr, &t, &now);
+		int n = recvfrom_wto(sock, buf, sizeof(buf), (struct sockaddr *)&resp_addr, &t, &now);
 		if (!n) {
 			if (debug > 1) {
 				printf("recvfrom_wto() timed out during a %u usecs wait\n", per_pkt_wait);
@@ -1015,7 +993,7 @@ static int wait_for_reply(int sock, u_int t) {
 		 * off the bottom 4 bits */
 		/* 		hlen = (ip->ip_vhl & 0x0f) << 2; */
 		/* #else */
-		hlen = (address_family == AF_INET6) ? 0 : ip->ip.ip_hl << 2;
+		int hlen = (address_family == AF_INET6) ? 0 : ip->ip.ip_hl << 2;
 		/* #endif */
 
 		if (n < (hlen + ICMP_MINLEN)) {
@@ -1047,6 +1025,8 @@ static int wait_for_reply(int sock, u_int t) {
 		}
 
 		/* this is indeed a valid response */
+		struct rta_host *host;
+		struct icmp_ping_data data;
 		if (address_family == PF_INET) {
 			memcpy(&data, packet.icp->icmp_data, sizeof(data));
 			if (debug > 2) {
@@ -1063,10 +1043,11 @@ static int wait_for_reply(int sock, u_int t) {
 			host = table[ntohs(packet.icp6->icmp6_seq) / packets];
 		}
 
-		tdiff = get_timevaldiff(&data.stime, &now);
+		u_int tdiff = get_timevaldiff(&data.stime, &now);
 
 		if (host->last_tdiff > 0) {
 			/* Calculate jitter */
+			double jitter_tmp;
 			if (host->last_tdiff > tdiff) {
 				jitter_tmp = host->last_tdiff - tdiff;
 			} else {
@@ -1143,19 +1124,13 @@ static int wait_for_reply(int sock, u_int t) {
 
 /* the ping functions */
 static int send_icmp_ping(int sock, struct rta_host *host) {
-	long int len;
-	size_t addrlen;
-	struct icmp_ping_data data;
-	struct msghdr hdr;
-	struct iovec iov;
-	struct timeval tv;
-	void *buf = NULL;
-
 	if (sock == -1) {
 		errno = 0;
 		crash("Attempt to send on bogus socket");
 		return -1;
 	}
+
+	void *buf = NULL;
 
 	if (!buf) {
 		if (!(buf = malloc(icmp_pkt_size))) {
@@ -1165,13 +1140,17 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 	}
 	memset(buf, 0, icmp_pkt_size);
 
+	struct timeval tv;
 	if ((gettimeofday(&tv, &tz)) == -1) {
 		free(buf);
 		return -1;
 	}
 
+	struct icmp_ping_data data;
 	data.ping_id = 10; /* host->icmp.icmp_sent; */
 	memcpy(&data.stime, &tv, sizeof(tv));
+
+	size_t addrlen;
 
 	if (address_family == AF_INET) {
 		struct icmp *icp = (struct icmp *)buf;
@@ -1209,10 +1188,12 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 		}
 	}
 
+	struct iovec iov;
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = buf;
 	iov.iov_len = icmp_pkt_size;
 
+	struct msghdr hdr;
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.msg_name = (struct sockaddr *)&host->saddr_in;
 	hdr.msg_namelen = addrlen;
@@ -1221,6 +1202,7 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 
 	errno = 0;
 
+	long int len;
 /* MSG_CONFIRM is a linux thing and only available on linux kernels >= 2.3.15, see send(2) */
 #ifdef MSG_CONFIRM
 	len = sendmsg(sock, &hdr, MSG_CONFIRM);
@@ -1247,19 +1229,9 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 }
 
 static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr, u_int *timo, struct timeval *tv) {
-	u_int slen;
-	int n;
-	int ret;
-	struct timeval to;
-	struct timeval then;
-	struct timeval now;
-	fd_set rd;
-	fd_set wr;
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	char ans_data[4096];
 #endif // HAVE_MSGHDR_MSG_CONTROL
-	struct msghdr hdr;
-	struct iovec iov;
 #ifdef SO_TIMESTAMP
 	struct cmsghdr *chdr;
 #endif
@@ -1271,18 +1243,24 @@ static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *
 		return 0;
 	}
 
+	struct timeval to;
 	to.tv_sec = *timo / 1000000;
 	to.tv_usec = (*timo - (to.tv_sec * 1000000));
 
+	fd_set rd;
+	fd_set wr;
 	FD_ZERO(&rd);
 	FD_ZERO(&wr);
 	FD_SET(sock, &rd);
 	errno = 0;
+
+	struct timeval then;
 	gettimeofday(&then, &tz);
-	n = select(sock + 1, &rd, &wr, NULL, &to);
+	int n = select(sock + 1, &rd, &wr, NULL, &to);
 	if (n < 0) {
 		crash("select() in recvfrom_wto");
 	}
+	struct timeval now;
 	gettimeofday(&now, &tz);
 	*timo = get_timevaldiff(&then, &now);
 
@@ -1290,12 +1268,14 @@ static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *
 		return 0; /* timeout */
 	}
 
-	slen = sizeof(struct sockaddr_storage);
+	u_int slen = sizeof(struct sockaddr_storage);
 
+	struct iovec iov;
 	memset(&iov, 0, sizeof(iov));
 	iov.iov_base = buf;
 	iov.iov_len = len;
 
+	struct msghdr hdr;
 	memset(&hdr, 0, sizeof(hdr));
 	hdr.msg_name = saddr;
 	hdr.msg_namelen = slen;
@@ -1306,7 +1286,7 @@ static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *
 	hdr.msg_controllen = sizeof(ans_data);
 #endif
 
-	ret = recvmsg(sock, &hdr, 0);
+	int ret = recvmsg(sock, &hdr, 0);
 #ifdef SO_TIMESTAMP
 	for (chdr = CMSG_FIRSTHDR(&hdr); chdr; chdr = CMSG_NXTHDR(&hdr, chdr)) {
 		if (chdr->cmsg_level == SOL_SOCKET && chdr->cmsg_type == SO_TIMESTAMP && chdr->cmsg_len >= CMSG_LEN(sizeof(struct timeval))) {
@@ -1322,16 +1302,6 @@ static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *
 }
 
 static void finish(int sig) {
-	u_int i = 0;
-	unsigned char pl;
-	double rta;
-	struct rta_host *host;
-	const char *status_string[] = {"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
-	int hosts_ok = 0;
-	int hosts_warn = 0;
-	int this_status;
-	double R;
-
 	alarm(0);
 	if (debug > 1) {
 		printf("finish(%d) called\n", sig);
@@ -1354,11 +1324,17 @@ static void finish(int sig) {
 
 	/* iterate thrice to calculate values, give output, and print perfparse */
 	status = STATE_OK;
-	host = list;
+	struct rta_host *host = list;
 
+	u_int i = 0;
+	const char *status_string[] = {"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
+	int hosts_ok = 0;
+	int hosts_warn = 0;
 	while (host) {
-		this_status = STATE_OK;
+		int this_status = STATE_OK;
 
+		unsigned char pl;
+		double rta;
 		if (!host->icmp_recv) {
 			/* rta 0 is ofcourse not entirely correct, but will still show up
 			 * conspicuously as missing entries in perfparse and cacti */
@@ -1398,6 +1374,7 @@ static void finish(int sig) {
 			 */
 			host->EffectiveLatency = (rta / 1000) + host->jitter * 2 + 10;
 
+			double R;
 			if (host->EffectiveLatency < 160) {
 				R = 93.2 - (host->EffectiveLatency / 40);
 			} else {
@@ -1687,7 +1664,6 @@ static void finish(int sig) {
 }
 
 static u_int get_timevaldiff(struct timeval *early, struct timeval *later) {
-	u_int ret;
 	struct timeval now;
 
 	if (!later) {
@@ -1702,19 +1678,15 @@ static u_int get_timevaldiff(struct timeval *early, struct timeval *later) {
 	if (early->tv_sec > later->tv_sec || (early->tv_sec == later->tv_sec && early->tv_usec > later->tv_usec)) {
 		return 0;
 	}
-	ret = (later->tv_sec - early->tv_sec) * 1000000;
+	u_int ret = (later->tv_sec - early->tv_sec) * 1000000;
 	ret += later->tv_usec - early->tv_usec;
 
 	return ret;
 }
 
 static int add_target_ip(char *arg, struct sockaddr_storage *in) {
-	struct rta_host *host;
 	struct sockaddr_in *sin;
-	struct sockaddr_in *host_sin;
 	struct sockaddr_in6 *sin6;
-	struct sockaddr_in6 *host_sin6;
-
 	if (address_family == AF_INET) {
 		sin = (struct sockaddr_in *)in;
 	} else {
@@ -1729,7 +1701,9 @@ static int add_target_ip(char *arg, struct sockaddr_storage *in) {
 	}
 
 	/* no point in adding two identical IP's, so don't. ;) */
-	host = list;
+	struct sockaddr_in *host_sin;
+	struct sockaddr_in6 *host_sin6;
+	struct rta_host *host = list;
 	while (host) {
 		host_sin = (struct sockaddr_in *)&host->saddr_in;
 		host_sin6 = (struct sockaddr_in6 *)&host->saddr_in;
@@ -1797,14 +1771,10 @@ static int add_target_ip(char *arg, struct sockaddr_storage *in) {
 
 /* wrapper for add_target_ip */
 static int add_target(char *arg) {
-	int error;
-	int result = -1;
 	struct sockaddr_storage ip;
-	struct addrinfo hints;
-	struct addrinfo *res;
-	struct addrinfo *p;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
+	int result = -1;
 
 	switch (address_family) {
 	case -1:
@@ -1841,6 +1811,8 @@ static int add_target(char *arg) {
 		/* don't add all ip's if we were given a specific one */
 		return add_target_ip(arg, &ip);
 	}
+
+	struct addrinfo hints;
 	errno = 0;
 	memset(&hints, 0, sizeof(hints));
 	if (address_family == -1) {
@@ -1849,6 +1821,9 @@ static int add_target(char *arg) {
 		hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
 	}
 	hints.ai_socktype = SOCK_RAW;
+
+	int error;
+	struct addrinfo *res;
 	if ((error = getaddrinfo(arg, NULL, &hints, &res)) != 0) {
 		errno = 0;
 		crash("Failed to resolve %s: %s", arg, gai_strerror(error));
@@ -1857,7 +1832,7 @@ static int add_target(char *arg) {
 	address_family = res->ai_family;
 
 	/* possibly add all the IP's as targets */
-	for (p = res; p != NULL; p = p->ai_next) {
+	for (struct addrinfo *p = res; p != NULL; p = p->ai_next) {
 		memcpy(&ip, p->ai_addr, p->ai_addrlen);
 		add_target_ip(arg, &ip);
 
@@ -1920,26 +1895,19 @@ static in_addr_t get_ip_address(const char *ifname) {
  * return value is in microseconds
  */
 static u_int get_timevar(const char *str) {
-	char p;
-	char u;
-	char *ptr;
-	size_t len;
-	u_int i;
-	u_int d;             /* integer and decimal, respectively */
-	u_int factor = 1000; /* default to milliseconds */
-
 	if (!str) {
 		return 0;
 	}
-	len = strlen(str);
+
+	size_t len = strlen(str);
 	if (!len) {
 		return 0;
 	}
 
 	/* unit might be given as ms|m (millisec),
 	 * us|u (microsec) or just plain s, for seconds */
-	p = '\0';
-	u = str[len - 1];
+	char p = '\0';
+	char u = str[len - 1];
 	if (len >= 2 && !isdigit((int)str[len - 2])) {
 		p = str[len - 2];
 	}
@@ -1952,6 +1920,7 @@ static u_int get_timevar(const char *str) {
 		printf("evaluating %s, u: %c, p: %c\n", str, u, p);
 	}
 
+	u_int factor = 1000; /* default to milliseconds */
 	if (u == 'u') {
 		factor = 1; /* microseconds */
 	} else if (u == 'm') {
@@ -1963,6 +1932,8 @@ static u_int get_timevar(const char *str) {
 		printf("factor is %u\n", factor);
 	}
 
+	char *ptr;
+	u_int i;
 	i = strtoul(str, &ptr, 0);
 	if (!ptr || *ptr != '.' || strlen(ptr) < 2 || factor == 1) {
 		return i * factor;
@@ -1973,7 +1944,8 @@ static u_int get_timevar(const char *str) {
 		return i;
 	}
 
-	d = strtoul(ptr + 1, NULL, 0);
+	/* integer and decimal, respectively */
+	u_int d = strtoul(ptr + 1, NULL, 0);
 
 	/* d is decimal, so get rid of excess digits */
 	while (d >= factor) {
@@ -1986,15 +1958,13 @@ static u_int get_timevar(const char *str) {
 
 /* not too good at checking errors, but it'll do (main() should barfe on -1) */
 static int get_threshold(char *str, threshold *th) {
-	char *p = NULL;
-	char i = 0;
-
 	if (!str || !strlen(str) || !th) {
 		return -1;
 	}
 
 	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
-	p = &str[strlen(str) - 1];
+	char i = 0;
+	char *p = &str[strlen(str) - 1];
 	while (p != &str[1]) {
 		if (*p == '%') {
 			*p = '\0';
@@ -2098,7 +2068,6 @@ static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, thre
 }
 
 unsigned short icmp_checksum(uint16_t *p, size_t n) {
-	unsigned short cksum;
 	long sum = 0;
 
 	/* sizeof(uint16_t) == 2 */
@@ -2114,7 +2083,8 @@ unsigned short icmp_checksum(uint16_t *p, size_t n) {
 
 	sum = (sum >> 16) + (sum & 0xffff); /* add hi 16 to low 16 */
 	sum += (sum >> 16);                 /* add carry */
-	cksum = ~sum;                       /* ones-complement, trunc to 16 bits */
+	unsigned short cksum;
+	cksum = ~sum; /* ones-complement, trunc to 16 bits */
 
 	return cksum;
 }
