@@ -208,29 +208,25 @@ typedef enum enum_threshold_mode threshold_mode;
 /** prototypes **/
 void print_help(void);
 void print_usage(void);
-static u_int get_timevar(const char *);
-static u_int get_timevaldiff(struct timeval *, struct timeval *);
-static in_addr_t get_ip_address(const char *);
-static int wait_for_reply(int, u_int);
-static int recvfrom_wto(int, void *, unsigned int, struct sockaddr *, u_int *, struct timeval *);
-static int send_icmp_ping(int, struct rta_host *);
+static u_int get_timevar(const char * /*str*/);
+static u_int get_timevaldiff(struct timeval * /*early*/, struct timeval * /*later*/);
+static in_addr_t get_ip_address(const char * /*ifname*/);
+static int wait_for_reply(int /*sock*/, u_int /*t*/);
+static int recvfrom_wto(int /*sock*/, void * /*buf*/, unsigned int /*len*/, struct sockaddr * /*saddr*/, u_int * /*timo*/,
+						struct timeval * /*tv*/);
+static int send_icmp_ping(int /*sock*/, struct rta_host * /*host*/);
 static int get_threshold(char *str, threshold *th);
-static bool get_threshold2(char *str, size_t length, threshold *, threshold *, threshold_mode mode);
+static bool get_threshold2(char *str, size_t length, threshold * /*warn*/, threshold * /*crit*/, threshold_mode mode);
 static bool parse_threshold2_helper(char *s, size_t length, threshold *thr, threshold_mode mode);
 static void run_checks(void);
-static void set_source_ip(char *);
-static int add_target(char *);
-static int add_target_ip(char *, struct sockaddr_storage *);
-static int handle_random_icmp(unsigned char *, struct sockaddr_storage *);
-static void parse_address(struct sockaddr_storage *, char *, int);
-static unsigned short icmp_checksum(uint16_t *, size_t);
-static void finish(int);
-static void crash(const char *, ...);
-
-/** external **/
-extern int optind;
-extern char *optarg;
-extern char **environ;
+static void set_source_ip(char * /*arg*/);
+static int add_target(char * /*arg*/);
+static int add_target_ip(char * /*arg*/, struct sockaddr_storage * /*in*/);
+static int handle_random_icmp(unsigned char * /*packet*/, struct sockaddr_storage * /*addr*/);
+static void parse_address(struct sockaddr_storage * /*addr*/, char * /*address*/, int /*size*/);
+static unsigned short icmp_checksum(uint16_t * /*p*/, size_t /*n*/);
+static void finish(int /*sig*/);
+static void crash(const char * /*fmt*/, ...);
 
 /** global variables **/
 static struct rta_host **table, *cursor, *list;
@@ -386,7 +382,8 @@ static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icm
 }
 
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr) {
-	struct icmp p, sent_icmp;
+	struct icmp p;
+	struct icmp sent_icmp;
 	struct rta_host *host = NULL;
 
 	memcpy(&p, packet, sizeof(p));
@@ -469,7 +466,9 @@ int main(int argc, char **argv) {
 	int i;
 	char *ptr;
 	long int arg;
-	int icmp_sockerrno, udp_sockerrno, tcp_sockerrno;
+	int icmp_sockerrno;
+	int udp_sockerrno;
+	int tcp_sockerrno;
 	int result;
 	struct rta_host *host;
 #ifdef HAVE_SIGACTION
@@ -880,8 +879,10 @@ int main(int argc, char **argv) {
 }
 
 static void run_checks(void) {
-	u_int i, t;
-	u_int final_wait, time_passed;
+	u_int i;
+	u_int t;
+	u_int final_wait;
+	u_int time_passed;
 
 	/* this loop might actually violate the pkt_interval or target_interval
 	 * settings, but only if there aren't any packets on the wire which
@@ -940,15 +941,19 @@ static void run_checks(void) {
  * icmp echo reply : the rest
  */
 static int wait_for_reply(int sock, u_int t) {
-	int n, hlen;
+	int n;
+	int hlen;
 	static unsigned char buf[65536];
 	struct sockaddr_storage resp_addr;
 	union ip_hdr *ip;
 	union icmp_packet packet;
 	struct rta_host *host;
 	struct icmp_ping_data data;
-	struct timeval wait_start, now;
-	u_int tdiff, i, per_pkt_wait;
+	struct timeval wait_start;
+	struct timeval now;
+	u_int tdiff;
+	u_int i;
+	u_int per_pkt_wait;
 	double jitter_tmp;
 
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
@@ -1045,14 +1050,14 @@ static int wait_for_reply(int sock, u_int t) {
 		if (address_family == PF_INET) {
 			memcpy(&data, packet.icp->icmp_data, sizeof(data));
 			if (debug > 2) {
-				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp->icmp_id),
+				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", sizeof(data), ntohs(packet.icp->icmp_id),
 					   ntohs(packet.icp->icmp_seq), packet.icp->icmp_cksum);
 			}
 			host = table[ntohs(packet.icp->icmp_seq) / packets];
 		} else {
 			memcpy(&data, &packet.icp6->icmp6_dataun.icmp6_un_data8[4], sizeof(data));
 			if (debug > 2) {
-				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", (unsigned long)sizeof(data), ntohs(packet.icp6->icmp6_id),
+				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", sizeof(data), ntohs(packet.icp6->icmp6_id),
 					   ntohs(packet.icp6->icmp6_seq), packet.icp6->icmp6_cksum);
 			}
 			host = table[ntohs(packet.icp6->icmp6_seq) / packets];
@@ -1182,8 +1187,8 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 		icp->icmp_cksum = icmp_checksum((uint16_t *)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2) {
-			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data),
-				   ntohs(icp->icmp_id), ntohs(icp->icmp_seq), icp->icmp_cksum, host->name);
+			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", sizeof(data), ntohs(icp->icmp_id),
+				   ntohs(icp->icmp_seq), icp->icmp_cksum, host->name);
 		}
 	} else {
 		struct icmp6_hdr *icp6 = (struct icmp6_hdr *)buf;
@@ -1199,8 +1204,8 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 		// let checksum be calculated automatically
 
 		if (debug > 2) {
-			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", (unsigned long)sizeof(data),
-				   ntohs(icp6->icmp6_id), ntohs(icp6->icmp6_seq), icp6->icmp6_cksum, host->name);
+			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n", sizeof(data), ntohs(icp6->icmp6_id),
+				   ntohs(icp6->icmp6_seq), icp6->icmp6_cksum, host->name);
 		}
 	}
 
@@ -1228,7 +1233,7 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 	if (len < 0 || (unsigned int)len != icmp_pkt_size) {
 		if (debug) {
 			char address[INET6_ADDRSTRLEN];
-			parse_address((struct sockaddr_storage *)&host->saddr_in, address, sizeof(address));
+			parse_address((&host->saddr_in), address, sizeof(address));
 			printf("Failed to send ping to %s: %s\n", address, strerror(errno));
 		}
 		errno = 0;
@@ -1243,9 +1248,13 @@ static int send_icmp_ping(int sock, struct rta_host *host) {
 
 static int recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr, u_int *timo, struct timeval *tv) {
 	u_int slen;
-	int n, ret;
-	struct timeval to, then, now;
-	fd_set rd, wr;
+	int n;
+	int ret;
+	struct timeval to;
+	struct timeval then;
+	struct timeval now;
+	fd_set rd;
+	fd_set wr;
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	char ans_data[4096];
 #endif // HAVE_MSGHDR_MSG_CONTROL
@@ -1701,8 +1710,10 @@ static u_int get_timevaldiff(struct timeval *early, struct timeval *later) {
 
 static int add_target_ip(char *arg, struct sockaddr_storage *in) {
 	struct rta_host *host;
-	struct sockaddr_in *sin, *host_sin;
-	struct sockaddr_in6 *sin6, *host_sin6;
+	struct sockaddr_in *sin;
+	struct sockaddr_in *host_sin;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 *host_sin6;
 
 	if (address_family == AF_INET) {
 		sin = (struct sockaddr_in *)in;
@@ -1786,9 +1797,12 @@ static int add_target_ip(char *arg, struct sockaddr_storage *in) {
 
 /* wrapper for add_target_ip */
 static int add_target(char *arg) {
-	int error, result = -1;
+	int error;
+	int result = -1;
 	struct sockaddr_storage ip;
-	struct addrinfo hints, *res, *p;
+	struct addrinfo hints;
+	struct addrinfo *res;
+	struct addrinfo *p;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 
@@ -1826,22 +1840,21 @@ static int add_target(char *arg) {
 	if (result == 1) {
 		/* don't add all ip's if we were given a specific one */
 		return add_target_ip(arg, &ip);
-	} else {
-		errno = 0;
-		memset(&hints, 0, sizeof(hints));
-		if (address_family == -1) {
-			hints.ai_family = AF_UNSPEC;
-		} else {
-			hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
-		}
-		hints.ai_socktype = SOCK_RAW;
-		if ((error = getaddrinfo(arg, NULL, &hints, &res)) != 0) {
-			errno = 0;
-			crash("Failed to resolve %s: %s", arg, gai_strerror(error));
-			return -1;
-		}
-		address_family = res->ai_family;
 	}
+	errno = 0;
+	memset(&hints, 0, sizeof(hints));
+	if (address_family == -1) {
+		hints.ai_family = AF_UNSPEC;
+	} else {
+		hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
+	}
+	hints.ai_socktype = SOCK_RAW;
+	if ((error = getaddrinfo(arg, NULL, &hints, &res)) != 0) {
+		errno = 0;
+		crash("Failed to resolve %s: %s", arg, gai_strerror(error));
+		return -1;
+	}
+	address_family = res->ai_family;
 
 	/* possibly add all the IP's as targets */
 	for (p = res; p != NULL; p = p->ai_next) {
@@ -1907,9 +1920,12 @@ static in_addr_t get_ip_address(const char *ifname) {
  * return value is in microseconds
  */
 static u_int get_timevar(const char *str) {
-	char p, u, *ptr;
+	char p;
+	char u;
+	char *ptr;
 	size_t len;
-	u_int i, d;          /* integer and decimal, respectively */
+	u_int i;
+	u_int d;             /* integer and decimal, respectively */
 	u_int factor = 1000; /* default to milliseconds */
 
 	if (!str) {
@@ -1970,7 +1986,8 @@ static u_int get_timevar(const char *str) {
 
 /* not too good at checking errors, but it'll do (main() should barfe on -1) */
 static int get_threshold(char *str, threshold *th) {
-	char *p = NULL, i = 0;
+	char *p = NULL;
+	char i = 0;
 
 	if (!str || !strlen(str) || !th) {
 		return -1;
