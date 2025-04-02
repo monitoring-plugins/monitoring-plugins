@@ -81,27 +81,61 @@ int main(int argc, char **argv) {
 	char *option_string = "";
 	char *fping_prog = NULL;
 
-	/* compose the command */
+	/* First determine if the target is dualstack or ipv6 only. */
+#ifdef USE_IPV6
+	bool server_is_inet6_addr = is_inet6_addr(server);
+#else
+	bool server_is_inet6_addr = false;
+#endif
+
+	/* PATH_TO_FPING6 implies USE_IPV6 */
 #ifdef PATH_TO_FPING6
-	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && is_inet6_addr(server))) {
+	/*
+	 * If the user requested -6 OR the user made no assertion and the address is v6 or dualstack
+	 *   -> we use ipv6
+	 * If the user requested -4 OR the user made no assertion and the address is v4 ONLY
+	 *   -> we use ipv4
+	 */
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
 		fping_prog = strdup(PATH_TO_FPING6);
 	} else {
 		xasprintf(&option_string, "%s-4 ", option_string);
 		fping_prog = strdup(PATH_TO_FPING);
 	}
 #else
-	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && is_inet6_addr(server))) {
-		// -4 / -6 must be set explicitly as when a host has dual stack
-		// if we don't specify -4 then fping selects ipv6 which can mess
-		// with some checks.
+#ifdef USE_IPV6
+	/*
+	 * If the user requested -6 OR the user made no assertion and the address is v6 or dualstack
+	 *   -> we use ipv6
+	 * If the user requested -4 OR the user made no assertion and the address is v4 ONLY
+	 *   -> we use ipv4
+	 */
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
 		xasprintf(&option_string, "%s-6 ", option_string);
 	} else {
 		xasprintf(&option_string, "%s-4 ", option_string);
 	}
-
+#else
+	/*
+	 * If the user requested -6
+	 *   -> warn that v6 is not available
+	 * -> we use ipv4
+	 */
+	if (address_family == AF_INET6) {
+		usage4(_("IPv6 support not available"));
+	}
+	/*
+	 * Note here we still have to call with -4, else in the case of a dual stacked target
+	 * we could potentially silently use ipv6 despite having just warned that it is not available
+	 */
+	xasprintf(&option_string, "%s-4 ", option_string);
+	/* end USE_IPV6 */
+#endif
 	fping_prog = strdup(PATH_TO_FPING);
+	/* end PATH_TO_FPING6 */
 #endif
 
+	/* compose the command */
 	if (config.target_timeout) {
 		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
 	}
