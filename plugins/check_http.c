@@ -1724,6 +1724,16 @@ print_help (void)
   printf ("%s\n", _("strings and regular expressions, check connection times, and report on"));
   printf ("%s\n", _("certificate expiration times."));
 
+  printf ("\n");
+  printf ("%s\n", _("ATTENTION!"));
+  printf ("\n");
+  printf ("%s\n", _("THIS PLUGIN IS DEPRECATED. The functionality was reimplemented by the"));
+  printf ("%s\n", _("check_curl plugin, which can be used as a drop-in replacement. You should"));
+  printf ("%s\n", _("migrate your checks over to check_curl, because check_http is going to be"));
+  printf ("%s\n", _("removed sooner than later. Just replace check_http with check_curl in your"));
+  printf ("%s\n", _("check command definitions."));
+  printf ("%s\n", _("Report issues to: https://github.com/monitoring-plugins/monitoring-plugins/issues"));
+
   printf ("\n\n");
 
   print_usage ();
