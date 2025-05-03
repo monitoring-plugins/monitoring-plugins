@@ -15,7 +15,7 @@ typedef struct rta_host {
 	char *msg;                                    /* icmp error message, if any */
 	struct sockaddr_storage saddr_in;             /* the address of this host */
 	struct sockaddr_storage error_addr;           /* stores address of error replies */
-	unsigned long long time_waited;               /* total time waited, in usecs */
+	time_t time_waited;               /* total time waited, in usecs */
 	unsigned int icmp_sent, icmp_recv, icmp_lost; /* counters */
 	unsigned char icmp_type, icmp_code;           /* type and code from errors */
 	unsigned short flags;                         /* control/status flags */
@@ -32,7 +32,7 @@ typedef struct rta_host {
 	double mos;   /* Mean opinion score */
 	double score; /* score */
 
-	unsigned int last_tdiff;
+	time_t last_tdiff;
 	unsigned int last_icmp_seq; /* Last ICMP_SEQ to check out of order pkts */
 	unsigned char pl;           /* measured packet loss */
 
@@ -71,3 +71,6 @@ typedef struct {
 } rta_host_create_wrapper;
 
 rta_host_create_wrapper rta_host_create(char *name, struct sockaddr_storage *address);
+unsigned int ping_target_list_append(ping_target *list, ping_target *elem);
+
+void check_icmp_timeout_handler(int, siginfo_t *, void *);

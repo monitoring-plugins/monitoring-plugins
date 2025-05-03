@@ -5,6 +5,9 @@
 #include "./check_icmp_helpers.h"
 #include "../../plugins/netutils.h"
 
+// timeout as a global variable to make it available to the timeout handler
+unsigned int timeout = DEFAULT_TIMEOUT;
+
 check_icmp_config check_icmp_config_init() {
 	check_icmp_config tmp = {
 		.source_ip = NULL,
@@ -33,11 +36,14 @@ check_icmp_config check_icmp_config_init() {
 				 .score = 80.0},
 		.pid = {},
 		.mode = MODE_RTA,
-		.timeout = DEFAULT_TIMEOUT,
 		.ttl = DEFAULT_TTL,
 
 		.packets = DEFAULT_NUMBER_OF_PACKETS,
+
 		.number_of_targets = 0,
+		.targets = NULL,
+
+		.number_of_hosts = 0,
 		.hosts = NULL,
 	};
 	return tmp;
@@ -139,4 +145,44 @@ check_icmp_target_container check_icmp_target_container_init() {
 		.target_list = NULL,
 	};
 	return tmp;
+}
+
+unsigned int ping_target_list_append(ping_target *list, ping_target *elem) {
+	if (elem == NULL || list == NULL) {
+		return 0;
+	}
+
+	while (list->next != NULL) {
+		list = list->next;
+	}
+
+	list->next = elem;
+
+	unsigned int result = 1;
+
+	while (elem->next != NULL) {
+		result++;
+		elem = elem->next;
+	}
+
+	return result;
+}
+
+void check_icmp_timeout_handler(int signal, siginfo_t * info, void *ucontext) {
+	// Ignore unused arguments
+	(void) info;
+	(void) ucontext;
+	mp_subcheck timeout_sc = mp_subcheck_init();
+	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
+
+	if (signal == SIGALRM) {
+		xasprintf(&timeout_sc.output, _("timeout after %d seconds\n"), timeout);
+	} else {
+		xasprintf(&timeout_sc.output, _("timeout after %d seconds\n"), timeout);
+	}
+
+	mp_check overall = mp_check_init();
+	mp_add_subcheck_to_check(&overall, timeout_sc);
+
+	mp_exit(overall);
 }
