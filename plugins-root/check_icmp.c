@@ -142,37 +142,38 @@ static void set_source_ip(char * /*arg*/, int icmp_sock);
 
 /* Receiving data */
 static int wait_for_reply(int socket, time_t time_interval, unsigned short icmp_pkt_size,
-						  unsigned int *pkt_interval, unsigned int *target_interval, pid_t pid,
-						  ping_target **table, unsigned short packets,
+						  unsigned int *pkt_interval, unsigned int *target_interval,
+						  uint16_t sender_id, ping_target **table, unsigned short packets,
 						  unsigned short number_of_targets, check_icmp_state *program_state);
 
 static ssize_t recvfrom_wto(int /*sock*/, void * /*buf*/, unsigned int /*len*/,
 							struct sockaddr * /*saddr*/, time_t *timeout, struct timeval * /*tv*/);
 static int handle_random_icmp(unsigned char * /*packet*/, struct sockaddr_storage * /*addr*/,
-							  unsigned int *pkt_interval, unsigned int *target_interval, pid_t pid,
+							  unsigned int *pkt_interval, unsigned int *target_interval, uint16_t sender_id,
 							  ping_target **table, unsigned short packets,
 							  unsigned short number_of_targets, check_icmp_state *program_state);
 
 /* Sending data */
 static int send_icmp_ping(int /*sock*/, ping_target * /*host*/, unsigned short icmp_pkt_size,
-						  pid_t pid, check_icmp_state *program_state);
+						  uint16_t sender_id, check_icmp_state *program_state);
 
 /* Threshold related */
-static int get_threshold(char *str, threshold *threshold);
-static bool get_threshold2(char *str, size_t length, threshold * /*warn*/, threshold * /*crit*/,
-						   threshold_mode mode);
-static bool parse_threshold2_helper(char *threshold_string, size_t length, threshold *thr,
-									threshold_mode mode);
+static int get_threshold(char *str, check_icmp_threshold *threshold);
+static bool get_threshold2(char *str, size_t length, check_icmp_threshold * /*warn*/,
+						   check_icmp_threshold * /*crit*/, threshold_mode mode);
+static bool parse_threshold2_helper(char *threshold_string, size_t length,
+									check_icmp_threshold *thr, threshold_mode mode);
 
 /* main test function */
 static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
 					   bool jitter_mode, bool score_mode, int min_hosts_alive,
 					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
-					   unsigned int *target_interval, threshold warn, threshold crit, pid_t pid,
-					   int mode, unsigned int max_completion_time, struct timeval prog_start,
-					   ping_target **table, unsigned short packets, int icmp_sock,
-					   unsigned short number_of_targets, check_icmp_state *program_state,
-					   ping_target *target_list);
+					   unsigned int *target_interval, check_icmp_threshold warn,
+					   check_icmp_threshold crit, uint16_t sender_id,
+					   check_icmp_execution_mode mode, unsigned int max_completion_time,
+					   struct timeval prog_start, ping_target **table, unsigned short packets,
+					   int icmp_sock, unsigned short number_of_targets,
+					   check_icmp_state *program_state, ping_target *target_list);
 
 /* Target aquisition */
 typedef struct {
@@ -190,13 +191,14 @@ static add_target_ip_wrapper add_target_ip(char * /*arg*/, struct sockaddr_stora
 
 static void parse_address(struct sockaddr_storage * /*addr*/, char * /*address*/, socklen_t size);
 
-static unsigned short icmp_checksum(uint16_t * /*p*/, size_t /*n*/);
+static unsigned short icmp_checksum(uint16_t *packet, size_t packet_size);
 
 /* End of run function */
 static void finish(int /*sig*/, bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-				   bool jitter_mode, bool score_mode, int min_hosts_alive, threshold warn,
-				   threshold crit, int icmp_sock, unsigned short number_of_targets,
-				   check_icmp_state *program_state, ping_target *target_list);
+				   bool jitter_mode, bool score_mode, int min_hosts_alive,
+				   check_icmp_threshold warn, check_icmp_threshold crit, int icmp_sock,
+				   unsigned short number_of_targets, check_icmp_state *program_state,
+				   ping_target *target_list);
 
 /* Error exit */
 static void crash(const char * /*fmt*/, ...);
@@ -239,21 +241,21 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	/* use the pid to mark packets as ours */
 	/* Some systems have 32-bit pid_t so mask off only 16 bits */
-	result.config.pid = getpid() & 0xffff;
+	result.config.sender_id = getpid() & 0xffff;
 
 	if (!strcmp(progname, "check_icmp") || !strcmp(progname, "check_ping")) {
 		result.config.mode = MODE_ICMP;
 	} else if (!strcmp(progname, "check_host")) {
 		result.config.mode = MODE_HOSTCHECK;
 		result.config.pkt_interval = 1000000;
-		result.config.packets = 5;
+		result.config.number_of_packets = 5;
 		result.config.crit.rta = result.config.warn.rta = 1000000;
 		result.config.crit.pl = result.config.warn.pl = 100;
 	} else if (!strcmp(progname, "check_rta_multi")) {
 		result.config.mode = MODE_ALL;
 		result.config.target_interval = 0;
 		result.config.pkt_interval = 50000;
-		result.config.packets = 5;
+		result.config.number_of_packets = 5;
 	}
 	/* support "--help" and "--version" */
 	if (argc == 2) {
@@ -279,14 +281,10 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				address_family = AF_INET;
 				break;
 			case '6':
-#ifdef USE_IPV6
 				if (address_family != -1) {
 					crash("Multiple protocol versions not supported");
 				}
 				address_family = AF_INET6;
-#else
-				usage(_("IPv6 support not available\n"));
-#endif
 				break;
 			case 'H': {
 				result.config.number_of_hosts++;
@@ -351,10 +349,10 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			case 'n':
 			case 'p':
-				result.config.packets = (unsigned short)strtoul(optarg, NULL, 0);
-				if (result.config.packets > 20) {
+				result.config.number_of_packets = (unsigned short)strtoul(optarg, NULL, 0);
+				if (result.config.number_of_packets > 20) {
 					errno = 0;
-					crash("packets is > 20 (%d)", result.config.packets);
+					crash("packets is > 20 (%d)", result.config.number_of_packets);
 				}
 				break;
 			case 't':
@@ -599,18 +597,18 @@ static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icm
 
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr,
 							  unsigned int *pkt_interval, unsigned int *target_interval,
-							  const pid_t pid, ping_target **table, unsigned short packets,
+							  const uint16_t sender_id, ping_target **table, unsigned short packets,
 							  const unsigned short number_of_targets,
 							  check_icmp_state *program_state) {
-	struct icmp p;
-	memcpy(&p, packet, sizeof(p));
-	if (p.icmp_type == ICMP_ECHO && ntohs(p.icmp_id) == pid) {
+	struct icmp icmp_packet;
+	memcpy(&icmp_packet, packet, sizeof(icmp_packet));
+	if (icmp_packet.icmp_type == ICMP_ECHO && ntohs(icmp_packet.icmp_id) == sender_id) {
 		/* echo request from us to us (pinging localhost) */
 		return 0;
 	}
 
 	if (debug) {
-		printf("handle_random_icmp(%p, %p)\n", (void *)&p, (void *)addr);
+		printf("handle_random_icmp(%p, %p)\n", (void *)&icmp_packet, (void *)addr);
 	}
 
 	/* only handle a few types, since others can't possibly be replies to
@@ -623,8 +621,8 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	 * TIMXCEED actually sends a proper icmp response we will have passed
 	 * too many hops to have a hope of reaching it later, in which case it
 	 * indicates overconfidence in the network, poor routing or both. */
-	if (p.icmp_type != ICMP_UNREACH && p.icmp_type != ICMP_TIMXCEED &&
-		p.icmp_type != ICMP_SOURCEQUENCH && p.icmp_type != ICMP_PARAMPROB) {
+	if (icmp_packet.icmp_type != ICMP_UNREACH && icmp_packet.icmp_type != ICMP_TIMXCEED &&
+		icmp_packet.icmp_type != ICMP_SOURCEQUENCH && icmp_packet.icmp_type != ICMP_PARAMPROB) {
 		return 0;
 	}
 
@@ -632,7 +630,7 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	 * to RFC 792). If it isn't, just ignore it */
 	struct icmp sent_icmp;
 	memcpy(&sent_icmp, packet + 28, sizeof(sent_icmp));
-	if (sent_icmp.icmp_type != ICMP_ECHO || ntohs(sent_icmp.icmp_id) != pid ||
+	if (sent_icmp.icmp_type != ICMP_ECHO || ntohs(sent_icmp.icmp_id) != sender_id ||
 		ntohs(sent_icmp.icmp_seq) >= number_of_targets * packets) {
 		if (debug) {
 			printf("Packet is no response to a packet we sent\n");
@@ -646,7 +644,7 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 		char address[INET6_ADDRSTRLEN];
 		parse_address(addr, address, sizeof(address));
 		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
-			   get_icmp_error_msg(p.icmp_type, p.icmp_code), address, host->name);
+			   get_icmp_error_msg(icmp_packet.icmp_type, icmp_packet.icmp_code), address, host->name);
 	}
 
 	program_state->icmp_lost++;
@@ -658,15 +656,15 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 
 	/* source quench means we're sending too fast, so increase the
 	 * interval and mark this packet lost */
-	if (p.icmp_type == ICMP_SOURCEQUENCH) {
+	if (icmp_packet.icmp_type == ICMP_SOURCEQUENCH) {
 		*pkt_interval = (unsigned int)(*pkt_interval * PACKET_BACKOFF_FACTOR);
 		*target_interval = (unsigned int)(*target_interval * TARGET_BACKOFF_FACTOR);
 	} else {
 		program_state->targets_down++;
 		host->flags |= FLAG_LOST_CAUSE;
 	}
-	host->icmp_type = p.icmp_type;
-	host->icmp_code = p.icmp_code;
+	host->icmp_type = icmp_packet.icmp_type;
+	host->icmp_code = icmp_packet.icmp_code;
 	host->error_addr = *addr;
 
 	return 0;
@@ -772,18 +770,18 @@ int main(int argc, char **argv) {
 	gettimeofday(&prog_start, NULL);
 
 	unsigned int max_completion_time =
-		((config.number_of_targets * config.packets * config.pkt_interval) +
+		((config.number_of_targets * config.number_of_packets * config.pkt_interval) +
 		 (config.number_of_targets * config.target_interval)) +
-		(config.number_of_targets * config.packets * config.crit.rta) + config.crit.rta;
+		(config.number_of_targets * config.number_of_packets * config.crit.rta) + config.crit.rta;
 
 	if (debug) {
 		printf("packets: %u, targets: %u\n"
 			   "target_interval: %0.3f, pkt_interval %0.3f\n"
 			   "crit.rta: %0.3f\n"
 			   "max_completion_time: %0.3f\n",
-			   config.packets, config.number_of_targets, (float)config.target_interval / 1000,
-			   (float)config.pkt_interval / 1000, (float)config.crit.rta / 1000,
-			   (float)max_completion_time / 1000);
+			   config.number_of_packets, config.number_of_targets,
+			   (float)config.target_interval / 1000, (float)config.pkt_interval / 1000,
+			   (float)config.crit.rta / 1000, (float)max_completion_time / 1000);
 	}
 
 	if (debug) {
@@ -814,7 +812,7 @@ int main(int argc, char **argv) {
 
 	unsigned short target_index = 0;
 	while (host) {
-		host->id = target_index * config.packets;
+		host->id = target_index * config.number_of_packets;
 		table[target_index] = host;
 		host = host->next;
 		target_index++;
@@ -827,9 +825,9 @@ int main(int argc, char **argv) {
 
 	run_checks(config.order_mode, config.mos_mode, config.rta_mode, config.pl_mode,
 			   config.jitter_mode, config.score_mode, config.min_hosts_alive, config.icmp_data_size,
-			   &pkt_interval, &target_interval, config.warn, config.crit, config.pid, config.mode,
-			   max_completion_time, prog_start, table, config.packets, icmp_sock,
-			   config.number_of_targets, &program_state, config.targets);
+			   &pkt_interval, &target_interval, config.warn, config.crit, config.sender_id,
+			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
+			   icmp_sock, config.number_of_targets, &program_state, config.targets);
 
 	errno = 0;
 	finish(0, config.order_mode, config.mos_mode, config.rta_mode, config.pl_mode,
@@ -842,8 +840,9 @@ int main(int argc, char **argv) {
 static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
 					   bool jitter_mode, bool score_mode, int min_hosts_alive,
 					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
-					   unsigned int *target_interval, threshold warn, threshold crit,
-					   const pid_t pid, const int mode, const unsigned int max_completion_time,
+					   unsigned int *target_interval, check_icmp_threshold warn,
+					   check_icmp_threshold crit, const uint16_t sender_id,
+					   const check_icmp_execution_mode mode, const unsigned int max_completion_time,
 					   const struct timeval prog_start, ping_target **table,
 					   const unsigned short packets, const int icmp_sock,
 					   const unsigned short number_of_targets, check_icmp_state *program_state,
@@ -867,14 +866,15 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 			}
 
 			/* we're still in the game, so send next packet */
-			(void)send_icmp_ping(icmp_sock, table[target_index], icmp_pkt_size, pid, program_state);
+			(void)send_icmp_ping(icmp_sock, table[target_index], icmp_pkt_size, sender_id,
+								 program_state);
 
 			/* wrap up if all targets are declared dead */
 			if (targets_alive(number_of_targets, program_state->targets_down) ||
 				get_timevaldiff(prog_start, prog_start) < max_completion_time ||
 				!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
 				wait_for_reply(icmp_sock, *target_interval, icmp_pkt_size, pkt_interval,
-							   target_interval, pid, table, packets, number_of_targets,
+							   target_interval, sender_id, table, packets, number_of_targets,
 							   program_state);
 			}
 		}
@@ -882,8 +882,8 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
 			wait_for_reply(icmp_sock, *pkt_interval * number_of_targets, icmp_pkt_size,
-						   pkt_interval, target_interval, pid, table, packets, number_of_targets,
-						   program_state);
+						   pkt_interval, target_interval, sender_id, table, packets,
+						   number_of_targets, program_state);
 		}
 	}
 
@@ -915,8 +915,8 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-			wait_for_reply(icmp_sock, final_wait, icmp_pkt_size, pkt_interval, target_interval, pid,
-						   table, packets, number_of_targets, program_state);
+			wait_for_reply(icmp_sock, final_wait, icmp_pkt_size, pkt_interval, target_interval,
+						   sender_id, table, packets, number_of_targets, program_state);
 		}
 	}
 }
@@ -932,8 +932,8 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
  * icmp echo reply : the rest
  */
 static int wait_for_reply(int sock, const time_t time_interval, unsigned short icmp_pkt_size,
-						  unsigned int *pkt_interval, unsigned int *target_interval, pid_t pid,
-						  ping_target **table, const unsigned short packets,
+						  unsigned int *pkt_interval, unsigned int *target_interval,
+						  uint16_t sender_id, ping_target **table, const unsigned short packets,
 						  const unsigned short number_of_targets, check_icmp_state *program_state) {
 	union icmp_packet packet;
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
@@ -1027,16 +1027,16 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 								   : sizeof(struct icmp));*/
 
 		if ((address_family == PF_INET &&
-			 (ntohs(packet.icp->icmp_id) != pid || packet.icp->icmp_type != ICMP_ECHOREPLY ||
+			 (ntohs(packet.icp->icmp_id) != sender_id || packet.icp->icmp_type != ICMP_ECHOREPLY ||
 			  ntohs(packet.icp->icmp_seq) >= number_of_targets * packets)) ||
 			(address_family == PF_INET6 &&
-			 (ntohs(packet.icp6->icmp6_id) != pid || packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
+			 (ntohs(packet.icp6->icmp6_id) != sender_id || packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
 			  ntohs(packet.icp6->icmp6_seq) >= number_of_targets * packets))) {
 			if (debug > 2) {
 				printf("not a proper ICMP_ECHOREPLY\n");
 			}
 
-			handle_random_icmp(buf + hlen, &resp_addr, pkt_interval, target_interval, pid, table,
+			handle_random_icmp(buf + hlen, &resp_addr, pkt_interval, target_interval, sender_id, table,
 							   packets, number_of_targets, program_state);
 
 			continue;
@@ -1136,7 +1136,7 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 
 /* the ping functions */
 static int send_icmp_ping(const int sock, ping_target *host, const unsigned short icmp_pkt_size,
-						  const pid_t pid, check_icmp_state *program_state) {
+						  const uint16_t sender_id, check_icmp_state *program_state) {
 	if (sock == -1) {
 		errno = 0;
 		crash("Attempt to send on bogus socket");
@@ -1174,7 +1174,7 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 		icp->icmp_type = ICMP_ECHO;
 		icp->icmp_code = 0;
 		icp->icmp_cksum = 0;
-		icp->icmp_id = htons((uint16_t)pid);
+		icp->icmp_id = htons((uint16_t)sender_id);
 		icp->icmp_seq = htons(host->id++);
 		icp->icmp_cksum = icmp_checksum((uint16_t *)buf, (size_t)icmp_pkt_size);
 
@@ -1192,7 +1192,7 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 		icp6->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp6->icmp6_code = 0;
 		icp6->icmp6_cksum = 0;
-		icp6->icmp6_id = htons((uint16_t)pid);
+		icp6->icmp6_id = htons((uint16_t)sender_id);
 		icp6->icmp6_seq = htons(host->id++);
 		// let checksum be calculated automatically
 
@@ -1330,9 +1330,10 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 }
 
 static void finish(int sig, bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-				   bool jitter_mode, bool score_mode, int min_hosts_alive, threshold warn,
-				   threshold crit, const int icmp_sock, const unsigned short number_of_targets,
-				   check_icmp_state *program_state, ping_target *target_list) {
+				   bool jitter_mode, bool score_mode, int min_hosts_alive,
+				   check_icmp_threshold warn, check_icmp_threshold crit, const int icmp_sock,
+				   const unsigned short number_of_targets, check_icmp_state *program_state,
+				   ping_target *target_list) {
 	// Deactivate alarm
 	alarm(0);
 
@@ -1821,13 +1822,12 @@ static add_target_wrapper add_target(char *arg, const int mode) {
 		address_family = AF_INET;
 		sin = (struct sockaddr_in *)&address_storage;
 		error_code = inet_pton(address_family, arg, &sin->sin_addr);
-#ifdef USE_IPV6
+
 		if (error_code != 1) {
 			address_family = AF_INET6;
 			sin6 = (struct sockaddr_in6 *)&address_storage;
 			error_code = inet_pton(address_family, arg, &sin6->sin6_addr);
 		}
-#endif
 		/* If we don't find any valid addresses, we still don't know the address_family */
 		if (error_code != 1) {
 			address_family = -1;
@@ -2029,7 +2029,7 @@ static unsigned int get_timevar(const char *str) {
 }
 
 /* not too good at checking errors, but it'll do (main() should barfe on -1) */
-static int get_threshold(char *str, threshold *threshold) {
+static int get_threshold(char *str, check_icmp_threshold *threshold) {
 	if (!str || !strlen(str) || !threshold) {
 		return -1;
 	}
@@ -2075,8 +2075,8 @@ static int get_threshold(char *str, threshold *threshold) {
  * @param[in] mode Determines whether this a threshold for rta, packet_loss, jitter, mos or score
  * (exclusively)
  */
-static bool get_threshold2(char *str, size_t length, threshold *warn, threshold *crit,
-						   threshold_mode mode) {
+static bool get_threshold2(char *str, size_t length, check_icmp_threshold *warn,
+						   check_icmp_threshold *crit, threshold_mode mode) {
 	if (!str || !length || !warn || !crit) {
 		return false;
 	}
@@ -2106,8 +2106,8 @@ static bool get_threshold2(char *str, size_t length, threshold *warn, threshold 
 	return parse_threshold2_helper(work_pointer, strlen(work_pointer), warn, mode);
 }
 
-static bool parse_threshold2_helper(char *threshold_string, size_t length, threshold *thr,
-									threshold_mode mode) {
+static bool parse_threshold2_helper(char *threshold_string, size_t length,
+									check_icmp_threshold *thr, threshold_mode mode) {
 	char *resultChecker = {0};
 
 	switch (mode) {

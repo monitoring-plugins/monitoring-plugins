@@ -10,8 +10,6 @@ unsigned int timeout = DEFAULT_TIMEOUT;
 
 check_icmp_config check_icmp_config_init() {
 	check_icmp_config tmp = {
-		.source_ip = NULL,
-
 		.order_mode = false,
 		.mos_mode = false,
 		.rta_mode = false,
@@ -20,10 +18,6 @@ check_icmp_config check_icmp_config_init() {
 		.score_mode = false,
 
 		.min_hosts_alive = -1,
-		.icmp_data_size = DEFAULT_PING_DATA_SIZE,
-		.icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN,
-		.pkt_interval = DEFAULT_PKT_INTERVAL,
-		.target_interval = 0,
 		.crit = {.pl = DEFAULT_CRIT_PL,
 				 .rta = DEFAULT_CRIT_RTA,
 				 .jitter = 50.0,
@@ -34,11 +28,18 @@ check_icmp_config check_icmp_config_init() {
 				 .jitter = 40.0,
 				 .mos = 3.5,
 				 .score = 80.0},
-		.pid = {},
-		.mode = MODE_RTA,
-		.ttl = DEFAULT_TTL,
 
-		.packets = DEFAULT_NUMBER_OF_PACKETS,
+		.ttl = DEFAULT_TTL,
+		.icmp_data_size = DEFAULT_PING_DATA_SIZE,
+		.icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN,
+		.pkt_interval = DEFAULT_PKT_INTERVAL,
+		.target_interval = 0,
+		.number_of_packets = DEFAULT_NUMBER_OF_PACKETS,
+		.source_ip = NULL,
+
+		.sender_id = {},
+
+		.mode = MODE_RTA,
 
 		.number_of_targets = 0,
 		.targets = NULL,
@@ -168,10 +169,10 @@ unsigned int ping_target_list_append(ping_target *list, ping_target *elem) {
 	return result;
 }
 
-void check_icmp_timeout_handler(int signal, siginfo_t * info, void *ucontext) {
+void check_icmp_timeout_handler(int signal, siginfo_t *info, void *ucontext) {
 	// Ignore unused arguments
-	(void) info;
-	(void) ucontext;
+	(void)info;
+	(void)ucontext;
 	mp_subcheck timeout_sc = mp_subcheck_init();
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 

@@ -10,20 +10,38 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
+#include <stdint.h>
 #include "./check_icmp_helpers.h"
 
 /* threshold structure. all values are maximum allowed, exclusive */
-typedef struct threshold {
+typedef struct {
 	unsigned char pl; /* max allowed packet loss in percent */
 	unsigned int rta; /* roundtrip time average, microseconds */
 	double jitter;    /* jitter time average, microseconds */
 	double mos;       /* MOS */
 	double score;     /* Score */
-} threshold;
+} check_icmp_threshold;
+
+/* the different modes of this program are as follows:
+ * MODE_RTA: send all packets no matter what (mimic check_icmp and check_ping)
+ * MODE_HOSTCHECK: Return immediately upon any sign of life
+ *                 In addition, sends packets to ALL addresses assigned
+ *                 to this host (as returned by gethostbyname() or
+ *                 gethostbyaddr() and expects one host only to be checked at
+ *                 a time.  Therefore, any packet response what so ever will
+ *                 count as a sign of life, even when received outside
+ *                 crit.rta limit. Do not misspell any additional IP's.
+ * MODE_ALL:  Requires packets from ALL requested IP to return OK (default).
+ * MODE_ICMP: Default Mode
+ */
+typedef enum {
+	MODE_RTA,
+	MODE_HOSTCHECK,
+	MODE_ALL,
+	MODE_ICMP,
+} check_icmp_execution_mode;
 
 typedef struct {
-	char *source_ip;
-
 	bool order_mode;
 	bool mos_mode;
 	bool rta_mode;
@@ -32,18 +50,20 @@ typedef struct {
 	bool score_mode;
 
 	int min_hosts_alive;
+	check_icmp_threshold crit;
+	check_icmp_threshold warn;
+
+	unsigned long ttl;
 	unsigned short icmp_data_size;
 	unsigned short icmp_pkt_size;
 	unsigned int pkt_interval;
 	unsigned int target_interval;
-	threshold crit;
-	threshold warn;
-	pid_t pid;
+	unsigned short number_of_packets;
+	char *source_ip;
 
-	int mode;
-	unsigned long ttl;
+	uint16_t sender_id; // PID of the main process, which is used as an ID in packets
 
-	unsigned short packets;
+	check_icmp_execution_mode mode;
 
 	unsigned short number_of_targets;
 	ping_target *targets;
@@ -77,24 +97,6 @@ typedef struct icmp_ping_data {
 
 #define DEFAULT_TIMEOUT 10
 #define DEFAULT_TTL     64
-
-/* the different modes of this program are as follows:
- * MODE_RTA: send all packets no matter what (mimic check_icmp and check_ping)
- * MODE_HOSTCHECK: Return immediately upon any sign of life
- *                 In addition, sends packets to ALL addresses assigned
- *                 to this host (as returned by gethostbyname() or
- *                 gethostbyaddr() and expects one host only to be checked at
- *                 a time.  Therefore, any packet response what so ever will
- *                 count as a sign of life, even when received outside
- *                 crit.rta limit. Do not misspell any additional IP's.
- * MODE_ALL:  Requires packets from ALL requested IP to return OK (default).
- * MODE_ICMP: implement something similar to check_icmp (MODE_RTA without
- *            tcp and udp args does this)
- */
-#define MODE_RTA       0
-#define MODE_HOSTCHECK 1
-#define MODE_ALL       2
-#define MODE_ICMP      3
 
 #define DEFAULT_NUMBER_OF_PACKETS 5
 
