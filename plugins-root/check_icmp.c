@@ -149,20 +149,37 @@ static int wait_for_reply(int socket, time_t time_interval, unsigned short icmp_
 static ssize_t recvfrom_wto(int /*sock*/, void * /*buf*/, unsigned int /*len*/,
 							struct sockaddr * /*saddr*/, time_t *timeout, struct timeval * /*tv*/);
 static int handle_random_icmp(unsigned char * /*packet*/, struct sockaddr_storage * /*addr*/,
-							  unsigned int *pkt_interval, unsigned int *target_interval, uint16_t sender_id,
-							  ping_target **table, unsigned short packets,
+							  unsigned int *pkt_interval, unsigned int *target_interval,
+							  uint16_t sender_id, ping_target **table, unsigned short packets,
 							  unsigned short number_of_targets, check_icmp_state *program_state);
 
 /* Sending data */
-static int send_icmp_ping(int /*sock*/, ping_target * /*host*/, unsigned short icmp_pkt_size,
+static int send_icmp_ping(int socket, ping_target *host, unsigned short icmp_pkt_size,
 						  uint16_t sender_id, check_icmp_state *program_state);
 
 /* Threshold related */
-static int get_threshold(char *str, check_icmp_threshold *threshold);
-static bool get_threshold2(char *str, size_t length, check_icmp_threshold * /*warn*/,
-						   check_icmp_threshold * /*crit*/, threshold_mode mode);
-static bool parse_threshold2_helper(char *threshold_string, size_t length,
-									check_icmp_threshold *thr, threshold_mode mode);
+typedef struct {
+	int errorcode;
+	check_icmp_threshold threshold;
+} get_threshold_wrapper;
+static get_threshold_wrapper get_threshold(char *str, check_icmp_threshold threshold);
+
+typedef struct {
+	int errorcode;
+	check_icmp_threshold warn;
+	check_icmp_threshold crit;
+} get_threshold2_wrapper;
+static get_threshold2_wrapper get_threshold2(char *str, size_t length, check_icmp_threshold warn,
+											 check_icmp_threshold crit, threshold_mode mode);
+
+typedef struct {
+	int errorcode;
+	check_icmp_threshold result;
+} parse_threshold2_helper_wrapper;
+static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_string,
+															   size_t length,
+															   check_icmp_threshold thr,
+															   threshold_mode mode);
 
 /* main test function */
 static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
@@ -314,7 +331,6 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 	/* Reset argument scanning */
 	optind = 1;
 
-	bool err;
 	/* parse the arguments */
 	for (int i = 1; i < argc; i++) {
 		long int arg;
@@ -341,12 +357,22 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 			case 'I':
 				result.config.target_interval = get_timevar(optarg);
 				break;
-			case 'w':
-				get_threshold(optarg, &result.config.warn);
-				break;
-			case 'c':
-				get_threshold(optarg, &result.config.crit);
-				break;
+			case 'w': {
+				get_threshold_wrapper warn = get_threshold(optarg, result.config.warn);
+				if (warn.errorcode == OK) {
+					result.config.warn = warn.threshold;
+				} else {
+					crash("failed to parse warning threshold");
+				}
+			} break;
+			case 'c': {
+				get_threshold_wrapper crit = get_threshold(optarg, result.config.crit);
+				if (crit.errorcode == OK) {
+					result.config.crit = crit.threshold;
+				} else {
+					crash("failed to parse critical threshold");
+				}
+			} break;
 			case 'n':
 			case 'p':
 				result.config.number_of_packets = (unsigned short)strtoul(optarg, NULL, 0);
@@ -387,51 +413,65 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				print_help();
 				exit(STATE_UNKNOWN);
 				break;
-			case 'R': /* RTA mode */
-				err = get_threshold2(optarg, strlen(optarg), &result.config.warn,
-									 &result.config.crit, const_rta_mode);
-				if (!err) {
+			case 'R': /* RTA mode */ {
+				get_threshold2_wrapper rta_th = get_threshold2(
+					optarg, strlen(optarg), result.config.warn, result.config.crit, const_rta_mode);
+
+				if (rta_th.errorcode != OK) {
 					crash("Failed to parse RTA threshold");
 				}
 
+				result.config.warn = rta_th.warn;
+				result.config.crit = rta_th.crit;
 				result.config.rta_mode = true;
-				break;
-			case 'P': /* packet loss mode */
-				err = get_threshold2(optarg, strlen(optarg), &result.config.warn,
-									 &result.config.crit, const_packet_loss_mode);
-				if (!err) {
+			} break;
+			case 'P': /* packet loss mode */ {
+				get_threshold2_wrapper pl_th =
+					get_threshold2(optarg, strlen(optarg), result.config.warn, result.config.crit,
+								   const_packet_loss_mode);
+				if (pl_th.errorcode != OK) {
 					crash("Failed to parse packet loss threshold");
 				}
 
+				result.config.warn = pl_th.warn;
+				result.config.crit = pl_th.crit;
 				result.config.pl_mode = true;
-				break;
-			case 'J': /* jitter mode */
-				err = get_threshold2(optarg, strlen(optarg), &result.config.warn,
-									 &result.config.crit, const_jitter_mode);
-				if (!err) {
+			} break;
+			case 'J': /* jitter mode */ {
+				get_threshold2_wrapper jitter_th =
+					get_threshold2(optarg, strlen(optarg), result.config.warn, result.config.crit,
+								   const_jitter_mode);
+				if (jitter_th.errorcode != OK) {
 					crash("Failed to parse jitter threshold");
 				}
 
+				result.config.warn = jitter_th.warn;
+				result.config.crit = jitter_th.crit;
 				result.config.jitter_mode = true;
-				break;
-			case 'M': /* MOS mode */
-				err = get_threshold2(optarg, strlen(optarg), &result.config.warn,
-									 &result.config.crit, const_mos_mode);
-				if (!err) {
+			} break;
+			case 'M': /* MOS mode */ {
+				get_threshold2_wrapper mos_th = get_threshold2(
+					optarg, strlen(optarg), result.config.warn, result.config.crit, const_mos_mode);
+				if (mos_th.errorcode != OK) {
 					crash("Failed to parse MOS threshold");
 				}
 
+				result.config.warn = mos_th.warn;
+				result.config.crit = mos_th.crit;
 				result.config.mos_mode = true;
-				break;
-			case 'S': /* score mode */
-				err = get_threshold2(optarg, strlen(optarg), &result.config.warn,
-									 &result.config.crit, const_score_mode);
-				if (!err) {
+			} break;
+			case 'S': /* score mode */ {
+				get_threshold2_wrapper score_th =
+					get_threshold2(optarg, strlen(optarg), result.config.warn, result.config.crit,
+								   const_score_mode);
+				if (score_th.errorcode != OK) {
 					crash("Failed to parse score threshold");
 				}
 
+				result.config.warn = score_th.warn;
+				result.config.crit = score_th.crit;
 				result.config.score_mode = true;
-				break;
+			} break;
 			case 'O': /* out of order mode */
 				result.config.order_mode = true;
 				break;
@@ -644,7 +684,8 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 		char address[INET6_ADDRSTRLEN];
 		parse_address(addr, address, sizeof(address));
 		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
-			   get_icmp_error_msg(icmp_packet.icmp_type, icmp_packet.icmp_code), address, host->name);
+			   get_icmp_error_msg(icmp_packet.icmp_type, icmp_packet.icmp_code), address,
+			   host->name);
 	}
 
 	program_state->icmp_lost++;
@@ -1030,14 +1071,15 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 			 (ntohs(packet.icp->icmp_id) != sender_id || packet.icp->icmp_type != ICMP_ECHOREPLY ||
 			  ntohs(packet.icp->icmp_seq) >= number_of_targets * packets)) ||
 			(address_family == PF_INET6 &&
-			 (ntohs(packet.icp6->icmp6_id) != sender_id || packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
+			 (ntohs(packet.icp6->icmp6_id) != sender_id ||
+			  packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
 			  ntohs(packet.icp6->icmp6_seq) >= number_of_targets * packets))) {
 			if (debug > 2) {
 				printf("not a proper ICMP_ECHOREPLY\n");
 			}
 
-			handle_random_icmp(buf + hlen, &resp_addr, pkt_interval, target_interval, sender_id, table,
-							   packets, number_of_targets, program_state);
+			handle_random_icmp(buf + hlen, &resp_addr, pkt_interval, target_interval, sender_id,
+							   table, packets, number_of_targets, program_state);
 
 			continue;
 		}
@@ -2029,9 +2071,15 @@ static unsigned int get_timevar(const char *str) {
 }
 
 /* not too good at checking errors, but it'll do (main() should barfe on -1) */
-static int get_threshold(char *str, check_icmp_threshold *threshold) {
-	if (!str || !strlen(str) || !threshold) {
-		return -1;
+static get_threshold_wrapper get_threshold(char *str, check_icmp_threshold threshold) {
+	get_threshold_wrapper result = {
+		.errorcode = OK,
+		.threshold = threshold,
+	};
+
+	if (!str || !strlen(str)) {
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
@@ -2042,26 +2090,27 @@ static int get_threshold(char *str, check_icmp_threshold *threshold) {
 			*tmp = '\0';
 		} else if (*tmp == ',' && is_at_last_char) {
 			*tmp = '\0'; /* reset it so get_timevar(str) works nicely later */
-			threshold->pl = (unsigned char)strtoul(tmp + 1, NULL, 0);
+			result.threshold.pl = (unsigned char)strtoul(tmp + 1, NULL, 0);
 			break;
 		}
 		is_at_last_char = true;
 		tmp--;
 	}
-	threshold->rta = get_timevar(str);
+	result.threshold.rta = get_timevar(str);
 
-	if (!threshold->rta) {
-		return -1;
+	if (!result.threshold.rta) {
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	if (threshold->rta > MAXTTL * 1000000) {
-		threshold->rta = MAXTTL * 1000000;
+	if (result.threshold.rta > MAXTTL * 1000000) {
+		result.threshold.rta = MAXTTL * 1000000;
 	}
-	if (threshold->pl > 100) {
-		threshold->pl = 100;
+	if (result.threshold.pl > 100) {
+		result.threshold.pl = 100;
 	}
 
-	return 0;
+	return result;
 }
 
 /*
@@ -2075,10 +2124,17 @@ static int get_threshold(char *str, check_icmp_threshold *threshold) {
  * @param[in] mode Determines whether this a threshold for rta, packet_loss, jitter, mos or score
  * (exclusively)
  */
-static bool get_threshold2(char *str, size_t length, check_icmp_threshold *warn,
-						   check_icmp_threshold *crit, threshold_mode mode) {
-	if (!str || !length || !warn || !crit) {
-		return false;
+static get_threshold2_wrapper get_threshold2(char *str, size_t length, check_icmp_threshold warn,
+											 check_icmp_threshold crit, threshold_mode mode) {
+	get_threshold2_wrapper result = {
+		.errorcode = OK,
+		.warn = warn,
+		.crit = crit,
+	};
+
+	if (!str || !length) {
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	// p points to the last char in str
@@ -2095,50 +2151,68 @@ static bool get_threshold2(char *str, size_t length, check_icmp_threshold *warn,
 
 			char *start_of_value = work_pointer + 1;
 
-			if (!parse_threshold2_helper(start_of_value, strlen(start_of_value), crit, mode)) {
-				return false;
+			parse_threshold2_helper_wrapper tmp =
+				parse_threshold2_helper(start_of_value, strlen(start_of_value), result.crit, mode);
+			if (tmp.errorcode != OK) {
+				result.errorcode = ERROR;
+				return result;
 			}
+			result.crit = tmp.result;
 		}
 		first_iteration = false;
 		work_pointer--;
 	}
 
-	return parse_threshold2_helper(work_pointer, strlen(work_pointer), warn, mode);
+	parse_threshold2_helper_wrapper tmp =
+		parse_threshold2_helper(work_pointer, strlen(work_pointer), result.warn, mode);
+	if (tmp.errorcode != OK) {
+		result.errorcode = ERROR;
+	} else {
+		result.warn = tmp.result;
+	}
+	return result;
 }
 
-static bool parse_threshold2_helper(char *threshold_string, size_t length,
-									check_icmp_threshold *thr, threshold_mode mode) {
+static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_string,
+															   size_t length,
+															   check_icmp_threshold thr,
+															   threshold_mode mode) {
 	char *resultChecker = {0};
+	parse_threshold2_helper_wrapper result = {
+		.result = thr,
+		.errorcode = OK,
+	};
 
 	switch (mode) {
 	case const_rta_mode:
-		thr->rta = (unsigned int)(strtod(threshold_string, &resultChecker) * 1000);
+		result.result.rta = (unsigned int)(strtod(threshold_string, &resultChecker) * 1000);
 		break;
 	case const_packet_loss_mode:
-		thr->pl = (unsigned char)strtoul(threshold_string, &resultChecker, 0);
+		result.result.pl = (unsigned char)strtoul(threshold_string, &resultChecker, 0);
 		break;
 	case const_jitter_mode:
-		thr->jitter = strtod(threshold_string, &resultChecker);
+		result.result.jitter = strtod(threshold_string, &resultChecker);
 		break;
 	case const_mos_mode:
-		thr->mos = strtod(threshold_string, &resultChecker);
+		result.result.mos = strtod(threshold_string, &resultChecker);
 		break;
 	case const_score_mode:
-		thr->score = strtod(threshold_string, &resultChecker);
+		result.result.score = strtod(threshold_string, &resultChecker);
 		break;
 	}
 
 	if (resultChecker == threshold_string) {
 		// Failed to parse
-		return false;
+		result.errorcode = ERROR;
+		return result;
 	}
 
 	if (resultChecker != (threshold_string + length)) {
 		// Trailing symbols
-		return false;
+		result.errorcode = ERROR;
 	}
 
-	return true;
+	return result;
 }
 
 unsigned short icmp_checksum(uint16_t *packet, size_t packet_size) {
