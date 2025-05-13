@@ -32,8 +32,9 @@ use utils qw (%ERRORS &print_revision &support);
 sub print_help ();
 sub print_usage ();
 
-my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V, $opt_i);
+my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_u, $opt_V, $opt_i);
 my ($result, $message, $age, $size, $st, $perfdata);
+my ($units, $udiv, $uage );
 
 $PROGNAME="check_file_age";
 
@@ -44,6 +45,8 @@ $ENV{'ENV'}='';
 $opt_w = 240;
 $opt_c = 600;
 $opt_f = "";
+$units = "seconds";
+$udiv = 1;
 
 Getopt::Long::Configure('bundling');
 GetOptions(
@@ -51,6 +54,7 @@ GetOptions(
 	"h"   => \$opt_h, "help"	=> \$opt_h,
 	"i"   => \$opt_i, "ignore-missing"	=> \$opt_i,
 	"f=s" => \$opt_f, "file"	=> \$opt_f,
+    "u=s" => \$opt_u, "units=s" => \$opt_u,
 	"w=s" => \$opt_w, "warning-age=s" => \$opt_w,
 	"W=s" => \$opt_W, "warning-size=s" => \$opt_W,
 	"c=s" => \$opt_c, "critical-age=s" => \$opt_c,
@@ -89,6 +93,18 @@ unless (-e $opt_f) {
 $st = File::stat::stat($opt_f);
 $age = time - $st->mtime;
 $size = $st->size;
+
+if ($opt_u) {
+    if ($opt_u =~ m/^h/) {
+        $units = "hours";
+        $udiv = "3600";
+    }
+    if ($opt_u =~ m/^d/) {
+        $units = "days";
+        $udiv = "86400";
+    }
+}
+
 
 $result = 'OK';
 
@@ -130,12 +146,13 @@ else {
 }
 
 $perfdata = "age=${age}s;${opt_w};${opt_c} size=${size}B;${opt_W};${opt_C};0";
-print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes | $perfdata\n";
+$uage = int( $age / $udiv);
+print "FILE_AGE $result: $opt_f is $uage $units old and $size bytes | $perfdata\n";
 exit $ERRORS{$result};
 
 sub print_usage () {
 	print "Usage:\n";
-	print "  $PROGNAME [-w <secs>] [-c <secs>] [-W <size>] [-C <size>] [-i] -f <file>\n";
+	print "  $PROGNAME [-w <secs>] [-c <secs>] [-W <size>] [-C <size>] [-u h|d] [-i] -f <file>\n";
 	print "  $PROGNAME [-h | --help]\n";
 	print "  $PROGNAME [-V | --version]\n";
 }
@@ -155,6 +172,7 @@ sub print_help () {
 	print "  For range syntax see https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\n";
 	print "  It is strongly recommended when using range syntax that all four of -w, -W, -c and -C are specified\n";
 	print "  otherwise it is unlikely that the size test will be doing what is desired\n";
+	print "  The 'u' option takes 'h' or 'd' as argument, to output file age in hours or days\n";
 	print "\n";
 	support();
 }
