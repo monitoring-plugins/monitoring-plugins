@@ -79,6 +79,24 @@ int main(int argc, char **argv) {
 	server = strscpy(server, config.server_name);
 
 	char *option_string = "";
+	char *fping_prog = NULL;
+
+	/* First determine if the target is dualstack or ipv6 only. */
+	bool server_is_inet6_addr = is_inet6_addr(server);
+
+	/*
+	 * If the user requested -6 OR the user made no assertion and the address is v6 or dualstack
+	 *   -> we use ipv6
+	 * If the user requested -4 OR the user made no assertion and the address is v4 ONLY
+	 *   -> we use ipv4
+	 */
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
+		xasprintf(&option_string, "%s-6 ", option_string);
+	} else {
+		xasprintf(&option_string, "%s-4 ", option_string);
+	}
+	fping_prog = strdup(PATH_TO_FPING);
+
 	/* compose the command */
 	if (config.target_timeout) {
 		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
@@ -98,17 +116,6 @@ int main(int argc, char **argv) {
 	if (config.randomize_packet_data) {
 		xasprintf(&option_string, "%s-R ", option_string);
 	}
-
-	char *fping_prog = NULL;
-#ifdef PATH_TO_FPING6
-	if (address_family != AF_INET && is_inet6_addr(server)) {
-		fping_prog = strdup(PATH_TO_FPING6);
-	} else {
-		fping_prog = strdup(PATH_TO_FPING);
-	}
-#else
-	fping_prog = strdup(PATH_TO_FPING);
-#endif
 
 	char *command_line = NULL;
 	xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
@@ -340,11 +347,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET;
 			break;
 		case '6': /* IPv6 only */
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage(_("IPv6 support not available\n"));
-#endif
 			break;
 		case 'c':
 			get_threshold(optarg, rv);
