@@ -133,12 +133,12 @@ void print_help();
 void print_usage(void);
 
 /* Time related */
-static unsigned int get_timevar(const char * /*str*/);
+static unsigned int get_timevar(const char *str);
 static time_t get_timevaldiff(struct timeval earlier, struct timeval later);
 static time_t get_timevaldiff_to_now(struct timeval earlier);
 
-static in_addr_t get_ip_address(const char * /*ifname*/);
-static void set_source_ip(char * /*arg*/, int icmp_sock);
+static in_addr_t get_ip_address(const char *ifname);
+static void set_source_ip(char *arg, int icmp_sock);
 
 /* Receiving data */
 static int wait_for_reply(int socket, time_t time_interval, unsigned short icmp_pkt_size,
@@ -146,9 +146,9 @@ static int wait_for_reply(int socket, time_t time_interval, unsigned short icmp_
 						  uint16_t sender_id, ping_target **table, unsigned short packets,
 						  unsigned short number_of_targets, check_icmp_state *program_state);
 
-static ssize_t recvfrom_wto(int /*sock*/, void * /*buf*/, unsigned int /*len*/,
-							struct sockaddr * /*saddr*/, time_t *timeout, struct timeval * /*tv*/);
-static int handle_random_icmp(unsigned char * /*packet*/, struct sockaddr_storage * /*addr*/,
+static ssize_t recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
+							time_t *timeout, struct timeval *received_timestamp);
+static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr,
 							  unsigned int *pkt_interval, unsigned int *target_interval,
 							  uint16_t sender_id, ping_target **table, unsigned short packets,
 							  unsigned short number_of_targets, check_icmp_state *program_state);
@@ -195,18 +195,23 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 /* Target aquisition */
 typedef struct {
 	int error_code;
+	check_icmp_target_container host;
+} add_host_wrapper;
+static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode);
+typedef struct {
+	int error_code;
 	ping_target *targets;
 	unsigned int number_of_targets;
 } add_target_wrapper;
-static add_target_wrapper add_target(char * /*arg*/, int mode);
+static add_target_wrapper add_target(char *arg, check_icmp_execution_mode mode);
 
 typedef struct {
 	int error_code;
 	ping_target *target;
 } add_target_ip_wrapper;
-static add_target_ip_wrapper add_target_ip(char * /*arg*/, struct sockaddr_storage * /*in*/);
+static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *address);
 
-static void parse_address(struct sockaddr_storage * /*addr*/, char * /*address*/, socklen_t size);
+static void parse_address(struct sockaddr_storage *addr, char *address, socklen_t size);
 
 static unsigned short icmp_checksum(uint16_t *packet, size_t packet_size);
 
@@ -218,7 +223,7 @@ static void finish(int /*sig*/, bool order_mode, bool mos_mode, bool rta_mode, b
 				   ping_target *target_list);
 
 /* Error exit */
-static void crash(const char * /*fmt*/, ...);
+static void crash(const char *fmt, ...);
 
 /** global variables **/
 static int debug = 0;
@@ -1852,7 +1857,7 @@ static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *a
 }
 
 /* wrapper for add_target_ip */
-static add_target_wrapper add_target(char *arg, const int mode) {
+static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode mode) {
 	struct sockaddr_storage address_storage;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;

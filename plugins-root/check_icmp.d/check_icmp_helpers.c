@@ -73,7 +73,7 @@ check_icmp_state check_icmp_state_init() {
 	return tmp;
 }
 
-rta_host_create_wrapper rta_host_create(char *name, struct sockaddr_storage *address) {
+ping_target_create_wrapper ping_target_create(char *name, struct sockaddr_storage *address) {
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	if (address_family == AF_INET) {
@@ -82,7 +82,7 @@ rta_host_create_wrapper rta_host_create(char *name, struct sockaddr_storage *add
 		sin6 = (struct sockaddr_in6 *)address;
 	}
 
-	rta_host_create_wrapper result = {
+	ping_target_create_wrapper result = {
 		.errorcode = OK,
 	};
 

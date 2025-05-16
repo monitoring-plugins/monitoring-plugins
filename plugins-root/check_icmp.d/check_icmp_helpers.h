@@ -68,9 +68,9 @@ check_icmp_state check_icmp_state_init();
 typedef struct {
 	int errorcode;
 	ping_target host;
-} rta_host_create_wrapper;
+} ping_target_create_wrapper;
 
-rta_host_create_wrapper rta_host_create(char *name, struct sockaddr_storage *address);
+ping_target_create_wrapper ping_target_create(char *name, struct sockaddr_storage *address);
 unsigned int ping_target_list_append(ping_target *list, ping_target *elem);
 
 void check_icmp_timeout_handler(int, siginfo_t *, void *);
