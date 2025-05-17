@@ -878,14 +878,14 @@ int main(int argc, char **argv) {
 
 	check_icmp_state program_state = check_icmp_state_init();
 
-	run_checks(config.modes, config.min_hosts_alive, config.icmp_data_size,
-			   &pkt_interval, &target_interval, config.warn, config.crit, config.sender_id,
-			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
-			   icmp_sock, config.number_of_targets, &program_state, config.targets);
+	run_checks(config.modes, config.min_hosts_alive, config.icmp_data_size, &pkt_interval,
+			   &target_interval, config.warn, config.crit, config.sender_id, config.mode,
+			   max_completion_time, prog_start, table, config.number_of_packets, icmp_sock,
+			   config.number_of_targets, &program_state, config.targets);
 
 	errno = 0;
-	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit,
-		   icmp_sock, config.number_of_targets, &program_state, config.targets);
+	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit, icmp_sock,
+		   config.number_of_targets, &program_state, config.targets);
 
 	return (0);
 }
@@ -906,9 +906,8 @@ static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 		for (unsigned int target_index = 0; target_index < number_of_targets; target_index++) {
 			/* don't send useless packets */
 			if (!targets_alive(number_of_targets, program_state->targets_down)) {
-				finish(0, modes,
-					   min_hosts_alive, warn, crit, icmp_sock, number_of_targets, program_state,
-					   target_list);
+				finish(0, modes, min_hosts_alive, warn, crit, icmp_sock, number_of_targets,
+					   program_state, target_list);
 			}
 			if (table[target_index]->flags & FLAG_LOST_CAUSE) {
 				if (debug) {
@@ -953,9 +952,8 @@ static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 			if (debug) {
 				printf("Time passed. Finishing up\n");
 			}
-			finish(0, modes,
-				   min_hosts_alive, warn, crit, icmp_sock, number_of_targets, program_state,
-				   target_list);
+			finish(0, modes, min_hosts_alive, warn, crit, icmp_sock, number_of_targets,
+				   program_state, target_list);
 		}
 
 		/* catch the packets that might come in within the timeframe, but
@@ -2065,7 +2063,8 @@ static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode) {
 mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 							check_icmp_threshold warn, check_icmp_threshold crit) {
 	/* if no new mode selected, use old schema */
-	if (!modes.rta_mode && !modes.pl_mode && !modes.jitter_mode && !modes.score_mode && !modes.mos_mode && !modes.order_mode) {
+	if (!modes.rta_mode && !modes.pl_mode && !modes.jitter_mode && !modes.score_mode &&
+		!modes.mos_mode && !modes.order_mode) {
 		modes.rta_mode = true;
 		modes.pl_mode = true;
 	}

@@ -15,7 +15,7 @@ typedef struct rta_host {
 	char *msg;                                    /* icmp error message, if any */
 	struct sockaddr_storage saddr_in;             /* the address of this host */
 	struct sockaddr_storage error_addr;           /* stores address of error replies */
-	time_t time_waited;               /* total time waited, in usecs */
+	time_t time_waited;                           /* total time waited, in usecs */
 	unsigned int icmp_sent, icmp_recv, icmp_lost; /* counters */
 	unsigned char icmp_type, icmp_code;           /* type and code from errors */
 	unsigned short flags;                         /* control/status flags */
