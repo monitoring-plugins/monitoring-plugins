@@ -46,6 +46,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "../plugins/common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "output.h"
+#include "perfdata.h"
 
 #if HAVE_SYS_SOCKIO_H
 #	include <sys/sockio.h>
@@ -182,8 +184,7 @@ static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_s
 															   threshold_mode mode);
 
 /* main test function */
-static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-					   bool jitter_mode, bool score_mode, int min_hosts_alive,
+static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 					   unsigned int *target_interval, check_icmp_threshold warn,
 					   check_icmp_threshold crit, uint16_t sender_id,
@@ -191,6 +192,8 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 					   struct timeval prog_start, ping_target **table, unsigned short packets,
 					   int icmp_sock, unsigned short number_of_targets,
 					   check_icmp_state *program_state, ping_target *target_list);
+mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
+							check_icmp_threshold warn, check_icmp_threshold crit);
 
 /* Target aquisition */
 typedef struct {
@@ -198,6 +201,7 @@ typedef struct {
 	check_icmp_target_container host;
 } add_host_wrapper;
 static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode);
+
 typedef struct {
 	int error_code;
 	ping_target *targets;
@@ -216,11 +220,10 @@ static void parse_address(struct sockaddr_storage *addr, char *address, socklen_
 static unsigned short icmp_checksum(uint16_t *packet, size_t packet_size);
 
 /* End of run function */
-static void finish(int /*sig*/, bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-				   bool jitter_mode, bool score_mode, int min_hosts_alive,
+static void finish(int sign, check_icmp_mode_switches modes, int min_hosts_alive,
 				   check_icmp_threshold warn, check_icmp_threshold crit, int icmp_sock,
 				   unsigned short number_of_targets, check_icmp_state *program_state,
-				   ping_target *target_list);
+				   ping_target *target_list) __attribute__((noreturn));
 
 /* Error exit */
 static void crash(const char *fmt, ...);
@@ -336,6 +339,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 	/* Reset argument scanning */
 	optind = 1;
 
+	int host_counter = 0;
 	/* parse the arguments */
 	for (int i = 1; i < argc; i++) {
 		long int arg;
@@ -391,15 +395,20 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				// TODO die here and complain about wrong input
 				break;
 			case 'H': {
-				add_target_wrapper add_result = add_target(optarg, result.config.mode);
-				if (add_result.error_code == OK) {
+				add_host_wrapper host_add_result = add_host(optarg, result.config.mode);
+				if (host_add_result.error_code == OK) {
+					result.config.hosts[host_counter] = host_add_result.host;
+					host_counter++;
+
 					if (result.config.targets != NULL) {
-						result.config.number_of_targets +=
-							ping_target_list_append(result.config.targets, add_result.targets);
+						result.config.number_of_targets += ping_target_list_append(
+							result.config.targets, host_add_result.host.target_list);
 					} else {
-						result.config.targets = add_result.targets;
-						result.config.number_of_targets += add_result.number_of_targets;
+						result.config.targets = host_add_result.host.target_list;
+						result.config.number_of_targets += host_add_result.host.number_of_targets;
 					}
+				} else {
+					// TODO adding host failed, crash here
 				}
 			} break;
 			case 'l':
@@ -428,7 +437,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 				result.config.warn = rta_th.warn;
 				result.config.crit = rta_th.crit;
-				result.config.rta_mode = true;
+				result.config.modes.rta_mode = true;
 			} break;
 			case 'P': /* packet loss mode */ {
 				get_threshold2_wrapper pl_th =
@@ -440,7 +449,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 				result.config.warn = pl_th.warn;
 				result.config.crit = pl_th.crit;
-				result.config.pl_mode = true;
+				result.config.modes.pl_mode = true;
 			} break;
 			case 'J': /* jitter mode */ {
 				get_threshold2_wrapper jitter_th =
@@ -452,7 +461,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 				result.config.warn = jitter_th.warn;
 				result.config.crit = jitter_th.crit;
-				result.config.jitter_mode = true;
+				result.config.modes.jitter_mode = true;
 			} break;
 			case 'M': /* MOS mode */ {
 				get_threshold2_wrapper mos_th = get_threshold2(
@@ -463,7 +472,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 				result.config.warn = mos_th.warn;
 				result.config.crit = mos_th.crit;
-				result.config.mos_mode = true;
+				result.config.modes.mos_mode = true;
 			} break;
 			case 'S': /* score mode */ {
 				get_threshold2_wrapper score_th =
@@ -475,10 +484,10 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 				result.config.warn = score_th.warn;
 				result.config.crit = score_th.crit;
-				result.config.score_mode = true;
+				result.config.modes.score_mode = true;
 			} break;
 			case 'O': /* out of order mode */
-				result.config.order_mode = true;
+				result.config.modes.order_mode = true;
 				break;
 			}
 		}
@@ -869,22 +878,19 @@ int main(int argc, char **argv) {
 
 	check_icmp_state program_state = check_icmp_state_init();
 
-	run_checks(config.order_mode, config.mos_mode, config.rta_mode, config.pl_mode,
-			   config.jitter_mode, config.score_mode, config.min_hosts_alive, config.icmp_data_size,
+	run_checks(config.modes, config.min_hosts_alive, config.icmp_data_size,
 			   &pkt_interval, &target_interval, config.warn, config.crit, config.sender_id,
 			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
 			   icmp_sock, config.number_of_targets, &program_state, config.targets);
 
 	errno = 0;
-	finish(0, config.order_mode, config.mos_mode, config.rta_mode, config.pl_mode,
-		   config.jitter_mode, config.score_mode, config.min_hosts_alive, config.warn, config.crit,
+	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit,
 		   icmp_sock, config.number_of_targets, &program_state, config.targets);
 
 	return (0);
 }
 
-static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-					   bool jitter_mode, bool score_mode, int min_hosts_alive,
+static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 					   unsigned int *target_interval, check_icmp_threshold warn,
 					   check_icmp_threshold crit, const uint16_t sender_id,
@@ -900,7 +906,7 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 		for (unsigned int target_index = 0; target_index < number_of_targets; target_index++) {
 			/* don't send useless packets */
 			if (!targets_alive(number_of_targets, program_state->targets_down)) {
-				finish(0, order_mode, mos_mode, rta_mode, pl_mode, jitter_mode, score_mode,
+				finish(0, modes,
 					   min_hosts_alive, warn, crit, icmp_sock, number_of_targets, program_state,
 					   target_list);
 			}
@@ -947,7 +953,7 @@ static void run_checks(bool order_mode, bool mos_mode, bool rta_mode, bool pl_mo
 			if (debug) {
 				printf("Time passed. Finishing up\n");
 			}
-			finish(0, order_mode, mos_mode, rta_mode, pl_mode, jitter_mode, score_mode,
+			finish(0, modes,
 				   min_hosts_alive, warn, crit, icmp_sock, number_of_targets, program_state,
 				   target_list);
 		}
@@ -1139,7 +1145,7 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 
 			/* Check if packets in order */
 			if (target->last_icmp_seq >= packet.icp->icmp_seq) {
-				target->order_status = STATE_CRITICAL;
+				target->found_out_of_order_packets = true;
 			}
 		}
 		target->last_tdiff = tdiff;
@@ -1376,8 +1382,7 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 	return (ret);
 }
 
-static void finish(int sig, bool order_mode, bool mos_mode, bool rta_mode, bool pl_mode,
-				   bool jitter_mode, bool score_mode, int min_hosts_alive,
+static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 				   check_icmp_threshold warn, check_icmp_threshold crit, const int icmp_sock,
 				   const unsigned short number_of_targets, check_icmp_state *program_state,
 				   ping_target *target_list) {
@@ -1399,358 +1404,53 @@ static void finish(int sig, bool order_mode, bool mos_mode, bool rta_mode, bool 
 			   targets_alive(number_of_targets, program_state->targets_down));
 	}
 
-	/* iterate thrice to calculate values, give output, and print perfparse */
-	mp_state_enum status = STATE_OK;
-	ping_target *host = target_list;
+	mp_check overall = mp_check_init();
 
-	unsigned int target_counter = 0;
-	const char *status_string[] = {"OK", "WARNING", "CRITICAL", "UNKNOWN", "DEPENDENT"};
+	// loop over targets to evaluate each one
+	ping_target *host = target_list;
 	int hosts_ok = 0;
 	int hosts_warn = 0;
 	while (host) {
-		mp_state_enum this_status = STATE_OK;
-
-		unsigned char packet_loss;
-		double rta;
-		if (!host->icmp_recv) {
-			/* rta 0 is ofcourse not entirely correct, but will still show up
-			 * conspicuously as missing entries in perfparse and cacti */
-			packet_loss = 100;
-			rta = 0;
-			status = STATE_CRITICAL;
-			/* up the down counter if not already counted */
-			if (!(host->flags & FLAG_LOST_CAUSE) &&
-				targets_alive(number_of_targets, program_state->targets_down)) {
-				program_state->targets_down++;
-			}
-		} else {
-			packet_loss =
-				(unsigned char)((host->icmp_sent - host->icmp_recv) * 100) / host->icmp_sent;
-			rta = (double)host->time_waited / host->icmp_recv;
+		if (host->flags & FLAG_LOST_CAUSE) {
+			program_state->targets_down++;
 		}
+		// TODO call evaluate here
+		mp_subcheck sc_target = evaluate_target(*host, modes, warn, crit);
 
-		if (host->icmp_recv > 1) {
-			/*
-			 * This algorithm is probably pretty much blindly copied from
-			 * locations like this one:
-			 * https://www.slac.stanford.edu/comp/net/wan-mon/tutorial.html#mos It calculates a MOS
-			 * value (range of 1 to 5, where 1 is bad and 5 really good). According to some quick
-			 * research MOS originates from the Audio/Video transport network area. Whether it can
-			 * and should be computed from ICMP data, I can not say.
-			 *
-			 * Anyway the basic idea is to map a value "R" with a range of 0-100 to the MOS value
-			 *
-			 * MOS stands likely for Mean Opinion Score (
-			 * https://en.wikipedia.org/wiki/Mean_Opinion_Score )
-			 *
-			 * More links:
-			 * - https://confluence.slac.stanford.edu/display/IEPM/MOS
-			 */
-			host->jitter = (host->jitter / (host->icmp_recv - 1) / 1000);
+		mp_add_subcheck_to_check(&overall, sc_target);
 
-			/*
-			 * Take the average round trip latency (in milliseconds), add
-			 * round trip jitter, but double the impact to latency
-			 * then add 10 for protocol latencies (in milliseconds).
-			 */
-			host->EffectiveLatency = (rta / 1000) + host->jitter * 2 + 10;
-
-			double R;
-			if (host->EffectiveLatency < 160) {
-				R = 93.2 - (host->EffectiveLatency / 40);
-			} else {
-				R = 93.2 - ((host->EffectiveLatency - 120) / 10);
-			}
-
-			// Now, let us deduct 2.5 R values per percentage of packet loss (i.e. a
-			// loss of 5% will be entered as 5).
-			R = R - (packet_loss * 2.5);
-
-			if (R < 0) {
-				R = 0;
-			}
-
-			host->score = R;
-			host->mos = 1 + ((0.035) * R) + ((.000007) * R * (R - 60) * (100 - R));
-		} else {
-			host->jitter = 0;
-			host->jitter_min = 0;
-			host->jitter_max = 0;
-			host->mos = 0;
-		}
-
-		host->pl = packet_loss;
-		host->rta = rta;
-
-		/* if no new mode selected, use old schema */
-		if (!rta_mode && !pl_mode && !jitter_mode && !score_mode && !mos_mode && !order_mode) {
-			rta_mode = true;
-			pl_mode = true;
-		}
-
-		/* Check which mode is on and do the warn / Crit stuff */
-		if (rta_mode) {
-			if (rta >= crit.rta) {
-				this_status = STATE_CRITICAL;
-				status = STATE_CRITICAL;
-				host->rta_status = STATE_CRITICAL;
-			} else if (status != STATE_CRITICAL && (rta >= warn.rta)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
-				status = STATE_WARNING;
-				host->rta_status = STATE_WARNING;
-			}
-		}
-
-		if (pl_mode) {
-			if (packet_loss >= crit.pl) {
-				this_status = STATE_CRITICAL;
-				status = STATE_CRITICAL;
-				host->pl_status = STATE_CRITICAL;
-			} else if (status != STATE_CRITICAL && (packet_loss >= warn.pl)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
-				status = STATE_WARNING;
-				host->pl_status = STATE_WARNING;
-			}
-		}
-
-		if (jitter_mode) {
-			if (host->jitter >= crit.jitter) {
-				this_status = STATE_CRITICAL;
-				status = STATE_CRITICAL;
-				host->jitter_status = STATE_CRITICAL;
-			} else if (status != STATE_CRITICAL && (host->jitter >= warn.jitter)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
-				status = STATE_WARNING;
-				host->jitter_status = STATE_WARNING;
-			}
-		}
-
-		if (mos_mode) {
-			if (host->mos <= crit.mos) {
-				this_status = STATE_CRITICAL;
-				status = STATE_CRITICAL;
-				host->mos_status = STATE_CRITICAL;
-			} else if (status != STATE_CRITICAL && (host->mos <= warn.mos)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
-				status = STATE_WARNING;
-				host->mos_status = STATE_WARNING;
-			}
-		}
-
-		if (score_mode) {
-			if (host->score <= crit.score) {
-				this_status = STATE_CRITICAL;
-				status = STATE_CRITICAL;
-				host->score_status = STATE_CRITICAL;
-			} else if (status != STATE_CRITICAL && (host->score <= warn.score)) {
-				this_status = (this_status <= STATE_WARNING ? STATE_WARNING : this_status);
-				status = STATE_WARNING;
-				host->score_status = STATE_WARNING;
-			}
-		}
-
-		if (this_status == STATE_WARNING) {
-			hosts_warn++;
-		} else if (this_status == STATE_OK) {
+		mp_state_enum target_state = mp_compute_subcheck_state(sc_target);
+		if (target_state == STATE_OK) {
 			hosts_ok++;
+		} else if (target_state == STATE_WARNING) {
+			hosts_warn++;
 		}
 
 		host = host->next;
 	}
 
 	/* this is inevitable */
-	if (!targets_alive(number_of_targets, program_state->targets_down)) {
-		status = STATE_CRITICAL;
-	}
-	if (min_hosts_alive > -1) {
-		if (hosts_ok >= min_hosts_alive) {
-			status = STATE_OK;
-		} else if ((hosts_ok + hosts_warn) >= min_hosts_alive) {
-			status = STATE_WARNING;
-		}
-	}
-	printf("%s - ", status_string[status]);
-
-	host = target_list;
-	while (host) {
-		if (debug) {
-			puts("");
-		}
-
-		if (target_counter) {
-			if (target_counter < number_of_targets) {
-				printf(" :: ");
-			} else {
-				printf("\n");
-			}
-		}
-
-		target_counter++;
-
-		if (!host->icmp_recv) {
-			status = STATE_CRITICAL;
-			host->rtmin = 0;
-			host->jitter_min = 0;
-
-			if (host->flags & FLAG_LOST_CAUSE) {
-				char address[INET6_ADDRSTRLEN];
-				parse_address(&host->error_addr, address, sizeof(address));
-				printf("%s: %s @ %s. rta nan, lost %d%%", host->name,
-					   get_icmp_error_msg(host->icmp_type, host->icmp_code), address, 100);
-			} else { /* not marked as lost cause, so we have no flags for it */
-				printf("%s: rta nan, lost 100%%", host->name);
-			}
-		} else { /* !icmp_recv */
-			printf("%s", host->name);
-			/* rta text output */
-			if (rta_mode) {
-				if (status == STATE_OK) {
-					printf(" rta %0.3fms", host->rta / 1000);
-				} else if (status == STATE_WARNING && host->rta_status == status) {
-					printf(" rta %0.3fms > %0.3fms", (float)host->rta / 1000,
-						   (float)warn.rta / 1000);
-				} else if (status == STATE_CRITICAL && host->rta_status == status) {
-					printf(" rta %0.3fms > %0.3fms", (float)host->rta / 1000,
-						   (float)crit.rta / 1000);
-				}
-			}
-
-			/* pl text output */
-			if (pl_mode) {
-				if (status == STATE_OK) {
-					printf(" lost %u%%", host->pl);
-				} else if (status == STATE_WARNING && host->pl_status == status) {
-					printf(" lost %u%% > %u%%", host->pl, warn.pl);
-				} else if (status == STATE_CRITICAL && host->pl_status == status) {
-					printf(" lost %u%% > %u%%", host->pl, crit.pl);
-				}
-			}
-
-			/* jitter text output */
-			if (jitter_mode) {
-				if (status == STATE_OK) {
-					printf(" jitter %0.3fms", (float)host->jitter);
-				} else if (status == STATE_WARNING && host->jitter_status == status) {
-					printf(" jitter %0.3fms > %0.3fms", (float)host->jitter, warn.jitter);
-				} else if (status == STATE_CRITICAL && host->jitter_status == status) {
-					printf(" jitter %0.3fms > %0.3fms", (float)host->jitter, crit.jitter);
-				}
-			}
-
-			/* mos text output */
-			if (mos_mode) {
-				if (status == STATE_OK) {
-					printf(" MOS %0.1f", (float)host->mos);
-				} else if (status == STATE_WARNING && host->mos_status == status) {
-					printf(" MOS %0.1f < %0.1f", (float)host->mos, (float)warn.mos);
-				} else if (status == STATE_CRITICAL && host->mos_status == status) {
-					printf(" MOS %0.1f < %0.1f", (float)host->mos, (float)crit.mos);
-				}
-			}
-
-			/* score text output */
-			if (score_mode) {
-				if (status == STATE_OK) {
-					printf(" Score %u", (int)host->score);
-				} else if (status == STATE_WARNING && host->score_status == status) {
-					printf(" Score %u < %u", (int)host->score, (int)warn.score);
-				} else if (status == STATE_CRITICAL && host->score_status == status) {
-					printf(" Score %u < %u", (int)host->score, (int)crit.score);
-				}
-			}
-
-			/* order statis text output */
-			if (order_mode) {
-				if (status == STATE_OK) {
-					printf(" Packets in order");
-				} else if (status == STATE_CRITICAL && host->order_status == status) {
-					printf(" Packets out of order");
-				}
-			}
-		}
-		host = host->next;
-	}
-
-	/* iterate once more for pretty perfparse output */
-	if (!(!rta_mode && !pl_mode && !jitter_mode && !score_mode && !mos_mode && order_mode)) {
-		printf("|");
-	}
-
-	target_counter = 0;
-	host = target_list;
-	while (host) {
-		if (debug) {
-			puts("");
-		}
-
-		if (rta_mode) {
-			if (host->pl < 100) {
-				printf("%srta=%0.3fms;%0.3f;%0.3f;0; %srtmax=%0.3fms;;;; %srtmin=%0.3fms;;;; ",
-					   (number_of_targets > 1) ? host->name : "", host->rta / 1000,
-					   (float)warn.rta / 1000, (float)crit.rta / 1000,
-					   (number_of_targets > 1) ? host->name : "", (float)host->rtmax / 1000,
-					   (number_of_targets > 1) ? host->name : "",
-					   (host->rtmin < INFINITY) ? (float)host->rtmin / 1000 : (float)0);
-			} else {
-				printf("%srta=U;;;; %srtmax=U;;;; %srtmin=U;;;; ",
-					   (number_of_targets > 1) ? host->name : "",
-					   (number_of_targets > 1) ? host->name : "",
-					   (number_of_targets > 1) ? host->name : "");
-			}
-		}
-
-		if (pl_mode) {
-			printf("%spl=%u%%;%u;%u;0;100 ", (number_of_targets > 1) ? host->name : "", host->pl,
-				   warn.pl, crit.pl);
-		}
-
-		if (jitter_mode) {
-			if (host->pl < 100) {
-				printf("%sjitter_avg=%0.3fms;%0.3f;%0.3f;0; %sjitter_max=%0.3fms;;;; "
-					   "%sjitter_min=%0.3fms;;;; ",
-					   (number_of_targets > 1) ? host->name : "", (float)host->jitter,
-					   (float)warn.jitter, (float)crit.jitter,
-					   (number_of_targets > 1) ? host->name : "", (float)host->jitter_max / 1000,
-					   (number_of_targets > 1) ? host->name : "", (float)host->jitter_min / 1000);
-			} else {
-				printf("%sjitter_avg=U;;;; %sjitter_max=U;;;; %sjitter_min=U;;;; ",
-					   (number_of_targets > 1) ? host->name : "",
-					   (number_of_targets > 1) ? host->name : "",
-					   (number_of_targets > 1) ? host->name : "");
-			}
-		}
-
-		if (mos_mode) {
-			if (host->pl < 100) {
-				printf("%smos=%0.1f;%0.1f;%0.1f;0;5 ", (number_of_targets > 1) ? host->name : "",
-					   (float)host->mos, (float)warn.mos, (float)crit.mos);
-			} else {
-				printf("%smos=U;;;; ", (number_of_targets > 1) ? host->name : "");
-			}
-		}
-
-		if (score_mode) {
-			if (host->pl < 100) {
-				printf("%sscore=%u;%u;%u;0;100 ", (number_of_targets > 1) ? host->name : "",
-					   (int)host->score, (int)warn.score, (int)crit.score);
-			} else {
-				printf("%sscore=U;;;; ", (number_of_targets > 1) ? host->name : "");
-			}
-		}
-
-		host = host->next;
+	if (targets_alive(number_of_targets, program_state->targets_down) == 0) {
+		mp_subcheck sc_no_target_alive = mp_subcheck_init();
+		sc_no_target_alive = mp_set_subcheck_state(sc_no_target_alive, STATE_CRITICAL);
+		sc_no_target_alive.output = strdup("No target is alive!");
+		mp_add_subcheck_to_check(&overall, sc_no_target_alive);
 	}
 
 	if (min_hosts_alive > -1) {
+		mp_subcheck sc_min_targets_alive = mp_subcheck_init();
+		sc_min_targets_alive = mp_set_subcheck_default_state(sc_min_targets_alive, STATE_OK);
+
+		// TODO problably broken now
 		if (hosts_ok >= min_hosts_alive) {
-			status = STATE_OK;
+			// TODO this should overwrite the main state
+			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
 		} else if ((hosts_ok + hosts_warn) >= min_hosts_alive) {
-			status = STATE_WARNING;
+			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
 		}
 	}
 
 	/* finish with an empty line */
-	puts("");
 	if (debug) {
 		printf(
 			"targets: %u, targets_alive: %u, hosts_ok: %u, hosts_warn: %u, min_hosts_alive: %i\n",
@@ -1758,7 +1458,7 @@ static void finish(int sig, bool order_mode, bool mos_mode, bool rta_mode, bool 
 			hosts_ok, hosts_warn, min_hosts_alive);
 	}
 
-	exit(status);
+	mp_exit(overall);
 }
 
 static time_t get_timevaldiff(const struct timeval earlier, const struct timeval later) {
@@ -1825,7 +1525,7 @@ static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *a
 	// }
 
 	/* add the fresh ip */
-	ping_target *target = (ping_target *)malloc(sizeof(ping_target));
+	ping_target *target = (ping_target *)calloc(1, sizeof(ping_target));
 	if (!target) {
 		char straddr[INET6_ADDRSTRLEN];
 		parse_address((struct sockaddr_storage *)&address, straddr, sizeof(straddr));
@@ -2338,4 +2038,290 @@ void print_help(void) {
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
+}
+
+static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode) {
+	add_host_wrapper result = {
+		.error_code = OK,
+		.host = check_icmp_target_container_init(),
+	};
+
+	add_target_wrapper targets = add_target(arg, mode);
+
+	if (targets.error_code != OK) {
+		result.error_code = targets.error_code;
+		return result;
+	}
+
+	result.host = check_icmp_target_container_init();
+
+	result.host.name = strdup(arg);
+	result.host.target_list = targets.targets;
+	result.host.number_of_targets = targets.number_of_targets;
+
+	return result;
+}
+
+mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
+							check_icmp_threshold warn, check_icmp_threshold crit) {
+	/* if no new mode selected, use old schema */
+	if (!modes.rta_mode && !modes.pl_mode && !modes.jitter_mode && !modes.score_mode && !modes.mos_mode && !modes.order_mode) {
+		modes.rta_mode = true;
+		modes.pl_mode = true;
+	}
+
+	mp_subcheck result = mp_subcheck_init();
+	result = mp_set_subcheck_default_state(result, STATE_OK);
+	xasprintf(&result.output, "%s", target.name);
+
+	double packet_loss;
+	double rta;
+	if (!target.icmp_recv) {
+		/* rta 0 is of course not entirely correct, but will still show up
+		 * conspicuously as missing entries in perfparse and cacti */
+		packet_loss = 100;
+		rta = 0;
+		result = mp_set_subcheck_state(result, STATE_CRITICAL);
+		/* up the down counter if not already counted */
+
+		if (target.flags & FLAG_LOST_CAUSE) {
+			char address[INET6_ADDRSTRLEN];
+			parse_address(&target.error_addr, address, sizeof(address));
+			xasprintf(&result.output, "%s: %s @ %s", result.output,
+					  get_icmp_error_msg(target.icmp_type, target.icmp_code), address);
+		} else { /* not marked as lost cause, so we have no flags for it */
+			xasprintf(&result.output, "%s", result.output);
+		}
+	} else {
+		packet_loss =
+			(unsigned char)((target.icmp_sent - target.icmp_recv) * 100) / target.icmp_sent;
+		rta = (double)target.time_waited / target.icmp_recv;
+	}
+
+	double EffectiveLatency;
+	double mos;   /* Mean opinion score */
+	double score; /* score */
+
+	if (target.icmp_recv > 1) {
+		/*
+		 * This algorithm is probably pretty much blindly copied from
+		 * locations like this one:
+		 * https://www.slac.stanford.edu/comp/net/wan-mon/tutorial.html#mos It calculates a MOS
+		 * value (range of 1 to 5, where 1 is bad and 5 really good). According to some quick
+		 * research MOS originates from the Audio/Video transport network area. Whether it can
+		 * and should be computed from ICMP data, I can not say.
+		 *
+		 * Anyway the basic idea is to map a value "R" with a range of 0-100 to the MOS value
+		 *
+		 * MOS stands likely for Mean Opinion Score (
+		 * https://en.wikipedia.org/wiki/Mean_Opinion_Score )
+		 *
+		 * More links:
+		 * - https://confluence.slac.stanford.edu/display/IEPM/MOS
+		 */
+		target.jitter = (target.jitter / (target.icmp_recv - 1) / 1000);
+
+		/*
+		 * Take the average round trip latency (in milliseconds), add
+		 * round trip jitter, but double the impact to latency
+		 * then add 10 for protocol latencies (in milliseconds).
+		 */
+		EffectiveLatency = (rta / 1000) + target.jitter * 2 + 10;
+
+		double R;
+		if (EffectiveLatency < 160) {
+			R = 93.2 - (EffectiveLatency / 40);
+		} else {
+			R = 93.2 - ((EffectiveLatency - 120) / 10);
+		}
+
+		// Now, let us deduct 2.5 R values per percentage of packet loss (i.e. a
+		// loss of 5% will be entered as 5).
+		R = R - (packet_loss * 2.5);
+
+		if (R < 0) {
+			R = 0;
+		}
+
+		score = R;
+		mos = 1 + ((0.035) * R) + ((.000007) * R * (R - 60) * (100 - R));
+	} else {
+		target.jitter = 0;
+		target.jitter_min = 0;
+		target.jitter_max = 0;
+		mos = 0;
+	}
+
+	/* Check which mode is on and do the warn / Crit stuff */
+	if (modes.rta_mode) {
+		mp_subcheck sc_rta = mp_subcheck_init();
+		sc_rta = mp_set_subcheck_default_state(sc_rta, STATE_OK);
+		xasprintf(&sc_rta.output, "rta %0.3fms", rta / 1000);
+
+		if (rta >= crit.rta) {
+			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, crit.rta / 1000);
+		} else if (rta >= warn.rta) {
+			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, warn.rta / 1000);
+		}
+
+		if (packet_loss < 100) {
+			mp_perfdata pd_rta = perfdata_init();
+			xasprintf(&pd_rta.label, "%srta", target.name);
+			pd_rta.uom = strdup("ms");
+			pd_rta.value = mp_create_pd_value(rta / 1000);
+			pd_rta.min = mp_create_pd_value(0);
+
+			pd_rta.warn = mp_range_set_end(pd_rta.warn, mp_create_pd_value(warn.rta));
+			pd_rta.crit = mp_range_set_end(pd_rta.crit, mp_create_pd_value(crit.rta));
+			mp_add_perfdata_to_subcheck(&sc_rta, pd_rta);
+
+			mp_perfdata pd_rt_min = perfdata_init();
+			xasprintf(&pd_rt_min.label, "%srtmin", target.name);
+			pd_rt_min.value = mp_create_pd_value(target.rtmin / 1000);
+			pd_rt_min.uom = strdup("ms");
+			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_min);
+
+			mp_perfdata pd_rt_max = perfdata_init();
+			xasprintf(&pd_rt_max.label, "%srtmax", target.name);
+			pd_rt_max.value = mp_create_pd_value(target.rtmax / 1000);
+			pd_rt_max.uom = strdup("ms");
+			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_max);
+		}
+
+		mp_add_subcheck_to_subcheck(&result, sc_rta);
+	}
+
+	if (modes.pl_mode) {
+		mp_subcheck sc_pl = mp_subcheck_init();
+		sc_pl = mp_set_subcheck_default_state(sc_pl, STATE_OK);
+		xasprintf(&sc_pl.output, "packet loss %.1f%%", packet_loss);
+
+		if (packet_loss >= crit.pl) {
+			sc_pl = mp_set_subcheck_state(sc_pl, STATE_CRITICAL);
+			xasprintf(&sc_pl.output, "%s > %u%%", sc_pl.output, crit.pl);
+		} else if (packet_loss >= warn.pl) {
+			sc_pl = mp_set_subcheck_state(sc_pl, STATE_WARNING);
+			xasprintf(&sc_pl.output, "%s > %u%%", sc_pl.output, crit.pl);
+		}
+
+		mp_perfdata pd_pl = perfdata_init();
+		xasprintf(&pd_pl.label, "%spl", target.name);
+		pd_pl.uom = strdup("%");
+
+		pd_pl.warn = mp_range_set_end(pd_pl.warn, mp_create_pd_value(warn.pl));
+		pd_pl.crit = mp_range_set_end(pd_pl.crit, mp_create_pd_value(crit.pl));
+		pd_pl.value = mp_create_pd_value(packet_loss);
+
+		mp_add_perfdata_to_subcheck(&sc_pl, pd_pl);
+
+		mp_add_subcheck_to_subcheck(&result, sc_pl);
+	}
+
+	if (modes.jitter_mode) {
+		mp_subcheck sc_jitter = mp_subcheck_init();
+		sc_jitter = mp_set_subcheck_default_state(sc_jitter, STATE_OK);
+		xasprintf(&sc_jitter.output, "jitter %0.3fms", target.jitter);
+
+		if (target.jitter >= crit.jitter) {
+			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_CRITICAL);
+			xasprintf(&sc_jitter.output, "%s > %0.3fms", sc_jitter.output, crit.jitter);
+		} else if (target.jitter >= warn.jitter) {
+			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_WARNING);
+			xasprintf(&sc_jitter.output, "%s > %0.3fms", sc_jitter.output, warn.jitter);
+		}
+
+		if (packet_loss < 100) {
+			mp_perfdata pd_jitter = perfdata_init();
+			pd_jitter.uom = strdup("ms");
+			xasprintf(&pd_jitter.label, "%sjitter_avg", target.name);
+			pd_jitter.value = mp_create_pd_value(target.jitter);
+			pd_jitter.warn = mp_range_set_end(pd_jitter.warn, mp_create_pd_value(warn.jitter));
+			pd_jitter.crit = mp_range_set_end(pd_jitter.crit, mp_create_pd_value(crit.jitter));
+			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter);
+
+			mp_perfdata pd_jitter_min = perfdata_init();
+			pd_jitter_min.uom = strdup("ms");
+			xasprintf(&pd_jitter_min.label, "%sjitter_min", target.name);
+			pd_jitter_min.value = mp_create_pd_value(target.jitter_min);
+			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_min);
+
+			mp_perfdata pd_jitter_max = perfdata_init();
+			pd_jitter_max.uom = strdup("ms");
+			xasprintf(&pd_jitter_max.label, "%sjitter_max", target.name);
+			pd_jitter_max.value = mp_create_pd_value(target.jitter_max);
+			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_max);
+		}
+		mp_add_subcheck_to_subcheck(&result, sc_jitter);
+	}
+
+	if (modes.mos_mode) {
+		mp_subcheck sc_mos = mp_subcheck_init();
+		sc_mos = mp_set_subcheck_default_state(sc_mos, STATE_OK);
+		xasprintf(&sc_mos.output, "MOS %0.1f", mos);
+
+		if (mos <= crit.mos) {
+			sc_mos = mp_set_subcheck_state(sc_mos, STATE_CRITICAL);
+			xasprintf(&sc_mos.output, "%s < %0.1f", sc_mos.output, crit.mos);
+		} else if (mos <= warn.mos) {
+			sc_mos = mp_set_subcheck_state(sc_mos, STATE_WARNING);
+			xasprintf(&sc_mos.output, "%s < %0.1f", sc_mos.output, warn.mos);
+		}
+
+		if (packet_loss < 100) {
+			mp_perfdata pd_mos = perfdata_init();
+			xasprintf(&pd_mos.label, "%smos", target.name);
+			pd_mos.value = mp_create_pd_value(mos);
+			pd_mos.warn = mp_range_set_end(pd_mos.warn, mp_create_pd_value(warn.mos));
+			pd_mos.crit = mp_range_set_end(pd_mos.crit, mp_create_pd_value(crit.mos));
+			pd_mos.min = mp_create_pd_value(0);
+			pd_mos.max = mp_create_pd_value(5);
+			mp_add_perfdata_to_subcheck(&sc_mos, pd_mos);
+		}
+		mp_add_subcheck_to_subcheck(&result, sc_mos);
+	}
+
+	if (modes.score_mode) {
+		mp_subcheck sc_score = mp_subcheck_init();
+		sc_score = mp_set_subcheck_default_state(sc_score, STATE_OK);
+		xasprintf(&sc_score.output, "Score %u", score);
+
+		if (score <= crit.score) {
+			sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
+			xasprintf(&sc_score.output, "%s < %u", sc_score.output, crit.score);
+		} else if (score <= warn.score) {
+			sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
+			xasprintf(&sc_score.output, "%s < %u", sc_score.output, warn.score);
+		}
+
+		if (packet_loss < 100) {
+			mp_perfdata pd_score = perfdata_init();
+			xasprintf(&pd_score.label, "%sscore", target.name);
+			pd_score.value = mp_create_pd_value(score);
+			pd_score.warn = mp_range_set_end(pd_score.warn, mp_create_pd_value(warn.score));
+			pd_score.crit = mp_range_set_end(pd_score.crit, mp_create_pd_value(crit.score));
+			pd_score.min = mp_create_pd_value(0);
+			pd_score.max = mp_create_pd_value(100);
+			mp_add_perfdata_to_subcheck(&sc_score, pd_score);
+		}
+
+		mp_add_subcheck_to_subcheck(&result, sc_score);
+	}
+
+	if (modes.order_mode) {
+		mp_subcheck sc_order = mp_subcheck_init();
+		sc_order = mp_set_subcheck_default_state(sc_order, STATE_OK);
+
+		if (target.found_out_of_order_packets) {
+			mp_set_subcheck_state(sc_order, STATE_CRITICAL);
+			xasprintf(&sc_order.output, "Packets out of order");
+		} else {
+			xasprintf(&sc_order.output, "Packets in order");
+		}
+
+		mp_add_subcheck_to_subcheck(&result, sc_order);
+	}
+
+	return result;
 }

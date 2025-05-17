@@ -48,6 +48,10 @@ typedef struct {
 	bool pl_mode;
 	bool jitter_mode;
 	bool score_mode;
+} check_icmp_mode_switches;
+
+typedef struct {
+	check_icmp_mode_switches modes;
 
 	int min_hosts_alive;
 	check_icmp_threshold crit;

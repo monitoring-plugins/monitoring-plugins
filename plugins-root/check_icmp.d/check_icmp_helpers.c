@@ -10,12 +10,15 @@ unsigned int timeout = DEFAULT_TIMEOUT;
 
 check_icmp_config check_icmp_config_init() {
 	check_icmp_config tmp = {
-		.order_mode = false,
-		.mos_mode = false,
-		.rta_mode = false,
-		.pl_mode = false,
-		.jitter_mode = false,
-		.score_mode = false,
+		.modes =
+			{
+				.order_mode = false,
+				.mos_mode = false,
+				.rta_mode = false,
+				.pl_mode = false,
+				.jitter_mode = false,
+				.score_mode = false,
+			},
 
 		.min_hosts_alive = -1,
 		.crit = {.pl = DEFAULT_CRIT_PL,
@@ -56,12 +59,7 @@ ping_target ping_target_init() {
 
 		.jitter_min = INFINITY,
 
-		.rta_status = STATE_OK,
-		.jitter_status = STATE_OK,
-		.mos_status = STATE_OK,
-		.score_status = STATE_OK,
-		.pl_status = STATE_OK,
-		.order_status = STATE_OK,
+		.found_out_of_order_packets = false,
 	};
 
 	return tmp;

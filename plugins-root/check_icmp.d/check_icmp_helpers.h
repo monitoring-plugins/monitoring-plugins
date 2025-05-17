@@ -20,7 +20,6 @@ typedef struct rta_host {
 	unsigned char icmp_type, icmp_code;           /* type and code from errors */
 	unsigned short flags;                         /* control/status flags */
 
-	double rta;   /* measured RTA */
 	double rtmax; /* max rtt */
 	double rtmin; /* min rtt */
 
@@ -28,20 +27,10 @@ typedef struct rta_host {
 	double jitter_max; /* jitter rtt maximum */
 	double jitter_min; /* jitter rtt minimum */
 
-	double EffectiveLatency;
-	double mos;   /* Mean opinion score */
-	double score; /* score */
-
 	time_t last_tdiff;
 	unsigned int last_icmp_seq; /* Last ICMP_SEQ to check out of order pkts */
-	unsigned char pl;           /* measured packet loss */
 
-	mp_state_enum rta_status;    // check result for RTA checks
-	mp_state_enum jitter_status; // check result for Jitter checks
-	mp_state_enum mos_status;    // check result for MOS checks
-	mp_state_enum score_status;  // check result for score checks
-	mp_state_enum pl_status;     // check result for packet loss checks
-	mp_state_enum order_status;  // check result for packet order checks
+	bool found_out_of_order_packets;
 
 	struct rta_host *next;
 } ping_target;
