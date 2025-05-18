@@ -1,7 +1,7 @@
 #include "./config.h"
-#include "states.h"
 #include <math.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include "./check_icmp_helpers.h"
 #include "../../plugins/netutils.h"
 
@@ -38,7 +38,10 @@ check_icmp_config check_icmp_config_init() {
 		.pkt_interval = DEFAULT_PKT_INTERVAL,
 		.target_interval = 0,
 		.number_of_packets = DEFAULT_NUMBER_OF_PACKETS,
+
 		.source_ip = NULL,
+		.need_v4 = false,
+		.need_v6 = false,
 
 		.sender_id = {},
 
@@ -71,68 +74,31 @@ check_icmp_state check_icmp_state_init() {
 	return tmp;
 }
 
-ping_target_create_wrapper ping_target_create(char *name, struct sockaddr_storage *address) {
-	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6;
-	if (address_family == AF_INET) {
-		sin = (struct sockaddr_in *)address;
-	} else {
-		sin6 = (struct sockaddr_in6 *)address;
-	}
-
+ping_target_create_wrapper ping_target_create(struct sockaddr_storage address) {
 	ping_target_create_wrapper result = {
 		.errorcode = OK,
 	};
 
+	struct sockaddr_storage *tmp_addr = &address;
+
 	/* disregard obviously stupid addresses
 	 * (I didn't find an ipv6 equivalent to INADDR_NONE) */
-	if (((address_family == AF_INET &&
-		  (sin->sin_addr.s_addr == INADDR_NONE || sin->sin_addr.s_addr == INADDR_ANY))) ||
-		(address_family == AF_INET6 && (sin6->sin6_addr.s6_addr == in6addr_any.s6_addr))) {
+	if (((tmp_addr->ss_family == AF_INET &&
+		  (((struct sockaddr_in *)tmp_addr)->sin_addr.s_addr == INADDR_NONE ||
+		   ((struct sockaddr_in *)tmp_addr)->sin_addr.s_addr == INADDR_ANY))) ||
+		(tmp_addr->ss_family == AF_INET6 &&
+		 (((struct sockaddr_in6 *)tmp_addr)->sin6_addr.s6_addr == in6addr_any.s6_addr))) {
 		result.errorcode = ERROR;
 		return result;
 	}
 
-	// TODO: Maybe add the following back in as a sanity check for the config
-	// /* no point in adding two identical IP's, so don't. ;) */
-	// struct sockaddr_in *host_sin;
-	// struct sockaddr_in6 *host_sin6;
-	// struct rta_host *host = host_list;
-
-	// while (host) {
-	// 	host_sin = (struct sockaddr_in *)&host->saddr_in;
-	// 	host_sin6 = (struct sockaddr_in6 *)&host->saddr_in;
-
-	// 	if ((address_family == AF_INET && host_sin->sin_addr.s_addr == sin->sin_addr.s_addr) ||
-	// 		(address_family == AF_INET6 &&
-	// 		 host_sin6->sin6_addr.s6_addr == sin6->sin6_addr.s6_addr)) {
-	// 		if (debug) {
-	// 			printf("Identical IP already exists. Not adding %s\n", name);
-	// 		}
-	// 		return -1;
-	// 	}
-	// 	host = host->next;
-	// }
-
 	/* add the fresh ip */
-	ping_target host = ping_target_init();
-
-	/* set the values. use calling name for output */
-	host.name = strdup(name);
+	ping_target target = ping_target_init();
 
 	/* fill out the sockaddr_storage struct */
-	if (address_family == AF_INET) {
-		struct sockaddr_in *host_sin = (struct sockaddr_in *)&host.saddr_in;
-		host_sin->sin_family = AF_INET;
-		host_sin->sin_addr.s_addr = sin->sin_addr.s_addr;
-	} else {
-		struct sockaddr_in6 *host_sin6 = (struct sockaddr_in6 *)&host.saddr_in;
-		host_sin6->sin6_family = AF_INET6;
-		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr,
-			   sizeof host_sin6->sin6_addr.s6_addr);
-	}
+	target.address = address;
 
-	result.host = host;
+	result.host = target;
 
 	return result;
 }

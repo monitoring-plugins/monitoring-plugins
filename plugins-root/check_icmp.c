@@ -71,6 +71,9 @@ const char *email = "devel@monitoring-plugins.org";
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <sys/socket.h>
+#include <assert.h>
+#include <sys/select.h>
 
 #include "../lib/states.h"
 #include "./check_icmp.d/config.h"
@@ -140,24 +143,31 @@ static time_t get_timevaldiff(struct timeval earlier, struct timeval later);
 static time_t get_timevaldiff_to_now(struct timeval earlier);
 
 static in_addr_t get_ip_address(const char *ifname);
-static void set_source_ip(char *arg, int icmp_sock);
+static void set_source_ip(char *arg, int icmp_sock, sa_family_t addr_family);
 
 /* Receiving data */
-static int wait_for_reply(int socket, time_t time_interval, unsigned short icmp_pkt_size,
-						  unsigned int *pkt_interval, unsigned int *target_interval,
-						  uint16_t sender_id, ping_target **table, unsigned short packets,
-						  unsigned short number_of_targets, check_icmp_state *program_state);
+static int wait_for_reply(check_icmp_socket_set sockset, time_t time_interval,
+						  unsigned short icmp_pkt_size, unsigned int *pkt_interval,
+						  unsigned int *target_interval, uint16_t sender_id, ping_target **table,
+						  unsigned short packets, unsigned short number_of_targets,
+						  check_icmp_state *program_state);
 
-static ssize_t recvfrom_wto(int sock, void *buf, unsigned int len, struct sockaddr *saddr,
-							time_t *timeout, struct timeval *received_timestamp);
+typedef struct {
+	sa_family_t recv_proto;
+	ssize_t received;
+} recvfrom_wto_wrapper;
+static recvfrom_wto_wrapper recvfrom_wto(check_icmp_socket_set sockset, void *buf, unsigned int len,
+										 struct sockaddr *saddr, time_t *timeout,
+										 struct timeval *received_timestamp);
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr,
 							  unsigned int *pkt_interval, unsigned int *target_interval,
 							  uint16_t sender_id, ping_target **table, unsigned short packets,
 							  unsigned short number_of_targets, check_icmp_state *program_state);
 
 /* Sending data */
-static int send_icmp_ping(int socket, ping_target *host, unsigned short icmp_pkt_size,
-						  uint16_t sender_id, check_icmp_state *program_state);
+static int send_icmp_ping(check_icmp_socket_set socket, ping_target *host,
+						  unsigned short icmp_pkt_size, uint16_t sender_id,
+						  check_icmp_state *program_state);
 
 /* Threshold related */
 typedef struct {
@@ -188,7 +198,7 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 					   unsigned int *target_interval, uint16_t sender_id,
 					   check_icmp_execution_mode mode, unsigned int max_completion_time,
 					   struct timeval prog_start, ping_target **table, unsigned short packets,
-					   int icmp_sock, unsigned short number_of_targets,
+					   check_icmp_socket_set sockset, unsigned short number_of_targets,
 					   check_icmp_state *program_state);
 mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 							check_icmp_threshold warn, check_icmp_threshold crit);
@@ -206,15 +216,21 @@ evaluate_host_wrapper evaluate_host(check_icmp_target_container host,
 typedef struct {
 	int error_code;
 	check_icmp_target_container host;
+	bool has_v4;
+	bool has_v6;
 } add_host_wrapper;
-static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode);
+static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode,
+								 sa_family_t enforced_proto);
 
 typedef struct {
 	int error_code;
 	ping_target *targets;
 	unsigned int number_of_targets;
+	bool has_v4;
+	bool has_v6;
 } add_target_wrapper;
-static add_target_wrapper add_target(char *arg, check_icmp_execution_mode mode);
+static add_target_wrapper add_target(char *arg, check_icmp_execution_mode mode,
+									 sa_family_t enforced_proto);
 
 typedef struct {
 	int error_code;
@@ -222,13 +238,13 @@ typedef struct {
 } add_target_ip_wrapper;
 static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address);
 
-static void parse_address(struct sockaddr_storage *addr, char *address, socklen_t size);
+static void parse_address(const struct sockaddr_storage *addr, char *dst, socklen_t size);
 
 static unsigned short icmp_checksum(uint16_t *packet, size_t packet_size);
 
 /* End of run function */
 static void finish(int sign, check_icmp_mode_switches modes, int min_hosts_alive,
-				   check_icmp_threshold warn, check_icmp_threshold crit, int icmp_sock,
+				   check_icmp_threshold warn, check_icmp_threshold crit,
 				   unsigned short number_of_targets, check_icmp_state *program_state,
 				   check_icmp_target_container host_list[], unsigned short number_of_hosts,
 				   mp_check overall[static 1]);
@@ -298,6 +314,8 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
+	sa_family_t enforced_ai_family = AF_UNSPEC;
+
 	// Parse protocol arguments first
 	// and count hosts here
 	char *opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O64";
@@ -306,16 +324,16 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
 			switch (arg) {
 			case '4':
-				if (address_family != -1) {
+				if (enforced_ai_family != AF_UNSPEC) {
 					crash("Multiple protocol versions not supported");
 				}
-				address_family = AF_INET;
+				enforced_ai_family = AF_INET;
 				break;
 			case '6':
-				if (address_family != -1) {
+				if (enforced_ai_family != AF_UNSPEC) {
 					crash("Multiple protocol versions not supported");
 				}
-				address_family = AF_INET6;
+				enforced_ai_family = AF_INET6;
 				break;
 			case 'H': {
 				result.config.number_of_hosts++;
@@ -402,7 +420,8 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				// TODO die here and complain about wrong input
 				break;
 			case 'H': {
-				add_host_wrapper host_add_result = add_host(optarg, result.config.mode);
+				add_host_wrapper host_add_result =
+					add_host(optarg, result.config.mode, enforced_ai_family);
 				if (host_add_result.error_code == OK) {
 					result.config.hosts[host_counter] = host_add_result.host;
 					host_counter++;
@@ -413,6 +432,13 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 					} else {
 						result.config.targets = host_add_result.host.target_list;
 						result.config.number_of_targets += host_add_result.host.number_of_targets;
+					}
+
+					if (host_add_result.has_v4) {
+						result.config.need_v4 = true;
+					}
+					if (host_add_result.has_v6) {
+						result.config.need_v6 = true;
 					}
 				} else {
 					// TODO adding host failed, crash here
@@ -502,7 +528,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	argv = &argv[optind];
 	while (*argv) {
-		add_target(*argv, result.config.mode);
+		add_target(*argv, result.config.mode, enforced_ai_family);
 		argv++;
 	}
 
@@ -704,9 +730,8 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	if (debug) {
 		char address[INET6_ADDRSTRLEN];
 		parse_address(addr, address, sizeof(address));
-		printf("Received \"%s\" from %s for ICMP ECHO sent to %s.\n",
-			   get_icmp_error_msg(icmp_packet.icmp_type, icmp_packet.icmp_code), address,
-			   host->name);
+		printf("Received \"%s\" from %s for ICMP ECHO sent.\n",
+			   get_icmp_error_msg(icmp_packet.icmp_type, icmp_packet.icmp_code), address);
 	}
 
 	program_state->icmp_lost++;
@@ -732,14 +757,16 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	return 0;
 }
 
-void parse_address(struct sockaddr_storage *addr, char *address, socklen_t size) {
-	switch (address_family) {
+void parse_address(const struct sockaddr_storage *addr, char *dst, socklen_t size) {
+	switch (addr->ss_family) {
 	case AF_INET:
-		inet_ntop(address_family, &((struct sockaddr_in *)addr)->sin_addr, address, size);
+		inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr, dst, size);
 		break;
 	case AF_INET6:
-		inet_ntop(address_family, &((struct sockaddr_in6 *)addr)->sin6_addr, address, size);
+		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr, dst, size);
 		break;
+	default:
+		assert(false);
 	}
 }
 
@@ -747,9 +774,6 @@ int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-
-	address_family = -1;
-	int icmp_proto = IPPROTO_ICMP;
 
 	/* POSIXLY_CORRECT might break things, so unset it (the portable way) */
 	environ = NULL;
@@ -765,35 +789,68 @@ int main(int argc, char **argv) {
 
 	const check_icmp_config config = tmp_config.config;
 
+	// int icmp_proto = IPPROTO_ICMP;
 	// add_target might change address_family
-	switch (address_family) {
-	case AF_INET:
-		icmp_proto = IPPROTO_ICMP;
-		break;
-	case AF_INET6:
-		icmp_proto = IPPROTO_ICMPV6;
-		break;
-	default:
-		crash("Address family not supported");
-	}
+	// switch (address_family) {
+	// case AF_INET:
+	// 	icmp_proto = IPPROTO_ICMP;
+	// 	break;
+	// case AF_INET6:
+	// 	icmp_proto = IPPROTO_ICMPV6;
+	// 	break;
+	// default:
+	// 	crash("Address family not supported");
+	// }
 
-	int icmp_sock = socket(address_family, SOCK_RAW, icmp_proto);
-	if (icmp_sock == -1) {
-		crash("Failed to obtain ICMP socket");
-	}
+	check_icmp_socket_set sockset = {
+		.socket4 = -1,
+		.socket6 = -1,
+	};
 
-	if (config.source_ip) {
-		set_source_ip(config.source_ip, icmp_sock);
-	}
+	if (config.need_v4) {
+		sockset.socket4 = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+		if (sockset.socket4 == -1) {
+			crash("Failed to obtain ICMP v4 socket");
+		}
+
+		if (config.source_ip) {
+
+			struct in_addr tmp = {};
+			int error_code = inet_pton(AF_INET, config.source_ip, &tmp);
+			if (error_code == 1) {
+				set_source_ip(config.source_ip, sockset.socket4, AF_INET);
+			} else {
+				// just try this mindlessly if it's not a v4 address
+				set_source_ip(config.source_ip, sockset.socket6, AF_INET6);
+			}
+		}
 
 #ifdef SO_TIMESTAMP
-	int on = 1;
-	if (setsockopt(icmp_sock, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on))) {
-		if (debug) {
-			printf("Warning: no SO_TIMESTAMP support\n");
+		if (sockset.socket4 != -1) {
+			int on = 1;
+			if (setsockopt(sockset.socket4, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on))) {
+				if (debug) {
+					printf("Warning: no SO_TIMESTAMP support\n");
+				}
+			}
+		}
+		if (sockset.socket6 != -1) {
+			int on = 1;
+			if (setsockopt(sockset.socket6, SOL_SOCKET, SO_TIMESTAMP, &on, sizeof(on))) {
+				if (debug) {
+					printf("Warning: no SO_TIMESTAMP support\n");
+				}
+			}
+		}
+#endif // SO_TIMESTAMP
+	}
+
+	if (config.need_v6) {
+		sockset.socket6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+		if (sockset.socket6 == -1) {
+			crash("Failed to obtain ICMP v6 socket");
 		}
 	}
-#endif // SO_TIMESTAMP
 
 	/* now drop privileges (no effect if not setsuid or geteuid() == 0) */
 	if (setuid(getuid()) == -1) {
@@ -801,8 +858,19 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	if (icmp_sock) {
-		int result = setsockopt(icmp_sock, SOL_IP, IP_TTL, &config.ttl, sizeof(config.ttl));
+	if (sockset.socket4) {
+		int result = setsockopt(sockset.socket4, SOL_IP, IP_TTL, &config.ttl, sizeof(config.ttl));
+		if (debug) {
+			if (result == -1) {
+				printf("setsockopt failed\n");
+			} else {
+				printf("ttl set to %lu\n", config.ttl);
+			}
+		}
+	}
+
+	if (sockset.socket6) {
+		int result = setsockopt(sockset.socket6, SOL_IP, IP_TTL, &config.ttl, sizeof(config.ttl));
 		if (debug) {
 			if (result == -1) {
 				printf("setsockopt failed\n");
@@ -888,14 +956,21 @@ int main(int argc, char **argv) {
 
 	run_checks(config.icmp_data_size, &pkt_interval, &target_interval, config.sender_id,
 			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
-			   icmp_sock, config.number_of_targets, &program_state);
+			   sockset, config.number_of_targets, &program_state);
 
 	errno = 0;
 
 	mp_check overall = mp_check_init();
-	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit, icmp_sock,
+	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit,
 		   config.number_of_targets, &program_state, config.hosts, config.number_of_hosts,
 		   &overall);
+
+	if (sockset.socket4) {
+		close(sockset.socket4);
+	}
+	if (sockset.socket6) {
+		close(sockset.socket6);
+	}
 
 	mp_exit(overall);
 }
@@ -904,7 +979,7 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 					   unsigned int *target_interval, const uint16_t sender_id,
 					   const check_icmp_execution_mode mode, const unsigned int max_completion_time,
 					   const struct timeval prog_start, ping_target **table,
-					   const unsigned short packets, const int icmp_sock,
+					   const unsigned short packets, const check_icmp_socket_set sockset,
 					   const unsigned short number_of_targets, check_icmp_state *program_state) {
 	/* this loop might actually violate the pkt_interval or target_interval
 	 * settings, but only if there aren't any packets on the wire which
@@ -917,20 +992,23 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 			}
 			if (table[target_index]->flags & FLAG_LOST_CAUSE) {
 				if (debug) {
-					printf("%s is a lost cause. not sending any more\n", table[target_index]->name);
+
+					char address[INET6_ADDRSTRLEN];
+					parse_address(&table[target_index]->address, address, sizeof(address));
+					printf("%s is a lost cause. not sending any more\n", address);
 				}
 				continue;
 			}
 
 			/* we're still in the game, so send next packet */
-			(void)send_icmp_ping(icmp_sock, table[target_index], icmp_pkt_size, sender_id,
+			(void)send_icmp_ping(sockset, table[target_index], icmp_pkt_size, sender_id,
 								 program_state);
 
 			/* wrap up if all targets are declared dead */
 			if (targets_alive(number_of_targets, program_state->targets_down) ||
 				get_timevaldiff(prog_start, prog_start) < max_completion_time ||
 				!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-				wait_for_reply(icmp_sock, *target_interval, icmp_pkt_size, pkt_interval,
+				wait_for_reply(sockset, *target_interval, icmp_pkt_size, pkt_interval,
 							   target_interval, sender_id, table, packets, number_of_targets,
 							   program_state);
 			}
@@ -938,9 +1016,9 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-			wait_for_reply(icmp_sock, *pkt_interval * number_of_targets, icmp_pkt_size,
-						   pkt_interval, target_interval, sender_id, table, packets,
-						   number_of_targets, program_state);
+			wait_for_reply(sockset, *pkt_interval * number_of_targets, icmp_pkt_size, pkt_interval,
+						   target_interval, sender_id, table, packets, number_of_targets,
+						   program_state);
 		}
 	}
 
@@ -970,7 +1048,7 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-			wait_for_reply(icmp_sock, final_wait, icmp_pkt_size, pkt_interval, target_interval,
+			wait_for_reply(sockset, final_wait, icmp_pkt_size, pkt_interval, target_interval,
 						   sender_id, table, packets, number_of_targets, program_state);
 		}
 	}
@@ -986,10 +1064,11 @@ static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
  * both:
  * icmp echo reply : the rest
  */
-static int wait_for_reply(int sock, const time_t time_interval, unsigned short icmp_pkt_size,
-						  unsigned int *pkt_interval, unsigned int *target_interval,
-						  uint16_t sender_id, ping_target **table, const unsigned short packets,
-						  const unsigned short number_of_targets, check_icmp_state *program_state) {
+static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_interval,
+						  unsigned short icmp_pkt_size, unsigned int *pkt_interval,
+						  unsigned int *target_interval, uint16_t sender_id, ping_target **table,
+						  const unsigned short packets, const unsigned short number_of_targets,
+						  check_icmp_state *program_state) {
 	union icmp_packet packet;
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
 		crash("send_icmp_ping(): failed to malloc %d bytes for send buffer", icmp_pkt_size);
@@ -1022,25 +1101,25 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 		time_t loop_time_interval = per_pkt_wait;
 
 		/* reap responses until we hit a timeout */
-		ssize_t n = recvfrom_wto(sock, buf, sizeof(buf), (struct sockaddr *)&resp_addr,
-								 &loop_time_interval, &packet_received_timestamp);
-		if (!n) {
+		recvfrom_wto_wrapper recv_foo =
+			recvfrom_wto(sockset, buf, sizeof(buf), (struct sockaddr *)&resp_addr,
+						 &loop_time_interval, &packet_received_timestamp);
+		if (!recv_foo.received) {
 			if (debug > 1) {
 				printf("recvfrom_wto() timed out during a %ld usecs wait\n", per_pkt_wait);
 			}
 			continue; /* timeout for this one, so keep trying */
 		}
 
-		if (n < 0) {
+		if (recv_foo.received < 0) {
 			if (debug) {
 				printf("recvfrom_wto() returned errors\n");
 			}
 			free(packet.buf);
-			return (int)n;
+			return (int)recv_foo.received;
 		}
 
-		// FIXME: with ipv6 we don't have an ip header here
-		if (address_family != AF_INET6) {
+		if (recv_foo.recv_proto != AF_INET6) {
 			ip_header = (union ip_hdr *)buf;
 
 			if (debug > 1) {
@@ -1053,38 +1132,21 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 			}
 		}
 
-		/* obsolete. alpha on tru64 provides the necessary defines, but isn't broken */
-		/* #if defined( __alpha__ ) && __STDC__ && !defined( __GLIBC__ ) */
-		/* alpha headers are decidedly broken. Using an ansi compiler,
-		 * they provide ip_vhl instead of ip_hl and ip_v, so we mask
-		 * off the bottom 4 bits */
-		/* 		hlen = (ip->ip_vhl & 0x0f) << 2; */
-		/* #else */
-		int hlen = (address_family == AF_INET6) ? 0 : ip_header->ip.ip_hl << 2;
-		/* #endif */
+		int hlen = (recv_foo.recv_proto == AF_INET6) ? 0 : ip_header->ip.ip_hl << 2;
 
-		if (n < (hlen + ICMP_MINLEN)) {
+		if (recv_foo.received < (hlen + ICMP_MINLEN)) {
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
-			crash("received packet too short for ICMP (%d bytes, expected %d) from %s\n", n,
-				  hlen + icmp_pkt_size, address);
+			crash("received packet too short for ICMP (%d bytes, expected %d) from %s\n",
+				  recv_foo.received, hlen + icmp_pkt_size, address);
 		}
-		/* else if(debug) { */
-		/* 	printf("ip header size: %u, packet size: %u (expected %u, %u)\n", */
-		/* 		   hlen, ntohs(ip->ip_len) - hlen, */
-		/* 		   sizeof(struct ip), icmp_pkt_size); */
-		/* } */
-
 		/* check the response */
-
 		memcpy(packet.buf, buf + hlen, icmp_pkt_size);
-		/*			address_family == AF_INET6 ? sizeof(struct icmp6_hdr)
-								   : sizeof(struct icmp));*/
 
-		if ((address_family == PF_INET &&
+		if ((recv_foo.recv_proto == AF_INET &&
 			 (ntohs(packet.icp->icmp_id) != sender_id || packet.icp->icmp_type != ICMP_ECHOREPLY ||
 			  ntohs(packet.icp->icmp_seq) >= number_of_targets * packets)) ||
-			(address_family == PF_INET6 &&
+			(recv_foo.recv_proto == AF_INET6 &&
 			 (ntohs(packet.icp6->icmp6_id) != sender_id ||
 			  packet.icp6->icmp6_type != ICMP6_ECHO_REPLY ||
 			  ntohs(packet.icp6->icmp6_seq) >= number_of_targets * packets))) {
@@ -1101,7 +1163,7 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 		/* this is indeed a valid response */
 		ping_target *target;
 		struct icmp_ping_data data;
-		if (address_family == PF_INET) {
+		if (address_family == AF_INET) {
 			memcpy(&data, packet.icp->icmp_data, sizeof(data));
 			if (debug > 2) {
 				printf("ICMP echo-reply of len %lu, id %u, seq %u, cksum 0x%X\n", sizeof(data),
@@ -1171,7 +1233,7 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
 
-			switch (address_family) {
+			switch (recv_foo.recv_proto) {
 			case AF_INET: {
 				printf("%0.3f ms rtt from %s, incoming ttl: %u, max: %0.3f, min: %0.3f\n",
 					   (float)tdiff / 1000, address, ip_header->ip.ip_ttl,
@@ -1191,23 +1253,14 @@ static int wait_for_reply(int sock, const time_t time_interval, unsigned short i
 }
 
 /* the ping functions */
-static int send_icmp_ping(const int sock, ping_target *host, const unsigned short icmp_pkt_size,
-						  const uint16_t sender_id, check_icmp_state *program_state) {
-	if (sock == -1) {
-		errno = 0;
-		crash("Attempt to send on bogus socket");
-		return -1;
-	}
-
-	void *buf = NULL;
-
+static int send_icmp_ping(const check_icmp_socket_set sockset, ping_target *host,
+						  const unsigned short icmp_pkt_size, const uint16_t sender_id,
+						  check_icmp_state *program_state) {
+	void *buf = calloc(1, icmp_pkt_size);
 	if (!buf) {
-		if (!(buf = malloc(icmp_pkt_size))) {
-			crash("send_icmp_ping(): failed to malloc %d bytes for send buffer", icmp_pkt_size);
-			return -1; /* might be reached if we're in debug mode */
-		}
+		crash("send_icmp_ping(): failed to malloc %d bytes for send buffer", icmp_pkt_size);
+		return -1; /* might be reached if we're in debug mode */
 	}
-	memset(buf, 0, icmp_pkt_size);
 
 	struct timeval current_time;
 	if ((gettimeofday(&current_time, NULL)) == -1) {
@@ -1221,7 +1274,7 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 
 	socklen_t addrlen;
 
-	if (address_family == AF_INET) {
+	if (host->address.ss_family == AF_INET) {
 		struct icmp *icp = (struct icmp *)buf;
 		addrlen = sizeof(struct sockaddr_in);
 
@@ -1235,11 +1288,14 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 		icp->icmp_cksum = icmp_checksum((uint16_t *)buf, (size_t)icmp_pkt_size);
 
 		if (debug > 2) {
+			char address[INET6_ADDRSTRLEN];
+			parse_address((&host->address), address, sizeof(address));
+
 			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
 				   sizeof(data), ntohs(icp->icmp_id), ntohs(icp->icmp_seq), icp->icmp_cksum,
-				   host->name);
+				   address);
 		}
-	} else {
+	} else if (host->address.ss_family == AF_INET6) {
 		struct icmp6_hdr *icp6 = (struct icmp6_hdr *)buf;
 		addrlen = sizeof(struct sockaddr_in6);
 
@@ -1253,10 +1309,16 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 		// let checksum be calculated automatically
 
 		if (debug > 2) {
-			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to host %s\n",
+			char address[INET6_ADDRSTRLEN];
+			parse_address((&host->address), address, sizeof(address));
+
+			printf("Sending ICMP echo-request of len %lu, id %u, seq %u, cksum 0x%X to target %s\n",
 				   sizeof(data), ntohs(icp6->icmp6_id), ntohs(icp6->icmp6_seq), icp6->icmp6_cksum,
-				   host->name);
+				   address);
 		}
+	} else {
+		// unknown address family
+		crash("unknown address family in ", __func__);
 	}
 
 	struct iovec iov;
@@ -1266,7 +1328,7 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 
 	struct msghdr hdr;
 	memset(&hdr, 0, sizeof(hdr));
-	hdr.msg_name = (struct sockaddr *)&host->saddr_in;
+	hdr.msg_name = (struct sockaddr *)&host->address;
 	hdr.msg_namelen = addrlen;
 	hdr.msg_iov = &iov;
 	hdr.msg_iovlen = 1;
@@ -1274,19 +1336,29 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 	errno = 0;
 
 	long int len;
-/* MSG_CONFIRM is a linux thing and only available on linux kernels >= 2.3.15, see send(2) */
+	/* MSG_CONFIRM is a linux thing and only available on linux kernels >= 2.3.15, see send(2) */
+	if (host->address.ss_family == AF_INET) {
 #ifdef MSG_CONFIRM
-	len = sendmsg(sock, &hdr, MSG_CONFIRM);
+		len = sendmsg(sockset.socket4, &hdr, MSG_CONFIRM);
 #else
-	len = sendmsg(sock, &hdr, 0);
+		len = sendmsg(sockset.socket4, &hdr, 0);
 #endif
+	} else if (host->address.ss_family == AF_INET6) {
+#ifdef MSG_CONFIRM
+		len = sendmsg(sockset.socket6, &hdr, MSG_CONFIRM);
+#else
+		len = sendmsg(sockset.socket6, &hdr, 0);
+#endif
+	} else {
+		assert(false);
+	}
 
 	free(buf);
 
 	if (len < 0 || (unsigned int)len != icmp_pkt_size) {
 		if (debug) {
 			char address[INET6_ADDRSTRLEN];
-			parse_address((&host->saddr_in), address, sizeof(address));
+			parse_address((&host->address), address, sizeof(address));
 			printf("Failed to send ping to %s: %s\n", address, strerror(errno));
 		}
 		errno = 0;
@@ -1299,9 +1371,9 @@ static int send_icmp_ping(const int sock, ping_target *host, const unsigned shor
 	return 0;
 }
 
-static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
-							struct sockaddr *saddr, time_t *timeout,
-							struct timeval *received_timestamp) {
+static recvfrom_wto_wrapper recvfrom_wto(const check_icmp_socket_set sockset, void *buf,
+										 const unsigned int len, struct sockaddr *saddr,
+										 time_t *timeout, struct timeval *received_timestamp) {
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	char ans_data[4096];
 #endif // HAVE_MSGHDR_MSG_CONTROL
@@ -1309,11 +1381,16 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 	struct cmsghdr *chdr;
 #endif
 
+	recvfrom_wto_wrapper result = {
+		.received = 0,
+		.recv_proto = AF_UNSPEC,
+	};
+
 	if (!*timeout) {
 		if (debug) {
 			printf("*timeout is not\n");
 		}
-		return 0;
+		return result;
 	}
 
 	struct timeval real_timeout;
@@ -1327,13 +1404,21 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 	// Read fds for select with the socket
 	fd_set read_fds;
 	FD_ZERO(&read_fds);
-	FD_SET(sock, &read_fds);
+
+	if (sockset.socket4 != -1) {
+		FD_SET(sockset.socket4, &read_fds);
+	}
+	if (sockset.socket6 != -1) {
+		FD_SET(sockset.socket6, &read_fds);
+	}
+
+	int nfds = (sockset.socket4 > sockset.socket6 ? sockset.socket4 : sockset.socket6) + 1;
 
 	struct timeval then;
 	gettimeofday(&then, NULL);
 
 	errno = 0;
-	int select_return = select(sock + 1, &read_fds, &dummy_write_fds, NULL, &real_timeout);
+	int select_return = select(nfds, &read_fds, &dummy_write_fds, NULL, &real_timeout);
 	if (select_return < 0) {
 		crash("select() in recvfrom_wto");
 	}
@@ -1343,7 +1428,7 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 	*timeout = get_timevaldiff(then, now);
 
 	if (!select_return) {
-		return 0; /* timeout */
+		return result; /* timeout */
 	}
 
 	unsigned int slen = sizeof(struct sockaddr_storage);
@@ -1364,7 +1449,18 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 #endif
 	};
 
-	ssize_t ret = recvmsg(sock, &hdr, 0);
+	ssize_t ret;
+	if (FD_ISSET(sockset.socket4, &read_fds)) {
+		ret = recvmsg(sockset.socket4, &hdr, 0);
+		result.recv_proto = AF_INET;
+	} else if (FD_ISSET(sockset.socket6, &read_fds)) {
+		ret = recvmsg(sockset.socket6, &hdr, 0);
+		result.recv_proto = AF_INET6;
+	} else {
+		assert(false);
+	}
+
+	result.received = ret;
 
 #ifdef SO_TIMESTAMP
 	for (chdr = CMSG_FIRSTHDR(&hdr); chdr; chdr = CMSG_NXTHDR(&hdr, chdr)) {
@@ -1382,11 +1478,11 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 	gettimeofday(tv, NULL);
 #endif // SO_TIMESTAMP
 
-	return (ret);
+	return (result);
 }
 
 static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
-				   check_icmp_threshold warn, check_icmp_threshold crit, const int icmp_sock,
+				   check_icmp_threshold warn, check_icmp_threshold crit,
 				   const unsigned short number_of_targets, check_icmp_state *program_state,
 				   check_icmp_target_container host_list[], unsigned short number_of_hosts,
 				   mp_check overall[static 1]) {
@@ -1395,10 +1491,6 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 
 	if (debug > 1) {
 		printf("finish(%d) called\n", sig);
-	}
-
-	if (icmp_sock != -1) {
-		close(icmp_sock);
 	}
 
 	if (debug) {
@@ -1476,17 +1568,21 @@ static time_t get_timevaldiff_to_now(struct timeval earlier) {
 }
 
 static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address) {
+	assert((address.ss_family == AF_INET) ||  (address.ss_family == AF_INET6));
+
 	if (debug) {
 		char straddr[INET6_ADDRSTRLEN];
-		parse_address((struct sockaddr_storage *)&address, straddr, sizeof(straddr));
+		parse_address((&address), straddr, sizeof(straddr));
 		printf("add_target_ip called with: %s\n", straddr);
 	}
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
-	if (address_family == AF_INET) {
+	if (address.ss_family == AF_INET) {
 		sin = (struct sockaddr_in *)&address;
-	} else {
+	} else if (address.ss_family == AF_INET6) {
 		sin6 = (struct sockaddr_in6 *)&address;
+	} else {
+		assert(false);
 	}
 
 	add_target_ip_wrapper result = {
@@ -1496,9 +1592,9 @@ static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address) {
 
 	/* disregard obviously stupid addresses
 	 * (I didn't find an ipv6 equivalent to INADDR_NONE) */
-	if (((address_family == AF_INET &&
+	if (((address.ss_family == AF_INET &&
 		  (sin->sin_addr.s_addr == INADDR_NONE || sin->sin_addr.s_addr == INADDR_ANY))) ||
-		(address_family == AF_INET6 && (sin6->sin6_addr.s6_addr == in6addr_any.s6_addr))) {
+		(address.ss_family == AF_INET6 && (sin6->sin6_addr.s6_addr == in6addr_any.s6_addr))) {
 		result.error_code = ERROR;
 		return result;
 	}
@@ -1513,32 +1609,21 @@ static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address) {
 		crash("add_target_ip(%s): malloc(%lu) failed", straddr, sizeof(ping_target));
 	}
 
-	*target = ping_target_init();
+	ping_target_create_wrapper target_wrapper = ping_target_create(address);
 
-	/* set the values. use calling name for output */
-	target->name = strdup(straddr);
-
-	/* fill out the sockaddr_storage struct */
-	struct sockaddr_in *host_sin;
-	struct sockaddr_in6 *host_sin6;
-	if (address_family == AF_INET) {
-		host_sin = (struct sockaddr_in *)&target->saddr_in;
-		host_sin->sin_family = AF_INET;
-		host_sin->sin_addr.s_addr = sin->sin_addr.s_addr;
+	if (target_wrapper.errorcode == OK) {
+		*target = target_wrapper.host;
+		result.target = target;
 	} else {
-		host_sin6 = (struct sockaddr_in6 *)&target->saddr_in;
-		host_sin6->sin6_family = AF_INET6;
-		memcpy(host_sin6->sin6_addr.s6_addr, sin6->sin6_addr.s6_addr,
-			   sizeof host_sin6->sin6_addr.s6_addr);
+		result.error_code = target_wrapper.errorcode;
 	}
-
-	result.target = target;
 
 	return result;
 }
 
 /* wrapper for add_target_ip */
-static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode mode) {
+static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode mode,
+									 sa_family_t enforced_proto) {
 	if (debug > 0) {
 		printf("add_target called with argument %s\n", arg);
 	}
@@ -1548,30 +1633,31 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	struct sockaddr_in6 *sin6 = NULL;
 	int error_code = -1;
 
-	switch (address_family) {
-	case -1:
-		/* -4 and -6 are not specified on cmdline */
-		address_family = AF_INET;
+	switch (enforced_proto) {
+	case AF_UNSPEC:
+		/*
+		 * no enforced protocoll family
+		 * try to parse the address with each one
+		 */
 		sin = (struct sockaddr_in *)&address_storage;
-		error_code = inet_pton(address_family, arg, &sin->sin_addr);
+		error_code = inet_pton(AF_INET, arg, &sin->sin_addr);
+		address_storage.ss_family = AF_INET;
 
 		if (error_code != 1) {
-			address_family = AF_INET6;
 			sin6 = (struct sockaddr_in6 *)&address_storage;
-			error_code = inet_pton(address_family, arg, &sin6->sin6_addr);
-		}
-		/* If we don't find any valid addresses, we still don't know the address_family */
-		if (error_code != 1) {
-			address_family = -1;
+			error_code = inet_pton(AF_INET6, arg, &sin6->sin6_addr);
+			address_storage.ss_family = AF_INET6;
 		}
 		break;
 	case AF_INET:
 		sin = (struct sockaddr_in *)&address_storage;
-		error_code = inet_pton(address_family, arg, &sin->sin_addr);
+		error_code = inet_pton(AF_INET, arg, &sin->sin_addr);
+		address_storage.ss_family = AF_INET;
 		break;
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)&address_storage;
-		error_code = inet_pton(address_family, arg, &sin6->sin6_addr);
+		error_code = inet_pton(AF_INET, arg, &sin6->sin6_addr);
+		address_storage.ss_family = AF_INET6;
 		break;
 	default:
 		crash("Address family not supported");
@@ -1580,9 +1666,11 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	add_target_wrapper result = {
 		.error_code = OK,
 		.targets = NULL,
+		.has_v4 = false,
+		.has_v6 = false,
 	};
 
-	/* don't resolve if we don't have to */
+	// if error_code == 1 the address was a valid address parsed above
 	if (error_code == 1) {
 		/* don't add all ip's if we were given a specific one */
 		add_target_ip_wrapper targeted = add_target_ip(address_storage);
@@ -1592,19 +1680,21 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 			return result;
 		}
 
+		if (targeted.target->address.ss_family == AF_INET) {
+			result.has_v4 = true;
+		} else if (targeted.target->address.ss_family == AF_INET6) {
+			result.has_v6 = true;
+		} else {
+			assert(false);
+		}
 		result.targets = targeted.target;
 		result.number_of_targets = 1;
 		return result;
 	}
 
-	struct addrinfo hints;
+	struct addrinfo hints = {};
 	errno = 0;
-	memset(&hints, 0, sizeof(hints));
-	if (address_family == -1) {
-		hints.ai_family = AF_UNSPEC;
-	} else {
-		hints.ai_family = address_family == AF_INET ? PF_INET : PF_INET6;
-	}
+	hints.ai_family = enforced_proto;
 	hints.ai_socktype = SOCK_RAW;
 
 	int error;
@@ -1615,7 +1705,6 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 		result.error_code = ERROR;
 		return result;
 	}
-	address_family = res->ai_family;
 
 	/* possibly add all the IP's as targets */
 	for (struct addrinfo *address = res; address != NULL; address = address->ai_next) {
@@ -1633,6 +1722,11 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 				result.number_of_targets = 1;
 			} else {
 				result.number_of_targets += ping_target_list_append(result.targets, tmp.target);
+			}
+			if (address->ai_family == AF_INET) {
+				result.has_v4 = true;
+			} else if (address->ai_family == AF_INET6) {
+				result.has_v6 = true;
 			}
 		}
 
@@ -1652,11 +1746,11 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	return result;
 }
 
-static void set_source_ip(char *arg, const int icmp_sock) {
+static void set_source_ip(char *arg, const int icmp_sock, sa_family_t addr_family) {
 	struct sockaddr_in src;
 
 	memset(&src, 0, sizeof(src));
-	src.sin_family = address_family;
+	src.sin_family = addr_family;
 	if ((src.sin_addr.s_addr = inet_addr(arg)) == INADDR_NONE) {
 		src.sin_addr.s_addr = get_ip_address(arg);
 	}
@@ -2026,7 +2120,8 @@ void print_usage(void) {
 	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
 }
 
-static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode) {
+static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode,
+								 sa_family_t enforced_proto) {
 	if (debug) {
 		printf("add_host called with argument %s\n", arg);
 	}
@@ -2034,14 +2129,19 @@ static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode) {
 	add_host_wrapper result = {
 		.error_code = OK,
 		.host = check_icmp_target_container_init(),
+		.has_v4 = false,
+		.has_v6 = false,
 	};
 
-	add_target_wrapper targets = add_target(arg, mode);
+	add_target_wrapper targets = add_target(arg, mode, enforced_proto);
 
 	if (targets.error_code != OK) {
 		result.error_code = targets.error_code;
 		return result;
 	}
+
+	result.has_v4 = targets.has_v4;
+	result.has_v6 = targets.has_v6;
 
 	result.host = check_icmp_target_container_init();
 
@@ -2063,7 +2163,12 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 	mp_subcheck result = mp_subcheck_init();
 	result = mp_set_subcheck_default_state(result, STATE_OK);
-	xasprintf(&result.output, "%s", target.name);
+
+	char address[INET6_ADDRSTRLEN];
+	memset(address, 0, INET6_ADDRSTRLEN);
+	parse_address(&target.address, address, sizeof(address));
+
+	xasprintf(&result.output, "%s", address);
 
 	double packet_loss;
 	double rta;
@@ -2076,8 +2181,6 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		/* up the down counter if not already counted */
 
 		if (target.flags & FLAG_LOST_CAUSE) {
-			char address[INET6_ADDRSTRLEN];
-			parse_address(&target.error_addr, address, sizeof(address));
 			xasprintf(&result.output, "%s: %s @ %s", result.output,
 					  get_icmp_error_msg(target.icmp_type, target.icmp_code), address);
 		} else { /* not marked as lost cause, so we have no flags for it */
@@ -2159,7 +2262,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_rta = perfdata_init();
-			xasprintf(&pd_rta.label, "%srta", target.name);
+			xasprintf(&pd_rta.label, "%srta", address);
 			pd_rta.uom = strdup("ms");
 			pd_rta.value = mp_create_pd_value(rta / 1000);
 			pd_rta.min = mp_create_pd_value(0);
@@ -2169,13 +2272,13 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rta);
 
 			mp_perfdata pd_rt_min = perfdata_init();
-			xasprintf(&pd_rt_min.label, "%srtmin", target.name);
+			xasprintf(&pd_rt_min.label, "%srtmin", address);
 			pd_rt_min.value = mp_create_pd_value(target.rtmin / 1000);
 			pd_rt_min.uom = strdup("ms");
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_min);
 
 			mp_perfdata pd_rt_max = perfdata_init();
-			xasprintf(&pd_rt_max.label, "%srtmax", target.name);
+			xasprintf(&pd_rt_max.label, "%srtmax", address);
 			pd_rt_max.value = mp_create_pd_value(target.rtmax / 1000);
 			pd_rt_max.uom = strdup("ms");
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_max);
@@ -2198,7 +2301,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		}
 
 		mp_perfdata pd_pl = perfdata_init();
-		xasprintf(&pd_pl.label, "%spl", target.name);
+		xasprintf(&pd_pl.label, "%spl", address);
 		pd_pl.uom = strdup("%");
 
 		pd_pl.warn = mp_range_set_end(pd_pl.warn, mp_create_pd_value(warn.pl));
@@ -2226,7 +2329,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		if (packet_loss < 100) {
 			mp_perfdata pd_jitter = perfdata_init();
 			pd_jitter.uom = strdup("ms");
-			xasprintf(&pd_jitter.label, "%sjitter_avg", target.name);
+			xasprintf(&pd_jitter.label, "%sjitter_avg", address);
 			pd_jitter.value = mp_create_pd_value(target.jitter);
 			pd_jitter.warn = mp_range_set_end(pd_jitter.warn, mp_create_pd_value(warn.jitter));
 			pd_jitter.crit = mp_range_set_end(pd_jitter.crit, mp_create_pd_value(crit.jitter));
@@ -2234,13 +2337,13 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 			mp_perfdata pd_jitter_min = perfdata_init();
 			pd_jitter_min.uom = strdup("ms");
-			xasprintf(&pd_jitter_min.label, "%sjitter_min", target.name);
+			xasprintf(&pd_jitter_min.label, "%sjitter_min", address);
 			pd_jitter_min.value = mp_create_pd_value(target.jitter_min);
 			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_min);
 
 			mp_perfdata pd_jitter_max = perfdata_init();
 			pd_jitter_max.uom = strdup("ms");
-			xasprintf(&pd_jitter_max.label, "%sjitter_max", target.name);
+			xasprintf(&pd_jitter_max.label, "%sjitter_max", address);
 			pd_jitter_max.value = mp_create_pd_value(target.jitter_max);
 			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_max);
 		}
@@ -2262,7 +2365,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_mos = perfdata_init();
-			xasprintf(&pd_mos.label, "%smos", target.name);
+			xasprintf(&pd_mos.label, "%smos", address);
 			pd_mos.value = mp_create_pd_value(mos);
 			pd_mos.warn = mp_range_set_end(pd_mos.warn, mp_create_pd_value(warn.mos));
 			pd_mos.crit = mp_range_set_end(pd_mos.crit, mp_create_pd_value(crit.mos));
@@ -2288,7 +2391,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_score = perfdata_init();
-			xasprintf(&pd_score.label, "%sscore", target.name);
+			xasprintf(&pd_score.label, "%sscore", address);
 			pd_score.value = mp_create_pd_value(score);
 			pd_score.warn = mp_range_set_end(pd_score.warn, mp_create_pd_value(warn.score));
 			pd_score.crit = mp_range_set_end(pd_score.crit, mp_create_pd_value(crit.score));

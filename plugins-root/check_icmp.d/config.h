@@ -63,7 +63,10 @@ typedef struct {
 	unsigned int pkt_interval;
 	unsigned int target_interval;
 	unsigned short number_of_packets;
+
 	char *source_ip;
+	bool need_v4;
+	bool need_v6;
 
 	uint16_t sender_id; // PID of the main process, which is used as an ID in packets
 

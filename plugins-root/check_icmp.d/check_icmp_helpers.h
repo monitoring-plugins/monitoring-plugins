@@ -10,10 +10,10 @@
 #include <arpa/inet.h>
 
 typedef struct rta_host {
-	unsigned short id;                            /* id in **table, and icmp pkts */
-	char *name;                                   /* arg used for adding this host */
-	char *msg;                                    /* icmp error message, if any */
-	struct sockaddr_storage saddr_in;             /* the address of this host */
+	unsigned short id; /* id in **table, and icmp pkts */
+	char *msg;         /* icmp error message, if any */
+
+	struct sockaddr_storage address;              /* the address of this host */
 	struct sockaddr_storage error_addr;           /* stores address of error replies */
 	time_t time_waited;                           /* total time waited, in usecs */
 	unsigned int icmp_sent, icmp_recv, icmp_lost; /* counters */
@@ -59,7 +59,12 @@ typedef struct {
 	ping_target host;
 } ping_target_create_wrapper;
 
-ping_target_create_wrapper ping_target_create(char *name, struct sockaddr_storage *address);
+typedef struct {
+	int socket4;
+	int socket6;
+} check_icmp_socket_set;
+
+ping_target_create_wrapper ping_target_create(struct sockaddr_storage address);
 unsigned int ping_target_list_append(ping_target *list, ping_target *elem);
 
 void check_icmp_timeout_handler(int, siginfo_t *, void *);
