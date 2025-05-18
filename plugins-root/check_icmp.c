@@ -1272,7 +1272,7 @@ static int send_icmp_ping(const check_icmp_socket_set sockset, ping_target *host
 	data.ping_id = 10; /* host->icmp.icmp_sent; */
 	memcpy(&data.stime, &current_time, sizeof(current_time));
 
-	socklen_t addrlen = 0;
+	socklen_t addrlen;
 
 	if (host->address.ss_family == AF_INET) {
 		struct icmp *icp = (struct icmp *)buf;
@@ -2253,10 +2253,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (rta >= crit.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, crit.rta / 1000);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double) crit.rta / 1000);
 		} else if (rta >= warn.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, warn.rta / 1000);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double) warn.rta / 1000);
 		}
 
 		if (packet_loss < 100) {
@@ -2378,14 +2378,14 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.score_mode) {
 		mp_subcheck sc_score = mp_subcheck_init();
 		sc_score = mp_set_subcheck_default_state(sc_score, STATE_OK);
-		xasprintf(&sc_score.output, "Score %u", score);
+		xasprintf(&sc_score.output, "Score %f", score);
 
 		if (score <= crit.score) {
 			sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
-			xasprintf(&sc_score.output, "%s < %u", sc_score.output, crit.score);
+			xasprintf(&sc_score.output, "%s < %f", sc_score.output, crit.score);
 		} else if (score <= warn.score) {
 			sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
-			xasprintf(&sc_score.output, "%s < %u", sc_score.output, warn.score);
+			xasprintf(&sc_score.output, "%s < %f", sc_score.output, warn.score);
 		}
 
 		if (packet_loss < 100) {
