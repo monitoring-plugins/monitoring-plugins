@@ -9,7 +9,7 @@
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
 
-typedef struct rta_host {
+typedef struct ping_target {
 	unsigned short id; /* id in **table, and icmp pkts */
 	char *msg;         /* icmp error message, if any */
 
@@ -32,7 +32,7 @@ typedef struct rta_host {
 
 	bool found_out_of_order_packets;
 
-	struct rta_host *next;
+	struct ping_target *next;
 } ping_target;
 
 ping_target ping_target_init();

@@ -43,7 +43,7 @@ check_icmp_config check_icmp_config_init() {
 		.need_v4 = false,
 		.need_v6 = false,
 
-		.sender_id = {},
+		.sender_id = 0,
 
 		.mode = MODE_RTA,
 
