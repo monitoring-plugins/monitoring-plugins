@@ -211,7 +211,7 @@ evaluate_host_wrapper evaluate_host(check_icmp_target_container host,
 									check_icmp_mode_switches modes, check_icmp_threshold warn,
 									check_icmp_threshold crit);
 
-/* Target aquisition */
+/* Target acquisition */
 typedef struct {
 	int error_code;
 	check_icmp_target_container host;
@@ -1528,7 +1528,6 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		mp_subcheck sc_min_targets_alive = mp_subcheck_init();
 		sc_min_targets_alive = mp_set_subcheck_default_state(sc_min_targets_alive, STATE_OK);
 
-		// TODO problably broken now
 		if (targets_ok >= min_hosts_alive) {
 			// TODO this should overwrite the main state
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
@@ -1635,7 +1634,7 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	switch (enforced_proto) {
 	case AF_UNSPEC:
 		/*
-		 * no enforced protocoll family
+		 * no enforced protocol family
 		 * try to parse the address with each one
 		 */
 		sin = (struct sockaddr_in *)&address_storage;
