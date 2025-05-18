@@ -257,6 +257,10 @@ mp_perfdata mp_set_pd_value_double(mp_perfdata pd, double value) {
 	return pd;
 }
 
+mp_perfdata mp_set_pd_value_char(mp_perfdata pd, char value) { return mp_set_pd_value_long_long(pd, (long long)value); }
+
+mp_perfdata mp_set_pd_value_u_char(mp_perfdata pd, unsigned char value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
+
 mp_perfdata mp_set_pd_value_int(mp_perfdata pd, int value) { return mp_set_pd_value_long_long(pd, (long long)value); }
 
 mp_perfdata mp_set_pd_value_u_int(mp_perfdata pd, unsigned int value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
@@ -287,6 +291,10 @@ mp_perfdata_value mp_create_pd_value_double(double value) {
 }
 
 mp_perfdata_value mp_create_pd_value_float(float value) { return mp_create_pd_value_double((double)value); }
+
+mp_perfdata_value mp_create_pd_value_char(char value) { return mp_create_pd_value_long_long((long long)value); }
+
+mp_perfdata_value mp_create_pd_value_u_char(unsigned char value) { return mp_create_pd_value_u_long_long((unsigned long long)value); }
 
 mp_perfdata_value mp_create_pd_value_int(int value) { return mp_create_pd_value_long_long((long long)value); }
 
