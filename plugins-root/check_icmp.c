@@ -249,7 +249,7 @@ static void finish(int sign, check_icmp_mode_switches modes, int min_hosts_alive
 				   mp_check overall[static 1]);
 
 /* Error exit */
-static void crash(const char *fmt, ...);
+static void crash(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 /** global variables **/
 static int debug = 0;
@@ -575,7 +575,7 @@ static void crash(const char *fmt, ...) {
 	puts("");
 
 	exit(3);
-}
+} 
 
 static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code) {
 	const char *msg = "unreachable";
@@ -899,8 +899,8 @@ int main(int argc, char **argv) {
 	gettimeofday(&prog_start, NULL);
 
 	time_t max_completion_time =
-		((config.number_of_targets * config.number_of_packets * config.pkt_interval) +
-		 (config.number_of_targets * config.target_interval)) +
+		((config.pkt_interval *config.number_of_targets * config.number_of_packets) +
+		 (config.target_interval * config.number_of_targets)) +
 		(config.number_of_targets * config.number_of_packets * config.crit.rta) + config.crit.rta;
 
 	if (debug) {
@@ -1136,8 +1136,9 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 		if (recv_foo.received < (hlen + ICMP_MINLEN)) {
 			char address[INET6_ADDRSTRLEN];
 			parse_address(&resp_addr, address, sizeof(address));
-			crash("received packet too short for ICMP (%d bytes, expected %d) from %s\n",
+			crash("received packet too short for ICMP (%ld bytes, expected %d) from %s\n",
 				  recv_foo.received, hlen + icmp_pkt_size, address);
+
 		}
 		/* check the response */
 		memcpy(packet.buf, buf + hlen, icmp_pkt_size);
@@ -1271,7 +1272,7 @@ static int send_icmp_ping(const check_icmp_socket_set sockset, ping_target *host
 	data.ping_id = 10; /* host->icmp.icmp_sent; */
 	memcpy(&data.stime, &current_time, sizeof(current_time));
 
-	socklen_t addrlen;
+	socklen_t addrlen = 0;
 
 	if (host->address.ss_family == AF_INET) {
 		struct icmp *icp = (struct icmp *)buf;
@@ -1317,7 +1318,7 @@ static int send_icmp_ping(const check_icmp_socket_set sockset, ping_target *host
 		}
 	} else {
 		// unknown address family
-		crash("unknown address family in ", __func__);
+		crash("unknown address family in %s", __func__);
 	}
 
 	struct iovec iov;
