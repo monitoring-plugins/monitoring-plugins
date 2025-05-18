@@ -184,16 +184,23 @@ static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_s
 															   threshold_mode mode);
 
 /* main test function */
-static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
-					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
-					   unsigned int *target_interval, check_icmp_threshold warn,
-					   check_icmp_threshold crit, uint16_t sender_id,
+static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
+					   unsigned int *target_interval, uint16_t sender_id,
 					   check_icmp_execution_mode mode, unsigned int max_completion_time,
 					   struct timeval prog_start, ping_target **table, unsigned short packets,
 					   int icmp_sock, unsigned short number_of_targets,
-					   check_icmp_state *program_state, ping_target *target_list);
+					   check_icmp_state *program_state);
 mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 							check_icmp_threshold warn, check_icmp_threshold crit);
+
+typedef struct {
+	int targets_ok;
+	int targets_warn;
+	mp_subcheck sc_host;
+} evaluate_host_wrapper;
+evaluate_host_wrapper evaluate_host(check_icmp_target_container host,
+									check_icmp_mode_switches modes, check_icmp_threshold warn,
+									check_icmp_threshold crit);
 
 /* Target aquisition */
 typedef struct {
@@ -213,7 +220,7 @@ typedef struct {
 	int error_code;
 	ping_target *target;
 } add_target_ip_wrapper;
-static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *address);
+static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address);
 
 static void parse_address(struct sockaddr_storage *addr, char *address, socklen_t size);
 
@@ -223,7 +230,8 @@ static unsigned short icmp_checksum(uint16_t *packet, size_t packet_size);
 static void finish(int sign, check_icmp_mode_switches modes, int min_hosts_alive,
 				   check_icmp_threshold warn, check_icmp_threshold crit, int icmp_sock,
 				   unsigned short number_of_targets, check_icmp_state *program_state,
-				   ping_target *target_list) __attribute__((noreturn));
+				   check_icmp_target_container host_list[], unsigned short number_of_hosts,
+				   mp_check overall[static 1]);
 
 /* Error exit */
 static void crash(const char *fmt, ...);
@@ -247,8 +255,6 @@ typedef struct {
 	int errorcode;
 	check_icmp_config config;
 } check_icmp_config_wrapper;
-check_icmp_config_wrapper process_arguments(int argc, char **argv);
-
 check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 	/* get calling name the old-fashioned way for portability instead
 	 * of relying on the glibc-ism __progname */
@@ -313,7 +319,11 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			case 'H': {
 				result.config.number_of_hosts++;
+				break;
 			}
+			case 'v':
+				debug++;
+				break;
 			}
 		}
 	}
@@ -345,9 +355,6 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		long int arg;
 		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
 			switch (arg) {
-			case 'v':
-				debug++;
-				break;
 			case 'b': {
 				long size = strtol(optarg, NULL, 0);
 				if ((unsigned long)size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
@@ -859,6 +866,7 @@ int main(int argc, char **argv) {
 		crash("minimum alive hosts is negative (%i)", config.min_hosts_alive);
 	}
 
+	// Build an index table of all targets
 	ping_target *host = config.targets;
 	ping_target **table = malloc(sizeof(ping_target *) * config.number_of_targets);
 	if (!table) {
@@ -878,27 +886,26 @@ int main(int argc, char **argv) {
 
 	check_icmp_state program_state = check_icmp_state_init();
 
-	run_checks(config.modes, config.min_hosts_alive, config.icmp_data_size, &pkt_interval,
-			   &target_interval, config.warn, config.crit, config.sender_id, config.mode,
-			   max_completion_time, prog_start, table, config.number_of_packets, icmp_sock,
-			   config.number_of_targets, &program_state, config.targets);
+	run_checks(config.icmp_data_size, &pkt_interval, &target_interval, config.sender_id,
+			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
+			   icmp_sock, config.number_of_targets, &program_state);
 
 	errno = 0;
-	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit, icmp_sock,
-		   config.number_of_targets, &program_state, config.targets);
 
-	return (0);
+	mp_check overall = mp_check_init();
+	finish(0, config.modes, config.min_hosts_alive, config.warn, config.crit, icmp_sock,
+		   config.number_of_targets, &program_state, config.hosts, config.number_of_hosts,
+		   &overall);
+
+	mp_exit(overall);
 }
 
-static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
-					   unsigned short icmp_pkt_size, unsigned int *pkt_interval,
-					   unsigned int *target_interval, check_icmp_threshold warn,
-					   check_icmp_threshold crit, const uint16_t sender_id,
+static void run_checks(unsigned short icmp_pkt_size, unsigned int *pkt_interval,
+					   unsigned int *target_interval, const uint16_t sender_id,
 					   const check_icmp_execution_mode mode, const unsigned int max_completion_time,
 					   const struct timeval prog_start, ping_target **table,
 					   const unsigned short packets, const int icmp_sock,
-					   const unsigned short number_of_targets, check_icmp_state *program_state,
-					   ping_target *target_list) {
+					   const unsigned short number_of_targets, check_icmp_state *program_state) {
 	/* this loop might actually violate the pkt_interval or target_interval
 	 * settings, but only if there aren't any packets on the wire which
 	 * indicates that the target can handle an increased packet rate */
@@ -906,8 +913,7 @@ static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 		for (unsigned int target_index = 0; target_index < number_of_targets; target_index++) {
 			/* don't send useless packets */
 			if (!targets_alive(number_of_targets, program_state->targets_down)) {
-				finish(0, modes, min_hosts_alive, warn, crit, icmp_sock, number_of_targets,
-					   program_state, target_list);
+				return;
 			}
 			if (table[target_index]->flags & FLAG_LOST_CAUSE) {
 				if (debug) {
@@ -952,8 +958,7 @@ static void run_checks(check_icmp_mode_switches modes, int min_hosts_alive,
 			if (debug) {
 				printf("Time passed. Finishing up\n");
 			}
-			finish(0, modes, min_hosts_alive, warn, crit, icmp_sock, number_of_targets,
-				   program_state, target_list);
+			return;
 		}
 
 		/* catch the packets that might come in within the timeframe, but
@@ -1383,7 +1388,8 @@ static ssize_t recvfrom_wto(const int sock, void *buf, const unsigned int len,
 static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 				   check_icmp_threshold warn, check_icmp_threshold crit, const int icmp_sock,
 				   const unsigned short number_of_targets, check_icmp_state *program_state,
-				   ping_target *target_list) {
+				   check_icmp_target_container host_list[], unsigned short number_of_hosts,
+				   mp_check overall[static 1]) {
 	// Deactivate alarm
 	alarm(0);
 
@@ -1402,29 +1408,21 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 			   targets_alive(number_of_targets, program_state->targets_down));
 	}
 
-	mp_check overall = mp_check_init();
-
 	// loop over targets to evaluate each one
-	ping_target *host = target_list;
-	int hosts_ok = 0;
-	int hosts_warn = 0;
-	while (host) {
-		if (host->flags & FLAG_LOST_CAUSE) {
-			program_state->targets_down++;
-		}
-		// TODO call evaluate here
-		mp_subcheck sc_target = evaluate_target(*host, modes, warn, crit);
+	int targets_ok = 0;
+	int targets_warn = 0;
+	for (unsigned short i = 0; i < number_of_hosts; i++) {
+		evaluate_host_wrapper host_check = evaluate_host(host_list[i], modes, warn, crit);
 
-		mp_add_subcheck_to_check(&overall, sc_target);
+		targets_ok += host_check.targets_ok;
+		targets_warn += host_check.targets_warn;
 
-		mp_state_enum target_state = mp_compute_subcheck_state(sc_target);
-		if (target_state == STATE_OK) {
-			hosts_ok++;
-		} else if (target_state == STATE_WARNING) {
-			hosts_warn++;
-		}
+		mp_add_subcheck_to_check(overall, host_check.sc_host);
+	}
 
-		host = host->next;
+	if (number_of_hosts == 1) {
+		// Exit early here, since the other checks only make sense for multiple hosts
+		return;
 	}
 
 	/* this is inevitable */
@@ -1432,7 +1430,7 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		mp_subcheck sc_no_target_alive = mp_subcheck_init();
 		sc_no_target_alive = mp_set_subcheck_state(sc_no_target_alive, STATE_CRITICAL);
 		sc_no_target_alive.output = strdup("No target is alive!");
-		mp_add_subcheck_to_check(&overall, sc_no_target_alive);
+		mp_add_subcheck_to_check(overall, sc_no_target_alive);
 	}
 
 	if (min_hosts_alive > -1) {
@@ -1440,10 +1438,10 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		sc_min_targets_alive = mp_set_subcheck_default_state(sc_min_targets_alive, STATE_OK);
 
 		// TODO problably broken now
-		if (hosts_ok >= min_hosts_alive) {
+		if (targets_ok >= min_hosts_alive) {
 			// TODO this should overwrite the main state
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
-		} else if ((hosts_ok + hosts_warn) >= min_hosts_alive) {
+		} else if ((targets_ok + targets_warn) >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
 		}
 	}
@@ -1453,10 +1451,8 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		printf(
 			"targets: %u, targets_alive: %u, hosts_ok: %u, hosts_warn: %u, min_hosts_alive: %i\n",
 			number_of_targets, targets_alive(number_of_targets, program_state->targets_down),
-			hosts_ok, hosts_warn, min_hosts_alive);
+			targets_ok, targets_warn, min_hosts_alive);
 	}
-
-	mp_exit(overall);
 }
 
 static time_t get_timevaldiff(const struct timeval earlier, const struct timeval later) {
@@ -1479,13 +1475,18 @@ static time_t get_timevaldiff_to_now(struct timeval earlier) {
 	return get_timevaldiff(earlier, now);
 }
 
-static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *address) {
+static add_target_ip_wrapper add_target_ip(struct sockaddr_storage address) {
+	if (debug) {
+		char straddr[INET6_ADDRSTRLEN];
+		parse_address((struct sockaddr_storage *)&address, straddr, sizeof(straddr));
+		printf("add_target_ip called with: %s\n", straddr);
+	}
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	if (address_family == AF_INET) {
-		sin = (struct sockaddr_in *)address;
+		sin = (struct sockaddr_in *)&address;
 	} else {
-		sin6 = (struct sockaddr_in6 *)address;
+		sin6 = (struct sockaddr_in6 *)&address;
 	}
 
 	add_target_ip_wrapper result = {
@@ -1502,38 +1503,20 @@ static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *a
 		return result;
 	}
 
-	// TODO: allow duplicate targets for now, might be on purpose
-	/* no point in adding two identical IP's, so don't. ;) */
-	// struct sockaddr_in *host_sin;
-	// struct sockaddr_in6 *host_sin6;
-	// ping_target *host = host_list;
-	// while (host) {
-	// 	host_sin = (struct sockaddr_in *)&host->saddr_in;
-	// 	host_sin6 = (struct sockaddr_in6 *)&host->saddr_in;
-
-	// 	if ((address_family == AF_INET && host_sin->sin_addr.s_addr == sin->sin_addr.s_addr) ||
-	// 		(address_family == AF_INET6 &&
-	// 		 host_sin6->sin6_addr.s6_addr == sin6->sin6_addr.s6_addr)) {
-	// 		if (debug) {
-	// 			printf("Identical IP already exists. Not adding %s\n", arg);
-	// 		}
-	// 		return -1;
-	// 	}
-	// 	host = host->next;
-	// }
+	// get string representation of address
+	char straddr[INET6_ADDRSTRLEN];
+	parse_address((&address), straddr, sizeof(straddr));
 
 	/* add the fresh ip */
 	ping_target *target = (ping_target *)calloc(1, sizeof(ping_target));
 	if (!target) {
-		char straddr[INET6_ADDRSTRLEN];
-		parse_address((struct sockaddr_storage *)&address, straddr, sizeof(straddr));
-		crash("add_target_ip(%s, %s): malloc(%lu) failed", arg, straddr, sizeof(ping_target));
+		crash("add_target_ip(%s): malloc(%lu) failed", straddr, sizeof(ping_target));
 	}
 
 	*target = ping_target_init();
 
 	/* set the values. use calling name for output */
-	target->name = strdup(arg);
+	target->name = strdup(straddr);
 
 	/* fill out the sockaddr_storage struct */
 	struct sockaddr_in *host_sin;
@@ -1556,9 +1539,13 @@ static add_target_ip_wrapper add_target_ip(char *arg, struct sockaddr_storage *a
 
 /* wrapper for add_target_ip */
 static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode mode) {
-	struct sockaddr_storage address_storage;
-	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6;
+	if (debug > 0) {
+		printf("add_target called with argument %s\n", arg);
+	}
+
+	struct sockaddr_storage address_storage = {};
+	struct sockaddr_in *sin = NULL;
+	struct sockaddr_in6 *sin6 = NULL;
 	int error_code = -1;
 
 	switch (address_family) {
@@ -1598,7 +1585,7 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	/* don't resolve if we don't have to */
 	if (error_code == 1) {
 		/* don't add all ip's if we were given a specific one */
-		add_target_ip_wrapper targeted = add_target_ip(arg, &address_storage);
+		add_target_ip_wrapper targeted = add_target_ip(address_storage);
 
 		if (targeted.error_code != OK) {
 			result.error_code = ERROR;
@@ -1634,7 +1621,8 @@ static add_target_wrapper add_target(char *arg, const check_icmp_execution_mode 
 	for (struct addrinfo *address = res; address != NULL; address = address->ai_next) {
 		struct sockaddr_storage temporary_ip_address;
 		memcpy(&temporary_ip_address, address->ai_addr, address->ai_addrlen);
-		add_target_ip_wrapper tmp = add_target_ip(arg, &temporary_ip_address);
+
+		add_target_ip_wrapper tmp = add_target_ip(temporary_ip_address);
 
 		if (tmp.error_code != OK) {
 			// No proper error handling
@@ -2039,6 +2027,10 @@ void print_usage(void) {
 }
 
 static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode) {
+	if (debug) {
+		printf("add_host called with argument %s\n", arg);
+	}
+
 	add_host_wrapper result = {
 		.error_code = OK,
 		.host = check_icmp_target_container_init(),
@@ -2320,6 +2312,37 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		}
 
 		mp_add_subcheck_to_subcheck(&result, sc_order);
+	}
+
+	return result;
+}
+
+evaluate_host_wrapper evaluate_host(check_icmp_target_container host,
+									check_icmp_mode_switches modes, check_icmp_threshold warn,
+									check_icmp_threshold crit) {
+	evaluate_host_wrapper result = {
+		.targets_warn = 0,
+		.targets_ok = 0,
+		.sc_host = mp_subcheck_init(),
+	};
+	result.sc_host = mp_set_subcheck_default_state(result.sc_host, STATE_OK);
+
+	result.sc_host.output = strdup(host.name);
+
+	ping_target *target = host.target_list;
+	for (unsigned int i = 0; i < host.number_of_targets; i++) {
+		mp_subcheck sc_target = evaluate_target(*target, modes, warn, crit);
+
+		mp_state_enum target_state = mp_compute_subcheck_state(sc_target);
+
+		if (target_state == STATE_WARNING) {
+			result.targets_warn++;
+		} else if (target_state == STATE_OK) {
+			result.targets_ok++;
+		}
+		mp_add_subcheck_to_subcheck(&result.sc_host, sc_target);
+
+		target = target->next;
 	}
 
 	return result;
