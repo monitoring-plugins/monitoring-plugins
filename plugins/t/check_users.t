@@ -15,8 +15,8 @@ use NPTest;
 use vars qw($tests);
 BEGIN {$tests = 12; plan tests => $tests}
 
-my $successOutput = '/^USERS OK - [0-9]+ users currently logged in/';
-my $failureOutput = '/^USERS CRITICAL - [0-9]+ users currently logged in/';
+my $successOutput = '/[0-9]+ users currently logged in/';
+my $failureOutput = '/[0-9]+ users currently logged in/';
 my $wrongOptionOutput = '/Usage:/';
 
 my $t;

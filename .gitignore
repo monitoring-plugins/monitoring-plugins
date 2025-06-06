@@ -197,6 +197,8 @@ plugins/check_disk.d/.dirstamp
 /plugins/check_udp
 /plugins/check_ups
 /plugins/check_users
+/plugins/check_users.d/.deps
+/plugins/check_users.d/.dirstamp
 /plugins/check_vsz
 /plugins/config.h
 /plugins/config.h.in
