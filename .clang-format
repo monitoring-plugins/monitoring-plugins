@@ -4,7 +4,7 @@ TabWidth: 4
 AllowShortIfStatementsOnASingleLine: false
 BreakBeforeBraces: Attach
 AlignConsecutiveMacros: true
-ColumnLimit: 140
+ColumnLimit: 100
 IndentPPDirectives: AfterHash
 SortIncludes: Never
 AllowShortEnumsOnASingleLine: false

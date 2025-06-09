@@ -155,6 +155,8 @@ mp_perfdata mp_set_pd_value_u_long_long(mp_perfdata, unsigned long long);
 	_Generic((V),                                                                                                                          \
 		float: mp_create_pd_value_float,                                                                                                   \
 		double: mp_create_pd_value_double,                                                                                                 \
+		char: mp_create_pd_value_char,                                                                                                     \
+		unsigned char: mp_create_pd_value_u_char,                                                                                          \
 		int: mp_create_pd_value_int,                                                                                                       \
 		unsigned int: mp_create_pd_value_u_int,                                                                                            \
 		long: mp_create_pd_value_long,                                                                                                     \
@@ -164,6 +166,8 @@ mp_perfdata mp_set_pd_value_u_long_long(mp_perfdata, unsigned long long);
 
 mp_perfdata_value mp_create_pd_value_float(float);
 mp_perfdata_value mp_create_pd_value_double(double);
+mp_perfdata_value mp_create_pd_value_char(char);
+mp_perfdata_value mp_create_pd_value_u_char(unsigned char);
 mp_perfdata_value mp_create_pd_value_int(int);
 mp_perfdata_value mp_create_pd_value_u_int(unsigned int);
 mp_perfdata_value mp_create_pd_value_long(long);
