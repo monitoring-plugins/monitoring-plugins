@@ -1519,7 +1519,6 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
-AC_PATH_PROG(PATH_TO_FPING6,fping6)
 
 AC_ARG_WITH(fping_command,
             ACX_HELP_STRING([--with-fping-command=PATH],
