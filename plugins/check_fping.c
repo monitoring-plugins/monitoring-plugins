@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 	char *command_line = NULL;
 
 	if (config.icmp_timestamp) {
-		// no paket size settable for ICMP timestamp
+		// no packet size settable for ICMP timestamp
 		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count, server);
 	} else {
 		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
@@ -346,7 +346,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		argc--;
 	}
 
-	while (1) {
+	while (true) {
 		int option_index = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF || option_index == 1) {

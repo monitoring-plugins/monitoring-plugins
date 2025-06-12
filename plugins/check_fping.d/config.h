@@ -32,7 +32,7 @@ typedef struct {
 
 	// only available with fping version >= 5.2
 	// for a given uint _fwmark_ fping sets _fwmark_ as a firewall mark
-	// in the pakets
+	// in the packets
 	unsigned int fwmark;
 	bool fwmark_set;
 
