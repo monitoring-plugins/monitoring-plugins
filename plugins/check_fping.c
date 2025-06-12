@@ -320,7 +320,6 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 									   // only available with fping version >= 5.3
 									   {"icmp-timestamp", no_argument, NULL, ICMP_TIMESTAMP_OPT},
 									   {"check-source", no_argument, NULL, CHECK_SOURCE_OPT},
-
 									   {0, 0, 0, 0}};
 
 	char *rv[2];
