@@ -117,8 +117,26 @@ int main(int argc, char **argv) {
 		xasprintf(&option_string, "%s-R ", option_string);
 	}
 
+	if (config.fwmark_set) {
+		xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
+	}
+
+	if (config.icmp_timestamp) {
+		xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
+	}
+
+	if (config.check_source) {
+		xasprintf(&option_string, "%s--check-source ", option_string);
+	}
+
 	char *command_line = NULL;
-	xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
+
+	if (config.icmp_timestamp) {
+		// no packet size settable for ICMP timestamp
+		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count, server);
+	} else {
+		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
+	}
 
 	if (verbose) {
 		printf("%s\n", command_line);
@@ -275,13 +293,38 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 
 /* process command-line arguments */
 check_fping_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"sourceip", required_argument, 0, 'S'}, {"sourceif", required_argument, 0, 'I'},
-		{"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},  {"alive", no_argument, 0, 'a'},
-		{"bytes", required_argument, 0, 'b'},    {"number", required_argument, 0, 'n'},   {"target-timeout", required_argument, 0, 'T'},
-		{"interval", required_argument, 0, 'i'}, {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},           {"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},
-		{"dontfrag", no_argument, 0, 'M'},       {"random", no_argument, 0, 'R'},         {0, 0, 0, 0}};
+	enum {
+		FWMARK_OPT = CHAR_MAX + 1,
+		ICMP_TIMESTAMP_OPT,
+		CHECK_SOURCE_OPT,
+	};
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"sourceip", required_argument, 0, 'S'},
+									   {"sourceif", required_argument, 0, 'I'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"alive", no_argument, 0, 'a'},
+									   {"bytes", required_argument, 0, 'b'},
+									   {"number", required_argument, 0, 'n'},
+									   {"target-timeout", required_argument, 0, 'T'},
+									   {"interval", required_argument, 0, 'i'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"use-ipv4", no_argument, 0, '4'},
+									   {"use-ipv6", no_argument, 0, '6'},
+									   {"dontfrag", no_argument, 0, 'M'},
+									   {"random", no_argument, 0, 'R'},
+#ifdef FPING_VERSION_5_2_OR_HIGHER
+									   // only available with fping version >= 5.2
+									   {"fwmark", required_argument, NULL, FWMARK_OPT},
+#	ifdef FPING_VERSION_5_3_OR_HIGHER
+									   // only available with fping version >= 5.3
+									   {"icmp-timestamp", no_argument, NULL, ICMP_TIMESTAMP_OPT},
+									   {"check-source", no_argument, NULL, CHECK_SOURCE_OPT},
+#	endif
+#endif
+									   {0, 0, 0, 0}};
 
 	char *rv[2];
 	rv[PL] = NULL;
@@ -306,7 +349,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		argc--;
 	}
 
-	while (1) {
+	while (true) {
 		int option_index = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF || option_index == 1) {
@@ -409,6 +452,20 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		case 'M':
 			result.config.dontfrag = true;
 			break;
+		case FWMARK_OPT:
+			if (is_intpos(optarg)) {
+				result.config.fwmark = (unsigned int)atol(optarg);
+				result.config.fwmark_set = true;
+			} else {
+				usage(_("fwmark must be a positive integer"));
+			}
+			break;
+		case ICMP_TIMESTAMP_OPT:
+			result.config.icmp_timestamp = true;
+			break;
+		case CHECK_SOURCE_OPT:
+			result.config.check_source = true;
+			break;
 		}
 	}
 
@@ -496,6 +553,16 @@ void print_help(void) {
 	printf("    %s\n", _("set the Don't Fragment flag"));
 	printf(" %s\n", "-R, --random");
 	printf("    %s\n", _("random packet data (to foil link data compression)"));
+#ifdef FPING_VERSION_5_2_OR_HIGHER
+	printf(" %s\n", "--fwmark=INTEGER");
+	printf("    %s\n", _("set the routing mark to INTEGER (fping option)"));
+#	ifdef FPING_VERSION_5_3_OR_HIGHER
+	printf(" %s\n", "--icmp-timestamp");
+	printf("    %s\n", _("use ICMP Timestamp instead of ICMP Echo (fping option)"));
+	printf(" %s\n", "--check-source");
+	printf("    %s\n", _("discard replies not from target address (fping option)"));
+#	endif
+#endif
 	printf(UT_VERBOSE);
 	printf("\n");
 	printf(" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
