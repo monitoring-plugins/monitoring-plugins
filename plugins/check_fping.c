@@ -315,11 +315,15 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {"dontfrag", no_argument, 0, 'M'},
 									   {"random", no_argument, 0, 'R'},
-									   // only available with fping version >= 5.3
+#ifdef FPING_VERSION_5_2_OR_HIGHER
+									   // only available with fping version >= 5.2
 									   {"fwmark", required_argument, NULL, FWMARK_OPT},
+#	ifdef FPING_VERSION_5_3_OR_HIGHER
 									   // only available with fping version >= 5.3
 									   {"icmp-timestamp", no_argument, NULL, ICMP_TIMESTAMP_OPT},
 									   {"check-source", no_argument, NULL, CHECK_SOURCE_OPT},
+#	endif
+#endif
 									   {0, 0, 0, 0}};
 
 	char *rv[2];
