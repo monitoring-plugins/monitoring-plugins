@@ -16,7 +16,7 @@
 /* threshold structure. all values are maximum allowed, exclusive */
 typedef struct {
 	unsigned char pl; /* max allowed packet loss in percent */
-	unsigned int rta; /* roundtrip time average, microseconds */
+	time_t rta; /* roundtrip time average, microseconds */
 	double jitter;    /* jitter time average, microseconds */
 	double mos;       /* MOS */
 	double score;     /* Score */

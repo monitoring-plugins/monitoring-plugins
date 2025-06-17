@@ -138,7 +138,11 @@ void print_help();
 void print_usage(void);
 
 /* Time related */
-static unsigned int get_timevar(const char *str);
+typedef struct {
+	int error_code;
+	time_t time_range;
+} get_timevar_wrapper;
+static get_timevar_wrapper get_timevar(const char *str);
 static time_t get_timevaldiff(struct timeval earlier, struct timeval later);
 static time_t get_timevaldiff_to_now(struct timeval earlier);
 
@@ -196,8 +200,8 @@ static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_s
 /* main test function */
 static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_t *target_interval,
 					   uint16_t sender_id, check_icmp_execution_mode mode,
-					   unsigned int max_completion_time, struct timeval prog_start,
-					   ping_target **table, unsigned short packets, check_icmp_socket_set sockset,
+					   time_t max_completion_time, struct timeval prog_start, ping_target **table,
+					   unsigned short packets, check_icmp_socket_set sockset,
 					   unsigned short number_of_targets, check_icmp_state *program_state);
 mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 							check_icmp_threshold warn, check_icmp_threshold crit);
@@ -249,7 +253,7 @@ static void finish(int sign, check_icmp_mode_switches modes, int min_hosts_alive
 				   mp_check overall[static 1]);
 
 /* Error exit */
-static void crash(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+static void crash(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /** global variables **/
 static int debug = 0;
@@ -384,12 +388,24 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 							 MAX_PING_DATA - 1);
 				}
 			} break;
-			case 'i':
-				result.config.pkt_interval = get_timevar(optarg);
-				break;
-			case 'I':
-				result.config.target_interval = get_timevar(optarg);
-				break;
+			case 'i': {
+				get_timevar_wrapper parsed_time = get_timevar(optarg);
+
+				if (parsed_time.error_code == OK) {
+					result.config.pkt_interval = parsed_time.time_range;
+				} else {
+					crash("failed to parse packet interval");
+				}
+			} break;
+			case 'I': {
+				get_timevar_wrapper parsed_time = get_timevar(optarg);
+
+				if (parsed_time.error_code == OK) {
+					result.config.target_interval = parsed_time.time_range;
+				} else {
+					crash("failed to parse target interval");
+				}
+			} break;
 			case 'w': {
 				get_threshold_wrapper warn = get_threshold(optarg, result.config.warn);
 				if (warn.errorcode == OK) {
@@ -575,7 +591,7 @@ static void crash(const char *fmt, ...) {
 	puts("");
 
 	exit(3);
-} 
+}
 
 static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icmp_code) {
 	const char *msg = "unreachable";
@@ -743,8 +759,8 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	/* source quench means we're sending too fast, so increase the
 	 * interval and mark this packet lost */
 	if (icmp_packet.icmp_type == ICMP_SOURCEQUENCH) {
-		*pkt_interval = (unsigned int)(*pkt_interval * PACKET_BACKOFF_FACTOR);
-		*target_interval = (unsigned int)(*target_interval * TARGET_BACKOFF_FACTOR);
+		*pkt_interval = (unsigned int)((double)*pkt_interval * PACKET_BACKOFF_FACTOR);
+		*target_interval = (unsigned int)((double)*target_interval * TARGET_BACKOFF_FACTOR);
 	} else {
 		program_state->targets_down++;
 		host->flags |= FLAG_LOST_CAUSE;
@@ -899,7 +915,7 @@ int main(int argc, char **argv) {
 	gettimeofday(&prog_start, NULL);
 
 	time_t max_completion_time =
-		((config.pkt_interval *config.number_of_targets * config.number_of_packets) +
+		((config.pkt_interval * config.number_of_targets * config.number_of_packets) +
 		 (config.target_interval * config.number_of_targets)) +
 		(config.number_of_targets * config.number_of_packets * config.crit.rta) + config.crit.rta;
 
@@ -921,7 +937,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (debug) {
-		printf("crit = {%u, %u%%}, warn = {%u, %u%%}\n", config.crit.rta, config.crit.pl,
+		printf("crit = {%ld, %u%%}, warn = {%ld, %u%%}\n", config.crit.rta, config.crit.pl,
 			   config.warn.rta, config.warn.pl);
 		printf("pkt_interval: %ld  target_interval: %ld\n", config.pkt_interval,
 			   config.target_interval);
@@ -976,7 +992,7 @@ int main(int argc, char **argv) {
 
 static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_t *target_interval,
 					   const uint16_t sender_id, const check_icmp_execution_mode mode,
-					   const unsigned int max_completion_time, const struct timeval prog_start,
+					   const time_t max_completion_time, const struct timeval prog_start,
 					   ping_target **table, const unsigned short packets,
 					   const check_icmp_socket_set sockset, const unsigned short number_of_targets,
 					   check_icmp_state *program_state) {
@@ -1028,7 +1044,7 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_
 		time_t final_wait = max_completion_time - time_passed;
 
 		if (debug) {
-			printf("time_passed: %ld  final_wait: %ld  max_completion_time: %u\n", time_passed,
+			printf("time_passed: %ld  final_wait: %ld  max_completion_time: %ld\n", time_passed,
 				   final_wait, max_completion_time);
 		}
 		if (time_passed > max_completion_time) {
@@ -1138,7 +1154,6 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 			parse_address(&resp_addr, address, sizeof(address));
 			crash("received packet too short for ICMP (%ld bytes, expected %d) from %s\n",
 				  recv_foo.received, hlen + icmp_pkt_size, address);
-
 		}
 		/* check the response */
 		memcpy(packet.buf, buf + hlen, icmp_pkt_size);
@@ -1272,7 +1287,7 @@ static int send_icmp_ping(const check_icmp_socket_set sockset, ping_target *host
 	data.ping_id = 10; /* host->icmp.icmp_sent; */
 	memcpy(&data.stime, &current_time, sizeof(current_time));
 
-	socklen_t addrlen;
+	socklen_t addrlen = 0;
 
 	if (host->address.ss_family == AF_INET) {
 		struct icmp *icp = (struct icmp *)buf;
@@ -1789,14 +1804,21 @@ static in_addr_t get_ip_address(const char *ifname) {
  * s = seconds
  * return value is in microseconds
  */
-static unsigned int get_timevar(const char *str) {
+static get_timevar_wrapper get_timevar(const char *str) {
+	get_timevar_wrapper result = {
+		.error_code = OK,
+		.time_range = 0,
+	};
+
 	if (!str) {
-		return 0;
+		result.error_code = ERROR;
+		return result;
 	}
 
 	size_t len = strlen(str);
 	if (!len) {
-		return 0;
+		result.error_code = ERROR;
+		return result;
 	}
 
 	/* unit might be given as ms|m (millisec),
@@ -1834,12 +1856,14 @@ static unsigned int get_timevar(const char *str) {
 	unsigned long pre_radix;
 	pre_radix = strtoul(str, &ptr, 0);
 	if (!ptr || *ptr != '.' || strlen(ptr) < 2 || factor == 1) {
-		return (unsigned int)(pre_radix * factor);
+		result.time_range = (unsigned int)(pre_radix * factor);
+		return result;
 	}
 
 	/* time specified in usecs can't have decimal points, so ignore them */
 	if (factor == 1) {
-		return (unsigned int)pre_radix;
+		result.time_range = (unsigned int)pre_radix;
+		return result;
 	}
 
 	/* integer and decimal, respectively */
@@ -1851,10 +1875,10 @@ static unsigned int get_timevar(const char *str) {
 	}
 
 	/* the last parenthesis avoids floating point exceptions. */
-	return (unsigned int)((pre_radix * factor) + (post_radix * (factor / 10)));
+	result.time_range = (unsigned int)((pre_radix * factor) + (post_radix * (factor / 10)));
+	return result;
 }
 
-/* not too good at checking errors, but it'll do (main() should barfe on -1) */
 static get_threshold_wrapper get_threshold(char *str, check_icmp_threshold threshold) {
 	get_threshold_wrapper result = {
 		.errorcode = OK,
@@ -1880,9 +1904,15 @@ static get_threshold_wrapper get_threshold(char *str, check_icmp_threshold thres
 		is_at_last_char = true;
 		tmp--;
 	}
-	result.threshold.rta = get_timevar(str);
 
-	if (!result.threshold.rta) {
+	get_timevar_wrapper parsed_time = get_timevar(str);
+
+	if (parsed_time.error_code == OK) {
+		result.threshold.rta = parsed_time.time_range;
+	} else {
+		if (debug > 1) {
+			printf("%s: failed to parse rta threshold\n", __FUNCTION__);
+		}
 		result.errorcode = ERROR;
 		return result;
 	}
@@ -2170,7 +2200,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	xasprintf(&result.output, "%s", address);
 
 	double packet_loss;
-	double rta;
+	time_t rta;
 	if (!target.icmp_recv) {
 		/* rta 0 is of course not entirely correct, but will still show up
 		 * conspicuously as missing entries in perfparse and cacti */
@@ -2188,7 +2218,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	} else {
 		packet_loss =
 			(unsigned char)((target.icmp_sent - target.icmp_recv) * 100) / target.icmp_sent;
-		rta = (double)target.time_waited / target.icmp_recv;
+		rta = target.time_waited / target.icmp_recv;
 	}
 
 	double EffectiveLatency;
@@ -2219,7 +2249,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		 * round trip jitter, but double the impact to latency
 		 * then add 10 for protocol latencies (in milliseconds).
 		 */
-		EffectiveLatency = (rta / 1000) + target.jitter * 2 + 10;
+		EffectiveLatency = ((double)rta / 1000) + target.jitter * 2 + 10;
 
 		double R;
 		if (EffectiveLatency < 160) {
@@ -2249,14 +2279,14 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.rta_mode) {
 		mp_subcheck sc_rta = mp_subcheck_init();
 		sc_rta = mp_set_subcheck_default_state(sc_rta, STATE_OK);
-		xasprintf(&sc_rta.output, "rta %0.3fms", rta / 1000);
+		xasprintf(&sc_rta.output, "rta %0.3fms", (double)rta / 1000);
 
 		if (rta >= crit.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double) crit.rta / 1000);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double)crit.rta / 1000);
 		} else if (rta >= warn.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double) warn.rta / 1000);
+			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double)warn.rta / 1000);
 		}
 
 		if (packet_loss < 100) {
