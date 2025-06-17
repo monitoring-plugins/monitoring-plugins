@@ -917,7 +917,7 @@ int main(int argc, char **argv) {
 	time_t max_completion_time =
 		((config.pkt_interval * config.number_of_targets * config.number_of_packets) +
 		 (config.target_interval * config.number_of_targets)) +
-		(config.number_of_targets * config.number_of_packets * config.crit.rta) + config.crit.rta;
+		(config.crit.rta * config.number_of_targets * config.number_of_packets) + config.crit.rta;
 
 	if (debug) {
 		printf("packets: %u, targets: %u\n"
