@@ -1515,6 +1515,9 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 			   targets_alive(number_of_targets, program_state->targets_down));
 	}
 
+	mp_subcheck sc_single_targets = mp_subcheck_init();
+	xasprintf(&sc_single_targets.output, "Individual Hosts");
+
 	// loop over targets to evaluate each one
 	int targets_ok = 0;
 	int targets_warn = 0;
@@ -1524,7 +1527,15 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		targets_ok += host_check.targets_ok;
 		targets_warn += host_check.targets_warn;
 
-		mp_add_subcheck_to_check(overall, host_check.sc_host);
+		if (min_hosts_alive > -1) {
+			mp_add_subcheck_to_subcheck(&sc_single_targets, host_check.sc_host);
+		} else {
+			mp_add_subcheck_to_check(overall, host_check.sc_host);
+		}
+	}
+
+	if (min_hosts_alive > -1) {
+		mp_add_subcheck_to_check(overall, sc_single_targets);
 	}
 
 	if (number_of_hosts == 1) {
@@ -1545,11 +1556,20 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		sc_min_targets_alive = mp_set_subcheck_default_state(sc_min_targets_alive, STATE_OK);
 
 		if (targets_ok >= min_hosts_alive) {
-			// TODO this should overwrite the main state
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
+			xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u",
+					  targets_ok, min_hosts_alive);
 		} else if ((targets_ok + targets_warn) >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
+			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
+					  targets_ok + targets_warn, min_hosts_alive);
+		} else {
+			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_CRITICAL);
+			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
+					  targets_ok + targets_warn, min_hosts_alive);
 		}
+
+		mp_add_subcheck_to_check(overall, sc_min_targets_alive);
 	}
 
 	/* finish with an empty line */
