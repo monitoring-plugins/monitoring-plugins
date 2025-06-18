@@ -1515,9 +1515,6 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 			   targets_alive(number_of_targets, program_state->targets_down));
 	}
 
-	mp_subcheck sc_single_targets = mp_subcheck_init();
-	xasprintf(&sc_single_targets.output, "Individual Hosts");
-
 	// loop over targets to evaluate each one
 	int targets_ok = 0;
 	int targets_warn = 0;
@@ -1527,29 +1524,16 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 		targets_ok += host_check.targets_ok;
 		targets_warn += host_check.targets_warn;
 
-		if (min_hosts_alive > -1) {
-			mp_add_subcheck_to_subcheck(&sc_single_targets, host_check.sc_host);
-		} else {
-			mp_add_subcheck_to_check(overall, host_check.sc_host);
-		}
-	}
-
-	if (min_hosts_alive > -1) {
-		mp_add_subcheck_to_check(overall, sc_single_targets);
-	}
-
-	if (number_of_hosts == 1) {
-		// Exit early here, since the other checks only make sense for multiple hosts
-		return;
+		mp_add_subcheck_to_check(overall, host_check.sc_host);
 	}
 
 	/* this is inevitable */
-	if (targets_alive(number_of_targets, program_state->targets_down) == 0) {
-		mp_subcheck sc_no_target_alive = mp_subcheck_init();
-		sc_no_target_alive = mp_set_subcheck_state(sc_no_target_alive, STATE_CRITICAL);
-		sc_no_target_alive.output = strdup("No target is alive!");
-		mp_add_subcheck_to_check(overall, sc_no_target_alive);
-	}
+	// if (targets_alive(number_of_targets, program_state->targets_down) == 0) {
+	// 	mp_subcheck sc_no_target_alive = mp_subcheck_init();
+	// 	sc_no_target_alive = mp_set_subcheck_state(sc_no_target_alive, STATE_CRITICAL);
+	// 	sc_no_target_alive.output = strdup("No target is alive!");
+	// 	mp_add_subcheck_to_check(overall, sc_no_target_alive);
+	// }
 
 	if (min_hosts_alive > -1) {
 		mp_subcheck sc_min_targets_alive = mp_subcheck_init();
@@ -1557,16 +1541,21 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 
 		if (targets_ok >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
-			xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u",
-					  targets_ok, min_hosts_alive);
+			xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u", targets_ok,
+					  min_hosts_alive);
+
+			// Overwrite main state here
+			overall->evaluation_function = &mp_eval_ok;
 		} else if ((targets_ok + targets_warn) >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
 			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
 					  targets_ok + targets_warn, min_hosts_alive);
+			overall->evaluation_function = &mp_eval_warning;
 		} else {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_CRITICAL);
 			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
 					  targets_ok + targets_warn, min_hosts_alive);
+			overall->evaluation_function = &mp_eval_critical;
 		}
 
 		mp_add_subcheck_to_check(overall, sc_min_targets_alive);
