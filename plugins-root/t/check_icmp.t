@@ -33,12 +33,12 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
 my $res;
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -w 10000ms,100% -c 10000ms,100%"
+	"$sudo ./check_icmp -H $host_responsive -w 100ms,100% -c 100ms,100%"
 	);
 is( $res->return_code, 0, "Syntax ok" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -w 0ms,0% -c 10000ms,100%"
+	"$sudo ./check_icmp -H $host_responsive -w 0ms,0% -c 100ms,100%"
 	);
 is( $res->return_code, 1, "Syntax ok, with forced warning" );
 
@@ -48,32 +48,32 @@ $res = NPTest->testCmd(
 is( $res->return_code, 2, "Syntax ok, with forced critical" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -t 2"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 100ms,100% -c 100ms,100%"
 	);
 is( $res->return_code, 2, "Timeout - host nonresponsive" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -w 10000ms,100% -c 10000ms,100%"
+	"$sudo ./check_icmp -w 100ms,100% -c 100ms,100%"
 	);
 is( $res->return_code, 3, "No hostname" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 0 -t 2"
+	"$sudo ./check_icmp -H $host_nonresponsive -w 100ms,100% -c 100ms,100% -n 1 -m 0"
 	);
 is( $res->return_code, 0, "One host nonresponsive - zero required" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 1 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 100ms,100% -c 100ms,100% -n 1 -m 1"
 	);
 is( $res->return_code, 0, "One of two host nonresponsive - one required" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 10000ms,100% -c 10000ms,100% -n 1 -m 2"
+	"$sudo ./check_icmp -H $host_responsive -H $host_nonresponsive -w 100ms,100% -c 100ms,100% -n 1 -m 2"
 	);
 is( $res->return_code, 2, "One of two host nonresponsive - two required" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -s 127.0.15.15 -w 10000ms,100% -c 10000ms,100% -n 1 -m 2"
+	"$sudo ./check_icmp -H $host_responsive -s 127.0.15.15 -w 100ms,100% -c 100ms,100% -n 1 -m 2"
 	);
 is( $res->return_code, 0, "IPv4 source_ip accepted" );
 
@@ -83,35 +83,35 @@ $res = NPTest->testCmd(
 is( $res->return_code, 0, "Try max packet size" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -R 100,100 -n 1 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -R 100,100 -n 1"
 	);
 is( $res->return_code, 0, "rta works" );
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -P 80,90 -n 1 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -P 80,90 -n 1"
 	);
 is( $res->return_code, 0, "pl works" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -J 80,90 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -J 80,90"
 	);
 is( $res->return_code, 0, "jitter works" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -M 4,3 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -M 4,3"
 	);
 is( $res->return_code, 0, "mos works" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -S 80,70 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -S 80,70"
 	);
 is( $res->return_code, 0, "score works" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -O -t 2"
+	"$sudo ./check_icmp -H $host_responsive -O"
 	);
 is( $res->return_code, 0, "order works" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -O -S 80,70 -M 4,3 -J 80,90 -P 80,90 -R 100,100 -t 2"
+	"$sudo ./check_icmp -H $host_responsive -O -S 80,70 -M 4,3 -J 80,90 -P 80,90 -R 100,100"
 	);
 is( $res->return_code, 0, "order works" );

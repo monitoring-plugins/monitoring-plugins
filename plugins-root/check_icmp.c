@@ -431,8 +431,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				}
 				break;
 			case 't':
-				timeout = (unsigned int)strtoul(optarg, NULL, 0);
-				// TODO die here and complain about wrong input
+				// WARNING Deprecated since execution time is determined by the other factors
 				break;
 			case 'H': {
 				add_host_wrapper host_add_result =
@@ -894,21 +893,6 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
-
-	struct sigaction sig_action;
-	sig_action.sa_handler = NULL;
-	sig_action.sa_sigaction = check_icmp_timeout_handler;
-	sigfillset(&sig_action.sa_mask);
-	sig_action.sa_flags = SA_NODEFER | SA_RESTART | SA_SIGINFO;
-
-	sigaction(SIGINT, &sig_action, NULL);
-	sigaction(SIGHUP, &sig_action, NULL);
-	sigaction(SIGTERM, &sig_action, NULL);
-	sigaction(SIGALRM, &sig_action, NULL);
-	if (debug) {
-		printf("Setting alarm timeout to %u seconds\n", timeout);
-	}
-	alarm(timeout);
 
 	/* make sure we don't wait any longer than necessary */
 	struct timeval prog_start;

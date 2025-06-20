@@ -66,5 +66,3 @@ typedef struct {
 
 ping_target_create_wrapper ping_target_create(struct sockaddr_storage address);
 unsigned int ping_target_list_append(ping_target *list, ping_target *elem);
-
-void check_icmp_timeout_handler(int, siginfo_t *, void *);

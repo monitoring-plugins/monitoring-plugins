@@ -132,22 +132,3 @@ unsigned int ping_target_list_append(ping_target *list, ping_target *elem) {
 
 	return result;
 }
-
-void check_icmp_timeout_handler(int signal, siginfo_t *info, void *ucontext) {
-	// Ignore unused arguments
-	(void)info;
-	(void)ucontext;
-	mp_subcheck timeout_sc = mp_subcheck_init();
-	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
-
-	if (signal == SIGALRM) {
-		xasprintf(&timeout_sc.output, _("timeout after %d seconds\n"), timeout);
-	} else {
-		xasprintf(&timeout_sc.output, _("timeout after %d seconds\n"), timeout);
-	}
-
-	mp_check overall = mp_check_init();
-	mp_add_subcheck_to_check(&overall, timeout_sc);
-
-	mp_exit(overall);
-}
