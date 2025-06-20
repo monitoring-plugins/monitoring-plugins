@@ -16,7 +16,8 @@ static mp_output_format output_format = MP_FORMAT_DEFAULT;
 static mp_output_detail_level level_of_detail = MP_DETAIL_ALL;
 
 // == Prototypes ==
-static char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation);
+static char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check,
+								 unsigned int indentation);
 static inline cJSON *json_serialize_subcheck(mp_subcheck subcheck);
 
 // == Implementation ==
@@ -58,7 +59,9 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
  * It sets useful defaults
  */
 mp_check mp_check_init(void) {
-	mp_check check = {0};
+	mp_check check = {
+		.evaluation_function = &mp_eval_check_default,
+	};
 	return check;
 }
 
@@ -121,7 +124,8 @@ void mp_add_perfdata_to_subcheck(mp_subcheck check[static 1], const mp_perfdata 
  */
 int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck subcheck) {
 	if (subcheck.output == NULL) {
-		die(STATE_UNKNOWN, "%s - %s #%d: %s", __FILE__, __func__, __LINE__, "Sub check output is NULL");
+		die(STATE_UNKNOWN, "%s - %s #%d: %s", __FILE__, __func__, __LINE__,
+			"Sub check output is NULL");
 	}
 
 	mp_subcheck_list *tmp = NULL;
@@ -194,18 +198,30 @@ char *get_subcheck_summary(mp_check check) {
 	return result;
 }
 
+mp_state_enum mp_compute_subcheck_state(const mp_subcheck subcheck) {
+	if (subcheck.evaluation_function == NULL) {
+		return mp_eval_subcheck_default(subcheck);
+	}
+	return subcheck.evaluation_function(subcheck);
+}
+
 /*
- * Generate the result state of a mp_subcheck object based on it's own state and it's subchecks states
+ * Generate the result state of a mp_subcheck object based on its own state and its subchecks
+ * states
  */
-mp_state_enum mp_compute_subcheck_state(const mp_subcheck check) {
-	if (check.state_set_explicitly) {
-		return check.state;
+mp_state_enum mp_eval_subcheck_default(mp_subcheck subcheck) {
+	if (subcheck.evaluation_function != NULL) {
+		return subcheck.evaluation_function(subcheck);
 	}
 
-	mp_subcheck_list *scl = check.subchecks;
+	if (subcheck.state_set_explicitly) {
+		return subcheck.state;
+	}
+
+	mp_subcheck_list *scl = subcheck.subchecks;
 
 	if (scl == NULL) {
-		return check.default_state;
+		return subcheck.default_state;
 	}
 
 	mp_state_enum result = STATE_OK;
@@ -218,10 +234,18 @@ mp_state_enum mp_compute_subcheck_state(const mp_subcheck check) {
 	return result;
 }
 
+mp_state_enum mp_compute_check_state(const mp_check check) {
+	// just a safety check
+	if (check.evaluation_function == NULL) {
+		return mp_eval_check_default(check);
+	}
+	return check.evaluation_function(check);
+}
+
 /*
  * Generate the result state of a mp_check object based on it's own state and it's subchecks states
  */
-mp_state_enum mp_compute_check_state(const mp_check check) {
+mp_state_enum mp_eval_check_default(const mp_check check) {
 	assert(check.subchecks != NULL); // a mp_check without subchecks is invalid, die here
 
 	mp_subcheck_list *scl = check.subchecks;
@@ -253,8 +277,10 @@ char *mp_fmt_output(mp_check check) {
 		mp_subcheck_list *subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			if (level_of_detail == MP_DETAIL_ALL || mp_compute_subcheck_state(subchecks->subcheck) != STATE_OK) {
-				asprintf(&result, "%s\n%s", result, fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
+			if (level_of_detail == MP_DETAIL_ALL ||
+				mp_compute_subcheck_state(subchecks->subcheck) != STATE_OK) {
+				asprintf(&result, "%s\n%s", result,
+						 fmt_subcheck_output(MP_FORMAT_MULTI_LINE, subchecks->subcheck, 1));
 			}
 			subchecks = subchecks->next;
 		}
@@ -266,7 +292,8 @@ char *mp_fmt_output(mp_check check) {
 			if (pd_string == NULL) {
 				asprintf(&pd_string, "%s", fmt_subcheck_perfdata(subchecks->subcheck));
 			} else {
-				asprintf(&pd_string, "%s %s", pd_string, fmt_subcheck_perfdata(subchecks->subcheck));
+				asprintf(&pd_string, "%s %s", pd_string,
+						 fmt_subcheck_perfdata(subchecks->subcheck));
 			}
 
 			subchecks = subchecks->next;
@@ -335,19 +362,21 @@ static char *generate_indentation_string(unsigned int indentation) {
 /*
  * Helper function to generate the output string of mp_subcheck
  */
-static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check, unsigned int indentation) {
+static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subcheck check,
+										unsigned int indentation) {
 	char *result = NULL;
 	mp_subcheck_list *subchecks = NULL;
 
 	switch (output_format) {
 	case MP_FORMAT_MULTI_LINE:
-		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
-				 check.output);
+		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation),
+				 state_text(mp_compute_subcheck_state(check)), check.output);
 
 		subchecks = check.subchecks;
 
 		while (subchecks != NULL) {
-			asprintf(&result, "%s\n%s", result, fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
+			asprintf(&result, "%s\n%s", result,
+					 fmt_subcheck_output(output_format, subchecks->subcheck, indentation + 1));
 			subchecks = subchecks->next;
 		}
 		return result;
@@ -551,3 +580,23 @@ mp_output_format mp_get_format(void) { return output_format; }
 void mp_set_level_of_detail(mp_output_detail_level level) { level_of_detail = level; }
 
 mp_output_detail_level mp_get_level_of_detail(void) { return level_of_detail; }
+
+mp_state_enum mp_eval_ok(mp_check overall) {
+	(void)overall;
+	return STATE_OK;
+}
+
+mp_state_enum mp_eval_warning(mp_check overall) {
+	(void)overall;
+	return STATE_WARNING;
+}
+
+mp_state_enum mp_eval_critical(mp_check overall) {
+	(void)overall;
+	return STATE_CRITICAL;
+}
+
+mp_state_enum mp_eval_unknown(mp_check overall) {
+	(void)overall;
+	return STATE_UNKNOWN;
+}
