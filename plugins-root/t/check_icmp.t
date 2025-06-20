@@ -73,7 +73,7 @@ $res = NPTest->testCmd(
 is( $res->return_code, 2, "One of two host nonresponsive - two required" );
 
 $res = NPTest->testCmd(
-	"$sudo ./check_icmp -H $host_responsive -s 127.0.15.15 -w 100ms,100% -c 100ms,100% -n 1 -m 2"
+	"$sudo ./check_icmp -H $host_responsive -s 127.0.15.15 -w 100ms,100% -c 100ms,100% -n 1"
 	);
 is( $res->return_code, 0, "IPv4 source_ip accepted" );
 
