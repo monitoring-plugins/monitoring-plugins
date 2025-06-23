@@ -2114,7 +2114,7 @@ void print_help(void) {
 	printf("    %s", _("max packet interval (default "));
 	printf("%0.3fms)\n", (float)DEFAULT_PKT_INTERVAL / 1000);
 	printf(" %s\n", "-I");
-	printf("    %s%0.3fms)\n    The time intervall to wait in between one target and the next",
+	printf("    %s%0.3fms)\n    The time interval to wait in between one target and the next",
 		   _("max target interval (default "), (float)DEFAULT_TARGET_INTERVAL / 1000);
 	printf(" %s\n", "-m");
 	printf("    %s", _("number of alive hosts required for success"));
