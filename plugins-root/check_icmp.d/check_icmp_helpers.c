@@ -52,6 +52,8 @@ check_icmp_config check_icmp_config_init() {
 
 		.number_of_hosts = 0,
 		.hosts = NULL,
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

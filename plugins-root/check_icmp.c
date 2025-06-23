@@ -319,12 +319,41 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	sa_family_t enforced_ai_family = AF_UNSPEC;
 
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	struct option longopts[] = {
+		{"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},
+		{"Host", required_argument, 0, 'H'},
+		{"ipv4-only", no_argument, 0, '4'},
+		{"ipv6-only", no_argument, 0, '6'},
+		{"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'},
+		{"rta-mode-thresholds", required_argument, 0, 'R'},
+		{"packet-loss-mode-thresholds", required_argument, 0, 'P'},
+		{"jitter-mode-thresholds", required_argument, 0, 'J'},
+		{"mos-mode-thresholds", required_argument, 0, 'M'},
+		{"score-mode-thresholds", required_argument, 0, 'S'},
+		{"out-of-order-packets", no_argument, 0, 'O'},
+		{"number-of-packets", required_argument, 0, 'n'},
+		{"number-of-packets", required_argument, 0, 'p'},
+		{"packet-interval", required_argument, 0, 'i'},
+		{"target-interval", required_argument, 0, 'I'},
+		{"outgoing-ttl", required_argument, 0, 'l'},
+		{"packet_payload_size", required_argument, 0, 'b'},
+		{"output-format", required_argument, 0, output_format_index},
+		{},
+	};
+
 	// Parse protocol arguments first
 	// and count hosts here
 	char *opts_str = "vhVw:c:n:p:t:H:s:i:b:I:l:m:P:R:J:S:M:O64";
 	for (int i = 1; i < argc; i++) {
 		long int arg;
-		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
+		while ((arg = getopt_long(argc, argv, opts_str, longopts, NULL)) != EOF) {
 			switch (arg) {
 			case '4':
 				if (enforced_ai_family != AF_UNSPEC) {
@@ -374,7 +403,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 	/* parse the arguments */
 	for (int i = 1; i < argc; i++) {
 		long int arg;
-		while ((arg = getopt(argc, argv, opts_str)) != EOF) {
+		while ((arg = getopt_long(argc, argv, opts_str, longopts, NULL)) != EOF) {
 			switch (arg) {
 			case 'b': {
 				long size = strtol(optarg, NULL, 0);
@@ -536,6 +565,18 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 			case 'O': /* out of order mode */
 				result.config.modes.order_mode = true;
 				break;
+			case output_format_index: {
+				parsed_output_format parser = mp_parse_output_format(optarg);
+				if (!parser.parsing_success) {
+					// TODO List all available formats here, maybe add anothoer usage function
+					printf("Invalid output format: %s\n", optarg);
+					exit(STATE_UNKNOWN);
+				}
+
+				result.config.output_format_is_set = true;
+				result.config.output_format = parser.output_format;
+				break;
+			}
 			}
 		}
 	}
@@ -802,6 +843,10 @@ int main(int argc, char **argv) {
 	}
 
 	const check_icmp_config config = tmp_config.config;
+
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
 
 	// int icmp_proto = IPPROTO_ICMP;
 	// add_target might change address_family
@@ -2104,6 +2149,9 @@ void print_help(void) {
 		   DEFAULT_PING_DATA_SIZE, ICMP_MINLEN);
 	printf(" %s\n", "-v");
 	printf("    %s\n", _("Verbosity, can be given multiple times (for debugging)"));
+
+	printf(UT_OUTPUT_FORMAT);
+
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
