@@ -2104,7 +2104,7 @@ void print_help(void) {
 					   "historical purposes\n"));
 
 	printf(" %s\n", "-I, --target-interval=TARGET_INTERVAL");
-	printf("    %s%0.3fms)\n    The time interval to wait in between one target and the next",
+	printf("    %s%0.3fms)\n    The time interval to wait in between one target and the next\n",
 		   _("max target interval (default "), (float)DEFAULT_TARGET_INTERVAL / 1000);
 	printf(" %s\n", "-m, --minimal-host-alive=MIN_ALIVE");
 	printf("    %s", _("number of alive hosts required for success. If less than MIN_ALIVE hosts "
