@@ -484,7 +484,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 						result.config.need_v6 = true;
 					}
 				} else {
-					// TODO adding host failed, crash here
+					crash("Failed to add host, unable to parse it correctly");
 				}
 			} break;
 			case 'l':
@@ -847,19 +847,6 @@ int main(int argc, char **argv) {
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
 	}
-
-	// int icmp_proto = IPPROTO_ICMP;
-	// add_target might change address_family
-	// switch (address_family) {
-	// case AF_INET:
-	// 	icmp_proto = IPPROTO_ICMP;
-	// 	break;
-	// case AF_INET6:
-	// 	icmp_proto = IPPROTO_ICMPV6;
-	// 	break;
-	// default:
-	// 	crash("Address family not supported");
-	// }
 
 	check_icmp_socket_set sockset = {
 		.socket4 = -1,
@@ -1555,14 +1542,6 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 
 		mp_add_subcheck_to_check(overall, host_check.sc_host);
 	}
-
-	/* this is inevitable */
-	// if (targets_alive(number_of_targets, program_state->targets_down) == 0) {
-	// 	mp_subcheck sc_no_target_alive = mp_subcheck_init();
-	// 	sc_no_target_alive = mp_set_subcheck_state(sc_no_target_alive, STATE_CRITICAL);
-	// 	sc_no_target_alive.output = strdup("No target is alive!");
-	// 	mp_add_subcheck_to_check(overall, sc_no_target_alive);
-	// }
 
 	if (min_hosts_alive > -1) {
 		mp_subcheck sc_min_targets_alive = mp_subcheck_init();
