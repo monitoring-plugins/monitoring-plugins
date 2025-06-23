@@ -339,8 +339,9 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		{"number-of-packets", required_argument, 0, 'p'},
 		{"packet-interval", required_argument, 0, 'i'},
 		{"target-interval", required_argument, 0, 'I'},
+		{"minimal-host-alive", required_argument, 0, 'm'},
 		{"outgoing-ttl", required_argument, 0, 'l'},
-		{"packet_payload_size", required_argument, 0, 'b'},
+		{"size", required_argument, 0, 'b'},
 		{"output-format", required_argument, 0, output_format_index},
 		{},
 	};
@@ -2062,56 +2063,59 @@ void print_help(void) {
 	printf(UT_HELP_VRSN);
 	printf(UT_EXTRA_OPTS);
 
-	printf(" %s\n", "-H");
+	printf(" -H, --Host=HOST\n");
 	printf("    %s\n",
-		   _("specify a target, might be one of: resolveable name, IPv6 address, IPv4 address "
-			 "(necessary, can be given multiple times)"));
-	printf(" %s\n", "[-4|-6]");
+		   _("specify a target, might be one of: resolveable name | IPv6 address | IPv4 address\n"
+			 "    (required, can be given multiple times)"));
+	printf(" %s\n", "[-4|-6], [--ipv4-only|--ipv6-only]");
 	printf("    %s\n", _("Use IPv4 or IPv6 only to communicate with the targets"));
-	printf(" %s\n", "-w");
+	printf(" %s\n", "-w, --warning=WARN_VALUE");
 	printf("    %s", _("warning threshold (default "));
 	printf("%0.3fms,%u%%)\n", (float)DEFAULT_WARN_RTA / 1000, DEFAULT_WARN_PL);
-	printf(" %s\n", "-c");
+	printf(" %s\n", "-c, --critical=CRIT_VALUE");
 	printf("    %s", _("critical threshold (default "));
 	printf("%0.3fms,%u%%)\n", (float)DEFAULT_CRIT_RTA / 1000, DEFAULT_CRIT_PL);
 
-	printf(" %s\n", "-R");
+	printf(" %s\n", "-R, --rta-mode-thresholds=RTA_THRESHOLDS");
 	printf("    %s\n",
-		   _("RTA (round trip average)  mode  warning,critical, ex. 100ms,200ms unit in ms"));
-	printf(" %s\n", "-P");
+		   _("RTA (round trip average) mode  warning,critical, ex. 100ms,200ms unit in ms"));
+	printf(" %s\n", "-P, --packet-loss-mode-thresholds=PACKET_LOSS_THRESHOLD");
 	printf("    %s\n", _("packet loss mode, ex. 40%,50% , unit in %"));
-	printf(" %s\n", "-J");
+	printf(" %s\n", "-J, --jitter-mode-thresholds=JITTER_MODE_THRESHOLD");
 	printf("    %s\n", _("jitter mode  warning,critical, ex. 40.000ms,50.000ms , unit in ms "));
-	printf(" %s\n", "-M");
+	printf(" %s\n", "-M, --mos-mode-thresholds=MOS_MODE_THRESHOLD");
 	printf("    %s\n", _("MOS mode, between 0 and 4.4  warning,critical, ex. 3.5,3.0"));
-	printf(" %s\n", "-S");
+	printf(" %s\n", "-S, --score-mode-thresholds=SCORE_MODE_THRESHOLD");
 	printf("    %s\n", _("score  mode, max value 100  warning,critical, ex. 80,70 "));
-	printf(" %s\n", "-O");
-	printf("    %s\n",
-		   _("detect out of order ICMP packts, if such packets are found, the result is CRITICAL"));
-	printf(" %s\n", "-n");
-	printf(" %s\n", "-p");
+	printf(" %s\n", "-O, --out-of-order-packets");
+	printf(
+		"    %s\n",
+		_("detect out of order ICMP packets, if such packets are found, the result is CRITICAL"));
+	printf(" %s\n", "[-n|-p], --number-of-packets=NUMBER_OF_PACKETS");
 	printf("    %s", _("number of packets to send (default "));
 	printf("%u)\n", DEFAULT_NUMBER_OF_PACKETS);
+
 	printf(" %s\n", "-i");
 	printf("    %s", _("[DEPRECATED] packet interval (default "));
 	printf("%0.3fms)\n", (float)DEFAULT_PKT_INTERVAL / 1000);
 	printf("    %s", _("This option was never actually used and is just mentioned here for "
-					   "historical purposes"));
-	printf(" %s\n", "-I");
+					   "historical purposes\n"));
+
+	printf(" %s\n", "-I, --target-interval=TARGET_INTERVAL");
 	printf("    %s%0.3fms)\n    The time interval to wait in between one target and the next",
 		   _("max target interval (default "), (float)DEFAULT_TARGET_INTERVAL / 1000);
-	printf(" %s\n", "-m");
-	printf("    %s", _("number of alive hosts required for success"));
+	printf(" %s\n", "-m, --minimal-host-alive=MIN_ALIVE");
+	printf("    %s", _("number of alive hosts required for success. If less than MIN_ALIVE hosts "
+					   "are OK, but MIN_ALIVE hosts are WARNING or OK, WARNING, else CRITICAL"));
 	printf("\n");
-	printf(" %s\n", "-l");
+	printf(" %s\n", "-l, --outgoing-ttl=OUTGOING_TTL");
 	printf("    %s", _("TTL on outgoing packets (default "));
 	printf("%u)\n", DEFAULT_TTL);
-	printf(" %s\n", "-b");
-	printf("    %s\n", _("Number of icmp data bytes to send"));
-	printf("    %s %lu + %d)\n", _("Packet size will be data bytes + icmp header (default"),
+	printf(" %s\n", "-b, --size=SIZE");
+	printf("    %s\n", _("Number of icmp ping data bytes to send"));
+	printf("    %s %lu + %d)\n", _("Packet size will be SIZE + icmp header (default"),
 		   DEFAULT_PING_DATA_SIZE, ICMP_MINLEN);
-	printf(" %s\n", "-v");
+	printf(" %s\n", "-v, --verbose");
 	printf("    %s\n", _("Verbosity, can be given multiple times (for debugging)"));
 
 	printf(UT_OUTPUT_FORMAT);
