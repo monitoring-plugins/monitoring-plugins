@@ -2279,10 +2279,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (rta >= crit.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double)crit.rta / 1000);
+			xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)crit.rta / 1000);
 		} else if (rta >= warn.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
-			xasprintf(&sc_rta.output, "%s > %0.3fms", sc_rta.output, (double)warn.rta / 1000);
+			xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)warn.rta / 1000);
 		}
 
 		if (packet_loss < 100) {
@@ -2319,10 +2319,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (packet_loss >= crit.pl) {
 			sc_pl = mp_set_subcheck_state(sc_pl, STATE_CRITICAL);
-			xasprintf(&sc_pl.output, "%s > %u%%", sc_pl.output, crit.pl);
+			xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, crit.pl);
 		} else if (packet_loss >= warn.pl) {
 			sc_pl = mp_set_subcheck_state(sc_pl, STATE_WARNING);
-			xasprintf(&sc_pl.output, "%s > %u%%", sc_pl.output, crit.pl);
+			xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, warn.pl);
 		}
 
 		mp_perfdata pd_pl = perfdata_init();
@@ -2345,10 +2345,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (target.jitter >= crit.jitter) {
 			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_CRITICAL);
-			xasprintf(&sc_jitter.output, "%s > %0.3fms", sc_jitter.output, crit.jitter);
+			xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, crit.jitter);
 		} else if (target.jitter >= warn.jitter) {
 			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_WARNING);
-			xasprintf(&sc_jitter.output, "%s > %0.3fms", sc_jitter.output, warn.jitter);
+			xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, warn.jitter);
 		}
 
 		if (packet_loss < 100) {
@@ -2382,10 +2382,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (mos <= crit.mos) {
 			sc_mos = mp_set_subcheck_state(sc_mos, STATE_CRITICAL);
-			xasprintf(&sc_mos.output, "%s < %0.1f", sc_mos.output, crit.mos);
+			xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, crit.mos);
 		} else if (mos <= warn.mos) {
 			sc_mos = mp_set_subcheck_state(sc_mos, STATE_WARNING);
-			xasprintf(&sc_mos.output, "%s < %0.1f", sc_mos.output, warn.mos);
+			xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, warn.mos);
 		}
 
 		if (packet_loss < 100) {
@@ -2394,8 +2394,8 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 			pd_mos.value = mp_create_pd_value(mos);
 			pd_mos.warn = mp_range_set_end(pd_mos.warn, mp_create_pd_value(warn.mos));
 			pd_mos.crit = mp_range_set_end(pd_mos.crit, mp_create_pd_value(crit.mos));
-			pd_mos.min = mp_create_pd_value(0);
-			pd_mos.max = mp_create_pd_value(5);
+			pd_mos.min = mp_create_pd_value(0); // MOS starts at 0
+			pd_mos.max = mp_create_pd_value(5); // MOS max is 5, by definition
 			mp_add_perfdata_to_subcheck(&sc_mos, pd_mos);
 		}
 		mp_add_subcheck_to_subcheck(&result, sc_mos);
@@ -2408,10 +2408,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (score <= crit.score) {
 			sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
-			xasprintf(&sc_score.output, "%s < %f", sc_score.output, crit.score);
+			xasprintf(&sc_score.output, "%s <= %f", sc_score.output, crit.score);
 		} else if (score <= warn.score) {
 			sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
-			xasprintf(&sc_score.output, "%s < %f", sc_score.output, warn.score);
+			xasprintf(&sc_score.output, "%s <= %f", sc_score.output, warn.score);
 		}
 
 		if (packet_loss < 100) {
