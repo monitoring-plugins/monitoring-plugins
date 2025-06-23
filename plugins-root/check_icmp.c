@@ -407,7 +407,6 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				if ((unsigned long)size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
 					size < MAX_PING_DATA) {
 					result.config.icmp_data_size = (unsigned short)size;
-					result.config.icmp_pkt_size = (unsigned short)(size + ICMP_MINLEN);
 				} else {
 					usage_va("ICMP data length must be between: %lu and %lu",
 							 sizeof(struct icmp) + sizeof(struct icmp_ping_data),
@@ -945,7 +944,7 @@ int main(int argc, char **argv) {
 		printf("crit = {%ld, %u%%}, warn = {%ld, %u%%}\n", config.crit.rta, config.crit.pl,
 			   config.warn.rta, config.warn.pl);
 		printf("target_interval: %ld\n", config.target_interval);
-		printf("icmp_pkt_size: %u  timeout: %u\n", config.icmp_pkt_size, timeout);
+		printf("icmp_pkt_size: %u  timeout: %u\n", config.icmp_data_size + ICMP_MINLEN, timeout);
 	}
 
 	if (config.min_hosts_alive < -1) {
