@@ -353,6 +353,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		long int arg;
 		while ((arg = getopt_long(argc, argv, opts_str, longopts, NULL)) != EOF) {
 			switch (arg) {
+
 			case '4':
 				if (enforced_ai_family != AF_UNSPEC) {
 					crash("Multiple protocol versions not supported");
@@ -369,6 +370,11 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.number_of_hosts++;
 				break;
 			}
+			case 'h': /* help */
+				// Trigger help here to avoid adding hosts before that (and doing DNS queries)
+				print_help();
+				exit(STATE_UNKNOWN);
+				break;
 			case 'v':
 				debug++;
 				break;
@@ -490,10 +496,6 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 			case 'V': /* version */
 				print_revision(progname, NP_VERSION);
 				exit(STATE_UNKNOWN);
-			case 'h': /* help */
-				print_help();
-				exit(STATE_UNKNOWN);
-				break;
 			case 'R': /* RTA mode */ {
 				get_threshold2_wrapper rta_th = get_threshold2(
 					optarg, strlen(optarg), result.config.warn, result.config.crit, const_rta_mode);
