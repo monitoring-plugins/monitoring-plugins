@@ -25,7 +25,8 @@ noinst_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 EXTRA_PROGRAMS = pst3
 
 EXTRA_DIST = t pst3.c \
-			 check_icmp.d
+			 check_icmp.d \
+			 check_dhcp.d
 
 BASEOBJS = ../plugins/utils.o ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
