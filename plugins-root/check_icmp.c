@@ -151,10 +151,9 @@ static void set_source_ip(char *arg, int icmp_sock, sa_family_t addr_family);
 
 /* Receiving data */
 static int wait_for_reply(check_icmp_socket_set sockset, time_t time_interval,
-						  unsigned short icmp_pkt_size, time_t *pkt_interval,
-						  time_t *target_interval, uint16_t sender_id, ping_target **table,
-						  unsigned short packets, unsigned short number_of_targets,
-						  check_icmp_state *program_state);
+						  unsigned short icmp_pkt_size, time_t *target_interval, uint16_t sender_id,
+						  ping_target **table, unsigned short packets,
+						  unsigned short number_of_targets, check_icmp_state *program_state);
 
 typedef struct {
 	sa_family_t recv_proto;
@@ -164,9 +163,9 @@ static recvfrom_wto_wrapper recvfrom_wto(check_icmp_socket_set sockset, void *bu
 										 struct sockaddr *saddr, time_t *timeout,
 										 struct timeval *received_timestamp);
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr,
-							  time_t *pkt_interval, time_t *target_interval, uint16_t sender_id,
-							  ping_target **table, unsigned short packets,
-							  unsigned short number_of_targets, check_icmp_state *program_state);
+							  time_t *target_interval, uint16_t sender_id, ping_target **table,
+							  unsigned short packets, unsigned short number_of_targets,
+							  check_icmp_state *program_state);
 
 /* Sending data */
 static int send_icmp_ping(check_icmp_socket_set sockset, ping_target *host,
@@ -198,11 +197,11 @@ static parse_threshold2_helper_wrapper parse_threshold2_helper(char *threshold_s
 															   threshold_mode mode);
 
 /* main test function */
-static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_t *target_interval,
-					   uint16_t sender_id, check_icmp_execution_mode mode,
-					   time_t max_completion_time, struct timeval prog_start, ping_target **table,
-					   unsigned short packets, check_icmp_socket_set sockset,
-					   unsigned short number_of_targets, check_icmp_state *program_state);
+static void run_checks(unsigned short icmp_pkt_size, time_t *target_interval, uint16_t sender_id,
+					   check_icmp_execution_mode mode, time_t max_completion_time,
+					   struct timeval prog_start, ping_target **table, unsigned short packets,
+					   check_icmp_socket_set sockset, unsigned short number_of_targets,
+					   check_icmp_state *program_state);
 mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 							check_icmp_threshold warn, check_icmp_threshold crit);
 
@@ -297,14 +296,12 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 		result.config.mode = MODE_ICMP;
 	} else if (!strcmp(progname, "check_host")) {
 		result.config.mode = MODE_HOSTCHECK;
-		result.config.pkt_interval = 1000000;
 		result.config.number_of_packets = 5;
 		result.config.crit.rta = result.config.warn.rta = 1000000;
 		result.config.crit.pl = result.config.warn.pl = 100;
 	} else if (!strcmp(progname, "check_rta_multi")) {
 		result.config.mode = MODE_ALL;
 		result.config.target_interval = 0;
-		result.config.pkt_interval = 50000;
 		result.config.number_of_packets = 5;
 	}
 	/* support "--help" and "--version" */
@@ -418,13 +415,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				}
 			} break;
 			case 'i': {
-				get_timevar_wrapper parsed_time = get_timevar(optarg);
-
-				if (parsed_time.error_code == OK) {
-					result.config.pkt_interval = parsed_time.time_range;
-				} else {
-					crash("failed to parse packet interval");
-				}
+				// packet_interval was unused and is now removed
 			} break;
 			case 'I': {
 				get_timevar_wrapper parsed_time = get_timevar(optarg);
@@ -738,8 +729,8 @@ static const char *get_icmp_error_msg(unsigned char icmp_type, unsigned char icm
 }
 
 static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *addr,
-							  time_t *pkt_interval, time_t *target_interval,
-							  const uint16_t sender_id, ping_target **table, unsigned short packets,
+							  time_t *target_interval, const uint16_t sender_id,
+							  ping_target **table, unsigned short packets,
 							  const unsigned short number_of_targets,
 							  check_icmp_state *program_state) {
 	struct icmp icmp_packet;
@@ -799,7 +790,6 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 	/* source quench means we're sending too fast, so increase the
 	 * interval and mark this packet lost */
 	if (icmp_packet.icmp_type == ICMP_SOURCEQUENCH) {
-		*pkt_interval = (unsigned int)((double)*pkt_interval * PACKET_BACKOFF_FACTOR);
 		*target_interval = (unsigned int)((double)*target_interval * TARGET_BACKOFF_FACTOR);
 	} else {
 		program_state->targets_down++;
@@ -931,18 +921,17 @@ int main(int argc, char **argv) {
 	gettimeofday(&prog_start, NULL);
 
 	time_t max_completion_time =
-		((config.pkt_interval * config.number_of_targets * config.number_of_packets) +
-		 (config.target_interval * config.number_of_targets)) +
+		(config.target_interval * config.number_of_targets) +
 		(config.crit.rta * config.number_of_targets * config.number_of_packets) + config.crit.rta;
 
 	if (debug) {
 		printf("packets: %u, targets: %u\n"
-			   "target_interval: %0.3f, pkt_interval %0.3f\n"
+			   "target_interval: %0.3f\n"
 			   "crit.rta: %0.3f\n"
 			   "max_completion_time: %0.3f\n",
 			   config.number_of_packets, config.number_of_targets,
-			   (float)config.target_interval / 1000, (float)config.pkt_interval / 1000,
-			   (float)config.crit.rta / 1000, (float)max_completion_time / 1000);
+			   (float)config.target_interval / 1000, (float)config.crit.rta / 1000,
+			   (float)max_completion_time / 1000);
 	}
 
 	if (debug) {
@@ -955,8 +944,7 @@ int main(int argc, char **argv) {
 	if (debug) {
 		printf("crit = {%ld, %u%%}, warn = {%ld, %u%%}\n", config.crit.rta, config.crit.pl,
 			   config.warn.rta, config.warn.pl);
-		printf("pkt_interval: %ld  target_interval: %ld\n", config.pkt_interval,
-			   config.target_interval);
+		printf("target_interval: %ld\n", config.target_interval);
 		printf("icmp_pkt_size: %u  timeout: %u\n", config.icmp_pkt_size, timeout);
 	}
 
@@ -980,14 +968,13 @@ int main(int argc, char **argv) {
 		target_index++;
 	}
 
-	time_t pkt_interval = config.pkt_interval;
 	time_t target_interval = config.target_interval;
 
 	check_icmp_state program_state = check_icmp_state_init();
 
-	run_checks(config.icmp_data_size, &pkt_interval, &target_interval, config.sender_id,
-			   config.mode, max_completion_time, prog_start, table, config.number_of_packets,
-			   sockset, config.number_of_targets, &program_state);
+	run_checks(config.icmp_data_size, &target_interval, config.sender_id, config.mode,
+			   max_completion_time, prog_start, table, config.number_of_packets, sockset,
+			   config.number_of_targets, &program_state);
 
 	errno = 0;
 
@@ -1006,7 +993,7 @@ int main(int argc, char **argv) {
 	mp_exit(overall);
 }
 
-static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_t *target_interval,
+static void run_checks(unsigned short icmp_pkt_size, time_t *target_interval,
 					   const uint16_t sender_id, const check_icmp_execution_mode mode,
 					   const time_t max_completion_time, const struct timeval prog_start,
 					   ping_target **table, const unsigned short packets,
@@ -1039,17 +1026,15 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_
 			if (targets_alive(number_of_targets, program_state->targets_down) ||
 				get_timevaldiff(prog_start, prog_start) < max_completion_time ||
 				!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-				wait_for_reply(sockset, *target_interval, icmp_pkt_size, pkt_interval,
-							   target_interval, sender_id, table, packets, number_of_targets,
-							   program_state);
+				wait_for_reply(sockset, *target_interval, icmp_pkt_size, target_interval, sender_id,
+							   table, packets, number_of_targets, program_state);
 			}
 		}
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-			wait_for_reply(sockset, *pkt_interval * number_of_targets, icmp_pkt_size, pkt_interval,
-						   target_interval, sender_id, table, packets, number_of_targets,
-						   program_state);
+			wait_for_reply(sockset, number_of_targets, icmp_pkt_size, target_interval, sender_id,
+						   table, packets, number_of_targets, program_state);
 		}
 	}
 
@@ -1079,8 +1064,8 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
 			get_timevaldiff_to_now(prog_start) < max_completion_time ||
 			!(mode == MODE_HOSTCHECK && program_state->targets_down)) {
-			wait_for_reply(sockset, final_wait, icmp_pkt_size, pkt_interval, target_interval,
-						   sender_id, table, packets, number_of_targets, program_state);
+			wait_for_reply(sockset, final_wait, icmp_pkt_size, target_interval, sender_id, table,
+						   packets, number_of_targets, program_state);
 		}
 	}
 }
@@ -1096,10 +1081,9 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *pkt_interval, time_
  * icmp echo reply : the rest
  */
 static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_interval,
-						  unsigned short icmp_pkt_size, time_t *pkt_interval,
-						  time_t *target_interval, uint16_t sender_id, ping_target **table,
-						  const unsigned short packets, const unsigned short number_of_targets,
-						  check_icmp_state *program_state) {
+						  unsigned short icmp_pkt_size, time_t *target_interval, uint16_t sender_id,
+						  ping_target **table, const unsigned short packets,
+						  const unsigned short number_of_targets, check_icmp_state *program_state) {
 	union icmp_packet packet;
 	if (!(packet.buf = malloc(icmp_pkt_size))) {
 		crash("send_icmp_ping(): failed to malloc %d bytes for send buffer", icmp_pkt_size);
@@ -1185,8 +1169,8 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 				printf("not a proper ICMP_ECHOREPLY\n");
 			}
 
-			handle_random_icmp(buf + hlen, &resp_addr, pkt_interval, target_interval, sender_id,
-							   table, packets, number_of_targets, program_state);
+			handle_random_icmp(buf + hlen, &resp_addr, target_interval, sender_id, table, packets,
+							   number_of_targets, program_state);
 
 			continue;
 		}
@@ -2111,8 +2095,10 @@ void print_help(void) {
 	printf("    %s", _("number of packets to send (default "));
 	printf("%u)\n", DEFAULT_NUMBER_OF_PACKETS);
 	printf(" %s\n", "-i");
-	printf("    %s", _("max packet interval (default "));
+	printf("    %s", _("[DEPRECATED] packet interval (default "));
 	printf("%0.3fms)\n", (float)DEFAULT_PKT_INTERVAL / 1000);
+	printf("    %s", _("This option was never actually used and is just mentioned here for "
+					   "historical purposes"));
 	printf(" %s\n", "-I");
 	printf("    %s%0.3fms)\n    The time interval to wait in between one target and the next",
 		   _("max target interval (default "), (float)DEFAULT_TARGET_INTERVAL / 1000);

@@ -61,7 +61,6 @@ typedef struct {
 	unsigned long ttl;
 	unsigned short icmp_data_size;
 	unsigned short icmp_pkt_size;
-	time_t pkt_interval;
 	time_t target_interval;
 	unsigned short number_of_packets;
 
