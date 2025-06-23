@@ -34,8 +34,6 @@ check_icmp_config check_icmp_config_init() {
 
 		.ttl = DEFAULT_TTL,
 		.icmp_data_size = DEFAULT_PING_DATA_SIZE,
-		.icmp_pkt_size = DEFAULT_PING_DATA_SIZE + ICMP_MINLEN,
-		.pkt_interval = DEFAULT_PKT_INTERVAL,
 		.target_interval = 0,
 		.number_of_packets = DEFAULT_NUMBER_OF_PACKETS,
 
@@ -52,6 +50,8 @@ check_icmp_config check_icmp_config_init() {
 
 		.number_of_hosts = 0,
 		.hosts = NULL,
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

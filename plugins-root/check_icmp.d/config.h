@@ -12,11 +12,12 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 #include "./check_icmp_helpers.h"
+#include "output.h"
 
 /* threshold structure. all values are maximum allowed, exclusive */
 typedef struct {
 	unsigned char pl; /* max allowed packet loss in percent */
-	time_t rta; /* roundtrip time average, microseconds */
+	time_t rta;       /* roundtrip time average, microseconds */
 	double jitter;    /* jitter time average, microseconds */
 	double mos;       /* MOS */
 	double score;     /* Score */
@@ -59,8 +60,6 @@ typedef struct {
 
 	unsigned long ttl;
 	unsigned short icmp_data_size;
-	unsigned short icmp_pkt_size;
-	time_t pkt_interval;
 	time_t target_interval;
 	unsigned short number_of_packets;
 
@@ -77,6 +76,9 @@ typedef struct {
 
 	unsigned short number_of_hosts;
 	check_icmp_target_container *hosts;
+
+	mp_output_format output_format;
+	bool output_format_is_set;
 } check_icmp_config;
 
 check_icmp_config check_icmp_config_init();
@@ -94,7 +96,9 @@ typedef struct icmp_ping_data {
 #define DEFAULT_PING_DATA_SIZE (MIN_PING_DATA_SIZE + 44)
 
 /* 80 msec packet interval by default */
-#define DEFAULT_PKT_INTERVAL    80000
+// DEPRECATED, remove when removing the option
+#define DEFAULT_PKT_INTERVAL    80000 
+
 #define DEFAULT_TARGET_INTERVAL 0
 
 #define DEFAULT_WARN_RTA 200000
