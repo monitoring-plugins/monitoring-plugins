@@ -2045,12 +2045,10 @@ unsigned short icmp_checksum(uint16_t *packet, size_t packet_size) {
 }
 
 void print_help(void) {
-	/*print_revision (progname);*/ /* FIXME: Why? */
+	// print_revision (progname); /* FIXME: Why? */
 	printf("Copyright (c) 2005 Andreas Ericsson <ae@op5.se>\n");
 
 	printf(COPYRIGHT, copyright, email);
-
-	printf("\n\n");
 
 	print_usage();
 
@@ -2058,19 +2056,21 @@ void print_help(void) {
 	printf(UT_EXTRA_OPTS);
 
 	printf(" %s\n", "-H");
-	printf("    %s\n", _("specify a target"));
+	printf("    %s\n",
+		   _("specify a target, might be one of: resolveable name, IPv6 address, IPv4 address "
+			 "(necessary, can be given multiple times)"));
 	printf(" %s\n", "[-4|-6]");
-	printf("    %s\n", _("Use IPv4 (default) or IPv6 to communicate with the targets"));
+	printf("    %s\n", _("Use IPv4 or IPv6 only to communicate with the targets"));
 	printf(" %s\n", "-w");
-	printf("    %s", _("warning threshold (currently "));
+	printf("    %s", _("warning threshold (default "));
 	printf("%0.3fms,%u%%)\n", (float)DEFAULT_WARN_RTA / 1000, DEFAULT_WARN_PL);
 	printf(" %s\n", "-c");
-	printf("    %s", _("critical threshold (currently "));
+	printf("    %s", _("critical threshold (default "));
 	printf("%0.3fms,%u%%)\n", (float)DEFAULT_CRIT_RTA / 1000, DEFAULT_CRIT_PL);
 
 	printf(" %s\n", "-R");
 	printf("    %s\n",
-		   _("RTA, round trip average,  mode  warning,critical, ex. 100ms,200ms unit in ms"));
+		   _("RTA (round trip average)  mode  warning,critical, ex. 100ms,200ms unit in ms"));
 	printf(" %s\n", "-P");
 	printf("    %s\n", _("packet loss mode, ex. 40%,50% , unit in %"));
 	printf(" %s\n", "-J");
@@ -2080,42 +2080,34 @@ void print_help(void) {
 	printf(" %s\n", "-S");
 	printf("    %s\n", _("score  mode, max value 100  warning,critical, ex. 80,70 "));
 	printf(" %s\n", "-O");
-	printf("    %s\n", _("detect out of order ICMP packts "));
-	printf(" %s\n", "-H");
-	printf("    %s\n", _("specify a target"));
-	printf(" %s\n", "-s");
-	printf("    %s\n", _("specify a source IP address or device name"));
+	printf("    %s\n",
+		   _("detect out of order ICMP packts, if such packets are found, the result is CRITICAL"));
 	printf(" %s\n", "-n");
-	printf("    %s", _("number of packets to send (currently "));
-	printf("%u)\n", DEFAULT_NUMBER_OF_PACKETS);
 	printf(" %s\n", "-p");
-	printf("    %s", _("number of packets to send (currently "));
+	printf("    %s", _("number of packets to send (default "));
 	printf("%u)\n", DEFAULT_NUMBER_OF_PACKETS);
 	printf(" %s\n", "-i");
-	printf("    %s", _("max packet interval (currently "));
+	printf("    %s", _("max packet interval (default "));
 	printf("%0.3fms)\n", (float)DEFAULT_PKT_INTERVAL / 1000);
 	printf(" %s\n", "-I");
-	printf("    %s", _("max target interval (currently "));
-	printf("%0.3fms)\n", (float)DEFAULT_TARGET_INTERVAL / 1000);
+	printf("    %s%0.3fms)\n    The time intervall to wait in between one target and the next",
+		   _("max target interval (default "), (float)DEFAULT_TARGET_INTERVAL / 1000);
 	printf(" %s\n", "-m");
 	printf("    %s", _("number of alive hosts required for success"));
 	printf("\n");
 	printf(" %s\n", "-l");
-	printf("    %s", _("TTL on outgoing packets (currently "));
+	printf("    %s", _("TTL on outgoing packets (default "));
 	printf("%u)\n", DEFAULT_TTL);
-	printf(" %s\n", "-t");
-	printf("    %s", _("timeout value (seconds, currently  "));
-	printf("%u)\n", DEFAULT_TIMEOUT);
 	printf(" %s\n", "-b");
 	printf("    %s\n", _("Number of icmp data bytes to send"));
-	printf("    %s %lu + %d)\n", _("Packet size will be data bytes + icmp header (currently"),
+	printf("    %s %lu + %d)\n", _("Packet size will be data bytes + icmp header (default"),
 		   DEFAULT_PING_DATA_SIZE, ICMP_MINLEN);
 	printf(" %s\n", "-v");
-	printf("    %s\n", _("verbose"));
+	printf("    %s\n", _("Verbosity, can be given multiple times (for debugging)"));
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If none of R,P,J,M,S or O is specified, default behavior is -R -P"));
-	printf(" %s\n", _("The -H switch is optional. Naming a host (or several) to check is not."));
+	printf(" %s\n", _("Naming a host (or several) to check is not."));
 	printf("\n");
 	printf(" %s\n", _("Threshold format for -w and -c is 200.25,60% for 200.25 msec RTA and 60%"));
 	printf(" %s\n", _("packet loss.  The default values should work well for most users."));
@@ -2128,8 +2120,6 @@ void print_help(void) {
 	   hops")); printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent.")); printf
 	   ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do
 	   not."));*/
-	printf("\n");
-	printf(" %s\n", _("The -v switch can be specified several times for increased verbosity."));
 	/*  printf ("%s\n", _("Long options are currently unsupported."));
 			printf ("%s\n", _("Options marked with * require an argument"));
 			*/
@@ -2139,7 +2129,7 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s [options] [-H] host1 host2 hostN\n", progname);
+	printf(" %s [options] [-H host1 [-H host2 [-H hostN]]]\n", progname);
 }
 
 static add_host_wrapper add_host(char *arg, check_icmp_execution_mode mode,
