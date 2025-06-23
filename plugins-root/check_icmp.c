@@ -2127,14 +2127,6 @@ void print_help(void) {
 		   _("You can specify different RTA factors using the standardized abbreviations"));
 	printf(" %s\n",
 		   _("us (microseconds), ms (milliseconds, default) or just plain s for seconds."));
-	/* -d not yet implemented */
-	/*  printf ("%s\n", _("Threshold format for -d is warn,crit.  12,14 means WARNING if >= 12
-	   hops")); printf ("%s\n", _("are spent and CRITICAL if >= 14 hops are spent.")); printf
-	   ("%s\n\n", _("NOTE: Some systems decrease TTL when forming ICMP_ECHOREPLY, others do
-	   not."));*/
-	/*  printf ("%s\n", _("Long options are currently unsupported."));
-			printf ("%s\n", _("Options marked with * require an argument"));
-			*/
 
 	printf(UT_SUPPORT);
 }
