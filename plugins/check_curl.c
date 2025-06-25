@@ -524,8 +524,20 @@ int check_http(void) {
 	// fill dns resolve cache to make curl connect to the given server_address instead of the host_name, only required for ssl, because we
 	// use the host_name later on to make SNI happy
 	if (use_ssl && host_name != NULL) {
-		if ((res = lookup_host(server_address, addrstr, DEFAULT_BUFFER_SIZE / 2)) != 0) {
-			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"), server_address, res,
+		char *tmp_server_address;
+
+		/* lookup_host() requires an IPv6 address without the brackets. */
+		if ((strnlen(server_address, MAX_IPV4_HOSTLENGTH) > 2) && (server_address[0] == '[')) {
+			// Duplicate and strip the leading '['
+			tmp_server_address = strdup(server_address + 1);
+			// Strip the tailing ']'
+			tmp_server_address[strlen(tmp_server_address) - 1] = '\0';
+		} else {
+			tmp_server_address = server_address;
+		}
+
+		if ((res = lookup_host(tmp_server_address, addrstr, DEFAULT_BUFFER_SIZE / 2)) != 0) {
+			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"), tmp_server_address, res,
 					 gai_strerror(res));
 			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 		}
@@ -534,6 +546,10 @@ int check_http(void) {
 		curl_easy_setopt(curl, CURLOPT_RESOLVE, host);
 		if (verbose >= 1)
 			printf("* curl CURLOPT_RESOLVE: %s\n", dnscache);
+
+		if (tmp_server_address != server_address) {
+			free(tmp_server_address);
+		}
 	}
 
 	// If server_address is an IPv6 address it must be surround by square brackets
