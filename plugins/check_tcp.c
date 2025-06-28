@@ -3,7 +3,7 @@
  * Monitoring check_tcp plugin
  *
  * License: GPL
- * Copyright (c) 1999-2024 Monitoring Plugins Development Team
+ * Copyright (c) 1999-2025 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -29,74 +29,63 @@
 
 /* progname "check_tcp" changes depending on symlink called */
 char *progname;
-const char *copyright = "1999-2024";
+const char *copyright = "1999-2025";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "netutils.h"
-#include "utils.h"
-#include "utils_tcp.h"
+#include "./common.h"
+#include "./netutils.h"
+#include "./utils.h"
+#include "./check_tcp.d/config.h"
+#include "output.h"
+#include "states.h"
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <sys/select.h>
 
+ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
-static bool check_cert = false;
-static int days_till_exp_warn, days_till_exp_crit;
-#	define my_recv(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
-#	define my_send(buf, len) ((flags & FLAG_SSL) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
-#else
-#	define my_recv(buf, len) read(sd, buf, len)
-#	define my_send(buf, len) send(sd, buf, len, 0)
+	if (use_tls) {
+		return np_net_ssl_read(buf, (int)len);
+	}
 #endif
+	return read(socket_descriptor, buf, len);
+}
 
-/* int my_recv(char *, size_t); */
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static void print_help(void);
+ssize_t my_send(int socket_descriptor, char *buf, size_t len, bool use_tls) {
+#ifdef HAVE_SSL
+	if (use_tls) {
+		return np_net_ssl_write(buf, (int)len);
+	}
+#endif
+	return write(socket_descriptor, buf, len);
+}
+
+typedef struct {
+	int errorcode;
+	check_tcp_config config;
+} check_tcp_config_wrapper;
+static check_tcp_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/, check_tcp_config /*config*/);
+void print_help(const char *service);
 void print_usage(void);
 
-#define EXPECT server_expect[0]
-static char *SERVICE = "TCP";
-static char *SEND = NULL;
-static char *QUIT = NULL;
-static int PROTOCOL = IPPROTO_TCP; /* most common is default */
-static int PORT = 0;
-static int READ_TIMEOUT = 2;
+int verbosity = 0;
 
-static int server_port = 0;
-static char *server_address = NULL;
-static bool host_specified = false;
-static char *server_send = NULL;
-static char *server_quit = NULL;
-static char **server_expect;
-static size_t server_expect_count = 0;
-static ssize_t maxbytes = 0;
-static char **warn_codes = NULL;
-static size_t warn_codes_count = 0;
-static char **crit_codes = NULL;
-static size_t crit_codes_count = 0;
-static unsigned int delay = 0;
-static double warning_time = 0;
-static double critical_time = 0;
-static double elapsed_time = 0;
-static long microsec;
-static int sd = 0;
-#define MAXBUF 1024
-static char buffer[MAXBUF];
-static int expect_mismatch_state = STATE_WARNING;
-static int match_flags = NP_MATCH_EXACT;
+static const int READ_TIMEOUT = 2;
 
-#ifdef HAVE_SSL
-static char *sni = NULL;
-static bool sni_specified = false;
-#endif
+const int MAXBUF = 1024;
 
-#define FLAG_SSL         0x01
-#define FLAG_VERBOSE     0x02
-#define FLAG_TIME_WARN   0x04
-#define FLAG_TIME_CRIT   0x08
-#define FLAG_HIDE_OUTPUT 0x10
-static size_t flags;
+const int DEFAULT_FTP_PORT = 21;
+const int DEFAULT_POP_PORT = 110;
+const int DEFAULT_SPOP_PORT = 995;
+const int DEFAULT_SMTP_PORT = 25;
+const int DEFAULT_SSMTP_PORT = 465;
+const int DEFAULT_IMAP_PORT = 143;
+const int DEFAULT_SIMAP_PORT = 993;
+const int DEFAULT_XMPP_C2S_PORT = 5222;
+const int DEFAULT_NNTP_PORT = 119;
+const int DEFAULT_NNTPS_PORT = 563;
+const int DEFAULT_CLAMD_PORT = 3310;
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -105,113 +94,144 @@ int main(int argc, char **argv) {
 
 	/* determine program- and service-name quickly */
 	progname = strrchr(argv[0], '/');
-	if (progname != NULL)
+	if (progname != NULL) {
 		progname++;
-	else
+	} else {
 		progname = argv[0];
+	}
+
+	// Initialize config here with values from above,
+	// might be changed by on disk config or cli commands
+	check_tcp_config config = check_tcp_config_init();
 
 	size_t prog_name_len = strlen(progname);
-	if (prog_name_len > 6 && !memcmp(progname, "check_", 6)) {
-		SERVICE = strdup(progname + 6);
-		for (size_t i = 0; i < prog_name_len - 6; i++)
-			SERVICE[i] = toupper(SERVICE[i]);
+	const size_t prefix_length = strlen("check_");
+
+	if (prog_name_len <= prefix_length) {
+		die(STATE_UNKNOWN, _("Weird progname"));
+	}
+
+	if (!memcmp(progname, "check_", prefix_length)) {
+		config.service = strdup(progname + prefix_length);
+		if (config.service == NULL) {
+			die(STATE_UNKNOWN, _("Allocation failed"));
+		}
+
+		for (size_t i = 0; i < prog_name_len - prefix_length; i++) {
+			config.service[i] = toupper(config.service[i]);
+		}
 	}
 
 	/* set up a reasonable buffer at first (will be realloc()'ed if
 	 * user specifies other options) */
-	server_expect = calloc(2, sizeof(char *));
+	config.server_expect = calloc(2, sizeof(char *));
+
+	if (config.server_expect == NULL) {
+		die(STATE_UNKNOWN, _("Allocation failed"));
+	}
 
 	/* determine defaults for this service's protocol */
-	if (!strncmp(SERVICE, "UDP", 3)) {
-		PROTOCOL = IPPROTO_UDP;
-	} else if (!strncmp(SERVICE, "FTP", 3)) {
-		EXPECT = "220";
-		QUIT = "QUIT\r\n";
-		PORT = 21;
-	} else if (!strncmp(SERVICE, "POP", 3) || !strncmp(SERVICE, "POP3", 4)) {
-		EXPECT = "+OK";
-		QUIT = "QUIT\r\n";
-		PORT = 110;
-	} else if (!strncmp(SERVICE, "SMTP", 4)) {
-		EXPECT = "220";
-		QUIT = "QUIT\r\n";
-		PORT = 25;
-	} else if (!strncmp(SERVICE, "IMAP", 4)) {
-		EXPECT = "* OK";
-		QUIT = "a1 LOGOUT\r\n";
-		PORT = 143;
+	if (!strncmp(config.service, "UDP", strlen("UDP"))) {
+		config.protocol = IPPROTO_UDP;
+	} else if (!strncmp(config.service, "FTP", strlen("FTP"))) {
+		config.server_expect[0] = "220";
+		config.quit = "QUIT\r\n";
+		config.server_port = DEFAULT_FTP_PORT;
+	} else if (!strncmp(config.service, "POP", strlen("POP")) || !strncmp(config.service, "POP3", strlen("POP3"))) {
+		config.server_expect[0] = "+OK";
+		config.quit = "QUIT\r\n";
+		config.server_port = DEFAULT_POP_PORT;
+	} else if (!strncmp(config.service, "SMTP", strlen("SMTP"))) {
+		config.server_expect[0] = "220";
+		config.quit = "QUIT\r\n";
+		config.server_port = DEFAULT_SMTP_PORT;
+	} else if (!strncmp(config.service, "IMAP", strlen("IMAP"))) {
+		config.server_expect[0] = "* OK";
+		config.quit = "a1 LOGOUT\r\n";
+		config.server_port = DEFAULT_IMAP_PORT;
 	}
 #ifdef HAVE_SSL
-	else if (!strncmp(SERVICE, "SIMAP", 5)) {
-		EXPECT = "* OK";
-		QUIT = "a1 LOGOUT\r\n";
-		flags |= FLAG_SSL;
-		PORT = 993;
-	} else if (!strncmp(SERVICE, "SPOP", 4)) {
-		EXPECT = "+OK";
-		QUIT = "QUIT\r\n";
-		flags |= FLAG_SSL;
-		PORT = 995;
-	} else if (!strncmp(SERVICE, "SSMTP", 5)) {
-		EXPECT = "220";
-		QUIT = "QUIT\r\n";
-		flags |= FLAG_SSL;
-		PORT = 465;
-	} else if (!strncmp(SERVICE, "JABBER", 6)) {
-		SEND = "<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n";
-		EXPECT = "<?xml version=\'1.0\'";
-		QUIT = "</stream:stream>\n";
-		flags |= FLAG_HIDE_OUTPUT;
-		PORT = 5222;
-	} else if (!strncmp(SERVICE, "NNTPS", 5)) {
-		server_expect_count = 2;
-		server_expect[0] = "200";
-		server_expect[1] = "201";
-		QUIT = "QUIT\r\n";
-		flags |= FLAG_SSL;
-		PORT = 563;
+	else if (!strncmp(config.service, "SIMAP", strlen("SIMAP"))) {
+		config.server_expect[0] = "* OK";
+		config.quit = "a1 LOGOUT\r\n";
+		config.use_tls = true;
+		config.server_port = DEFAULT_SIMAP_PORT;
+	} else if (!strncmp(config.service, "SPOP", strlen("SPOP"))) {
+		config.server_expect[0] = "+OK";
+		config.quit = "QUIT\r\n";
+		config.use_tls = true;
+		config.server_port = DEFAULT_SPOP_PORT;
+	} else if (!strncmp(config.service, "SSMTP", strlen("SSMTP"))) {
+		config.server_expect[0] = "220";
+		config.quit = "QUIT\r\n";
+		config.use_tls = true;
+		config.server_port = DEFAULT_SSMTP_PORT;
+	} else if (!strncmp(config.service, "JABBER", strlen("JABBER"))) {
+		config.send = "<stream:stream to=\'host\' xmlns=\'jabber:client\' xmlns:stream=\'http://etherx.jabber.org/streams\'>\n";
+		config.server_expect[0] = "<?xml version=\'1.0\'";
+		config.quit = "</stream:stream>\n";
+		config.hide_output = true;
+		config.server_port = DEFAULT_XMPP_C2S_PORT;
+	} else if (!strncmp(config.service, "NNTPS", strlen("NNTPS"))) {
+		config.server_expect_count = 2;
+		config.server_expect[0] = "200";
+		config.server_expect[1] = "201";
+		config.quit = "QUIT\r\n";
+		config.use_tls = true;
+		config.server_port = DEFAULT_NNTPS_PORT;
 	}
 #endif
-	else if (!strncmp(SERVICE, "NNTP", 4)) {
-		server_expect_count = 2;
-		server_expect = malloc(sizeof(char *) * server_expect_count);
-		server_expect[0] = strdup("200");
-		server_expect[1] = strdup("201");
-		QUIT = "QUIT\r\n";
-		PORT = 119;
-	} else if (!strncmp(SERVICE, "CLAMD", 5)) {
-		SEND = "PING";
-		EXPECT = "PONG";
-		QUIT = NULL;
-		PORT = 3310;
+	else if (!strncmp(config.service, "NNTP", strlen("NNTP"))) {
+		config.server_expect_count = 2;
+		char **tmp = realloc(config.server_expect, config.server_expect_count * sizeof(char *));
+		if (tmp == NULL) {
+			free(config.server_expect);
+			die(STATE_UNKNOWN, _("Allocation failed"));
+		}
+		config.server_expect = tmp;
+
+		config.server_expect[0] = strdup("200");
+		config.server_expect[1] = strdup("201");
+		config.quit = "QUIT\r\n";
+		config.server_port = DEFAULT_NNTP_PORT;
+	} else if (!strncmp(config.service, "CLAMD", strlen("CLAMD"))) {
+		config.send = "PING";
+		config.server_expect[0] = "PONG";
+		config.quit = NULL;
+		config.server_port = DEFAULT_CLAMD_PORT;
 	}
 	/* fallthrough check, so it's supposed to use reverse matching */
-	else if (strcmp(SERVICE, "TCP"))
+	else if (strcmp(config.service, "TCP")) {
 		usage(_("CRITICAL - Generic check_tcp called with unknown service\n"));
-
-	server_address = "127.0.0.1";
-	server_port = PORT;
-	server_send = SEND;
-	server_quit = QUIT;
-	char *status = NULL;
+	}
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_tcp_config_wrapper paw = process_arguments(argc, argv, config);
+	if (paw.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
-
-	if (flags & FLAG_VERBOSE) {
-		printf("Using service %s\n", SERVICE);
-		printf("Port: %d\n", server_port);
-		printf("flags: 0x%x\n", (int)flags);
 	}
 
-	if (EXPECT && !server_expect_count)
-		server_expect_count++;
+	config = paw.config;
 
-	if (PROTOCOL == IPPROTO_UDP && !(server_expect_count && server_send)) {
+	if (verbosity > 0) {
+		printf("Using service %s\n", config.service);
+		printf("Port: %d\n", config.server_port);
+	}
+
+	if ((config.server_expect_count == 0) && config.server_expect[0]) {
+		config.server_expect_count++;
+	}
+
+	if (config.protocol == IPPROTO_UDP && !(config.server_expect_count && config.send)) {
 		usage(_("With UDP checks, a send/expect string must be specified."));
+	}
+
+	// Initialize check stuff before setting timers
+	mp_check overall = mp_check_init();
+	if (config.output_format_set) {
+		mp_set_format(config.output_format);
 	}
 
 	/* set up the timer */
@@ -219,163 +239,232 @@ int main(int argc, char **argv) {
 	alarm(socket_timeout);
 
 	/* try to connect to the host at the given port number */
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
 
-	int result = STATE_UNKNOWN;
-	result = np_net_connect(server_address, server_port, &sd, PROTOCOL);
-	if (result == STATE_CRITICAL)
-		return econn_refuse_state;
+	int socket_descriptor = 0;
+	mp_subcheck inital_connect_result = mp_subcheck_init();
+
+	// Try initial connection
+	if (np_net_connect(config.server_address, config.server_port, &socket_descriptor, config.protocol) == STATE_CRITICAL) {
+		// Early exit here, we got connection refused
+		inital_connect_result = mp_set_subcheck_state(inital_connect_result, config.econn_refuse_state);
+		xasprintf(&inital_connect_result.output, "Connection to %s on port %i was REFUSED", config.server_address, config.server_port);
+		mp_add_subcheck_to_check(&overall, inital_connect_result);
+		mp_exit(overall);
+	} else {
+		inital_connect_result = mp_set_subcheck_state(inital_connect_result, STATE_OK);
+		xasprintf(&inital_connect_result.output, "Connection to %s on port %i was a SUCCESS", config.server_address, config.server_port);
+		mp_add_subcheck_to_check(&overall, inital_connect_result);
+	}
 
 #ifdef HAVE_SSL
-	if (flags & FLAG_SSL) {
-		result = np_net_ssl_init_with_hostname(sd, (sni_specified ? sni : NULL));
-		if (result == STATE_OK && check_cert) {
-			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
+	if (config.use_tls) {
+		mp_subcheck tls_connection_result = mp_subcheck_init();
+		mp_state_enum result = np_net_ssl_init_with_hostname(socket_descriptor, (config.sni_specified ? config.sni : NULL));
+		tls_connection_result = mp_set_subcheck_default_state(tls_connection_result, result);
+
+		if (result == STATE_OK) {
+			xasprintf(&tls_connection_result.output, "TLS connection succeeded");
+
+			if (config.check_cert) {
+				result = np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
+
+				mp_subcheck tls_certificate_lifetime_result = mp_subcheck_init();
+				tls_certificate_lifetime_result = mp_set_subcheck_state(tls_certificate_lifetime_result, result);
+
+				if (result == STATE_OK) {
+					xasprintf(&tls_certificate_lifetime_result.output, "Certificate lifetime is within thresholds");
+				} else if (result == STATE_WARNING) {
+					xasprintf(&tls_certificate_lifetime_result.output, "Certificate lifetime is violating warning threshold (%i)",
+							  config.days_till_exp_warn);
+				} else if (result == STATE_CRITICAL) {
+					xasprintf(&tls_certificate_lifetime_result.output, "Certificate lifetime is violating critical threshold (%i)",
+							  config.days_till_exp_crit);
+				} else {
+					xasprintf(&tls_certificate_lifetime_result.output, "Certificate lifetime is somehow unknown");
+				}
+
+				mp_add_subcheck_to_subcheck(&tls_connection_result, tls_certificate_lifetime_result);
+			}
+
+			mp_add_subcheck_to_check(&overall, tls_connection_result);
+		} else {
+			xasprintf(&tls_connection_result.output, "TLS connection failed");
+			mp_add_subcheck_to_check(&overall, tls_connection_result);
+
+			if (socket_descriptor) {
+				close(socket_descriptor);
+			}
+			np_net_ssl_cleanup();
+
+			mp_exit(overall);
 		}
-	}
-	if (result != STATE_OK) {
-		if (sd)
-			close(sd);
-		np_net_ssl_cleanup();
-		return result;
 	}
 #endif /* HAVE_SSL */
 
-	if (server_send != NULL) { /* Something to send? */
-		my_send(server_send, strlen(server_send));
+	if (config.send != NULL) { /* Something to send? */
+		my_send(socket_descriptor, config.send, strlen(config.send), config.use_tls);
 	}
 
-	if (delay > 0) {
-		tv.tv_sec += delay;
-		sleep(delay);
+	if (config.delay > 0) {
+		start_time.tv_sec += config.delay;
+		sleep(config.delay);
 	}
 
-	if (flags & FLAG_VERBOSE) {
-		if (server_send) {
-			printf("Send string: %s\n", server_send);
+	if (verbosity > 0) {
+		if (config.send) {
+			printf("Send string: %s\n", config.send);
 		}
-		if (server_quit) {
-			printf("Quit string: %s\n", server_quit);
+		if (config.quit) {
+			printf("Quit string: %s\n", config.quit);
 		}
-		printf("server_expect_count: %d\n", (int)server_expect_count);
-		for (size_t i = 0; i < server_expect_count; i++)
-			printf("\t%zd: %s\n", i, server_expect[i]);
+		printf("server_expect_count: %d\n", (int)config.server_expect_count);
+		for (size_t i = 0; i < config.server_expect_count; i++) {
+			printf("\t%zd: %s\n", i, config.server_expect[i]);
+		}
 	}
 
 	/* if(len) later on, we know we have a non-NULL response */
 	ssize_t len = 0;
+	char *received_buffer = NULL;
+	enum np_match_result match = NP_MATCH_NONE;
+	mp_subcheck expected_data_result = mp_subcheck_init();
 
-	int match = -1;
-	struct timeval timeout;
-	fd_set rfds;
-	FD_ZERO(&rfds);
-	if (server_expect_count) {
+	if (config.server_expect_count) {
 		ssize_t received = 0;
+		char buffer[MAXBUF];
 
 		/* watch for the expect string */
-		while ((received = my_recv(buffer, sizeof(buffer))) > 0) {
-			status = realloc(status, len + received + 1);
-			memcpy(&status[len], buffer, received);
+		while ((received = my_recv(socket_descriptor, buffer, sizeof(buffer), config.use_tls)) > 0) {
+			received_buffer = realloc(received_buffer, len + received + 1);
+
+			if (received_buffer == NULL) {
+				die(STATE_UNKNOWN, _("Allocation failed"));
+			}
+
+			memcpy(&received_buffer[len], buffer, received);
 			len += received;
-			status[len] = '\0';
+			received_buffer[len] = '\0';
 
 			/* stop reading if user-forced */
-			if (maxbytes && len >= maxbytes)
+			if (config.maxbytes && len >= config.maxbytes) {
 				break;
+			}
 
-			if ((match = np_expect_match(status, server_expect, server_expect_count, match_flags)) != NP_MATCH_RETRY)
+			if ((match = np_expect_match(received_buffer, config.server_expect, config.server_expect_count, config.match_flags)) !=
+				NP_MATCH_RETRY) {
 				break;
+			}
+
+			fd_set rfds;
+			FD_ZERO(&rfds);
+			FD_SET(socket_descriptor, &rfds);
 
 			/* some protocols wait for further input, so make sure we don't wait forever */
-			FD_SET(sd, &rfds);
+			struct timeval timeout;
 			timeout.tv_sec = READ_TIMEOUT;
 			timeout.tv_usec = 0;
-			if (select(sd + 1, &rfds, NULL, NULL, &timeout) <= 0)
+
+			if (select(socket_descriptor + 1, &rfds, NULL, NULL, &timeout) <= 0) {
 				break;
+			}
 		}
 
-		if (match == NP_MATCH_RETRY)
+		if (match == NP_MATCH_RETRY) {
 			match = NP_MATCH_FAILURE;
+		}
 
 		/* no data when expected, so return critical */
-		if (len == 0)
-			die(STATE_CRITICAL, _("No data received from host\n"));
+		if (len == 0) {
+			xasprintf(&expected_data_result.output, "Received no data when some was expected");
+			expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, expected_data_result);
+			mp_exit(overall);
+		}
 
 		/* print raw output if we're debugging */
-		if (flags & FLAG_VERBOSE)
-			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n", (int)len + 1, status);
+		if (verbosity > 0) {
+			printf("received %d bytes from host\n#-raw-recv-------#\n%s\n#-raw-recv-------#\n", (int)len + 1, received_buffer);
+		}
 		/* strip whitespace from end of output */
-		while (--len > 0 && isspace(status[len]))
-			status[len] = '\0';
+		while (--len > 0 && isspace(received_buffer[len])) {
+			received_buffer[len] = '\0';
+		}
 	}
 
-	if (server_quit != NULL) {
-		my_send(server_quit, strlen(server_quit));
+	if (config.quit != NULL) {
+		my_send(socket_descriptor, config.quit, strlen(config.quit), config.use_tls);
 	}
-	if (sd)
-		close(sd);
+
+	if (socket_descriptor) {
+		close(socket_descriptor);
+	}
 #ifdef HAVE_SSL
 	np_net_ssl_cleanup();
 #endif
 
-	microsec = deltime(tv);
-	elapsed_time = (double)microsec / 1.0e6;
+	long microsec = deltime(start_time);
+	double elapsed_time = (double)microsec / 1.0e6;
 
-	if (flags & FLAG_TIME_CRIT && elapsed_time > critical_time)
-		result = STATE_CRITICAL;
-	else if (flags & FLAG_TIME_WARN && elapsed_time > warning_time)
-		result = STATE_WARNING;
+	mp_subcheck elapsed_time_result = mp_subcheck_init();
+
+	mp_perfdata time_pd = perfdata_init();
+	time_pd = mp_set_pd_value(time_pd, elapsed_time);
+	time_pd.label = "time";
+	time_pd.uom = "s";
+
+	if (config.critical_time_set && elapsed_time > config.critical_time) {
+		xasprintf(&elapsed_time_result.output, "Connection time %fs exceeded critical threshold (%f)", elapsed_time, config.critical_time);
+
+		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_CRITICAL);
+		time_pd.crit_present = true;
+		mp_range crit_val = mp_range_init();
+
+		crit_val.end = mp_create_pd_value(config.critical_time);
+		crit_val.end_infinity = false;
+
+		time_pd.crit = crit_val;
+	} else if (config.warning_time_set && elapsed_time > config.warning_time) {
+		xasprintf(&elapsed_time_result.output, "Connection time %fs exceeded warning threshold (%f)", elapsed_time, config.critical_time);
+
+		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_WARNING);
+		time_pd.warn_present = true;
+		mp_range warn_val = mp_range_init();
+		warn_val.end = mp_create_pd_value(config.critical_time);
+		warn_val.end_infinity = false;
+
+		time_pd.warn = warn_val;
+	} else {
+		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_OK);
+		xasprintf(&elapsed_time_result.output, "Connection time %fs is within thresholds", elapsed_time);
+	}
+
+	mp_add_perfdata_to_subcheck(&elapsed_time_result, time_pd);
+	mp_add_subcheck_to_check(&overall, elapsed_time_result);
 
 	/* did we get the response we hoped? */
-	if (match == NP_MATCH_FAILURE && result != STATE_CRITICAL)
-		result = expect_mismatch_state;
+	if (match == NP_MATCH_FAILURE) {
+		expected_data_result = mp_set_subcheck_state(expected_data_result, config.expect_mismatch_state);
+		xasprintf(&expected_data_result.output, "Answer failed to match expectation");
+		mp_add_subcheck_to_check(&overall, expected_data_result);
+	} else if (match == NP_MATCH_SUCCESS) {
+		expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_OK);
+		xasprintf(&expected_data_result.output, "The answer of the server matched the expectation");
+		mp_add_subcheck_to_check(&overall, expected_data_result);
+	}
 
 	/* reset the alarm */
 	alarm(0);
 
-	/* this is a bit stupid, because we don't want to print the
-	 * response time (which can look ok to the user) if we didn't get
-	 * the response we were looking for. if-else */
-	printf("%s %s - ", SERVICE, state_text(result));
-
-	if (match == NP_MATCH_FAILURE && len && !(flags & FLAG_HIDE_OUTPUT))
-		printf("Unexpected response from host/socket: %s", status);
-	else {
-		if (match == NP_MATCH_FAILURE)
-			printf("Unexpected response from host/socket on ");
-		else
-			printf("%.3f second response time on ", elapsed_time);
-		if (server_address[0] != '/') {
-			if (host_specified)
-				printf("%s port %d", server_address, server_port);
-			else
-				printf("port %d", server_port);
-		} else
-			printf("socket %s", server_address);
-	}
-
-	if (match != NP_MATCH_FAILURE && !(flags & FLAG_HIDE_OUTPUT) && len)
-		printf(" [%s]", status);
-
-	/* perf-data doesn't apply when server doesn't talk properly,
-	 * so print all zeroes on warn and crit. Use fperfdata since
-	 * localisation settings can make different outputs */
-	if (match == NP_MATCH_FAILURE)
-		printf("|%s", fperfdata("time", elapsed_time, "s", (flags & FLAG_TIME_WARN ? true : false), 0,
-								(flags & FLAG_TIME_CRIT ? true : false), 0, true, 0, true, socket_timeout));
-	else
-		printf("|%s", fperfdata("time", elapsed_time, "s", (flags & FLAG_TIME_WARN ? true : false), warning_time,
-								(flags & FLAG_TIME_CRIT ? true : false), critical_time, true, 0, true, socket_timeout));
-
-	putchar('\n');
-	return result;
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
-static int process_arguments(int argc, char **argv) {
+static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_tcp_config config) {
 	enum {
-		SNI_OPTION = CHAR_MAX + 1
+		SNI_OPTION = CHAR_MAX + 1,
+		output_format_index,
 	};
 
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
@@ -404,54 +493,58 @@ static int process_arguments(int argc, char **argv) {
 									   {"ssl", no_argument, 0, 'S'},
 									   {"sni", required_argument, 0, SNI_OPTION},
 									   {"certificate", required_argument, 0, 'D'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage4(_("No arguments found"));
+	}
 
 	/* backwards compatibility */
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
+		}
 	}
 
 	if (!is_option(argv[1])) {
-		server_address = argv[1];
+		config.server_address = argv[1];
 		argv[1] = argv[0];
 		argv = &argv[1];
 		argc--;
 	}
 
-	int option_char;
 	bool escape = false;
+
 	while (true) {
 		int option = 0;
-		option_char = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
+		int option_index = getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF || option_char == 1)
+		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
+		}
 
-		switch (option_char) {
+		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
 			usage5();
 		case 'h': /* help */
-			print_help();
+			print_help(config.service);
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
-			flags |= FLAG_VERBOSE;
-			match_flags |= NP_MATCH_VERBOSE;
+			verbosity++;
+			config.match_flags |= NP_MATCH_VERBOSE;
 			break;
-		case '4':
+		case '4': // Apparently unused TODO
 			address_family = AF_INET;
 			break;
-		case '6':
+		case '6': // Apparently unused TODO
 #ifdef USE_IPV6
 			address_family = AF_INET6;
 #else
@@ -459,163 +552,190 @@ static int process_arguments(int argc, char **argv) {
 #endif
 			break;
 		case 'H': /* hostname */
-			host_specified = true;
-			server_address = optarg;
+			config.host_specified = true;
+			config.server_address = optarg;
 			break;
 		case 'c': /* critical */
-			critical_time = strtod(optarg, NULL);
-			flags |= FLAG_TIME_CRIT;
+			config.critical_time = strtod(optarg, NULL);
+			config.critical_time_set = true;
 			break;
 		case 'j': /* hide output */
-			flags |= FLAG_HIDE_OUTPUT;
+			config.hide_output = true;
 			break;
 		case 'w': /* warning */
-			warning_time = strtod(optarg, NULL);
-			flags |= FLAG_TIME_WARN;
-			break;
-		case 'C':
-			crit_codes = realloc(crit_codes, ++crit_codes_count);
-			crit_codes[crit_codes_count - 1] = optarg;
-			break;
-		case 'W':
-			warn_codes = realloc(warn_codes, ++warn_codes_count);
-			warn_codes[warn_codes_count - 1] = optarg;
+			config.warning_time = strtod(optarg, NULL);
+			config.warning_time_set = true;
 			break;
 		case 't': /* timeout */
-			if (!is_intpos(optarg))
+			if (!is_intpos(optarg)) {
 				usage4(_("Timeout interval must be a positive integer"));
-			else
+			} else {
 				socket_timeout = atoi(optarg);
+			}
 			break;
 		case 'p': /* port */
-			if (!is_intpos(optarg))
+			if (!is_intpos(optarg)) {
 				usage4(_("Port must be a positive integer"));
-			else
-				server_port = atoi(optarg);
+			} else {
+				config.server_port = atoi(optarg);
+			}
 			break;
 		case 'E':
 			escape = true;
 			break;
 		case 's':
-			if (escape)
-				server_send = np_escaped_string(optarg);
-			else
-				xasprintf(&server_send, "%s", optarg);
+			if (escape) {
+				config.send = np_escaped_string(optarg);
+			} else {
+				xasprintf(&config.send, "%s", optarg);
+			}
 			break;
 		case 'e': /* expect string (may be repeated) */
-			match_flags &= ~NP_MATCH_EXACT;
-			if (server_expect_count == 0)
-				server_expect = malloc(sizeof(char *) * (++server_expect_count));
-			else
-				server_expect = realloc(server_expect, sizeof(char *) * (++server_expect_count));
-			server_expect[server_expect_count - 1] = optarg;
+			config.match_flags &= ~NP_MATCH_EXACT;
+			if (config.server_expect_count == 0) {
+				config.server_expect = malloc(sizeof(char *) * (++config.server_expect_count));
+			} else {
+				config.server_expect = realloc(config.server_expect, sizeof(char *) * (++config.server_expect_count));
+			}
+
+			if (config.server_expect == NULL) {
+				die(STATE_UNKNOWN, _("Allocation failed"));
+			}
+			config.server_expect[config.server_expect_count - 1] = optarg;
 			break;
 		case 'm':
-			if (!is_intpos(optarg))
+			if (!is_intpos(optarg)) {
 				usage4(_("Maxbytes must be a positive integer"));
-			else
-				maxbytes = strtol(optarg, NULL, 0);
+			} else {
+				config.maxbytes = strtol(optarg, NULL, 0);
+			}
 			break;
 		case 'q':
-			if (escape)
-				server_quit = np_escaped_string(optarg);
-			else
-				xasprintf(&server_quit, "%s\r\n", optarg);
+			if (escape) {
+				config.quit = np_escaped_string(optarg);
+			} else {
+				xasprintf(&config.quit, "%s\r\n", optarg);
+			}
 			break;
 		case 'r':
-			if (!strncmp(optarg, "ok", 2))
-				econn_refuse_state = STATE_OK;
-			else if (!strncmp(optarg, "warn", 4))
-				econn_refuse_state = STATE_WARNING;
-			else if (!strncmp(optarg, "crit", 4))
-				econn_refuse_state = STATE_CRITICAL;
-			else
+			if (!strncmp(optarg, "ok", 2)) {
+				config.econn_refuse_state = STATE_OK;
+			} else if (!strncmp(optarg, "warn", 4)) {
+				config.econn_refuse_state = STATE_WARNING;
+			} else if (!strncmp(optarg, "crit", 4)) {
+				config.econn_refuse_state = STATE_CRITICAL;
+			} else {
 				usage4(_("Refuse must be one of ok, warn, crit"));
+			}
 			break;
 		case 'M':
-			if (!strncmp(optarg, "ok", 2))
-				expect_mismatch_state = STATE_OK;
-			else if (!strncmp(optarg, "warn", 4))
-				expect_mismatch_state = STATE_WARNING;
-			else if (!strncmp(optarg, "crit", 4))
-				expect_mismatch_state = STATE_CRITICAL;
-			else
+			if (!strncmp(optarg, "ok", 2)) {
+				config.expect_mismatch_state = STATE_OK;
+			} else if (!strncmp(optarg, "warn", 4)) {
+				config.expect_mismatch_state = STATE_WARNING;
+			} else if (!strncmp(optarg, "crit", 4)) {
+				config.expect_mismatch_state = STATE_CRITICAL;
+			} else {
 				usage4(_("Mismatch must be one of ok, warn, crit"));
+			}
 			break;
 		case 'd':
-			if (is_intpos(optarg))
-				delay = atoi(optarg);
-			else
+			if (is_intpos(optarg)) {
+				config.delay = atoi(optarg);
+			} else {
 				usage4(_("Delay must be a positive integer"));
+			}
 			break;
-		case 'D': { /* Check SSL cert validity - days 'til certificate expiration */
+		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
 #	ifdef USE_OPENSSL /* XXX */
+		{
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg))
+				if (!is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
-				days_till_exp_warn = atoi(optarg);
+				}
+				config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp))
+				if (!is_intnonneg(temp)) {
 					usage2(_("Invalid certificate expiration period"), temp);
-				days_till_exp_crit = atoi(temp);
+				}
+				config.days_till_exp_crit = atoi(temp);
 			} else {
-				days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg))
+				config.days_till_exp_crit = 0;
+				if (!is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
-				days_till_exp_warn = atoi(optarg);
+				}
+				config.days_till_exp_warn = atoi(optarg);
 			}
-			check_cert = true;
-			flags |= FLAG_SSL;
+			config.check_cert = true;
+			config.use_tls = true;
 		} break;
 #	endif /* USE_OPENSSL */
 #endif
 			/* fallthrough if we don't have ssl */
 		case 'S':
 #ifdef HAVE_SSL
-			flags |= FLAG_SSL;
+			config.use_tls = true;
 #else
 			die(STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
 		case SNI_OPTION:
 #ifdef HAVE_SSL
-			flags |= FLAG_SSL;
-			sni_specified = true;
-			sni = optarg;
+			config.use_tls = true;
+			config.sni_specified = true;
+			config.sni = optarg;
 #else
 			die(STATE_UNKNOWN, _("Invalid option - SSL is not available"));
 #endif
 			break;
 		case 'A':
-			match_flags |= NP_MATCH_ALL;
+			config.match_flags |= NP_MATCH_ALL;
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			config.output_format_set = true;
+			config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
-	option_char = optind;
-	if (!host_specified && option_char < argc)
-		server_address = strdup(argv[option_char++]);
+	int index = optind;
+	if (!config.host_specified && index < argc) {
+		config.server_address = strdup(argv[index++]);
+	}
 
-	if (server_address == NULL)
+	if (config.server_address == NULL) {
 		usage4(_("You must provide a server address"));
-	else if (server_address[0] != '/' && !is_host(server_address))
-		die(STATE_CRITICAL, "%s %s - %s: %s\n", SERVICE, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"),
-			server_address);
+	} else if (config.server_address[0] != '/' && !is_host(config.server_address)) {
+		die(STATE_CRITICAL, "%s %s - %s: %s\n", config.service, state_text(STATE_CRITICAL), _("Invalid hostname, address or socket"),
+			config.server_address);
+	}
 
-	return OK;
+	check_tcp_config_wrapper result = {
+		.config = config,
+		.errorcode = OK,
+	};
+	return result;
 }
 
-void print_help(void) {
+void print_help(const char *service) {
 	print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf(_("This plugin tests %s connections with the specified host (or unix socket).\n\n"), SERVICE);
+	printf(_("This plugin tests %s connections with the specified host (or unix socket).\n\n"), service);
 
 	print_usage();
 
@@ -662,6 +782,7 @@ void print_help(void) {
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
+	printf(UT_OUTPUT_FORMAT);
 	printf(UT_VERBOSE);
 
 	printf(UT_SUPPORT);

@@ -31,7 +31,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include "config.h"
+#include "../config.h"
 #include "../lib/monitoringplug.h"
 
 #ifdef HAVE_FEATURES_H
@@ -110,7 +110,7 @@
 
 /* GNU Libraries */
 #include <getopt.h>
-#include "dirname.h"
+#include "../gl/dirname.h"
 
 #include <locale.h>
 
@@ -190,7 +190,7 @@ enum {
  * Internationalization
  *
  */
-#include "gettext.h"
+#include "../gl/gettext.h"
 #define _(String) gettext (String)
 #if ! ENABLE_NLS
 # undef textdomain

@@ -1,8 +1,15 @@
 #!/bin/sh -e
+
+. /etc/os-release
+
 # workaround for really bare-bones Archlinux containers:
 if [ -x "$(command -v pacman)" ]; then
     pacman --noconfirm -Sy
     pacman --noconfirm -S grep gawk sed
+fi
+
+if [ ${ID} == "fedora" -a ${VERSION_ID} -gt 41 ]; then
+    dnf install -y gawk
 fi
 
 os_release_file=

@@ -35,6 +35,7 @@
  *
  *****************************************************************************/
 
+#include "thresholds.h"
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -42,30 +43,18 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
+#include "../lib/states.h"
+#include "check_ntp_peer.d/config.h"
 
-static char *server_address = NULL;
-static int port = 123;
 static int verbose = 0;
-static bool quiet = false;
-static char *owarn = "60";
-static char *ocrit = "120";
-static bool do_stratum = false;
-static char *swarn = "-1:16";
-static char *scrit = "-1:16";
-static bool do_jitter = false;
-static char *jwarn = "-1:5000";
-static char *jcrit = "-1:10000";
-static bool do_truechimers = false;
-static char *twarn = "0:";
-static char *tcrit = "0:";
 static bool syncsource_found = false;
 static bool li_alarm = false;
 
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static thresholds *offset_thresholds = NULL;
-static thresholds *jitter_thresholds = NULL;
-static thresholds *stratum_thresholds = NULL;
-static thresholds *truechimer_thresholds = NULL;
+typedef struct {
+	int errorcode;
+	check_ntp_peer_config config;
+} check_ntp_peer_config_wrapper;
+static check_ntp_peer_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -157,25 +146,25 @@ typedef struct {
 		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);                                              \
 	} while (0);
 
-void print_ntp_control_message(const ntp_control_message *p) {
+void print_ntp_control_message(const ntp_control_message *message) {
 	printf("control packet contents:\n");
-	printf("\tflags: 0x%.2x , 0x%.2x\n", p->flags, p->op);
-	printf("\t  li=%d (0x%.2x)\n", LI(p->flags), p->flags & LI_MASK);
-	printf("\t  vn=%d (0x%.2x)\n", VN(p->flags), p->flags & VN_MASK);
-	printf("\t  mode=%d (0x%.2x)\n", MODE(p->flags), p->flags & MODE_MASK);
-	printf("\t  response=%d (0x%.2x)\n", (p->op & REM_RESP) > 0, p->op & REM_RESP);
-	printf("\t  more=%d (0x%.2x)\n", (p->op & REM_MORE) > 0, p->op & REM_MORE);
-	printf("\t  error=%d (0x%.2x)\n", (p->op & REM_ERROR) > 0, p->op & REM_ERROR);
-	printf("\t  op=%d (0x%.2x)\n", p->op & OP_MASK, p->op & OP_MASK);
-	printf("\tsequence: %d (0x%.2x)\n", ntohs(p->seq), ntohs(p->seq));
-	printf("\tstatus: %d (0x%.2x)\n", ntohs(p->status), ntohs(p->status));
-	printf("\tassoc: %d (0x%.2x)\n", ntohs(p->assoc), ntohs(p->assoc));
-	printf("\toffset: %d (0x%.2x)\n", ntohs(p->offset), ntohs(p->offset));
-	printf("\tcount: %d (0x%.2x)\n", ntohs(p->count), ntohs(p->count));
+	printf("\tflags: 0x%.2x , 0x%.2x\n", message->flags, message->op);
+	printf("\t  li=%d (0x%.2x)\n", LI(message->flags), message->flags & LI_MASK);
+	printf("\t  vn=%d (0x%.2x)\n", VN(message->flags), message->flags & VN_MASK);
+	printf("\t  mode=%d (0x%.2x)\n", MODE(message->flags), message->flags & MODE_MASK);
+	printf("\t  response=%d (0x%.2x)\n", (message->op & REM_RESP) > 0, message->op & REM_RESP);
+	printf("\t  more=%d (0x%.2x)\n", (message->op & REM_MORE) > 0, message->op & REM_MORE);
+	printf("\t  error=%d (0x%.2x)\n", (message->op & REM_ERROR) > 0, message->op & REM_ERROR);
+	printf("\t  op=%d (0x%.2x)\n", message->op & OP_MASK, message->op & OP_MASK);
+	printf("\tsequence: %d (0x%.2x)\n", ntohs(message->seq), ntohs(message->seq));
+	printf("\tstatus: %d (0x%.2x)\n", ntohs(message->status), ntohs(message->status));
+	printf("\tassoc: %d (0x%.2x)\n", ntohs(message->assoc), ntohs(message->assoc));
+	printf("\toffset: %d (0x%.2x)\n", ntohs(message->offset), ntohs(message->offset));
+	printf("\tcount: %d (0x%.2x)\n", ntohs(message->count), ntohs(message->count));
 
-	int numpeers = ntohs(p->count) / (sizeof(ntp_assoc_status_pair));
-	if (p->op & REM_RESP && p->op & OP_READSTAT) {
-		const ntp_assoc_status_pair *peer = (ntp_assoc_status_pair *)p->data;
+	int numpeers = ntohs(message->count) / (sizeof(ntp_assoc_status_pair));
+	if (message->op & REM_RESP && message->op & OP_READSTAT) {
+		const ntp_assoc_status_pair *peer = (ntp_assoc_status_pair *)message->data;
 		for (int i = 0; i < numpeers; i++) {
 			printf("\tpeer id %.2x status %.2x", ntohs(peer[i].assoc), ntohs(peer[i].status));
 			if (PEER_SEL(peer[i].status) >= PEER_SYNCSOURCE) {
@@ -190,13 +179,13 @@ void print_ntp_control_message(const ntp_control_message *p) {
 	}
 }
 
-void setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq) {
-	memset(p, 0, sizeof(ntp_control_message));
-	LI_SET(p->flags, LI_NOWARNING);
-	VN_SET(p->flags, VN_RESERVED);
-	MODE_SET(p->flags, MODE_CONTROLMSG);
-	OP_SET(p->op, opcode);
-	p->seq = htons(seq);
+void setup_control_request(ntp_control_message *message, uint8_t opcode, uint16_t seq) {
+	memset(message, 0, sizeof(ntp_control_message));
+	LI_SET(message->flags, LI_NOWARNING);
+	VN_SET(message->flags, VN_RESERVED);
+	MODE_SET(message->flags, MODE_CONTROLMSG);
+	OP_SET(message->op, opcode);
+	message->seq = htons(seq);
 	/* Remaining fields are zero for requests */
 }
 
@@ -211,10 +200,23 @@ void setup_control_request(ntp_control_message *p, uint8_t opcode, uint16_t seq)
  *  status is pretty much useless as syncsource_found is a global variable
  *  used later in main to check is the server was synchronized. It works
  *  so I left it alone */
-int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum, int *num_truechimers) {
-	*offset_result = STATE_UNKNOWN;
-	*jitter = *stratum = -1;
-	*num_truechimers = 0;
+typedef struct {
+	mp_state_enum state;
+	mp_state_enum offset_result;
+	double offset;
+	double jitter;
+	long stratum;
+	int num_truechimers;
+} ntp_request_result;
+ntp_request_result ntp_request(const check_ntp_peer_config config) {
+
+	ntp_request_result result = {
+		.state = STATE_OK,
+		.offset_result = STATE_UNKNOWN,
+		.jitter = -1,
+		.stratum = -1,
+		.num_truechimers = 0,
+	};
 
 	/* Long-winded explanation:
 	 * Getting the sync peer offset, jitter and stratum requires a number of
@@ -237,10 +239,10 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	void *tmp;
 	ntp_assoc_status_pair *peers = NULL;
 	int peer_offset = 0;
-	int peers_size = 0;
-	int npeers = 0;
+	size_t peers_size = 0;
+	size_t npeers = 0;
 	int conn = -1;
-	my_udp_connect(server_address, port, &conn);
+	my_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
@@ -255,24 +257,28 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 			/* Attempt to read the largest size packet possible */
 			req.count = htons(MAX_CM_SIZE);
 			DBG(printf("receiving READSTAT response"))
-			if (read(conn, &req, SIZEOF_NTPCM(req)) == -1)
+			if (read(conn, &req, SIZEOF_NTPCM(req)) == -1) {
 				die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
+			}
 			DBG(print_ntp_control_message(&req));
 			/* discard obviously invalid packets */
-			if (ntohs(req.count) > MAX_CM_SIZE)
+			if (ntohs(req.count) > MAX_CM_SIZE) {
 				die(STATE_CRITICAL, "NTP CRITICAL: Invalid packet received from NTP server\n");
+			}
 		} while (!(req.op & OP_READSTAT && ntohs(req.seq) == 1));
 
-		if (LI(req.flags) == LI_ALARM)
+		if (LI(req.flags) == LI_ALARM) {
 			li_alarm = true;
+		}
 		/* Each peer identifier is 4 bytes in the data section, which
 		 * we represent as a ntp_assoc_status_pair datatype.
 		 */
 		peers_size += ntohs(req.count);
-		if ((tmp = realloc(peers, peers_size)) == NULL)
+		if ((tmp = realloc(peers, peers_size)) == NULL) {
 			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
+		}
 		peers = tmp;
-		memcpy((void *)((ptrdiff_t)peers + peer_offset), (void *)req.data, ntohs(req.count));
+		memcpy((peers + peer_offset), (void *)req.data, ntohs(req.count));
 		npeers = peers_size / sizeof(ntp_assoc_status_pair);
 		peer_offset += ntohs(req.count);
 	} while (req.op & REM_MORE);
@@ -280,9 +286,9 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 	/* first, let's find out if we have a sync source, or if there are
 	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
-	for (int i = 0; i < npeers; i++) {
+	for (size_t i = 0; i < npeers; i++) {
 		if (PEER_SEL(peers[i].status) >= PEER_TRUECHIMER) {
-			(*num_truechimers)++;
+			result.num_truechimers++;
 			if (PEER_SEL(peers[i].status) >= PEER_INCLUDED) {
 				num_candidates++;
 				if (PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE) {
@@ -293,31 +299,35 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("%d candidate peers available\n", num_candidates);
-	if (verbose && syncsource_found)
+	}
+	if (verbose && syncsource_found) {
 		printf("synchronization source found\n");
+	}
 
-	int status = STATE_OK;
 	if (!syncsource_found) {
-		status = STATE_WARNING;
-		if (verbose)
+		result.state = STATE_WARNING;
+		if (verbose) {
 			printf("warning: no synchronization source found\n");
+		}
 	}
 	if (li_alarm) {
-		status = STATE_WARNING;
-		if (verbose)
+		result.state = STATE_WARNING;
+		if (verbose) {
 			printf("warning: LI_ALARM bit is set\n");
+		}
 	}
 
 	const char *getvar = "stratum,offset,jitter";
 	char *data;
-	for (int i = 0; i < npeers; i++) {
+	for (size_t i = 0; i < npeers; i++) {
 		/* Only query this server if it is the current sync source */
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel) {
-			if (verbose)
+			if (verbose) {
 				printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
+			}
 			xasprintf(&data, "");
 			do {
 				setup_control_request(&req, OP_READVAR, 2);
@@ -342,60 +352,68 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 					DBG(print_ntp_control_message(&req));
 				} while (!(req.op & OP_READVAR && ntohs(req.seq) == 2));
 
-				if (!(req.op & REM_ERROR))
+				if (!(req.op & REM_ERROR)) {
 					xasprintf(&data, "%s%s", data, req.data);
+				}
 			} while (req.op & REM_MORE);
 
 			if (req.op & REM_ERROR) {
 				if (strstr(getvar, "jitter")) {
-					if (verbose)
+					if (verbose) {
 						printf("The command failed. This is usually caused by servers refusing the 'jitter'\nvariable. Restarting with "
 							   "'dispersion'...\n");
+					}
 					getvar = "stratum,offset,dispersion";
 					i--;
 					continue;
 				}
 				if (strlen(getvar)) {
-					if (verbose)
+					if (verbose) {
 						printf("Server didn't like dispersion either; will retrieve everything\n");
+					}
 					getvar = "";
 					i--;
 					continue;
 				}
 			}
 
-			if (verbose > 1)
+			if (verbose > 1) {
 				printf("Server responded: >>>%s<<<\n", data);
+			}
 
 			double tmp_offset = 0;
 			char *value;
 			char *nptr;
 			/* get the offset */
-			if (verbose)
+			if (verbose) {
 				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
+			}
 
 			value = np_extract_ntpvar(data, "offset");
 			nptr = NULL;
 			/* Convert the value if we have one */
-			if (value != NULL)
+			if (value != NULL) {
 				tmp_offset = strtod(value, &nptr) / 1000;
+			}
 			/* If value is null or no conversion was performed */
 			if (value == NULL || value == nptr) {
-				if (verbose)
+				if (verbose) {
 					printf("error: unable to read server offset response.\n");
+				}
 			} else {
-				if (verbose)
+				if (verbose) {
 					printf("%.10g\n", tmp_offset);
-				if (*offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(*offset)) {
-					*offset = tmp_offset;
-					*offset_result = STATE_OK;
+				}
+				if (result.offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(result.offset)) {
+					result.offset = tmp_offset;
+					result.offset_result = STATE_OK;
 				} else {
 					/* Skip this one; move to the next */
 					continue;
 				}
 			}
 
-			if (do_jitter) {
+			if (config.do_jitter) {
 				/* get the jitter */
 				if (verbose) {
 					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
@@ -404,19 +422,21 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				nptr = NULL;
 				/* Convert the value if we have one */
-				if (value != NULL)
-					*jitter = strtod(value, &nptr);
+				if (value != NULL) {
+					result.jitter = strtod(value, &nptr);
+				}
 				/* If value is null or no conversion was performed */
 				if (value == NULL || value == nptr) {
-					if (verbose)
+					if (verbose) {
 						printf("error: unable to read server jitter/dispersion response.\n");
-					*jitter = -1;
+					}
+					result.jitter = -1;
 				} else if (verbose) {
-					printf("%.10g\n", *jitter);
+					printf("%.10g\n", result.jitter);
 				}
 			}
 
-			if (do_stratum) {
+			if (config.do_stratum) {
 				/* get the stratum */
 				if (verbose) {
 					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
@@ -424,28 +444,32 @@ int ntp_request(double *offset, int *offset_result, double *jitter, int *stratum
 				value = np_extract_ntpvar(data, "stratum");
 				nptr = NULL;
 				/* Convert the value if we have one */
-				if (value != NULL)
-					*stratum = strtol(value, &nptr, 10);
+				if (value != NULL) {
+					result.stratum = strtol(value, &nptr, 10);
+				}
 				if (value == NULL || value == nptr) {
-					if (verbose)
+					if (verbose) {
 						printf("error: unable to read server stratum response.\n");
-					*stratum = -1;
+					}
+					result.stratum = -1;
 				} else {
-					if (verbose)
-						printf("%i\n", *stratum);
+					if (verbose) {
+						printf("%li\n", result.stratum);
+					}
 				}
 			}
 		} /* if (PEER_SEL(peers[i].status) >= min_peer_sel) */
-	}     /* for (i = 0; i < npeers; i++) */
+	} /* for (i = 0; i < npeers; i++) */
 
 	close(conn);
-	if (peers != NULL)
+	if (peers != NULL) {
 		free(peers);
+	}
 
-	return status;
+	return result;
 }
 
-int process_arguments(int argc, char **argv) {
+check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"verbose", no_argument, 0, 'v'},
 		{"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},       {"quiet", no_argument, 0, 'q'},
@@ -454,14 +478,21 @@ int process_arguments(int argc, char **argv) {
 		{"twarn", required_argument, 0, 'm'},    {"tcrit", required_argument, 0, 'n'},    {"timeout", required_argument, 0, 't'},
 		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'p'},     {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage("\n");
+	}
+
+	check_ntp_peer_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_ntp_peer_config_init(),
+	};
 
 	while (true) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
-		if (option_char == -1 || option_char == EOF || option_char == 1)
+		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'h':
@@ -476,45 +507,46 @@ int process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'q':
-			quiet = true;
+			result.config.quiet = true;
 			break;
 		case 'w':
-			owarn = optarg;
+			result.config.owarn = optarg;
 			break;
 		case 'c':
-			ocrit = optarg;
+			result.config.ocrit = optarg;
 			break;
 		case 'W':
-			do_stratum = true;
-			swarn = optarg;
+			result.config.do_stratum = true;
+			result.config.swarn = optarg;
 			break;
 		case 'C':
-			do_stratum = true;
-			scrit = optarg;
+			result.config.do_stratum = true;
+			result.config.scrit = optarg;
 			break;
 		case 'j':
-			do_jitter = true;
-			jwarn = optarg;
+			result.config.do_jitter = true;
+			result.config.jwarn = optarg;
 			break;
 		case 'k':
-			do_jitter = true;
-			jcrit = optarg;
+			result.config.do_jitter = true;
+			result.config.jcrit = optarg;
 			break;
 		case 'm':
-			do_truechimers = true;
-			twarn = optarg;
+			result.config.do_truechimers = true;
+			result.config.twarn = optarg;
 			break;
 		case 'n':
-			do_truechimers = true;
-			tcrit = optarg;
+			result.config.do_truechimers = true;
+			result.config.tcrit = optarg;
 			break;
 		case 'H':
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
-			server_address = strdup(optarg);
+			}
+			result.config.server_address = strdup(optarg);
 			break;
 		case 'p':
-			port = atoi(optarg);
+			result.config.port = atoi(optarg);
 			break;
 		case 't':
 			socket_timeout = atoi(optarg);
@@ -536,29 +568,34 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	return 0;
+	set_thresholds(&result.config.offset_thresholds, result.config.owarn, result.config.ocrit);
+	set_thresholds(&result.config.jitter_thresholds, result.config.jwarn, result.config.jcrit);
+	set_thresholds(&result.config.stratum_thresholds, result.config.swarn, result.config.scrit);
+	set_thresholds(&result.config.truechimer_thresholds, result.config.twarn, result.config.tcrit);
+
+	return result;
 }
 
-char *perfd_offset(double offset) {
+char *perfd_offset(double offset, thresholds *offset_thresholds) {
 	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
 					 0);
 }
 
-char *perfd_jitter(double jitter) {
+char *perfd_jitter(double jitter, bool do_jitter, thresholds *jitter_thresholds) {
 	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter, jitter_thresholds->critical->end, true, 0,
 					 false, 0);
 }
 
-char *perfd_stratum(int stratum) {
+char *perfd_stratum(int stratum, bool do_stratum, thresholds *stratum_thresholds) {
 	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end, do_stratum,
 					(int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
-char *perfd_truechimers(int num_truechimers) {
+char *perfd_truechimers(int num_truechimers, const bool do_truechimers, thresholds *truechimer_thresholds) {
 	return perfdata("truechimers", num_truechimers, "", do_truechimers, (int)truechimer_thresholds->warning->end, do_truechimers,
 					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
@@ -571,13 +608,13 @@ int main(int argc, char *argv[]) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
-		usage4(_("Could not parse arguments"));
+	check_ntp_peer_config_wrapper tmp_config = process_arguments(argc, argv);
 
-	set_thresholds(&offset_thresholds, owarn, ocrit);
-	set_thresholds(&jitter_thresholds, jwarn, jcrit);
-	set_thresholds(&stratum_thresholds, swarn, scrit);
-	set_thresholds(&truechimer_thresholds, twarn, tcrit);
+	if (tmp_config.errorcode == ERROR) {
+		usage4(_("Could not parse arguments"));
+	}
+
+	const check_ntp_peer_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -585,44 +622,40 @@ int main(int argc, char *argv[]) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	int offset_result;
-	int stratum;
-	int num_truechimers;
-	double offset = 0;
-	double jitter = 0;
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
-	int result = ntp_request(&offset, &offset_result, &jitter, &stratum, &num_truechimers);
+	ntp_request_result ntp_res = ntp_request(config);
+	mp_state_enum result = STATE_UNKNOWN;
 
-	if (offset_result == STATE_UNKNOWN) {
+	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
-		result = (quiet ? STATE_UNKNOWN : STATE_CRITICAL);
+		result = (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (quiet && result == STATE_WARNING)
+		if (config.quiet && result == STATE_WARNING) {
 			result = STATE_UNKNOWN;
-		result = max_state_alt(result, get_status(fabs(offset), offset_thresholds));
+		}
+		result = max_state_alt(result, get_status(fabs(ntp_res.offset), config.offset_thresholds));
 	}
 
-	int oresult = result;
+	mp_state_enum oresult = result;
+	mp_state_enum tresult = STATE_UNKNOWN;
 
-	int tresult = STATE_UNKNOWN;
-
-	if (do_truechimers) {
-		tresult = get_status(num_truechimers, truechimer_thresholds);
+	if (config.do_truechimers) {
+		tresult = get_status(ntp_res.num_truechimers, config.truechimer_thresholds);
 		result = max_state_alt(result, tresult);
 	}
 
-	int sresult = STATE_UNKNOWN;
+	mp_state_enum sresult = STATE_UNKNOWN;
 
-	if (do_stratum) {
-		sresult = get_status(stratum, stratum_thresholds);
+	if (config.do_stratum) {
+		sresult = get_status((double)ntp_res.stratum, config.stratum_thresholds);
 		result = max_state_alt(result, sresult);
 	}
 
-	int jresult = STATE_UNKNOWN;
+	mp_state_enum jresult = STATE_UNKNOWN;
 
-	if (do_jitter) {
-		jresult = get_status(jitter, jitter_thresholds);
+	if (config.do_jitter) {
+		jresult = get_status(ntp_res.jitter, config.jitter_thresholds);
 		result = max_state_alt(result, jresult);
 	}
 
@@ -641,59 +674,67 @@ int main(int argc, char *argv[]) {
 		xasprintf(&result_line, _("NTP UNKNOWN:"));
 		break;
 	}
-	if (!syncsource_found)
+
+	if (!syncsource_found) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
-	else if (li_alarm)
+	} else if (li_alarm) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
+	}
 
 	char *perfdata_line;
-	if (offset_result == STATE_UNKNOWN) {
+	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		xasprintf(&perfdata_line, "");
 	} else if (oresult == STATE_WARNING) {
-		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"), offset);
+		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"), ntp_res.offset);
 	} else if (oresult == STATE_CRITICAL) {
-		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), offset);
+		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), ntp_res.offset);
 	} else {
-		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
+		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), ntp_res.offset);
 	}
-	xasprintf(&perfdata_line, "%s", perfd_offset(offset));
+	xasprintf(&perfdata_line, "%s", perfd_offset(ntp_res.offset, config.offset_thresholds));
 
-	if (do_jitter) {
+	if (config.do_jitter) {
 		if (jresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, jitter);
+			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, ntp_res.jitter);
 		} else if (jresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, jitter=%f (CRITICAL)", result_line, jitter);
+			xasprintf(&result_line, "%s, jitter=%f (CRITICAL)", result_line, ntp_res.jitter);
 		} else {
-			xasprintf(&result_line, "%s, jitter=%f", result_line, jitter);
+			xasprintf(&result_line, "%s, jitter=%f", result_line, ntp_res.jitter);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(jitter));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(ntp_res.jitter, config.do_jitter, config.jitter_thresholds));
 	}
-	if (do_stratum) {
+
+	if (config.do_stratum) {
 		if (sresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, stratum=%i (WARNING)", result_line, stratum);
+			xasprintf(&result_line, "%s, stratum=%l (WARNING)", result_line, ntp_res.stratum);
 		} else if (sresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, stratum=%i (CRITICAL)", result_line, stratum);
+			xasprintf(&result_line, "%s, stratum=%l (CRITICAL)", result_line, ntp_res.stratum);
 		} else {
-			xasprintf(&result_line, "%s, stratum=%i", result_line, stratum);
+			xasprintf(&result_line, "%s, stratum=%l", result_line, ntp_res.stratum);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(stratum));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
 	}
-	if (do_truechimers) {
+
+	if (config.do_truechimers) {
 		if (tresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, num_truechimers);
+			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, ntp_res.num_truechimers);
 		} else if (tresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line, num_truechimers);
+			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line, ntp_res.num_truechimers);
 		} else {
-			xasprintf(&result_line, "%s, truechimers=%i", result_line, num_truechimers);
+			xasprintf(&result_line, "%s, truechimers=%i", result_line, ntp_res.num_truechimers);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_truechimers(num_truechimers));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line,
+				  perfd_truechimers(ntp_res.num_truechimers, config.do_truechimers, config.truechimer_thresholds));
 	}
+
 	printf("%s|%s\n", result_line, perfdata_line);
 
-	if (server_address != NULL)
-		free(server_address);
-	return result;
+	if (config.server_address != NULL) {
+		free(config.server_address);
+	}
+
+	exit(result);
 }
 
 void print_help(void) {

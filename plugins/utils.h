@@ -76,7 +76,7 @@ char *strnl(char *);
 char *strpcpy(char *, const char *, const char *);
 char *strpcat(char *, const char *, const char *);
 int xvasprintf(char **strp, const char *fmt, va_list ap);
-int xasprintf(char **strp, const char *fmt, ...);
+int xasprintf(char **strp, const char *fmt, ...)__attribute__ ((format (printf, 2, 3)));
 
 void usage(const char *) __attribute__((noreturn));
 void usage2(const char *, const char *) __attribute__((noreturn));
