@@ -72,6 +72,7 @@ EXTRA_DIST = t \
 			 check_ntp_peer.d \
 			 check_apt.d \
 			 check_pgsql.d \
+			 check_procs.d \
 			 check_ping.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
