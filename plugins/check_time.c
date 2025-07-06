@@ -28,6 +28,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "check_time";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -35,28 +36,15 @@ const char *email = "devel@monitoring-plugins.org";
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
-
-enum {
-	TIME_PORT = 37
-};
+#include "check_time.d/config.h"
 
 #define UNIX_EPOCH 2208988800UL
 
-static uint32_t raw_server_time;
-static unsigned long server_time, diff_time;
-static int warning_time = 0;
-static bool check_warning_time = false;
-static int critical_time = 0;
-static bool check_critical_time = false;
-static unsigned long warning_diff = 0;
-static bool check_warning_diff = false;
-static unsigned long critical_diff = 0;
-static bool check_critical_diff = false;
-static int server_port = TIME_PORT;
-static char *server_address = NULL;
-static bool use_udp = false;
-
-static int process_arguments(int, char **);
+typedef struct {
+	int errorcode;
+	check_time_config config;
+} check_time_config_wrapper;
+static check_time_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -68,8 +56,12 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_time_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
+
+	const check_time_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
@@ -79,37 +71,40 @@ int main(int argc, char **argv) {
 	time(&start_time);
 
 	int socket;
-	int result = STATE_UNKNOWN;
+	mp_state_enum result = STATE_UNKNOWN;
 	/* try to connect to the host at the given port number */
-	if (use_udp) {
-		result = my_udp_connect(server_address, server_port, &socket);
+	if (config.use_udp) {
+		result = my_udp_connect(config.server_address, config.server_port, &socket);
 	} else {
-		result = my_tcp_connect(server_address, server_port, &socket);
+		result = my_tcp_connect(config.server_address, config.server_port, &socket);
 	}
 
 	if (result != STATE_OK) {
-		if (check_critical_time)
+		if (config.check_critical_time) {
 			result = STATE_CRITICAL;
-		else if (check_warning_time)
+		} else if (config.check_warning_time) {
 			result = STATE_WARNING;
-		else
+		} else {
 			result = STATE_UNKNOWN;
-		die(result, _("TIME UNKNOWN - could not connect to server %s, port %d\n"), server_address, server_port);
+		}
+		die(result, _("TIME UNKNOWN - could not connect to server %s, port %d\n"), config.server_address, config.server_port);
 	}
 
-	if (use_udp) {
+	if (config.use_udp) {
 		if (send(socket, "", 0, 0) < 0) {
-			if (check_critical_time)
+			if (config.check_critical_time) {
 				result = STATE_CRITICAL;
-			else if (check_warning_time)
+			} else if (config.check_warning_time) {
 				result = STATE_WARNING;
-			else
+			} else {
 				result = STATE_UNKNOWN;
-			die(result, _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"), server_address, server_port);
+			}
+			die(result, _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"), config.server_address, config.server_port);
 		}
 	}
 
 	/* watch for the connection string */
+	uint32_t raw_server_time;
 	result = recv(socket, (void *)&raw_server_time, sizeof(raw_server_time), 0);
 
 	/* close the connection */
@@ -121,48 +116,56 @@ int main(int argc, char **argv) {
 
 	/* return a WARNING status if we couldn't read any data */
 	if (result <= 0) {
-		if (check_critical_time)
+		if (config.check_critical_time) {
 			result = STATE_CRITICAL;
-		else if (check_warning_time)
+		} else if (config.check_warning_time) {
 			result = STATE_WARNING;
-		else
+		} else {
 			result = STATE_UNKNOWN;
-		die(result, _("TIME UNKNOWN - no data received from server %s, port %d\n"), server_address, server_port);
+		}
+		die(result, _("TIME UNKNOWN - no data received from server %s, port %d\n"), config.server_address, config.server_port);
 	}
 
 	result = STATE_OK;
 
 	time_t conntime = (end_time - start_time);
-	if (check_critical_time && conntime > critical_time)
+	if (config.check_critical_time && conntime > config.critical_time) {
 		result = STATE_CRITICAL;
-	else if (check_warning_time && conntime > warning_time)
+	} else if (config.check_warning_time && conntime > config.warning_time) {
 		result = STATE_WARNING;
+	}
 
-	if (result != STATE_OK)
+	if (result != STATE_OK) {
 		die(result, _("TIME %s - %d second response time|%s\n"), state_text(result), (int)conntime,
-			perfdata("time", (long)conntime, "s", check_warning_time, (long)warning_time, check_critical_time, (long)critical_time, true, 0,
-					 false, 0));
+			perfdata("time", (long)conntime, "s", config.check_warning_time, (long)config.warning_time, config.check_critical_time,
+					 (long)config.critical_time, true, 0, false, 0));
+	}
 
+	unsigned long server_time;
+	unsigned long diff_time;
 	server_time = ntohl(raw_server_time) - UNIX_EPOCH;
-	if (server_time > (unsigned long)end_time)
+	if (server_time > (unsigned long)end_time) {
 		diff_time = server_time - (unsigned long)end_time;
-	else
+	} else {
 		diff_time = (unsigned long)end_time - server_time;
+	}
 
-	if (check_critical_diff && diff_time > critical_diff)
+	if (config.check_critical_diff && diff_time > config.critical_diff) {
 		result = STATE_CRITICAL;
-	else if (check_warning_diff && diff_time > warning_diff)
+	} else if (config.check_warning_diff && diff_time > config.warning_diff) {
 		result = STATE_WARNING;
+	}
 
 	printf(_("TIME %s - %lu second time difference|%s %s\n"), state_text(result), diff_time,
-		   perfdata("time", (long)conntime, "s", check_warning_time, (long)warning_time, check_critical_time, (long)critical_time, true, 0,
-					false, 0),
-		   perfdata("offset", diff_time, "s", check_warning_diff, warning_diff, check_critical_diff, critical_diff, true, 0, false, 0));
+		   perfdata("time", (long)conntime, "s", config.check_warning_time, (long)config.warning_time, config.check_critical_time,
+					(long)config.critical_time, true, 0, false, 0),
+		   perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff, config.check_critical_diff,
+					config.critical_diff, true, 0, false, 0));
 	return result;
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_time_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"warning-variance", required_argument, 0, 'w'},
 									   {"critical-variance", required_argument, 0, 'c'},
@@ -175,29 +178,37 @@ int process_arguments(int argc, char **argv) {
 									   {"help", no_argument, 0, 'h'},
 									   {0, 0, 0, 0}};
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage("\n");
+	}
 
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-to", argv[i]) == 0)
+		if (strcmp("-to", argv[i]) == 0) {
 			strcpy(argv[i], "-t");
-		else if (strcmp("-wd", argv[i]) == 0)
+		} else if (strcmp("-wd", argv[i]) == 0) {
 			strcpy(argv[i], "-w");
-		else if (strcmp("-cd", argv[i]) == 0)
+		} else if (strcmp("-cd", argv[i]) == 0) {
 			strcpy(argv[i], "-c");
-		else if (strcmp("-wt", argv[i]) == 0)
+		} else if (strcmp("-wt", argv[i]) == 0) {
 			strcpy(argv[i], "-W");
-		else if (strcmp("-ct", argv[i]) == 0)
+		} else if (strcmp("-ct", argv[i]) == 0) {
 			strcpy(argv[i], "-C");
+		}
 	}
+
+	check_time_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_time_config_init(),
+	};
 
 	int option_char;
 	while (true) {
 		int option = 0;
 		option_char = getopt_long(argc, argv, "hVH:w:c:W:C:p:t:u", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
@@ -209,18 +220,19 @@ int process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
-			if (!is_host(optarg))
+			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
-			server_address = optarg;
+			}
+			result.config.server_address = optarg;
 			break;
 		case 'w': /* warning-variance */
 			if (is_intnonneg(optarg)) {
-				warning_diff = strtoul(optarg, NULL, 10);
-				check_warning_diff = true;
+				result.config.warning_diff = strtoul(optarg, NULL, 10);
+				result.config.check_warning_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
-				if (sscanf(optarg, "%lu%*[:,]%d", &warning_diff, &warning_time) == 2) {
-					check_warning_diff = true;
-					check_warning_time = true;
+				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.warning_diff, &result.config.warning_time) == 2) {
+					result.config.check_warning_diff = true;
+					result.config.check_warning_time = true;
 				} else {
 					usage4(_("Warning thresholds must be a positive integer"));
 				}
@@ -230,12 +242,12 @@ int process_arguments(int argc, char **argv) {
 			break;
 		case 'c': /* critical-variance */
 			if (is_intnonneg(optarg)) {
-				critical_diff = strtoul(optarg, NULL, 10);
-				check_critical_diff = true;
+				result.config.critical_diff = strtoul(optarg, NULL, 10);
+				result.config.check_critical_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
-				if (sscanf(optarg, "%lu%*[:,]%d", &critical_diff, &critical_time) == 2) {
-					check_critical_diff = true;
-					check_critical_time = true;
+				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.critical_diff, &result.config.critical_time) == 2) {
+					result.config.check_critical_diff = true;
+					result.config.check_critical_time = true;
 				} else {
 					usage4(_("Critical thresholds must be a positive integer"));
 				}
@@ -244,48 +256,53 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'W': /* warning-connect */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage4(_("Warning threshold must be a positive integer"));
-			else
-				warning_time = atoi(optarg);
-			check_warning_time = true;
+			} else {
+				result.config.warning_time = atoi(optarg);
+			}
+			result.config.check_warning_time = true;
 			break;
 		case 'C': /* critical-connect */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage4(_("Critical threshold must be a positive integer"));
-			else
-				critical_time = atoi(optarg);
-			check_critical_time = true;
+			} else {
+				result.config.critical_time = atoi(optarg);
+			}
+			result.config.check_critical_time = true;
 			break;
 		case 'p': /* port */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage4(_("Port must be a positive integer"));
-			else
-				server_port = atoi(optarg);
+			} else {
+				result.config.server_port = atoi(optarg);
+			}
 			break;
 		case 't': /* timeout */
-			if (!is_intnonneg(optarg))
+			if (!is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
-			else
+			} else {
 				socket_timeout = atoi(optarg);
+			}
 			break;
 		case 'u': /* udp */
-			use_udp = true;
+			result.config.use_udp = true;
 		}
 	}
 
 	option_char = optind;
-	if (server_address == NULL) {
+	if (result.config.server_address == NULL) {
 		if (argc > option_char) {
-			if (!is_host(argv[option_char]))
+			if (!is_host(argv[option_char])) {
 				usage2(_("Invalid hostname/address"), optarg);
-			server_address = argv[option_char];
+			}
+			result.config.server_address = argv[option_char];
 		} else {
 			usage4(_("Hostname was not supplied"));
 		}
 	}
 
-	return OK;
+	return result;
 }
 
 void print_help(void) {

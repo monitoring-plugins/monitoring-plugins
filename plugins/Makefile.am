@@ -27,7 +27,7 @@ MATHLIBS = @MATHLIBS@
 #AM_CFLAGS = -Wall
 
 libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http check_load \
-	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_nwstat check_overcr check_ping \
+	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_ping \
 	check_real check_smtp check_ssh check_tcp check_time check_ntp_time \
 	check_ups check_users negate \
 	urlize @EXTRAS@
@@ -40,26 +40,51 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl \
 	\
-	tests/test_check_swap
+	tests/test_check_swap \
+	tests/test_check_disk
 
 SUBDIRS = picohttpparser
 
-np_test_scripts = tests/test_check_swap.t
+np_test_scripts = tests/test_check_swap.t \
+				  tests/test_check_disk.t
 
 EXTRA_DIST = t \
 			 tests \
 			 $(np_test_scripts) \
+			 negate.d \
 			 check_swap.d \
+			 check_ldap.d \
+			 check_hpjd.d \
 			 check_game.d \
+			 check_radius.d \
+			 check_disk.d \
+			 check_time.d \
+			 check_load.d \
+			 check_nagios.d \
 			 check_dbi.d \
+			 check_tcp.d \
+			 check_real.d \
 			 check_ssh.d \
+			 check_nt.d \
 			 check_dns.d \
+			 check_mrtgtraf.d \
+			 check_mysql_query.d \
+			 check_mrtg.d \
+			 check_ntp_peer.d \
 			 check_apt.d \
+			 check_pgsql.d \
+			 check_procs.d \
+			 check_ping.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
+			 check_mysql.d \
+			 check_ntp_time.d \
 			 check_dig.d \
 			 check_cluster.d \
 			 check_curl.d
+			 check_cluster.d \
+			 check_ups.d \
+			 check_fping.d
 
 PLUGINHDRS = common.h
 
@@ -101,6 +126,7 @@ check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) $(URIPARSERLIBS) picohtt
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)
+check_disk_SOURCES = check_disk.c check_disk.d/utils_disk.c
 check_dns_LDADD = $(NETLIBS)
 check_dummy_LDADD = $(BASEOBJS)
 check_fping_LDADD = $(NETLIBS)
@@ -121,8 +147,6 @@ check_nagios_LDADD = $(BASEOBJS)
 check_nt_LDADD = $(NETLIBS)
 check_ntp_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ntp_peer_LDADD = $(NETLIBS) $(MATHLIBS)
-check_nwstat_LDADD = $(NETLIBS)
-check_overcr_LDADD = $(NETLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
 check_ping_LDADD = $(NETLIBS)
 check_procs_LDADD = $(BASEOBJS)
@@ -149,6 +173,8 @@ endif
 
 tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
+tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
+tests_test_check_disk_SOURCES = tests/test_check_disk.c
 
 ##############################################################################
 # secondary dependencies

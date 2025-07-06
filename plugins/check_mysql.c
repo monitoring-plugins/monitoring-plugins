@@ -40,31 +40,13 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "utils_base.h"
 #include "netutils.h"
+#include "check_mysql.d/config.h"
 
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <errmsg.h>
 
-static char *db_user = NULL;
-static char *db_host = NULL;
-static char *db_socket = NULL;
-static char *db_pass = NULL;
-static char *db = NULL;
-static char *ca_cert = NULL;
-static char *ca_dir = NULL;
-static char *cert = NULL;
-static char *key = NULL;
-static char *ciphers = NULL;
-static bool ssl = false;
-static char *opt_file = NULL;
-static char *opt_group = NULL;
-static unsigned int db_port = MYSQL_PORT;
-static bool check_replica = false;
-static bool ignore_auth = false;
 static int verbose = 0;
-
-static double warning_time = 0;
-static double critical_time = 0;
 
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
@@ -78,28 +60,16 @@ static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
 #define MYSQLDUMP_THREADS_QUERY                                                                                                            \
 	"SELECT COUNT(1) mysqldumpThreads FROM information_schema.processlist WHERE info LIKE 'SELECT /*!40001 SQL_NO_CACHE */%'"
 
-static thresholds *my_threshold = NULL;
-
-static int process_arguments(int, char **);
-static int validate_arguments(void);
+typedef struct {
+	int errorcode;
+	check_mysql_config config;
+} check_mysql_config_wrapper;
+static check_mysql_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_mysql_config_wrapper validate_arguments(check_mysql_config_wrapper /*config_wrapper*/);
 static void print_help(void);
 void print_usage(void);
 
 int main(int argc, char **argv) {
-
-	MYSQL mysql;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-
-	/* should be status */
-
-	char *result = NULL;
-	char *error = NULL;
-	char replica_result[REPLICA_RESULTSIZE] = {0};
-	char *perf;
-
-	perf = strdup("");
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -107,36 +77,43 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR) {
+	check_mysql_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
 
+	const check_mysql_config config = tmp_config.config;
+
+	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
 
-	if (opt_file != NULL) {
-		mysql_options(&mysql, MYSQL_READ_DEFAULT_FILE, opt_file);
+	if (config.opt_file != NULL) {
+		mysql_options(&mysql, MYSQL_READ_DEFAULT_FILE, config.opt_file);
 	}
 
-	if (opt_group != NULL) {
-		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, opt_group);
+	if (config.opt_group != NULL) {
+		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, config.opt_group);
 	} else {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "client");
 	}
 
-	if (ssl) {
-		mysql_ssl_set(&mysql, key, cert, ca_cert, ca_dir, ciphers);
+	if (config.ssl) {
+		mysql_ssl_set(&mysql, config.key, config.cert, config.ca_cert, config.ca_dir, config.ciphers);
 	}
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql, db_host, db_user, db_pass, db, db_port, db_socket, 0)) {
+	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db, config.db_port, config.db_socket, 0)) {
 		/* Depending on internally-selected auth plugin MySQL might return */
 		/* ER_ACCESS_DENIED_NO_PASSWORD_ERROR or ER_ACCESS_DENIED_ERROR. */
 		/* Semantically these errors are the same. */
-		if (ignore_auth && (mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR || mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
+		if (config.ignore_auth &&
+			(mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR || mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
 			printf("MySQL OK - Version: %s (protocol %d)\n", mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
 			mysql_close(&mysql);
 			return STATE_OK;
-		} else if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
+		}
+
+		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
 			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
 		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
 			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
@@ -152,7 +129,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* get the server stats */
-	result = strdup(mysql_stat(&mysql));
+	char *result = strdup(mysql_stat(&mysql));
 
 	/* error checking once more */
 	if (mysql_error(&mysql)) {
@@ -165,6 +142,10 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	char *perf = strdup("");
+	char *error = NULL;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
 	/* try to fetch some perf data */
 	if (mysql_query(&mysql, "show global status") == 0) {
 		if ((res = mysql_store_result(&mysql)) == NULL) {
@@ -174,15 +155,13 @@ int main(int argc, char **argv) {
 		}
 
 		while ((row = mysql_fetch_row(res)) != NULL) {
-			int i;
-
-			for (i = 0; i < LENGTH_METRIC_UNIT; i++) {
+			for (int i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i], atol(row[1]), "", false, 0, false, 0, false, 0, false, 0));
 					continue;
 				}
 			}
-			for (i = 0; i < LENGTH_METRIC_COUNTER; i++) {
+			for (int i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
 					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i], atol(row[1]), "c", false, 0, false, 0, false, 0, false, 0));
 					continue;
@@ -195,8 +174,8 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (check_replica) {
-
+	char replica_result[REPLICA_RESULTSIZE] = {0};
+	if (config.check_replica) {
 		// Detect which version we are, on older version
 		// "show slave status" should work, on newer ones
 		// "show replica status"
@@ -283,12 +262,14 @@ int main(int argc, char **argv) {
 
 		} else {
 			/* mysql 4.x.x and mysql 5.x.x */
-			int replica_io_field = -1, replica_sql_field = -1, seconds_behind_field = -1, i, num_fields;
+			int replica_io_field = -1;
+			int replica_sql_field = -1;
+			int seconds_behind_field = -1;
+			int num_fields;
 			MYSQL_FIELD *fields;
-
 			num_fields = mysql_num_fields(res);
 			fields = mysql_fetch_fields(res);
-			for (i = 0; i < num_fields; i++) {
+			for (int i = 0; i < num_fields; i++) {
 				if (strcmp(fields[i].name, "Slave_IO_Running") == 0) {
 					replica_io_field = i;
 					continue;
@@ -353,11 +334,11 @@ int main(int argc, char **argv) {
 				double value = atof(row[seconds_behind_field]);
 				int status;
 
-				status = get_status(value, my_threshold);
+				status = get_status(value, config.my_threshold);
 
 				xasprintf(&perf, "%s %s", perf,
-						  fperfdata("seconds behind master", value, "s", true, (double)warning_time, true, (double)critical_time, false, 0,
-									false, 0));
+						  fperfdata("seconds behind master", value, "s", true, (double)config.warning_time, true,
+									(double)config.critical_time, false, 0, false, 0));
 
 				if (status == STATE_WARNING) {
 					printf("SLOW_REPLICA %s: %s|%s\n", _("WARNING"), replica_result, perf);
@@ -377,7 +358,7 @@ int main(int argc, char **argv) {
 	mysql_close(&mysql);
 
 	/* print out the result of stats */
-	if (check_replica) {
+	if (config.check_replica) {
 		printf("%s %s|%s\n", result, replica_result, perf);
 	} else {
 		printf("%s|%s\n", result, perf);
@@ -389,12 +370,7 @@ int main(int argc, char **argv) {
 #define CHECK_REPLICA_OPT CHAR_MAX + 1
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
-	int c;
-	char *warning = NULL;
-	char *critical = NULL;
-
-	int option = 0;
+check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"socket", required_argument, 0, 's'},
 									   {"database", required_argument, 0, 'd'},
@@ -419,56 +395,66 @@ int process_arguments(int argc, char **argv) {
 									   {"ciphers", required_argument, 0, 'L'},
 									   {0, 0, 0, 0}};
 
+	check_mysql_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_mysql_config_init(),
+	};
+
 	if (argc < 1) {
-		return ERROR;
+		result.errorcode = ERROR;
+		return result;
 	}
 
-	while (1) {
-		c = getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+	char *warning = NULL;
+	char *critical = NULL;
 
-		if (c == -1 || c == EOF) {
+	int option = 0;
+	while (true) {
+		int option_index = getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+
+		if (option_index == -1 || option_index == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (option_index) {
 		case 'H': /* hostname */
 			if (is_host(optarg)) {
-				db_host = optarg;
+				result.config.db_host = optarg;
 			} else if (*optarg == '/') {
-				db_socket = optarg;
+				result.config.db_socket = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 's': /* socket */
-			db_socket = optarg;
+			result.config.db_socket = optarg;
 			break;
 		case 'd': /* database */
-			db = optarg;
+			result.config.db = optarg;
 			break;
 		case 'l':
-			ssl = true;
+			result.config.ssl = true;
 			break;
 		case 'C':
-			ca_cert = optarg;
+			result.config.ca_cert = optarg;
 			break;
 		case 'a':
-			cert = optarg;
+			result.config.cert = optarg;
 			break;
 		case 'k':
-			key = optarg;
+			result.config.key = optarg;
 			break;
 		case 'D':
-			ca_dir = optarg;
+			result.config.ca_dir = optarg;
 			break;
 		case 'L':
-			ciphers = optarg;
+			result.config.ciphers = optarg;
 			break;
 		case 'u': /* username */
-			db_user = optarg;
+			result.config.db_user = optarg;
 			break;
 		case 'p': /* authentication information: password */
-			db_pass = strdup(optarg);
+			result.config.db_pass = strdup(optarg);
 
 			/* Delete the password from process list */
 			while (*optarg != '\0') {
@@ -477,28 +463,28 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'f': /* client options file */
-			opt_file = optarg;
+			result.config.opt_file = optarg;
 			break;
 		case 'g': /* client options group */
-			opt_group = optarg;
+			result.config.opt_group = optarg;
 			break;
 		case 'P': /* critical time threshold */
-			db_port = atoi(optarg);
+			result.config.db_port = atoi(optarg);
 			break;
 		case 'S':
 		case CHECK_REPLICA_OPT:
-			check_replica = true; /* check-slave */
+			result.config.check_replica = true; /* check-slave */
 			break;
 		case 'n':
-			ignore_auth = true; /* ignore-auth */
+			result.config.ignore_auth = true; /* ignore-auth */
 			break;
 		case 'w':
 			warning = optarg;
-			warning_time = strtod(warning, NULL);
+			result.config.warning_time = strtod(warning, NULL);
 			break;
 		case 'c':
 			critical = optarg;
-			critical_time = strtod(critical, NULL);
+			result.config.critical_time = strtod(critical, NULL);
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -514,48 +500,47 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	c = optind;
+	int index = optind;
 
-	set_thresholds(&my_threshold, warning, critical);
+	set_thresholds(&result.config.my_threshold, warning, critical);
 
-	while (argc > c) {
-
-		if (db_host == NULL) {
-			if (is_host(argv[c])) {
-				db_host = argv[c++];
+	while (argc > index) {
+		if (result.config.db_host == NULL) {
+			if (is_host(argv[index])) {
+				result.config.db_host = argv[index++];
 			} else {
-				usage2(_("Invalid hostname/address"), argv[c]);
+				usage2(_("Invalid hostname/address"), argv[index]);
 			}
-		} else if (db_user == NULL) {
-			db_user = argv[c++];
-		} else if (db_pass == NULL) {
-			db_pass = argv[c++];
-		} else if (db == NULL) {
-			db = argv[c++];
-		} else if (is_intnonneg(argv[c])) {
-			db_port = atoi(argv[c++]);
+		} else if (result.config.db_user == NULL) {
+			result.config.db_user = argv[index++];
+		} else if (result.config.db_pass == NULL) {
+			result.config.db_pass = argv[index++];
+		} else if (result.config.db == NULL) {
+			result.config.db = argv[index++];
+		} else if (is_intnonneg(argv[index])) {
+			result.config.db_port = atoi(argv[index++]);
 		} else {
 			break;
 		}
 	}
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-int validate_arguments(void) {
-	if (db_user == NULL) {
-		db_user = strdup("");
+check_mysql_config_wrapper validate_arguments(check_mysql_config_wrapper config_wrapper) {
+	if (config_wrapper.config.db_user == NULL) {
+		config_wrapper.config.db_user = strdup("");
 	}
 
-	if (db_host == NULL) {
-		db_host = strdup("");
+	if (config_wrapper.config.db_host == NULL) {
+		config_wrapper.config.db_host = strdup("");
 	}
 
-	if (db == NULL) {
-		db = strdup("");
+	if (config_wrapper.config.db == NULL) {
+		config_wrapper.config.db = strdup("");
 	}
 
-	return OK;
+	return config_wrapper;
 }
 
 void print_help(void) {

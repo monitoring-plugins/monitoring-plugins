@@ -12,14 +12,14 @@ my $allow_sudo = getTestParameter( "NP_ALLOW_SUDO",
                                    "no" );
 
 if ($allow_sudo eq "yes" or $> == 0) {
-    plan tests => 6;
+    plan tests => 7;
 } else {
     plan skip_all => "Need sudo to test check_dhcp";
 }
 my $sudo = $> == 0 ? '' : 'sudo';
 
-my $successOutput = '/OK: Received \d+ DHCPOFFER\(s\), \d+ of 1 requested servers responded, max lease time = \d+ sec\./';
-my $failureOutput = '/CRITICAL: (No DHCPOFFERs were received|Received \d+ DHCPOFFER\(s\), 0 of 1 requested servers responded, max lease time = \d+ sec\.)/';
+my $successOutput = '/Received \d+ DHCPOFFER(s)*, max lease time = \d+ seconds/';
+my $failureOutput = '/(No DHCPOFFERs were received|Received \d+ DHCPOFFER\(s\), 0 of 1 requested servers responded, max lease time = \d+ sec\.)/';
 my $invalidOutput = '/Invalid hostname/';
 
 my $host_responsive    = getTestParameter( "NP_HOST_DHCP_RESPONSIVE",
@@ -33,6 +33,8 @@ my $host_nonresponsive = getTestParameter( "NP_HOST_NONRESPONSIVE",
 my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname",
                                            "nosuchhost" );
+
+my $output_format = "--output-format mp-test-json";
 
 # try to determince interface
 my $interface = '';
@@ -49,19 +51,21 @@ my $res;
 SKIP: {
     skip('need responsive test host', 2) unless $host_responsive;
     $res = NPTest->testCmd(
-        "$sudo ./check_dhcp $interface -u -s $host_responsive"
+        "$sudo ./check_dhcp $interface -u -s $host_responsive $output_format"
     );
-    is( $res->return_code, 0, "Syntax ok" );
-    like( $res->output, $successOutput, "Output OK" );
+    is( $res->return_code, 0, "with JSON test format result should always be OK" );
+    like( $res->{'mp_test_result'}->{'state'}, "/OK/", "Output OK" );
+    like( $res->{'mp_test_result'}->{'checks'}->[0]->{'output'}, $successOutput, "Output OK" );
 };
 
 SKIP: {
     skip('need nonresponsive test host', 2) unless $host_nonresponsive;
     $res = NPTest->testCmd(
-        "$sudo ./check_dhcp $interface -u -s $host_nonresponsive"
+        "$sudo ./check_dhcp $interface -u -s $host_nonresponsive $output_format"
     );
-    is( $res->return_code, 2, "Exit code - host nonresponsive" );
-    like( $res->output, $failureOutput, "Output OK" );
+    is( $res->return_code, 0, "with JSON test format result should always be OK" );
+    like( $res->{'mp_test_result'}->{'state'}, "/CRITICAL/", "Exit code - host nonresponsive" );
+    like( $res->{'mp_test_result'}->{'checks'}->[0]->{'output'}, $failureOutput, "Output OK" );
 };
 
 SKIP: {
@@ -69,6 +73,6 @@ SKIP: {
     $res = NPTest->testCmd(
         "$sudo ./check_dhcp $interface -u -s $hostname_invalid"
     );
-    is( $res->return_code, 3, "Exit code - host invalid" );
+    is( $res->return_code, 3, "invalid hostname/address should return UNKNOWN" );
     like( $res->output, $invalidOutput, "Output OK" );
 };

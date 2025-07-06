@@ -68,7 +68,7 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	FILE *meminfo_file_ptr;
 	meminfo_file_ptr = fopen(proc_meminfo, "r");
 
-	swap_result result = {0};
+	swap_result result = {};
 	result.errorcode = STATE_UNKNOWN;
 
 	if (meminfo_file_ptr == NULL) {
@@ -78,83 +78,71 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 		return result;
 	}
 
-	uint64_t swap_total = 0;
-	uint64_t swap_used = 0;
-	uint64_t swap_free = 0;
+	unsigned long swap_total = 0;
+	unsigned long swap_used = 0;
+	unsigned long swap_free = 0;
 
 	bool found_total = false;
-	bool found_used = false;
 	bool found_free = false;
 
 	char input_buffer[MAX_INPUT_BUFFER];
 	char str[32];
 
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, meminfo_file_ptr)) {
-		uint64_t tmp_KB = 0;
 
 		/*
 		 * The following sscanf call looks for a line looking like: "Swap: 123
-		 * 123 123" On which kind of system this format exists, I can not say,
-		 * but I wanted to document this for people who are not adapt with
-		 * sscanf anymore, like me
-		 * Also the units used here are unclear and probably wrong
+		 * 123 123" which exists on NetBSD (at least),
+		 * The unit should be Bytes
 		 */
 		if (sscanf(input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu", &swap_total, &swap_used, &swap_free) == 3) {
-
-			result.metrics.total += swap_total;
-			result.metrics.used += swap_used;
-			result.metrics.free += swap_free;
-
 			found_total = true;
 			found_free = true;
-			found_used = true;
-
 			// Set error
 			result.errorcode = STATE_OK;
+			// Break out of fgets here, since both scanf expressions might match (NetBSD for example)
+			break;
+		}
 
-			/*
-			 * The following sscanf call looks for lines looking like:
-			 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
-			 * on Debian Linux with a 5.* kernel
-			 */
-		} else {
-			int sscanf_result = sscanf(input_buffer,
-									   "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
-									   "%*[k]%*[B]",
-									   str, &tmp_KB);
+		/*
+		 * The following sscanf call looks for lines looking like:
+		 * "SwapTotal: 123" and "SwapFree: 123" This format exists at least
+		 * on Debian Linux with a 5.* kernel
+		 */
+		unsigned long tmp_KB = 0;
+		int sscanf_result = sscanf(input_buffer,
+								   "%*[S]%*[w]%*[a]%*[p]%[TotalFreCchd]%*[:] %lu "
+								   "%*[k]%*[B]",
+								   str, &tmp_KB);
 
-			if (sscanf_result == 2) {
+		if (sscanf_result == 2) {
 
-				if (verbose >= 3) {
-					printf("Got %s with %lu\n", str, tmp_KB);
-				}
-
-				/* I think this part is always in Kb, so convert to bytes */
-				if (strcmp("Total", str) == 0) {
-					swap_total = tmp_KB * 1000;
-					found_total = true;
-				} else if (strcmp("Free", str) == 0) {
-					swap_free = swap_free + tmp_KB * 1000;
-					found_free = true;
-					found_used = true; // No explicit used metric available
-				} else if (strcmp("Cached", str) == 0) {
-					swap_free = swap_free + tmp_KB * 1000;
-					found_free = true;
-					found_used = true; // No explicit used metric available
-				}
-
-				result.errorcode = STATE_OK;
+			if (verbose >= 3) {
+				printf("Got %s with %lu\n", str, tmp_KB);
 			}
+
+			/* I think this part is always in Kb, so convert to bytes */
+			if (strcmp("Total", str) == 0) {
+				swap_total = tmp_KB * 1000;
+				found_total = true;
+			} else if (strcmp("Free", str) == 0) {
+				swap_free += tmp_KB * 1000;
+				found_free = true;
+			} else if (strcmp("Cached", str) == 0) {
+				swap_free += tmp_KB * 1000;
+			}
+
+			result.errorcode = STATE_OK;
 		}
 	}
 
 	fclose(meminfo_file_ptr);
 
 	result.metrics.total = swap_total;
-	result.metrics.used = swap_total - swap_free;
 	result.metrics.free = swap_free;
+	result.metrics.used = swap_total - swap_free;
 
-	if (!found_free || !found_total || !found_used) {
+	if (!found_free || !found_total) {
 		result.errorcode = STATE_UNKNOWN;
 	}
 
@@ -297,8 +285,14 @@ struct swapent {
 };
 
 #else
+
+// Includes for NetBSD
+#	include <unistd.h>
+#	include <sys/swap.h>
+
 #	define bsd_swapctl swapctl
-#endif
+
+#endif // CHECK_SWAP_SWAPCTL_BSD
 
 swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	/* get the number of active swap devices */
@@ -322,8 +316,8 @@ swap_result getSwapFromSwapctl_BSD(swap_config config) {
 	unsigned long long used_swap_mb = 0;
 
 	for (int i = 0; i < nswaps; i++) {
-		dsktotal_mb = (float)ent[i].se_nblks / (float)config.conversion_factor;
-		dskused_mb = (float)ent[i].se_inuse / (float)config.conversion_factor;
+		dsktotal_mb = (double)ent[i].se_nblks / (double)config.conversion_factor;
+		dskused_mb = (double)ent[i].se_inuse / (double)config.conversion_factor;
 		dskfree_mb = (dsktotal_mb - dskused_mb);
 
 		if (config.allswaps && dsktotal_mb > 0) {

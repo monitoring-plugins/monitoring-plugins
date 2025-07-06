@@ -37,27 +37,21 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "utils_base.h"
 #include "netutils.h"
+#include "check_mysql_query.d/config.h"
 
 #include <mysql.h>
 #include <errmsg.h>
 
-static char *db_user = NULL;
-static char *db_host = NULL;
-static char *db_socket = NULL;
-static char *db_pass = NULL;
-static char *db = NULL;
-static char *opt_file = NULL;
-static char *opt_group = NULL;
-static unsigned int db_port = MYSQL_PORT;
-
-static int process_arguments(int /*argc*/, char ** /*argv*/);
-static int validate_arguments(void);
+typedef struct {
+	int errorcode;
+	check_mysql_query_config config;
+} check_mysql_query_config_wrapper;
+static check_mysql_query_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
+static check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper /*config_wrapper*/);
 static void print_help(void);
 void print_usage(void);
 
-static char *sql_query = NULL;
 static int verbose = 0;
-static thresholds *my_thresholds = NULL;
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -67,39 +61,46 @@ int main(int argc, char **argv) {
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
-	if (process_arguments(argc, argv) == ERROR)
+	check_mysql_query_config_wrapper tmp_config = process_arguments(argc, argv);
+	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
+	}
+
+	const check_mysql_query_config config = tmp_config.config;
 
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
 
-	if (opt_file != NULL)
-		mysql_options(&mysql, MYSQL_READ_DEFAULT_FILE, opt_file);
+	if (config.opt_file != NULL) {
+		mysql_options(&mysql, MYSQL_READ_DEFAULT_FILE, config.opt_file);
+	}
 
-	if (opt_group != NULL)
-		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, opt_group);
-	else
+	if (config.opt_group != NULL) {
+		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, config.opt_group);
+	} else {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "client");
+	}
 
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql, db_host, db_user, db_pass, db, db_port, db_socket, 0)) {
-		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST)
+	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db, config.db_port, config.db_socket, 0)) {
+		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_VERSION_ERROR)
+		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY)
+		} else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR)
+		} else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR)
+		} else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
-		else
+		} else {
 			die(STATE_CRITICAL, "QUERY %s: %s\n", _("CRITICAL"), mysql_error(&mysql));
+		}
 	}
 
 	char *error = NULL;
-	if (mysql_query(&mysql, sql_query) != 0) {
+	if (mysql_query(&mysql, config.sql_query) != 0) {
 		error = strdup(mysql_error(&mysql));
 		mysql_close(&mysql);
 		die(STATE_CRITICAL, "QUERY %s: %s - %s\n", _("CRITICAL"), _("Error with query"), error);
@@ -140,10 +141,11 @@ int main(int argc, char **argv) {
 	/* close the connection */
 	mysql_close(&mysql);
 
-	if (verbose >= 3)
+	if (verbose >= 3) {
 		printf("mysql result: %f\n", value);
+	}
 
-	int status = get_status(value, my_thresholds);
+	int status = get_status(value, config.my_thresholds);
 
 	if (status == STATE_OK) {
 		printf("QUERY %s: ", _("OK"));
@@ -152,17 +154,16 @@ int main(int argc, char **argv) {
 	} else if (status == STATE_CRITICAL) {
 		printf("QUERY %s: ", _("CRITICAL"));
 	}
-	printf(_("'%s' returned %f | %s"), sql_query, value,
-		   fperfdata("result", value, "", my_thresholds->warning ? true : false, my_thresholds->warning ? my_thresholds->warning->end : 0,
-					 my_thresholds->critical ? true : false, my_thresholds->critical ? my_thresholds->critical->end : 0, false, 0, false,
-					 0));
+	printf(_("'%s' returned %f | %s"), config.sql_query, value,
+		   fperfdata("result", value, "", config.my_thresholds->warning, config.my_thresholds->warning ? config.my_thresholds->warning->end : 0,
+					 config.my_thresholds->critical, config.my_thresholds->critical ? config.my_thresholds->critical->end : 0, false, 0, false, 0));
 	printf("\n");
 
 	return status;
 }
 
 /* process command-line arguments */
-int process_arguments(int argc, char **argv) {
+check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {
 		{"hostname", required_argument, 0, 'H'}, {"socket", required_argument, 0, 's'},   {"database", required_argument, 0, 'd'},
 		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'}, {"file", required_argument, 0, 'f'},
@@ -170,8 +171,15 @@ int process_arguments(int argc, char **argv) {
 		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"query", required_argument, 0, 'q'},
 		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {0, 0, 0, 0}};
 
-	if (argc < 1)
-		return ERROR;
+	check_mysql_query_config_wrapper result = {
+		.errorcode = OK,
+		.config = check_mysql_query_config_init(),
+	};
+
+	if (argc < 1) {
+		result.errorcode = ERROR;
+		return result;
+	}
 
 	char *warning = NULL;
 	char *critical = NULL;
@@ -180,28 +188,29 @@ int process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "hvVP:p:u:d:H:s:q:w:c:f:g:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF)
+		if (option_char == -1 || option_char == EOF) {
 			break;
+		}
 
 		switch (option_char) {
 		case 'H': /* hostname */
 			if (is_host(optarg)) {
-				db_host = optarg;
+				result.config.db_host = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 's': /* socket */
-			db_socket = optarg;
+			result.config.db_socket = optarg;
 			break;
 		case 'd': /* database */
-			db = optarg;
+			result.config.db = optarg;
 			break;
 		case 'u': /* username */
-			db_user = optarg;
+			result.config.db_user = optarg;
 			break;
 		case 'p': /* authentication information: password */
-			db_pass = strdup(optarg);
+			result.config.db_pass = strdup(optarg);
 
 			/* Delete the password from process list */
 			while (*optarg != '\0') {
@@ -210,13 +219,13 @@ int process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'f': /* client options file */
-			opt_file = optarg;
+			result.config.opt_file = optarg;
 			break;
 		case 'g': /* client options group */
-			opt_group = optarg;
+			result.config.opt_group = optarg;
 			break;
 		case 'P': /* critical time threshold */
-			db_port = atoi(optarg);
+			result.config.db_port = atoi(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -228,7 +237,7 @@ int process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'q':
-			xasprintf(&sql_query, "%s", optarg);
+			xasprintf(&result.config.sql_query, "%s", optarg);
 			break;
 		case 'w':
 			warning = optarg;
@@ -241,25 +250,29 @@ int process_arguments(int argc, char **argv) {
 		}
 	}
 
-	set_thresholds(&my_thresholds, warning, critical);
+	set_thresholds(&result.config.my_thresholds, warning, critical);
 
-	return validate_arguments();
+	return validate_arguments(result);
 }
 
-int validate_arguments(void) {
-	if (sql_query == NULL)
+check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
+	if (config_wrapper.config.sql_query == NULL) {
 		usage("Must specify a SQL query to run");
+	}
 
-	if (db_user == NULL)
-		db_user = strdup("");
+	if (config_wrapper.config.db_user == NULL) {
+		config_wrapper.config.db_user = strdup("");
+	}
 
-	if (db_host == NULL)
-		db_host = strdup("");
+	if (config_wrapper.config.db_host == NULL) {
+		config_wrapper.config.db_host = strdup("");
+	}
 
-	if (db == NULL)
-		db = strdup("");
+	if (config_wrapper.config.db == NULL) {
+		config_wrapper.config.db = strdup("");
+	}
 
-	return OK;
+	return config_wrapper;
 }
 
 void print_help(void) {
