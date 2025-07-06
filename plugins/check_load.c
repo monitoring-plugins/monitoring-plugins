@@ -245,13 +245,15 @@ int main(int argc, char **argv) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
 		top_processes_result top_proc = print_top_consuming_processes(config.n_procs_to_show);
-		top_proc_sc.output = "";
+		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes", config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
 			for (int i = 0; i < config.n_procs_to_show; i++) {
 				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output, top_proc.top_processes[i]);
 			}
 		}
+
+		mp_add_subcheck_to_check(&overall, top_proc_sc);
 	}
 
 	mp_exit(overall);
