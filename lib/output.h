@@ -7,15 +7,21 @@
 /*
  * A partial check result
  */
-typedef struct {
+typedef struct mp_subcheck mp_subcheck;
+struct mp_subcheck {
 	mp_state_enum state;         // OK, Warning, Critical ... set explicitly
 	mp_state_enum default_state; // OK, Warning, Critical .. if not set explicitly
-	bool state_set_explicitly;   // was the state set explicitly (or should it be derived from subchecks)
+	bool state_set_explicitly;   // was the state set explicitly (or should it be derived from
+								 // subchecks)
 
-	char *output;                    // Text output for humans ("Filesystem xyz is fine", "Could not create TCP connection to..")
-	pd_list *perfdata;               // Performance data for this check
+	char *output;      // Text output for humans ("Filesystem xyz is fine", "Could not create TCP
+					   // connection to..")
+	pd_list *perfdata; // Performance data for this check
 	struct subcheck_list *subchecks; // subchecks deeper in the hierarchy
-} mp_subcheck;
+
+	// the evaluation_functions computes the state of subcheck
+	mp_state_enum (*evaluation_function)(mp_subcheck);
+};
 
 /*
  * A list of subchecks, used in subchecks and the main check
@@ -38,8 +44,18 @@ typedef enum output_format {
 /*
  * Format related functions
  */
- void mp_set_format(mp_output_format format);
- mp_output_format mp_get_format(void);
+void mp_set_format(mp_output_format format);
+mp_output_format mp_get_format(void);
+
+// Output detail level
+
+typedef enum output_detail_level {
+	MP_DETAIL_ALL,
+	MP_DETAIL_NON_OK_ONLY,
+} mp_output_detail_level;
+
+void mp_set_level_of_detail(mp_output_detail_level level);
+mp_output_detail_level mp_get_level_of_detail(void);
 
 /*
  * The main state object of a plugin. Exists only ONCE per plugin.
@@ -47,10 +63,14 @@ typedef enum output_format {
  * The final result is always derived from the children and the "worst" state
  * in the first layer of subchecks
  */
-typedef struct {
-	char *summary;           // Overall summary, if not set a summary will be automatically generated
+typedef struct mp_check mp_check;
+struct mp_check {
+	char *summary; // Overall summary, if not set a summary will be automatically generated
 	mp_subcheck_list *subchecks;
-} mp_check;
+
+	// the evaluation_functions computes the state of check
+	mp_state_enum (*evaluation_function)(mp_check);
+};
 
 mp_check mp_check_init(void);
 mp_subcheck mp_subcheck_init(void);
@@ -67,6 +87,13 @@ void mp_add_summary(mp_check check[static 1], char *summary);
 
 mp_state_enum mp_compute_check_state(mp_check);
 mp_state_enum mp_compute_subcheck_state(mp_subcheck);
+
+mp_state_enum mp_eval_ok(mp_check overall);
+mp_state_enum mp_eval_warning(mp_check overall);
+mp_state_enum mp_eval_critical(mp_check overall);
+mp_state_enum mp_eval_unknown(mp_check overall);
+mp_state_enum mp_eval_check_default(mp_check check);
+mp_state_enum mp_eval_subcheck_default(mp_subcheck subcheck);
 
 typedef struct {
 	bool parsing_success;

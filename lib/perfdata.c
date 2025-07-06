@@ -33,7 +33,7 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 char *pd_to_string(mp_perfdata pd) {
 	assert(pd.label != NULL);
 	char *result = NULL;
-	asprintf(&result, "%s=", pd.label);
+	asprintf(&result, "'%s'=", pd.label);
 
 	asprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
 
@@ -257,6 +257,10 @@ mp_perfdata mp_set_pd_value_double(mp_perfdata pd, double value) {
 	return pd;
 }
 
+mp_perfdata mp_set_pd_value_char(mp_perfdata pd, char value) { return mp_set_pd_value_long_long(pd, (long long)value); }
+
+mp_perfdata mp_set_pd_value_u_char(mp_perfdata pd, unsigned char value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
+
 mp_perfdata mp_set_pd_value_int(mp_perfdata pd, int value) { return mp_set_pd_value_long_long(pd, (long long)value); }
 
 mp_perfdata mp_set_pd_value_u_int(mp_perfdata pd, unsigned int value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
@@ -287,6 +291,10 @@ mp_perfdata_value mp_create_pd_value_double(double value) {
 }
 
 mp_perfdata_value mp_create_pd_value_float(float value) { return mp_create_pd_value_double((double)value); }
+
+mp_perfdata_value mp_create_pd_value_char(char value) { return mp_create_pd_value_long_long((long long)value); }
+
+mp_perfdata_value mp_create_pd_value_u_char(unsigned char value) { return mp_create_pd_value_u_long_long((unsigned long long)value); }
 
 mp_perfdata_value mp_create_pd_value_int(int value) { return mp_create_pd_value_long_long((long long)value); }
 
@@ -513,4 +521,85 @@ perfdata_value_parser_wrapper parse_pd_value(const char *input) {
 		result.error = tmp_double.error;
 	}
 	return result;
+}
+
+mp_perfdata mp_set_pd_max_value(mp_perfdata perfdata, mp_perfdata_value value) {
+	perfdata.max = value;
+	perfdata.max_present = true;
+	return perfdata;
+}
+
+mp_perfdata mp_set_pd_min_value(mp_perfdata perfdata, mp_perfdata_value value) {
+	perfdata.min = value;
+	perfdata.min_present = true;
+	return perfdata;
+}
+
+double mp_get_pd_value(mp_perfdata_value value) {
+	assert(value.type != PD_TYPE_NONE);
+	switch (value.type) {
+	case PD_TYPE_DOUBLE:
+		return value.pd_double;
+	case PD_TYPE_INT:
+		return (double)value.pd_int;
+	case PD_TYPE_UINT:
+		return (double)value.pd_uint;
+	default:
+		return 0; // just to make the compiler happy
+	}
+}
+
+mp_perfdata_value mp_pd_value_multiply(mp_perfdata_value left, mp_perfdata_value right) {
+	if (left.type == right.type) {
+		switch (left.type) {
+		case PD_TYPE_DOUBLE:
+			left.pd_double *= right.pd_double;
+			return left;
+		case PD_TYPE_INT:
+			left.pd_int *= right.pd_int;
+			return left;
+		case PD_TYPE_UINT:
+			left.pd_uint *= right.pd_uint;
+			return left;
+		default:
+			// what to here?
+			return left;
+		}
+	}
+
+	// Different types, oh boy, just do the lazy thing for now and switch to double
+	switch (left.type) {
+	case PD_TYPE_INT:
+		left.pd_double = (double)left.pd_int;
+		left.type = PD_TYPE_DOUBLE;
+		break;
+	case PD_TYPE_UINT:
+		left.pd_double = (double)left.pd_uint;
+		left.type = PD_TYPE_DOUBLE;
+		break;
+	}
+
+	switch (right.type) {
+	case PD_TYPE_INT:
+		right.pd_double = (double)right.pd_int;
+		right.type = PD_TYPE_DOUBLE;
+		break;
+	case PD_TYPE_UINT:
+		right.pd_double = (double)right.pd_uint;
+		right.type = PD_TYPE_DOUBLE;
+		break;
+	}
+
+	left.pd_double *= right.pd_double;
+	return left;
+}
+
+mp_range mp_range_multiply(mp_range range, mp_perfdata_value factor) {
+	if (!range.end_infinity) {
+		range.end = mp_pd_value_multiply(range.end, factor);
+	}
+	if (!range.start_infinity) {
+		range.start = mp_pd_value_multiply(range.start, factor);
+	}
+	return range;
 }

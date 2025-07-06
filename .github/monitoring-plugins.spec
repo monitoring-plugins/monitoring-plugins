@@ -191,7 +191,6 @@ Requires: %{name}-nt
 Requires: %{name}-ntp
 Requires: %{name}-ntp_peer
 Requires: %{name}-ntp_time
-Requires: %{name}-nwstat
 Requires: %{name}-oracle
 Requires: %{name}-pgsql
 Requires: %{name}-ping
@@ -699,19 +698,6 @@ Provides check_ntp_time of the Monitoring Plugins.
 
 %files ntp_time
 %{plugindir}/check_ntp_time
-
-
-
-# check_nwstat
-%package nwstat
-Summary:  Monitoring Plugins - check_nwstat
-Requires: %{name} = %{version}-%{release}
-
-%description nwstat
-Provides check_nwstat of the Monitoring Plugins.
-
-%files nwstat
-%{plugindir}/check_nwstat
 
 
 

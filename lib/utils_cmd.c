@@ -346,7 +346,7 @@ int cmd_run_array(char *const *argv, output *out, output *err, int flags) {
 	return _cmd_close(fd);
 }
 
-int cmd_file_read(char *filename, output *out, int flags) {
+int cmd_file_read(const char *filename, output *out, int flags) {
 	int fd;
 	if (out)
 		memset(out, 0, sizeof(output));
