@@ -58,7 +58,6 @@ typedef struct {
 	check_load_config config;
 } check_load_config_wrapper;
 static check_load_config_wrapper process_arguments(int argc, char **argv);
-static check_load_config_wrapper validate_arguments(check_load_config_wrapper /*config_wrapper*/);
 
 void print_help(void);
 void print_usage(void);
@@ -78,9 +77,12 @@ static parsed_thresholds get_threshold(char *arg) {
 	bool valid = false;
 
 	parsed_thresholds result = {
-		.load[0] = mp_range_init(),
-		.load[1] = mp_range_init(),
-		.load[2] = mp_range_init(),
+		.load =
+			{
+				mp_range_init(),
+				mp_range_init(),
+				mp_range_init(),
+			},
 	};
 
 	size_t arg_length = strlen(arg);
@@ -148,10 +150,11 @@ int main(int argc, char **argv) {
 	if (config.take_into_account_cpus && ((numcpus = GET_NUMBER_OF_CPUS()) > 0)) {
 		is_using_scaled_load_values = true;
 
-		double scaled_la[3] = {0.0, 0.0, 0.0};
-		scaled_la[0] = load_values[0] / numcpus;
-		scaled_la[1] = load_values[1] / numcpus;
-		scaled_la[2] = load_values[2] / numcpus;
+		double scaled_la[3] = {
+			load_values[0] / numcpus,
+			load_values[1] / numcpus,
+			load_values[2] / numcpus,
+		};
 
 		mp_subcheck scaled_load_sc = mp_subcheck_init();
 		scaled_load_sc = mp_set_subcheck_default_state(scaled_load_sc, STATE_OK);
@@ -292,7 +295,6 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
-				// TODO List all available formats here, maybe add anothoer usage function
 				printf("Invalid output format: %s\n", optarg);
 				exit(STATE_UNKNOWN);
 			}
@@ -305,8 +307,10 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			parsed_thresholds warning_range = get_threshold(optarg);
 			result.config.th_load[0].warning = warning_range.load[0];
 			result.config.th_load[0].warning_is_set = true;
+
 			result.config.th_load[1].warning = warning_range.load[1];
 			result.config.th_load[1].warning_is_set = true;
+
 			result.config.th_load[2].warning = warning_range.load[2];
 			result.config.th_load[2].warning_is_set = true;
 		} break;
@@ -314,8 +318,10 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			parsed_thresholds critical_range = get_threshold(optarg);
 			result.config.th_load[0].critical = critical_range.load[0];
 			result.config.th_load[0].critical_is_set = true;
+
 			result.config.th_load[1].critical = critical_range.load[1];
 			result.config.th_load[1].critical_is_set = true;
+
 			result.config.th_load[2].critical = critical_range.load[2];
 			result.config.th_load[2].critical_is_set = true;
 		} break;
@@ -338,7 +344,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 
 	int index = optind;
 	if (index == argc) {
-		return validate_arguments(result);
+		return result;
 	}
 
 	/* handle the case if both arguments are missing,
@@ -347,31 +353,35 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		parsed_thresholds warning_range = get_threshold(argv[index++]);
 		result.config.th_load[0].warning = warning_range.load[0];
 		result.config.th_load[0].warning_is_set = true;
+
 		result.config.th_load[1].warning = warning_range.load[1];
 		result.config.th_load[1].warning_is_set = true;
+
 		result.config.th_load[2].warning = warning_range.load[2];
 		result.config.th_load[2].warning_is_set = true;
 		parsed_thresholds critical_range = get_threshold(argv[index++]);
 		result.config.th_load[0].critical = critical_range.load[0];
 		result.config.th_load[0].critical_is_set = true;
+
 		result.config.th_load[1].critical = critical_range.load[1];
 		result.config.th_load[1].critical_is_set = true;
+
 		result.config.th_load[2].critical = critical_range.load[2];
 		result.config.th_load[2].critical_is_set = true;
 	} else if (index - argc == 1) {
 		parsed_thresholds critical_range = get_threshold(argv[index++]);
 		result.config.th_load[0].critical = critical_range.load[0];
 		result.config.th_load[0].critical_is_set = true;
+
 		result.config.th_load[1].critical = critical_range.load[1];
 		result.config.th_load[1].critical_is_set = true;
+
 		result.config.th_load[2].critical = critical_range.load[2];
 		result.config.th_load[2].critical_is_set = true;
 	}
 
-	return validate_arguments(result);
+	return result;
 }
-
-static check_load_config_wrapper validate_arguments(check_load_config_wrapper config_wrapper) { return config_wrapper; }
 
 void print_help(void) {
 	print_revision(progname, NP_VERSION);
