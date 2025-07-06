@@ -368,9 +368,39 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 	mp_subcheck_list *subchecks = NULL;
 
 	switch (output_format) {
-	case MP_FORMAT_MULTI_LINE:
-		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation),
-				 state_text(mp_compute_subcheck_state(check)), check.output);
+	case MP_FORMAT_MULTI_LINE: {
+		char *tmp_string = NULL;
+		if ((tmp_string = strchr(check.output, '\n')) != NULL) {
+			// This is a multiline string, put the correct indentation in before proceeding
+			char *intermediate_string = "";
+			bool have_residual_chars = false;
+
+			while (tmp_string != NULL) {
+				*tmp_string = '\0';
+				asprintf(&intermediate_string, "%s%s\n%s", intermediate_string,check.output, generate_indentation_string(indentation+1)); // one more indentation to make it look better
+
+				if (*(tmp_string + 1) != '\0') {
+					check.output = tmp_string + 1;
+					have_residual_chars = true;
+				} else {
+					// Null after the \n, so this is the end
+					have_residual_chars = false;
+					break;
+				}
+
+				tmp_string = strchr(check.output, '\n');
+			}
+
+			// add the rest (if any)
+			if (have_residual_chars) {
+				char *tmp = check.output;
+				xasprintf(&check.output, "%s\n%s%s", intermediate_string, generate_indentation_string(indentation+1), tmp);
+			} else {
+				check.output = intermediate_string;
+			}
+		}
+		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
+				 check.output);
 
 		subchecks = check.subchecks;
 
@@ -380,6 +410,7 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 			subchecks = subchecks->next;
 		}
 		return result;
+	}
 	default:
 		die(STATE_UNKNOWN, "Invalid format");
 	}
