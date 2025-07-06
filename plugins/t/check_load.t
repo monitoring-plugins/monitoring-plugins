@@ -33,9 +33,9 @@ cmp_ok( $res->return_code, 'eq', 2, "Load over 0 with per cpu division");
 $res = NPTest->testCmd( "./check_load -w 100 -c 100,110" );
 cmp_ok( $res->return_code, 'eq', 0, "Plugin can handle non-triplet-arguments");
 # like( $res->output, $successOutput, "Output OK");
-like( $res->perf_output, "/load1=$loadValue;~:100.0+;~:100.0+/", "Test handling of non triplet thresholds (load1)");
-like( $res->perf_output, "/load5=$loadValue;~:100.0+;~:110.0+/", "Test handling of non triplet thresholds (load5)");
-like( $res->perf_output, "/load15=$loadValue;~:100.0+;~:110.0+/", "Test handling of non triplet thresholds (load15)");
+like( $res->perf_output, "/'load1'=$loadValue;~:100.0+;~:100.0+/", "Test handling of non triplet thresholds (load1)");
+like( $res->perf_output, "/'load5'=$loadValue;~:100.0+;~:110.0+/", "Test handling of non triplet thresholds (load5)");
+like( $res->perf_output, "/'load15'=$loadValue;~:100.0+;~:110.0+/", "Test handling of non triplet thresholds (load15)");
 
 
 $res = NPTest->testCmd( "./check_load -w 100,100,100 -c 100,100,100 -r" );
