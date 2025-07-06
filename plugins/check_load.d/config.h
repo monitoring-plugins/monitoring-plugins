@@ -6,7 +6,7 @@ typedef struct {
 	mp_thresholds th_load[3];
 
 	bool take_into_account_cpus;
-	int n_procs_to_show;
+	unsigned long n_procs_to_show;
 
 	mp_output_format output_format;
 	bool output_format_set;

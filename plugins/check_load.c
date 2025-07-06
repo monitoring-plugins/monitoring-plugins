@@ -65,7 +65,7 @@ typedef struct {
 	int errorcode;
 	char **top_processes;
 } top_processes_result;
-static top_processes_result print_top_consuming_processes(int /*n_procs_to_show*/);
+static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show);
 
 typedef struct {
 	mp_range load[3];
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
 		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes", config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
-			for (int i = 0; i < config.n_procs_to_show; i++) {
+			for (unsigned long i = 0; i < config.n_procs_to_show; i++) {
 				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output, top_proc.top_processes[i]);
 			}
 		}
@@ -337,7 +337,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'n':
-			result.config.n_procs_to_show = atoi(optarg);
+			result.config.n_procs_to_show = (unsigned long)atol(optarg);
 			break;
 		case '?': /* help */
 			usage5();
@@ -441,7 +441,7 @@ int cmpstringp(const void *p1, const void *p2) {
 }
 #endif /* PS_USES_PROCPCPU */
 
-static top_processes_result print_top_consuming_processes(int n_procs_to_show) {
+static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show) {
 	top_processes_result result = {
 		.errorcode = OK,
 	};
@@ -462,7 +462,7 @@ static top_processes_result print_top_consuming_processes(int n_procs_to_show) {
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char *), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
-	int lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1) ? (int)chld_out.lines : n_procs_to_show + 1;
+	unsigned long lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1) ? chld_out.lines : n_procs_to_show + 1;
 
 	result.top_processes = calloc(lines_to_show, sizeof(char *));
 	if (result.top_processes == NULL) {
@@ -471,7 +471,7 @@ static top_processes_result print_top_consuming_processes(int n_procs_to_show) {
 		return result;
 	}
 
-	for (int i = 0; i < lines_to_show; i += 1) {
+	for (unsigned long i = 0; i < lines_to_show; i += 1) {
 		xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
 	}
 
