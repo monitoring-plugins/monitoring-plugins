@@ -255,7 +255,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 			byte_offset = 0;
 
 			char *index = NULL;
-			unsigned long len = 0;
+			size_t len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
