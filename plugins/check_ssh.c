@@ -255,7 +255,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 			byte_offset = 0;
 
 			char *index = NULL;
-			unsigned long len = 0;
+			size_t len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
@@ -273,12 +273,14 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 			}
 
 			if (version_control_string == NULL) {
-				/* move unconsumed data to beginning of buffer, null rest */
-				memmove((void *)output, (void *)(output + byte_offset + 1), BUFF_SZ - len + 1);
-				memset(output + byte_offset + 1, 0, BUFF_SZ - byte_offset + 1);
+				/* move unconsumed data to beginning of buffer */
+				memmove((void *)output, (void *)(output + byte_offset), BUFF_SZ - byte_offset);
 
 				/*start reading from end of current line chunk on next recv*/
 				byte_offset = strlen(output);
+
+				/* NUL the rest of the buffer */
+				memset(output + byte_offset, 0, BUFF_SZ - byte_offset);
 			}
 		} else {
 			byte_offset += recv_ret;
