@@ -48,7 +48,7 @@ typedef struct {
 	char *http_method;
 	char user_agent[DEFAULT_BUFFER_SIZE];
 	char **http_opt_headers;
-	int http_opt_headers_count;
+	size_t http_opt_headers_count;
 	char *http_post_data;
 	int max_depth;
 	char *http_content_type;
@@ -63,7 +63,7 @@ typedef struct {
 
 	int maximum_age;
 	char regexp[MAX_RE_SIZE];
-	int state_regex;
+	mp_state_enum state_regex;
 	bool invert_regex;
 	bool verify_peer_and_host;
 	bool check_cert;
@@ -71,13 +71,13 @@ typedef struct {
 	int days_till_exp_warn;
 	int days_till_exp_crit;
 	thresholds *thlds;
-	int min_page_len;
-	int max_page_len;
+	size_t min_page_len;
+	size_t max_page_len;
 	char server_expect[MAX_INPUT_BUFFER];
 	bool server_expect_yn;
 	char string_expect[MAX_INPUT_BUFFER];
 	char header_expect[MAX_INPUT_BUFFER];
-	int onredirect;
+	mp_state_enum onredirect;
 
 	bool show_extended_perfdata;
 	bool show_body;
@@ -100,7 +100,7 @@ check_curl_config check_curl_config_init() {
 		.use_ssl = false,
 		.ssl_version = CURL_SSLVERSION_DEFAULT,
 		.http_method = NULL,
-		.user_agent = {},
+		.user_agent = {'\0'},
 		.http_opt_headers = NULL,
 		.http_opt_headers_count = 0,
 		.http_post_data = NULL,
