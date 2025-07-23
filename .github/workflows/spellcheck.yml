@@ -2,6 +2,7 @@
 name: Spellcheck
 
 on:
+  workflow_dispatch: {}
   # Run for pushes on any branch
   push:
     branches:
