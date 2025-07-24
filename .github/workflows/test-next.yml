@@ -2,7 +2,13 @@
 name: Tests Debian:Testing and Fedora:Rawhide
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
   push:
     branches-ignore:
       - '*'
@@ -25,6 +31,9 @@ jobs:
     steps:
       - name: Git clone repository
         uses: actions/checkout@v4
+      - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Run the tests on ${{ matrix.distro }}
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
@@ -60,6 +69,9 @@ jobs:
     steps:
       - name: Git clone repository
         uses: actions/checkout@v4
+      - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Run the tests on ${{ matrix.distro }}
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
