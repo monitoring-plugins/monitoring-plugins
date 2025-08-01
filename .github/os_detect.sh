@@ -22,4 +22,7 @@ else
   return 1
 fi
 export distro_id=$(grep '^ID=' $os_release_file|awk -F = '{print $2}'|sed 's/\"//g')
+export version_id=$(grep '^VERSION_ID=' $os_release_file|awk -F = '{print $2}'|sed 's/\"//g')
 export platform_id=$(grep '^PLATFORM_ID=' /etc/os-release|awk -F = '{print $2}'|sed 's/\"//g'| cut -d":" -f2)
+# Fedora dropped PLATFORM_ID: https://fedoraproject.org/wiki/Changes/Drop_PLATFORM_ID?#Drop_PLATFORM_ID
+if [ -z $platform_id ]; then export platform_id=$(echo ${distro_id:0:1}${version_id}); fi
