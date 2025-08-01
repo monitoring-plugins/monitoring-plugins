@@ -7,6 +7,7 @@
 
 #include "./perfdata.h"
 #include "./thresholds.h"
+#include "states.h"
 
 
 #ifndef USE_OPENSSL
@@ -55,7 +56,7 @@ void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
 bool check_range(double, range *);
 bool mp_check_range(mp_perfdata_value, mp_range);
-int get_status(double, thresholds *);
+mp_state_enum get_status(double, thresholds *);
 
 /* Handle timeouts */
 extern int timeout_state;
@@ -107,6 +108,6 @@ void np_state_write_string(time_t, char *);
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup(void);
-const char *state_text(int);
+const char *state_text(mp_state_enum);
 
 #endif /* _UTILS_BASE_ */

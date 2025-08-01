@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "../plugins/common.h"
+#include "states.h"
 #include <stdarg.h>
 #include "utils_base.h"
 #include <ctype.h>
@@ -256,21 +257,21 @@ bool check_range(double value, range *my_range) {
 		yes = false;
 	}
 
-	if (my_range->end_infinity == false && my_range->start_infinity == false) {
+	if (!my_range->end_infinity&& !my_range->start_infinity) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		}
 		return yes;
 	}
 
-	if (my_range->start_infinity == false && my_range->end_infinity == true) {
+	if (!my_range->start_infinity && my_range->end_infinity) {
 		if (my_range->start <= value) {
 			return no;
 		}
 		return yes;
 	}
 
-	if (my_range->start_infinity == true && my_range->end_infinity == false) {
+	if (my_range->start_infinity && !my_range->end_infinity ) {
 		if (value <= my_range->end) {
 			return no;
 		}
@@ -280,14 +281,14 @@ bool check_range(double value, range *my_range) {
 }
 
 /* Returns status */
-int get_status(double value, thresholds *my_thresholds) {
+mp_state_enum get_status(double value, thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical) == true) {
+		if (check_range(value, my_thresholds->critical)) {
 			return STATE_CRITICAL;
 		}
 	}
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning) == true) {
+		if (check_range(value, my_thresholds->warning)) {
 			return STATE_WARNING;
 		}
 	}
@@ -395,7 +396,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 	return value;
 }
 
-const char *state_text(int result) {
+const char *state_text(mp_state_enum result) {
 	switch (result) {
 	case STATE_OK:
 		return "OK";
