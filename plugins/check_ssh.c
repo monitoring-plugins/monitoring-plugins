@@ -245,7 +245,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	char *output = (char *)calloc(BUFF_SZ + 1, sizeof(char));
 	char *buffer = NULL;
-	size_t recv_ret = 0;
+	ssize_t recv_ret = 0;
 	char *version_control_string = NULL;
 	size_t byte_offset = 0;
 	while ((version_control_string == NULL) &&
@@ -283,7 +283,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 				memset(output + byte_offset, 0, BUFF_SZ - byte_offset);
 			}
 		} else {
-			byte_offset += recv_ret;
+			byte_offset += (size_t)recv_ret;
 		}
 	}
 
