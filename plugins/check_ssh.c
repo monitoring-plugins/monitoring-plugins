@@ -255,12 +255,11 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 			byte_offset = 0;
 
 			char *index = NULL;
-			size_t len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
 				output[(index - output)] = '\0';
-				len = strlen(output + byte_offset);
+				size_t len = strlen(output + byte_offset);
 
 				if ((len >= 4) && (strncmp(output + byte_offset, "SSH-", 4) == 0)) {
 					/*if the string starts with SSH-, this _should_ be a valid version control string*/
