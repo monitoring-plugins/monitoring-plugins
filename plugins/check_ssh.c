@@ -289,7 +289,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	if (recv_ret < 0) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - %s", strerror(errno));
+		xasprintf(&connection_sc.output, "%s - %s", "SSH CRITICAL - ", strerror(errno));
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return OK;
 	}
