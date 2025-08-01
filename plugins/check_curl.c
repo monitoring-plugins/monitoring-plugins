@@ -127,8 +127,6 @@ static curlhelp_statusline status_line;
 static bool put_buf_initialized = false;
 static curlhelp_read_curlbuf put_buf;
 
-static struct curl_slist *server_ips = NULL; // TODO maybe unused
-static int redir_depth = 0;                  // Maybe global
 static CURL *curl;
 static struct curl_slist *header_list = NULL;
 static long code;
@@ -138,7 +136,6 @@ typedef union {
 	struct curl_slist *to_info;
 	struct curl_certinfo *to_certinfo;
 } cert_ptr_union;
-static cert_ptr_union cert_ptr;
 static bool is_openssl_callback = false;
 static bool add_sslctx_verify_fun = false;
 
@@ -146,7 +143,6 @@ static bool add_sslctx_verify_fun = false;
 static X509 *cert = NULL;
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 
-static int address_family = AF_UNSPEC;
 static curlhelp_ssl_library ssl_library = CURLHELP_SSL_LIBRARY_UNKNOWN;
 
 typedef struct {
@@ -156,8 +152,11 @@ typedef struct {
 static check_curl_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 
 static void handle_curl_option_return_code(CURLcode res, const char *option);
-static mp_state_enum check_http(check_curl_config /*config*/);
-static void redir(curlhelp_write_curlbuf * /*header_buf*/, check_curl_config /*config*/);
+static mp_state_enum check_http(check_curl_config /*config*/, int redir_depth);
+
+static void redir(curlhelp_write_curlbuf * /*header_buf*/, check_curl_config /*config*/,
+				  int redir_depth);
+
 static char *perfd_time(double elapsed_time, thresholds * /*thlds*/, long /*socket_timeout*/);
 static char *perfd_time_connect(double elapsed_time_connect, long /*socket_timeout*/);
 static char *perfd_time_ssl(double elapsed_time_ssl, long /*socket_timeout*/);
@@ -224,7 +223,9 @@ int main(int argc, char **argv) {
 			   config.virtual_port ? config.virtual_port : config.server_port, config.server_url);
 	}
 
-	exit((int)check_http(config));
+	int redir_depth = 0;
+
+	exit((int)check_http(config, redir_depth));
 }
 
 #ifdef HAVE_SSL
@@ -326,10 +327,10 @@ void handle_curl_option_return_code(CURLcode res, const char *option) {
 	}
 }
 
-int lookup_host(const char *host, char *buf, size_t buflen) {
+int lookup_host(const char *host, char *buf, size_t buflen, sa_family_t addr_family) {
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = address_family;
+	hints.ai_family = addr_family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags |= AI_CANONNAME;
 
@@ -408,7 +409,7 @@ static void cleanup(void) {
 	put_buf_initialized = false;
 }
 
-mp_state_enum check_http(check_curl_config config) {
+mp_state_enum check_http(check_curl_config config, int redir_depth) {
 	/* initialize curl */
 	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
 		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
@@ -448,8 +449,7 @@ mp_state_enum check_http(check_curl_config config) {
 	}
 	body_buf_initialized = true;
 	handle_curl_option_return_code(
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
-						 curlhelp_buffer_write_callback),
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlhelp_buffer_write_callback),
 		"CURLOPT_WRITEFUNCTION");
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&body_buf),
 								   "CURLOPT_WRITEDATA");
@@ -460,8 +460,7 @@ mp_state_enum check_http(check_curl_config config) {
 	}
 	header_buf_initialized = true;
 	handle_curl_option_return_code(
-		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,
-						 curlhelp_buffer_write_callback),
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curlhelp_buffer_write_callback),
 		"CURLOPT_HEADERFUNCTION");
 	handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_WRITEHEADER, (void *)&header_buf),
 								   "CURLOPT_WRITEHEADER");
@@ -490,7 +489,8 @@ mp_state_enum check_http(check_curl_config config) {
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
 	if (config.use_ssl && config.host_name != NULL) {
 		int res;
-		if ((res = lookup_host(config.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2)) != 0) {
+		if ((res = lookup_host(config.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
+							   config.sin_family)) != 0) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE,
 					 _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
 					 config.server_address, res, gai_strerror(res));
@@ -810,16 +810,16 @@ mp_state_enum check_http(check_curl_config config) {
 	}
 
 	/* IPv4 or IPv6 forced DNS resolution */
-	if (address_family == AF_UNSPEC) {
+	if (config.sin_family == AF_UNSPEC) {
 		handle_curl_option_return_code(
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER),
 			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
-	} else if (address_family == AF_INET) {
+	} else if (config.sin_family == AF_INET) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4),
 									   "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
 	}
 #if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
-	else if (address_family == AF_INET6) {
+	else if (config.sin_family == AF_INET6) {
 		handle_curl_option_return_code(curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
 									   "CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
 	}
@@ -889,8 +889,7 @@ mp_state_enum check_http(check_curl_config config) {
 	/* free header and server IP resolve lists, we don't need it anymore */
 	curl_slist_free_all(header_list);
 	header_list = NULL;
-	curl_slist_free_all(server_ips);
-	server_ips = NULL;
+
 	if (host) {
 		curl_slist_free_all(host);
 		host = NULL;
@@ -926,6 +925,7 @@ mp_state_enum check_http(check_curl_config config) {
 			} else {
 				struct curl_slist *slist;
 
+				cert_ptr_union cert_ptr = {0};
 				cert_ptr.to_info = NULL;
 				res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
 				if (!res && cert_ptr.to_info) {
@@ -1103,7 +1103,7 @@ mp_state_enum check_http(check_curl_config config) {
 					 * back here, we are in the same status as with
 					 * the libcurl method
 					 */
-					redir(&header_buf, config);
+					redir(&header_buf, config, redir_depth);
 				}
 			} else {
 				/* this is a specific code in the command line to
@@ -1287,7 +1287,8 @@ char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
 	return buf;
 }
 
-void redir(curlhelp_write_curlbuf *header_buf, check_curl_config config) {
+void redir(curlhelp_write_curlbuf *header_buf, check_curl_config config, int redir_depth) {
+
 	curlhelp_statusline status_line;
 	struct phr_header headers[255];
 	size_t msglen;
@@ -1443,7 +1444,7 @@ void redir(curlhelp_write_curlbuf *header_buf, check_curl_config config) {
 	 */
 
 	cleanup();
-	check_http(config);
+	check_http(config, redir_depth);
 }
 
 /* check whether a file exists */
@@ -1899,11 +1900,11 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case '4':
-			address_family = AF_INET;
+			result.config.sin_family = AF_INET;
 			break;
 		case '6':
 #if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
-			address_family = AF_INET6;
+			result.config.sin_family = AF_INET6;
 #else
 			usage4(_("IPv6 support not available"));
 #endif

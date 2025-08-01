@@ -6,6 +6,7 @@
 #include "thresholds.h"
 #include <stddef.h>
 #include <string.h>
+#include <sys/socket.h>
 #include "curl/curl.h"
 
 enum {
@@ -37,6 +38,7 @@ typedef struct {
 	unsigned short virtual_port;
 	char *host_name;
 	char *server_url;
+	sa_family_t sin_family;
 
 	bool automatic_decompression;
 	bool haproxy_protocol;
@@ -91,6 +93,7 @@ check_curl_config check_curl_config_init() {
 		.virtual_port = 0,
 		.host_name = NULL,
 		.server_url = strdup(DEFAULT_SERVER_URL),
+		.sin_family = AF_UNSPEC,
 
 		.automatic_decompression = false,
 		.haproxy_protocol = false,
