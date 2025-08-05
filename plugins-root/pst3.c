@@ -139,15 +139,9 @@ try_again:
     if((ps_fd = open(ps_name, O_RDONLY)) == -1)
       continue;
 
-    if((as_fd = open(as_name, O_RDONLY)) == -1) {
-      close(ps_fd);
-      continue;
-    }
-
     if(read(ps_fd, &psinfo, sizeof(psinfo)) != sizeof(psinfo)) {
       int err = errno;
       close(ps_fd);
-      close(as_fd);
       if(err == EAGAIN) goto try_again;
       if(err != ENOENT)
         fprintf(stderr, "%s: read() on %s: %s\n", szProg,
@@ -155,14 +149,6 @@ try_again:
       continue;
     }
     close(ps_fd);
-
-    /* system process, ignore since the previous version did */
-    if(
-      psinfo.pr_nlwp == 0 ||
-      strcmp(psinfo.pr_lwp.pr_clname, "SYS") == 0
-    ) {
-      continue;
-    }
 
     /* get the procname to match previous versions */
     procname = strdup(psinfo.pr_psargs);
@@ -190,7 +176,13 @@ try_again:
 
     /*
      * and now for the command line stuff
+     *
+     * If this file cannot be opened then it is a defunct process
      */
+    if((as_fd = open(as_name, O_RDONLY)) == -1) {
+      printf("<defunct>\n");
+      continue;
+    }
 
     args_addr = psinfo.pr_argv;
     args_count = psinfo.pr_argc;
