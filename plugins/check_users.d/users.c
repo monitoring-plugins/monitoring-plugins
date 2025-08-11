@@ -61,7 +61,7 @@ get_num_of_users_wrapper get_num_of_users_systemd() {
 
 	// Test whether we booted with systemd
 	if (sd_booted() > 0) {
-		int users = sd_get_sessions(NULL);
+		int users = sd_get_uids(NULL);
 		if (users >= 0) {
 			// Success
 			result.users = users;
