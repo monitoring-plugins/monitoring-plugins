@@ -707,11 +707,11 @@ int main(int argc, char *argv[]) {
 
 	if (config.do_stratum) {
 		if (sresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, stratum=%l (WARNING)", result_line, ntp_res.stratum);
+			xasprintf(&result_line, "%s, stratum=%li (WARNING)", result_line, ntp_res.stratum);
 		} else if (sresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, stratum=%l (CRITICAL)", result_line, ntp_res.stratum);
+			xasprintf(&result_line, "%s, stratum=%li (CRITICAL)", result_line, ntp_res.stratum);
 		} else {
-			xasprintf(&result_line, "%s, stratum=%l", result_line, ntp_res.stratum);
+			xasprintf(&result_line, "%s, stratum=%li", result_line, ntp_res.stratum);
 		}
 		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
 	}

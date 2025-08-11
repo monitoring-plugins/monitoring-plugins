@@ -114,7 +114,6 @@ NP-VERSION-FILE
 /lib/tests/Makefile.in
 /lib/tests/test_base64
 /lib/tests/test_cmd
-/lib/tests/test_disk
 /lib/tests/test_tcp
 /lib/tests/test_utils
 /lib/tests/utils_base.Po
@@ -153,6 +152,8 @@ NP-VERSION-FILE
 /plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
+plugins/check_disk.d/.deps/
+plugins/check_disk.d/.dirstamp
 /plugins/check_dns
 /plugins/check_dummy
 /plugins/check_fping
@@ -177,7 +178,6 @@ NP-VERSION-FILE
 /plugins/check_ntp
 /plugins/check_ntp_peer
 /plugins/check_ntp_time
-/plugins/check_nwstat
 /plugins/check_pgsql
 /plugins/check_ping
 /plugins/check_pop
@@ -224,7 +224,7 @@ NP-VERSION-FILE
 /plugins/tests/Makefile
 /plugins/tests/Makefile.in
 /plugins/tests/test_utils
-/plugins/tests/test_disk
+/plugins/tests/test_check_disk
 /plugins/tests/test_check_swap
 /plugins/tests/.deps
 /plugins/tests/.dirstamp

@@ -24,7 +24,9 @@ noinst_PROGRAMS = check_dhcp check_icmp @EXTRAS_ROOT@
 
 EXTRA_PROGRAMS = pst3
 
-EXTRA_DIST = t pst3.c
+EXTRA_DIST = t pst3.c \
+			 check_icmp.d \
+			 check_dhcp.d
 
 BASEOBJS = ../plugins/utils.o ../lib/libmonitoringplug.a ../gl/libgnu.a
 NETOBJS = ../plugins/netutils.o $(BASEOBJS) $(EXTRA_NETOBJS)
@@ -82,6 +84,7 @@ install-exec-local: $(noinst_PROGRAMS)
 # the actual targets
 check_dhcp_LDADD = @LTLIBINTL@ $(NETLIBS) $(LIB_CRYPTO)
 check_icmp_LDADD = @LTLIBINTL@ $(NETLIBS) $(SOCKETLIBS) $(LIB_CRYPTO)
+check_icmp_SOURCES = check_icmp.c check_icmp.d/check_icmp_helpers.c
 
 # -m64 needed at compiler and linker phase
 pst3_CFLAGS = @PST3CFLAGS@
@@ -89,7 +92,7 @@ pst3_LDFLAGS = @PST3CFLAGS@
 # pst3 must not use monitoringplug/gnulib includes!
 pst3_CPPFLAGS =
 
-check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS) 
+check_dhcp_DEPENDENCIES = check_dhcp.c $(NETOBJS) $(DEPLIBS)
 check_icmp_DEPENDENCIES = check_icmp.c $(NETOBJS)
 
 clean-local:

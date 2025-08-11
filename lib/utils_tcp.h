@@ -11,6 +11,7 @@
  * server.
  */
 enum np_match_result {
+	NP_MATCH_NONE,
 	NP_MATCH_FAILURE,
 	NP_MATCH_SUCCESS,
 	NP_MATCH_RETRY

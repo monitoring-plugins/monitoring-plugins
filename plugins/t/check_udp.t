@@ -28,7 +28,7 @@ like  ( $res->output, '/With UDP checks, a send/expect string must be specified.
 
 $res = NPTest->testCmd( "./check_udp -H localhost -p 3333 -s foo -e bar" );
 cmp_ok( $res->return_code, '==', 2, "Errors correctly because no udp service running" );
-like  ( $res->output, '/No data received from host/', "Output OK");
+like  ( $res->output, '/Received no data /', "Output OK");
 
 my $nc;
 if(system("which nc.traditional >/dev/null 2>&1") == 0) {
@@ -48,7 +48,7 @@ SKIP: {
 	sleep 1;
 	$res = NPTest->testCmd( "./check_udp -H localhost -p 3333 -s '' -e barbar -4" );
 	cmp_ok( $res->return_code, '==', 0, "Got barbar response back" );
-	like  ( $res->output, '/\[barbar\]/', "Output OK");
+	like  ( $res->output, '/answer of the server matched/', "Output OK");
 	close NC;
 
 	# Start up a udp server listening on port 3333, quit after 3 seconds

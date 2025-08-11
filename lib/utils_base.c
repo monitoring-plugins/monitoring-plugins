@@ -225,27 +225,15 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	if (my_range.end_infinity == false && my_range.start_infinity == false) {
 		// range:  .........|---inside---|...........
 		// value
-		if ((cmp_perfdata_value(my_range.start, value) < 1) && (cmp_perfdata_value(value, my_range.end) <= 0)) {
-			is_inside = true;
-		} else {
-			is_inside = false;
-		}
+		is_inside = ((cmp_perfdata_value(my_range.start, value) < 1) && (cmp_perfdata_value(value, my_range.end) <= 0));
 	} else if (my_range.start_infinity == false && my_range.end_infinity == true) {
 		// range:  .........|---inside---------
 		// value
-		if (cmp_perfdata_value(my_range.start, value) < 0) {
-			is_inside = true;
-		} else {
-			is_inside = false;
-		}
+		is_inside = (cmp_perfdata_value(my_range.start, value) < 0);
 	} else if (my_range.start_infinity == true && my_range.end_infinity == false) {
 		// range:  -inside--------|....................
 		// value
-		if (cmp_perfdata_value(value, my_range.end) == -1) {
-			is_inside = true;
-		} else {
-			is_inside = false;
-		}
+		is_inside = (cmp_perfdata_value(value, my_range.end) == -1);
 	} else {
 		// range from -inf to inf, so always inside
 		is_inside = true;

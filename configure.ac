@@ -181,10 +181,10 @@ fi
 
 # Finally, define tests if we use libtap
 if test "$enable_libtap" = "yes" ; then
-	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
+	EXTRA_TEST="test_utils test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
 
-	EXTRA_PLUGIN_TESTS="tests/test_check_swap"
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk"
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
@@ -796,7 +796,7 @@ elif ps axwo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu etime comm args'"
-	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
+	ac_cv_ps_format="%s %u %d %d %d %d %f %s %s %n"
 	ac_cv_ps_cols=10
 	AC_MSG_RESULT([$ac_cv_ps_command])
 
@@ -1519,21 +1519,47 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
-AC_PATH_PROG(PATH_TO_FPING6,fping6)
 
 AC_ARG_WITH(fping_command,
             ACX_HELP_STRING([--with-fping-command=PATH],
                             [Path to fping command]), PATH_TO_FPING=$withval)
-AC_ARG_WITH(fping6_command,
-            ACX_HELP_STRING([--with-fping6-command=PATH],
-                            [Path to fping6 command]), PATH_TO_FPING6=$withval)
-
-if test -n "$PATH_TO_FPING"
-then
+if test -n "$PATH_TO_FPING"; then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping\$(EXEEXT)"
-	if test x"$with_ipv6" != xno && test -n "$PATH_TO_FPING6"; then
-		AC_DEFINE_UNQUOTED(PATH_TO_FPING6,"$PATH_TO_FPING6",[path to fping6])
+
+	if test -z "$($PATH_TO_FPING --version)"  ; then
+		AC_MSG_NOTICE([failed to get version of fping])
+	else
+		FPING_MAJOR_VERSION="$($PATH_TO_FPING --version | sed 's/.*fping: Version //' | sed 's/\..*//')"
+		FPING_MINOR_VERSION="$($PATH_TO_FPING --version | sed 's/.*fping: Version //' | sed 's/.*\.//')"
+
+		if test $FPING_MAJOR_VERSION -eq 5 ; then
+			if test $FPING_MINOR_VERSION -ge 3 ; then
+				AC_DEFINE(FPING_VERSION_5_3_OR_HIGHER, "true", [fping is of version 5.3 or higher])
+				AC_MSG_NOTICE([fping is of version 5.3 or higher])
+				AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+				AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			elif test $FPING_MINOR_VERSION -ge 2 ; then
+				AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+				AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			else
+				AC_MSG_NOTICE([fping is of a version lower then 5.2])
+			fi
+
+		elif $FPING_MAJOR_VERSION > 5 ; then
+			AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+			AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			AC_DEFINE(FPING_VERSION_5_3_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+			AC_MSG_NOTICE([fping is of version 5.3 or higher])
+		fi
+
+		if test "`fping --version | sed 's/.*fping: Version //'`" =  "5.2" ; then
+			AC_DEFINE(FPING_VERSION, "5.2", [the version of fping available])
+			AC_MSG_NOTICE([fping version: 5.2])
+		elif test "`fping --version | sed 's/.*fping: Version //'`" =  "5.3"; then
+			AC_DEFINE(FPING_VERSION, "5.3", [the version of fping available])
+			AC_MSG_NOTICE([fping version: 5.3])
+		fi
 	fi
 else
 	AC_MSG_WARN([Get fping from http://www.fping.com in order to make check_fping plugin])
