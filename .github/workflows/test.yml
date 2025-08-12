@@ -28,7 +28,7 @@ jobs:
             prepare: .github/prepare_debian.sh
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
@@ -69,7 +69,7 @@ jobs:
 #          - {"distro": "oraclelinux:9", "build": ".github/mock.sh"}
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
