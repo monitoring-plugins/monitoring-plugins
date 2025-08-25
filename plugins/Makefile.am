@@ -78,6 +78,7 @@ EXTRA_DIST = t \
 			 check_ping.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
+			 check_snmp.d \
 			 check_mysql.d \
 			 check_ntp_time.d \
 			 check_dig.d \
@@ -152,6 +153,8 @@ check_procs_LDADD = $(BASEOBJS)
 check_radius_LDADD = $(NETLIBS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
 check_snmp_LDADD = $(BASEOBJS)
+check_snmp_LDFLAGS = $(AM_LDFLAGS) `net-snmp-config --libs`
+check_snmp_CFLAGS = $(AM_CFLAGS) `net-snmp-config --cflags`
 check_smtp_LDADD = $(SSLOBJS)
 check_ssh_LDADD = $(NETLIBS)
 check_swap_SOURCES = check_swap.c check_swap.d/swap.c
