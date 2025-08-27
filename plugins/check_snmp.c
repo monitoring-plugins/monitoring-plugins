@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
 	np_set_args(argc, argv);
 
-	// Initialize net-snmp before touching the sessio we are going to use
+	// Initialize net-snmp before touching the session we are going to use
 	init_snmp("check_snmp");
 
 	time_t current_time;
@@ -190,10 +190,10 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
-	mp_subcheck sc_succesfull_query = mp_subcheck_init();
-	xasprintf(&sc_succesfull_query.output, "SNMP query was succesful");
-	sc_succesfull_query = mp_set_subcheck_state(sc_succesfull_query, STATE_OK);
-	mp_add_subcheck_to_check(&overall, sc_succesfull_query);
+	mp_subcheck sc_successfull_query = mp_subcheck_init();
+	xasprintf(&sc_successfull_query.output, "SNMP query was succesful");
+	sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
+	mp_add_subcheck_to_check(&overall, sc_successfull_query);
 
 	// We got the the query results, now process them
 	size_t loop_index = 0;
@@ -643,7 +643,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
 				// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
 			} else {
-				die(STATE_UNKNOWN, "Unknow privacy protocol");
+				die(STATE_UNKNOWN, "Unknown privacy protocol");
 			}
 			break;
 		case 'A': /* auth passwd */
