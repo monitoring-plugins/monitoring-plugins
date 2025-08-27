@@ -84,8 +84,8 @@ typedef struct proces_arguments_wrapper {
 } process_arguments_wrapper;
 
 static process_arguments_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-char *trim_whitespaces_and_check_quoting(char *str);
-char *get_next_argument(char *str);
+static char *trim_whitespaces_and_check_quoting(char *str);
+static char *get_next_argument(char *str);
 void print_usage(void);
 void print_help(void);
 
