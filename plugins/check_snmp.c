@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 	mp_check overall = mp_check_init();
 
 	mp_subcheck sc_successfull_query = mp_subcheck_init();
-	xasprintf(&sc_successfull_query.output, "SNMP query was succesful");
+	xasprintf(&sc_successfull_query.output, "SNMP query was successful");
 	sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
 	mp_add_subcheck_to_check(&overall, sc_successfull_query);
 
