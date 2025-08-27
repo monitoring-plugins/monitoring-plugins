@@ -9,56 +9,66 @@ check_snmp_test_unit check_snmp_test_unit_init() {
 	return tmp;
 }
 
+int check_snmp_set_thresholds(const char *threshold_string, check_snmp_test_unit test_units[],
+							  size_t max_test_units, bool is_critical) {
 
-int check_snmp_set_thresholds(char *threshold_string, check_snmp_test_unit tu[],
-									 size_t max_test_units, bool is_critical) {
+	if (threshold_string == NULL || strlen(threshold_string) == 0) {
+		// No input, do nothing
+		return 0;
+	}
+
 	if (strchr(threshold_string, ',') != NULL) {
 		// Got a comma in the string, should be multiple values
-		size_t tmp_counter = 0;
-		mp_range range_buffer;
-		bool first_value = true;
+		size_t tu_index = 0;
+
+		while (threshold_string[0] == ',') {
+			// got commas at the beginning, so skip some values
+			tu_index++;
+			threshold_string++;
+		}
+
 		for (char *ptr = strtok(threshold_string, ", "); ptr != NULL;
-			 ptr = strtok(NULL, ", "), tmp_counter++) {
+			 ptr = strtok(NULL, ", "), tu_index++) {
+
+			if (tu_index > max_test_units) {
+				// More thresholds then values, just ignore them
+				return 0;
+			}
 
 			// edge case: maybe we got `,,` to skip a value
 			if (strlen(ptr) == 0) {
-				// use the previous value in this case
-				// or do not overwrite the loop value to be specific
-				if (first_value) {
-					die(STATE_UNKNOWN, "Empty threshold value");
-				}
-			} else {
-				mp_range_parsed tmp = mp_parse_range_string(ptr);
-				if (tmp.error != MP_PARSING_SUCCES) {
-					die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", ptr);
-				}
-				range_buffer = tmp.range;
+				// no threshold given, do not set it then
+				continue;
+			}
+
+			mp_range_parsed tmp = mp_parse_range_string(ptr);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", ptr);
 			}
 
 			if (is_critical) {
-				tu[tmp_counter].threshold.critical = range_buffer;
-				tu[tmp_counter].threshold.critical_is_set = true;
+				test_units[tu_index].threshold.critical = tmp.range;
+				test_units[tu_index].threshold.critical_is_set = true;
 			} else {
-				tu[tmp_counter].threshold.warning = range_buffer;
-				tu[tmp_counter].threshold.warning_is_set = true;
+				test_units[tu_index].threshold.warning = tmp.range;
+				test_units[tu_index].threshold.warning_is_set = true;
 			}
-			first_value = false;
 		}
+
 	} else {
 		// Single value
+		// only valid for the first test unit
 		mp_range_parsed tmp = mp_parse_range_string(threshold_string);
 		if (tmp.error != MP_PARSING_SUCCES) {
 			die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", threshold_string);
 		}
 
-		for (size_t i = 0; i < max_test_units; i++) {
-			if (is_critical) {
-				tu[i].threshold.critical = tmp.range;
-				tu[i].threshold.critical_is_set = true;
-			} else {
-				tu[i].threshold.warning = tmp.range;
-				tu[i].threshold.warning_is_set = true;
-			}
+		if (is_critical) {
+			test_units[0].threshold.critical = tmp.range;
+			test_units[0].threshold.critical_is_set = true;
+		} else {
+			test_units[0].threshold.warning = tmp.range;
+			test_units[0].threshold.warning_is_set = true;
 		}
 	}
 
