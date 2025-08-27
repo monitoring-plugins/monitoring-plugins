@@ -516,6 +516,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	char *port = NULL;
 	char *miblist = NULL;
 	char *connection_prefix = NULL;
+	bool snmp_version_set_explicitely = false;
 	// TODO error checking
 	while (true) {
 		int option_char = getopt_long(
@@ -567,6 +568,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				die(STATE_UNKNOWN, "invalid SNMP version/protocol: %s", optarg);
 			}
+			snmp_version_set_explicitely = true;
+
 			break;
 		case 'N': /* SNMPv3 context name */
 			config.snmp_session.contextName = optarg;
@@ -856,6 +859,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	} else {
 		// Blatantly stolen from snmplib/snmp_parse_args
 		setenv("MIBS", miblist, 1);
+	}
+
+	// Historical default is SNMP v2c
+	if (!snmp_version_set_explicitely && config.snmp_session.community != NULL) {
+		config.snmp_session.version = SNMP_VERSION_2c;
 	}
 
 	if ((config.snmp_session.version == SNMP_VERSION_1) ||
