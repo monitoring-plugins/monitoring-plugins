@@ -88,6 +88,9 @@ BuildRequires: postgresql-devel
 # check_radius
 BuildRequires: radcli-devel
 
+# check_snmp
+BuildRequires: net-snmp-devel
+
 %description
 Common files for Monitoring Plugins
 
@@ -824,7 +827,6 @@ Provides check_smtp of the Monitoring Plugins.
 Summary:  Monitoring Plugins - check_snmp
 Requires: %{name} = %{version}-%{release}
 Requires: net-snmp
-Build-Requires: net-snmp-devel
 
 %description snmp
 Provides check_snmp of the Monitoring Plugins.
