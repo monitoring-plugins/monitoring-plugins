@@ -152,6 +152,7 @@ check_ping_LDADD = $(NETLIBS)
 check_procs_LDADD = $(BASEOBJS)
 check_radius_LDADD = $(NETLIBS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
+check_snmp_SOURCES = check_snmp.c check_snmp.d/check_snmp_helpers.c
 check_snmp_LDADD = $(BASEOBJS)
 check_snmp_LDFLAGS = $(AM_LDFLAGS) `net-snmp-config --libs`
 check_snmp_CFLAGS = $(AM_CFLAGS) `net-snmp-config --cflags`

@@ -41,6 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "../lib/utils_base.h"
 #include "../lib/output.h"
 #include "../lib/perfdata.h"
+#include "check_snmp.d/check_snmp_helpers.h"
 
 #include <bits/getopt_core.h>
 #include <bits/getopt_ext.h>
@@ -366,8 +367,9 @@ int main(int argc, char **argv) {
 					  config.test_units[loop_index].unit_value);
 		}
 
-		if (config.thresholds.warning_is_set || config.thresholds.critical_is_set) {
-			pd_num_val = mp_pd_set_thresholds(pd_num_val, config.thresholds);
+		if (config.test_units[loop_index].threshold.warning_is_set ||
+			config.test_units[loop_index].threshold.critical_is_set) {
+			pd_num_val = mp_pd_set_thresholds(pd_num_val, config.test_units[loop_index].threshold);
 			mp_state_enum tmp_state = mp_get_pd_status(pd_num_val);
 
 			if (tmp_state == STATE_WARNING) {
@@ -660,23 +662,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 			/* Test parameters */
 		case 'c': /* critical threshold */
-		{
-			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
-				die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", optarg);
-			}
-			config.thresholds.critical = tmp.range;
-			config.thresholds.critical_is_set = true;
-		} break;
+			check_snmp_set_thresholds(optarg, config.test_units, oid_counter, true);
+			break;
 		case 'w': /* warning threshold */
-		{
-			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
-				die(STATE_UNKNOWN, "Unable to parse warning threshold range: %s", optarg);
-			}
-			config.thresholds.warning = tmp.range;
-			config.thresholds.warning_is_set = true;
-		} break;
+			check_snmp_set_thresholds(optarg, config.test_units, oid_counter, false);
+			break;
 		case 'o': /* object identifier */
 			if (strspn(optarg, "0123456789.,") != strlen(optarg)) {
 				/*
