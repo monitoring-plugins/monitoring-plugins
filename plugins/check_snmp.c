@@ -161,18 +161,27 @@ int main(int argc, char **argv) {
 
 	struct snmp_session *active_session = snmp_open(&config.snmp_session);
 	if (active_session == NULL) {
-		snmp_sess_perror("Failed to open session", &config.snmp_session);
-		die(STATE_UNKNOWN, "Failed to open SNMP session\n");
+		int pcliberr = 0;
+		int psnmperr = 0;
+		char *pperrstring = NULL;
+		snmp_error (&config.snmp_session, &pcliberr , &psnmperr, &pperrstring);
+		die(STATE_UNKNOWN, "Failed to open SNMP session: %s\n", pperrstring);
 	}
 
 	struct snmp_pdu *response = NULL;
 	int snmp_query_status = snmp_synch_response(active_session, pdu, &response);
 
 	if (!(snmp_query_status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR)) {
-		snmp_sess_perror("Failed to query", active_session);
-		// FAILED somehow
-		// TODO do some error analysis here
-		die(STATE_UNKNOWN, "SNMP query failed\n");
+		int pcliberr = 0;
+		int psnmperr = 0;
+		char *pperrstring = NULL;
+		snmp_error (active_session, &pcliberr , &psnmperr, &pperrstring);
+
+		if (psnmperr == SNMPERR_TIMEOUT) {
+			// We exit with critical here for some historical reason
+			die(STATE_CRITICAL, "SNMP query ran into a timeout\n");
+		}
+		die(STATE_UNKNOWN, "SNMP query failed: %s\n", pperrstring);
 	}
 
 	snmp_close(active_session);
