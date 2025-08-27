@@ -88,7 +88,6 @@ char *trim_whitespaces_and_check_quoting(char *str);
 char *get_next_argument(char *str);
 void print_usage(void);
 void print_help(void);
-char *multiply(char *str, double multiplier, char *fmt_str);
 
 static int verbose = 0;
 
@@ -952,53 +951,6 @@ char *get_next_argument(char *str) {
 		return (++str);
 	}
 	return NULL;
-}
-
-/* multiply result (values 0 < n < 1 work as divider) */
-char *multiply(char *str, double multiplier, char *fmt_str) {
-
-	if (multiplier == 1) {
-		return (str);
-	}
-
-	if (verbose > 2) {
-		printf("    multiply input: %s\n", str);
-	}
-
-	char *endptr;
-	double val = strtod(str, &endptr);
-	if ((val == 0.0) && (endptr == str)) {
-		die(STATE_UNKNOWN, _("multiplier set (%.1f), but input is not a number: %s"), multiplier,
-			str);
-	}
-
-	if (verbose > 2) {
-		printf("    multiply extracted double: %f\n", val);
-	}
-
-	val *= multiplier;
-	char *conv = "%f";
-	if (fmt_str != NULL) {
-		conv = fmt_str;
-	}
-
-	char *buffer = calloc(1, DEFAULT_BUFFER_SIZE);
-	if (buffer == NULL) {
-		die(STATE_UNKNOWN, "calloc failed");
-	}
-
-	if (val == (int)val) {
-		snprintf(buffer, DEFAULT_BUFFER_SIZE, "%.0f", val);
-	} else {
-		if (verbose > 2) {
-			printf("    multiply using format: %s\n", conv);
-		}
-		snprintf(buffer, DEFAULT_BUFFER_SIZE, conv, val);
-	}
-	if (verbose > 2) {
-		printf("    multiply result: %s\n", buffer);
-	}
-	return buffer;
 }
 
 void print_help(void) {
