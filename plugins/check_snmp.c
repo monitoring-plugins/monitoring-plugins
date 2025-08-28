@@ -68,9 +68,15 @@ const char *email = "devel@monitoring-plugins.org";
 const char DEFAULT_COMMUNITY[] = "public";
 const char DEFAULT_MIBLIST[] = "ALL";
 #define DEFAULT_AUTH_PROTOCOL "MD5"
-#define DEFAULT_PRIV_PROTOCOL "DES"
-#define DEFAULT_DELIMITER     "="
-#define DEFAULT_BUFFER_SIZE   100
+
+#ifdef usmDESPrivProtocol
+#	define DEFAULT_PRIV_PROTOCOL "DES"
+#else
+#	define DEFAULT_PRIV_PROTOCOL "AES"
+#endif
+
+#define DEFAULT_DELIMITER   "="
+#define DEFAULT_BUFFER_SIZE 100
 
 /* Longopts only arguments */
 #define L_INVERT_SEARCH             CHAR_MAX + 3
@@ -617,8 +623,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'x': /* priv protocol */
 			if (strcasecmp("DES", optarg) == 0) {
+#ifdef usmDESPrivProtocol
 				config.snmp_session.securityAuthProto = usmDESPrivProtocol;
 				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmDESPrivProtocol);
+#else
+				die(STATE_UNKNOWN, "DES Privacy Protocol not available on this platform");
+#endif
 			} else if (strcasecmp("AES", optarg) == 0) {
 				config.snmp_session.securityAuthProto = usmAESPrivProtocol;
 				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAESPrivProtocol);
@@ -987,8 +997,13 @@ void print_help(void) {
 	printf("    %s\n", _("SNMPv3 securityLevel"));
 	printf(" %s\n", "-a, --authproto=[MD5|SHA]");
 	printf("    %s\n", _("SNMPv3 auth proto"));
+#ifdef usmDESPrivProtocol
 	printf(" %s\n", "-x, --privproto=[DES|AES]");
 	printf("    %s\n", _("SNMPv3 priv proto (default DES)"));
+#else
+	printf(" %s\n", "-x, --privproto=[AES]");
+	printf("    %s\n", _("SNMPv3 priv proto (default AES)"));
+#endif
 
 	/* Authentication Tokens*/
 	printf(" %s\n", "-C, --community=STRING");
