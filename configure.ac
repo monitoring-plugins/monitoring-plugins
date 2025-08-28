@@ -1470,17 +1470,6 @@ AC_ARG_WITH(snmpgetnext_command,
 AS_IF([test -n "$PATH_TO_SNMPGET"], [
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd"
-
-	dnl PATH_TO_SNMPGETNEXT is used unconditionally in check_snmp:
-	dnl
-	dnl   https://github.com/nagios-plugins/nagios-plugins/issues/788
-	dnl
-	AS_IF([test -n "$PATH_TO_SNMPGETNEXT"], [
-		AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT",[path to snmpgetnext binary])
-		EXTRAS="$EXTRAS check_snmp\$(EXEEXT)"
-	], [
-		AC_MSG_WARN([Get snmpgetnext from https://net-snmp.sourceforge.io/ to build the check_snmp plugin])
-	])
 ], [
 	AC_MSG_WARN([Get snmpget from https://net-snmp.sourceforge.io/ to build the check_hpjd and check_snmp plugins])
 ])
