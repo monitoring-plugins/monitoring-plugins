@@ -88,6 +88,9 @@ BuildRequires: postgresql-devel
 # check_radius
 BuildRequires: radcli-devel
 
+# check_snmp
+BuildRequires: net-snmp-devel
+
 %description
 Common files for Monitoring Plugins
 

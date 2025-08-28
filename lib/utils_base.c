@@ -222,15 +222,15 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	bool is_inside = false;
 
-	if (my_range.end_infinity == false && my_range.start_infinity == false) {
+	if (!my_range.end_infinity && !my_range.start_infinity) {
 		// range:  .........|---inside---|...........
 		// value
-		is_inside = ((cmp_perfdata_value(my_range.start, value) < 1) && (cmp_perfdata_value(value, my_range.end) <= 0));
-	} else if (my_range.start_infinity == false && my_range.end_infinity == true) {
+		is_inside = ((cmp_perfdata_value(value, my_range.start) >= 0) && (cmp_perfdata_value(value, my_range.end) <= 0));
+	} else if (!my_range.start_infinity && my_range.end_infinity) {
 		// range:  .........|---inside---------
 		// value
-		is_inside = (cmp_perfdata_value(my_range.start, value) < 0);
-	} else if (my_range.start_infinity == true && my_range.end_infinity == false) {
+		is_inside = (cmp_perfdata_value(value, my_range.start) >= 0);
+	} else if (my_range.start_infinity && !my_range.end_infinity) {
 		// range:  -inside--------|....................
 		// value
 		is_inside = (cmp_perfdata_value(value, my_range.end) == -1);

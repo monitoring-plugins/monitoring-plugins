@@ -24,6 +24,7 @@ apt-get -y install perl \
 	libpq-dev \
 	libradcli-dev \
 	libnet-snmp-perl \
+	libsnmp-dev \
 	procps \
 	libdbi0-dev \
 	libdbd-sqlite3 \
