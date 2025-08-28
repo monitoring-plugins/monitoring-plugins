@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 		int pcliberr = 0;
 		int psnmperr = 0;
 		char *pperrstring = NULL;
-		snmp_error (&config.snmp_session, &pcliberr , &psnmperr, &pperrstring);
+		snmp_error(&config.snmp_session, &pcliberr, &psnmperr, &pperrstring);
 		die(STATE_UNKNOWN, "Failed to open SNMP session: %s\n", pperrstring);
 	}
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 		int pcliberr = 0;
 		int psnmperr = 0;
 		char *pperrstring = NULL;
-		snmp_error (active_session, &pcliberr , &psnmperr, &pperrstring);
+		snmp_error(active_session, &pcliberr, &psnmperr, &pperrstring);
 
 		if (psnmperr == SNMPERR_TIMEOUT) {
 			// We exit with critical here for some historical reason
