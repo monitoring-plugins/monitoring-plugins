@@ -69,7 +69,7 @@ const char DEFAULT_COMMUNITY[] = "public";
 const char DEFAULT_MIBLIST[] = "ALL";
 #define DEFAULT_AUTH_PROTOCOL "MD5"
 
-#ifdef usmDESPrivProtocol
+#ifdef HAVE_USM_DES_PRIV_PROTOCOL
 #	define DEFAULT_PRIV_PROTOCOL "DES"
 #else
 #	define DEFAULT_PRIV_PROTOCOL "AES"
@@ -623,7 +623,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'x': /* priv protocol */
 			if (strcasecmp("DES", optarg) == 0) {
-#ifdef usmDESPrivProtocol
+#ifdef HAVE_USM_DES_PRIV_PROTOCOL
 				config.snmp_session.securityAuthProto = usmDESPrivProtocol;
 				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmDESPrivProtocol);
 #else
@@ -997,7 +997,7 @@ void print_help(void) {
 	printf("    %s\n", _("SNMPv3 securityLevel"));
 	printf(" %s\n", "-a, --authproto=[MD5|SHA]");
 	printf("    %s\n", _("SNMPv3 auth proto"));
-#ifdef usmDESPrivProtocol
+#ifdef HAVE_USM_DES_PRIV_PROTOCOL
 	printf(" %s\n", "-x, --privproto=[DES|AES]");
 	printf("    %s\n", _("SNMPv3 priv proto (default DES)"));
 #else

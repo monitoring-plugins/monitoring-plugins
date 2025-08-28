@@ -1482,6 +1482,16 @@ else
 	AC_MSG_WARN([Tried $PERL - install Net::SNMP perl module if you want to use the perl snmp plugins])
 fi
 
+dnl Check whether DES encryption is available (might not on RHEL)
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <net-snmp/net-snmp-config.h>
+                #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmDESPrivProtocol;]]
+	)],
+	[AC_DEFINE(HAVE_USM_DES_PRIV_PROTOCOL,1,Define whether we have DES Privacy Protocol)],
+	[]
+)
+
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
 AC_ARG_WITH(qstat_command,
