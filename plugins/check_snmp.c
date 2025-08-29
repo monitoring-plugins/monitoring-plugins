@@ -36,7 +36,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "./runcmd.h"
 #include "./utils.h"
 #include "../lib/states.h"
-#include "../lib/utils_cmd.h"
+
 #include "../lib/thresholds.h"
 #include "../lib/utils_base.h"
 #include "../lib/output.h"
@@ -159,7 +159,8 @@ int main(int argc, char **argv) {
 	}
 
 	const int timeout_safety_tolerance = 5;
-	alarm(timeout_interval * config.snmp_session.retries + timeout_safety_tolerance);
+	alarm((timeout_interval * (unsigned int)config.snmp_session.retries) +
+		  timeout_safety_tolerance);
 
 	struct snmp_session *active_session = snmp_open(&config.snmp_session);
 	if (active_session == NULL) {
@@ -254,7 +255,7 @@ int main(int argc, char **argv) {
 						sc_oid_test, (config.invert_search) ? STATE_OK : STATE_CRITICAL);
 				}
 			} else if (config.test_units[loop_index].eval_mthd.crit_regex) {
-				const int nmatch = config.regex_cmp_value.re_nsub + 1;
+				const size_t nmatch = config.regex_cmp_value.re_nsub + 1;
 				regmatch_t pmatch[nmatch];
 				memset(pmatch, '\0', sizeof(regmatch_t) * nmatch);
 
@@ -287,8 +288,8 @@ int main(int argc, char **argv) {
 			}
 			struct counter64 tmp = *(vars->val.counter64);
 			uint64_t counter = (tmp.high << 32) + tmp.low;
-			counter *= config.multiplier;
-			counter += config.offset;
+			counter *= (uint64_t)config.multiplier;
+			counter += (uint64_t)config.offset;
 			pd_result_val = mp_create_pd_value(counter);
 		} break;
 		/* Numerical values */
@@ -299,10 +300,10 @@ int main(int argc, char **argv) {
 			if (verbose) {
 				printf("Debug: Got a Integer like\n");
 			}
-			unsigned long tmp = *(vars->val.integer);
-			tmp *= config.multiplier;
+			unsigned long tmp = (unsigned long)*(vars->val.integer);
+			tmp *= (unsigned long)config.multiplier;
 
-			tmp += config.offset;
+			tmp += (unsigned long)config.offset;
 			pd_result_val = mp_create_pd_value(tmp);
 			break;
 		}
@@ -310,17 +311,18 @@ int main(int argc, char **argv) {
 			if (verbose) {
 				printf("Debug: Got a Integer\n");
 			}
-			unsigned long tmp = *(vars->val.integer);
-			tmp *= config.multiplier;
 
-			tmp += config.offset;
+			long tmp = *(vars->val.integer);
+			tmp *= (long)config.multiplier;
+			tmp += (long)config.offset;
+
 			pd_result_val = mp_create_pd_value(tmp);
 		} break;
 		case ASN_FLOAT: {
 			if (verbose) {
 				printf("Debug: Got a float\n");
 			}
-			float tmp = *(vars->val.floatVal);
+			double tmp = *(vars->val.floatVal);
 			tmp *= config.multiplier;
 
 			tmp += config.offset;
@@ -437,7 +439,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
 		{"multiplier", required_argument, 0, 'M'},
-		{"ignore-mib-parsing-errors", no_argument, false, L_IGNORE_MIB_PARSING_ERRORS},
+		{"ignore-mib-parsing-errors", no_argument, 0, L_IGNORE_MIB_PARSING_ERRORS},
 		{"connection-prefix", required_argument, 0, L_CONNECTION_PREFIX},
 		{0, 0, 0, 0}};
 
@@ -674,7 +676,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (!is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
-				timeout_interval = atoi(optarg);
+				timeout_interval = (unsigned int)atoi(optarg);
 			}
 			break;
 
@@ -895,10 +897,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 					"No authentication passphrase was given, but authorization was requested");
 			}
 			// auth and priv
-			size_t priv_key_generated = generate_Ku(
-				config.snmp_session.securityPrivProto, config.snmp_session.securityPrivProtoLen,
-				authpasswd, strlen((const char *)authpasswd), config.snmp_session.securityPrivKey,
-				&config.snmp_session.securityPrivKeyLen);
+			int priv_key_generated =
+				generate_Ku(config.snmp_session.securityPrivProto,
+							(unsigned int)config.snmp_session.securityPrivProtoLen, authpasswd,
+							strlen((const char *)authpasswd), config.snmp_session.securityPrivKey,
+							&config.snmp_session.securityPrivKeyLen);
+
 			if (priv_key_generated != SNMPERR_SUCCESS) {
 				die(STATE_UNKNOWN, "Failed to generate privacy key");
 			}
@@ -908,10 +912,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (privpasswd == NULL) {
 				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
 			}
-			size_t auth_key_generated = generate_Ku(
-				config.snmp_session.securityAuthProto, config.snmp_session.securityAuthProtoLen,
-				privpasswd, strlen((const char *)privpasswd), config.snmp_session.securityAuthKey,
-				&config.snmp_session.securityAuthKeyLen);
+			int auth_key_generated =
+				generate_Ku(config.snmp_session.securityAuthProto,
+							(unsigned int)config.snmp_session.securityAuthProtoLen, privpasswd,
+							strlen((const char *)privpasswd), config.snmp_session.securityAuthKey,
+							&config.snmp_session.securityAuthKeyLen);
+
 			if (auth_key_generated != SNMPERR_SUCCESS) {
 				die(STATE_UNKNOWN, "Failed to generate privacy key");
 			}
