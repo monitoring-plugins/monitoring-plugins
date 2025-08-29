@@ -75,9 +75,6 @@ const char DEFAULT_MIBLIST[] = "ALL";
 #	define DEFAULT_PRIV_PROTOCOL "AES"
 #endif
 
-#define DEFAULT_DELIMITER   "="
-#define DEFAULT_BUFFER_SIZE 100
-
 /* Longopts only arguments */
 #define L_INVERT_SEARCH             CHAR_MAX + 3
 #define L_OFFSET                    CHAR_MAX + 4
@@ -1027,9 +1024,6 @@ void print_help(void) {
 	printf("    %s\n",
 		   _("List of MIBS to be loaded (default = none if using numeric OIDs or 'ALL'"));
 	printf("    %s\n", _("for symbolic OIDs.)"));
-	printf(" %s\n", "-d, --delimiter=STRING");
-	printf("    %s \"%s\"\n", _("Delimiter to use when parsing returned data. Default is"),
-		   DEFAULT_DELIMITER);
 	printf("    %s\n", _("Any data on the right hand side of the delimiter is considered"));
 	printf("    %s\n", _("to be the data that should be used in the evaluation."));
 	printf(" %s\n", "-z, --nulloid=#");
