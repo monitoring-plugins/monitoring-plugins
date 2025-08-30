@@ -97,7 +97,9 @@ check_snmp_config check_snmp_config_init() {
 		.string_cmp_value = "",
 
 		.multiplier = 1.0,
+		.multiplier_set = false,
 		.offset = 0,
+		.offset_set = false,
 
 		.use_perf_data_labels_from_input = false,
 	};

@@ -58,7 +58,9 @@ typedef struct check_snmp_config {
 
 	// Modify data
 	double multiplier;
+	bool multiplier_set;
 	double offset;
+	bool offset_set;
 
 	// Modify output
 	bool use_perf_data_labels_from_input;

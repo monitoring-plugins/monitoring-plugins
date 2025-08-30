@@ -286,9 +286,21 @@ int main(int argc, char **argv) {
 			}
 			struct counter64 tmp = *(vars->val.counter64);
 			uint64_t counter = (tmp.high << 32) + tmp.low;
-			counter *= (uint64_t)config.multiplier;
-			counter += (uint64_t)config.offset;
-			pd_result_val = mp_create_pd_value(counter);
+
+			if (config.multiplier_set || config.offset_set) {
+				double processed = 0;
+				if (config.multiplier_set) {
+					processed = (double)counter * config.multiplier;
+				}
+
+				if (config.offset_set) {
+					processed += config.offset;
+				}
+				pd_result_val = mp_create_pd_value(processed);
+			} else {
+				pd_result_val = mp_create_pd_value(counter);
+			}
+
 		} break;
 		/* Numerical values */
 		case ASN_GAUGE: // same as ASN_UNSIGNED
@@ -299,10 +311,20 @@ int main(int argc, char **argv) {
 				printf("Debug: Got a Integer like\n");
 			}
 			unsigned long tmp = (unsigned long)*(vars->val.integer);
-			tmp *= (unsigned long)config.multiplier;
 
-			tmp += (unsigned long)config.offset;
-			pd_result_val = mp_create_pd_value(tmp);
+			if (config.multiplier_set || config.offset_set) {
+				double processed = 0;
+				if (config.multiplier_set) {
+					processed = (double)tmp * config.multiplier;
+				}
+
+				if (config.offset_set) {
+					processed += config.offset;
+				}
+				pd_result_val = mp_create_pd_value(processed);
+			} else {
+				pd_result_val = mp_create_pd_value(tmp);
+			}
 			break;
 		}
 		case ASN_INTEGER: {
@@ -311,19 +333,36 @@ int main(int argc, char **argv) {
 			}
 
 			long tmp = *(vars->val.integer);
-			tmp *= (long)config.multiplier;
-			tmp += (long)config.offset;
 
-			pd_result_val = mp_create_pd_value(tmp);
+			if (config.multiplier_set || config.offset_set) {
+				double processed = 0;
+				if (config.multiplier_set) {
+					processed = (double)tmp * config.multiplier;
+				}
+
+				if (config.offset_set) {
+					processed += config.offset;
+				}
+				pd_result_val = mp_create_pd_value(processed);
+			} else {
+				pd_result_val = mp_create_pd_value(tmp);
+			}
+
 		} break;
 		case ASN_FLOAT: {
 			if (verbose) {
 				printf("Debug: Got a float\n");
 			}
 			double tmp = *(vars->val.floatVal);
-			tmp *= config.multiplier;
 
-			tmp += config.offset;
+			if (config.multiplier_set) {
+				tmp *= config.multiplier;
+			}
+
+			if (config.offset_set) {
+				tmp += config.offset;
+			}
+
 			pd_result_val = mp_create_pd_value(tmp);
 			break;
 		}
@@ -332,8 +371,14 @@ int main(int argc, char **argv) {
 				printf("Debug: Got a double\n");
 			}
 			double tmp = *(vars->val.doubleVal);
-			tmp *= config.multiplier;
-			tmp += config.offset;
+			if (config.multiplier_set) {
+				tmp *= config.multiplier;
+			}
+
+			if (config.offset_set) {
+				tmp += config.offset;
+			}
+
 			pd_result_val = mp_create_pd_value(tmp);
 			break;
 		}
