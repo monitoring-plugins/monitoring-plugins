@@ -75,12 +75,6 @@ const char DEFAULT_MIBLIST[] = "ALL";
 #	define DEFAULT_PRIV_PROTOCOL "AES"
 #endif
 
-/* Longopts only arguments */
-#define L_INVERT_SEARCH             CHAR_MAX + 3
-#define L_OFFSET                    CHAR_MAX + 4
-#define L_IGNORE_MIB_PARSING_ERRORS CHAR_MAX + 5
-#define L_CONNECTION_PREFIX         CHAR_MAX + 6
-
 typedef struct proces_arguments_wrapper {
 	int errorcode;
 	check_snmp_config config;
@@ -120,6 +114,10 @@ int main(int argc, char **argv) {
 	}
 
 	check_snmp_config config = paw_tmp.config;
+
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
 
 	if (config.ignore_mib_parsing_errors) {
 		char *opt_toggle_res = snmp_mib_toggle_options("e");
@@ -406,6 +404,15 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 static process_arguments_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		/* Longopts only arguments */
+		invert_search_index = CHAR_MAX + 1,
+		offset_index,
+		ignore_mib_parsing_errors_index,
+		connection_prefix_index,
+		output_format_index,
+	};
+
 	static struct option longopts[] = {
 		STD_LONG_OPTS,
 		{"community", required_argument, 0, 'C'},
@@ -433,14 +440,15 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"authpasswd", required_argument, 0, 'A'},
 		{"privpasswd", required_argument, 0, 'X'},
 		{"next", no_argument, 0, 'n'},
-		{"offset", required_argument, 0, L_OFFSET},
-		{"invert-search", no_argument, 0, L_INVERT_SEARCH},
+		{"offset", required_argument, 0, offset_index},
+		{"invert-search", no_argument, 0, invert_search_index},
 		{"perf-oids", no_argument, 0, 'O'},
 		{"ipv4", no_argument, 0, '4'},
 		{"ipv6", no_argument, 0, '6'},
 		{"multiplier", required_argument, 0, 'M'},
-		{"ignore-mib-parsing-errors", no_argument, 0, L_IGNORE_MIB_PARSING_ERRORS},
-		{"connection-prefix", required_argument, 0, L_CONNECTION_PREFIX},
+		{"ignore-mib-parsing-errors", no_argument, 0, ignore_mib_parsing_errors_index},
+		{"connection-prefix", required_argument, 0, connection_prefix_index},
+		{"output-format", required_argument, 0, output_format_index},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -780,10 +788,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			}
 			unitv_counter++;
 		} break;
-		case L_OFFSET:
+		case offset_index:
 			config.offset = strtod(optarg, NULL);
+			config.offset_set = true;
 			break;
-		case L_INVERT_SEARCH:
+		case invert_search_index:
 			config.invert_search = false;
 			break;
 		case 'O':
@@ -796,16 +805,34 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case '6':
 			connection_prefix = "udp6";
 			break;
-		case L_CONNECTION_PREFIX:
+		case connection_prefix_index:
 			connection_prefix = optarg;
 			break;
 		case 'M':
 			if (strspn(optarg, "0123456789.,") == strlen(optarg)) {
 				config.multiplier = strtod(optarg, NULL);
+				config.multiplier_set = true;
 			}
 			break;
-		case L_IGNORE_MIB_PARSING_ERRORS:
+		case ignore_mib_parsing_errors_index:
 			config.ignore_mib_parsing_errors = true;
+			break;
+		case 'f': // Deprecated format option for floating point values
+			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			config.output_format_is_set = true;
+			config.output_format = parser.output_format;
+			break;
+		}
+		default:
+			die(STATE_UNKNOWN, "Unknown option");
 		}
 	}
 
@@ -1068,6 +1095,7 @@ void print_help(void) {
 	printf("    %s\n", _("Units label(s) for output data (e.g., 'sec.')."));
 	printf(" %s\n", "-M, --multiplier=FLOAT");
 	printf("    %s\n", _("Multiplies current value, 0 < n < 1 works as divider, defaults to 1"));
+	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf("    %s\n", _("NOTE the final timeout value is calculated using this formula: "
@@ -1115,5 +1143,5 @@ void print_usage(void) {
 	printf("[-l label] [-u units] [-p port-number] [-d delimiter] [-D output-delimiter]\n");
 	printf("[-m miblist] [-P snmp version] [-N context] [-L seclevel] [-U secname]\n");
 	printf("[-a authproto] [-A authpasswd] [-x privproto] [-X privpasswd] [-4|6]\n");
-	printf("[-M multiplier [-f format]]\n");
+	printf("[-M multiplier]\n");
 }

@@ -62,4 +62,7 @@ typedef struct check_snmp_config {
 
 	// Modify output
 	bool use_perf_data_labels_from_input;
+
+	mp_output_format output_format;
+	bool output_format_is_set;
 } check_snmp_config;
