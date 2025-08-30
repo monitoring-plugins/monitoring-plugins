@@ -214,8 +214,7 @@ int main(int argc, char **argv) {
 			sc_oid_test.output = strdup("");
 		}
 
-		char oid_string[(MAX_OID_LEN * 2) + 1];
-		memset(oid_string, 0, (MAX_OID_LEN * 2) + 1);
+		char oid_string[(MAX_OID_LEN * 2) + 1] = {};
 
 		int oid_string_result =
 			snprint_objid(oid_string, (MAX_OID_LEN * 2) + 1, vars->name, vars->name_length);
@@ -404,9 +403,11 @@ int main(int argc, char **argv) {
 			// Use oid for perdata label
 			pd_num_val.label = strdup(oid_string);
 			// TODO strdup error checking
-		} else if (config.test_units[loop_index].label != NULL ||
+		} else if (config.test_units[loop_index].label != NULL &&
 				   strcmp(config.test_units[loop_index].label, "") != 0) {
 			pd_num_val.label = config.test_units[loop_index].label;
+		} else {
+			pd_num_val.label = config.test_units[loop_index].oid;
 		}
 
 		if (config.test_units[loop_index].unit_value != NULL &&
