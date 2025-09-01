@@ -235,8 +235,23 @@ int main(int argc, char **argv) {
 			if (verbose) {
 				printf("Debug: Got a string\n");
 			}
+
 			char *tmp = (char *)vars->val.string;
-			xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
+
+			if (strchr(tmp, '"') != NULL) {
+				// got double quote in the string
+				if (strchr(tmp, '\'') != NULL) {
+					// got single quote in the string too
+					// dont quote that at all to avoid even more confusion
+					xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
+				} else {
+					// quote with single quotes
+					xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
+				}
+			} else {
+				// quote with double quotes
+				xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
+			}
 
 			if (strlen(tmp) == 0) {
 				sc_oid_test = mp_set_subcheck_state(sc_oid_test, config.nulloid_result);
