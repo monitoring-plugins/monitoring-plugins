@@ -46,7 +46,7 @@ monitoring_plugin *this_monitoring_plugin = NULL;
 int timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-bool _np_state_read_file(FILE *);
+bool _np_state_read_file(FILE *state_file);
 
 void np_init(char *plugin_name, int argc, char **argv) {
 	if (this_monitoring_plugin == NULL) {
@@ -153,7 +153,7 @@ range *parse_range_string(char *str) {
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == true || temp_range->end_infinity == true ||
+	if (temp_range->start_infinity || temp_range->end_infinity ||
 		temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
@@ -261,21 +261,21 @@ bool check_range(double value, range *my_range) {
 		yes = false;
 	}
 
-	if (my_range->end_infinity == false && my_range->start_infinity == false) {
+	if (!my_range->end_infinity && !my_range->start_infinity) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		}
 		return yes;
 	}
 
-	if (my_range->start_infinity == false && my_range->end_infinity == true) {
+	if (!my_range->start_infinity && my_range->end_infinity) {
 		if (my_range->start <= value) {
 			return no;
 		}
 		return yes;
 	}
 
-	if (my_range->start_infinity == true && my_range->end_infinity == false) {
+	if (my_range->start_infinity && !my_range->end_infinity) {
 		if (value <= my_range->end) {
 			return no;
 		}
@@ -287,12 +287,12 @@ bool check_range(double value, range *my_range) {
 /* Returns status */
 int get_status(double value, thresholds *my_thresholds) {
 	if (my_thresholds->critical != NULL) {
-		if (check_range(value, my_thresholds->critical) == true) {
+		if (check_range(value, my_thresholds->critical)) {
 			return STATE_CRITICAL;
 		}
 	}
 	if (my_thresholds->warning != NULL) {
-		if (check_range(value, my_thresholds->warning) == true) {
+		if (check_range(value, my_thresholds->warning)) {
 			return STATE_WARNING;
 		}
 	}
@@ -301,32 +301,31 @@ int get_status(double value, thresholds *my_thresholds) {
 
 char *np_escaped_string(const char *string) {
 	char *data;
-	int i;
-	int j = 0;
+	int write_index = 0;
 	data = strdup(string);
-	for (i = 0; data[i]; i++) {
+	for (int i = 0; data[i]; i++) {
 		if (data[i] == '\\') {
 			switch (data[++i]) {
 			case 'n':
-				data[j++] = '\n';
+				data[write_index++] = '\n';
 				break;
 			case 'r':
-				data[j++] = '\r';
+				data[write_index++] = '\r';
 				break;
 			case 't':
-				data[j++] = '\t';
+				data[write_index++] = '\t';
 				break;
 			case '\\':
-				data[j++] = '\\';
+				data[write_index++] = '\\';
 				break;
 			default:
-				data[j++] = data[i];
+				data[write_index++] = data[i];
 			}
 		} else {
-			data[j++] = data[i];
+			data[write_index++] = data[i];
 		}
 	}
-	data[j] = '\0';
+	data[write_index] = '\0';
 	return data;
 }
 
@@ -341,33 +340,35 @@ int np_check_if_root(void) { return (geteuid() == 0); }
 char *np_extract_value(const char *varlist, const char *name, char sep) {
 	char *tmp = NULL;
 	char *value = NULL;
-	int i;
 
-	while (1) {
+	while (true) {
 		/* Strip any leading space */
-		for (; isspace(varlist[0]); varlist++)
+		for (; isspace(varlist[0]); varlist++) {
 			;
+		}
 
 		if (strncmp(name, varlist, strlen(name)) == 0) {
 			varlist += strlen(name);
 			/* strip trailing spaces */
-			for (; isspace(varlist[0]); varlist++)
+			for (; isspace(varlist[0]); varlist++) {
 				;
+			}
 
 			if (varlist[0] == '=') {
 				/* We matched the key, go past the = sign */
 				varlist++;
 				/* strip leading spaces */
-				for (; isspace(varlist[0]); varlist++)
+				for (; isspace(varlist[0]); varlist++) {
 					;
+				}
 
 				if ((tmp = index(varlist, sep))) {
 					/* Value is delimited by a comma */
 					if (tmp - varlist == 0) {
 						continue;
 					}
-					value = (char *)calloc(1, tmp - varlist + 1);
-					strncpy(value, varlist, tmp - varlist);
+					value = (char *)calloc(1, (unsigned long)(tmp - varlist + 1));
+					strncpy(value, varlist, (unsigned long)(tmp - varlist));
 					value[tmp - varlist] = '\0';
 				} else {
 					/* Value is delimited by a \0 */
@@ -392,7 +393,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 
 	/* Clean-up trailing spaces/newlines */
 	if (value) {
-		for (i = strlen(value) - 1; isspace(value[i]); i--) {
+		for (unsigned long i = strlen(value) - 1; isspace(value[i]); i--) {
 			value[i] = '\0';
 		}
 	}
@@ -441,11 +442,7 @@ int mp_translate_state(char *state_text) {
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
 char *_np_state_generate_key(void) {
-	int i;
 	char **argv = this_monitoring_plugin->argv;
-	char keyname[41];
-	char *p = NULL;
-
 	unsigned char result[256];
 
 #ifdef USE_OPENSSL
@@ -458,7 +455,7 @@ char *_np_state_generate_key(void) {
 
 	EVP_DigestInit(ctx, EVP_sha256());
 
-	for (i = 0; i < this_monitoring_plugin->argc; i++) {
+	for (int i = 0; i < this_monitoring_plugin->argc; i++) {
 		EVP_DigestUpdate(ctx, argv[i], strlen(argv[i]));
 	}
 
@@ -467,24 +464,26 @@ char *_np_state_generate_key(void) {
 
 	struct sha256_ctx ctx;
 
-	for (i = 0; i < this_monitoring_plugin->argc; i++) {
+	for (int i = 0; i < this_monitoring_plugin->argc; i++) {
 		sha256_process_bytes(argv[i], strlen(argv[i]), &ctx);
 	}
 
 	sha256_finish_ctx(&ctx, result);
 #endif // FOUNDOPENSSL
 
-	for (i = 0; i < 20; ++i) {
+	char keyname[41];
+	for (int i = 0; i < 20; ++i) {
 		sprintf(&keyname[2 * i], "%02x", result[i]);
 	}
 
 	keyname[40] = '\0';
 
-	p = strdup(keyname);
-	if (p == NULL) {
+	char *keyname_copy = strdup(keyname);
+	if (keyname_copy == NULL) {
 		die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 	}
-	return p;
+
+	return keyname_copy;
 }
 
 void _cleanup_state_data(void) {
@@ -525,21 +524,16 @@ char *_np_state_calculate_location_prefix(void) {
  * UNKNOWN if exception
  */
 void np_enable_state(char *keyname, int expected_data_version) {
-	state_key *this_state = NULL;
-	char *temp_filename = NULL;
-	char *temp_keyname = NULL;
-	char *p = NULL;
-	int ret;
-
 	if (this_monitoring_plugin == NULL) {
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 	}
 
-	this_state = (state_key *)calloc(1, sizeof(state_key));
+	state_key *this_state = (state_key *)calloc(1, sizeof(state_key));
 	if (this_state == NULL) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}
 
+	char *temp_keyname = NULL;
 	if (keyname == NULL) {
 		temp_keyname = _np_state_generate_key();
 	} else {
@@ -548,13 +542,14 @@ void np_enable_state(char *keyname, int expected_data_version) {
 			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 		}
 	}
+
 	/* Die if invalid characters used for keyname */
-	p = temp_keyname;
-	while (*p != '\0') {
-		if (!(isalnum(*p) || *p == '_')) {
+	char *tmp_char = temp_keyname;
+	while (*tmp_char != '\0') {
+		if (!(isalnum(*tmp_char) || *tmp_char == '_')) {
 			die(STATE_UNKNOWN, _("Invalid character for keyname - only alphanumerics or '_'"));
 		}
-		p++;
+		tmp_char++;
 	}
 	this_state->name = temp_keyname;
 	this_state->plugin_name = this_monitoring_plugin->plugin_name;
@@ -562,9 +557,11 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data = NULL;
 
 	/* Calculate filename */
-	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(),
-				   (unsigned long)geteuid(), this_monitoring_plugin->plugin_name, this_state->name);
-	if (ret < 0) {
+	char *temp_filename = NULL;
+	int error =
+		asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(),
+				 (unsigned long)geteuid(), this_monitoring_plugin->plugin_name, this_state->name);
+	if (error < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}
 
@@ -581,19 +578,17 @@ void np_enable_state(char *keyname, int expected_data_version) {
  * if exceptional error.
  */
 state_data *np_state_read(void) {
-	state_data *this_state_data = NULL;
-	FILE *statefile;
-	bool rc = false;
-
 	if (this_monitoring_plugin == NULL) {
 		die(STATE_UNKNOWN, _("This requires np_init to be called"));
 	}
 
+	bool error_code = false;
+
 	/* Open file. If this fails, no previous state found */
-	statefile = fopen(this_monitoring_plugin->state->_filename, "r");
+	FILE *statefile = fopen(this_monitoring_plugin->state->_filename, "r");
 	if (statefile != NULL) {
 
-		this_state_data = (state_data *)calloc(1, sizeof(state_data));
+		state_data *this_state_data = (state_data *)calloc(1, sizeof(state_data));
 		if (this_state_data == NULL) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 		}
@@ -601,12 +596,12 @@ state_data *np_state_read(void) {
 		this_state_data->data = NULL;
 		this_monitoring_plugin->state->state_data = this_state_data;
 
-		rc = _np_state_read_file(statefile);
+		error_code = _np_state_read_file(statefile);
 
 		fclose(statefile);
 	}
 
-	if (!rc) {
+	if (!error_code) {
 		_cleanup_state_data();
 	}
 
@@ -616,13 +611,17 @@ state_data *np_state_read(void) {
 /*
  * Read the state file
  */
-bool _np_state_read_file(FILE *f) {
+bool _np_state_read_file(FILE *state_file) {
+	time_t current_time;
+	time(&current_time);
+
+	/* Note: This introduces a limit of 1024 bytes in the string data */
+	char *line = (char *)calloc(1, 1024);
+	if (line == NULL) {
+		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
+	}
+
 	bool status = false;
-	size_t pos;
-	char *line;
-	int i;
-	int failure = 0;
-	time_t current_time, data_time;
 	enum {
 		STATE_FILE_VERSION,
 		STATE_DATA_VERSION,
@@ -631,16 +630,9 @@ bool _np_state_read_file(FILE *f) {
 		STATE_DATA_END
 	} expected = STATE_FILE_VERSION;
 
-	time(&current_time);
-
-	/* Note: This introduces a limit of 1024 bytes in the string data */
-	line = (char *)calloc(1, 1024);
-	if (line == NULL) {
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-	}
-
-	while (!failure && (fgets(line, 1024, f)) != NULL) {
-		pos = strlen(line);
+	int failure = 0;
+	while (!failure && (fgets(line, 1024, state_file)) != NULL) {
+		size_t pos = strlen(line);
 		if (line[pos - 1] == '\n') {
 			line[pos - 1] = '\0';
 		}
@@ -650,32 +642,32 @@ bool _np_state_read_file(FILE *f) {
 		}
 
 		switch (expected) {
-		case STATE_FILE_VERSION:
-			i = atoi(line);
+		case STATE_FILE_VERSION: {
+			int i = atoi(line);
 			if (i != NP_STATE_FORMAT_VERSION) {
 				failure++;
 			} else {
 				expected = STATE_DATA_VERSION;
 			}
-			break;
-		case STATE_DATA_VERSION:
-			i = atoi(line);
+		} break;
+		case STATE_DATA_VERSION: {
+			int i = atoi(line);
 			if (i != this_monitoring_plugin->state->data_version) {
 				failure++;
 			} else {
 				expected = STATE_DATA_TIME;
 			}
-			break;
-		case STATE_DATA_TIME:
+		} break;
+		case STATE_DATA_TIME: {
 			/* If time > now, error */
-			data_time = strtoul(line, NULL, 10);
+			time_t data_time = strtoul(line, NULL, 10);
 			if (data_time > current_time) {
 				failure++;
 			} else {
 				this_monitoring_plugin->state->state_data->time = data_time;
 				expected = STATE_DATA_TEXT;
 			}
-			break;
+		} break;
 		case STATE_DATA_TEXT:
 			this_monitoring_plugin->state->state_data->data = strdup(line);
 			if (this_monitoring_plugin->state->state_data->data == NULL) {
@@ -700,27 +692,24 @@ bool _np_state_read_file(FILE *f) {
  * Will die with UNKNOWN if errors
  */
 void np_state_write_string(time_t data_time, char *data_string) {
-	FILE *fp;
-	char *temp_file = NULL;
-	int fd = 0, result = 0;
 	time_t current_time;
-	char *directories = NULL;
-	char *p = NULL;
-
 	if (data_time == 0) {
 		time(&current_time);
 	} else {
 		current_time = data_time;
 	}
 
+	int result = 0;
+
 	/* If file doesn't currently exist, create directories */
 	if (access(this_monitoring_plugin->state->_filename, F_OK) != 0) {
+		char *directories = NULL;
 		result = asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
 		if (result < 0) {
 			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 		}
 
-		for (p = directories + 1; *p; p++) {
+		for (char *p = directories + 1; *p; p++) {
 			if (*p == '/') {
 				*p = '\0';
 				if ((access(directories, F_OK) != 0) && (mkdir(directories, S_IRWXU) != 0)) {
@@ -734,37 +723,39 @@ void np_state_write_string(time_t data_time, char *data_string) {
 		np_free(directories);
 	}
 
+	char *temp_file = NULL;
 	result = asprintf(&temp_file, "%s.XXXXXX", this_monitoring_plugin->state->_filename);
 	if (result < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}
 
-	if ((fd = mkstemp(temp_file)) == -1) {
+	int temp_file_desc = 0;
+	if ((temp_file_desc = mkstemp(temp_file)) == -1) {
 		np_free(temp_file);
 		die(STATE_UNKNOWN, _("Cannot create temporary filename"));
 	}
 
-	fp = (FILE *)fdopen(fd, "w");
-	if (fp == NULL) {
-		close(fd);
+	FILE *temp_file_pointer = (FILE *)fdopen(temp_file_desc, "w");
+	if (temp_file_pointer == NULL) {
+		close(temp_file_desc);
 		unlink(temp_file);
 		np_free(temp_file);
 		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
 	}
 
-	fprintf(fp, "# NP State file\n");
-	fprintf(fp, "%d\n", NP_STATE_FORMAT_VERSION);
-	fprintf(fp, "%d\n", this_monitoring_plugin->state->data_version);
-	fprintf(fp, "%lu\n", current_time);
-	fprintf(fp, "%s\n", data_string);
+	fprintf(temp_file_pointer, "# NP State file\n");
+	fprintf(temp_file_pointer, "%d\n", NP_STATE_FORMAT_VERSION);
+	fprintf(temp_file_pointer, "%d\n", this_monitoring_plugin->state->data_version);
+	fprintf(temp_file_pointer, "%lu\n", current_time);
+	fprintf(temp_file_pointer, "%s\n", data_string);
 
-	fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP);
+	fchmod(temp_file_desc, S_IRUSR | S_IWUSR | S_IRGRP);
 
-	fflush(fp);
+	fflush(temp_file_pointer);
 
-	result = fclose(fp);
+	result = fclose(temp_file_pointer);
 
-	fsync(fd);
+	fsync(temp_file_desc);
 
 	if (result != 0) {
 		unlink(temp_file);
