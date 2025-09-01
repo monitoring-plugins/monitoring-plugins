@@ -33,12 +33,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define np_free(ptr)                                                                                                                       \
-	{                                                                                                                                      \
-		if (ptr) {                                                                                                                         \
-			free(ptr);                                                                                                                     \
-			ptr = NULL;                                                                                                                    \
-		}                                                                                                                                  \
+#define np_free(ptr)                                                                               \
+	{                                                                                              \
+		if (ptr) {                                                                                 \
+			free(ptr);                                                                             \
+			ptr = NULL;                                                                            \
+		}                                                                                          \
 	}
 
 monitoring_plugin *this_monitoring_plugin = NULL;
@@ -153,7 +153,8 @@ range *parse_range_string(char *str) {
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == true || temp_range->end_infinity == true || temp_range->start <= temp_range->end) {
+	if (temp_range->start_infinity == true || temp_range->end_infinity == true ||
+		temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
 	free(temp_range);
@@ -205,12 +206,14 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
-			printf("Warning: start=%g end=%g; ", my_threshold->warning->start, my_threshold->warning->end);
+			printf("Warning: start=%g end=%g; ", my_threshold->warning->start,
+				   my_threshold->warning->end);
 		} else {
 			printf("Warning not set; ");
 		}
 		if (my_threshold->critical) {
-			printf("Critical: start=%g end=%g", my_threshold->critical->start, my_threshold->critical->end);
+			printf("Critical: start=%g end=%g", my_threshold->critical->start,
+				   my_threshold->critical->end);
 		} else {
 			printf("Critical not set");
 		}
@@ -225,7 +228,8 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	if (!my_range.end_infinity && !my_range.start_infinity) {
 		// range:  .........|---inside---|...........
 		// value
-		is_inside = ((cmp_perfdata_value(value, my_range.start) >= 0) && (cmp_perfdata_value(value, my_range.end) <= 0));
+		is_inside = ((cmp_perfdata_value(value, my_range.start) >= 0) &&
+					 (cmp_perfdata_value(value, my_range.end) <= 0));
 	} else if (!my_range.start_infinity && my_range.end_infinity) {
 		// range:  .........|---inside---------
 		// value
@@ -239,7 +243,8 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 		is_inside = true;
 	}
 
-	if ((is_inside && my_range.alert_on_inside_range == INSIDE) || (!is_inside && my_range.alert_on_inside_range == OUTSIDE)) {
+	if ((is_inside && my_range.alert_on_inside_range == INSIDE) ||
+		(!is_inside && my_range.alert_on_inside_range == OUTSIDE)) {
 		return true;
 	}
 
@@ -557,8 +562,8 @@ void np_enable_state(char *keyname, int expected_data_version) {
 	this_state->state_data = NULL;
 
 	/* Calculate filename */
-	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(), (unsigned long)geteuid(),
-				   this_monitoring_plugin->plugin_name, this_state->name);
+	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(),
+				   (unsigned long)geteuid(), this_monitoring_plugin->plugin_name, this_state->name);
 	if (ret < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}
