@@ -65,7 +65,7 @@ typedef struct {
 	// Modify output
 	bool use_oid_as_perf_data_label;
 
-	// activate rate calucation
+	// activate rate calculation
 	bool calculate_rate;
 	unsigned int rate_multiplier;
 } check_snmp_evaluation_parameters;
