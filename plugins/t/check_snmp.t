@@ -10,7 +10,7 @@ use NPTest;
 
 BEGIN {
     plan skip_all => 'check_snmp is not compiled' unless -x "./check_snmp";
-    plan tests => 42;
+    plan tests => 62;
 }
 
 my $res;
