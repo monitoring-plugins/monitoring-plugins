@@ -112,6 +112,8 @@ mkdir -p /var/lib/snmp/mib_indexes
 sed -e 's/^agentaddress.*/agentaddress 127.0.0.1/' -i /etc/snmp/snmpd.conf
 service snmpd start
 
+sed 's/^mibs ://' -i /etc/snmp/snmp.conf
+
 # start cron, will be used by check_nagios
 cron
 
