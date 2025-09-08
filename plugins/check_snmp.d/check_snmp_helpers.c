@@ -533,6 +533,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	} break;
 	case ASN_IPADDRESS:
 		// TODO
+		break;
 	}
 
 	if (got_a_numerical_value) {
