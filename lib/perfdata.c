@@ -33,7 +33,18 @@ char *pd_value_to_string(const mp_perfdata_value pd) {
 char *pd_to_string(mp_perfdata pd) {
 	assert(pd.label != NULL);
 	char *result = NULL;
-	asprintf(&result, "'%s'=", pd.label);
+
+	if (strchr(pd.label, '\'') == NULL) {
+		asprintf(&result, "'%s'=", pd.label);
+	} else {
+		// we have a illegal single quote in the string
+		// replace it silently instead of complaining
+		for (char *ptr = pd.label; *ptr == '\0'; ptr++) {
+			if (*ptr == '\'') {
+				*ptr = '_';
+			}
+		}
+	}
 
 	asprintf(&result, "%s%s", result, pd_value_to_string(pd.value));
 
@@ -249,7 +260,9 @@ char *mp_range_to_string(const mp_range input) {
 	return result;
 }
 
-mp_perfdata mp_set_pd_value_float(mp_perfdata pd, float value) { return mp_set_pd_value_double(pd, value); }
+mp_perfdata mp_set_pd_value_float(mp_perfdata pd, float value) {
+	return mp_set_pd_value_double(pd, value);
+}
 
 mp_perfdata mp_set_pd_value_double(mp_perfdata pd, double value) {
 	pd.value.pd_double = value;
@@ -257,15 +270,25 @@ mp_perfdata mp_set_pd_value_double(mp_perfdata pd, double value) {
 	return pd;
 }
 
-mp_perfdata mp_set_pd_value_char(mp_perfdata pd, char value) { return mp_set_pd_value_long_long(pd, (long long)value); }
+mp_perfdata mp_set_pd_value_char(mp_perfdata pd, char value) {
+	return mp_set_pd_value_long_long(pd, (long long)value);
+}
 
-mp_perfdata mp_set_pd_value_u_char(mp_perfdata pd, unsigned char value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
+mp_perfdata mp_set_pd_value_u_char(mp_perfdata pd, unsigned char value) {
+	return mp_set_pd_value_u_long_long(pd, (unsigned long long)value);
+}
 
-mp_perfdata mp_set_pd_value_int(mp_perfdata pd, int value) { return mp_set_pd_value_long_long(pd, (long long)value); }
+mp_perfdata mp_set_pd_value_int(mp_perfdata pd, int value) {
+	return mp_set_pd_value_long_long(pd, (long long)value);
+}
 
-mp_perfdata mp_set_pd_value_u_int(mp_perfdata pd, unsigned int value) { return mp_set_pd_value_u_long_long(pd, (unsigned long long)value); }
+mp_perfdata mp_set_pd_value_u_int(mp_perfdata pd, unsigned int value) {
+	return mp_set_pd_value_u_long_long(pd, (unsigned long long)value);
+}
 
-mp_perfdata mp_set_pd_value_long(mp_perfdata pd, long value) { return mp_set_pd_value_long_long(pd, (long long)value); }
+mp_perfdata mp_set_pd_value_long(mp_perfdata pd, long value) {
+	return mp_set_pd_value_long_long(pd, (long long)value);
+}
 
 mp_perfdata mp_set_pd_value_u_long(mp_perfdata pd, unsigned long value) {
 	return mp_set_pd_value_u_long_long(pd, (unsigned long long)value);
@@ -290,19 +313,33 @@ mp_perfdata_value mp_create_pd_value_double(double value) {
 	return res;
 }
 
-mp_perfdata_value mp_create_pd_value_float(float value) { return mp_create_pd_value_double((double)value); }
+mp_perfdata_value mp_create_pd_value_float(float value) {
+	return mp_create_pd_value_double((double)value);
+}
 
-mp_perfdata_value mp_create_pd_value_char(char value) { return mp_create_pd_value_long_long((long long)value); }
+mp_perfdata_value mp_create_pd_value_char(char value) {
+	return mp_create_pd_value_long_long((long long)value);
+}
 
-mp_perfdata_value mp_create_pd_value_u_char(unsigned char value) { return mp_create_pd_value_u_long_long((unsigned long long)value); }
+mp_perfdata_value mp_create_pd_value_u_char(unsigned char value) {
+	return mp_create_pd_value_u_long_long((unsigned long long)value);
+}
 
-mp_perfdata_value mp_create_pd_value_int(int value) { return mp_create_pd_value_long_long((long long)value); }
+mp_perfdata_value mp_create_pd_value_int(int value) {
+	return mp_create_pd_value_long_long((long long)value);
+}
 
-mp_perfdata_value mp_create_pd_value_u_int(unsigned int value) { return mp_create_pd_value_u_long_long((unsigned long long)value); }
+mp_perfdata_value mp_create_pd_value_u_int(unsigned int value) {
+	return mp_create_pd_value_u_long_long((unsigned long long)value);
+}
 
-mp_perfdata_value mp_create_pd_value_long(long value) { return mp_create_pd_value_long_long((long long)value); }
+mp_perfdata_value mp_create_pd_value_long(long value) {
+	return mp_create_pd_value_long_long((long long)value);
+}
 
-mp_perfdata_value mp_create_pd_value_u_long(unsigned long value) { return mp_create_pd_value_u_long_long((unsigned long long)value); }
+mp_perfdata_value mp_create_pd_value_u_long(unsigned long value) {
+	return mp_create_pd_value_u_long_long((unsigned long long)value);
+}
 
 mp_perfdata_value mp_create_pd_value_long_long(long long value) {
 	mp_perfdata_value res = {0};
@@ -368,6 +405,13 @@ mp_range_parsed mp_parse_range_string(const char *input) {
 	}
 
 	char *working_copy = strdup(input);
+	if (working_copy == NULL) {
+		// strdup error, probably
+		mp_range_parsed result = {
+			.error = MP_RANGE_PARSING_FAILURE,
+		};
+		return result;
+	}
 	input = working_copy;
 
 	char *separator = index(working_copy, ':');
