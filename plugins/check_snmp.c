@@ -37,10 +37,8 @@ const char *email = "devel@monitoring-plugins.org";
 #include "./utils.h"
 #include "../lib/states.h"
 
-#include "../lib/thresholds.h"
 #include "../lib/utils_base.h"
 #include "../lib/output.h"
-#include "../lib/perfdata.h"
 #include "check_snmp.d/check_snmp_helpers.h"
 
 #include <bits/getopt_core.h>
@@ -49,6 +47,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <stdint.h>
 
 #include "check_snmp.d/config.h"
+#include <stdlib.h>
 #include <arpa/inet.h>
 #include <net-snmp/library/parse.h>
 #include <net-snmp/net-snmp-config.h>
@@ -63,6 +62,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <net-snmp/library/snmp_impl.h>
 #include <string.h>
 #include "../gl/regex.h"
+#include "../gl/base64.h"
 #include <assert.h>
 
 const char DEFAULT_COMMUNITY[] = "public";
@@ -86,7 +86,168 @@ static char *get_next_argument(char *str);
 void print_usage(void);
 void print_help(void);
 
-static int verbose = 0;
+int verbose = 0;
+
+typedef struct {
+	int errorcode;
+	char *state_string;
+} gen_state_string_type;
+gen_state_string_type gen_state_string(check_snmp_state_entry *entries, size_t num_of_entries) {
+	char *encoded_string = NULL;
+	gen_state_string_type result = {.errorcode = OK, .state_string = NULL};
+
+	if (verbose > 1) {
+		printf("%s:\n", __FUNCTION__);
+		for (size_t i = 0; i < num_of_entries; i++) {
+			printf("Entry timestamp %lu: %s", entries[i].timestamp, ctime(&entries[i].timestamp));
+			switch (entries[i].type) {
+			case ASN_GAUGE:
+				printf("Type GAUGE\n");
+				break;
+			case ASN_TIMETICKS:
+				printf("Type TIMETICKS\n");
+				break;
+			case ASN_COUNTER:
+				printf("Type COUNTER\n");
+				break;
+			case ASN_UINTEGER:
+				printf("Type UINTEGER\n");
+				break;
+			case ASN_COUNTER64:
+				printf("Type COUNTER64\n");
+				break;
+			case ASN_FLOAT:
+				printf("Type FLOAT\n");
+			case ASN_DOUBLE:
+				printf("Type DOUBLE\n");
+				break;
+			case ASN_INTEGER:
+				printf("Type INTEGER\n");
+				break;
+			}
+
+			switch (entries[i].type) {
+			case ASN_GAUGE:
+			case ASN_TIMETICKS:
+			case ASN_COUNTER:
+			case ASN_UINTEGER:
+			case ASN_COUNTER64:
+				printf("Value %llu\n", entries[i].value.uIntVal);
+				break;
+			case ASN_FLOAT:
+			case ASN_DOUBLE:
+				printf("Value %f\n", entries[i].value.doubleVal);
+				break;
+			case ASN_INTEGER:
+				printf("Value %lld\n", entries[i].value.intVal);
+				break;
+			}
+		}
+	}
+
+	idx_t encoded = base64_encode_alloc((const char *)entries,
+										(idx_t)(num_of_entries * sizeof(check_snmp_state_entry)),
+										&encoded_string);
+
+	if (encoded > 0 && encoded_string != NULL) {
+		// success
+		if (verbose > 1) {
+			printf("encoded string: %s\n", encoded_string);
+			printf("encoded string length: %lu\n", strlen(encoded_string));
+		}
+		result.state_string = encoded_string;
+		return result;
+	}
+	result.errorcode = ERROR;
+	return result;
+}
+
+typedef struct {
+	int errorcode;
+	check_snmp_state_entry *state;
+} recover_state_data_type;
+recover_state_data_type recover_state_data(char *state_string, idx_t state_string_length) {
+	recover_state_data_type result = {.errorcode = OK, .state = NULL};
+
+	if (verbose > 1) {
+		printf("%s:\n", __FUNCTION__);
+		printf("State string: %s\n", state_string);
+		printf("State string length: %lu\n", state_string_length);
+	}
+
+	idx_t outlen = 0;
+	bool decoded =
+		base64_decode_alloc(state_string, state_string_length, (char **)&result.state, &outlen);
+
+	if (!decoded) {
+		if (verbose) {
+			printf("Failed to decode state string\n");
+		}
+		// failure to decode
+		result.errorcode = ERROR;
+		return result;
+	}
+
+	if (result.state == NULL) {
+		// Memory Error?
+		result.errorcode = ERROR;
+		return result;
+	}
+
+	if (verbose > 1) {
+		printf("Recovered %lu entries of size %lu\n",
+			   (size_t)outlen / sizeof(check_snmp_state_entry), outlen);
+
+		for (size_t i = 0; i < (size_t)outlen / sizeof(check_snmp_state_entry); i++) {
+			printf("Entry timestamp %lu: %s", result.state[i].timestamp,
+				   ctime(&result.state[i].timestamp));
+			switch (result.state[i].type) {
+			case ASN_GAUGE:
+				printf("Type GAUGE\n");
+				break;
+			case ASN_TIMETICKS:
+				printf("Type TIMETICKS\n");
+				break;
+			case ASN_COUNTER:
+				printf("Type COUNTER\n");
+				break;
+			case ASN_UINTEGER:
+				printf("Type UINTEGER\n");
+				break;
+			case ASN_COUNTER64:
+				printf("Type COUNTER64\n");
+				break;
+			case ASN_FLOAT:
+				printf("Type FLOAT\n");
+			case ASN_DOUBLE:
+				printf("Type DOUBLE\n");
+				break;
+			case ASN_INTEGER:
+				printf("Type INTEGER\n");
+				break;
+			}
+
+			switch (result.state[i].type) {
+			case ASN_GAUGE:
+			case ASN_TIMETICKS:
+			case ASN_COUNTER:
+			case ASN_UINTEGER:
+			case ASN_COUNTER64:
+				printf("Value %llu\n", result.state[i].value.uIntVal);
+				break;
+			case ASN_FLOAT:
+			case ASN_DOUBLE:
+				printf("Value %f\n", result.state[i].value.doubleVal);
+				break;
+			case ASN_INTEGER:
+				printf("Value %lld\n", result.state[i].value.intVal);
+				break;
+			}
+		}
+	}
+
+	return result;
+}
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -97,6 +258,8 @@ int main(int argc, char **argv) {
 
 	np_init((char *)progname, argc, argv);
 
+	state_key stateKey = np_enable_state(NULL, 1, progname, argc, argv);
+
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
 
@@ -104,9 +267,6 @@ int main(int argc, char **argv) {
 
 	// Initialize net-snmp before touching the session we are going to use
 	init_snmp("check_snmp");
-
-	time_t current_time;
-	time(&current_time);
 
 	process_arguments_wrapper paw_tmp = process_arguments(argc, argv);
 	if (paw_tmp.errorcode == ERROR) {
@@ -119,347 +279,103 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
-	if (config.ignore_mib_parsing_errors) {
-		char *opt_toggle_res = snmp_mib_toggle_options("e");
-		if (opt_toggle_res != NULL) {
-			die(STATE_UNKNOWN, "Unable to disable MIB parsing errors");
-		}
-	}
-
-	struct snmp_pdu *pdu = NULL;
-	if (config.use_getnext) {
-		pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
-	} else {
-		pdu = snmp_pdu_create(SNMP_MSG_GET);
-	}
-
-	for (size_t i = 0; i < config.num_of_test_units; i++) {
-		assert(config.test_units[i].oid != NULL);
-		if (verbose > 0) {
-			printf("OID %zu to parse: %s\n", i, config.test_units[i].oid);
-		}
-
-		oid tmp_OID[MAX_OID_LEN];
-		size_t tmp_OID_len = MAX_OID_LEN;
-		if (snmp_parse_oid(config.test_units[i].oid, tmp_OID, &tmp_OID_len) != NULL) {
-			// success
-			snmp_add_null_var(pdu, tmp_OID, tmp_OID_len);
-		} else {
-			// failed
-			snmp_perror("Parsing failure");
-			die(STATE_UNKNOWN, "Failed to parse OID\n");
-		}
-	}
-
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
 		usage4(_("Cannot catch SIGALRM"));
 	}
 
-	const int timeout_safety_tolerance = 5;
-	alarm((timeout_interval * (unsigned int)config.snmp_session.retries) +
-		  timeout_safety_tolerance);
+	time_t current_time;
+	time(&current_time);
 
-	struct snmp_session *active_session = snmp_open(&config.snmp_session);
-	if (active_session == NULL) {
-		int pcliberr = 0;
-		int psnmperr = 0;
-		char *pperrstring = NULL;
-		snmp_error(&config.snmp_session, &pcliberr, &psnmperr, &pperrstring);
-		die(STATE_UNKNOWN, "Failed to open SNMP session: %s\n", pperrstring);
+	if (verbose > 2) {
+		printf("current time: %s (timestamp: %lu)\n", ctime(&current_time), current_time);
 	}
 
-	struct snmp_pdu *response = NULL;
-	int snmp_query_status = snmp_synch_response(active_session, pdu, &response);
-
-	if (!(snmp_query_status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR)) {
-		int pcliberr = 0;
-		int psnmperr = 0;
-		char *pperrstring = NULL;
-		snmp_error(active_session, &pcliberr, &psnmperr, &pperrstring);
-
-		if (psnmperr == SNMPERR_TIMEOUT) {
-			// We exit with critical here for some historical reason
-			die(STATE_CRITICAL, "SNMP query ran into a timeout\n");
-		}
-		die(STATE_UNKNOWN, "SNMP query failed: %s\n", pperrstring);
-	}
-
-	snmp_close(active_session);
-
-	/* disable alarm again */
-	alarm(0);
+	snmp_responces response = do_snmp_query(config.snmp_params);
 
 	mp_check overall = mp_check_init();
 
-	mp_subcheck sc_successfull_query = mp_subcheck_init();
-	xasprintf(&sc_successfull_query.output, "SNMP query was successful");
-	sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
-	mp_add_subcheck_to_check(&overall, sc_successfull_query);
+	if (response.errorcode == OK) {
+		mp_subcheck sc_successfull_query = mp_subcheck_init();
+		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
+		sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_successfull_query);
+	} else {
+		// Error treatment here, either partial or whole
+		mp_subcheck sc_failed_query = mp_subcheck_init();
+		xasprintf(&sc_failed_query.output, "SNMP query failed");
+		sc_failed_query = mp_set_subcheck_state(sc_failed_query, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_failed_query);
+		mp_exit(overall);
+	}
+
+	check_snmp_state_entry *prev_state = NULL;
+	bool have_previous_state = false;
+
+	if (config.evaluation_params.calculate_rate) {
+		state_data *previous_state = np_state_read(stateKey);
+		if (previous_state == NULL) {
+			// failed to recover state
+			// or no previous state
+			have_previous_state = false;
+		} else {
+			// sanity check
+			recover_state_data_type prev_state_wrapper =
+				recover_state_data(previous_state->data, (idx_t)previous_state->length);
+
+			if (prev_state_wrapper.errorcode == OK) {
+				have_previous_state = true;
+				prev_state = prev_state_wrapper.state;
+			} else {
+				have_previous_state = false;
+				prev_state = NULL;
+			}
+		}
+	}
+
+	check_snmp_state_entry *new_state = NULL;
+	if (config.evaluation_params.calculate_rate) {
+		new_state = calloc(config.snmp_params.num_of_test_units, sizeof(check_snmp_state_entry));
+		if (new_state == NULL) {
+			die(STATE_UNKNOWN, "memory allocation failed");
+		}
+	}
 
 	// We got the the query results, now process them
-	size_t loop_index = 0;
-	for (netsnmp_variable_list *vars = response->variables; vars;
-		 vars = vars->next_variable, loop_index++) {
-		mp_subcheck sc_oid_test = mp_subcheck_init();
-
+	for (size_t loop_index = 0; loop_index < config.snmp_params.num_of_test_units; loop_index++) {
 		if (verbose > 0) {
 			printf("loop_index: %zu\n", loop_index);
 		}
 
-		if ((config.test_units[loop_index].label != NULL) &&
-			(strcmp(config.test_units[loop_index].label, "") != 0)) {
-			xasprintf(&sc_oid_test.output, "%s - ", config.test_units[loop_index].label);
-		} else {
-			sc_oid_test.output = strdup("");
+		check_snmp_state_entry previous_unit_state = {};
+		if (config.evaluation_params.calculate_rate && have_previous_state) {
+			previous_unit_state = prev_state[loop_index];
 		}
 
-		char oid_string[(MAX_OID_LEN * 2) + 1] = {};
+		check_snmp_evaluation single_eval =
+			evaluate_single_unit(response.response_values[loop_index], config.evaluation_params,
+								 config.snmp_params.test_units[loop_index], current_time,
+								 previous_unit_state, have_previous_state);
 
-		int oid_string_result =
-			snprint_objid(oid_string, (MAX_OID_LEN * 2) + 1, vars->name, vars->name_length);
-		if (oid_string_result <= 0) {
-			// TODO error here
+		if (config.evaluation_params.calculate_rate &&
+			mp_compute_subcheck_state(single_eval.sc) != STATE_UNKNOWN) {
+			new_state[loop_index] = single_eval.state;
 		}
 
-		if (verbose > 2) {
-			printf("Processing oid %s\n", oid_string);
-		}
-
-		mp_perfdata_value pd_result_val = {0};
-		xasprintf(&sc_oid_test.output, "%sOID: %s", sc_oid_test.output, oid_string);
-		sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, STATE_OK);
-
-		switch (vars->type) {
-		case ASN_OCTET_STR: {
-			if (verbose) {
-				printf("Debug: Got a string\n");
-			}
-
-			char *tmp = (char *)vars->val.string;
-
-			if (strchr(tmp, '"') != NULL) {
-				// got double quote in the string
-				if (strchr(tmp, '\'') != NULL) {
-					// got single quote in the string too
-					// dont quote that at all to avoid even more confusion
-					xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
-				} else {
-					// quote with single quotes
-					xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
-				}
-			} else {
-				// quote with double quotes
-				xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
-			}
-
-			if (strlen(tmp) == 0) {
-				sc_oid_test = mp_set_subcheck_state(sc_oid_test, config.nulloid_result);
-			}
-
-			// String matching test
-			if ((config.test_units[loop_index].eval_mthd.crit_string)) {
-				if (strcmp(tmp, config.string_cmp_value)) {
-					sc_oid_test = mp_set_subcheck_state(
-						sc_oid_test, (config.invert_search) ? STATE_CRITICAL : STATE_OK);
-				} else {
-					sc_oid_test = mp_set_subcheck_state(
-						sc_oid_test, (config.invert_search) ? STATE_OK : STATE_CRITICAL);
-				}
-			} else if (config.test_units[loop_index].eval_mthd.crit_regex) {
-				const size_t nmatch = config.regex_cmp_value.re_nsub + 1;
-				regmatch_t pmatch[nmatch];
-				memset(pmatch, '\0', sizeof(regmatch_t) * nmatch);
-
-				int excode = regexec(&config.regex_cmp_value, tmp, nmatch, pmatch, 0);
-				if (excode == 0) {
-					sc_oid_test = mp_set_subcheck_state(
-						sc_oid_test, (config.invert_search) ? STATE_OK : STATE_CRITICAL);
-				} else if (excode != REG_NOMATCH) {
-					char errbuf[MAX_INPUT_BUFFER] = "";
-					regerror(excode, &config.regex_cmp_value, errbuf, MAX_INPUT_BUFFER);
-					printf(_("Execute Error: %s\n"), errbuf);
-					exit(STATE_CRITICAL);
-				} else { // REG_NOMATCH
-					sc_oid_test = mp_set_subcheck_state(
-						sc_oid_test, config.invert_search ? STATE_CRITICAL : STATE_OK);
-				}
-			}
-
-			mp_add_subcheck_to_check(&overall, sc_oid_test);
-		}
-			continue;
-		case ASN_OPAQUE:
-			if (verbose) {
-				printf("Debug: Got OPAQUE\n");
-			}
-			break;
-		case ASN_COUNTER64: {
-			if (verbose) {
-				printf("Debug: Got counter64\n");
-			}
-			struct counter64 tmp = *(vars->val.counter64);
-			uint64_t counter = (tmp.high << 32) + tmp.low;
-
-			if (config.multiplier_set || config.offset_set) {
-				double processed = 0;
-				if (config.multiplier_set) {
-					processed = (double)counter * config.multiplier;
-				}
-
-				if (config.offset_set) {
-					processed += config.offset;
-				}
-				pd_result_val = mp_create_pd_value(processed);
-			} else {
-				pd_result_val = mp_create_pd_value(counter);
-			}
-
-		} break;
-		/* Numerical values */
-		case ASN_GAUGE: // same as ASN_UNSIGNED
-		case ASN_TIMETICKS:
-		case ASN_COUNTER:
-		case ASN_UINTEGER: {
-			if (verbose) {
-				printf("Debug: Got a Integer like\n");
-			}
-			unsigned long tmp = (unsigned long)*(vars->val.integer);
-
-			if (config.multiplier_set || config.offset_set) {
-				double processed = 0;
-				if (config.multiplier_set) {
-					processed = (double)tmp * config.multiplier;
-				}
-
-				if (config.offset_set) {
-					processed += config.offset;
-				}
-				pd_result_val = mp_create_pd_value(processed);
-			} else {
-				pd_result_val = mp_create_pd_value(tmp);
-			}
-			break;
-		}
-		case ASN_INTEGER: {
-			if (verbose) {
-				printf("Debug: Got a Integer\n");
-			}
-
-			long tmp = *(vars->val.integer);
-
-			if (config.multiplier_set || config.offset_set) {
-				double processed = 0;
-				if (config.multiplier_set) {
-					processed = (double)tmp * config.multiplier;
-				}
-
-				if (config.offset_set) {
-					processed += config.offset;
-				}
-				pd_result_val = mp_create_pd_value(processed);
-			} else {
-				pd_result_val = mp_create_pd_value(tmp);
-			}
-
-		} break;
-		case ASN_FLOAT: {
-			if (verbose) {
-				printf("Debug: Got a float\n");
-			}
-			double tmp = *(vars->val.floatVal);
-
-			if (config.multiplier_set) {
-				tmp *= config.multiplier;
-			}
-
-			if (config.offset_set) {
-				tmp += config.offset;
-			}
-
-			pd_result_val = mp_create_pd_value(tmp);
-			break;
-		}
-		case ASN_DOUBLE: {
-			if (verbose) {
-				printf("Debug: Got a double\n");
-			}
-			double tmp = *(vars->val.doubleVal);
-			if (config.multiplier_set) {
-				tmp *= config.multiplier;
-			}
-
-			if (config.offset_set) {
-				tmp += config.offset;
-			}
-
-			pd_result_val = mp_create_pd_value(tmp);
-			break;
-		}
-		case ASN_IPADDRESS:
-			if (verbose) {
-				printf("Debug: Got an IP address\n");
-			}
-			continue;
-		default:
-			if (verbose) {
-				printf("Debug: Got a unmatched result type: %hhu\n", vars->type);
-			}
-			// TODO: Error here?
-			continue;
-		}
-
-		// some kind of numerical value
-		mp_perfdata pd_num_val = {
-			.value = pd_result_val,
-		};
-
-		if (!config.use_perf_data_labels_from_input) {
-			// Use oid for perdata label
-			pd_num_val.label = strdup(oid_string);
-			// TODO strdup error checking
-		} else if (config.test_units[loop_index].label != NULL &&
-				   strcmp(config.test_units[loop_index].label, "") != 0) {
-			pd_num_val.label = config.test_units[loop_index].label;
-		} else {
-			pd_num_val.label = config.test_units[loop_index].oid;
-		}
-
-		if (config.test_units[loop_index].unit_value != NULL &&
-			strcmp(config.test_units[loop_index].unit_value, "") != 0) {
-			pd_num_val.uom = config.test_units[loop_index].unit_value;
-		}
-
-		xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
-				  pd_value_to_string(pd_result_val));
-
-		if (config.test_units[loop_index].unit_value != NULL &&
-			strcmp(config.test_units[loop_index].unit_value, "") != 0) {
-			xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output,
-					  config.test_units[loop_index].unit_value);
-		}
-
-		if (config.test_units[loop_index].threshold.warning_is_set ||
-			config.test_units[loop_index].threshold.critical_is_set) {
-			pd_num_val = mp_pd_set_thresholds(pd_num_val, config.test_units[loop_index].threshold);
-			mp_state_enum tmp_state = mp_get_pd_status(pd_num_val);
-
-			if (tmp_state == STATE_WARNING) {
-				sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_WARNING);
-				xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
-						  sc_oid_test.output);
-			} else if (tmp_state == STATE_CRITICAL) {
-				sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_CRITICAL);
-				xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
-						  sc_oid_test.output);
-			}
-		}
-
-		mp_add_perfdata_to_subcheck(&sc_oid_test, pd_num_val);
-
-		mp_add_subcheck_to_check(&overall, sc_oid_test);
+		mp_add_subcheck_to_check(&overall, single_eval.sc);
 	}
 
+	if (config.evaluation_params.calculate_rate) {
+		// store state
+		gen_state_string_type current_state_wrapper =
+			gen_state_string(new_state, config.snmp_params.num_of_test_units);
+
+		if (current_state_wrapper.errorcode == OK) {
+			np_state_write_string(stateKey, current_time, current_state_wrapper.state_string);
+		} else {
+			die(STATE_UNKNOWN, "failed to create state string");
+		}
+	}
 	mp_exit(overall);
 }
 
@@ -472,6 +388,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		ignore_mib_parsing_errors_index,
 		connection_prefix_index,
 		output_format_index,
+		calculate_rate,
+		rate_multiplier
 	};
 
 	static struct option longopts[] = {
@@ -510,6 +428,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"ignore-mib-parsing-errors", no_argument, 0, ignore_mib_parsing_errors_index},
 		{"connection-prefix", required_argument, 0, connection_prefix_index},
 		{"output-format", required_argument, 0, output_format_index},
+		{"rate", no_argument, 0, calculate_rate},
+		{"rate-multiplier", required_argument, 0, rate_multiplier},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -575,8 +495,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	check_snmp_config config = check_snmp_config_init();
-	config.test_units = tmp;
-	config.num_of_test_units = oid_counter;
+	config.snmp_params.test_units = tmp;
+	config.snmp_params.num_of_test_units = oid_counter;
 
 	option = 0;
 	optind = 1; // Reset argument scanner
@@ -616,11 +536,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 			/* Connection info */
 		case 'C': /* group or community */
-			config.snmp_session.community = (unsigned char *)optarg;
-			config.snmp_session.community_len = strlen(optarg);
+			config.snmp_params.snmp_session.community = (unsigned char *)optarg;
+			config.snmp_params.snmp_session.community_len = strlen(optarg);
 			break;
 		case 'H': /* Host or server */
-			config.snmp_session.peername = optarg;
+			config.snmp_params.snmp_session.peername = optarg;
 			break;
 		case 'p': /*port number */
 			// Add port to "peername" below to not rely on argument order
@@ -630,15 +550,15 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			miblist = optarg;
 			break;
 		case 'n': /* use_getnext instead of get */
-			config.use_getnext = true;
+			config.snmp_params.use_getnext = true;
 			break;
 		case 'P': /* SNMP protocol version */
 			if (strcasecmp("1", optarg) == 0) {
-				config.snmp_session.version = SNMP_VERSION_1;
+				config.snmp_params.snmp_session.version = SNMP_VERSION_1;
 			} else if (strcasecmp("2c", optarg) == 0) {
-				config.snmp_session.version = SNMP_VERSION_2c;
+				config.snmp_params.snmp_session.version = SNMP_VERSION_2c;
 			} else if (strcasecmp("3", optarg) == 0) {
-				config.snmp_session.version = SNMP_VERSION_3;
+				config.snmp_params.snmp_session.version = SNMP_VERSION_3;
 			} else {
 				die(STATE_UNKNOWN, "invalid SNMP version/protocol: %s", optarg);
 			}
@@ -646,45 +566,51 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 			break;
 		case 'N': /* SNMPv3 context name */
-			config.snmp_session.contextName = optarg;
-			config.snmp_session.contextNameLen = strlen(optarg);
+			config.snmp_params.snmp_session.contextName = optarg;
+			config.snmp_params.snmp_session.contextNameLen = strlen(optarg);
 			break;
 		case 'L': /* security level */
 			if (strcasecmp("noAuthNoPriv", optarg) == 0) {
-				config.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
+				config.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
 			} else if (strcasecmp("authNoPriv", optarg) == 0) {
-				config.snmp_session.securityLevel = SNMP_SEC_LEVEL_AUTHNOPRIV;
+				config.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_AUTHNOPRIV;
 			} else if (strcasecmp("authPriv", optarg) == 0) {
-				config.snmp_session.securityLevel = SNMP_SEC_LEVEL_AUTHPRIV;
+				config.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_AUTHPRIV;
 			} else {
 				die(STATE_UNKNOWN, "invalid security level: %s", optarg);
 			}
 			break;
 		case 'U': /* security username */
-			config.snmp_session.securityName = optarg;
-			config.snmp_session.securityNameLen = strlen(optarg);
+			config.snmp_params.snmp_session.securityName = optarg;
+			config.snmp_params.snmp_session.securityNameLen = strlen(optarg);
 			break;
 		case 'a': /* auth protocol */
 			// SNMPv3: SHA or MD5
 			// TODO Test for availability of individual protocols
 			if (strcasecmp("MD5", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMACMD5AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMACMD5AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMACMD5AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMACMD5AuthProtocol);
 			} else if (strcasecmp("SHA", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMACSHA1AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMACSHA1AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMACSHA1AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMACSHA1AuthProtocol);
 			} else if (strcasecmp("SHA224", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMAC128SHA224AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMAC128SHA224AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMAC128SHA224AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMAC128SHA224AuthProtocol);
 			} else if (strcasecmp("SHA256", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMAC192SHA256AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMAC192SHA256AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMAC192SHA256AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMAC192SHA256AuthProtocol);
 			} else if (strcasecmp("SHA384", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMAC256SHA384AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMAC256SHA384AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMAC256SHA384AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMAC256SHA384AuthProtocol);
 			} else if (strcasecmp("SHA512", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmHMAC384SHA512AuthProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmHMAC384SHA512AuthProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmHMAC384SHA512AuthProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmHMAC384SHA512AuthProtocol);
 			} else {
 				die(STATE_UNKNOWN, "Unknown authentication protocol");
 			}
@@ -692,24 +618,28 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case 'x': /* priv protocol */
 			if (strcasecmp("DES", optarg) == 0) {
 #ifdef HAVE_USM_DES_PRIV_PROTOCOL
-				config.snmp_session.securityAuthProto = usmDESPrivProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmDESPrivProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmDESPrivProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmDESPrivProtocol);
 #else
 				die(STATE_UNKNOWN, "DES Privacy Protocol not available on this platform");
 #endif
 			} else if (strcasecmp("AES", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmAESPrivProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAESPrivProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmAESPrivProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmAESPrivProtocol);
 				// } else if (strcasecmp("AES128", optarg)) {
 				// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
 				// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
 				// / OID_LENGTH(oid);
 			} else if (strcasecmp("AES192", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmAES192PrivProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES192PrivProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmAES192PrivProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmAES192PrivProtocol);
 			} else if (strcasecmp("AES256", optarg) == 0) {
-				config.snmp_session.securityAuthProto = usmAES256PrivProtocol;
-				config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES256PrivProtocol);
+				config.snmp_params.snmp_session.securityAuthProto = usmAES256PrivProtocol;
+				config.snmp_params.snmp_session.securityAuthProtoLen =
+					OID_LENGTH(usmAES256PrivProtocol);
 				// } else if (strcasecmp("AES192Cisco", optarg)) {
 				// 	config.snmp_session.securityAuthProto = usmAES192CiscoPrivProtocol;
 				// 	config.snmp_session.securityAuthProtoLen =
@@ -738,7 +668,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (!is_integer(optarg)) {
 				usage2(_("Retries interval must be a positive integer"), optarg);
 			} else {
-				config.snmp_session.retries = atoi(optarg);
+				config.snmp_params.snmp_session.retries = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout period */
@@ -751,10 +681,10 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 			/* Test parameters */
 		case 'c': /* critical threshold */
-			check_snmp_set_thresholds(optarg, config.test_units, oid_counter, true);
+			check_snmp_set_thresholds(optarg, config.snmp_params.test_units, oid_counter, true);
 			break;
 		case 'w': /* warning threshold */
-			check_snmp_set_thresholds(optarg, config.test_units, oid_counter, false);
+			check_snmp_set_thresholds(optarg, config.snmp_params.test_units, oid_counter, false);
 			break;
 		case 'o': /* object identifier */
 			if (strspn(optarg, "0123456789.,") != strlen(optarg)) {
@@ -763,25 +693,27 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				 * so we have a mib variable, rather than just an SNMP OID,
 				 * so we have to actually read the mib files
 				 */
-				config.need_mibs = true;
+				config.snmp_params.need_mibs = true;
 			}
 
 			for (char *ptr = strtok(optarg, ", "); ptr != NULL;
 				 ptr = strtok(NULL, ", "), tmp_oid_counter++) {
-				config.test_units[tmp_oid_counter].oid = strdup(ptr);
+				config.snmp_params.test_units[tmp_oid_counter].oid = strdup(ptr);
 			}
 			break;
 		case 'z': /* Null OID Return Check */
 			if (!is_integer(optarg)) {
 				usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
-				config.nulloid_result = atoi(optarg);
+				config.evaluation_params.nulloid_result = atoi(optarg);
 			}
 			break;
 		case 's': /* string or substring */
-			strncpy(config.string_cmp_value, optarg, sizeof(config.string_cmp_value) - 1);
-			config.string_cmp_value[sizeof(config.string_cmp_value) - 1] = 0;
-			config.test_units[eval_counter++].eval_mthd.crit_string = true;
+			strncpy(config.evaluation_params.string_cmp_value, optarg,
+					sizeof(config.evaluation_params.string_cmp_value) - 1);
+			config.evaluation_params
+				.string_cmp_value[sizeof(config.evaluation_params.string_cmp_value) - 1] = 0;
+			config.snmp_params.test_units[eval_counter++].eval_mthd.crit_string = true;
 			break;
 		case 'R': /* regex */
 			cflags = REG_ICASE;
@@ -792,72 +724,73 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			cflags |= REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 			strncpy(regex_expect, optarg, sizeof(regex_expect) - 1);
 			regex_expect[sizeof(regex_expect) - 1] = 0;
-			int errcode = regcomp(&config.regex_cmp_value, regex_expect, cflags);
+			int errcode = regcomp(&config.evaluation_params.regex_cmp_value, regex_expect, cflags);
 			if (errcode != 0) {
 				char errbuf[MAX_INPUT_BUFFER] = "";
-				regerror(errcode, &config.regex_cmp_value, errbuf, MAX_INPUT_BUFFER);
+				regerror(errcode, &config.evaluation_params.regex_cmp_value, errbuf,
+						 MAX_INPUT_BUFFER);
 				printf("Could Not Compile Regular Expression: %s", errbuf);
 				process_arguments_wrapper result = {
 					.errorcode = ERROR,
 				};
 				return result;
 			}
-			config.test_units[eval_counter++].eval_mthd.crit_regex = true;
+			config.snmp_params.test_units[eval_counter++].eval_mthd.crit_regex = true;
 		} break;
 		case 'l': /* label */
 		{
-			if (labels_counter >= config.num_of_test_units) {
+			if (labels_counter >= config.snmp_params.num_of_test_units) {
 				break;
 			}
 			char *ptr = trim_whitespaces_and_check_quoting(optarg);
 			if (ptr[0] == '\'') {
-				config.test_units[labels_counter].label = ptr + 1;
+				config.snmp_params.test_units[labels_counter].label = ptr + 1;
 			} else {
-				config.test_units[labels_counter].label = ptr;
+				config.snmp_params.test_units[labels_counter].label = ptr;
 			}
 
 			while (ptr && (ptr = get_next_argument(ptr))) {
 				labels_counter++;
 				ptr = trim_whitespaces_and_check_quoting(ptr);
 				if (ptr[0] == '\'') {
-					config.test_units[labels_counter].label = ptr + 1;
+					config.snmp_params.test_units[labels_counter].label = ptr + 1;
 				} else {
-					config.test_units[labels_counter].label = ptr;
+					config.snmp_params.test_units[labels_counter].label = ptr;
 				}
 			}
 			labels_counter++;
 		} break;
 		case 'u': /* units */
 		{
-			if (unitv_counter >= config.num_of_test_units) {
+			if (unitv_counter >= config.snmp_params.num_of_test_units) {
 				break;
 			}
 			char *ptr = trim_whitespaces_and_check_quoting(optarg);
 			if (ptr[0] == '\'') {
-				config.test_units[unitv_counter].unit_value = ptr + 1;
+				config.snmp_params.test_units[unitv_counter].unit_value = ptr + 1;
 			} else {
-				config.test_units[unitv_counter].unit_value = ptr;
+				config.snmp_params.test_units[unitv_counter].unit_value = ptr;
 			}
 			while (ptr && (ptr = get_next_argument(ptr))) {
 				unitv_counter++;
 				ptr = trim_whitespaces_and_check_quoting(ptr);
 				if (ptr[0] == '\'') {
-					config.test_units[unitv_counter].unit_value = ptr + 1;
+					config.snmp_params.test_units[unitv_counter].unit_value = ptr + 1;
 				} else {
-					config.test_units[unitv_counter].unit_value = ptr;
+					config.snmp_params.test_units[unitv_counter].unit_value = ptr;
 				}
 			}
 			unitv_counter++;
 		} break;
 		case offset_index:
-			config.offset = strtod(optarg, NULL);
-			config.offset_set = true;
+			config.evaluation_params.offset = strtod(optarg, NULL);
+			config.evaluation_params.offset_set = true;
 			break;
 		case invert_search_index:
-			config.invert_search = false;
+			config.evaluation_params.invert_search = false;
 			break;
 		case 'O':
-			config.use_perf_data_labels_from_input = true;
+			config.evaluation_params.use_oid_as_perf_data_label = true;
 			break;
 		case '4':
 			// The default, do something here to be exclusive to -6 instead of doing nothing?
@@ -871,12 +804,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'M':
 			if (strspn(optarg, "0123456789.,") == strlen(optarg)) {
-				config.multiplier = strtod(optarg, NULL);
-				config.multiplier_set = true;
+				config.evaluation_params.multiplier = strtod(optarg, NULL);
+				config.evaluation_params.multiplier_set = true;
 			}
 			break;
 		case ignore_mib_parsing_errors_index:
-			config.ignore_mib_parsing_errors = true;
+			config.snmp_params.ignore_mib_parsing_errors = true;
 			break;
 		case 'f': // Deprecated format option for floating point values
 			break;
@@ -892,13 +825,22 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			config.output_format = parser.output_format;
 			break;
 		}
+		case calculate_rate:
+			config.evaluation_params.calculate_rate = true;
+			break;
+		case rate_multiplier:
+			if (!is_integer(optarg) ||
+				((config.evaluation_params.rate_multiplier = (unsigned int)atoi(optarg)) <= 0)) {
+				usage2(_("Rate multiplier must be a positive integer"), optarg);
+			}
+			break;
 		default:
 			die(STATE_UNKNOWN, "Unknown option");
 		}
 	}
 
-	if (config.snmp_session.peername == NULL) {
-		config.snmp_session.peername = argv[optind];
+	if (config.snmp_params.snmp_session.peername == NULL) {
+		config.snmp_params.snmp_session.peername = argv[optind];
 	}
 
 	// Build true peername here if necessary
@@ -908,7 +850,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			// The default, do nothing
 		} else if (strcasecmp(connection_prefix, "tcp") == 0) {
 			// use tcp/ipv4
-			xasprintf(&config.snmp_session.peername, "tcp:%s", config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
+					  config.snmp_params.snmp_session.peername);
 		} else if (strcasecmp(connection_prefix, "tcp6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpv6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpipv6") == 0 ||
@@ -917,19 +860,23 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				   strcasecmp(connection_prefix, "udpv6") == 0) {
 			// Man page (or net-snmp) code says IPv6 addresses should be wrapped in [], but it
 			// works anyway therefore do nothing here
-			xasprintf(&config.snmp_session.peername, "%s:%s", connection_prefix,
-					  config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
+					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "tls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_session.peername, "tls:%s", config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
+					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "dtls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_session.peername, "dtls:%s", config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
+					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "unix") == 0) {
 			// TODO: Check whether this is a valid path?
-			xasprintf(&config.snmp_session.peername, "unix:%s", config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
+					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "ipx") == 0) {
-			xasprintf(&config.snmp_session.peername, "ipx:%s", config.snmp_session.peername);
+			xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
+					  config.snmp_params.snmp_session.peername);
 		} else {
 			// Don't know that prefix, die here
 			die(STATE_UNKNOWN, "Unknown connection prefix");
@@ -937,17 +884,18 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	/* Check server_address is given */
-	if (config.snmp_session.peername == NULL) {
+	if (config.snmp_params.snmp_session.peername == NULL) {
 		die(STATE_UNKNOWN, _("No host specified\n"));
 	}
 
 	if (port != NULL) {
-		xasprintf(&config.snmp_session.peername, "%s:%s", config.snmp_session.peername, port);
+		xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
+				  config.snmp_params.snmp_session.peername, port);
 	}
 
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
 	if (miblist == NULL) {
-		if (config.need_mibs) {
+		if (config.snmp_params.need_mibs) {
 			setenv("MIBLS", DEFAULT_MIBLIST, 1);
 		} else {
 			setenv("MIBLS", "NONE", 1);
@@ -959,37 +907,37 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	// Historical default is SNMP v2c
-	if (!snmp_version_set_explicitely && config.snmp_session.community != NULL) {
-		config.snmp_session.version = SNMP_VERSION_2c;
+	if (!snmp_version_set_explicitely && config.snmp_params.snmp_session.community != NULL) {
+		config.snmp_params.snmp_session.version = SNMP_VERSION_2c;
 	}
 
-	if ((config.snmp_session.version == SNMP_VERSION_1) ||
-		(config.snmp_session.version == SNMP_VERSION_2c)) {     /* snmpv1 or snmpv2c */
-																/*
-																config.numauthpriv = 2;
-																config.authpriv = calloc(config.numauthpriv, sizeof(char *));
-																config.authpriv[0] = strdup("-c");
-																config.authpriv[1] = strdup(community);
-																*/
-	} else if (config.snmp_session.version == SNMP_VERSION_3) { /* snmpv3 args */
+	if ((config.snmp_params.snmp_session.version == SNMP_VERSION_1) ||
+		(config.snmp_params.snmp_session.version == SNMP_VERSION_2c)) {     /* snmpv1 or snmpv2c */
+																			/*
+																			config.numauthpriv = 2;
+																			config.authpriv = calloc(config.numauthpriv, sizeof(char *));
+																			config.authpriv[0] = strdup("-c");
+																			config.authpriv[1] = strdup(community);
+																			*/
+	} else if (config.snmp_params.snmp_session.version == SNMP_VERSION_3) { /* snmpv3 args */
 		// generate keys for priv and auth here (if demanded)
 
-		if (config.snmp_session.securityName == NULL) {
+		if (config.snmp_params.snmp_session.securityName == NULL) {
 			die(STATE_UNKNOWN, _("Required parameter: %s\n"), "secname");
 		}
 
-		switch (config.snmp_session.securityLevel) {
+		switch (config.snmp_params.snmp_session.securityLevel) {
 		case SNMP_SEC_LEVEL_AUTHPRIV: {
 			if (authpasswd == NULL) {
 				die(STATE_UNKNOWN,
 					"No authentication passphrase was given, but authorization was requested");
 			}
 			// auth and priv
-			int priv_key_generated =
-				generate_Ku(config.snmp_session.securityPrivProto,
-							(unsigned int)config.snmp_session.securityPrivProtoLen, authpasswd,
-							strlen((const char *)authpasswd), config.snmp_session.securityPrivKey,
-							&config.snmp_session.securityPrivKeyLen);
+			int priv_key_generated = generate_Ku(
+				config.snmp_params.snmp_session.securityPrivProto,
+				(unsigned int)config.snmp_params.snmp_session.securityPrivProtoLen, authpasswd,
+				strlen((const char *)authpasswd), config.snmp_params.snmp_session.securityPrivKey,
+				&config.snmp_params.snmp_session.securityPrivKeyLen);
 
 			if (priv_key_generated != SNMPERR_SUCCESS) {
 				die(STATE_UNKNOWN, "Failed to generate privacy key");
@@ -1000,11 +948,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (privpasswd == NULL) {
 				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
 			}
-			int auth_key_generated =
-				generate_Ku(config.snmp_session.securityAuthProto,
-							(unsigned int)config.snmp_session.securityAuthProtoLen, privpasswd,
-							strlen((const char *)privpasswd), config.snmp_session.securityAuthKey,
-							&config.snmp_session.securityAuthKeyLen);
+			int auth_key_generated = generate_Ku(
+				config.snmp_params.snmp_session.securityAuthProto,
+				(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen, privpasswd,
+				strlen((const char *)privpasswd), config.snmp_params.snmp_session.securityAuthKey,
+				&config.snmp_params.snmp_session.securityAuthKeyLen);
 
 			if (auth_key_generated != SNMPERR_SUCCESS) {
 				die(STATE_UNKNOWN, "Failed to generate privacy key");

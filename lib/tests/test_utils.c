@@ -28,17 +28,7 @@
 #include "utils_base.c"
 
 int main(int argc, char **argv) {
-	char state_path[1024];
-	range *range;
-	double temp;
-	thresholds *thresholds = NULL;
-	int i, rc;
-	char *temp_string;
-	state_key *temp_state_key = NULL;
-	state_data *temp_state_data;
-	time_t current_time;
-
-	plan_tests(185);
+	plan_tests(155);
 
 	ok(this_monitoring_plugin == NULL, "monitoring_plugin not initialised");
 
@@ -57,7 +47,7 @@ int main(int argc, char **argv) {
 
 	np_set_args(argc, argv);
 
-	range = parse_range_string("6");
+	range *range = parse_range_string("6");
 	ok(range != NULL, "'6' is valid range");
 	ok(range->start == 0, "Start correct");
 	ok(range->start_infinity == false, "Not using negative infinity");
@@ -97,7 +87,7 @@ int main(int argc, char **argv) {
 	free(range);
 
 	range = parse_range_string("12345678901234567890:");
-	temp = atof("12345678901234567890"); /* Can't just use this because number too large */
+	double temp = atof("12345678901234567890"); /* Can't just use this because number too large */
 	ok(range != NULL, "'12345678901234567890:' is valid range");
 	ok(range->start == temp, "Start correct");
 	ok(range->start_infinity == false, "Not using negative infinity");
@@ -158,32 +148,34 @@ int main(int argc, char **argv) {
 	range = parse_range_string("2:1");
 	ok(range == NULL, "'2:1' rejected");
 
-	rc = _set_thresholds(&thresholds, NULL, NULL);
-	ok(rc == 0, "Thresholds (NULL, NULL) set");
+	thresholds *thresholds = NULL;
+	int returnCode;
+	returnCode = _set_thresholds(&thresholds, NULL, NULL);
+	ok(returnCode == 0, "Thresholds (NULL, NULL) set");
 	ok(thresholds->warning == NULL, "Warning not set");
 	ok(thresholds->critical == NULL, "Critical not set");
 
-	rc = _set_thresholds(&thresholds, NULL, "80");
-	ok(rc == 0, "Thresholds (NULL, '80') set");
+	returnCode = _set_thresholds(&thresholds, NULL, "80");
+	ok(returnCode == 0, "Thresholds (NULL, '80') set");
 	ok(thresholds->warning == NULL, "Warning not set");
 	ok(thresholds->critical->end == 80, "Critical set correctly");
 
-	rc = _set_thresholds(&thresholds, "5:33", NULL);
-	ok(rc == 0, "Thresholds ('5:33', NULL) set");
+	returnCode = _set_thresholds(&thresholds, "5:33", NULL);
+	ok(returnCode == 0, "Thresholds ('5:33', NULL) set");
 	ok(thresholds->warning->start == 5, "Warning start set");
 	ok(thresholds->warning->end == 33, "Warning end set");
 	ok(thresholds->critical == NULL, "Critical not set");
 
-	rc = _set_thresholds(&thresholds, "30", "60");
-	ok(rc == 0, "Thresholds ('30', '60') set");
+	returnCode = _set_thresholds(&thresholds, "30", "60");
+	ok(returnCode == 0, "Thresholds ('30', '60') set");
 	ok(thresholds->warning->end == 30, "Warning set correctly");
 	ok(thresholds->critical->end == 60, "Critical set correctly");
 	ok(get_status(15.3, thresholds) == STATE_OK, "15.3 - ok");
 	ok(get_status(30.0001, thresholds) == STATE_WARNING, "30.0001 - warning");
 	ok(get_status(69, thresholds) == STATE_CRITICAL, "69 - critical");
 
-	rc = _set_thresholds(&thresholds, "-10:-2", "-30:20");
-	ok(rc == 0, "Thresholds ('-30:20', '-10:-2') set");
+	returnCode = _set_thresholds(&thresholds, "-10:-2", "-30:20");
+	ok(returnCode == 0, "Thresholds ('-30:20', '-10:-2') set");
 	ok(thresholds->warning->start == -10, "Warning start set correctly");
 	ok(thresholds->warning->end == -2, "Warning end set correctly");
 	ok(thresholds->critical->start == -30, "Critical start set correctly");
@@ -304,164 +296,28 @@ int main(int argc, char **argv) {
 	test = np_extract_ntpvar("", "foo");
 	ok(!test, "Empty string return NULL");
 
-	/* This is the result of running ./test_utils */
-	temp_string = (char *)_np_state_generate_key();
-	ok(!strcmp(temp_string, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got hash with exe and no parameters") ||
-		diag("You are probably running in wrong directory. Must run as ./test_utils");
-
-	this_monitoring_plugin->argc = 4;
-	this_monitoring_plugin->argv[0] = "./test_utils";
-	this_monitoring_plugin->argv[1] = "here";
-	this_monitoring_plugin->argv[2] = "--and";
-	this_monitoring_plugin->argv[3] = "now";
-	temp_string = (char *)_np_state_generate_key();
-	ok(!strcmp(temp_string, "bd72da9f78ff1419fad921ea5e43ce56508aef6c"), "Got based on expected argv");
-
-	unsetenv("MP_STATE_PATH");
-	temp_string = (char *)_np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory");
-
-	setenv("MP_STATE_PATH", "", 1);
-	temp_string = (char *)_np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string");
-
-	setenv("MP_STATE_PATH", "/usr/local/nagios/var", 1);
-	temp_string = (char *)_np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory");
-
-	ok(temp_state_key == NULL, "temp_state_key initially empty");
-
-	this_monitoring_plugin->argc = 1;
-	this_monitoring_plugin->argv[0] = "./test_utils";
-	np_enable_state(NULL, 51);
-	temp_state_key = this_monitoring_plugin->state;
-	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
-	ok(!strcmp(temp_state_key->name, "e2d17f995fd4c020411b85e3e3d0ff7306d4147e"), "Got generated filename");
-
-	np_enable_state("allowedchars_in_keyname", 77);
-	temp_state_key = this_monitoring_plugin->state;
-	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/allowedchars_in_keyname", (unsigned long)geteuid());
-	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
-	ok(!strcmp(temp_state_key->name, "allowedchars_in_keyname"), "Got key name with valid chars");
-	ok(!strcmp(temp_state_key->_filename, state_path), "Got internal filename");
-
-	/* Don't do this test just yet. Will die */
-	/*
-	np_enable_state("bad^chars$in@here", 77);
-	temp_state_key = this_monitoring_plugin->state;
-	ok( !strcmp(temp_state_key->name, "bad_chars_in_here"), "Got key name with bad chars replaced" );
-	*/
-
-	np_enable_state("funnykeyname", 54);
-	temp_state_key = this_monitoring_plugin->state;
-	sprintf(state_path, "/usr/local/nagios/var/%lu/check_test/funnykeyname", (unsigned long)geteuid());
-	ok(!strcmp(temp_state_key->plugin_name, "check_test"), "Got plugin name");
-	ok(!strcmp(temp_state_key->name, "funnykeyname"), "Got key name");
-
-	ok(!strcmp(temp_state_key->_filename, state_path), "Got internal filename");
-	ok(temp_state_key->data_version == 54, "Version set");
-
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Got no state data as file does not exist");
-
-	/*
-		temp_fp = fopen("var/statefile", "r");
-		if (temp_fp==NULL)
-			printf("Error opening. errno=%d\n", errno);
-		printf("temp_fp=%s\n", temp_fp);
-		ok( _np_state_read_file(temp_fp) == true, "Can read state file" );
-		fclose(temp_fp);
-	*/
-
-	temp_state_key->_filename = "var/statefile";
-	temp_state_data = np_state_read();
-	ok(this_monitoring_plugin->state->state_data != NULL, "Got state data now") ||
-		diag("Are you running in right directory? Will get coredump next if not");
-	ok(this_monitoring_plugin->state->state_data->time == 1234567890, "Got time");
-	ok(!strcmp((char *)this_monitoring_plugin->state->state_data->data, "String to read"), "Data as expected");
-
-	temp_state_key->data_version = 53;
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Older data version gives NULL");
-	temp_state_key->data_version = 54;
-
-	temp_state_key->_filename = "var/nonexistent";
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Missing file gives NULL");
-	ok(this_monitoring_plugin->state->state_data == NULL, "No state information");
-
-	temp_state_key->_filename = "var/oldformat";
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Old file format gives NULL");
-
-	temp_state_key->_filename = "var/baddate";
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Bad date gives NULL");
-
-	temp_state_key->_filename = "var/missingdataline";
-	temp_state_data = np_state_read();
-	ok(temp_state_data == NULL, "Missing data line gives NULL");
-
-	unlink("var/generated");
-	temp_state_key->_filename = "var/generated";
-	current_time = 1234567890;
-	np_state_write_string(current_time, "String to read");
-	ok(system("cmp var/generated var/statefile") == 0, "Generated file same as expected");
-
-	unlink("var/generated_directory/statefile");
-	unlink("var/generated_directory");
-	temp_state_key->_filename = "var/generated_directory/statefile";
-	current_time = 1234567890;
-	np_state_write_string(current_time, "String to read");
-	ok(system("cmp var/generated_directory/statefile var/statefile") == 0, "Have created directory");
-
-	/* This test to check cannot write to dir - can't automate yet */
-	/*
-	unlink("var/generated_bad_dir");
-	mkdir("var/generated_bad_dir", S_IRUSR);
-	np_state_write_string(current_time, "String to read");
-	*/
-
-	temp_state_key->_filename = "var/generated";
-	time(&current_time);
-	np_state_write_string(0, "String to read");
-	temp_state_data = np_state_read();
-	/* Check time is set to current_time */
-	ok(system("cmp var/generated var/statefile > /dev/null") != 0, "Generated file should be different this time");
-	ok(this_monitoring_plugin->state->state_data->time - current_time <= 1, "Has time generated from current time");
-
-	/* Don't know how to automatically test this. Need to be able to redefine die and catch the error */
-	/*
-	temp_state_key->_filename="/dev/do/not/expect/to/be/able/to/write";
-	np_state_write_string(0, "Bad file");
-	*/
-
-	np_cleanup();
-
-	ok(this_monitoring_plugin == NULL, "Free'd this_monitoring_plugin");
-
 	ok(mp_suid() == false, "Test aren't suid");
 
 	/* base states with random case */
 	char *states[] = {"Ok", "wArnINg", "cRiTIcaL", "UnKNoWN", NULL};
 
-	for (i = 0; states[i] != NULL; i++) {
-		/* out of the random case states, create the lower and upper versions + numeric string one */
+	for (int i = 0; states[i] != NULL; i++) {
+		/* out of the random case states, create the lower and upper versions + numeric string one
+		 */
 		char *statelower = strdup(states[i]);
 		char *stateupper = strdup(states[i]);
 		char statenum[2];
-		char *temp_ptr;
-		for (temp_ptr = statelower; *temp_ptr; temp_ptr++) {
-			*temp_ptr = tolower(*temp_ptr);
+		for (char *temp_ptr = statelower; *temp_ptr; temp_ptr++) {
+			*temp_ptr = (char)tolower(*temp_ptr);
 		}
-		for (temp_ptr = stateupper; *temp_ptr; temp_ptr++) {
-			*temp_ptr = toupper(*temp_ptr);
+		for (char *temp_ptr = stateupper; *temp_ptr; temp_ptr++) {
+			*temp_ptr = (char)toupper(*temp_ptr);
 		}
 		snprintf(statenum, 2, "%i", i);
 
 		/* Base test names, we'll append the state string */
 		char testname[64] = "Translate state string: ";
-		int tlen = strlen(testname);
+		size_t tlen = strlen(testname);
 
 		strcpy(testname + tlen, states[i]);
 		ok(i == mp_translate_state(states[i]), testname);

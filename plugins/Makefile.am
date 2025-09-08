@@ -13,8 +13,14 @@ AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl \
-	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
+AM_CPPFLAGS = -I.. \
+			  -I$(top_srcdir)/lib \
+			  -I$(top_srcdir)/gl \
+			  -I$(top_srcdir)/intl \
+			  -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\" \
+			  @LDAPINCLUDE@ \
+			  @PGINCLUDE@ \
+			  @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 # gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this
@@ -42,11 +48,13 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 	check_procs check_mysql_query check_apt check_dbi check_curl \
 	\
 	tests/test_check_swap \
+	tests/test_check_snmp \
 	tests/test_check_disk
 
 SUBDIRS = picohttpparser
 
 np_test_scripts = tests/test_check_swap.t \
+				  tests/test_check_snmp.t \
 				  tests/test_check_disk.t
 
 EXTRA_DIST = t \
@@ -178,6 +186,8 @@ endif
 
 tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
+tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
+tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
 

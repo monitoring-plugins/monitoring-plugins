@@ -1,7 +1,7 @@
 #pragma once
 
-#include "thresholds.h"
-#include "states.h"
+#include "../../lib/thresholds.h"
+#include "../../lib/states.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <regex.h>
@@ -18,7 +18,7 @@
 #include <net-snmp/library/snmp.h>
 #include <net-snmp/session_api.h>
 
-#define DEFAULT_PORT "161"
+#define DEFAULT_PORT    "161"
 #define DEFAULT_RETRIES 5
 
 typedef struct eval_method {
@@ -34,10 +34,8 @@ typedef struct check_snmp_test_unit {
 	mp_thresholds threshold;
 } check_snmp_test_unit;
 
-typedef struct check_snmp_config {
-	// SNMP session to use
+typedef struct {
 	struct snmp_session snmp_session;
-
 	// use getnet instead of get
 	bool use_getnext;
 
@@ -47,7 +45,9 @@ typedef struct check_snmp_config {
 
 	check_snmp_test_unit *test_units;
 	size_t num_of_test_units;
+} check_snmp_config_snmp_parameters;
 
+typedef struct {
 	// State if an empty value is encountered
 	mp_state_enum nulloid_result;
 
@@ -63,7 +63,18 @@ typedef struct check_snmp_config {
 	bool offset_set;
 
 	// Modify output
-	bool use_perf_data_labels_from_input;
+	bool use_oid_as_perf_data_label;
+
+	// activate rate calucation
+	bool calculate_rate;
+	unsigned int rate_multiplier;
+} check_snmp_evaluation_parameters;
+
+typedef struct check_snmp_config {
+	// SNMP session to use
+	check_snmp_config_snmp_parameters snmp_params;
+
+	check_snmp_evaluation_parameters evaluation_params;
 
 	mp_output_format output_format;
 	bool output_format_is_set;
