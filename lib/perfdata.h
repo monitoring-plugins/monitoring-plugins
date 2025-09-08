@@ -45,7 +45,7 @@ typedef struct range_struct {
 	double start;
 	bool start_infinity;
 	double end;
-	int end_infinity;
+	bool end_infinity;
 	int alert_on; /* OUTSIDE (default) or INSIDE */
 	char *text;   /* original unparsed text input */
 } range;

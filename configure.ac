@@ -1470,17 +1470,6 @@ AC_ARG_WITH(snmpgetnext_command,
 AS_IF([test -n "$PATH_TO_SNMPGET"], [
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd"
-
-	dnl PATH_TO_SNMPGETNEXT is used unconditionally in check_snmp:
-	dnl
-	dnl   https://github.com/nagios-plugins/nagios-plugins/issues/788
-	dnl
-	AS_IF([test -n "$PATH_TO_SNMPGETNEXT"], [
-		AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT",[path to snmpgetnext binary])
-		EXTRAS="$EXTRAS check_snmp\$(EXEEXT)"
-	], [
-		AC_MSG_WARN([Get snmpgetnext from https://net-snmp.sourceforge.io/ to build the check_snmp plugin])
-	])
 ], [
 	AC_MSG_WARN([Get snmpget from https://net-snmp.sourceforge.io/ to build the check_hpjd and check_snmp plugins])
 ])
@@ -1492,6 +1481,16 @@ then
 else
 	AC_MSG_WARN([Tried $PERL - install Net::SNMP perl module if you want to use the perl snmp plugins])
 fi
+
+dnl Check whether DES encryption is available (might not on RHEL)
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <net-snmp/net-snmp-config.h>
+                #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmDESPrivProtocol;]]
+	)],
+	[AC_DEFINE(HAVE_USM_DES_PRIV_PROTOCOL,1,Define whether we have DES Privacy Protocol)],
+	[]
+)
 
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)

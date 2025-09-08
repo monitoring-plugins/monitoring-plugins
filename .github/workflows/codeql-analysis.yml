@@ -57,9 +57,20 @@ jobs:
         run: |
           sudo apt update
           sudo apt-get install -y --no-install-recommends m4 gettext automake autoconf make build-essential
-          sudo apt-get install -y --no-install-recommends perl autotools-dev libdbi-dev libldap2-dev libpq-dev \
-                                                          libmysqlclient-dev libradcli-dev libkrb5-dev libdbi0-dev \
-                                                          libdbd-sqlite3 libssl-dev libcurl4-openssl-dev liburiparser-dev
+          sudo apt-get install -y --no-install-recommends perl \
+            autotools-dev \
+            libdbi-dev \
+            libldap2-dev \
+            libpq-dev \
+            libmysqlclient-dev \
+            libradcli-dev \
+            libkrb5-dev \
+            libdbi0-dev \
+            libdbd-sqlite3 \
+            libssl-dev \
+            libcurl4-openssl-dev \
+            liburiparser-dev \
+            libsnmp-dev
 
       - name: Configure build
         run: |
