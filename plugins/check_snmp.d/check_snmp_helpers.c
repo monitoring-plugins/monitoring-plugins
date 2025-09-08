@@ -273,8 +273,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			}
 			result.response_values[loop_index].value.doubleVal = *(vars->val.doubleVal);
 			result.response_values[loop_index].type = vars->type;
-			break;
-		}
+		} break;
 		case ASN_IPADDRESS:
 			if (verbose) {
 				printf("Debug: Got an IP address\n");
@@ -282,13 +281,13 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			result.response_values[loop_index].type = vars->type;
 
 			// TODO: print address here, state always ok? or regex match?
-			continue;
+			break;
 		default:
 			if (verbose) {
 				printf("Debug: Got a unmatched result type: %hhu\n", vars->type);
 			}
 			// TODO: Error here?
-			continue;
+			break;
 		}
 	}
 
