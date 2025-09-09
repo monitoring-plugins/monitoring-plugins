@@ -34,10 +34,37 @@ enum {
 
 typedef struct {
 	char *server_address;
-	unsigned short server_port;
-	unsigned short virtual_port;
-	char *host_name;
 	char *server_url;
+	char *host_name;
+
+	char *http_method;
+
+	char *http_post_data;
+
+	unsigned short virtualPort;
+	unsigned short serverPort;
+
+	bool use_ssl;
+	bool no_body;
+} check_curl_working_state;
+
+check_curl_working_state check_curl_working_state_init() {
+	check_curl_working_state result = {
+		.server_address = NULL,
+		.server_url = DEFAULT_SERVER_URL,
+		.host_name = NULL,
+		.http_method = NULL,
+		.http_post_data = NULL,
+		.virtualPort = 0,
+		.serverPort = 0,
+		.use_ssl = false,
+		.no_body = false,
+	};
+	return result;
+}
+
+typedef struct {
+	check_curl_working_state initial_config;
 	sa_family_t sin_family;
 
 	bool automatic_decompression;
@@ -45,13 +72,10 @@ typedef struct {
 	char *client_cert;
 	char *client_privkey;
 	char *ca_cert;
-	bool use_ssl;
 	int ssl_version;
-	char *http_method;
 	char user_agent[DEFAULT_BUFFER_SIZE];
 	char **http_opt_headers;
 	size_t http_opt_headers_count;
-	char *http_post_data;
 	int max_depth;
 	char *http_content_type;
 	long socket_timeout;
@@ -59,7 +83,6 @@ typedef struct {
 	char proxy_auth[MAX_INPUT_BUFFER];
 	int followmethod;
 	int followsticky;
-	bool no_body;
 	int curl_http_version;
 	char *cookie_jar_file;
 
@@ -88,11 +111,8 @@ typedef struct {
 
 check_curl_config check_curl_config_init() {
 	check_curl_config tmp = {
-		.server_address = NULL,
-		.server_port = HTTP_PORT,
-		.virtual_port = 0,
-		.host_name = NULL,
-		.server_url = strdup(DEFAULT_SERVER_URL),
+		.initial_config = check_curl_working_state_init(),
+
 		.sin_family = AF_UNSPEC,
 
 		.automatic_decompression = false,
@@ -100,13 +120,10 @@ check_curl_config check_curl_config_init() {
 		.client_cert = NULL,
 		.client_privkey = NULL,
 		.ca_cert = NULL,
-		.use_ssl = false,
 		.ssl_version = CURL_SSLVERSION_DEFAULT,
-		.http_method = NULL,
 		.user_agent = {'\0'},
 		.http_opt_headers = NULL,
 		.http_opt_headers_count = 0,
-		.http_post_data = NULL,
 		.max_depth = DEFAULT_MAX_REDIRS,
 		.http_content_type = NULL,
 		.socket_timeout = DEFAULT_SOCKET_TIMEOUT,
@@ -114,7 +131,6 @@ check_curl_config check_curl_config_init() {
 		.proxy_auth = "",
 		.followmethod = FOLLOW_HTTP_CURL,
 		.followsticky = STICKY_NONE,
-		.no_body = false,
 		.curl_http_version = CURL_HTTP_VERSION_NONE,
 		.cookie_jar_file = NULL,
 
