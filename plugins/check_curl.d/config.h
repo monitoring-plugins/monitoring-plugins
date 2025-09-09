@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../../config.h"
-#include "common.h"
-#include "states.h"
-#include "thresholds.h"
+#include "../common.h"
+#include "../../lib/states.h"
+#include "../../lib/thresholds.h"
 #include <stddef.h>
 #include <string.h>
 #include <sys/socket.h>
