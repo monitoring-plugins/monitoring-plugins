@@ -13,8 +13,14 @@ AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
-AM_CPPFLAGS = -I.. -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl \
-	@LDAPINCLUDE@ @PGINCLUDE@ @SSLINCLUDE@
+AM_CPPFLAGS = -I.. \
+			  -I$(top_srcdir)/lib \
+			  -I$(top_srcdir)/gl \
+			  -I$(top_srcdir)/intl \
+			  -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\" \
+			  @LDAPINCLUDE@ \
+			  @PGINCLUDE@ \
+			  @SSLINCLUDE@
 
 localedir = $(datadir)/locale
 # gettext docs say to use AM_CPPFLAGS, but per module_CPPFLAGS override this
@@ -30,22 +36,25 @@ libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http che
 	check_mrtg check_mrtgtraf check_ntp check_ntp_peer check_ping \
 	check_real check_smtp check_ssh check_tcp check_time check_ntp_time \
 	check_ups check_users negate \
-	urlize @EXTRAS@
+	urlize @EXTRAS@ \
+	check_snmp
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 	check_udp check_clamd @check_tcp_ssl@
 
-EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_snmp check_hpjd \
+EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_nt check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl \
 	\
 	tests/test_check_swap \
+	tests/test_check_snmp \
 	tests/test_check_disk
 
 SUBDIRS = picohttpparser
 
 np_test_scripts = tests/test_check_swap.t \
+				  tests/test_check_snmp.t \
 				  tests/test_check_disk.t
 
 EXTRA_DIST = t \
@@ -59,6 +68,7 @@ EXTRA_DIST = t \
 			 check_radius.d \
 			 check_disk.d \
 			 check_time.d \
+			 check_users.d \
 			 check_load.d \
 			 check_nagios.d \
 			 check_dbi.d \
@@ -77,6 +87,7 @@ EXTRA_DIST = t \
 			 check_ping.d \
 			 check_by_ssh.d \
 			 check_smtp.d \
+			 check_snmp.d \
 			 check_mysql.d \
 			 check_ntp_time.d \
 			 check_dig.d \
@@ -152,7 +163,10 @@ check_ping_LDADD = $(NETLIBS)
 check_procs_LDADD = $(BASEOBJS)
 check_radius_LDADD = $(NETLIBS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
+check_snmp_SOURCES = check_snmp.c check_snmp.d/check_snmp_helpers.c
 check_snmp_LDADD = $(BASEOBJS)
+check_snmp_LDFLAGS = $(AM_LDFLAGS) `net-snmp-config --libs`
+check_snmp_CFLAGS = $(AM_CFLAGS) `net-snmp-config --cflags`
 check_smtp_LDADD = $(SSLOBJS)
 check_ssh_LDADD = $(NETLIBS)
 check_swap_SOURCES = check_swap.c check_swap.d/swap.c
@@ -161,6 +175,7 @@ check_tcp_LDADD = $(SSLOBJS)
 check_time_LDADD = $(NETLIBS)
 check_ntp_time_LDADD = $(NETLIBS) $(MATHLIBS)
 check_ups_LDADD = $(NETLIBS)
+check_users_SOURCES = check_users.c check_users.d/users.c
 check_users_LDADD = $(BASEOBJS) $(WTSAPI32LIBS) $(SYSTEMDLIBS)
 check_by_ssh_LDADD = $(NETLIBS)
 check_ide_smart_LDADD = $(BASEOBJS)
@@ -173,6 +188,8 @@ endif
 
 tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
+tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
+tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
 

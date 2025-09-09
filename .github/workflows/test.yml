@@ -2,6 +2,13 @@
 name: Tests
 
 on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
   push:
     branches:
       - '*'
@@ -21,7 +28,10 @@ jobs:
             prepare: .github/prepare_debian.sh
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Run the tests on ${{ matrix.distro }}
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
@@ -59,7 +69,10 @@ jobs:
 #          - {"distro": "oraclelinux:9", "build": ".github/mock.sh"}
     steps:
       - name: Git clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: Run the tests on ${{ matrix.distro }}
         run: |
           docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol

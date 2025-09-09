@@ -34,12 +34,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define np_free(ptr)                                                                                                                       \
-	{                                                                                                                                      \
-		if (ptr) {                                                                                                                         \
-			free(ptr);                                                                                                                     \
-			ptr = NULL;                                                                                                                    \
-		}                                                                                                                                  \
+#define np_free(ptr)                                                                               \
+	{                                                                                              \
+		if (ptr) {                                                                                 \
+			free(ptr);                                                                             \
+			ptr = NULL;                                                                            \
+		}                                                                                          \
 	}
 
 monitoring_plugin *this_monitoring_plugin = NULL;
@@ -47,7 +47,7 @@ monitoring_plugin *this_monitoring_plugin = NULL;
 int timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-bool _np_state_read_file(FILE *);
+bool _np_state_read_file(FILE *state_file);
 
 void np_init(char *plugin_name, int argc, char **argv) {
 	if (this_monitoring_plugin == NULL) {
@@ -75,14 +75,6 @@ void np_set_args(int argc, char **argv) {
 
 void np_cleanup(void) {
 	if (this_monitoring_plugin != NULL) {
-		if (this_monitoring_plugin->state != NULL) {
-			if (this_monitoring_plugin->state->state_data) {
-				np_free(this_monitoring_plugin->state->state_data->data);
-				np_free(this_monitoring_plugin->state->state_data);
-			}
-			np_free(this_monitoring_plugin->state->name);
-			np_free(this_monitoring_plugin->state);
-		}
 		np_free(this_monitoring_plugin->plugin_name);
 		np_free(this_monitoring_plugin);
 	}
@@ -154,7 +146,8 @@ range *parse_range_string(char *str) {
 		set_range_end(temp_range, end);
 	}
 
-	if (temp_range->start_infinity == true || temp_range->end_infinity == true || temp_range->start <= temp_range->end) {
+	if (temp_range->start_infinity || temp_range->end_infinity ||
+		temp_range->start <= temp_range->end) {
 		return temp_range;
 	}
 	free(temp_range);
@@ -206,12 +199,14 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 		printf("Threshold not set");
 	} else {
 		if (my_threshold->warning) {
-			printf("Warning: start=%g end=%g; ", my_threshold->warning->start, my_threshold->warning->end);
+			printf("Warning: start=%g end=%g; ", my_threshold->warning->start,
+				   my_threshold->warning->end);
 		} else {
 			printf("Warning not set; ");
 		}
 		if (my_threshold->critical) {
-			printf("Critical: start=%g end=%g", my_threshold->critical->start, my_threshold->critical->end);
+			printf("Critical: start=%g end=%g", my_threshold->critical->start,
+				   my_threshold->critical->end);
 		} else {
 			printf("Critical not set");
 		}
@@ -223,15 +218,16 @@ void print_thresholds(const char *threshold_name, thresholds *my_threshold) {
 bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	bool is_inside = false;
 
-	if (my_range.end_infinity == false && my_range.start_infinity == false) {
+	if (!my_range.end_infinity && !my_range.start_infinity) {
 		// range:  .........|---inside---|...........
 		// value
-		is_inside = ((cmp_perfdata_value(my_range.start, value) < 1) && (cmp_perfdata_value(value, my_range.end) <= 0));
-	} else if (my_range.start_infinity == false && my_range.end_infinity == true) {
+		is_inside = ((cmp_perfdata_value(value, my_range.start) >= 0) &&
+					 (cmp_perfdata_value(value, my_range.end) <= 0));
+	} else if (!my_range.start_infinity && my_range.end_infinity) {
 		// range:  .........|---inside---------
 		// value
-		is_inside = (cmp_perfdata_value(my_range.start, value) < 0);
-	} else if (my_range.start_infinity == true && my_range.end_infinity == false) {
+		is_inside = (cmp_perfdata_value(value, my_range.start) >= 0);
+	} else if (my_range.start_infinity && !my_range.end_infinity) {
 		// range:  -inside--------|....................
 		// value
 		is_inside = (cmp_perfdata_value(value, my_range.end) == -1);
@@ -240,7 +236,8 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 		is_inside = true;
 	}
 
-	if ((is_inside && my_range.alert_on_inside_range == INSIDE) || (!is_inside && my_range.alert_on_inside_range == OUTSIDE)) {
+	if ((is_inside && my_range.alert_on_inside_range == INSIDE) ||
+		(!is_inside && my_range.alert_on_inside_range == OUTSIDE)) {
 		return true;
 	}
 
@@ -297,32 +294,31 @@ mp_state_enum get_status(double value, thresholds *my_thresholds) {
 
 char *np_escaped_string(const char *string) {
 	char *data;
-	int i;
-	int j = 0;
+	int write_index = 0;
 	data = strdup(string);
-	for (i = 0; data[i]; i++) {
+	for (int i = 0; data[i]; i++) {
 		if (data[i] == '\\') {
 			switch (data[++i]) {
 			case 'n':
-				data[j++] = '\n';
+				data[write_index++] = '\n';
 				break;
 			case 'r':
-				data[j++] = '\r';
+				data[write_index++] = '\r';
 				break;
 			case 't':
-				data[j++] = '\t';
+				data[write_index++] = '\t';
 				break;
 			case '\\':
-				data[j++] = '\\';
+				data[write_index++] = '\\';
 				break;
 			default:
-				data[j++] = data[i];
+				data[write_index++] = data[i];
 			}
 		} else {
-			data[j++] = data[i];
+			data[write_index++] = data[i];
 		}
 	}
-	data[j] = '\0';
+	data[write_index] = '\0';
 	return data;
 }
 
@@ -337,33 +333,35 @@ int np_check_if_root(void) { return (geteuid() == 0); }
 char *np_extract_value(const char *varlist, const char *name, char sep) {
 	char *tmp = NULL;
 	char *value = NULL;
-	int i;
 
-	while (1) {
+	while (true) {
 		/* Strip any leading space */
-		for (; isspace(varlist[0]); varlist++)
+		for (; isspace(varlist[0]); varlist++) {
 			;
+		}
 
 		if (strncmp(name, varlist, strlen(name)) == 0) {
 			varlist += strlen(name);
 			/* strip trailing spaces */
-			for (; isspace(varlist[0]); varlist++)
+			for (; isspace(varlist[0]); varlist++) {
 				;
+			}
 
 			if (varlist[0] == '=') {
 				/* We matched the key, go past the = sign */
 				varlist++;
 				/* strip leading spaces */
-				for (; isspace(varlist[0]); varlist++)
+				for (; isspace(varlist[0]); varlist++) {
 					;
+				}
 
 				if ((tmp = index(varlist, sep))) {
 					/* Value is delimited by a comma */
 					if (tmp - varlist == 0) {
 						continue;
 					}
-					value = (char *)calloc(1, tmp - varlist + 1);
-					strncpy(value, varlist, tmp - varlist);
+					value = (char *)calloc(1, (unsigned long)(tmp - varlist + 1));
+					strncpy(value, varlist, (unsigned long)(tmp - varlist));
 					value[tmp - varlist] = '\0';
 				} else {
 					/* Value is delimited by a \0 */
@@ -388,7 +386,7 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 
 	/* Clean-up trailing spaces/newlines */
 	if (value) {
-		for (i = strlen(value) - 1; isspace(value[i]); i--) {
+		for (unsigned long i = strlen(value) - 1; isspace(value[i]); i--) {
 			value[i] = '\0';
 		}
 	}
@@ -429,350 +427,4 @@ int mp_translate_state(char *state_text) {
 		return STATE_UNKNOWN;
 	}
 	return ERROR;
-}
-
-/*
- * Returns a string to use as a keyname, based on an md5 hash of argv, thus
- * hopefully a unique key per service/plugin invocation. Use the extra-opts
- * parse of argv, so that uniqueness in parameters are reflected there.
- */
-char *_np_state_generate_key(void) {
-	int i;
-	char **argv = this_monitoring_plugin->argv;
-	char keyname[41];
-	char *p = NULL;
-
-	unsigned char result[256];
-
-#ifdef USE_OPENSSL
-	/*
-	 * This code path is chosen if openssl is available (which should be the most common
-	 * scenario). Alternatively, the gnulib implementation/
-	 *
-	 */
-	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-
-	EVP_DigestInit(ctx, EVP_sha256());
-
-	for (i = 0; i < this_monitoring_plugin->argc; i++) {
-		EVP_DigestUpdate(ctx, argv[i], strlen(argv[i]));
-	}
-
-	EVP_DigestFinal(ctx, result, NULL);
-#else
-
-	struct sha256_ctx ctx;
-
-	for (i = 0; i < this_monitoring_plugin->argc; i++) {
-		sha256_process_bytes(argv[i], strlen(argv[i]), &ctx);
-	}
-
-	sha256_finish_ctx(&ctx, result);
-#endif // FOUNDOPENSSL
-
-	for (i = 0; i < 20; ++i) {
-		sprintf(&keyname[2 * i], "%02x", result[i]);
-	}
-
-	keyname[40] = '\0';
-
-	p = strdup(keyname);
-	if (p == NULL) {
-		die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
-	}
-	return p;
-}
-
-void _cleanup_state_data(void) {
-	if (this_monitoring_plugin->state->state_data != NULL) {
-		np_free(this_monitoring_plugin->state->state_data->data);
-		np_free(this_monitoring_plugin->state->state_data);
-	}
-}
-
-/*
- * Internal function. Returns either:
- *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
- *   statically compiled shared state directory
- */
-char *_np_state_calculate_location_prefix(void) {
-	char *env_dir;
-
-	/* Do not allow passing MP_STATE_PATH in setuid plugins
-	 * for security reasons */
-	if (!mp_suid()) {
-		env_dir = getenv("MP_STATE_PATH");
-		if (env_dir && env_dir[0] != '\0') {
-			return env_dir;
-		}
-		/* This is the former ENV, for backward-compatibility */
-		env_dir = getenv("NAGIOS_PLUGIN_STATE_DIRECTORY");
-		if (env_dir && env_dir[0] != '\0') {
-			return env_dir;
-		}
-	}
-
-	return NP_STATE_DIR_PREFIX;
-}
-
-/*
- * Initiatializer for state routines.
- * Sets variables. Generates filename. Returns np_state_key. die with
- * UNKNOWN if exception
- */
-void np_enable_state(char *keyname, int expected_data_version) {
-	state_key *this_state = NULL;
-	char *temp_filename = NULL;
-	char *temp_keyname = NULL;
-	char *p = NULL;
-	int ret;
-
-	if (this_monitoring_plugin == NULL) {
-		die(STATE_UNKNOWN, _("This requires np_init to be called"));
-	}
-
-	this_state = (state_key *)calloc(1, sizeof(state_key));
-	if (this_state == NULL) {
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-	}
-
-	if (keyname == NULL) {
-		temp_keyname = _np_state_generate_key();
-	} else {
-		temp_keyname = strdup(keyname);
-		if (temp_keyname == NULL) {
-			die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
-		}
-	}
-	/* Die if invalid characters used for keyname */
-	p = temp_keyname;
-	while (*p != '\0') {
-		if (!(isalnum(*p) || *p == '_')) {
-			die(STATE_UNKNOWN, _("Invalid character for keyname - only alphanumerics or '_'"));
-		}
-		p++;
-	}
-	this_state->name = temp_keyname;
-	this_state->plugin_name = this_monitoring_plugin->plugin_name;
-	this_state->data_version = expected_data_version;
-	this_state->state_data = NULL;
-
-	/* Calculate filename */
-	ret = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(), (unsigned long)geteuid(),
-				   this_monitoring_plugin->plugin_name, this_state->name);
-	if (ret < 0) {
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-	}
-
-	this_state->_filename = temp_filename;
-
-	this_monitoring_plugin->state = this_state;
-}
-
-/*
- * Will return NULL if no data is available (first run). If key currently
- * exists, read data. If state file format version is not expected, return
- * as if no data. Get state data version number and compares to expected.
- * If numerically lower, then return as no previous state. die with UNKNOWN
- * if exceptional error.
- */
-state_data *np_state_read(void) {
-	state_data *this_state_data = NULL;
-	FILE *statefile;
-	bool rc = false;
-
-	if (this_monitoring_plugin == NULL) {
-		die(STATE_UNKNOWN, _("This requires np_init to be called"));
-	}
-
-	/* Open file. If this fails, no previous state found */
-	statefile = fopen(this_monitoring_plugin->state->_filename, "r");
-	if (statefile != NULL) {
-
-		this_state_data = (state_data *)calloc(1, sizeof(state_data));
-		if (this_state_data == NULL) {
-			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-		}
-
-		this_state_data->data = NULL;
-		this_monitoring_plugin->state->state_data = this_state_data;
-
-		rc = _np_state_read_file(statefile);
-
-		fclose(statefile);
-	}
-
-	if (!rc) {
-		_cleanup_state_data();
-	}
-
-	return this_monitoring_plugin->state->state_data;
-}
-
-/*
- * Read the state file
- */
-bool _np_state_read_file(FILE *f) {
-	bool status = false;
-	size_t pos;
-	char *line;
-	int i;
-	int failure = 0;
-	time_t current_time, data_time;
-	enum {
-		STATE_FILE_VERSION,
-		STATE_DATA_VERSION,
-		STATE_DATA_TIME,
-		STATE_DATA_TEXT,
-		STATE_DATA_END
-	} expected = STATE_FILE_VERSION;
-
-	time(&current_time);
-
-	/* Note: This introduces a limit of 1024 bytes in the string data */
-	line = (char *)calloc(1, 1024);
-	if (line == NULL) {
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-	}
-
-	while (!failure && (fgets(line, 1024, f)) != NULL) {
-		pos = strlen(line);
-		if (line[pos - 1] == '\n') {
-			line[pos - 1] = '\0';
-		}
-
-		if (line[0] == '#') {
-			continue;
-		}
-
-		switch (expected) {
-		case STATE_FILE_VERSION:
-			i = atoi(line);
-			if (i != NP_STATE_FORMAT_VERSION) {
-				failure++;
-			} else {
-				expected = STATE_DATA_VERSION;
-			}
-			break;
-		case STATE_DATA_VERSION:
-			i = atoi(line);
-			if (i != this_monitoring_plugin->state->data_version) {
-				failure++;
-			} else {
-				expected = STATE_DATA_TIME;
-			}
-			break;
-		case STATE_DATA_TIME:
-			/* If time > now, error */
-			data_time = strtoul(line, NULL, 10);
-			if (data_time > current_time) {
-				failure++;
-			} else {
-				this_monitoring_plugin->state->state_data->time = data_time;
-				expected = STATE_DATA_TEXT;
-			}
-			break;
-		case STATE_DATA_TEXT:
-			this_monitoring_plugin->state->state_data->data = strdup(line);
-			if (this_monitoring_plugin->state->state_data->data == NULL) {
-				die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
-			}
-			expected = STATE_DATA_END;
-			status = true;
-			break;
-		case STATE_DATA_END:;
-		}
-	}
-
-	np_free(line);
-	return status;
-}
-
-/*
- * If time=NULL, use current time. Create state file, with state format
- * version, default text. Writes version, time, and data. Avoid locking
- * problems - use mv to write and then swap. Possible loss of state data if
- * two things writing to same key at same time.
- * Will die with UNKNOWN if errors
- */
-void np_state_write_string(time_t data_time, char *data_string) {
-	FILE *fp;
-	char *temp_file = NULL;
-	int fd = 0, result = 0;
-	time_t current_time;
-	char *directories = NULL;
-	char *p = NULL;
-
-	if (data_time == 0) {
-		time(&current_time);
-	} else {
-		current_time = data_time;
-	}
-
-	/* If file doesn't currently exist, create directories */
-	if (access(this_monitoring_plugin->state->_filename, F_OK) != 0) {
-		result = asprintf(&directories, "%s", this_monitoring_plugin->state->_filename);
-		if (result < 0) {
-			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-		}
-
-		for (p = directories + 1; *p; p++) {
-			if (*p == '/') {
-				*p = '\0';
-				if ((access(directories, F_OK) != 0) && (mkdir(directories, S_IRWXU) != 0)) {
-					/* Can't free this! Otherwise error message is wrong! */
-					/* np_free(directories); */
-					die(STATE_UNKNOWN, _("Cannot create directory: %s"), directories);
-				}
-				*p = '/';
-			}
-		}
-		np_free(directories);
-	}
-
-	result = asprintf(&temp_file, "%s.XXXXXX", this_monitoring_plugin->state->_filename);
-	if (result < 0) {
-		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-	}
-
-	if ((fd = mkstemp(temp_file)) == -1) {
-		np_free(temp_file);
-		die(STATE_UNKNOWN, _("Cannot create temporary filename"));
-	}
-
-	fp = (FILE *)fdopen(fd, "w");
-	if (fp == NULL) {
-		close(fd);
-		unlink(temp_file);
-		np_free(temp_file);
-		die(STATE_UNKNOWN, _("Unable to open temporary state file"));
-	}
-
-	fprintf(fp, "# NP State file\n");
-	fprintf(fp, "%d\n", NP_STATE_FORMAT_VERSION);
-	fprintf(fp, "%d\n", this_monitoring_plugin->state->data_version);
-	fprintf(fp, "%lu\n", current_time);
-	fprintf(fp, "%s\n", data_string);
-
-	fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP);
-
-	fflush(fp);
-
-	result = fclose(fp);
-
-	fsync(fd);
-
-	if (result != 0) {
-		unlink(temp_file);
-		np_free(temp_file);
-		die(STATE_UNKNOWN, _("Error writing temp file"));
-	}
-
-	if (rename(temp_file, this_monitoring_plugin->state->_filename) != 0) {
-		unlink(temp_file);
-		np_free(temp_file);
-		die(STATE_UNKNOWN, _("Cannot rename state temp file"));
-	}
-
-	np_free(temp_file);
 }

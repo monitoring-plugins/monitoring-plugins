@@ -9,7 +9,6 @@
 #include "./thresholds.h"
 #include "states.h"
 
-
 #ifndef USE_OPENSSL
 #	include "sha256.h"
 #endif
@@ -27,25 +26,8 @@
 #define OUTSIDE 0
 #define INSIDE  1
 
-#define NP_STATE_FORMAT_VERSION 1
-
-typedef struct state_data_struct {
-	time_t time;
-	void *data;
-	int length; /* Of binary data */
-} state_data;
-
-typedef struct state_key_struct {
-	char *name;
-	char *plugin_name;
-	int data_version;
-	char *_filename;
-	state_data *state_data;
-} state_key;
-
 typedef struct np_struct {
 	char *plugin_name;
-	state_key *state;
 	int argc;
 	char **argv;
 } monitoring_plugin;
@@ -100,10 +82,6 @@ char *np_extract_value(const char *, const char *, char);
  * return the corresponding NP_STATE or ERROR)
  */
 int mp_translate_state(char *);
-
-void np_enable_state(char *, int);
-state_data *np_state_read(void);
-void np_state_write_string(time_t, char *);
 
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
