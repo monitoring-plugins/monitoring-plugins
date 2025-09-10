@@ -189,67 +189,54 @@ int np_net_ssl_write(const void *buf, int num) { return SSL_write(s, buf, num); 
 
 int np_net_ssl_read(void *buf, int num) { return SSL_read(s, buf, num); }
 
-int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
-								 int days_till_exp_crit) {
+mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										   int days_till_exp_crit) {
 #	ifdef USE_OPENSSL
-	X509_NAME *subj = NULL;
-	char timestamp[50] = "";
-	char cn[MAX_CN_LENGTH] = "";
-	char *tz;
-
-	int cnlen = -1;
-	int status = STATE_UNKNOWN;
-
-	ASN1_STRING *tm;
-	int offset;
-	struct tm stamp;
-	float time_left;
-	int days_left;
-	int time_remaining;
-	time_t tm_t;
-
 	if (!certificate) {
 		printf("%s\n", _("CRITICAL - No server certificate present to inspect."));
 		return STATE_CRITICAL;
 	}
 
 	/* Extract CN from certificate subject */
-	subj = X509_get_subject_name(certificate);
+	X509_NAME *subj = X509_get_subject_name(certificate);
 
 	if (!subj) {
 		printf("%s\n", _("CRITICAL - Cannot retrieve certificate subject."));
 		return STATE_CRITICAL;
 	}
-	cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
+
+	char cn[MAX_CN_LENGTH] = "";
+	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
 	if (cnlen == -1) {
 		strcpy(cn, _("Unknown CN"));
 	}
 
 	/* Retrieve timestamp of certificate */
-	tm = X509_get_notAfter(certificate);
+	ASN1_STRING *tm = X509_get_notAfter(certificate);
 
+	int offset = 0;
+	struct tm stamp = {};
 	/* Generate tm structure to process timestamp */
 	if (tm->type == V_ASN1_UTCTIME) {
 		if (tm->length < 10) {
 			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
-		} else {
-			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
-			if (stamp.tm_year < 50) {
-				stamp.tm_year += 100;
-			}
-			offset = 0;
 		}
+		stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
+		if (stamp.tm_year < 50) {
+			stamp.tm_year += 100;
+		}
+		offset = 0;
+
 	} else {
 		if (tm->length < 12) {
 			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
-		} else {
-			stamp.tm_year = (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
-							(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
-			stamp.tm_year -= 1900;
-			offset = 2;
 		}
+		stamp.tm_year = (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
+						(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
+		stamp.tm_year -= 1900;
+		offset = 2;
 	}
 	stamp.tm_mon = (tm->data[2 + offset] - '0') * 10 + (tm->data[3 + offset] - '0') - 1;
 	stamp.tm_mday = (tm->data[4 + offset] - '0') * 10 + (tm->data[5 + offset] - '0');
@@ -258,20 +245,25 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 	stamp.tm_sec = (tm->data[10 + offset] - '0') * 10 + (tm->data[11 + offset] - '0');
 	stamp.tm_isdst = -1;
 
-	tm_t = timegm(&stamp);
-	time_left = difftime(tm_t, time(NULL));
-	days_left = time_left / 86400;
-	tz = getenv("TZ");
+	time_t tm_t = timegm(&stamp);
+	float time_left = difftime(tm_t, time(NULL));
+	int days_left = time_left / 86400;
+	char *tz = getenv("TZ");
 	setenv("TZ", "GMT", 1);
 	tzset();
+
+	char timestamp[50] = "";
 	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
 	if (tz) {
 		setenv("TZ", tz, 1);
 	} else {
 		unsetenv("TZ");
 	}
+
 	tzset();
 
+	int time_remaining;
+	mp_state_enum status = STATE_UNKNOWN;
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf(_("%s - Certificate '%s' expires in %d day(s) (%s).\n"),
 			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, days_left, timestamp);
