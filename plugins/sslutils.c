@@ -30,6 +30,7 @@
 #include "common.h"
 #include "netutils.h"
 #include "../lib/monitoringplug.h"
+#include "states.h"
 
 #ifdef HAVE_SSL
 static SSL_CTX *ctx = NULL;
@@ -318,7 +319,7 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 #	endif /* USE_OPENSSL */
 }
 
-int np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
+mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
 #	ifdef USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(s);
