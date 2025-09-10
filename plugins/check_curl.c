@@ -991,8 +991,13 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 					 * parsing We only check the first certificate and assume it's the one of
 					 * the server
 					 */
-					const char *raw_cert = NULL;
+					char *raw_cert = NULL;
+					bool got_first_cert = false;
 					for (int i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
+						if (got_first_cert) {
+							break;
+						}
+
 						for (slist = cert_ptr.to_certinfo->certinfo[i]; slist;
 							 slist = slist->next) {
 							if (verbose >= 2) {
@@ -1000,11 +1005,12 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 							}
 							if (strncmp(slist->data, "Cert:", 5) == 0) {
 								raw_cert = &slist->data[5];
-								goto GOT_FIRST_CERT;
+								got_first_cert = true;
+								break;
 							}
 						}
 					}
-				GOT_FIRST_CERT:
+
 					if (!raw_cert) {
 						snprintf(msg, DEFAULT_BUFFER_SIZE,
 								 _("Cannot retrieve certificates from CERTINFO information - "
@@ -2898,7 +2904,12 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 		printf("**** REQUEST CERTIFICATES ****\n");
 	}
 
+	bool have_first_cert = false;
 	for (int i = 0; i < cert_ptr->to_certinfo->num_of_certs; i++) {
+		if (have_first_cert) {
+			break;
+		}
+
 		for (slist = cert_ptr->to_certinfo->certinfo[i]; slist; slist = slist->next) {
 			/* find first common name in subject,
 			 * TODO: check alternative subjects for
@@ -2922,14 +2933,14 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 			} else if (strncasecmp(slist->data, "Expire Date:", 12) == 0) {
 				end_date_str = &slist->data[12];
 			} else if (strncasecmp(slist->data, "Cert:", 5) == 0) {
-				goto HAVE_FIRST_CERT;
+				have_first_cert = true;
+				break;
 			}
 			if (verbose >= 2) {
 				printf("%d ** %s\n", i, slist->data);
 			}
 		}
 	}
-HAVE_FIRST_CERT:
 
 	if (verbose >= 2) {
 		printf("**** REQUEST CERTIFICATES ****\n");
