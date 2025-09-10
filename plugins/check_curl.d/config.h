@@ -57,7 +57,7 @@ check_curl_working_state check_curl_working_state_init() {
 		.http_method = NULL,
 		.http_post_data = NULL,
 		.virtualPort = 0,
-		.serverPort = 0,
+		.serverPort = HTTP_PORT,
 		.use_ssl = false,
 		.no_body = false,
 	};
