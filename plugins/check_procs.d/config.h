@@ -12,7 +12,8 @@ enum metric {
 	METRIC_VSZ,
 	METRIC_RSS,
 	METRIC_CPU,
-	METRIC_ELAPSED
+	METRIC_ELAPSED,
+	METRIC_NLWP
 };
 
 typedef struct {
@@ -30,11 +31,13 @@ typedef struct {
 	regex_t re_args;
 
 	bool kthread_filter;
+	bool usethreads; /* whether to test for threads or processes */
 	bool usepid; /* whether to test for pid or /proc/pid/exe */
 	uid_t uid;
 	pid_t ppid;
 	int vsz;
 	int rss;
+	int nlwp;
 	float pcpu;
 	char *statopts;
 
@@ -64,6 +67,7 @@ check_procs_config check_procs_config_init() {
 		.ppid = 0,
 		.vsz = 0,
 		.rss = 0,
+		.nlwp = 0,
 		.pcpu = 0,
 		.statopts = NULL,
 
