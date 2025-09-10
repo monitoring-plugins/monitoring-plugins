@@ -37,13 +37,16 @@ static SSL *s = NULL;
 
 int np_net_ssl_init(int sd) { return np_net_ssl_init_with_hostname(sd, NULL); }
 
-int np_net_ssl_init_with_hostname(int sd, char *host_name) { return np_net_ssl_init_with_hostname_and_version(sd, host_name, 0); }
+int np_net_ssl_init_with_hostname(int sd, char *host_name) {
+	return np_net_ssl_init_with_hostname_and_version(sd, host_name, 0);
+}
 
 int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
 	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, NULL, NULL);
 }
 
-int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert, char *privkey) {
+int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert,
+												   char *privkey) {
 	long options = 0;
 
 	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL) {
@@ -75,7 +78,8 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #	endif
 	case MP_TLSv1_1: /* TLSv1.1 protocol */
 #	if !defined(SSL_OP_NO_TLSv1_1)
-		printf("%s\n", _("UNKNOWN - TLS protocol version 1.1 is not supported by your SSL library."));
+		printf("%s\n",
+			   _("UNKNOWN - TLS protocol version 1.1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #	else
 		SSL_CTX_set_min_proto_version(ctx, TLS1_1_VERSION);
@@ -84,7 +88,8 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #	endif
 	case MP_TLSv1_2: /* TLSv1.2 protocol */
 #	if !defined(SSL_OP_NO_TLSv1_2)
-		printf("%s\n", _("UNKNOWN - TLS protocol version 1.2 is not supported by your SSL library."));
+		printf("%s\n",
+			   _("UNKNOWN - TLS protocol version 1.2 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
 #	else
 		SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
@@ -145,8 +150,9 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
 	if ((s = SSL_new(ctx)) != NULL) {
 #	ifdef SSL_set_tlsext_host_name
-		if (host_name != NULL)
+		if (host_name != NULL) {
 			SSL_set_tlsext_host_name(s, host_name);
+		}
 #	endif
 		SSL_set_fd(s, sd);
 		if (SSL_connect(s) == 1) {
@@ -182,7 +188,8 @@ int np_net_ssl_write(const void *buf, int num) { return SSL_write(s, buf, num); 
 
 int np_net_ssl_read(void *buf, int num) { return SSL_read(s, buf, num); }
 
-int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit) {
+int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+								 int days_till_exp_crit) {
 #	ifdef USE_OPENSSL
 	X509_NAME *subj = NULL;
 	char timestamp[50] = "";
@@ -213,8 +220,9 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 		return STATE_CRITICAL;
 	}
 	cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
-	if (cnlen == -1)
+	if (cnlen == -1) {
 		strcpy(cn, _("Unknown CN"));
+	}
 
 	/* Retrieve timestamp of certificate */
 	tm = X509_get_notAfter(certificate);
@@ -226,8 +234,9 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 			return STATE_CRITICAL;
 		} else {
 			stamp.tm_year = (tm->data[0] - '0') * 10 + (tm->data[1] - '0');
-			if (stamp.tm_year < 50)
+			if (stamp.tm_year < 50) {
 				stamp.tm_year += 100;
+			}
 			offset = 0;
 		}
 	} else {
@@ -235,7 +244,8 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 			printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 			return STATE_CRITICAL;
 		} else {
-			stamp.tm_year = (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 + (tm->data[2] - '0') * 10 + (tm->data[3] - '0');
+			stamp.tm_year = (tm->data[0] - '0') * 1000 + (tm->data[1] - '0') * 100 +
+							(tm->data[2] - '0') * 10 + (tm->data[3] - '0');
 			stamp.tm_year -= 1900;
 			offset = 2;
 		}
@@ -254,41 +264,48 @@ int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int 
 	setenv("TZ", "GMT", 1);
 	tzset();
 	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
-	if (tz)
+	if (tz) {
 		setenv("TZ", tz, 1);
-	else
+	} else {
 		unsetenv("TZ");
+	}
 	tzset();
 
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
-		printf(_("%s - Certificate '%s' expires in %d day(s) (%s).\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn,
-			   days_left, timestamp);
-		if (days_left > days_till_exp_crit)
+		printf(_("%s - Certificate '%s' expires in %d day(s) (%s).\n"),
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, days_left, timestamp);
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else if (days_left == 0 && time_left > 0) {
-		if (time_left >= 3600)
+		if (time_left >= 3600) {
 			time_remaining = (int)time_left / 3600;
-		else
+		} else {
 			time_remaining = (int)time_left / 60;
+		}
 
-		printf(_("%s - Certificate '%s' expires in %u %s (%s)\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn,
-			   time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
+		printf(_("%s - Certificate '%s' expires in %u %s (%s)\n"),
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, time_remaining,
+			   time_left >= 3600 ? "hours" : "minutes", timestamp);
 
-		if (days_left > days_till_exp_crit)
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else if (time_left < 0) {
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
 		status = STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("%s - Certificate '%s' just expired (%s).\n"), (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, timestamp);
-		if (days_left > days_till_exp_crit)
+		printf(_("%s - Certificate '%s' just expired (%s).\n"),
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, timestamp);
+		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
-		else
+		} else {
 			status = STATE_CRITICAL;
+		}
 	} else {
 		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
 		status = STATE_OK;
