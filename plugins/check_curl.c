@@ -145,7 +145,6 @@ check_curl_global_state global_state = {
 	.curl = NULL,
 };
 
-static long httpReturnCode;
 static char errbuf[MAX_INPUT_BUFFER];
 static char msg[DEFAULT_BUFFER_SIZE];
 typedef union {
@@ -257,7 +256,6 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_SSL
 #	ifdef USE_OPENSSL
-
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 	(void)preverify_ok;
 	/* TODO: we get all certificates of the chain, so which ones
@@ -297,7 +295,6 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 
 	return CURLE_OK;
 }
-
 #	endif /* USE_OPENSSL */
 #endif     /* HAVE_SSL */
 
@@ -1108,11 +1105,12 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 				 perfstring);
 		/* we cannot know the major/minor version here for sure as we cannot parse the first
 		 * line */
-		die(STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x %ld unknown - %s", httpReturnCode, msg);
+		die(STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x unknown - %s", msg);
 	}
 	global_state.status_line_initialized = true;
 
 	/* get result code from cURL */
+	long httpReturnCode;
 	handle_curl_option_return_code(
 		curl_easy_getinfo(global_state.curl, CURLINFO_RESPONSE_CODE, &httpReturnCode),
 		"CURLINFO_RESPONSE_CODE");
