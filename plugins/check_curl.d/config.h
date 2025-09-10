@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include "curl/curl.h"
+#include "regex.h"
 
 enum {
 	MAX_RE_SIZE = 1024,
@@ -87,7 +88,13 @@ typedef struct {
 	char *cookie_jar_file;
 
 	int maximum_age;
+
+	// the original regex string from the command line
 	char regexp[MAX_RE_SIZE];
+
+	// the compiled regex for usage later
+	regex_t compiled_regex;
+
 	mp_state_enum state_regex;
 	bool invert_regex;
 	bool verify_peer_and_host;
@@ -136,6 +143,7 @@ check_curl_config check_curl_config_init() {
 
 		.maximum_age = -1,
 		.regexp = {},
+		.compiled_regex = {},
 		.state_regex = STATE_CRITICAL,
 		.invert_regex = false,
 		.verify_peer_and_host = false,

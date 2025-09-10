@@ -1261,9 +1261,8 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	}
 
 	if (strlen(config.regexp)) {
-		regex_t preg;
 		regmatch_t pmatch[REGS];
-		int errcode = regexec(&preg, global_state.body_buf.buf, REGS, pmatch, 0);
+		int errcode = regexec(&config.compiled_regex, global_state.body_buf.buf, REGS, pmatch, 0);
 		if ((errcode == 0 && !config.invert_regex) ||
 			(errcode == REG_NOMATCH && config.invert_regex)) {
 			/* OK - No-op to avoid changing the logic around it */
@@ -1284,7 +1283,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 			}
 			result = config.state_regex;
 		} else {
-			regerror(errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+			regerror(errcode, &config.compiled_regex, errbuf, MAX_INPUT_BUFFER);
 
 			char tmp[DEFAULT_BUFFER_SIZE];
 
@@ -1969,6 +1968,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				result.errorcode = ERROR;
 				return result;
 			}
+
+			result.config.compiled_regex = preg;
 			break;
 		case INVERT_REGEX:
 			result.config.invert_regex = true;
