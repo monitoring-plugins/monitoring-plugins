@@ -1628,6 +1628,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 	char *critical_thresholds = NULL;
 	int cflags = REG_NOSUB | REG_EXTENDED | REG_NEWLINE;
 	bool specify_port = false;
+	bool enable_tls = false;
+	char *tls_option_optarg = NULL;
 
 	while (true) {
 		int option_index = getopt_long(
@@ -1748,152 +1750,82 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.display_html = false;
 			break;
 		case 'C': /* Check SSL cert validity */
-#ifdef LIBCURL_FEATURE_SSL
-			char *temp;
-			if ((temp = strchr(optarg, ',')) != NULL) {
-				*temp = '\0';
-				if (!is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
-				}
-				result.config.days_till_exp_warn = atoi(optarg);
-				*temp = ',';
-				temp++;
-				if (!is_intnonneg(temp)) {
-					usage2(_("Invalid certificate expiration period"), temp);
-				}
-				result.config.days_till_exp_crit = atoi(temp);
-			} else {
-				result.config.days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
-				}
-				result.config.days_till_exp_warn = atoi(optarg);
-			}
-			result.config.check_cert = true;
-			goto enable_ssl;
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
 #endif
+			{
+				char *temp;
+				if ((temp = strchr(optarg, ',')) != NULL) {
+					*temp = '\0';
+					if (!is_intnonneg(optarg)) {
+						usage2(_("Invalid certificate expiration period"), optarg);
+					}
+					result.config.days_till_exp_warn = atoi(optarg);
+					*temp = ',';
+					temp++;
+					if (!is_intnonneg(temp)) {
+						usage2(_("Invalid certificate expiration period"), temp);
+					}
+					result.config.days_till_exp_crit = atoi(temp);
+				} else {
+					result.config.days_till_exp_crit = 0;
+					if (!is_intnonneg(optarg)) {
+						usage2(_("Invalid certificate expiration period"), optarg);
+					}
+					result.config.days_till_exp_warn = atoi(optarg);
+				}
+				result.config.check_cert = true;
+				enable_tls = true;
+			}
+			break;
 		case CONTINUE_AFTER_CHECK_CERT: /* don't stop after the certificate is checked */
 #ifdef HAVE_SSL
 			result.config.continue_after_check_cert = true;
 			break;
 #endif
 		case 'J': /* use client certificate */
-#ifdef LIBCURL_FEATURE_SSL
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
+#endif
 			test_file(optarg);
 			result.config.client_cert = optarg;
-			goto enable_ssl;
-#endif
+			enable_tls = true;
+			break;
 		case 'K': /* use client private key */
-#ifdef LIBCURL_FEATURE_SSL
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
+#endif
 			test_file(optarg);
 			result.config.client_privkey = optarg;
-			goto enable_ssl;
-#endif
-#ifdef LIBCURL_FEATURE_SSL
+			enable_tls = true;
+			break;
 		case CA_CERT_OPTION: /* use CA chain file */
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
+#endif
 			test_file(optarg);
 			result.config.ca_cert = optarg;
-			goto enable_ssl;
-#endif
-#ifdef LIBCURL_FEATURE_SSL
-		case 'D': /* verify peer certificate & host */
-			result.config.verify_peer_and_host = true;
+			enable_tls = true;
 			break;
-#endif
-		case 'S': /* use SSL */
-#ifdef LIBCURL_FEATURE_SSL
-		{
-		enable_ssl:
-			bool got_plus = false;
-			result.config.initial_config.use_ssl = true;
-			/* ssl_version initialized to CURL_SSLVERSION_DEFAULT as a default.
-			 * Only set if it's non-zero.  This helps when we include multiple
-			 * parameters, like -S and -C combinations */
-			result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
-			if (option_index == 'S' && optarg != NULL) {
-				char *plus_ptr = strchr(optarg, '+');
-				if (plus_ptr) {
-					got_plus = true;
-					*plus_ptr = '\0';
-				}
-
-				if (optarg[0] == '2') {
-					result.config.ssl_version = CURL_SSLVERSION_SSLv2;
-				} else if (optarg[0] == '3') {
-					result.config.ssl_version = CURL_SSLVERSION_SSLv3;
-				} else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0")) {
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-					result.config.ssl_version = CURL_SSLVERSION_TLSv1_0;
-#	else
-					result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-				} else if (!strcmp(optarg, "1.1")) {
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-					result.config.ssl_version = CURL_SSLVERSION_TLSv1_1;
-#	else
-					result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-				} else if (!strcmp(optarg, "1.2")) {
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-					result.config.ssl_version = CURL_SSLVERSION_TLSv1_2;
-#	else
-					result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-				} else if (!strcmp(optarg, "1.3")) {
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
-					result.config.ssl_version = CURL_SSLVERSION_TLSv1_3;
-#	else
-					result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
-				} else {
-					usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
-							 "(with optional '+' suffix)"));
-				}
-			}
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
-			if (got_plus) {
-				switch (result.config.ssl_version) {
-				case CURL_SSLVERSION_TLSv1_3:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
-					break;
-				case CURL_SSLVERSION_TLSv1_2:
-				case CURL_SSLVERSION_TLSv1_1:
-				case CURL_SSLVERSION_TLSv1_0:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_DEFAULT;
-					break;
-				}
-			} else {
-				switch (result.config.ssl_version) {
-				case CURL_SSLVERSION_TLSv1_3:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
-					break;
-				case CURL_SSLVERSION_TLSv1_2:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_2;
-					break;
-				case CURL_SSLVERSION_TLSv1_1:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_1;
-					break;
-				case CURL_SSLVERSION_TLSv1_0:
-					result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_0;
-					break;
-				}
-			}
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
-			if (verbose >= 2) {
-				printf(_("* Set SSL/TLS version to %d\n"), result.config.ssl_version);
-			}
-			if (!specify_port) {
-				result.config.initial_config.serverPort = HTTPS_PORT;
-			}
-		} break;
-#else  /* LIBCURL_FEATURE_SSL */
-			/* -C -J and -K fall through to here without SSL */
+		case 'D': /* verify peer certificate & host */
+#ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
+#endif
+			result.config.verify_peer_and_host = true;
+			enable_tls = true;
+			break;
+		case 'S': /* use SSL */
+			tls_option_optarg = optarg;
+			enable_tls = true;
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
+#endif
 			break;
 		case SNI_OPTION: /* --sni is parsed, but ignored, the default is true with libcurl */
-			use_sni = true;
-			break;
+#ifndef LIBCURL_FEATURE_SSL
+			usage4(_("Invalid option - SSL is not available"));
 #endif /* LIBCURL_FEATURE_SSL */
+			break;
 		case MAX_REDIRS_OPTION:
 			if (!is_intnonneg(optarg)) {
 				usage2(_("Invalid max_redirs count"), optarg);
@@ -2077,6 +2009,90 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			/* print short usage statement if args not parsable */
 			usage5();
 			break;
+		}
+	}
+
+	if (enable_tls) {
+		bool got_plus = false;
+		result.config.initial_config.use_ssl = true;
+		/* ssl_version initialized to CURL_SSLVERSION_DEFAULT as a default.
+		 * Only set if it's non-zero.  This helps when we include multiple
+		 * parameters, like -S and -C combinations */
+		result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+		if (tls_option_optarg != NULL) {
+			char *plus_ptr = strchr(optarg, '+');
+			if (plus_ptr) {
+				got_plus = true;
+				*plus_ptr = '\0';
+			}
+
+			if (optarg[0] == '2') {
+				result.config.ssl_version = CURL_SSLVERSION_SSLv2;
+			} else if (optarg[0] == '3') {
+				result.config.ssl_version = CURL_SSLVERSION_SSLv3;
+			} else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0")) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+				result.config.ssl_version = CURL_SSLVERSION_TLSv1_0;
+#else
+				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+			} else if (!strcmp(optarg, "1.1")) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+				result.config.ssl_version = CURL_SSLVERSION_TLSv1_1;
+#else
+				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+			} else if (!strcmp(optarg, "1.2")) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+				result.config.ssl_version = CURL_SSLVERSION_TLSv1_2;
+#else
+				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+			} else if (!strcmp(optarg, "1.3")) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
+				result.config.ssl_version = CURL_SSLVERSION_TLSv1_3;
+#else
+				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
+			} else {
+				usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
+						 "(with optional '+' suffix)"));
+			}
+		}
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
+		if (got_plus) {
+			switch (result.config.ssl_version) {
+			case CURL_SSLVERSION_TLSv1_3:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+				break;
+			case CURL_SSLVERSION_TLSv1_2:
+			case CURL_SSLVERSION_TLSv1_1:
+			case CURL_SSLVERSION_TLSv1_0:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_DEFAULT;
+				break;
+			}
+		} else {
+			switch (result.config.ssl_version) {
+			case CURL_SSLVERSION_TLSv1_3:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+				break;
+			case CURL_SSLVERSION_TLSv1_2:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_2;
+				break;
+			case CURL_SSLVERSION_TLSv1_1:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_1;
+				break;
+			case CURL_SSLVERSION_TLSv1_0:
+				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_0;
+				break;
+			}
+		}
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
+		if (verbose >= 2) {
+			printf(_("* Set SSL/TLS version to %d\n"), result.config.ssl_version);
+		}
+		if (!specify_port) {
+			result.config.initial_config.serverPort = HTTPS_PORT;
 		}
 	}
 
