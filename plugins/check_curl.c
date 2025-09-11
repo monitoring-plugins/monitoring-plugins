@@ -1139,7 +1139,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	}
 
 	/* make sure the status line matches the response we are looking for */
-	if (!expected_statuscode(global_state.status_line.first_line, config.server_expect)) {
+	if (!expected_statuscode(global_state.status_line.first_line, config.server_expect.string)) {
 		if (workingState.serverPort == HTTP_PORT) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"),
 					 global_state.status_line.first_line);
@@ -1153,7 +1153,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	}
 
 	mp_state_enum result = STATE_OK;
-	if (config.server_expect_yn) {
+	if (config.server_expect.is_present) {
 		snprintf(msg, DEFAULT_BUFFER_SIZE, _("Status line output matched \"%s\" - "),
 				 config.server_expect);
 		if (verbose) {
@@ -1893,9 +1893,9 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.string_expect[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'e': /* string or substring */
-			strncpy(result.config.server_expect, optarg, MAX_INPUT_BUFFER - 1);
-			result.config.server_expect[MAX_INPUT_BUFFER - 1] = 0;
-			result.config.server_expect_yn = true;
+			strncpy(result.config.server_expect.string, optarg, MAX_INPUT_BUFFER - 1);
+			result.config.server_expect.string[MAX_INPUT_BUFFER - 1] = 0;
+			result.config.server_expect.is_present = true;
 			break;
 		case 'T': /* Content-type */
 			result.config.http_content_type = strdup(optarg);

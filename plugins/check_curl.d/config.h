@@ -105,8 +105,10 @@ typedef struct {
 	thresholds *thlds;
 	size_t min_page_len;
 	size_t max_page_len;
-	char server_expect[MAX_INPUT_BUFFER];
-	bool server_expect_yn;
+	struct {
+		char string[MAX_INPUT_BUFFER];
+		bool is_present;
+	} server_expect;
 	char string_expect[MAX_INPUT_BUFFER];
 	char header_expect[MAX_INPUT_BUFFER];
 	mp_state_enum onredirect;
@@ -154,8 +156,11 @@ check_curl_config check_curl_config_init() {
 		.thlds = NULL,
 		.min_page_len = 0,
 		.max_page_len = 0,
-		.server_expect = HTTP_EXPECT,
-		.server_expect_yn = false,
+		.server_expect =
+			{
+				.string = HTTP_EXPECT,
+				.is_present = false,
+			},
 		.string_expect = "",
 		.header_expect = "",
 		.onredirect = STATE_OK,
