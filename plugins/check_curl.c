@@ -129,6 +129,9 @@ typedef struct {
 	bool put_buf_initialized;
 	curlhelp_read_curlbuf put_buf;
 	CURL *curl;
+
+	struct curl_slist *header_list;
+	struct curl_slist *host;
 } check_curl_global_state;
 
 static char errbuf[MAX_INPUT_BUFFER];
@@ -152,8 +155,7 @@ static check_curl_config_wrapper process_arguments(int /*argc*/, char ** /*argv*
 
 static void handle_curl_option_return_code(CURLcode res, const char *option);
 static mp_state_enum check_http(check_curl_config /*config*/, check_curl_working_state workingState,
-								int redir_depth, struct curl_slist *header_list,
-								check_curl_global_state global_state);
+								int redir_depth);
 
 typedef struct {
 	int redir_depth;
@@ -162,8 +164,7 @@ typedef struct {
 	check_curl_global_state curl_state;
 } redir_wrapper;
 static redir_wrapper redir(curlhelp_write_curlbuf * /*header_buf*/, check_curl_config /*config*/,
-						   int redir_depth, check_curl_working_state working_state,
-						   check_curl_global_state global_state);
+						   int redir_depth, check_curl_working_state working_state);
 
 static char *perfd_time(double elapsed_time, thresholds * /*thlds*/, long /*socket_timeout*/);
 static char *perfd_time_connect(double elapsed_time_connect, long /*socket_timeout*/);
@@ -172,30 +173,575 @@ static char *perfd_time_firstbyte(double elapsed_time_firstbyte, long /*socket_t
 static char *perfd_time_headers(double elapsed_time_headers, long /*socket_timeout*/);
 static char *perfd_time_transfer(double elapsed_time_transfer, long /*socket_timeout*/);
 static char *perfd_size(size_t page_len, int /*min_page_len*/);
+
 static void print_help(void);
 void print_usage(void);
+
 static void print_curl_version(void);
+
 static int curlhelp_initwritebuffer(curlhelp_write_curlbuf * /*buf*/);
 static size_t curlhelp_buffer_write_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/,
 											 void * /*stream*/);
 static void curlhelp_freewritebuffer(curlhelp_write_curlbuf * /*buf*/);
+
 static int curlhelp_initreadbuffer(curlhelp_read_curlbuf * /*buf*/, const char * /*data*/,
 								   size_t /*datalen*/);
 static size_t curlhelp_buffer_read_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/,
 											void * /*stream*/);
 static void curlhelp_freereadbuffer(curlhelp_read_curlbuf * /*buf*/);
+
 static curlhelp_ssl_library curlhelp_get_ssl_library(void);
 static const char *curlhelp_get_ssl_library_string(curlhelp_ssl_library /*ssl_library*/);
+
 int net_noopenssl_check_certificate(cert_ptr_union *, int, int);
 
 static int curlhelp_parse_statusline(const char * /*buf*/, curlhelp_statusline * /*status_line*/);
 static void curlhelp_free_statusline(curlhelp_statusline * /*status_line*/);
+
 static char *get_header_value(const struct phr_header *headers, size_t nof_headers,
 							  const char *header);
 static mp_state_enum check_document_dates(const curlhelp_write_curlbuf * /*header_buf*/,
 										  char (*msg)[DEFAULT_BUFFER_SIZE], int /*maximum_age*/);
 static size_t get_content_length(const curlhelp_write_curlbuf *header_buf,
 								 const curlhelp_write_curlbuf *body_buf);
+static int lookup_host(const char *host, char *buf, size_t buflen, sa_family_t addr_family);
+
+// typedef struct {
+// 	int errorcode;
+// } check_curl_evaluation_wrapper;
+// check_curl_evaluation_wrapper check_curl_evaluate(check_curl_config config,
+// 												  mp_check overall[static 1]) {}
+
+CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm);
+
+typedef struct {
+	int errorcode;
+	check_curl_global_state curl_state;
+} check_curl_configure_curl_wrapper;
+check_curl_configure_curl_wrapper
+check_curl_configure_curl(const check_curl_static_curl_config config,
+						  check_curl_working_state working_state, bool check_cert,
+						  bool on_redirect_dependent, int follow_method, int max_depth) {
+	check_curl_configure_curl_wrapper result = {
+		.errorcode = OK,
+		.curl_state =
+			{
+				.curl_global_initialized = false,
+				.curl_easy_initialized = false,
+				.curl = NULL,
+
+				.body_buf_initialized = false,
+				.body_buf = {},
+				.header_buf_initialized = false,
+				.header_buf = {},
+				.status_line_initialized = false,
+				.status_line = {},
+				.put_buf_initialized = false,
+				.put_buf = {},
+
+				.header_list = NULL,
+				.host = NULL,
+			},
+	};
+
+	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
+		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
+	}
+	result.curl_state.curl_global_initialized = true;
+
+	if ((result.curl_state.curl = curl_easy_init()) == NULL) {
+		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
+	}
+	result.curl_state.curl_easy_initialized = true;
+
+	if (verbose >= 1) {
+		handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_VERBOSE, 1),
+									   "CURLOPT_VERBOSE");
+	}
+	/* print everything on stdout like check_http would do */
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_STDERR, stdout),
+								   "CURLOPT_STDERR");
+
+	if (config.automatic_decompression) {
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_ACCEPT_ENCODING, ""),
+			"CURLOPT_ACCEPT_ENCODING");
+#else
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_ENCODING, ""), "CURLOPT_ENCODING");
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
+	}
+
+	/* initialize buffer for body of the answer */
+	if (curlhelp_initwritebuffer(&result.curl_state.body_buf) < 0) {
+		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
+	}
+	result.curl_state.body_buf_initialized = true;
+
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_WRITEFUNCTION,
+													curlhelp_buffer_write_callback),
+								   "CURLOPT_WRITEFUNCTION");
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_WRITEDATA,
+													(void *)&result.curl_state.body_buf),
+								   "CURLOPT_WRITEDATA");
+
+	/* initialize buffer for header of the answer */
+	if (curlhelp_initwritebuffer(&result.curl_state.header_buf) < 0) {
+		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n");
+	}
+	result.curl_state.header_buf_initialized = true;
+
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_HEADERFUNCTION,
+													curlhelp_buffer_write_callback),
+								   "CURLOPT_HEADERFUNCTION");
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_WRITEHEADER,
+													(void *)&result.curl_state.header_buf),
+								   "CURLOPT_WRITEHEADER");
+
+	/* set the error buffer */
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_ERRORBUFFER, errbuf),
+		"CURLOPT_ERRORBUFFER");
+
+	/* set timeouts */
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_CONNECTTIMEOUT, config.socket_timeout),
+		"CURLOPT_CONNECTTIMEOUT");
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_TIMEOUT, config.socket_timeout),
+		"CURLOPT_TIMEOUT");
+
+	/* enable haproxy protocol */
+	if (config.haproxy_protocol) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_HAPROXYPROTOCOL, 1L),
+			"CURLOPT_HAPROXYPROTOCOL");
+	}
+
+	// fill dns resolve cache to make curl connect to the given server_address instead of the
+	// host_name, only required for ssl, because we use the host_name later on to make SNI happy
+	char dnscache[DEFAULT_BUFFER_SIZE];
+	char addrstr[DEFAULT_BUFFER_SIZE / 2];
+	if (working_state.use_ssl && working_state.host_name != NULL) {
+		int res;
+		if ((res = lookup_host(working_state.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
+							   config.sin_family)) != 0) {
+			snprintf(msg, DEFAULT_BUFFER_SIZE,
+					 _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+					 working_state.server_address, res, gai_strerror(res));
+			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+		}
+		snprintf(dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", working_state.host_name,
+				 working_state.serverPort, addrstr);
+		result.curl_state.host = curl_slist_append(NULL, dnscache);
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_RESOLVE, result.curl_state.host);
+		if (verbose >= 1) {
+			printf("* curl CURLOPT_RESOLVE: %s\n", dnscache);
+		}
+	}
+
+	// If server_address is an IPv6 address it must be surround by square brackets
+	struct in6_addr tmp_in_addr;
+	if (inet_pton(AF_INET6, working_state.server_address, &tmp_in_addr) == 1) {
+		char *new_server_address = malloc(strlen(working_state.server_address) + 3);
+		if (new_server_address == NULL) {
+			die(STATE_UNKNOWN, "HTTP UNKNOWN - Unable to allocate memory\n");
+		}
+		snprintf(new_server_address, strlen(working_state.server_address) + 3, "[%s]",
+				 working_state.server_address);
+		working_state.server_address = new_server_address;
+	}
+
+	/* compose URL: use the address we want to connect to, set Host: header later */
+	char url[DEFAULT_BUFFER_SIZE];
+	snprintf(url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", working_state.use_ssl ? "https" : "http",
+			 (working_state.use_ssl & (working_state.host_name != NULL))
+				 ? working_state.host_name
+				 : working_state.server_address,
+			 working_state.serverPort, working_state.server_url);
+
+	if (verbose >= 1) {
+		printf("* curl CURLOPT_URL: %s\n", url);
+	}
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_URL, url),
+								   "CURLOPT_URL");
+
+	/* extract proxy information for legacy proxy https requests */
+	if (!strcmp(working_state.http_method, "CONNECT") ||
+		strstr(working_state.server_url, "http") == working_state.server_url) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, working_state.server_address),
+			"CURLOPT_PROXY");
+		handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXYPORT,
+														(long)working_state.serverPort),
+									   "CURLOPT_PROXYPORT");
+		if (verbose >= 2) {
+			printf("* curl CURLOPT_PROXY: %s:%d\n", working_state.server_address,
+				   working_state.serverPort);
+		}
+		working_state.http_method = "GET";
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_URL, working_state.server_url),
+			"CURLOPT_URL");
+	}
+
+	/* disable body for HEAD request */
+	if (working_state.http_method && !strcmp(working_state.http_method, "HEAD")) {
+		working_state.no_body = true;
+	}
+
+	/* set HTTP protocol version */
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_HTTP_VERSION, config.curl_http_version),
+		"CURLOPT_HTTP_VERSION");
+
+	/* set HTTP method */
+	if (working_state.http_method) {
+		if (!strcmp(working_state.http_method, "POST")) {
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_POST, 1), "CURLOPT_POST");
+		} else if (!strcmp(working_state.http_method, "PUT")) {
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_UPLOAD, 1), "CURLOPT_UPLOAD");
+		} else {
+			handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl,
+															CURLOPT_CUSTOMREQUEST,
+															working_state.http_method),
+										   "CURLOPT_CUSTOMREQUEST");
+		}
+	}
+
+	char *force_host_header = NULL;
+	/* check if Host header is explicitly set in options */
+	if (config.http_opt_headers_count) {
+		for (size_t i = 0; i < config.http_opt_headers_count; i++) {
+			if (strncmp(config.http_opt_headers[i], "Host:", 5) == 0) {
+				force_host_header = config.http_opt_headers[i];
+			}
+		}
+	}
+
+	/* set hostname (virtual hosts), not needed if CURLOPT_CONNECT_TO is used, but left in
+	 * anyway */
+	char http_header[DEFAULT_BUFFER_SIZE];
+	if (working_state.host_name != NULL && force_host_header == NULL) {
+		if ((working_state.virtualPort != HTTP_PORT && !working_state.use_ssl) ||
+			(working_state.virtualPort != HTTPS_PORT && working_state.use_ssl)) {
+			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s:%d", working_state.host_name,
+					 working_state.virtualPort);
+		} else {
+			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s", working_state.host_name);
+		}
+		result.curl_state.header_list =
+			curl_slist_append(result.curl_state.header_list, http_header);
+	}
+
+	/* always close connection, be nice to servers */
+	snprintf(http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
+	result.curl_state.header_list = curl_slist_append(result.curl_state.header_list, http_header);
+
+	/* attach additional headers supplied by the user */
+	/* optionally send any other header tag */
+	if (config.http_opt_headers_count) {
+		for (size_t i = 0; i < config.http_opt_headers_count; i++) {
+			result.curl_state.header_list =
+				curl_slist_append(result.curl_state.header_list, config.http_opt_headers[i]);
+		}
+	}
+
+	/* set HTTP headers */
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_HTTPHEADER, result.curl_state.header_list),
+		"CURLOPT_HTTPHEADER");
+
+#ifdef LIBCURL_FEATURE_SSL
+	/* set SSL version, warn about insecure or unsupported versions */
+	if (working_state.use_ssl) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSLVERSION, config.ssl_version),
+			"CURLOPT_SSLVERSION");
+	}
+
+	/* client certificate and key to present to server (SSL) */
+	if (config.client_cert) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSLCERT, config.client_cert),
+			"CURLOPT_SSLCERT");
+	}
+
+	if (config.client_privkey) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSLKEY, config.client_privkey),
+			"CURLOPT_SSLKEY");
+	}
+
+	if (config.ca_cert) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_CAINFO, config.ca_cert),
+			"CURLOPT_CAINFO");
+	}
+
+	if (config.ca_cert || config.verify_peer_and_host) {
+		/* per default if we have a CA verify both the peer and the
+		 * hostname in the certificate, can be switched off later */
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_VERIFYPEER, 1),
+			"CURLOPT_SSL_VERIFYPEER");
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_VERIFYHOST, 2),
+			"CURLOPT_SSL_VERIFYHOST");
+	} else {
+		/* backward-compatible behaviour, be tolerant in checks
+		 * TODO: depending on more options have aspects we want
+		 * to be less tolerant about ssl verfications
+		 */
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_VERIFYPEER, 0),
+			"CURLOPT_SSL_VERIFYPEER");
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_VERIFYHOST, 0),
+			"CURLOPT_SSL_VERIFYHOST");
+	}
+
+	/* detect SSL library used by libcurl */
+	curlhelp_ssl_library ssl_library = curlhelp_get_ssl_library();
+
+	/* try hard to get a stack of certificates to verify against */
+	if (check_cert) {
+#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
+		/* inform curl to report back certificates */
+		switch (ssl_library) {
+		case CURLHELP_SSL_LIBRARY_OPENSSL:
+		case CURLHELP_SSL_LIBRARY_LIBRESSL:
+			/* set callback to extract certificate with OpenSSL context function (works with
+			 * OpenSSL-style libraries only!) */
+#		ifdef USE_OPENSSL
+			/* libcurl and monitoring plugins built with OpenSSL, good */
+			add_sslctx_verify_fun = true;
+			is_openssl_callback = true;
+#		endif /* USE_OPENSSL */
+			/* libcurl is built with OpenSSL, monitoring plugins, so falling
+			 * back to manually extracting certificate information */
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
+			break;
+
+		case CURLHELP_SSL_LIBRARY_NSS:
+#		if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
+			/* NSS: support for CERTINFO is implemented since 7.34.0 */
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
+#		else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+			die(STATE_CRITICAL,
+				"HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library "
+				"'%s' is too old)\n",
+				curlhelp_get_ssl_library_string(ssl_library));
+#		endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
+			break;
+
+		case CURLHELP_SSL_LIBRARY_GNUTLS:
+#		if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0)
+			/* GnuTLS: support for CERTINFO is implemented since 7.42.0 */
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
+#		else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
+			die(STATE_CRITICAL,
+				"HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library "
+				"'%s' is too old)\n",
+				curlhelp_get_ssl_library_string(ssl_library));
+#		endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
+			break;
+
+		case CURLHELP_SSL_LIBRARY_UNKNOWN:
+		default:
+			die(STATE_CRITICAL,
+				"HTTP CRITICAL - Cannot retrieve certificates (unknown SSL library '%s', must "
+				"implement first)\n",
+				curlhelp_get_ssl_library_string(ssl_library));
+			break;
+		}
+#	else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
+		/* old libcurl, our only hope is OpenSSL, otherwise we are out of luck */
+		if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL ||
+			ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL) {
+			add_sslctx_verify_fun = true;
+		} else {
+			die(STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no "
+								"CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl "
+								"too old and has no CURLOPT_CERTINFO)\n");
+		}
+#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
+	}
+
+#	if LIBCURL_VERSION_NUM >=                                                                     \
+		MAKE_LIBCURL_VERSION(7, 10, 6) /* required for CURLOPT_SSL_CTX_FUNCTION */
+	// ssl ctx function is not available with all ssl backends
+	if (curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_CTX_FUNCTION, NULL) !=
+		CURLE_UNKNOWN_OPTION) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun),
+			"CURLOPT_SSL_CTX_FUNCTION");
+	}
+#	endif
+#endif /* LIBCURL_FEATURE_SSL */
+
+	/* set default or user-given user agent identification */
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_USERAGENT, config.user_agent),
+		"CURLOPT_USERAGENT");
+
+	/* proxy-authentication */
+	if (strcmp(config.proxy_auth, "")) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXYUSERPWD, config.proxy_auth),
+			"CURLOPT_PROXYUSERPWD");
+	}
+
+	/* authentication */
+	if (strcmp(config.user_auth, "")) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_USERPWD, config.user_auth),
+			"CURLOPT_USERPWD");
+	}
+	/* TODO: parameter auth method, bitfield of following methods:
+	 * CURLAUTH_BASIC (default)
+	 * CURLAUTH_DIGEST
+	 * CURLAUTH_DIGEST_IE
+	 * CURLAUTH_NEGOTIATE
+	 * CURLAUTH_NTLM
+	 * CURLAUTH_NTLM_WB
+	 *
+	 * convenience tokens for typical sets of methods:
+	 * CURLAUTH_ANYSAFE: most secure, without BASIC
+	 * or CURLAUTH_ANY: most secure, even BASIC if necessary
+	 *
+	 * handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPAUTH,
+	 * (long)CURLAUTH_DIGEST ), "CURLOPT_HTTPAUTH");
+	 */
+
+	/* handle redirections */
+	if (on_redirect_dependent) {
+		if (follow_method == FOLLOW_LIBCURL) {
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_FOLLOWLOCATION, 1),
+				"CURLOPT_FOLLOWLOCATION");
+
+			/* default -1 is infinite, not good, could lead to zombie plugins!
+			   Setting it to one bigger than maximal limit to handle errors nicely below
+			 */
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_MAXREDIRS, max_depth + 1),
+				"CURLOPT_MAXREDIRS");
+
+			/* for now allow only http and https (we are a http(s) check plugin in the end) */
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 85, 0)
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https"),
+				"CURLOPT_REDIR_PROTOCOLS_STR");
+#elif LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
+			handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl,
+															CURLOPT_REDIR_PROTOCOLS,
+															CURLPROTO_HTTP | CURLPROTO_HTTPS),
+										   "CURLOPT_REDIRECT_PROTOCOLS");
+#endif
+
+			/* TODO: handle the following aspects of redirection, make them
+			 * command line options too later:
+			  CURLOPT_POSTREDIR: method switch
+			  CURLINFO_REDIRECT_URL: custom redirect option
+			  CURLOPT_REDIRECT_PROTOCOLS: allow people to step outside safe protocols
+			  CURLINFO_REDIRECT_COUNT: get the number of redirects, print it, maybe a range
+			 option here is nice like for expected page size?
+			*/
+		} else {
+			/* old style redirection*/
+		}
+	}
+	/* no-body */
+	if (working_state.no_body) {
+		handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_NOBODY, 1),
+									   "CURLOPT_NOBODY");
+	}
+
+	/* IPv4 or IPv6 forced DNS resolution */
+	if (config.sin_family == AF_UNSPEC) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER),
+			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
+	} else if (config.sin_family == AF_INET) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4),
+			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
+	}
+#if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
+	else if (config.sin_family == AF_INET6) {
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
+			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
+	}
+#endif
+
+	/* either send http POST data (any data, not only POST)*/
+	if (!strcmp(working_state.http_method, "POST") || !strcmp(working_state.http_method, "PUT")) {
+		/* set content of payload for POST and PUT */
+		if (config.http_content_type) {
+			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Content-Type: %s",
+					 config.http_content_type);
+			result.curl_state.header_list =
+				curl_slist_append(result.curl_state.header_list, http_header);
+		}
+		/* NULL indicates "HTTP Continue" in libcurl, provide an empty string
+		 * in case of no POST/PUT data */
+		if (!working_state.http_post_data) {
+			working_state.http_post_data = "";
+		}
+
+		if (!strcmp(working_state.http_method, "POST")) {
+			/* POST method, set payload with CURLOPT_POSTFIELDS */
+			handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl,
+															CURLOPT_POSTFIELDS,
+															working_state.http_post_data),
+										   "CURLOPT_POSTFIELDS");
+		} else if (!strcmp(working_state.http_method, "PUT")) {
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_READFUNCTION,
+								 (curl_read_callback)curlhelp_buffer_read_callback),
+				"CURLOPT_READFUNCTION");
+			if (curlhelp_initreadbuffer(&result.curl_state.put_buf, working_state.http_post_data,
+										strlen(working_state.http_post_data)) < 0) {
+				die(STATE_UNKNOWN,
+					"HTTP CRITICAL - out of memory allocating read buffer for PUT\n");
+			}
+			result.curl_state.put_buf_initialized = true;
+			handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl,
+															CURLOPT_READDATA,
+															(void *)&result.curl_state.put_buf),
+										   "CURLOPT_READDATA");
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_INFILESIZE,
+								 (curl_off_t)strlen(working_state.http_post_data)),
+				"CURLOPT_INFILESIZE");
+		}
+	}
+
+	/* cookie handling */
+	if (config.cookie_jar_file != NULL) {
+		/* enable reading cookies from a file, and if the filename is an empty string, only
+		 * enable the curl cookie engine */
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_COOKIEFILE, config.cookie_jar_file),
+			"CURLOPT_COOKIEFILE");
+		/* now enable saving cookies to a file, but only if the filename is not an empty string,
+		 * since writing it would fail */
+		if (*config.cookie_jar_file) {
+			handle_curl_option_return_code(
+				curl_easy_setopt(result.curl_state.curl, CURLOPT_COOKIEJAR, config.cookie_jar_file),
+				"CURLOPT_COOKIEJAR");
+		}
+	}
+	return result;
+}
 
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
@@ -220,12 +766,6 @@ int main(int argc, char **argv) {
 
 	const check_curl_config config = tmp_config.config;
 
-	/* set defaults */
-	if (strlen(config.user_agent) == 0) {
-		snprintf(config.user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
-				 progname, NP_VERSION, VERSION, curl_version());
-	}
-
 	if (config.display_html) {
 		printf("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
 			   config.initial_config.use_ssl ? "https" : "http",
@@ -236,24 +776,9 @@ int main(int argc, char **argv) {
 			   config.initial_config.server_url);
 	}
 
-	check_curl_global_state global_state = {
-		.curl_global_initialized = false,
-		.curl_easy_initialized = false,
-		.body_buf_initialized = false,
-		.body_buf = {},
-		.header_buf_initialized = false,
-		.header_buf = {},
-		.status_line_initialized = false,
-		.status_line = {},
-		.put_buf_initialized = false,
-		.put_buf = {},
-		.curl = NULL,
-	};
-
 	check_curl_working_state working_state = config.initial_config;
-	struct curl_slist *header_list = NULL;
 
-	exit((int)check_http(config, working_state, 0, header_list, global_state));
+	exit((int)check_http(config, working_state, 0));
 }
 
 #ifdef HAVE_SSL
@@ -435,525 +960,35 @@ static void cleanup(check_curl_global_state global_state) {
 		curlhelp_freereadbuffer(&global_state.put_buf);
 	}
 	global_state.put_buf_initialized = false;
+
+	if (global_state.header_list) {
+		curl_slist_free_all(global_state.header_list);
+	}
+
+	if (global_state.host) {
+		curl_slist_free_all(global_state.host);
+	}
 }
 
 mp_state_enum check_http(const check_curl_config config, check_curl_working_state workingState,
-						 int redir_depth, struct curl_slist *header_list,
-						 check_curl_global_state global_state) {
+						 int redir_depth) {
 
 	// =======================
 	// Initialisation for curl
 	// =======================
-	/* initialize curl */
-	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
-		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
-	}
-	global_state.curl_global_initialized = true;
+	check_curl_configure_curl_wrapper conf_curl_struct = check_curl_configure_curl(
+		config.curl_config, workingState, config.check_cert, config.on_redirect_dependent,
+		config.followmethod, config.max_depth);
 
-	if ((global_state.curl = curl_easy_init()) == NULL) {
-		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
-	}
-	global_state.curl_easy_initialized = true;
-
-	if (verbose >= 1) {
-		handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_VERBOSE, 1),
-									   "CURLOPT_VERBOSE");
-	}
-
-	/* print everything on stdout like check_http would do */
-	handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_STDERR, stdout),
-								   "CURLOPT_STDERR");
-
-	if (config.automatic_decompression) {
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_ACCEPT_ENCODING, ""),
-			"CURLOPT_ACCEPT_ENCODING");
-#else
-		handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_ENCODING, ""),
-									   "CURLOPT_ENCODING");
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6) */
-	}
-
-	/* initialize buffer for body of the answer */
-	if (curlhelp_initwritebuffer(&global_state.body_buf) < 0) {
-		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for body\n");
-	}
-	global_state.body_buf_initialized = true;
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_WRITEFUNCTION, curlhelp_buffer_write_callback),
-		"CURLOPT_WRITEFUNCTION");
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_WRITEDATA, (void *)&global_state.body_buf),
-		"CURLOPT_WRITEDATA");
-
-	/* initialize buffer for header of the answer */
-	if (curlhelp_initwritebuffer(&global_state.header_buf) < 0) {
-		die(STATE_UNKNOWN, "HTTP CRITICAL - out of memory allocating buffer for header\n");
-	}
-	global_state.header_buf_initialized = true;
-
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_HEADERFUNCTION, curlhelp_buffer_write_callback),
-		"CURLOPT_HEADERFUNCTION");
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_WRITEHEADER, (void *)&global_state.header_buf),
-		"CURLOPT_WRITEHEADER");
-
-	/* set the error buffer */
-	handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_ERRORBUFFER, errbuf),
-								   "CURLOPT_ERRORBUFFER");
-
-	/* set timeouts */
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_CONNECTTIMEOUT, config.socket_timeout),
-		"CURLOPT_CONNECTTIMEOUT");
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_TIMEOUT, config.socket_timeout),
-		"CURLOPT_TIMEOUT");
-
-	/* enable haproxy protocol */
-	if (config.haproxy_protocol) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_HAPROXYPROTOCOL, 1L),
-			"CURLOPT_HAPROXYPROTOCOL");
-	}
-
-	// fill dns resolve cache to make curl connect to the given server_address instead of the
-	// host_name, only required for ssl, because we use the host_name later on to make SNI happy
-	struct curl_slist *host = NULL;
-	char dnscache[DEFAULT_BUFFER_SIZE];
-	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (workingState.use_ssl && workingState.host_name != NULL) {
-		int res;
-		if ((res = lookup_host(workingState.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
-							   config.sin_family)) != 0) {
-			snprintf(msg, DEFAULT_BUFFER_SIZE,
-					 _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
-					 workingState.server_address, res, gai_strerror(res));
-			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
-		}
-		snprintf(dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", workingState.host_name,
-				 workingState.serverPort, addrstr);
-		host = curl_slist_append(NULL, dnscache);
-		curl_easy_setopt(global_state.curl, CURLOPT_RESOLVE, host);
-		if (verbose >= 1) {
-			printf("* curl CURLOPT_RESOLVE: %s\n", dnscache);
-		}
-	}
-
-	// If server_address is an IPv6 address it must be surround by square brackets
-	struct in6_addr tmp_in_addr;
-	if (inet_pton(AF_INET6, workingState.server_address, &tmp_in_addr) == 1) {
-		char *new_server_address = malloc(strlen(workingState.server_address) + 3);
-		if (new_server_address == NULL) {
-			die(STATE_UNKNOWN, "HTTP UNKNOWN - Unable to allocate memory\n");
-		}
-		snprintf(new_server_address, strlen(workingState.server_address) + 3, "[%s]",
-				 workingState.server_address);
-		free(workingState.server_address);
-		workingState.server_address = new_server_address;
-	}
-
-	/* compose URL: use the address we want to connect to, set Host: header later */
-	char url[DEFAULT_BUFFER_SIZE];
-	snprintf(url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", workingState.use_ssl ? "https" : "http",
-			 (workingState.use_ssl & (workingState.host_name != NULL))
-				 ? workingState.host_name
-				 : workingState.server_address,
-			 workingState.serverPort, workingState.server_url);
-
-	if (verbose >= 1) {
-		printf("* curl CURLOPT_URL: %s\n", url);
-	}
-	handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_URL, url),
-								   "CURLOPT_URL");
-
-	/* extract proxy information for legacy proxy https requests */
-	if (!strcmp(workingState.http_method, "CONNECT") ||
-		strstr(workingState.server_url, "http") == workingState.server_url) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_PROXY, workingState.server_address),
-			"CURLOPT_PROXY");
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_PROXYPORT, (long)workingState.serverPort),
-			"CURLOPT_PROXYPORT");
-		if (verbose >= 2) {
-			printf("* curl CURLOPT_PROXY: %s:%d\n", workingState.server_address,
-				   workingState.serverPort);
-		}
-		workingState.http_method = "GET";
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_URL, workingState.server_url),
-			"CURLOPT_URL");
-	}
-
-	/* disable body for HEAD request */
-	if (workingState.http_method && !strcmp(workingState.http_method, "HEAD")) {
-		workingState.no_body = true;
-	}
-
-	/* set HTTP protocol version */
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_HTTP_VERSION, config.curl_http_version),
-		"CURLOPT_HTTP_VERSION");
-
-	/* set HTTP method */
-	if (workingState.http_method) {
-		if (!strcmp(workingState.http_method, "POST")) {
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_POST, 1),
-										   "CURLOPT_POST");
-		} else if (!strcmp(workingState.http_method, "PUT")) {
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_UPLOAD, 1),
-										   "CURLOPT_UPLOAD");
-		} else {
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl,
-															CURLOPT_CUSTOMREQUEST,
-															workingState.http_method),
-										   "CURLOPT_CUSTOMREQUEST");
-		}
-	}
-
-	char *force_host_header = NULL;
-	/* check if Host header is explicitly set in options */
-	if (config.http_opt_headers_count) {
-		for (size_t i = 0; i < config.http_opt_headers_count; i++) {
-			if (strncmp(config.http_opt_headers[i], "Host:", 5) == 0) {
-				force_host_header = config.http_opt_headers[i];
-			}
-		}
-	}
-
-	/* set hostname (virtual hosts), not needed if CURLOPT_CONNECT_TO is used, but left in
-	 * anyway */
-	char http_header[DEFAULT_BUFFER_SIZE];
-	if (workingState.host_name != NULL && force_host_header == NULL) {
-		if ((workingState.virtualPort != HTTP_PORT && !workingState.use_ssl) ||
-			(workingState.virtualPort != HTTPS_PORT && workingState.use_ssl)) {
-			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s:%d", workingState.host_name,
-					 workingState.virtualPort);
-		} else {
-			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Host: %s", workingState.host_name);
-		}
-		header_list = curl_slist_append(header_list, http_header);
-	}
-
-	/* always close connection, be nice to servers */
-	snprintf(http_header, DEFAULT_BUFFER_SIZE, "Connection: close");
-	header_list = curl_slist_append(header_list, http_header);
-
-	/* attach additional headers supplied by the user */
-	/* optionally send any other header tag */
-	if (config.http_opt_headers_count) {
-		for (size_t i = 0; i < config.http_opt_headers_count; i++) {
-			header_list = curl_slist_append(header_list, config.http_opt_headers[i]);
-		}
-	}
-
-	/* set HTTP headers */
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_HTTPHEADER, header_list), "CURLOPT_HTTPHEADER");
-
-#ifdef LIBCURL_FEATURE_SSL
-	/* set SSL version, warn about insecure or unsupported versions */
-	if (workingState.use_ssl) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSLVERSION, config.ssl_version),
-			"CURLOPT_SSLVERSION");
-	}
-
-	/* client certificate and key to present to server (SSL) */
-	if (config.client_cert) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSLCERT, config.client_cert),
-			"CURLOPT_SSLCERT");
-	}
-
-	if (config.client_privkey) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSLKEY, config.client_privkey),
-			"CURLOPT_SSLKEY");
-	}
-
-	if (config.ca_cert) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_CAINFO, config.ca_cert), "CURLOPT_CAINFO");
-	}
-
-	if (config.ca_cert || config.verify_peer_and_host) {
-		/* per default if we have a CA verify both the peer and the
-		 * hostname in the certificate, can be switched off later */
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSL_VERIFYPEER, 1),
-			"CURLOPT_SSL_VERIFYPEER");
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSL_VERIFYHOST, 2),
-			"CURLOPT_SSL_VERIFYHOST");
-	} else {
-		/* backward-compatible behaviour, be tolerant in checks
-		 * TODO: depending on more options have aspects we want
-		 * to be less tolerant about ssl verfications
-		 */
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSL_VERIFYPEER, 0),
-			"CURLOPT_SSL_VERIFYPEER");
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSL_VERIFYHOST, 0),
-			"CURLOPT_SSL_VERIFYHOST");
-	}
-
-	/* detect SSL library used by libcurl */
-	curlhelp_ssl_library ssl_library = curlhelp_get_ssl_library();
-
-	/* try hard to get a stack of certificates to verify against */
-	if (config.check_cert) {
-#	if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1)
-		/* inform curl to report back certificates */
-		switch (ssl_library) {
-		case CURLHELP_SSL_LIBRARY_OPENSSL:
-		case CURLHELP_SSL_LIBRARY_LIBRESSL:
-			/* set callback to extract certificate with OpenSSL context function (works with
-			 * OpenSSL-style libraries only!) */
-#		ifdef USE_OPENSSL
-			/* libcurl and monitoring plugins built with OpenSSL, good */
-			add_sslctx_verify_fun = true;
-			is_openssl_callback = true;
-#		endif /* USE_OPENSSL */
-			/* libcurl is built with OpenSSL, monitoring plugins, so falling
-			 * back to manually extracting certificate information */
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
-			break;
-
-		case CURLHELP_SSL_LIBRARY_NSS:
-#		if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-			/* NSS: support for CERTINFO is implemented since 7.34.0 */
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
-#		else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-			die(STATE_CRITICAL,
-				"HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library "
-				"'%s' is too old)\n",
-				curlhelp_get_ssl_library_string(ssl_library));
-#		endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-			break;
-
-		case CURLHELP_SSL_LIBRARY_GNUTLS:
-#		if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0)
-			/* GnuTLS: support for CERTINFO is implemented since 7.42.0 */
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_CERTINFO, 1L), "CURLOPT_CERTINFO");
-#		else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
-			die(STATE_CRITICAL,
-				"HTTP CRITICAL - Cannot retrieve certificates (libcurl linked with SSL library "
-				"'%s' is too old)\n",
-				curlhelp_get_ssl_library_string(ssl_library));
-#		endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 42, 0) */
-			break;
-
-		case CURLHELP_SSL_LIBRARY_UNKNOWN:
-		default:
-			die(STATE_CRITICAL,
-				"HTTP CRITICAL - Cannot retrieve certificates (unknown SSL library '%s', must "
-				"implement first)\n",
-				curlhelp_get_ssl_library_string(ssl_library));
-			break;
-		}
-#	else  /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
-		/* old libcurl, our only hope is OpenSSL, otherwise we are out of luck */
-		if (ssl_library == CURLHELP_SSL_LIBRARY_OPENSSL ||
-			ssl_library == CURLHELP_SSL_LIBRARY_LIBRESSL) {
-			add_sslctx_verify_fun = true;
-		} else {
-			die(STATE_CRITICAL, "HTTP CRITICAL - Cannot retrieve certificates (no "
-								"CURLOPT_SSL_CTX_FUNCTION, no OpenSSL library or libcurl "
-								"too old and has no CURLOPT_CERTINFO)\n");
-		}
-#	endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 1) */
-	}
-
-#	if LIBCURL_VERSION_NUM >=                                                                     \
-		MAKE_LIBCURL_VERSION(7, 10, 6) /* required for CURLOPT_SSL_CTX_FUNCTION */
-	// ssl ctx function is not available with all ssl backends
-	if (curl_easy_setopt(global_state.curl, CURLOPT_SSL_CTX_FUNCTION, NULL) !=
-		CURLE_UNKNOWN_OPTION) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_SSL_CTX_FUNCTION, sslctxfun),
-			"CURLOPT_SSL_CTX_FUNCTION");
-	}
-#	endif
-#endif /* LIBCURL_FEATURE_SSL */
-
-	/* set default or user-given user agent identification */
-	handle_curl_option_return_code(
-		curl_easy_setopt(global_state.curl, CURLOPT_USERAGENT, config.user_agent),
-		"CURLOPT_USERAGENT");
-
-	/* proxy-authentication */
-	if (strcmp(config.proxy_auth, "")) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_PROXYUSERPWD, config.proxy_auth),
-			"CURLOPT_PROXYUSERPWD");
-	}
-
-	/* authentication */
-	if (strcmp(config.user_auth, "")) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_USERPWD, config.user_auth),
-			"CURLOPT_USERPWD");
-	}
-
-	/* TODO: parameter auth method, bitfield of following methods:
-	 * CURLAUTH_BASIC (default)
-	 * CURLAUTH_DIGEST
-	 * CURLAUTH_DIGEST_IE
-	 * CURLAUTH_NEGOTIATE
-	 * CURLAUTH_NTLM
-	 * CURLAUTH_NTLM_WB
-	 *
-	 * convenience tokens for typical sets of methods:
-	 * CURLAUTH_ANYSAFE: most secure, without BASIC
-	 * or CURLAUTH_ANY: most secure, even BASIC if necessary
-	 *
-	 * handle_curl_option_return_code (curl_easy_setopt( curl, CURLOPT_HTTPAUTH,
-	 * (long)CURLAUTH_DIGEST ), "CURLOPT_HTTPAUTH");
-	 */
-
-	/* handle redirections */
-	if (config.onredirect == STATE_DEPENDENT) {
-		if (config.followmethod == FOLLOW_LIBCURL) {
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_FOLLOWLOCATION, 1),
-				"CURLOPT_FOLLOWLOCATION");
-
-			/* default -1 is infinite, not good, could lead to zombie plugins!
-			   Setting it to one bigger than maximal limit to handle errors nicely below
-			 */
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_MAXREDIRS, config.max_depth + 1),
-				"CURLOPT_MAXREDIRS");
-
-			/* for now allow only http and https (we are a http(s) check plugin in the end) */
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 85, 0)
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https"),
-				"CURLOPT_REDIR_PROTOCOLS_STR");
-#elif LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 19, 4)
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl,
-															CURLOPT_REDIR_PROTOCOLS,
-															CURLPROTO_HTTP | CURLPROTO_HTTPS),
-										   "CURLOPT_REDIRECT_PROTOCOLS");
-#endif
-
-			/* TODO: handle the following aspects of redirection, make them
-			 * command line options too later:
-			  CURLOPT_POSTREDIR: method switch
-			  CURLINFO_REDIRECT_URL: custom redirect option
-			  CURLOPT_REDIRECT_PROTOCOLS: allow people to step outside safe protocols
-			  CURLINFO_REDIRECT_COUNT: get the number of redirects, print it, maybe a range
-			 option here is nice like for expected page size?
-			*/
-		} else {
-			/* old style redirection is handled below */
-		}
-	}
-
-	/* no-body */
-	if (workingState.no_body) {
-		handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_NOBODY, 1),
-									   "CURLOPT_NOBODY");
-	}
-
-	/* IPv4 or IPv6 forced DNS resolution */
-	if (config.sin_family == AF_UNSPEC) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER),
-			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_WHATEVER)");
-	} else if (config.sin_family == AF_INET) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4),
-			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
-	}
-#if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
-	else if (config.sin_family == AF_INET6) {
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
-			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V6)");
-	}
-#endif
-
-	/* either send http POST data (any data, not only POST)*/
-	if (!strcmp(workingState.http_method, "POST") || !strcmp(workingState.http_method, "PUT")) {
-		/* set content of payload for POST and PUT */
-		if (config.http_content_type) {
-			snprintf(http_header, DEFAULT_BUFFER_SIZE, "Content-Type: %s",
-					 config.http_content_type);
-			header_list = curl_slist_append(header_list, http_header);
-		}
-		/* NULL indicates "HTTP Continue" in libcurl, provide an empty string
-		 * in case of no POST/PUT data */
-		if (!workingState.http_post_data) {
-			workingState.http_post_data = "";
-		}
-		if (!strcmp(workingState.http_method, "POST")) {
-			/* POST method, set payload with CURLOPT_POSTFIELDS */
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_POSTFIELDS,
-															workingState.http_post_data),
-										   "CURLOPT_POSTFIELDS");
-		} else if (!strcmp(workingState.http_method, "PUT")) {
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_READFUNCTION,
-								 (curl_read_callback)curlhelp_buffer_read_callback),
-				"CURLOPT_READFUNCTION");
-			if (curlhelp_initreadbuffer(&global_state.put_buf, workingState.http_post_data,
-										strlen(workingState.http_post_data)) < 0) {
-				die(STATE_UNKNOWN,
-					"HTTP CRITICAL - out of memory allocating read buffer for PUT\n");
-			}
-			global_state.put_buf_initialized = true;
-
-			handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_READDATA,
-															(void *)&global_state.put_buf),
-										   "CURLOPT_READDATA");
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_INFILESIZE,
-								 (curl_off_t)strlen(workingState.http_post_data)),
-				"CURLOPT_INFILESIZE");
-		}
-	}
-
-	/* cookie handling */
-	if (config.cookie_jar_file != NULL) {
-		/* enable reading cookies from a file, and if the filename is an empty string, only
-		 * enable the curl cookie engine */
-		handle_curl_option_return_code(
-			curl_easy_setopt(global_state.curl, CURLOPT_COOKIEFILE, config.cookie_jar_file),
-			"CURLOPT_COOKIEFILE");
-		/* now enable saving cookies to a file, but only if the filename is not an empty string,
-		 * since writing it would fail */
-		if (*config.cookie_jar_file) {
-			handle_curl_option_return_code(
-				curl_easy_setopt(global_state.curl, CURLOPT_COOKIEJAR, config.cookie_jar_file),
-				"CURLOPT_COOKIEJAR");
-		}
-	}
+	check_curl_global_state curl_state = conf_curl_struct.curl_state;
 
 	// ==============
 	// do the request
 	// ==============
-	CURLcode res = curl_easy_perform(global_state.curl);
+	CURLcode res = curl_easy_perform(curl_state.curl);
 
 	if (verbose >= 2 && workingState.http_post_data) {
 		printf("**** REQUEST CONTENT ****\n%s\n", workingState.http_post_data);
-	}
-
-	/* free header and server IP resolve lists, we don't need it anymore */
-	curl_slist_free_all(header_list);
-	header_list = NULL;
-
-	if (host) {
-		curl_slist_free_all(host);
-		host = NULL;
 	}
 
 	/* Curl errors, result in critical Nagios state */
@@ -969,7 +1004,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	// ==========
 
 	mp_state_enum result_ssl = STATE_OK;
-	/* certificate checks */
+/* certificate checks */
 #ifdef LIBCURL_FEATURE_SSL
 	if (workingState.use_ssl) {
 		if (config.check_cert) {
@@ -992,7 +1027,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 
 				cert_ptr_union cert_ptr = {0};
 				cert_ptr.to_info = NULL;
-				res = curl_easy_getinfo(global_state.curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
+				res = curl_easy_getinfo(curl_state.curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
 				if (!res && cert_ptr.to_info) {
 #	ifdef USE_OPENSSL
 					/* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert
@@ -1066,54 +1101,55 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	 */
 	double total_time;
 	handle_curl_option_return_code(
-		curl_easy_getinfo(global_state.curl, CURLINFO_TOTAL_TIME, &total_time),
+		curl_easy_getinfo(curl_state.curl, CURLINFO_TOTAL_TIME, &total_time),
 		"CURLINFO_TOTAL_TIME");
-	size_t page_len = get_content_length(&global_state.header_buf, &global_state.body_buf);
+	size_t page_len = get_content_length(&curl_state.header_buf, &curl_state.body_buf);
 	char perfstring[DEFAULT_BUFFER_SIZE];
 	if (config.show_extended_perfdata) {
 		double time_connect;
 		handle_curl_option_return_code(
-			curl_easy_getinfo(global_state.curl, CURLINFO_CONNECT_TIME, &time_connect),
+			curl_easy_getinfo(curl_state.curl, CURLINFO_CONNECT_TIME, &time_connect),
 			"CURLINFO_CONNECT_TIME");
 
 		double time_appconnect;
 		handle_curl_option_return_code(
-			curl_easy_getinfo(global_state.curl, CURLINFO_APPCONNECT_TIME, &time_appconnect),
+			curl_easy_getinfo(curl_state.curl, CURLINFO_APPCONNECT_TIME, &time_appconnect),
 			"CURLINFO_APPCONNECT_TIME");
 
 		double time_headers;
 		handle_curl_option_return_code(
-			curl_easy_getinfo(global_state.curl, CURLINFO_PRETRANSFER_TIME, &time_headers),
+			curl_easy_getinfo(curl_state.curl, CURLINFO_PRETRANSFER_TIME, &time_headers),
 			"CURLINFO_PRETRANSFER_TIME");
 
 		double time_firstbyte;
 		handle_curl_option_return_code(
-			curl_easy_getinfo(global_state.curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte),
+			curl_easy_getinfo(curl_state.curl, CURLINFO_STARTTRANSFER_TIME, &time_firstbyte),
 			"CURLINFO_STARTTRANSFER_TIME");
 
-		snprintf(perfstring, DEFAULT_BUFFER_SIZE, "%s %s %s %s %s %s %s",
-				 perfd_time(total_time, config.thlds, config.socket_timeout),
-				 perfd_size(page_len, config.min_page_len),
-				 perfd_time_connect(time_connect, config.socket_timeout),
-				 workingState.use_ssl
-					 ? perfd_time_ssl(time_appconnect - time_connect, config.socket_timeout)
-					 : "",
-				 perfd_time_headers(time_headers - time_appconnect, config.socket_timeout),
-				 perfd_time_firstbyte(time_firstbyte - time_headers, config.socket_timeout),
-				 perfd_time_transfer(total_time - time_firstbyte, config.socket_timeout));
+		snprintf(
+			perfstring, DEFAULT_BUFFER_SIZE, "%s %s %s %s %s %s %s",
+			perfd_time(total_time, config.thlds, config.curl_config.socket_timeout),
+			perfd_size(page_len, config.min_page_len),
+			perfd_time_connect(time_connect, config.curl_config.socket_timeout),
+			workingState.use_ssl
+				? perfd_time_ssl(time_appconnect - time_connect, config.curl_config.socket_timeout)
+				: "",
+			perfd_time_headers(time_headers - time_appconnect, config.curl_config.socket_timeout),
+			perfd_time_firstbyte(time_firstbyte - time_headers, config.curl_config.socket_timeout),
+			perfd_time_transfer(total_time - time_firstbyte, config.curl_config.socket_timeout));
 	} else {
 		snprintf(perfstring, DEFAULT_BUFFER_SIZE, "%s %s",
-				 perfd_time(total_time, config.thlds, config.socket_timeout),
+				 perfd_time(total_time, config.thlds, config.curl_config.socket_timeout),
 				 perfd_size(page_len, config.min_page_len));
 	}
 
 	/* return a CRITICAL status if we couldn't read any data */
-	if (strlen(global_state.header_buf.buf) == 0 && strlen(global_state.body_buf.buf) == 0) {
+	if (strlen(curl_state.header_buf.buf) == 0 && strlen(curl_state.body_buf.buf) == 0) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - No header received from host\n"));
 	}
 
 	/* get status line of answer, check sanity of HTTP code */
-	if (curlhelp_parse_statusline(global_state.header_buf.buf, &global_state.status_line) < 0) {
+	if (curlhelp_parse_statusline(curl_state.header_buf.buf, &curl_state.status_line) < 0) {
 		snprintf(msg, DEFAULT_BUFFER_SIZE,
 				 "Unparsable status line in %.3g seconds response time|%s\n", total_time,
 				 perfstring);
@@ -1121,12 +1157,12 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		 * line */
 		die(STATE_CRITICAL, "HTTP CRITICAL HTTP/x.x unknown - %s", msg);
 	}
-	global_state.status_line_initialized = true;
+	curl_state.status_line_initialized = true;
 
 	/* get result code from cURL */
 	long httpReturnCode;
 	handle_curl_option_return_code(
-		curl_easy_getinfo(global_state.curl, CURLINFO_RESPONSE_CODE, &httpReturnCode),
+		curl_easy_getinfo(curl_state.curl, CURLINFO_RESPONSE_CODE, &httpReturnCode),
 		"CURLINFO_RESPONSE_CODE");
 	if (verbose >= 2) {
 		printf("* curl CURLINFO_RESPONSE_CODE is %ld\n", httpReturnCode);
@@ -1134,28 +1170,28 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 
 	/* print status line, header, body if verbose */
 	if (verbose >= 2) {
-		printf("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", global_state.header_buf.buf,
-			   (workingState.no_body ? "  [[ skipped ]]" : global_state.body_buf.buf));
+		printf("**** HEADER ****\n%s\n**** CONTENT ****\n%s\n", curl_state.header_buf.buf,
+			   (workingState.no_body ? "  [[ skipped ]]" : curl_state.body_buf.buf));
 	}
 
 	/* make sure the status line matches the response we are looking for */
-	if (!expected_statuscode(global_state.status_line.first_line, config.server_expect.string)) {
+	if (!expected_statuscode(curl_state.status_line.first_line, config.server_expect.string)) {
 		if (workingState.serverPort == HTTP_PORT) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, _("Invalid HTTP response received from host: %s\n"),
-					 global_state.status_line.first_line);
+					 curl_state.status_line.first_line);
 		} else {
 			snprintf(msg, DEFAULT_BUFFER_SIZE,
 					 _("Invalid HTTP response received from host on port %d: %s\n"),
-					 workingState.serverPort, global_state.status_line.first_line);
+					 workingState.serverPort, curl_state.status_line.first_line);
 		}
 		die(STATE_CRITICAL, "HTTP CRITICAL - %s%s%s", msg, config.show_body ? "\n" : "",
-			config.show_body ? global_state.body_buf.buf : "");
+			config.show_body ? curl_state.body_buf.buf : "");
 	}
 
 	mp_state_enum result = STATE_OK;
 	if (config.server_expect.is_present) {
 		snprintf(msg, DEFAULT_BUFFER_SIZE, _("Status line output matched \"%s\" - "),
-				 config.server_expect);
+				 config.server_expect.string);
 		if (verbose) {
 			printf("%s\n", msg);
 		}
@@ -1164,7 +1200,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		/* illegal return codes result in a critical state */
 		if (httpReturnCode >= 600 || httpReturnCode < 100) {
 			die(STATE_CRITICAL, _("HTTP CRITICAL: Invalid Status (%d, %.40s)\n"),
-				global_state.status_line.http_code, global_state.status_line.msg);
+				curl_state.status_line.http_code, curl_state.status_line.msg);
 			/* server errors result in a critical state */
 		} else if (httpReturnCode >= 500) {
 			result = STATE_CRITICAL;
@@ -1173,25 +1209,25 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 			result = STATE_WARNING;
 			/* check redirected page if specified */
 		} else if (httpReturnCode >= 300) {
-			if (config.onredirect == STATE_DEPENDENT) {
+			if (config.on_redirect_dependent) {
 				if (config.followmethod == FOLLOW_LIBCURL) {
-					httpReturnCode = global_state.status_line.http_code;
+					httpReturnCode = curl_state.status_line.http_code;
 				} else {
 					/* old check_http style redirection, if we come
 					 * back here, we are in the same status as with
 					 * the libcurl method
 					 */
-					redir_wrapper redir_result = redir(&global_state.header_buf, config,
-													   redir_depth, workingState, global_state);
-					check_http(config, redir_result.working_state, redir_result.redir_depth,
-							   header_list, redir_result.curl_state);
+					redir_wrapper redir_result =
+						redir(&curl_state.header_buf, config, redir_depth, workingState);
+					cleanup(curl_state);
+					check_http(config, redir_result.working_state, redir_result.redir_depth);
 				}
 			} else {
 				/* this is a specific code in the command line to
 				 * be returned when a redirection is encountered
 				 */
 			}
-			result = max_state_alt(config.onredirect, result);
+			result = max_state_alt(config.on_redirect_result_state, result);
 			/* all other codes are considered ok */
 		} else {
 			result = STATE_OK;
@@ -1201,7 +1237,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	/* libcurl redirection internally, handle error states here */
 	if (config.followmethod == FOLLOW_LIBCURL) {
 		handle_curl_option_return_code(
-			curl_easy_getinfo(global_state.curl, CURLINFO_REDIRECT_COUNT, &redir_depth),
+			curl_easy_getinfo(curl_state.curl, CURLINFO_REDIRECT_COUNT, &redir_depth),
 			"CURLINFO_REDIRECT_COUNT");
 
 		if (verbose >= 2) {
@@ -1216,22 +1252,21 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	}
 
 	/* check status codes, set exit status accordingly */
-	if (global_state.status_line.http_code != httpReturnCode) {
+	if (curl_state.status_line.http_code != httpReturnCode) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
-			string_statuscode(global_state.status_line.http_major,
-							  global_state.status_line.http_minor),
-			global_state.status_line.http_code, global_state.status_line.msg, httpReturnCode);
+			string_statuscode(curl_state.status_line.http_major, curl_state.status_line.http_minor),
+			curl_state.status_line.http_code, curl_state.status_line.msg, httpReturnCode);
 	}
 
 	if (config.maximum_age >= 0) {
 		result = max_state_alt(
-			check_document_dates(&global_state.header_buf, &msg, config.maximum_age), result);
+			check_document_dates(&curl_state.header_buf, &msg, config.maximum_age), result);
 	}
 
 	/* Page and Header content checks go here */
 
 	if (strlen(config.header_expect)) {
-		if (!strstr(global_state.header_buf.buf, config.header_expect)) {
+		if (!strstr(curl_state.header_buf.buf, config.header_expect)) {
 
 			char output_header_search[30] = "";
 			strncpy(&output_header_search[0], config.header_expect, sizeof(output_header_search));
@@ -1254,7 +1289,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	}
 
 	if (strlen(config.string_expect)) {
-		if (!strstr(global_state.body_buf.buf, config.string_expect)) {
+		if (!strstr(curl_state.body_buf.buf, config.string_expect)) {
 
 			char output_string_search[30] = "";
 			strncpy(&output_string_search[0], config.string_expect, sizeof(output_string_search));
@@ -1278,7 +1313,7 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 
 	if (strlen(config.regexp)) {
 		regmatch_t pmatch[REGS];
-		int errcode = regexec(&config.compiled_regex, global_state.body_buf.buf, REGS, pmatch, 0);
+		int errcode = regexec(&config.compiled_regex, curl_state.body_buf.buf, REGS, pmatch, 0);
 		if ((errcode == 0 && !config.invert_regex) ||
 			(errcode == REG_NOMATCH && config.invert_regex)) {
 			/* OK - No-op to avoid changing the logic around it */
@@ -1344,11 +1379,10 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 	die((int)max_state_alt(result, result_ssl),
 		"HTTP %s: %s %d %s%s%s - %zu bytes in %.3f second response time %s|%s\n%s%s",
 		state_text(result),
-		string_statuscode(global_state.status_line.http_major, global_state.status_line.http_minor),
-		global_state.status_line.http_code, global_state.status_line.msg,
-		strlen(msg) > 0 ? " - " : "", msg, page_len, total_time,
-		(config.display_html ? "</A>" : ""), perfstring,
-		(config.show_body ? global_state.body_buf.buf : ""), (config.show_body ? "\n" : ""));
+		string_statuscode(curl_state.status_line.http_major, curl_state.status_line.http_minor),
+		curl_state.status_line.http_code, curl_state.status_line.msg, strlen(msg) > 0 ? " - " : "",
+		msg, page_len, total_time, (config.display_html ? "</A>" : ""), perfstring,
+		(config.show_body ? curl_state.body_buf.buf : ""), (config.show_body ? "\n" : ""));
 
 	return max_state_alt(result, result_ssl);
 }
@@ -1375,8 +1409,7 @@ char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
 }
 
 redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config config,
-					int redir_depth, check_curl_working_state working_state,
-					check_curl_global_state global_state) {
+					int redir_depth, check_curl_working_state working_state) {
 	curlhelp_statusline status_line;
 	struct phr_header headers[255];
 	size_t msglen;
@@ -1533,8 +1566,6 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	 * attached to the URL in Location
 	 */
 
-	cleanup(global_state);
-
 	redir_wrapper result = {
 		.redir_depth = redir_depth,
 		.working_state = working_state,
@@ -1673,7 +1704,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			if (!is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
-				result.config.socket_timeout = (int)strtol(optarg, NULL, 10);
+				result.config.curl_config.socket_timeout = (int)strtol(optarg, NULL, 10);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1724,12 +1755,12 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'a': /* authorization info */
-			strncpy(result.config.user_auth, optarg, MAX_INPUT_BUFFER - 1);
-			result.config.user_auth[MAX_INPUT_BUFFER - 1] = 0;
+			strncpy(result.config.curl_config.user_auth, optarg, MAX_INPUT_BUFFER - 1);
+			result.config.curl_config.user_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'b': /* proxy-authorization info */
-			strncpy(result.config.proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
-			result.config.proxy_auth[MAX_INPUT_BUFFER - 1] = 0;
+			strncpy(result.config.curl_config.proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
+			result.config.curl_config.proxy_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'P': /* HTTP POST data in URL encoded format; ignored if settings already */
 			if (!result.config.initial_config.http_post_data) {
@@ -1746,19 +1777,20 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.initial_config.http_method = strdup(optarg);
 			break;
 		case 'A': /* useragent */
-			strncpy(result.config.user_agent, optarg, DEFAULT_BUFFER_SIZE);
-			result.config.user_agent[DEFAULT_BUFFER_SIZE - 1] = '\0';
+			strncpy(result.config.curl_config.user_agent, optarg, DEFAULT_BUFFER_SIZE);
+			result.config.curl_config.user_agent[DEFAULT_BUFFER_SIZE - 1] = '\0';
 			break;
 		case 'k': /* Additional headers */
-			if (result.config.http_opt_headers_count == 0) {
-				result.config.http_opt_headers =
-					malloc(sizeof(char *) * (++result.config.http_opt_headers_count));
+			if (result.config.curl_config.http_opt_headers_count == 0) {
+				result.config.curl_config.http_opt_headers =
+					malloc(sizeof(char *) * (++result.config.curl_config.http_opt_headers_count));
 			} else {
-				result.config.http_opt_headers =
-					realloc(result.config.http_opt_headers,
-							sizeof(char *) * (++result.config.http_opt_headers_count));
+				result.config.curl_config.http_opt_headers =
+					realloc(result.config.curl_config.http_opt_headers,
+							sizeof(char *) * (++result.config.curl_config.http_opt_headers_count));
 			}
-			result.config.http_opt_headers[result.config.http_opt_headers_count - 1] = optarg;
+			result.config.curl_config
+				.http_opt_headers[result.config.curl_config.http_opt_headers_count - 1] = optarg;
 			break;
 		case 'L': /* show html link */
 			result.config.display_html = true;
@@ -1805,7 +1837,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			usage4(_("Invalid option - SSL is not available"));
 #endif
 			test_file(optarg);
-			result.config.client_cert = optarg;
+			result.config.curl_config.client_cert = optarg;
 			enable_tls = true;
 			break;
 		case 'K': /* use client private key */
@@ -1813,7 +1845,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			usage4(_("Invalid option - SSL is not available"));
 #endif
 			test_file(optarg);
-			result.config.client_privkey = optarg;
+			result.config.curl_config.client_privkey = optarg;
 			enable_tls = true;
 			break;
 		case CA_CERT_OPTION: /* use CA chain file */
@@ -1821,14 +1853,14 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			usage4(_("Invalid option - SSL is not available"));
 #endif
 			test_file(optarg);
-			result.config.ca_cert = optarg;
+			result.config.curl_config.ca_cert = optarg;
 			enable_tls = true;
 			break;
 		case 'D': /* verify peer certificate & host */
 #ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
 #endif
-			result.config.verify_peer_and_host = true;
+			result.config.curl_config.verify_peer_and_host = true;
 			enable_tls = true;
 			break;
 		case 'S': /* use SSL */
@@ -1852,36 +1884,44 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* onredirect */
 			if (!strcmp(optarg, "ok")) {
-				result.config.onredirect = STATE_OK;
+				result.config.on_redirect_result_state = STATE_OK;
+				result.config.on_redirect_dependent = false;
 			} else if (!strcmp(optarg, "warning")) {
-				result.config.onredirect = STATE_WARNING;
+				result.config.on_redirect_result_state = STATE_WARNING;
+				result.config.on_redirect_dependent = false;
 			} else if (!strcmp(optarg, "critical")) {
-				result.config.onredirect = STATE_CRITICAL;
+				result.config.on_redirect_result_state = STATE_CRITICAL;
+				result.config.on_redirect_dependent = false;
 			} else if (!strcmp(optarg, "unknown")) {
-				result.config.onredirect = STATE_UNKNOWN;
+				result.config.on_redirect_result_state = STATE_UNKNOWN;
+				result.config.on_redirect_dependent = false;
 			} else if (!strcmp(optarg, "follow")) {
-				result.config.onredirect = STATE_DEPENDENT;
+				result.config.on_redirect_dependent = true;
 			} else if (!strcmp(optarg, "stickyport")) {
-				result.config.onredirect = STATE_DEPENDENT,
+				result.config.on_redirect_dependent = true;
 				result.config.followmethod = FOLLOW_HTTP_CURL,
 				result.config.followsticky = STICKY_HOST | STICKY_PORT;
 			} else if (!strcmp(optarg, "sticky")) {
-				result.config.onredirect = STATE_DEPENDENT,
+				result.config.on_redirect_dependent = true;
 				result.config.followmethod = FOLLOW_HTTP_CURL,
 				result.config.followsticky = STICKY_HOST;
 			} else if (!strcmp(optarg, "follow")) {
-				result.config.onredirect = STATE_DEPENDENT,
+				result.config.on_redirect_dependent = true;
 				result.config.followmethod = FOLLOW_HTTP_CURL,
 				result.config.followsticky = STICKY_NONE;
 			} else if (!strcmp(optarg, "curl")) {
-				result.config.onredirect = STATE_DEPENDENT,
+				result.config.on_redirect_dependent = true;
 				result.config.followmethod = FOLLOW_LIBCURL;
 			} else {
 				usage2(_("Invalid onredirect option"), optarg);
 			}
 			if (verbose >= 2) {
-				printf(_("* Following redirects set to %s\n"),
-					   state_text(result.config.onredirect));
+				if (result.config.on_redirect_dependent) {
+					printf(_("* Following redirects\n"));
+				} else {
+					printf(_("* Following redirects set to state %s\n"),
+						   state_text(result.config.on_redirect_result_state));
+				}
 			}
 			break;
 		case 'd': /* string or substring */
@@ -1898,7 +1938,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.server_expect.is_present = true;
 			break;
 		case 'T': /* Content-type */
-			result.config.http_content_type = strdup(optarg);
+			result.config.curl_config.http_content_type = strdup(optarg);
 			break;
 		case 'l': /* linespan */
 			cflags &= ~REG_NEWLINE;
@@ -1933,11 +1973,11 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case '4':
-			result.config.sin_family = AF_INET;
+			result.config.curl_config.sin_family = AF_INET;
 			break;
 		case '6':
 #if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
-			result.config.sin_family = AF_INET6;
+			result.config.curl_config.sin_family = AF_INET6;
 #else
 			usage4(_("IPv6 support not available"));
 #endif
@@ -1997,30 +2037,33 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.show_body = true;
 			break;
 		case HTTP_VERSION_OPTION:
-			result.config.curl_http_version = CURL_HTTP_VERSION_NONE;
+			result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_NONE;
 			if (strcmp(optarg, "1.0") == 0) {
-				result.config.curl_http_version = CURL_HTTP_VERSION_1_0;
+				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_1_0;
 			} else if (strcmp(optarg, "1.1") == 0) {
-				result.config.curl_http_version = CURL_HTTP_VERSION_1_1;
+				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_1_1;
 			} else if ((strcmp(optarg, "2.0") == 0) || (strcmp(optarg, "2") == 0)) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0)
-				result.config.curl_http_version = CURL_HTTP_VERSION_2_0;
+				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_2_0;
 #else
 				result.config.curl_http_version = CURL_HTTP_VERSION_NONE;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 33, 0) */
+			} else if ((strcmp(optarg, "3") == 0)) {
+				// TODO find out which libcurl version starts supporting HTTP 3
+				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_3;
 			} else {
 				fprintf(stderr, "unknown http-version parameter: %s\n", optarg);
 				exit(STATE_WARNING);
 			}
 			break;
 		case AUTOMATIC_DECOMPRESSION:
-			result.config.automatic_decompression = true;
+			result.config.curl_config.automatic_decompression = true;
 			break;
 		case COOKIE_JAR:
-			result.config.cookie_jar_file = optarg;
+			result.config.curl_config.cookie_jar_file = optarg;
 			break;
 		case HAPROXY_PROTOCOL:
-			result.config.haproxy_protocol = true;
+			result.config.curl_config.haproxy_protocol = true;
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
@@ -2035,7 +2078,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		/* ssl_version initialized to CURL_SSLVERSION_DEFAULT as a default.
 		 * Only set if it's non-zero.  This helps when we include multiple
 		 * parameters, like -S and -C combinations */
-		result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
+		result.config.curl_config.ssl_version = CURL_SSLVERSION_DEFAULT;
 		if (tls_option_optarg != NULL) {
 			char *plus_ptr = strchr(optarg, '+');
 			if (plus_ptr) {
@@ -2044,30 +2087,30 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			}
 
 			if (optarg[0] == '2') {
-				result.config.ssl_version = CURL_SSLVERSION_SSLv2;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_SSLv2;
 			} else if (optarg[0] == '3') {
-				result.config.ssl_version = CURL_SSLVERSION_SSLv3;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_SSLv3;
 			} else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-				result.config.ssl_version = CURL_SSLVERSION_TLSv1_0;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_0;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
 			} else if (!strcmp(optarg, "1.1")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-				result.config.ssl_version = CURL_SSLVERSION_TLSv1_1;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_1;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
 			} else if (!strcmp(optarg, "1.2")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
-				result.config.ssl_version = CURL_SSLVERSION_TLSv1_2;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_2;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
 			} else if (!strcmp(optarg, "1.3")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
-				result.config.ssl_version = CURL_SSLVERSION_TLSv1_3;
+				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_3;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
@@ -2078,35 +2121,35 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		}
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
 		if (got_plus) {
-			switch (result.config.ssl_version) {
+			switch (result.config.curl_config.ssl_version) {
 			case CURL_SSLVERSION_TLSv1_3:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
 				break;
 			case CURL_SSLVERSION_TLSv1_2:
 			case CURL_SSLVERSION_TLSv1_1:
 			case CURL_SSLVERSION_TLSv1_0:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_DEFAULT;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_DEFAULT;
 				break;
 			}
 		} else {
-			switch (result.config.ssl_version) {
+			switch (result.config.curl_config.ssl_version) {
 			case CURL_SSLVERSION_TLSv1_3:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_3;
 				break;
 			case CURL_SSLVERSION_TLSv1_2:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_2;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_2;
 				break;
 			case CURL_SSLVERSION_TLSv1_1:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_1;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_1;
 				break;
 			case CURL_SSLVERSION_TLSv1_0:
-				result.config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_0;
+				result.config.curl_config.ssl_version |= CURL_SSLVERSION_MAX_TLSv1_0;
 				break;
 			}
 		}
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
 		if (verbose >= 2) {
-			printf(_("* Set SSL/TLS version to %d\n"), result.config.ssl_version);
+			printf(_("* Set SSL/TLS version to %d\n"), result.config.curl_config.ssl_version);
 		}
 		if (!specify_port) {
 			result.config.initial_config.serverPort = HTTPS_PORT;
@@ -2135,18 +2178,18 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 	set_thresholds(&result.config.thlds, warning_thresholds, critical_thresholds);
 
 	if (critical_thresholds &&
-		result.config.thlds->critical->end > (double)result.config.socket_timeout) {
-		result.config.socket_timeout = (int)result.config.thlds->critical->end + 1;
+		result.config.thlds->critical->end > (double)result.config.curl_config.socket_timeout) {
+		result.config.curl_config.socket_timeout = (int)result.config.thlds->critical->end + 1;
 	}
 	if (verbose >= 2) {
-		printf("* Socket timeout set to %ld seconds\n", result.config.socket_timeout);
+		printf("* Socket timeout set to %ld seconds\n", result.config.curl_config.socket_timeout);
 	}
 
 	if (result.config.initial_config.http_method == NULL) {
 		result.config.initial_config.http_method = strdup("GET");
 	}
 
-	if (result.config.client_cert && !result.config.client_privkey) {
+	if (result.config.curl_config.client_cert && !result.config.curl_config.client_privkey) {
 		usage4(_("If you use a client certificate you must also specify a private key file"));
 	}
 

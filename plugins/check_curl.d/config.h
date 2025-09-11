@@ -65,27 +65,32 @@ check_curl_working_state check_curl_working_state_init() {
 }
 
 typedef struct {
-	check_curl_working_state initial_config;
-	sa_family_t sin_family;
-
 	bool automatic_decompression;
 	bool haproxy_protocol;
+	long socket_timeout;
+	sa_family_t sin_family;
+	int curl_http_version;
+	char **http_opt_headers;
+	size_t http_opt_headers_count;
+	int ssl_version;
 	char *client_cert;
 	char *client_privkey;
 	char *ca_cert;
-	int ssl_version;
+	bool verify_peer_and_host;
 	char user_agent[DEFAULT_BUFFER_SIZE];
-	char **http_opt_headers;
-	size_t http_opt_headers_count;
-	int max_depth;
-	char *http_content_type;
-	long socket_timeout;
-	char user_auth[MAX_INPUT_BUFFER];
 	char proxy_auth[MAX_INPUT_BUFFER];
+	char user_auth[MAX_INPUT_BUFFER];
+	char *http_content_type;
+	char *cookie_jar_file;
+} check_curl_static_curl_config;
+
+typedef struct {
+	check_curl_working_state initial_config;
+
+	check_curl_static_curl_config curl_config;
+	int max_depth;
 	int followmethod;
 	int followsticky;
-	int curl_http_version;
-	char *cookie_jar_file;
 
 	int maximum_age;
 
@@ -97,7 +102,6 @@ typedef struct {
 
 	mp_state_enum state_regex;
 	bool invert_regex;
-	bool verify_peer_and_host;
 	bool check_cert;
 	bool continue_after_check_cert;
 	int days_till_exp_warn;
@@ -111,7 +115,8 @@ typedef struct {
 	} server_expect;
 	char string_expect[MAX_INPUT_BUFFER];
 	char header_expect[MAX_INPUT_BUFFER];
-	mp_state_enum onredirect;
+	mp_state_enum on_redirect_result_state;
+	bool on_redirect_dependent;
 
 	bool show_extended_perfdata;
 	bool show_body;
@@ -122,33 +127,35 @@ check_curl_config check_curl_config_init() {
 	check_curl_config tmp = {
 		.initial_config = check_curl_working_state_init(),
 
-		.sin_family = AF_UNSPEC,
-
-		.automatic_decompression = false,
-		.haproxy_protocol = false,
-		.client_cert = NULL,
-		.client_privkey = NULL,
-		.ca_cert = NULL,
-		.ssl_version = CURL_SSLVERSION_DEFAULT,
-		.user_agent = {'\0'},
-		.http_opt_headers = NULL,
-		.http_opt_headers_count = 0,
+		.curl_config =
+			{
+				.automatic_decompression = false,
+				.socket_timeout = DEFAULT_SOCKET_TIMEOUT,
+				.haproxy_protocol = false,
+				.sin_family = AF_UNSPEC,
+				.curl_http_version = CURL_HTTP_VERSION_NONE,
+				.http_opt_headers = NULL,
+				.http_opt_headers_count = 0,
+				.ssl_version = CURL_SSLVERSION_DEFAULT,
+				.client_cert = NULL,
+				.client_privkey = NULL,
+				.ca_cert = NULL,
+				.verify_peer_and_host = false,
+				.user_agent = {'\0'},
+				.proxy_auth = "",
+				.user_auth = "",
+				.http_content_type = NULL,
+				.cookie_jar_file = NULL,
+			},
 		.max_depth = DEFAULT_MAX_REDIRS,
-		.http_content_type = NULL,
-		.socket_timeout = DEFAULT_SOCKET_TIMEOUT,
-		.user_auth = "",
-		.proxy_auth = "",
 		.followmethod = FOLLOW_HTTP_CURL,
 		.followsticky = STICKY_NONE,
-		.curl_http_version = CURL_HTTP_VERSION_NONE,
-		.cookie_jar_file = NULL,
 
 		.maximum_age = -1,
 		.regexp = {},
 		.compiled_regex = {},
 		.state_regex = STATE_CRITICAL,
 		.invert_regex = false,
-		.verify_peer_and_host = false,
 		.check_cert = false,
 		.continue_after_check_cert = false,
 		.days_till_exp_warn = 0,
@@ -163,11 +170,16 @@ check_curl_config check_curl_config_init() {
 			},
 		.string_expect = "",
 		.header_expect = "",
-		.onredirect = STATE_OK,
+		.on_redirect_result_state = STATE_OK,
+		.on_redirect_dependent = true,
 
 		.show_extended_perfdata = false,
 		.show_body = false,
 		.display_html = false,
 	};
+
+	snprintf(tmp.curl_config.user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
+			 "check_curl", NP_VERSION, VERSION, curl_version());
+
 	return tmp;
 }
