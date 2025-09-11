@@ -516,7 +516,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			result.curl_state.put_buf_initialized = true;
 			handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl,
 															CURLOPT_READDATA,
-															(void *)&result.curl_state.put_buf),
+															(void *)result.curl_state.put_buf),
 										   "CURLOPT_READDATA");
 			handle_curl_option_return_code(
 				curl_easy_setopt(result.curl_state.curl, CURLOPT_INFILESIZE,

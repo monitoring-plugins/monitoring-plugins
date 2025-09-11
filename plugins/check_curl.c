@@ -1275,7 +1275,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 66, 0)
 				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_3;
 #else
-				result.config.curl_http_version = CURL_HTTP_VERSION_NONE;
+				result.config.curl_config.curl_http_version = CURL_HTTP_VERSION_NONE;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 66, 0) */
 			} else {
 				fprintf(stderr, "unknown http-version parameter: %s\n", optarg);
