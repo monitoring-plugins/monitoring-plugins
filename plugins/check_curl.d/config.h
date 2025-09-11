@@ -49,20 +49,7 @@ typedef struct {
 	bool no_body;
 } check_curl_working_state;
 
-check_curl_working_state check_curl_working_state_init() {
-	check_curl_working_state result = {
-		.server_address = NULL,
-		.server_url = DEFAULT_SERVER_URL,
-		.host_name = NULL,
-		.http_method = NULL,
-		.http_post_data = NULL,
-		.virtualPort = 0,
-		.serverPort = HTTP_PORT,
-		.use_ssl = false,
-		.no_body = false,
-	};
-	return result;
-}
+check_curl_working_state check_curl_working_state_init();
 
 typedef struct {
 	bool automatic_decompression;
@@ -123,63 +110,4 @@ typedef struct {
 	bool display_html;
 } check_curl_config;
 
-check_curl_config check_curl_config_init() {
-	check_curl_config tmp = {
-		.initial_config = check_curl_working_state_init(),
-
-		.curl_config =
-			{
-				.automatic_decompression = false,
-				.socket_timeout = DEFAULT_SOCKET_TIMEOUT,
-				.haproxy_protocol = false,
-				.sin_family = AF_UNSPEC,
-				.curl_http_version = CURL_HTTP_VERSION_NONE,
-				.http_opt_headers = NULL,
-				.http_opt_headers_count = 0,
-				.ssl_version = CURL_SSLVERSION_DEFAULT,
-				.client_cert = NULL,
-				.client_privkey = NULL,
-				.ca_cert = NULL,
-				.verify_peer_and_host = false,
-				.user_agent = {'\0'},
-				.proxy_auth = "",
-				.user_auth = "",
-				.http_content_type = NULL,
-				.cookie_jar_file = NULL,
-			},
-		.max_depth = DEFAULT_MAX_REDIRS,
-		.followmethod = FOLLOW_HTTP_CURL,
-		.followsticky = STICKY_NONE,
-
-		.maximum_age = -1,
-		.regexp = {},
-		.compiled_regex = {},
-		.state_regex = STATE_CRITICAL,
-		.invert_regex = false,
-		.check_cert = false,
-		.continue_after_check_cert = false,
-		.days_till_exp_warn = 0,
-		.days_till_exp_crit = 0,
-		.thlds = NULL,
-		.min_page_len = 0,
-		.max_page_len = 0,
-		.server_expect =
-			{
-				.string = HTTP_EXPECT,
-				.is_present = false,
-			},
-		.string_expect = "",
-		.header_expect = "",
-		.on_redirect_result_state = STATE_OK,
-		.on_redirect_dependent = true,
-
-		.show_extended_perfdata = false,
-		.show_body = false,
-		.display_html = false,
-	};
-
-	snprintf(tmp.curl_config.user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
-			 "check_curl", NP_VERSION, VERSION, curl_version());
-
-	return tmp;
-}
+check_curl_config check_curl_config_init();
