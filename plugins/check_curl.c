@@ -198,7 +198,8 @@ static size_t get_content_length(const curlhelp_write_curlbuf *header_buf,
 								 const curlhelp_write_curlbuf *body_buf);
 
 #if defined(HAVE_SSL) && defined(USE_OPENSSL)
-int np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn, int days_till_exp_crit);
+mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										   int days_till_exp_crit);
 #endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
 
 static void test_file(char * /*path*/);
