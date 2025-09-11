@@ -131,20 +131,6 @@ typedef struct {
 	CURL *curl;
 } check_curl_global_state;
 
-check_curl_global_state global_state = {
-	.curl_global_initialized = false,
-	.curl_easy_initialized = false,
-	.body_buf_initialized = false,
-	.body_buf = {},
-	.header_buf_initialized = false,
-	.header_buf = {},
-	.status_line_initialized = false,
-	.status_line = {},
-	.put_buf_initialized = false,
-	.put_buf = {},
-	.curl = NULL,
-};
-
 static char errbuf[MAX_INPUT_BUFFER];
 static char msg[DEFAULT_BUFFER_SIZE];
 typedef union {
@@ -166,15 +152,18 @@ static check_curl_config_wrapper process_arguments(int /*argc*/, char ** /*argv*
 
 static void handle_curl_option_return_code(CURLcode res, const char *option);
 static mp_state_enum check_http(check_curl_config /*config*/, check_curl_working_state workingState,
-								int redir_depth, struct curl_slist *header_list);
+								int redir_depth, struct curl_slist *header_list,
+								check_curl_global_state global_state);
 
 typedef struct {
 	int redir_depth;
 	check_curl_working_state working_state;
 	int error_code;
+	check_curl_global_state curl_state;
 } redir_wrapper;
 static redir_wrapper redir(curlhelp_write_curlbuf * /*header_buf*/, check_curl_config /*config*/,
-						   int redir_depth, check_curl_working_state working_state);
+						   int redir_depth, check_curl_working_state working_state,
+						   check_curl_global_state global_state);
 
 static char *perfd_time(double elapsed_time, thresholds * /*thlds*/, long /*socket_timeout*/);
 static char *perfd_time_connect(double elapsed_time_connect, long /*socket_timeout*/);
@@ -246,12 +235,24 @@ int main(int argc, char **argv) {
 			   config.initial_config.server_url);
 	}
 
-	int redir_depth = 0;
+	check_curl_global_state global_state = {
+		.curl_global_initialized = false,
+		.curl_easy_initialized = false,
+		.body_buf_initialized = false,
+		.body_buf = {},
+		.header_buf_initialized = false,
+		.header_buf = {},
+		.status_line_initialized = false,
+		.status_line = {},
+		.put_buf_initialized = false,
+		.put_buf = {},
+		.curl = NULL,
+	};
 
 	check_curl_working_state working_state = config.initial_config;
 	struct curl_slist *header_list = NULL;
 
-	exit((int)check_http(config, working_state, redir_depth, header_list));
+	exit((int)check_http(config, working_state, 0, header_list, global_state));
 }
 
 #ifdef HAVE_SSL
@@ -403,7 +404,7 @@ int lookup_host(const char *host, char *buf, size_t buflen, sa_family_t addr_fam
 	return 0;
 }
 
-static void cleanup(void) {
+static void cleanup(check_curl_global_state global_state) {
 	if (global_state.status_line_initialized) {
 		curlhelp_free_statusline(&global_state.status_line);
 	}
@@ -436,7 +437,12 @@ static void cleanup(void) {
 }
 
 mp_state_enum check_http(const check_curl_config config, check_curl_working_state workingState,
-						 int redir_depth, struct curl_slist *header_list) {
+						 int redir_depth, struct curl_slist *header_list,
+						 check_curl_global_state global_state) {
+
+	// =======================
+	// Initialisation for curl
+	// =======================
 	/* initialize curl */
 	if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
 		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_global_init failed\n");
@@ -447,9 +453,6 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		die(STATE_UNKNOWN, "HTTP UNKNOWN - curl_easy_init failed\n");
 	}
 	global_state.curl_easy_initialized = true;
-
-	/* register cleanup function to shut down libcurl properly */
-	atexit(cleanup);
 
 	if (verbose >= 1) {
 		handle_curl_option_return_code(curl_easy_setopt(global_state.curl, CURLOPT_VERBOSE, 1),
@@ -651,7 +654,6 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		curl_easy_setopt(global_state.curl, CURLOPT_HTTPHEADER, header_list), "CURLOPT_HTTPHEADER");
 
 #ifdef LIBCURL_FEATURE_SSL
-
 	/* set SSL version, warn about insecure or unsupported versions */
 	if (workingState.use_ssl) {
 		handle_curl_option_return_code(
@@ -779,7 +781,6 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 			"CURLOPT_SSL_CTX_FUNCTION");
 	}
 #	endif
-
 #endif /* LIBCURL_FEATURE_SSL */
 
 	/* set default or user-given user agent identification */
@@ -936,7 +937,9 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		}
 	}
 
-	/* do the request */
+	// ==============
+	// do the request
+	// ==============
 	CURLcode res = curl_easy_perform(global_state.curl);
 
 	if (verbose >= 2 && workingState.http_post_data) {
@@ -959,6 +962,10 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 				 workingState.serverPort, res, errbuf[0] ? errbuf : curl_easy_strerror(res));
 		die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
 	}
+
+	// ==========
+	// Evaluation
+	// ==========
 
 	mp_state_enum result_ssl = STATE_OK;
 	/* certificate checks */
@@ -1173,10 +1180,10 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 					 * back here, we are in the same status as with
 					 * the libcurl method
 					 */
-					redir_wrapper redir_result =
-						redir(&global_state.header_buf, config, redir_depth, workingState);
+					redir_wrapper redir_result = redir(&global_state.header_buf, config,
+													   redir_depth, workingState, global_state);
 					check_http(config, redir_result.working_state, redir_result.redir_depth,
-							   header_list);
+							   header_list, redir_result.curl_state);
 				}
 			} else {
 				/* this is a specific code in the command line to
@@ -1195,9 +1202,11 @@ mp_state_enum check_http(const check_curl_config config, check_curl_working_stat
 		handle_curl_option_return_code(
 			curl_easy_getinfo(global_state.curl, CURLINFO_REDIRECT_COUNT, &redir_depth),
 			"CURLINFO_REDIRECT_COUNT");
+
 		if (verbose >= 2) {
 			printf(_("* curl LIBINFO_REDIRECT_COUNT is %d\n"), redir_depth);
 		}
+
 		if (redir_depth > config.max_depth) {
 			snprintf(msg, DEFAULT_BUFFER_SIZE, "maximum redirection depth %d exceeded in libcurl",
 					 config.max_depth);
@@ -1365,7 +1374,8 @@ char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
 }
 
 redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config config,
-					int redir_depth, check_curl_working_state working_state) {
+					int redir_depth, check_curl_working_state working_state,
+					check_curl_global_state global_state) {
 	curlhelp_statusline status_line;
 	struct phr_header headers[255];
 	size_t msglen;
@@ -1522,7 +1532,7 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	 * attached to the URL in Location
 	 */
 
-	cleanup();
+	cleanup(global_state);
 
 	redir_wrapper result = {
 		.redir_depth = redir_depth,
