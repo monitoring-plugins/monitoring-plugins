@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include "curl/curl.h"
+#include "perfdata.h"
 #include "regex.h"
 
 enum {
@@ -93,9 +94,9 @@ typedef struct {
 	bool continue_after_check_cert;
 	int days_till_exp_warn;
 	int days_till_exp_crit;
-	thresholds *thlds;
-	size_t min_page_len;
-	size_t max_page_len;
+	mp_thresholds thlds;
+	mp_range page_length_limits;
+	bool page_length_limits_is_set;
 	struct {
 		char string[MAX_INPUT_BUFFER];
 		bool is_present;

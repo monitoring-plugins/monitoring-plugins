@@ -5,9 +5,12 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include "../utils.h"
+#include "check_curl.d/config.h"
+#include "output.h"
+#include "perfdata.h"
+#include "states.h"
 
 extern int verbose;
-char msg[DEFAULT_BUFFER_SIZE];
 char errbuf[MAX_INPUT_BUFFER];
 bool is_openssl_callback = false;
 bool add_sslctx_verify_fun = false;
@@ -127,10 +130,9 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		int res;
 		if ((res = lookup_host(working_state.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
 							   config.sin_family)) != 0) {
-			snprintf(msg, DEFAULT_BUFFER_SIZE,
-					 _("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
-					 working_state.server_address, res, gai_strerror(res));
-			die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+			die(STATE_CRITICAL,
+				_("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
+				working_state.server_address, res, gai_strerror(res));
 		}
 		snprintf(dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", working_state.host_name,
 				 working_state.serverPort, addrstr);
@@ -154,18 +156,15 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	}
 
 	/* compose URL: use the address we want to connect to, set Host: header later */
-	char url[DEFAULT_BUFFER_SIZE];
-	snprintf(url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", working_state.use_ssl ? "https" : "http",
-			 (working_state.use_ssl & (working_state.host_name != NULL))
-				 ? working_state.host_name
-				 : working_state.server_address,
-			 working_state.serverPort, working_state.server_url);
+	char *url = fmt_url(working_state);
 
 	if (verbose >= 1) {
 		printf("* curl CURLOPT_URL: %s\n", url);
 	}
 	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_URL, url),
 								   "CURLOPT_URL");
+
+	free(url);
 
 	/* extract proxy information for legacy proxy https requests */
 	if (!strcmp(working_state.http_method, "CONNECT") ||
@@ -548,10 +547,8 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 void handle_curl_option_return_code(CURLcode res, const char *option) {
 	if (res != CURLE_OK) {
-		snprintf(msg, DEFAULT_BUFFER_SIZE,
-				 _("Error while setting cURL option '%s': cURL returned %d - %s"), option, res,
-				 curl_easy_strerror(res));
-		die(STATE_CRITICAL, "HTTP CRITICAL - %s\n", msg);
+		die(STATE_CRITICAL, _("Error while setting cURL option '%s': cURL returned %d - %s"),
+			option, res, curl_easy_strerror(res));
 	}
 }
 
@@ -618,9 +615,9 @@ check_curl_config check_curl_config_init() {
 		.continue_after_check_cert = false,
 		.days_till_exp_warn = 0,
 		.days_till_exp_crit = 0,
-		.thlds = NULL,
-		.min_page_len = 0,
-		.max_page_len = 0,
+		.thlds = mp_thresholds_init(),
+		.page_length_limits = mp_range_init(),
+		.page_length_limits_is_set = false,
 		.server_expect =
 			{
 				.string = HTTP_EXPECT,
@@ -729,9 +726,7 @@ size_t get_content_length(const curlhelp_write_curlbuf *header_buf,
 	return header_buf->buflen + body_buf->buflen;
 }
 
-mp_state_enum check_document_dates(const curlhelp_write_curlbuf *header_buf,
-								   const char msg[static DEFAULT_BUFFER_SIZE],
-								   const int maximum_age) {
+mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const int maximum_age) {
 	struct phr_header headers[255];
 	size_t nof_headers = 255;
 	curlhelp_statusline status_line;
@@ -747,73 +742,54 @@ mp_state_enum check_document_dates(const curlhelp_write_curlbuf *header_buf,
 	char *server_date = get_header_value(headers, nof_headers, "date");
 	char *document_date = get_header_value(headers, nof_headers, "last-modified");
 
-	mp_state_enum date_result = STATE_OK;
+	mp_subcheck sc_document_dates = mp_subcheck_init();
 	if (!server_date || !*server_date) {
-		char tmp[DEFAULT_BUFFER_SIZE];
-
-		snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sServer date unknown, "), msg);
-		strcpy(msg, tmp);
-
-		date_result = max_state_alt(STATE_UNKNOWN, date_result);
-
+		xasprintf(&sc_document_dates.output, _("Server date unknown"));
+		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_UNKNOWN);
 	} else if (!document_date || !*document_date) {
-		char tmp[DEFAULT_BUFFER_SIZE];
-
-		snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sDocument modification date unknown, "), msg);
-		strcpy(msg, tmp);
-
-		date_result = max_state_alt(STATE_CRITICAL, date_result);
-
+		xasprintf(&sc_document_dates.output, _("Document modification date unknown, "));
+		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 	} else {
 		time_t srv_data = curl_getdate(server_date, NULL);
 		time_t doc_data = curl_getdate(document_date, NULL);
+
 		if (verbose >= 2) {
 			printf("* server date: '%s' (%d), doc_date: '%s' (%d)\n", server_date, (int)srv_data,
 				   document_date, (int)doc_data);
 		}
+
 		if (srv_data <= 0) {
-			char tmp[DEFAULT_BUFFER_SIZE];
-
-			snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sServer date \"%100s\" unparsable, "), msg,
-					 server_date);
-			strcpy(msg, tmp);
-
-			date_result = max_state_alt(STATE_CRITICAL, date_result);
+			xasprintf(&sc_document_dates.output, _("Server date \"%100s\" unparsable"),
+					  server_date);
+			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data <= 0) {
-			char tmp[DEFAULT_BUFFER_SIZE];
 
-			snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sDocument date \"%100s\" unparsable, "), msg,
-					 document_date);
-			strcpy(msg, tmp);
-
-			date_result = max_state_alt(STATE_CRITICAL, date_result);
+			xasprintf(&sc_document_dates.output, _("Document date \"%100s\" unparsable"),
+					  document_date);
+			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data > srv_data + 30) {
-			char tmp[DEFAULT_BUFFER_SIZE];
 
-			snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sDocument is %d seconds in the future, "), msg,
-					 (int)doc_data - (int)srv_data);
-			strcpy(msg, tmp);
+			xasprintf(&sc_document_dates.output, _("Document is %d seconds in the future"),
+					  (int)doc_data - (int)srv_data);
 
-			date_result = max_state_alt(STATE_CRITICAL, date_result);
+			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data < srv_data - maximum_age) {
 			time_t last_modified = (srv_data - doc_data);
-			if (last_modified > (60 * 60 * 24 * 2)) {
-				char tmp[DEFAULT_BUFFER_SIZE];
-
-				snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sLast modified %.1f days ago, "), msg,
-						 ((float)last_modified) / (60 * 60 * 24));
-				strcpy(msg, tmp);
-
-				date_result = max_state_alt(STATE_CRITICAL, date_result);
+			if (last_modified > (60 * 60 * 24 * 2)) { // two days hardcoded?
+				xasprintf(&sc_document_dates.output, _("Last modified %.1f days ago"),
+						  ((float)last_modified) / (60 * 60 * 24));
+				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 			} else {
-				char tmp[DEFAULT_BUFFER_SIZE];
-
-				snprintf(tmp, DEFAULT_BUFFER_SIZE, _("%sLast modified %ld:%02ld:%02ld ago, "), msg,
-						 last_modified / (60 * 60), (last_modified / 60) % 60, last_modified % 60);
-				strcpy(msg, tmp);
-
-				date_result = max_state_alt(STATE_CRITICAL, date_result);
+				xasprintf(&sc_document_dates.output, _("Last modified %ld:%02ld:%02ld ago"),
+						  last_modified / (60 * 60), (last_modified / 60) % 60, last_modified % 60);
+				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 			}
+		} else {
+			// TODO is this the OK case?
+			time_t last_modified = (srv_data - doc_data);
+			xasprintf(&sc_document_dates.output, _("Last modified %ld:%02ld:%02ld ago"),
+					  last_modified / (60 * 60), (last_modified / 60) % 60, last_modified % 60);
+			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_OK);
 		}
 	}
 
@@ -824,7 +800,7 @@ mp_state_enum check_document_dates(const curlhelp_write_curlbuf *header_buf,
 		free(document_date);
 	}
 
-	return date_result;
+	return sc_document_dates;
 }
 
 void curlhelp_free_statusline(curlhelp_statusline *status_line) { free(status_line->first_line); }
@@ -1172,46 +1148,117 @@ char *string_statuscode(int major, int minor) {
 	return buf;
 }
 
-char *perfd_time(double elapsed_time, thresholds *thlds, long socket_timeout) {
-	return fperfdata("time", elapsed_time, "s", (thlds->warning != NULL),
-					 thlds->warning ? thlds->warning->end : 0, (thlds->critical != NULL),
-					 thlds->critical ? thlds->critical->end : 0, true, 0, true, socket_timeout);
-}
-
-char *perfd_time_connect(double elapsed_time_connect, long socket_timeout) {
-	return fperfdata("time_connect", elapsed_time_connect, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
-}
-
-char *perfd_time_ssl(double elapsed_time_ssl, long socket_timeout) {
-	return fperfdata("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
-}
-
-char *perfd_time_headers(double elapsed_time_headers, long socket_timeout) {
-	return fperfdata("time_headers", elapsed_time_headers, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
-}
-
-char *perfd_time_firstbyte(double elapsed_time_firstbyte, long socket_timeout) {
-	return fperfdata("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0, false, 0,
-					 true, socket_timeout);
-}
-
-char *perfd_time_transfer(double elapsed_time_transfer, long socket_timeout) {
-	return fperfdata("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0, false, 0,
-					 true, socket_timeout);
-}
-
-char *perfd_size(size_t page_len, int min_page_len) {
-	return perfdata("size", page_len, "B", (min_page_len > 0), min_page_len, (min_page_len > 0), 0,
-					true, 0, false, 0);
-}
-
 /* check whether a file exists */
 void test_file(char *path) {
 	if (access(path, R_OK) == 0) {
 		return;
 	}
 	usage2(_("file does not exist or is not readable"), path);
+}
+
+mp_subcheck np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										 int days_till_exp_crit);
+
+mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
+										  int crit_days_till_exp) {
+	mp_subcheck sc_cert_result = mp_subcheck_init();
+	sc_cert_result = mp_set_subcheck_default_state(sc_cert_result, STATE_OK);
+
+#ifdef LIBCURL_FEATURE_SSL
+	if (is_openssl_callback) {
+#	ifdef USE_OPENSSL
+		/* check certificate with OpenSSL functions, curl has been built against OpenSSL
+		 * and we actually have OpenSSL in the monitoring tools
+		 */
+		return np_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
+#	else  /* USE_OPENSSL */
+		xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
+								  "callback used and not linked against OpenSSL\n");
+		mp_set_subcheck_state(result, STATE_CRITICAL);
+#	endif /* USE_OPENSSL */
+	} else {
+		struct curl_slist *slist;
+
+		cert_ptr_union cert_ptr = {0};
+		cert_ptr.to_info = NULL;
+		CURLcode res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
+		if (!res && cert_ptr.to_info) {
+#	ifdef USE_OPENSSL
+			/* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert
+			 * parsing We only check the first certificate and assume it's the one of
+			 * the server
+			 */
+			char *raw_cert = NULL;
+			bool got_first_cert = false;
+			for (int i = 0; i < cert_ptr.to_certinfo->num_of_certs; i++) {
+				if (got_first_cert) {
+					break;
+				}
+
+				for (slist = cert_ptr.to_certinfo->certinfo[i]; slist; slist = slist->next) {
+					if (verbose >= 2) {
+						printf("%d ** %s\n", i, slist->data);
+					}
+					if (strncmp(slist->data, "Cert:", 5) == 0) {
+						raw_cert = &slist->data[5];
+						got_first_cert = true;
+						break;
+					}
+				}
+			}
+
+			if (!raw_cert) {
+
+				xasprintf(&sc_cert_result.output,
+						  _("Cannot retrieve certificates from CERTINFO information - "
+							"certificate data was empty"));
+				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
+				return sc_cert_result;
+			}
+
+			BIO *cert_BIO = BIO_new(BIO_s_mem());
+			BIO_write(cert_BIO, raw_cert, (int)strlen(raw_cert));
+
+			cert = PEM_read_bio_X509(cert_BIO, NULL, NULL, NULL);
+			if (!cert) {
+				xasprintf(&sc_cert_result.output,
+						  _("Cannot read certificate from CERTINFO information - BIO error"));
+				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
+				return sc_cert_result;
+			}
+
+			BIO_free(cert_BIO);
+			return np_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
+#	else  /* USE_OPENSSL */
+			/* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our
+			 * disposal, so we use the libcurl CURLINFO data
+			 */
+			return net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn,
+												   days_till_exp_crit);
+#	endif /* USE_OPENSSL */
+		} else {
+			xasprintf(&sc_cert_result.output,
+					  _("Cannot retrieve certificates - cURL returned %d - %s"), res,
+					  curl_easy_strerror(res));
+			mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
+		}
+	}
+#endif /* LIBCURL_FEATURE_SSL */
+
+	return sc_cert_result;
+}
+
+char *fmt_url(check_curl_working_state workingState) {
+	char *url = calloc(DEFAULT_BUFFER_SIZE, sizeof(char));
+	if (url == NULL) {
+		die(STATE_UNKNOWN, "memory allocation failed");
+	}
+
+	snprintf(url, DEFAULT_BUFFER_SIZE, "%s://%s:%d%s", workingState.use_ssl ? "https" : "http",
+			 (workingState.use_ssl & (workingState.host_name != NULL))
+				 ? workingState.host_name
+				 : workingState.server_address,
+			 workingState.serverPort, workingState.server_url);
+
+	return url;
 }

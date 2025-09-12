@@ -1,7 +1,11 @@
 #include "./config.h"
 #include <curl/curl.h>
 #include "../picohttpparser/picohttpparser.h"
-// #include "curl/easy.h"
+#include "output.h"
+
+#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#	include <openssl/opensslv.h>
+#endif
 
 /* for buffers for header and body */
 typedef struct {
@@ -99,8 +103,8 @@ int curlhelp_parse_statusline(const char * /*buf*/, curlhelp_statusline * /*stat
 void curlhelp_free_statusline(curlhelp_statusline * /*status_line*/);
 
 char *get_header_value(const struct phr_header *headers, size_t nof_headers, const char *header);
-mp_state_enum check_document_dates(const curlhelp_write_curlbuf * /*header_buf*/,
-								   const char msg[static DEFAULT_BUFFER_SIZE], int /*maximum_age*/);
+mp_subcheck check_document_dates(const curlhelp_write_curlbuf * /*header_buf*/,
+								 int /*maximum_age*/);
 size_t get_content_length(const curlhelp_write_curlbuf *header_buf,
 						  const curlhelp_write_curlbuf *body_buf);
 int lookup_host(const char *host, char *buf, size_t buflen, sa_family_t addr_family);
@@ -114,12 +118,7 @@ void cleanup(check_curl_global_state global_state);
 bool expected_statuscode(const char *reply, const char *statuscodes);
 char *string_statuscode(int major, int minor);
 
-char *perfd_time(double elapsed_time, thresholds * /*thlds*/, long /*socket_timeout*/);
-char *perfd_time_connect(double elapsed_time_connect, long /*socket_timeout*/);
-char *perfd_time_ssl(double elapsed_time_ssl, long /*socket_timeout*/);
-char *perfd_time_firstbyte(double elapsed_time_firstbyte, long /*socket_timeout*/);
-char *perfd_time_headers(double elapsed_time_headers, long /*socket_timeout*/);
-char *perfd_time_transfer(double elapsed_time_transfer, long /*socket_timeout*/);
-char *perfd_size(size_t page_len, int /*min_page_len*/);
-
 void test_file(char *path);
+mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
+										  int crit_days_till_exp);
+char *fmt_url(check_curl_working_state workingState);
