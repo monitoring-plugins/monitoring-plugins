@@ -6,12 +6,12 @@
 /*
  * Old threshold type using the old range type
  */
-typedef struct thresholds_struct {
+typedef struct {
 	range *warning;
 	range *critical;
 } thresholds;
 
-typedef struct mp_thresholds_struct {
+typedef struct {
 	bool warning_is_set;
 	mp_range warning;
 	bool critical_is_set;
