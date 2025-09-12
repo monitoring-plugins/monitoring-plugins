@@ -629,7 +629,7 @@ check_curl_config check_curl_config_init() {
 		.string_expect = "",
 		.header_expect = "",
 		.on_redirect_result_state = STATE_OK,
-		.on_redirect_dependent = true,
+		.on_redirect_dependent = false,
 
 		.show_extended_perfdata = false,
 		.show_body = false,
