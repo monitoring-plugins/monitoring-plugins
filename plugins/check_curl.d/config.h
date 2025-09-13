@@ -108,7 +108,6 @@ typedef struct {
 
 	bool show_extended_perfdata;
 	bool show_body;
-	bool display_html;
 } check_curl_config;
 
 check_curl_config check_curl_config_init();

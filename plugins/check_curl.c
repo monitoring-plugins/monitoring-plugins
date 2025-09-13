@@ -139,16 +139,6 @@ int main(int argc, char **argv) {
 
 	const check_curl_config config = tmp_config.config;
 
-	if (config.display_html) {
-		printf("<A HREF=\"%s://%s:%d%s\" target=\"_blank\">",
-			   config.initial_config.use_ssl ? "https" : "http",
-			   config.initial_config.host_name ? config.initial_config.host_name
-											   : config.initial_config.server_address,
-			   config.initial_config.virtualPort ? config.initial_config.virtualPort
-												 : config.initial_config.serverPort,
-			   config.initial_config.server_url);
-	}
-
 	check_curl_working_state working_state = config.initial_config;
 
 	mp_check overall = mp_check_init();
@@ -672,8 +662,8 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	}
 
 	if (++redir_depth > config.max_depth) {
-		die(STATE_WARNING, _("HTTP WARNING - maximum redirection depth %d exceeded - %s%s\n"),
-			config.max_depth, location, (config.display_html ? "</A>" : ""));
+		die(STATE_WARNING, _("HTTP WARNING - maximum redirection depth %d exceeded - %s\n"),
+			config.max_depth, location);
 	}
 
 	UriParserStateA state;
@@ -681,8 +671,8 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	state.uri = &uri;
 	if (uriParseUriA(&state, location) != URI_SUCCESS) {
 		if (state.errorCode == URI_ERROR_SYNTAX) {
-			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Could not parse redirect location '%s'%s\n"),
-				location, (config.display_html ? "</A>" : ""));
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Could not parse redirect location '%s'\n"),
+				location);
 		} else if (state.errorCode == URI_ERROR_MALLOC) {
 			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Could not allocate URL\n"));
 		}
@@ -735,8 +725,8 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		}
 	}
 	if (new_port > MAX_PORT) {
-		die(STATE_UNKNOWN, _("HTTP UNKNOWN - Redirection to port above %d - %s%s\n"), MAX_PORT,
-			location, config.display_html ? "</A>" : "");
+		die(STATE_UNKNOWN, _("HTTP UNKNOWN - Redirection to port above %d - %s\n"), MAX_PORT,
+			location);
 	}
 
 	/* by RFC 7231 relative URLs in Location should be taken relative to
@@ -772,9 +762,8 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		 !strncmp(working_state.host_name, new_host, MAX_IPV4_HOSTLENGTH)) &&
 		!strcmp(working_state.server_url, new_url)) {
 		die(STATE_CRITICAL,
-			_("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s%s\n"),
-			working_state.use_ssl ? "https" : "http", new_host, new_port, new_url,
-			(config.display_html ? "</A>" : ""));
+			_("HTTP CRITICAL - redirection creates an infinite loop - %s://%s:%d%s\n"),
+			working_state.use_ssl ? "https" : "http", new_host, new_port, new_url);
 	}
 
 	/* set new values for redirected request */
@@ -1037,10 +1026,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				.http_opt_headers[result.config.curl_config.http_opt_headers_count - 1] = optarg;
 			break;
 		case 'L': /* show html link */
-			result.config.display_html = true;
-			break;
 		case 'n': /* do not show html link */
-			result.config.display_html = false;
+			// HTML link related options are deprecated
 			break;
 		case 'C': /* Check SSL cert validity */
 #ifndef LIBCURL_FEATURE_SSL
@@ -1566,8 +1553,8 @@ void print_help(void) {
 	printf("    %s\n", _("Print additional performance data"));
 	printf(" %s\n", "-B, --show-body");
 	printf("    %s\n", _("Print body content below status line"));
-	printf(" %s\n", "-L, --link");
-	printf("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
+	// printf(" %s\n", "-L, --link");
+	// printf("    %s\n", _("Wrap output in HTML link (obsoleted by urlize)"));
 	printf(" %s\n", "-f, --onredirect=<ok|warning|critical|follow|sticky|stickyport|curl>");
 	printf("    %s\n", _("How to handle redirected pages. sticky is like follow but stick to the"));
 	printf("    %s\n", _("specified IP address. stickyport also ensures port stays the same."));
