@@ -238,7 +238,28 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		return sc_result;
 	}
 
-	xasprintf(&sc_curl.output, "cURL performed query");
+	/* get status line of answer, check sanity of HTTP code */
+	if (curlhelp_parse_statusline(curl_state.header_buf->buf, curl_state.status_line) < 0) {
+		sc_result = mp_set_subcheck_state(sc_result, STATE_CRITICAL);
+		/* we cannot know the major/minor version here for sure as we cannot parse the first
+		 * line */
+		xasprintf(&sc_result.output, "HTTP/x.x unknown - Unparsable status line");
+		return sc_result;
+	}
+
+	curl_state.status_line_initialized = true;
+
+	size_t page_len = get_content_length(curl_state.header_buf, curl_state.body_buf);
+
+	double total_time;
+	handle_curl_option_return_code(
+		curl_easy_getinfo(curl_state.curl, CURLINFO_TOTAL_TIME, &total_time),
+		"CURLINFO_TOTAL_TIME");
+
+	xasprintf(
+		&sc_curl.output, "%s %d %s - %ld bytes in %.3f second response time",
+		string_statuscode(curl_state.status_line->http_major, curl_state.status_line->http_minor),
+		curl_state.status_line->http_code, curl_state.status_line->msg, page_len, total_time);
 	sc_curl = mp_set_subcheck_state(sc_curl, STATE_OK);
 	mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
 
@@ -264,10 +285,6 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	// total time the query took
 	mp_perfdata pd_total_time = perfdata_init();
-	double total_time;
-	handle_curl_option_return_code(
-		curl_easy_getinfo(curl_state.curl, CURLINFO_TOTAL_TIME, &total_time),
-		"CURLINFO_TOTAL_TIME");
 	mp_perfdata_value pd_val_total_time = mp_create_pd_value(total_time);
 	pd_total_time.value = pd_val_total_time;
 	pd_total_time = mp_pd_set_thresholds(pd_total_time, config.thlds);
@@ -359,17 +376,6 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		xasprintf(&sc_result.output, "No header received from host");
 		return sc_result;
 	}
-
-	/* get status line of answer, check sanity of HTTP code */
-	if (curlhelp_parse_statusline(curl_state.header_buf->buf, curl_state.status_line) < 0) {
-		sc_result = mp_set_subcheck_state(sc_result, STATE_CRITICAL);
-		/* we cannot know the major/minor version here for sure as we cannot parse the first
-		 * line */
-		xasprintf(&sc_result.output, "HTTP/x.x unknown - Unparsable status line");
-		return sc_result;
-	}
-
-	curl_state.status_line_initialized = true;
 
 	/* get result code from cURL */
 	long httpReturnCode;
@@ -578,7 +584,6 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	// size a.k.a. page length
 	mp_perfdata pd_page_length = perfdata_init();
-	size_t page_len = get_content_length(curl_state.header_buf, curl_state.body_buf);
 	mp_perfdata_value pd_val_page_length = mp_create_pd_value(page_len);
 	pd_page_length.value = pd_val_page_length;
 	pd_page_length.label = "size";

@@ -18,7 +18,7 @@ BEGIN {
 }
 
 
-my $successOutput = '/OK.*HTTP.*second/';
+my $successOutput = '/.*HTTP.*second/';
 
 my $res;
 my $plugin = 'check_http';
@@ -63,7 +63,7 @@ $res = NPTest->testCmd(
     );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
-like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
 
 $res = NPTest->testCmd(
     "./$plugin $hostname_invalid -wt 1 -ct 2"
