@@ -134,10 +134,12 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 				_("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),
 				working_state.server_address, res, gai_strerror(res));
 		}
+
 		snprintf(dnscache, DEFAULT_BUFFER_SIZE, "%s:%d:%s", working_state.host_name,
 				 working_state.serverPort, addrstr);
 		result.curl_state.host = curl_slist_append(NULL, dnscache);
 		curl_easy_setopt(result.curl_state.curl, CURLOPT_RESOLVE, result.curl_state.host);
+
 		if (verbose >= 1) {
 			printf("* curl CURLOPT_RESOLVE: %s\n", dnscache);
 		}
@@ -1155,7 +1157,7 @@ void test_file(char *path) {
 	usage2(_("file does not exist or is not readable"), path);
 }
 
-mp_subcheck np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										 int days_till_exp_crit);
 
 mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
@@ -1169,7 +1171,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 		/* check certificate with OpenSSL functions, curl has been built against OpenSSL
 		 * and we actually have OpenSSL in the monitoring tools
 		 */
-		return np_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
+		return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
 #	else  /* USE_OPENSSL */
 		xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
 								  "callback used and not linked against OpenSSL\n");
@@ -1227,7 +1229,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 			}
 
 			BIO_free(cert_BIO);
-			return np_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
+			return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
 #	else  /* USE_OPENSSL */
 			/* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our
 			 * disposal, so we use the libcurl CURLINFO data
