@@ -273,7 +273,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 		mp_add_subcheck_to_subcheck(&sc_result, sc_certificate);
 		if (!config.continue_after_check_cert) {
-			// TODO finish here then
+			return sc_result;
 		}
 	}
 #endif
