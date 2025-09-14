@@ -564,18 +564,24 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		if (errcode == 0) {
 			// got a match
 			if (config.invert_regex) {
+				sc_body_regex = mp_set_subcheck_state(sc_body_regex, config.state_regex);
+			} else {
+				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
+			}
+		} else if (errcode == REG_NOMATCH) {
+			xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
+			// got no match
+			if (config.invert_regex) {
 				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
 			} else {
 				sc_body_regex = mp_set_subcheck_state(sc_body_regex, config.state_regex);
 			}
 		} else {
-			xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
-			// got no match
-			if (config.invert_regex) {
-				sc_body_regex = mp_set_subcheck_state(sc_body_regex, config.state_regex);
-			} else {
-				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
-			}
+			// error in regexec
+			char error_buffer[DEFAULT_BUFFER_SIZE];
+			regerror(errcode, &config.compiled_regex, &error_buffer[0], DEFAULT_BUFFER_SIZE);
+			xasprintf(&sc_body_regex.output, "regexec error: %s", error_buffer);
+			sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_UNKNOWN);
 		}
 
 		mp_add_subcheck_to_subcheck(&sc_result, sc_body_regex);
