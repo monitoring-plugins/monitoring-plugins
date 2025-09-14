@@ -569,8 +569,9 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
 			}
 		} else if (errcode == REG_NOMATCH) {
-			xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
 			// got no match
+			xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
+
 			if (config.invert_regex) {
 				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
 			} else {

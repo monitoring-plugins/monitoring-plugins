@@ -32,6 +32,7 @@
 #define _NETUTILS_H_
 
 #include "common.h"
+#include "output.h"
 #include "states.h"
 #include "utils.h"
 #include <netinet/in.h>
@@ -114,6 +115,6 @@ void np_net_ssl_cleanup();
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
+mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 #endif /* HAVE_SSL */
-
 #endif /* _NETUTILS_H_ */

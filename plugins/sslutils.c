@@ -26,6 +26,7 @@
  *
  *****************************************************************************/
 
+#include "output.h"
 #define MAX_CN_LENGTH 256
 #include "common.h"
 #include "netutils.h"
@@ -322,4 +323,138 @@ mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_cr
 #	endif /* USE_OPENSSL */
 }
 
+mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										 int days_till_exp_crit) {
+	mp_subcheck sc_cert = mp_subcheck_init();
+#	ifdef USE_OPENSSL
+	if (!certificate) {
+		xasprintf(&sc_cert.output, _("No server certificate present to inspect"));
+		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+		return sc_cert;
+	}
+
+	/* Extract CN from certificate subject */
+	X509_NAME *subj = X509_get_subject_name(certificate);
+
+	if (!subj) {
+		xasprintf(&sc_cert.output, _("Cannot retrieve certificate subject"));
+		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+		return sc_cert;
+	}
+
+	char commonName[MAX_CN_LENGTH] = "";
+	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, commonName, sizeof(commonName));
+	if (cnlen == -1) {
+		strcpy(commonName, _("Unknown CN"));
+	}
+
+	/* Retrieve timestamp of certificate */
+	ASN1_STRING *expiry_timestamp = X509_get_notAfter(certificate);
+
+	int offset = 0;
+	struct tm stamp = {};
+	/* Generate tm structure to process timestamp */
+	if (expiry_timestamp->type == V_ASN1_UTCTIME) {
+		if (expiry_timestamp->length < 10) {
+			xasprintf(&sc_cert.output, _("Wrong time format in certificate"));
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+			return sc_cert;
+		}
+
+		stamp.tm_year = (expiry_timestamp->data[0] - '0') * 10 + (expiry_timestamp->data[1] - '0');
+		if (stamp.tm_year < 50) {
+			stamp.tm_year += 100;
+		}
+
+		offset = 0;
+	} else {
+		if (expiry_timestamp->length < 12) {
+			xasprintf(&sc_cert.output, _("Wrong time format in certificate"));
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+			return sc_cert;
+		}
+		stamp.tm_year = (expiry_timestamp->data[0] - '0') * 1000 +
+						(expiry_timestamp->data[1] - '0') * 100 +
+						(expiry_timestamp->data[2] - '0') * 10 + (expiry_timestamp->data[3] - '0');
+		stamp.tm_year -= 1900;
+		offset = 2;
+	}
+
+	stamp.tm_mon = (expiry_timestamp->data[2 + offset] - '0') * 10 +
+				   (expiry_timestamp->data[3 + offset] - '0') - 1;
+	stamp.tm_mday = (expiry_timestamp->data[4 + offset] - '0') * 10 +
+					(expiry_timestamp->data[5 + offset] - '0');
+	stamp.tm_hour = (expiry_timestamp->data[6 + offset] - '0') * 10 +
+					(expiry_timestamp->data[7 + offset] - '0');
+	stamp.tm_min = (expiry_timestamp->data[8 + offset] - '0') * 10 +
+				   (expiry_timestamp->data[9 + offset] - '0');
+	stamp.tm_sec = (expiry_timestamp->data[10 + offset] - '0') * 10 +
+				   (expiry_timestamp->data[11 + offset] - '0');
+	stamp.tm_isdst = -1;
+
+	time_t tm_t = timegm(&stamp);
+	double time_left = difftime(tm_t, time(NULL));
+	int days_left = (int)(time_left / 86400);
+	char *timeZone = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+
+	char timestamp[50] = "";
+	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
+	if (timeZone) {
+		setenv("TZ", timeZone, 1);
+	} else {
+		unsetenv("TZ");
+	}
+
+	tzset();
+
+	int time_remaining;
+	if (days_left > 0 && days_left <= days_till_exp_warn) {
+		xasprintf(&sc_cert.output, _("Certificate '%s' expires in %d day(s) (%s)"), commonName,
+				  days_left, timestamp);
+		if (days_left > days_till_exp_crit) {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
+		} else {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+		}
+	} else if (days_left == 0 && time_left > 0) {
+		if (time_left >= 3600) {
+			time_remaining = (int)time_left / 3600;
+		} else {
+			time_remaining = (int)time_left / 60;
+		}
+
+		xasprintf(&sc_cert.output, _("Certificate '%s' expires in %u %s (%s)"), commonName,
+				  time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
+
+		if (days_left > days_till_exp_crit) {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
+		} else {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+		}
+	} else if (time_left < 0) {
+		xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName, timestamp);
+		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+	} else if (days_left == 0) {
+		xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName,
+				  timestamp);
+		if (days_left > days_till_exp_crit) {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
+		} else {
+			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
+		}
+	} else {
+		xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName,
+				  timestamp);
+		sc_cert = mp_set_subcheck_state(sc_cert, STATE_OK);
+	}
+	X509_free(certificate);
+	return sc_cert;
+#	else  /* ifndef USE_OPENSSL */
+	xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
+	sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
+	return sc_cert;
+#	endif /* USE_OPENSSL */
+}
 #endif /* HAVE_SSL */
