@@ -246,7 +246,7 @@ SKIP: {
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14" );
 	is( $result->return_code, 0, "$command -p $port_https -S -C 14" );
-	like( $result->output, "/.*Certificate \'Monitoring Plugins\' will expire on $expiry.*", "output ok" );
+	like( $result->output, '/.*Certificate \'Monitoring Plugins\' will expire on ' . quotemeta($expiry) . '.*/', "output ok" );
 
 	$result = NPTest->testCmd( "$command -p $port_https -S -C 14000" );
 	is( $result->return_code, 1, "$command -p $port_https -S -C 14000" );
@@ -260,7 +260,7 @@ SKIP: {
 	$result = NPTest->testCmd( "$command -p $port_https_expired -S -C 7" );
 	is( $result->return_code, 2, "$command -p $port_https_expired -S -C 7" );
 	like( $result->output,
-		'/.*Certificate \'Monitoring Plugins\' expired on Wed Jan  2 12:00:00 2008 +0000.*/',
+		'/.*Certificate \'Monitoring Plugins\' expired on Wed Jan\s+2 12:00:00 2008 \+0000.*/',
 		"output ok" );
 
 }
