@@ -307,7 +307,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 		mp_perfdata_value pd_val_time_connect = mp_create_pd_value(time_connect);
 		pd_time_connect.value = pd_val_time_connect;
-		pd_time_connect.label = "time";
+		pd_time_connect.label = "time_connect";
 		pd_time_connect.uom = "s";
 		pd_time_connect = mp_set_pd_max_value(
 			pd_time_connect, mp_create_pd_value(config.curl_config.socket_timeout));
