@@ -53,8 +53,10 @@ int main(int argc, char **argv) {
 
 	int c;
 	int option = 0;
-	static struct option longopts[] = {
-		{"help", no_argument, 0, 'h'}, {"version", no_argument, 0, 'V'}, {"url", required_argument, 0, 'u'}, {0, 0, 0, 0}};
+	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
+									   {"version", no_argument, 0, 'V'},
+									   {"url", required_argument, 0, 'u'},
+									   {0, 0, 0, 0}};
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -69,8 +71,9 @@ int main(int argc, char **argv) {
 	while (1) {
 		c = getopt_long(argc, argv, "+hVu:", longopts, &option);
 
-		if (c == -1 || c == EOF)
+		if (c == -1 || c == EOF) {
 			break;
+		}
 
 		switch (c) {
 		case 'h': /* help */
@@ -90,8 +93,9 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (url == NULL)
+	if (url == NULL) {
 		url = strdup(argv[optind++]);
+	}
 
 	cmd = strdup(argv[optind++]);
 	for (c = optind; c < argc; c++) {
@@ -118,27 +122,32 @@ int main(int argc, char **argv) {
 		strcat(tstr, buf);
 	}
 
-	if (!found)
-		die(STATE_UNKNOWN, _("%s UNKNOWN - No data received from host\nCMD: %s</A>\n"), argv[0], cmd);
+	if (!found) {
+		die(STATE_UNKNOWN, _("%s UNKNOWN - No data received from host\nCMD: %s</A>\n"), argv[0],
+			cmd);
+	}
 
 	/* chop the newline character */
-	if ((nstr = strchr(tstr, NEWLINE_CHARACTER)) != NULL)
+	if ((nstr = strchr(tstr, NEWLINE_CHARACTER)) != NULL) {
 		*nstr = '\0';
+	}
 
 	/* tokenize the string for Perfdata if there is some */
 	nstr = strtok(tstr, PERF_CHARACTER);
 	printf("%s", nstr);
 	printf("</A>");
 	nstr = strtok(NULL, PERF_CHARACTER);
-	if (nstr != NULL)
+	if (nstr != NULL) {
 		printf(" | %s", nstr);
+	}
 
 	/* close the pipe */
 	result = spclose(child_process);
 
 	/* WARNING if output found on stderr */
-	if (fgets(buf, MAX_INPUT_BUFFER - 1, child_stderr))
+	if (fgets(buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
 		result = max_state(result, STATE_WARNING);
+	}
 
 	/* close stderr */
 	(void)fclose(child_stderr);
@@ -153,8 +162,10 @@ void print_help(void) {
 	printf(COPYRIGHT, copyright, email);
 
 	printf("%s\n", _("This plugin wraps the text output of another command (plugin) in HTML <A>"));
-	printf("%s\n", _("tags, thus displaying the child plugin's output as a clickable link in compatible"));
-	printf("%s\n", _("monitoring status screen. This plugin returns the status of the invoked plugin."));
+	printf("%s\n",
+		   _("tags, thus displaying the child plugin's output as a clickable link in compatible"));
+	printf("%s\n",
+		   _("monitoring status screen. This plugin returns the status of the invoked plugin."));
 
 	printf("\n\n");
 
@@ -164,7 +175,8 @@ void print_help(void) {
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf("%s\n", _("Pay close attention to quoting to ensure that the shell passes the expected"));
+	printf("%s\n",
+		   _("Pay close attention to quoting to ensure that the shell passes the expected"));
 	printf("%s\n\n", _("data to the plugin. For example, in:"));
 	printf(" %s\n\n", _("urlize http://example.com/ check_http -H example.com -r 'two words'"));
 	printf("    %s\n", _("the shell will remove the single quotes and urlize will see:"));

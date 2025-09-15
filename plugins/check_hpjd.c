@@ -85,13 +85,16 @@ int main(int argc, char **argv) {
 	char query_string[512];
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
-	sprintf(query_string, "%s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0", HPJD_LINE_STATUS, HPJD_PAPER_STATUS,
-			HPJD_INTERVENTION_REQUIRED, HPJD_GD_PERIPHERAL_ERROR, HPJD_GD_PAPER_JAM, HPJD_GD_PAPER_OUT, HPJD_GD_TONER_LOW,
-			HPJD_GD_PAGE_PUNT, HPJD_GD_MEMORY_OUT, HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
+	sprintf(query_string, "%s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0",
+			HPJD_LINE_STATUS, HPJD_PAPER_STATUS, HPJD_INTERVENTION_REQUIRED,
+			HPJD_GD_PERIPHERAL_ERROR, HPJD_GD_PAPER_JAM, HPJD_GD_PAPER_OUT, HPJD_GD_TONER_LOW,
+			HPJD_GD_PAGE_PUNT, HPJD_GD_MEMORY_OUT, HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT,
+			HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
 	char command_line[1024];
-	sprintf(command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s", PATH_TO_SNMPGET, config.community, config.address, config.port, query_string);
+	sprintf(command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s", PATH_TO_SNMPGET, config.community,
+			config.address, config.port, query_string);
 
 	/* run the command */
 	child_process = spopen(command_line);
@@ -177,7 +180,8 @@ int main(int argc, char **argv) {
 				strcpy(display_message, temp_buffer + 1);
 				break;
 			default: /* fold multiline message */
-				strncat(display_message, input_buffer, sizeof(display_message) - strlen(display_message) - 1);
+				strncat(display_message, input_buffer,
+						sizeof(display_message) - strlen(display_message) - 1);
 			}
 		}
 

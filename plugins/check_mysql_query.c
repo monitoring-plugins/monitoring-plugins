@@ -47,7 +47,8 @@ typedef struct {
 	check_mysql_query_config config;
 } check_mysql_query_config_wrapper;
 static check_mysql_query_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-static check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper /*config_wrapper*/);
+static check_mysql_query_config_wrapper
+	validate_arguments(check_mysql_query_config_wrapper /*config_wrapper*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -83,7 +84,8 @@ int main(int argc, char **argv) {
 	}
 
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db, config.db_port, config.db_socket, 0)) {
+	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
+							config.db_port, config.db_socket, 0)) {
 		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
 			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
 		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
@@ -155,8 +157,11 @@ int main(int argc, char **argv) {
 		printf("QUERY %s: ", _("CRITICAL"));
 	}
 	printf(_("'%s' returned %f | %s"), config.sql_query, value,
-		   fperfdata("result", value, "", config.my_thresholds->warning, config.my_thresholds->warning ? config.my_thresholds->warning->end : 0,
-					 config.my_thresholds->critical, config.my_thresholds->critical ? config.my_thresholds->critical->end : 0, false, 0, false, 0));
+		   fperfdata("result", value, "", config.my_thresholds->warning,
+					 config.my_thresholds->warning ? config.my_thresholds->warning->end : 0,
+					 config.my_thresholds->critical,
+					 config.my_thresholds->critical ? config.my_thresholds->critical->end : 0,
+					 false, 0, false, 0));
 	printf("\n");
 
 	return status;
@@ -164,12 +169,21 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"socket", required_argument, 0, 's'},   {"database", required_argument, 0, 'd'},
-		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'}, {"file", required_argument, 0, 'f'},
-		{"group", required_argument, 0, 'g'},    {"port", required_argument, 0, 'P'},     {"verbose", no_argument, 0, 'v'},
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"query", required_argument, 0, 'q'},
-		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {0, 0, 0, 0}};
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"socket", required_argument, 0, 's'},
+									   {"database", required_argument, 0, 'd'},
+									   {"username", required_argument, 0, 'u'},
+									   {"password", required_argument, 0, 'p'},
+									   {"file", required_argument, 0, 'f'},
+									   {"group", required_argument, 0, 'g'},
+									   {"port", required_argument, 0, 'P'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"query", required_argument, 0, 'q'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {0, 0, 0, 0}};
 
 	check_mysql_query_config_wrapper result = {
 		.errorcode = OK,
@@ -255,7 +269,8 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 	return validate_arguments(result);
 }
 
-check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
+check_mysql_query_config_wrapper
+validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
 	if (config_wrapper.config.sql_query == NULL) {
 		usage("Must specify a SQL query to run");
 	}

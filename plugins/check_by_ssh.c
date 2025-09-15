@@ -45,7 +45,8 @@ typedef struct {
 	check_by_ssh_config config;
 } check_by_ssh_config_wrapper;
 static check_by_ssh_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-static check_by_ssh_config_wrapper validate_arguments(check_by_ssh_config_wrapper /*config_wrapper*/);
+static check_by_ssh_config_wrapper
+	validate_arguments(check_by_ssh_config_wrapper /*config_wrapper*/);
 
 static command_construct comm_append(command_construct /*cmd*/, const char * /*str*/);
 static void print_help(void);
@@ -90,7 +91,8 @@ int main(int argc, char **argv) {
 
 	/* SSH returns 255 if connection attempt fails; include the first line of error output */
 	if (result == 255 && config.unknown_timeout) {
-		printf(_("SSH connection failed: %s\n"), chld_err.lines > 0 ? chld_err.line[0] : "(no error output)");
+		printf(_("SSH connection failed: %s\n"),
+			   chld_err.lines > 0 ? chld_err.line[0] : "(no error output)");
 		return STATE_UNKNOWN;
 	}
 
@@ -134,7 +136,8 @@ int main(int argc, char **argv) {
 				puts(chld_out.line[i]);
 			}
 		} else {
-			printf(_("%s - check_by_ssh: Remote command '%s' returned status %d\n"), state_text(result), config.remotecmd, result);
+			printf(_("%s - check_by_ssh: Remote command '%s' returned status %d\n"),
+				   state_text(result), config.remotecmd, result);
 		}
 		return result; /* return error status from remote command */
 	}
@@ -160,9 +163,11 @@ int main(int argc, char **argv) {
 			die(STATE_UNKNOWN, _("%s: Error parsing output\n"), progname);
 		}
 
-		if (config.service[commands] && status_text && sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
-			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time, config.host_shortname,
-					config.service[commands++], cresult, status_text);
+		if (config.service[commands] && status_text &&
+			sscanf(chld_out.line[i], "STATUS CODE: %d", &cresult) == 1) {
+			fprintf(file_pointer, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n",
+					(int)local_time, config.host_shortname, config.service[commands++], cresult,
+					status_text);
 		}
 	}
 
@@ -172,34 +177,35 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"fork", no_argument, 0, 'f'},
-									   {"timeout", required_argument, 0, 't'},
-									   {"unknown-timeout", no_argument, 0, 'U'},
-									   {"host", required_argument, 0, 'H'}, /* backward compatibility */
-									   {"hostname", required_argument, 0, 'H'},
-									   {"port", required_argument, 0, 'p'},
-									   {"output", required_argument, 0, 'O'},
-									   {"name", required_argument, 0, 'n'},
-									   {"services", required_argument, 0, 's'},
-									   {"identity", required_argument, 0, 'i'},
-									   {"user", required_argument, 0, 'u'},
-									   {"logname", required_argument, 0, 'l'},
-									   {"command", required_argument, 0, 'C'},
-									   {"skip", optional_argument, 0, 'S'}, /* backwards compatibility */
-									   {"skip-stdout", optional_argument, 0, 'S'},
-									   {"skip-stderr", optional_argument, 0, 'E'},
-									   {"warn-on-stderr", no_argument, 0, 'W'},
-									   {"proto1", no_argument, 0, '1'},
-									   {"proto2", no_argument, 0, '2'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"ssh-option", required_argument, 0, 'o'},
-									   {"quiet", no_argument, 0, 'q'},
-									   {"configfile", optional_argument, 0, 'F'},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},
+		{"fork", no_argument, 0, 'f'},
+		{"timeout", required_argument, 0, 't'},
+		{"unknown-timeout", no_argument, 0, 'U'},
+		{"host", required_argument, 0, 'H'}, /* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
+		{"output", required_argument, 0, 'O'},
+		{"name", required_argument, 0, 'n'},
+		{"services", required_argument, 0, 's'},
+		{"identity", required_argument, 0, 'i'},
+		{"user", required_argument, 0, 'u'},
+		{"logname", required_argument, 0, 'l'},
+		{"command", required_argument, 0, 'C'},
+		{"skip", optional_argument, 0, 'S'}, /* backwards compatibility */
+		{"skip-stdout", optional_argument, 0, 'S'},
+		{"skip-stderr", optional_argument, 0, 'E'},
+		{"warn-on-stderr", no_argument, 0, 'W'},
+		{"proto1", no_argument, 0, '1'},
+		{"proto2", no_argument, 0, '2'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
+		{"ssh-option", required_argument, 0, 'o'},
+		{"quiet", no_argument, 0, 'q'},
+		{"configfile", optional_argument, 0, 'F'},
+		{0, 0, 0, 0}};
 
 	check_by_ssh_config_wrapper result = {
 		.errorcode = OK,
@@ -221,7 +227,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	while (true) {
-		int opt_index = getopt_long(argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts, &option);
+		int opt_index =
+			getopt_long(argc, argv, "Vvh1246fqt:UH:O:p:i:u:l:C:S::E::n:s:o:F:", longopts, &option);
 
 		if (opt_index == -1 || opt_index == EOF) {
 			break;
@@ -266,11 +273,13 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			char *p2;
 
 			p1 = optarg;
-			result.config.service = realloc(result.config.service, (++result.config.number_of_services) * sizeof(char *));
+			result.config.service = realloc(result.config.service,
+											(++result.config.number_of_services) * sizeof(char *));
 			while ((p2 = index(p1, ':'))) {
 				*p2 = '\0';
 				result.config.service[result.config.number_of_services - 1] = p1;
-				result.config.service = realloc(result.config.service, (++result.config.number_of_services) * sizeof(char *));
+				result.config.service = realloc(
+					result.config.service, (++result.config.number_of_services) * sizeof(char *));
 				p1 = p2 + 1;
 			}
 			result.config.service[result.config.number_of_services - 1] = p1;
@@ -309,7 +318,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 		case 'C': /* Command for remote machine */
 			result.config.commands++;
 			if (result.config.commands > 1) {
-				xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;", result.config.remotecmd);
+				xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;",
+						  result.config.remotecmd);
 			}
 			xasprintf(&result.config.remotecmd, "%s%s", result.config.remotecmd, optarg);
 			break;
@@ -396,7 +406,8 @@ command_construct comm_append(command_construct cmd, const char *str) {
 		die(STATE_UNKNOWN, _("%s: Argument limit of %d exceeded\n"), progname, NP_MAXARGS);
 	}
 
-	if ((cmd.commargv = (char **)realloc(cmd.commargv, (cmd.commargc + 1) * sizeof(char *))) == NULL) {
+	if ((cmd.commargv = (char **)realloc(cmd.commargv, (cmd.commargc + 1) * sizeof(char *))) ==
+		NULL) {
 		die(STATE_UNKNOWN, _("Can not (re)allocate 'commargv' buffer\n"));
 	}
 
@@ -412,12 +423,18 @@ check_by_ssh_config_wrapper validate_arguments(check_by_ssh_config_wrapper confi
 		return config_wrapper;
 	}
 
-	if (config_wrapper.config.passive && config_wrapper.config.commands != config_wrapper.config.number_of_services) {
-		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide a service name for each command.\n"), progname);
+	if (config_wrapper.config.passive &&
+		config_wrapper.config.commands != config_wrapper.config.number_of_services) {
+		die(STATE_UNKNOWN,
+			_("%s: In passive mode, you must provide a service name for each command.\n"),
+			progname);
 	}
 
 	if (config_wrapper.config.passive && config_wrapper.config.host_shortname == NULL) {
-		die(STATE_UNKNOWN, _("%s: In passive mode, you must provide the host short name from the monitoring configs.\n"), progname);
+		die(STATE_UNKNOWN,
+			_("%s: In passive mode, you must provide the host short name from the monitoring "
+			  "configs.\n"),
+			progname);
 	}
 
 	return config_wrapper;
@@ -454,7 +471,8 @@ void print_help(void) {
 	printf(" %s\n", "-W, --warn-on-stderr]");
 	printf("    %s\n", _("Exit with an warning, if there is an output on STDERR"));
 	printf(" %s\n", "-f");
-	printf("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always return OK if ssh is executed"));
+	printf("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always "
+						 "return OK if ssh is executed"));
 	printf(" %s\n", "-C, --command='COMMAND STRING'");
 	printf("    %s\n", _("command to execute on the remote machine"));
 	printf(" %s\n", "-l, --logname=USERNAME");
@@ -490,7 +508,9 @@ void print_help(void) {
 	printf(" %s\n", _("all of -O, -s, and -n options (servicelist order must match '-C'options)"));
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf(" %s\n", "$ check_by_ssh -H localhost -n lh -s c1:c2:c3 -C uptime -C uptime -C uptime -O /tmp/foo");
+	printf(
+		" %s\n",
+		"$ check_by_ssh -H localhost -n lh -s c1:c2:c3 -C uptime -C uptime -C uptime -O /tmp/foo");
 	printf(" %s\n", "$ cat /tmp/foo");
 	printf(" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
 	printf(" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");

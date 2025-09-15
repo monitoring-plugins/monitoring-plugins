@@ -71,7 +71,7 @@ extern char **environ;
 #endif
 
 #ifndef WIFEXITED
-#	define WIFEXITED(stat_val) (((stat_val)&255) == 0)
+#	define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
 /* 4.3BSD Reno <signal.h> doesn't define SIG_ERR */
@@ -103,8 +103,9 @@ void cmd_init(void) {
 		maxfd = MAXFD_LIMIT;
 	}
 
-	if (!_cmd_pids)
+	if (!_cmd_pids) {
 		_cmd_pids = calloc(maxfd, sizeof(pid_t));
+	}
 }
 
 /* Start running a command, array style */
@@ -116,13 +117,15 @@ static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 
 	int i = 0;
 
-	if (!_cmd_pids)
+	if (!_cmd_pids) {
 		CMD_INIT;
+	}
 
 	setenv("LC_ALL", "C", 1);
 
-	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0)
+	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0) {
 		return -1; /* errno set by the failing function */
+	}
 
 	/* child runs exceve() and _exit. */
 	if (pid == 0) {
@@ -147,9 +150,11 @@ static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
 		long maxfd = mp_open_max();
-		for (i = 0; i < maxfd; i++)
-			if (_cmd_pids[i] > 0)
+		for (i = 0; i < maxfd; i++) {
+			if (_cmd_pids[i] > 0) {
 				close(i);
+			}
+		}
 
 		execve(argv[0], argv, environ);
 		_exit(STATE_UNKNOWN);
@@ -172,17 +177,21 @@ static int _cmd_close(int fd) {
 
 	/* make sure the provided fd was opened */
 	long maxfd = mp_open_max();
-	if (fd < 0 || fd > maxfd || !_cmd_pids || (pid = _cmd_pids[fd]) == 0)
+	if (fd < 0 || fd > maxfd || !_cmd_pids || (pid = _cmd_pids[fd]) == 0) {
 		return -1;
+	}
 
 	_cmd_pids[fd] = 0;
-	if (close(fd) == -1)
+	if (close(fd) == -1) {
 		return -1;
+	}
 
 	/* EINTR is ok (sort of), everything else is bad */
-	while (waitpid(pid, &status, 0) < 0)
-		if (errno != EINTR)
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
 			return -1;
+		}
+	}
 
 	/* return child's termination status */
 	return (WIFEXITED(status)) ? WEXITSTATUS(status) : -1;
@@ -212,15 +221,17 @@ static int _cmd_fetch_output(int fd, output *op, int flags) {
 
 	/* some plugins may want to keep output unbroken, and some commands
 	 * will yield no output, so return here for those */
-	if (flags & CMD_NO_ARRAYS || !op->buf || !op->buflen)
+	if (flags & CMD_NO_ARRAYS || !op->buf || !op->buflen) {
 		return op->buflen;
+	}
 
 	/* and some may want both */
 	if (flags & CMD_NO_ASSOC) {
 		buf = malloc(op->buflen);
 		memcpy(buf, op->buf, op->buflen);
-	} else
+	} else {
 		buf = op->buf;
+	}
 
 	op->line = NULL;
 	op->lens = NULL;
@@ -241,8 +252,9 @@ static int _cmd_fetch_output(int fd, output *op, int flags) {
 		op->line[lineno] = &buf[i];
 
 		/* hop to next newline or end of buffer */
-		while (buf[i] != '\n' && i < op->buflen)
+		while (buf[i] != '\n' && i < op->buflen) {
 			i++;
+		}
 		buf[i] = '\0';
 
 		/* calculate the string length using pointer difference */
@@ -262,30 +274,36 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 	char *cmd = NULL;
 	char *str = NULL;
 
-	if (cmdstring == NULL)
+	if (cmdstring == NULL) {
 		return -1;
+	}
 
 	/* initialize the structs */
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
-	if (err)
+	}
+	if (err) {
 		memset(err, 0, sizeof(output));
+	}
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmdlen = strlen(cmdstring);
-	if ((cmd = malloc(cmdlen + 1)) == NULL)
+	if ((cmd = malloc(cmdlen + 1)) == NULL) {
 		return -1;
+	}
 	memcpy(cmd, cmdstring, cmdlen);
 	cmd[cmdlen] = '\0';
 
 	/* This is not a shell, so we don't handle "???" */
-	if (strstr(cmdstring, "\""))
+	if (strstr(cmdstring, "\"")) {
 		return -1;
+	}
 
 	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
-	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
+	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''")) {
 		return -1;
+	}
 
 	/* each arg must be whitespace-separated, so args can be a maximum
 	 * of (len / 2) + 1. We add 1 extra to the mix for NULL termination */
@@ -304,8 +322,9 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 
 		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
 			str++;
-			if (!strstr(str, "'"))
+			if (!strstr(str, "'")) {
 				return -1; /* balanced? */
+			}
 			cmd = 1 + strstr(str, "'");
 			str[strcspn(str, "'")] = 0;
 		} else {
@@ -317,8 +336,9 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 			}
 		}
 
-		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n"))
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n")) {
 			cmd = NULL;
+		}
 
 		argv[i++] = str;
 	}
@@ -330,50 +350,61 @@ int cmd_run_array(char *const *argv, output *out, output *err, int flags) {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
-	if (err)
+	}
+	if (err) {
 		memset(err, 0, sizeof(output));
+	}
 
-	if ((fd = _cmd_open(argv, pfd_out, pfd_err)) == -1)
+	if ((fd = _cmd_open(argv, pfd_out, pfd_err)) == -1) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), argv[0]);
+	}
 
-	if (out)
+	if (out) {
 		out->lines = _cmd_fetch_output(pfd_out[0], out, flags);
-	if (err)
+	}
+	if (err) {
 		err->lines = _cmd_fetch_output(pfd_err[0], err, flags);
+	}
 
 	return _cmd_close(fd);
 }
 
 int cmd_file_read(const char *filename, output *out, int flags) {
 	int fd;
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
+	}
 
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		die(STATE_UNKNOWN, _("Error opening %s: %s"), filename, strerror(errno));
 	}
 
-	if (out)
+	if (out) {
 		out->lines = _cmd_fetch_output(fd, out, flags);
+	}
 
-	if (close(fd) == -1)
+	if (close(fd) == -1) {
 		die(STATE_UNKNOWN, _("Error closing %s: %s"), filename, strerror(errno));
+	}
 
 	return 0;
 }
 
 void timeout_alarm_handler(int signo) {
 	if (signo == SIGALRM) {
-		printf(_("%s - Plugin timed out after %d seconds\n"), state_text(timeout_state), timeout_interval);
+		printf(_("%s - Plugin timed out after %d seconds\n"), state_text(timeout_state),
+			   timeout_interval);
 
 		long maxfd = mp_open_max();
-		if (_cmd_pids)
+		if (_cmd_pids) {
 			for (long int i = 0; i < maxfd; i++) {
-				if (_cmd_pids[i] != 0)
+				if (_cmd_pids[i] != 0) {
 					kill(_cmd_pids[i], SIGKILL);
+				}
 			}
+		}
 
 		exit(timeout_state);
 	}

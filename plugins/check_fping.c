@@ -46,8 +46,9 @@ enum {
 	RTA = 1
 };
 
-static mp_state_enum textscan(char *buf, const char * /*server_name*/, bool /*crta_p*/, double /*crta*/, bool /*wrta_p*/, double /*wrta*/,
-							  bool /*cpl_p*/, int /*cpl*/, bool /*wpl_p*/, int /*wpl*/, bool /*alive_p*/);
+static mp_state_enum textscan(char *buf, const char * /*server_name*/, bool /*crta_p*/,
+							  double /*crta*/, bool /*wrta_p*/, double /*wrta*/, bool /*cpl_p*/,
+							  int /*cpl*/, bool /*wpl_p*/, int /*wpl*/, bool /*alive_p*/);
 
 typedef struct {
 	int errorcode;
@@ -133,9 +134,11 @@ int main(int argc, char **argv) {
 
 	if (config.icmp_timestamp) {
 		// no packet size settable for ICMP timestamp
-		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count, server);
+		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
+				  server);
 	} else {
-		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
+		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
+				  config.packet_size, config.packet_count, server);
 	}
 
 	if (verbose) {
@@ -160,8 +163,9 @@ int main(int argc, char **argv) {
 		if (verbose) {
 			printf("%s", input_buffer);
 		}
-		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p, config.crta, config.wrta_p, config.wrta,
-											config.cpl_p, config.cpl, config.wpl_p, config.wpl, config.alive_p));
+		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p,
+											config.crta, config.wrta_p, config.wrta, config.cpl_p,
+											config.cpl, config.wpl_p, config.wpl, config.alive_p));
 	}
 
 	/* If we get anything on STDERR, at least set warning */
@@ -170,8 +174,9 @@ int main(int argc, char **argv) {
 		if (verbose) {
 			printf("%s", input_buffer);
 		}
-		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p, config.crta, config.wrta_p, config.wrta,
-											config.cpl_p, config.cpl, config.wpl_p, config.wpl, config.alive_p));
+		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p,
+											config.crta, config.wrta_p, config.wrta, config.cpl_p,
+											config.cpl, config.wpl_p, config.wpl, config.alive_p));
 	}
 	(void)fclose(child_stderr);
 
@@ -200,8 +205,8 @@ int main(int argc, char **argv) {
 	return status;
 }
 
-mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double crta, bool wrta_p, double wrta, bool cpl_p, int cpl,
-					   bool wpl_p, int wpl, bool alive_p) {
+mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double crta, bool wrta_p,
+					   double wrta, bool cpl_p, int cpl, bool wpl_p, int wpl, bool alive_p) {
 	/* stops testing after the first successful reply. */
 	double rta;
 	double loss;
@@ -214,7 +219,8 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		die(STATE_OK, _("FPING %s - %s (rta=%f ms)|%s\n"), state_text(STATE_OK), server_name, rta,
 			/* No loss since we only waited for the first reply
 			perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100), */
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0, false, 0));
+			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+					  false, 0));
 	}
 
 	mp_state_enum status = STATE_UNKNOWN;
@@ -255,9 +261,11 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		} else {
 			status = STATE_OK;
 		}
-		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status), server_name, loss, rta,
+		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status),
+			server_name, loss, rta,
 			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0),
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0, false, 0));
+			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+					  false, 0));
 
 	} else if (strstr(buf, "xmt/rcv/%loss")) {
 		/* no min/max/avg if host was unreachable in fping v2.2.b1 */
@@ -350,7 +358,8 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	while (true) {
-		int option_index = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
+		int option_index =
+			getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
@@ -487,10 +496,12 @@ int get_threshold(char *arg, char *rv[2]) {
 	if (arg2) {
 		arg1[strcspn(arg1, ",:")] = 0;
 		if (strstr(arg1, "%") && strstr(arg2, "%")) {
-			die(STATE_UNKNOWN, _("%s: Only one threshold may be packet loss (%s)\n"), progname, arg);
+			die(STATE_UNKNOWN, _("%s: Only one threshold may be packet loss (%s)\n"), progname,
+				arg);
 		}
 		if (!strstr(arg1, "%") && !strstr(arg2, "%")) {
-			die(STATE_UNKNOWN, _("%s: Only one threshold must be packet loss (%s)\n"), progname, arg);
+			die(STATE_UNKNOWN, _("%s: Only one threshold must be packet loss (%s)\n"), progname,
+				arg);
 		}
 	}
 
@@ -516,7 +527,8 @@ void print_help(void) {
 	printf("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("This plugin will use the fping command to ping the specified host for a fast check"));
+	printf("%s\n",
+		   _("This plugin will use the fping command to ping the specified host for a fast check"));
 
 	printf("%s\n", _("Note that it is necessary to set the suid flag on fping."));
 
@@ -530,7 +542,8 @@ void print_help(void) {
 	printf(UT_IPv46);
 
 	printf(" %s\n", "-H, --hostname=HOST");
-	printf("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
+	printf("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, "
+						 "reducing system load)"));
 	printf(" %s\n", "-w, --warning=THRESHOLD");
 	printf("    %s\n", _("warning threshold pair"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
@@ -544,7 +557,8 @@ void print_help(void) {
 	printf(" %s\n", "-T, --target-timeout=INTEGER");
 	printf("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"));
 	printf(" %s\n", "-i, --interval=INTEGER");
-	printf("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"));
+	printf("    %s (default: fping's default for -p)\n",
+		   _("Interval (ms) between sending packets"));
 	printf(" %s\n", "-S, --sourceip=HOST");
 	printf("    %s\n", _("name or IP Address of sourceip"));
 	printf(" %s\n", "-I, --sourceif=IF");
@@ -565,7 +579,8 @@ void print_help(void) {
 #endif
 	printf(UT_VERBOSE);
 	printf("\n");
-	printf(" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
+	printf(" %s\n",
+		   _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
 	printf(" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
 	printf(" %s\n", _("packet loss to trigger an alarm state."));
 
@@ -577,5 +592,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s <host_address> -w limit -c limit [-b size] [-n number] [-T number] [-i number]\n", progname);
+	printf(" %s <host_address> -w limit -c limit [-b size] [-n number] [-T number] [-i number]\n",
+		   progname);
 }

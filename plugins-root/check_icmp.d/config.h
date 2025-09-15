@@ -97,7 +97,7 @@ typedef struct icmp_ping_data {
 
 /* 80 msec packet interval by default */
 // DEPRECATED, remove when removing the option
-#define DEFAULT_PKT_INTERVAL    80000 
+#define DEFAULT_PKT_INTERVAL 80000
 
 #define DEFAULT_TARGET_INTERVAL 0
 

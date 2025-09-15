@@ -122,7 +122,8 @@ int main(int argc, char **argv) {
 	time_t current_time;
 	time(&current_time);
 	if ((config.expire_minutes > 0) && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
+		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"),
+			(int)((current_time - timestamp) / 60));
 	}
 
 	unsigned long incoming_rate = 0L;
@@ -177,21 +178,26 @@ int main(int argc, char **argv) {
 	}
 
 	int result = STATE_OK;
-	if (incoming_rate > config.incoming_critical_threshold || outgoing_rate > config.outgoing_critical_threshold) {
+	if (incoming_rate > config.incoming_critical_threshold ||
+		outgoing_rate > config.outgoing_critical_threshold) {
 		result = STATE_CRITICAL;
-	} else if (incoming_rate > config.incoming_warning_threshold || outgoing_rate > config.outgoing_warning_threshold) {
+	} else if (incoming_rate > config.incoming_warning_threshold ||
+			   outgoing_rate > config.outgoing_warning_threshold) {
 		result = STATE_WARNING;
 	}
 
 	char *error_message;
-	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"), (config.use_average) ? _("Avg") : _("Max"),
-			  adjusted_incoming_rate, incoming_speed_rating, (config.use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
-			  outgoing_speed_rating,
-			  fperfdata("in", adjusted_incoming_rate, incoming_speed_rating, (int)config.incoming_warning_threshold,
-						config.incoming_warning_threshold, (int)config.incoming_critical_threshold, config.incoming_critical_threshold,
+	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"),
+			  (config.use_average) ? _("Avg") : _("Max"), adjusted_incoming_rate,
+			  incoming_speed_rating, (config.use_average) ? _("Avg") : _("Max"),
+			  adjusted_outgoing_rate, outgoing_speed_rating,
+			  fperfdata("in", adjusted_incoming_rate, incoming_speed_rating,
+						(int)config.incoming_warning_threshold, config.incoming_warning_threshold,
+						(int)config.incoming_critical_threshold, config.incoming_critical_threshold,
 						true, 0, false, 0),
-			  fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating, (int)config.outgoing_warning_threshold,
-						config.outgoing_warning_threshold, (int)config.outgoing_critical_threshold, config.outgoing_critical_threshold,
+			  fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating,
+						(int)config.outgoing_warning_threshold, config.outgoing_warning_threshold,
+						(int)config.outgoing_critical_threshold, config.outgoing_critical_threshold,
 						true, 0, false, 0));
 
 	printf(_("Traffic %s - %s\n"), state_text(result), error_message);
@@ -249,10 +255,12 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.use_average = (bool)(strcmp(optarg, "MAX"));
 			break;
 		case 'c': /* warning threshold */
-			sscanf(optarg, "%lu,%lu", &result.config.incoming_critical_threshold, &result.config.outgoing_critical_threshold);
+			sscanf(optarg, "%lu,%lu", &result.config.incoming_critical_threshold,
+				   &result.config.outgoing_critical_threshold);
 			break;
 		case 'w': /* critical threshold */
-			sscanf(optarg, "%lu,%lu", &result.config.incoming_warning_threshold, &result.config.outgoing_warning_threshold);
+			sscanf(optarg, "%lu,%lu", &result.config.incoming_warning_threshold,
+				   &result.config.outgoing_warning_threshold);
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);

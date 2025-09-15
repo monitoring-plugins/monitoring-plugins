@@ -108,7 +108,8 @@ int main(int argc, char *argv[]) {
 
 #ifdef HAVE_LDAP_SET_OPTION
 	/* set ldap options */
-	if (ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &config.ld_protocol) != LDAP_OPT_SUCCESS) {
+	if (ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &config.ld_protocol) !=
+		LDAP_OPT_SUCCESS) {
 		printf(_("Could not set protocol version %d\n"), config.ld_protocol);
 		return STATE_CRITICAL;
 	}
@@ -135,7 +136,8 @@ int main(int argc, char *argv[]) {
 	} else if (config.starttls) {
 #if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
 		/* ldap with startTLS: set option version */
-		if (ldap_get_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version) == LDAP_OPT_SUCCESS) {
+		if (ldap_get_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version) ==
+			LDAP_OPT_SUCCESS) {
 			if (version < LDAP_VERSION3) {
 				version = LDAP_VERSION3;
 				ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version);
@@ -156,7 +158,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* bind to the ldap server */
-	if (ldap_bind_s(ldap_connection, config.ld_binddn, config.ld_passwd, LDAP_AUTH_SIMPLE) != LDAP_SUCCESS) {
+	if (ldap_bind_s(ldap_connection, config.ld_binddn, config.ld_passwd, LDAP_AUTH_SIMPLE) !=
+		LDAP_SUCCESS) {
 		if (verbose) {
 			ldap_perror(ldap_connection, "ldap_bind");
 		}
@@ -168,8 +171,10 @@ int main(int argc, char *argv[]) {
 	int num_entries = 0;
 	/* do a search of all objectclasses in the base dn */
 	if (ldap_search_s(ldap_connection, config.ld_base,
-					  (config.crit_entries != NULL || config.warn_entries != NULL) ? LDAP_SCOPE_SUBTREE : LDAP_SCOPE_BASE, config.ld_attr,
-					  NULL, 0, &result) != LDAP_SUCCESS) {
+					  (config.crit_entries != NULL || config.warn_entries != NULL)
+						  ? LDAP_SCOPE_SUBTREE
+						  : LDAP_SCOPE_BASE,
+					  config.ld_attr, NULL, 0, &result) != LDAP_SUCCESS) {
 		if (verbose) {
 			ldap_perror(ldap_connection, "ldap_search");
 		}
@@ -215,14 +220,16 @@ int main(int argc, char *argv[]) {
 
 	/* print out the result */
 	if (config.crit_entries != NULL || config.warn_entries != NULL) {
-		printf(_("LDAP %s - found %d entries in %.3f seconds|%s %s\n"), state_text(status), num_entries, elapsed_time,
-			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time, config.crit_time_set, config.crit_time, true, 0,
-						 false, 0),
-			   sperfdata("entries", (double)num_entries, "", config.warn_entries, config.crit_entries, true, 0.0, false, 0.0));
+		printf(_("LDAP %s - found %d entries in %.3f seconds|%s %s\n"), state_text(status),
+			   num_entries, elapsed_time,
+			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time,
+						 config.crit_time_set, config.crit_time, true, 0, false, 0),
+			   sperfdata("entries", (double)num_entries, "", config.warn_entries,
+						 config.crit_entries, true, 0.0, false, 0.0));
 	} else {
 		printf(_("LDAP %s - %.3f seconds response time|%s\n"), state_text(status), elapsed_time,
-			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time, config.crit_time_set, config.crit_time, true, 0,
-						 false, 0));
+			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time,
+						 config.crit_time_set, config.crit_time, true, 0, false, 0));
 	}
 
 	exit(status);
@@ -273,7 +280,8 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	while (true) {
-		int option_index = getopt_long(argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
+		int option_index =
+			getopt_long(argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -381,7 +389,8 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		result.config.ld_port = DEFAULT_PORT;
 	}
 
-	if (strstr(argv[0], "check_ldaps") && !result.config.starttls && !result.config.ssl_on_connect) {
+	if (strstr(argv[0], "check_ldaps") && !result.config.starttls &&
+		!result.config.ssl_on_connect) {
 		result.config.starttls = true;
 	}
 
@@ -398,7 +407,8 @@ check_ldap_config_wrapper validate_arguments(check_ldap_config_wrapper config_wr
 	}
 
 	if (config_wrapper.config.crit_entries != NULL || config_wrapper.config.warn_entries != NULL) {
-		set_thresholds(&config_wrapper.config.entries_thresholds, config_wrapper.config.warn_entries, config_wrapper.config.crit_entries);
+		set_thresholds(&config_wrapper.config.entries_thresholds,
+					   config_wrapper.config.warn_entries, config_wrapper.config.crit_entries);
 	}
 
 	if (config_wrapper.config.ld_passwd == NULL) {
@@ -435,11 +445,13 @@ void print_help(void) {
 	printf(" %s\n", "-D [--bind]");
 	printf("    %s\n", _("ldap bind DN (if required)"));
 	printf(" %s\n", "-P [--pass]");
-	printf("    %s\n", _("ldap password (if required, or set the password through environment variable 'LDAP_PASSWORD')"));
+	printf("    %s\n", _("ldap password (if required, or set the password through environment "
+						 "variable 'LDAP_PASSWORD')"));
 	printf(" %s\n", "-T [--starttls]");
 	printf("    %s\n", _("use starttls mechanism introduced in protocol version 3"));
 	printf(" %s\n", "-S [--ssl]");
-	printf("    %s %i\n", _("use ldaps (ldap v2 ssl method). this also sets the default port to"), LDAPS_PORT);
+	printf("    %s %i\n", _("use ldaps (ldap v2 ssl method). this also sets the default port to"),
+		   LDAPS_PORT);
 
 #ifdef HAVE_LDAP_SET_OPTION
 	printf(" %s\n", "-2 [--ver2]");
@@ -463,9 +475,11 @@ void print_help(void) {
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("If this plugin is called via 'check_ldaps', method 'STARTTLS' will be"));
-	printf(_(" implied (using default port %i) unless --port=636 is specified. In that case\n"), DEFAULT_PORT);
+	printf(_(" implied (using default port %i) unless --port=636 is specified. In that case\n"),
+		   DEFAULT_PORT);
 	printf(" %s\n", _("'SSL on connect' will be used no matter how the plugin was called."));
-	printf(" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' or '--ssl' flags"));
+	printf(" %s\n", _("This detection is deprecated, please use 'check_ldap' with the '--starttls' "
+					  "or '--ssl' flags"));
 	printf(" %s\n", _("to define the behaviour explicitly instead."));
 	printf(" %s\n", _("The parameters --warn-entries and --crit-entries are optional."));
 

@@ -254,7 +254,7 @@ bool check_range(double value, range *my_range) {
 		yes = false;
 	}
 
-	if (!my_range->end_infinity&& !my_range->start_infinity) {
+	if (!my_range->end_infinity && !my_range->start_infinity) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		}
@@ -268,7 +268,7 @@ bool check_range(double value, range *my_range) {
 		return yes;
 	}
 
-	if (my_range->start_infinity && !my_range->end_infinity ) {
+	if (my_range->start_infinity && !my_range->end_infinity) {
 		if (value <= my_range->end) {
 			return no;
 		}
