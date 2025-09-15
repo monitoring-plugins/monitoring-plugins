@@ -77,8 +77,8 @@ void print_usage(void);
 #define EREG_ARGS     1024
 #define EXCLUDE_PROGS 2048
 
-#define KTHREAD_PARENT                                                                                                                     \
-	"kthreadd" /* the parent process of kernel threads:                                                                                    \
+#define KTHREAD_PARENT                                                                             \
+	"kthreadd" /* the parent process of kernel threads:                                            \
 		 ppid of procs are compared to pid of this proc*/
 
 static int verbose = 0;
@@ -197,14 +197,17 @@ int main(int argc, char **argv) {
 			procseconds = convert_to_seconds(procetime, config.metric);
 
 			if (verbose >= 3) {
-				printf("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procs, procuid, procvsz,
-					   procrss, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+				printf("proc#=%d uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s "
+					   "prog=%s args=%s\n",
+					   procs, procuid, procvsz, procrss, procpid, procppid, procpcpu, procstat,
+					   procetime, procprog, procargs);
 			}
 
 			/* Ignore self */
 			int ret = 0;
 			if ((config.usepid && mypid == procpid) ||
-				(((!config.usepid) && ((ret = stat_exe(procpid, &statbuf) != -1) && statbuf.st_dev == mydev && statbuf.st_ino == myino)) ||
+				(((!config.usepid) && ((ret = stat_exe(procpid, &statbuf) != -1) &&
+									   statbuf.st_dev == mydev && statbuf.st_ino == myino)) ||
 				 (ret == -1 && errno == ENOENT))) {
 				if (verbose >= 3) {
 					printf("not considering - is myself or gone\n");
@@ -255,7 +258,8 @@ int main(int argc, char **argv) {
 
 				if (kthread_ppid == procppid) {
 					if (verbose >= 2) {
-						printf("Ignore kernel thread: pid=%d ppid=%d prog=%s args=%s\n", procpid, procppid, procprog, procargs);
+						printf("Ignore kernel thread: pid=%d ppid=%d prog=%s args=%s\n", procpid,
+							   procppid, procprog, procargs);
 					}
 					continue;
 				}
@@ -267,7 +271,8 @@ int main(int argc, char **argv) {
 			if ((config.options & ARGS) && procargs && (strstr(procargs, config.args) != NULL)) {
 				resultsum |= ARGS;
 			}
-			if ((config.options & EREG_ARGS) && procargs && (regexec(&config.re_args, procargs, (size_t)0, NULL, 0) == 0)) {
+			if ((config.options & EREG_ARGS) && procargs &&
+				(regexec(&config.re_args, procargs, (size_t)0, NULL, 0) == 0)) {
 				resultsum |= EREG_ARGS;
 			}
 			if ((config.options & PROG) && procprog && (strcmp(config.prog, procprog) == 0)) {
@@ -298,8 +303,10 @@ int main(int argc, char **argv) {
 
 			procs++;
 			if (verbose >= 2) {
-				printf("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s prog=%s args=%s\n", procuid, procvsz,
-					   procrss, procpid, procppid, procpcpu, procstat, procetime, procprog, procargs);
+				printf("Matched: uid=%d vsz=%d rss=%d pid=%d ppid=%d pcpu=%.2f stat=%s etime=%s "
+					   "prog=%s args=%s\n",
+					   procuid, procvsz, procrss, procpid, procppid, procpcpu, procstat, procetime,
+					   procprog, procargs);
 			}
 
 			mp_state_enum temporary_result = STATE_OK;
@@ -318,12 +325,14 @@ int main(int argc, char **argv) {
 			if (config.metric != METRIC_PROCS) {
 				if (temporary_result == STATE_WARNING) {
 					warn++;
-					xasprintf(&config.fails, "%s%s%s", config.fails, (strcmp(config.fails, "") ? ", " : ""), procprog);
+					xasprintf(&config.fails, "%s%s%s", config.fails,
+							  (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
 				if (temporary_result == STATE_CRITICAL) {
 					crit++;
-					xasprintf(&config.fails, "%s%s%s", config.fails, (strcmp(config.fails, "") ? ", " : ""), procprog);
+					xasprintf(&config.fails, "%s%s%s", config.fails,
+							  (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
 			}
@@ -420,7 +429,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_index = getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
+		int option_index =
+			getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -451,7 +461,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		case 'p': { /* process id */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.ppid, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sPPID = %d", (result.config.fmt ? result.config.fmt : ""),
+				xasprintf(&result.config.fmt, "%s%sPPID = %d",
+						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.ppid);
 				result.config.options |= PPID;
 				break;
@@ -464,7 +475,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.statopts = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%sSTATE = %s"), (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.statopts);
 			result.config.options |= STAT;
 			break;
@@ -488,7 +500,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			}
 
 			char *user = pw->pw_name;
-			xasprintf(&result.config.fmt, "%s%sUID = %d (%s)", (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, "%s%sUID = %d (%s)",
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.uid, user);
 			result.config.options |= USER;
 		} break;
@@ -499,7 +512,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.prog = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%scommand name '%s'"), (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, _("%s%scommand name '%s'"),
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.prog);
 			result.config.options |= PROG;
 			break;
@@ -509,14 +523,17 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.exclude_progs = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%sexclude progs '%s'"), (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, _("%s%sexclude progs '%s'"),
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.exclude_progs);
 			char *tmp_pointer = strtok(result.config.exclude_progs, ",");
 
 			while (tmp_pointer) {
 				result.config.exclude_progs_arr =
-					realloc(result.config.exclude_progs_arr, sizeof(char *) * ++result.config.exclude_progs_counter);
-				result.config.exclude_progs_arr[result.config.exclude_progs_counter - 1] = tmp_pointer;
+					realloc(result.config.exclude_progs_arr,
+							sizeof(char *) * ++result.config.exclude_progs_counter);
+				result.config.exclude_progs_arr[result.config.exclude_progs_counter - 1] =
+					tmp_pointer;
 				tmp_pointer = strtok(NULL, ",");
 			}
 
@@ -529,7 +546,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.args = optarg;
 			}
-			xasprintf(&result.config.fmt, "%s%sargs '%s'", (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, "%s%sargs '%s'",
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.args);
 			result.config.options |= ARGS;
 			break;
@@ -539,7 +557,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			if (err != 0) {
 				char errbuf[MAX_INPUT_BUFFER];
 				regerror(err, &result.config.re_args, errbuf, MAX_INPUT_BUFFER);
-				die(STATE_UNKNOWN, "PROCS %s: %s - %s\n", _("UNKNOWN"), _("Could not compile regular expression"), errbuf);
+				die(STATE_UNKNOWN, "PROCS %s: %s - %s\n", _("UNKNOWN"),
+					_("Could not compile regular expression"), errbuf);
 			}
 			/* Strip off any | within the regex optarg */
 			char *temp_string = strdup(optarg);
@@ -550,14 +569,16 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				}
 				index++;
 			}
-			xasprintf(&result.config.fmt, "%s%sregex args '%s'", (result.config.fmt ? result.config.fmt : ""),
+			xasprintf(&result.config.fmt, "%s%sregex args '%s'",
+					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), temp_string);
 			result.config.options |= EREG_ARGS;
 		} break;
 		case 'r': { /* RSS */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.rss, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sRSS >= %d", (result.config.fmt ? result.config.fmt : ""),
+				xasprintf(&result.config.fmt, "%s%sRSS >= %d",
+						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.rss);
 				result.config.options |= RSS;
 				break;
@@ -567,7 +588,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		case 'z': { /* VSZ */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.vsz, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sVSZ >= %d", (result.config.fmt ? result.config.fmt : ""),
+				xasprintf(&result.config.fmt, "%s%sVSZ >= %d",
+						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.vsz);
 				result.config.options |= VSZ;
 				break;
@@ -578,7 +600,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			/* TODO: -P 1.5.5 is accepted */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%f%[^0-9.]", &result.config.pcpu, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sPCPU >= %.2f", (result.config.fmt ? result.config.fmt : ""),
+				xasprintf(&result.config.fmt, "%s%sPCPU >= %.2f",
+						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.pcpu);
 				result.config.options |= PCPU;
 				break;
@@ -633,13 +656,15 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 	}
 	if (result.config.statopts == NULL && argv[index]) {
 		xasprintf(&result.config.statopts, "%s", argv[index++]);
-		xasprintf(&result.config.fmt, _("%s%sSTATE = %s"), (result.config.fmt ? result.config.fmt : ""),
-				  (result.config.options ? ", " : ""), result.config.statopts);
+		xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
+				  (result.config.fmt ? result.config.fmt : ""), (result.config.options ? ", " : ""),
+				  result.config.statopts);
 		result.config.options |= STAT;
 	}
 
 	/* this will abort in case of invalid ranges */
-	set_thresholds(&result.config.procs_thresholds, result.config.warning_range, result.config.critical_range);
+	set_thresholds(&result.config.procs_thresholds, result.config.warning_range,
+				   result.config.critical_range);
 
 	return validate_arguments(result);
 }
@@ -722,13 +747,17 @@ void print_help(void) {
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
-	printf("%s\n", _("metric is outside the required threshold ranges. The metric defaults to number"));
-	printf("%s\n", _("of processes.  Search filters can be applied to limit the processes to check."));
+	printf("%s\n",
+		   _("Checks all processes and generates WARNING or CRITICAL states if the specified"));
+	printf("%s\n",
+		   _("metric is outside the required threshold ranges. The metric defaults to number"));
+	printf("%s\n",
+		   _("of processes.  Search filters can be applied to limit the processes to check."));
 
 	printf("\n\n");
 
-	printf("%s\n", _("The parent process, check_procs itself and any child process of check_procs (ps)"));
+	printf("%s\n",
+		   _("The parent process, check_procs itself and any child process of check_procs (ps)"));
 	printf("%s\n", _("are excluded from any checks to prevent false positives."));
 
 	printf("\n\n");

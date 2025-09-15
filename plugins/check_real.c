@@ -78,7 +78,8 @@ int main(int argc, char **argv) {
 	/* try to connect to the host at the given port number */
 	int socket;
 	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
-		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), config.server_address, config.server_port);
+		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), config.server_address,
+			config.server_port);
 	}
 
 	/* Part I - Server Check */
@@ -166,7 +167,8 @@ int main(int argc, char **argv) {
 		/* Part I - Server Check */
 
 		/* send the DESCRIBE request */
-		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name, config.server_port, config.server_url);
+		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name,
+				config.server_port, config.server_url);
 
 		ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
 		if (sent_bytes == -1) {
@@ -200,7 +202,8 @@ int main(int argc, char **argv) {
 				if (config.server_port == PORT) {
 					printf("%s\n", _("Invalid REAL response received from host"));
 				} else {
-					printf(_("Invalid REAL response received from host on port %d\n"), config.server_port);
+					printf(_("Invalid REAL response received from host on port %d\n"),
+						   config.server_port);
 				}
 			} else {
 
@@ -256,7 +259,8 @@ int main(int argc, char **argv) {
 		}
 
 		/* Put some HTML in here to create a dynamic link */
-		printf(_("REAL %s - %d second response time\n"), state_text(result), (int)(end_time - start_time));
+		printf(_("REAL %s - %d second response time\n"), state_text(result),
+			   (int)(end_time - start_time));
 	} else {
 		printf("%s\n", status_line);
 	}
@@ -272,12 +276,13 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_real_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"IPaddress", required_argument, 0, 'I'},
-									   {"expect", required_argument, 0, 'e'},   {"url", required_argument, 0, 'u'},
-									   {"port", required_argument, 0, 'p'},     {"critical", required_argument, 0, 'c'},
-									   {"warning", required_argument, 0, 'w'},  {"timeout", required_argument, 0, 't'},
-									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"hostname", required_argument, 0, 'H'}, {"IPaddress", required_argument, 0, 'I'},
+		{"expect", required_argument, 0, 'e'},   {"url", required_argument, 0, 'u'},
+		{"port", required_argument, 0, 'p'},     {"critical", required_argument, 0, 'c'},
+		{"warning", required_argument, 0, 'w'},  {"timeout", required_argument, 0, 't'},
+		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
 	check_real_config_wrapper result = {
 		.errorcode = OK,
@@ -427,7 +432,8 @@ void print_help(void) {
 	printf("%s\n", _("This plugin will attempt to open an RTSP connection with the host."));
 	printf("%s\n", _("Successful connects return STATE_OK, refusals and timeouts return"));
 	printf("%s\n", _("STATE_CRITICAL, other errors return STATE_UNKNOWN.  Successful connects,"));
-	printf("%s\n", _("but incorrect response messages from the host result in STATE_WARNING return"));
+	printf("%s\n",
+		   _("but incorrect response messages from the host result in STATE_WARNING return"));
 	printf("%s\n", _("values."));
 
 	printf(UT_SUPPORT);

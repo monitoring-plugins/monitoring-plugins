@@ -126,7 +126,8 @@ bool np_find_regmatch(struct regex_list *list, const char *name) {
 		/* Emulate a full match as if surrounded with ^( )$
 		   by checking whether the match spans the whole name */
 		regmatch_t dummy_match;
-		if (!regexec(&list->regex, name, 1, &dummy_match, 0) && dummy_match.rm_so == 0 && dummy_match.rm_eo == len) {
+		if (!regexec(&list->regex, name, 1, &dummy_match, 0) && dummy_match.rm_so == 0 &&
+			dummy_match.rm_eo == len) {
 			return true;
 		}
 	}
@@ -144,7 +145,8 @@ bool np_seen_name(struct name_list *list, const char *name) {
 }
 
 bool np_regex_match_mount_entry(struct mount_entry *me, regex_t *re) {
-	return ((regexec(re, me->me_devname, (size_t)0, NULL, 0) == 0) || (regexec(re, me->me_mountdir, (size_t)0, NULL, 0) == 0));
+	return ((regexec(re, me->me_devname, (size_t)0, NULL, 0) == 0) ||
+			(regexec(re, me->me_mountdir, (size_t)0, NULL, 0) == 0));
 }
 
 check_disk_config check_disk_config_init() {
@@ -264,7 +266,8 @@ measurement_unit_list *add_measurement_list(measurement_unit_list *list, measure
 	return new;
 }
 
-measurement_unit add_filesystem_to_measurement_unit(measurement_unit unit, parameter_list_elem filesystem) {
+measurement_unit add_filesystem_to_measurement_unit(measurement_unit unit,
+													parameter_list_elem filesystem) {
 
 	unit.free_bytes += filesystem.free_bytes;
 	unit.used_bytes += filesystem.used_bytes;
@@ -277,7 +280,8 @@ measurement_unit add_filesystem_to_measurement_unit(measurement_unit unit, param
 	return unit;
 }
 
-measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem filesystem, bool display_mntp) {
+measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem filesystem,
+														 bool display_mntp) {
 	measurement_unit result = measurement_unit_init();
 	if (!display_mntp) {
 		result.name = strdup(filesystem.best_match->me_mountdir);
@@ -469,17 +473,20 @@ parameter_list_elem *mp_int_fs_list_get_next(parameter_list_elem *current) {
 	return current->next;
 }
 
-void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mount_list, bool exact) {
+void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mount_list,
+								   bool exact) {
 	for (parameter_list_elem *elem = list.first; elem; elem = mp_int_fs_list_get_next(elem)) {
 		if (!elem->best_match) {
 			size_t name_len = strlen(elem->name);
 			struct mount_entry *best_match = NULL;
 
 			/* set best match if path name exactly matches a mounted device name */
-			for (struct mount_entry *mount_entry = mount_list; mount_entry; mount_entry = mount_entry->me_next) {
+			for (struct mount_entry *mount_entry = mount_list; mount_entry;
+				 mount_entry = mount_entry->me_next) {
 				if (strcmp(mount_entry->me_devname, elem->name) == 0) {
 					struct fs_usage fsp;
-					if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >= 0) {
+					if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >=
+						0) {
 						best_match = mount_entry;
 					}
 				}
@@ -488,15 +495,18 @@ void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mou
 			/* set best match by directory name if no match was found by devname */
 			if (!best_match) {
 				size_t best_match_len = 0;
-				for (struct mount_entry *mount_entry = mount_list; mount_entry; mount_entry = mount_entry->me_next) {
+				for (struct mount_entry *mount_entry = mount_list; mount_entry;
+					 mount_entry = mount_entry->me_next) {
 					size_t len = strlen(mount_entry->me_mountdir);
 
-					if ((!exact && (best_match_len <= len && len <= name_len &&
-									(len == 1 || strncmp(mount_entry->me_mountdir, elem->name, len) == 0))) ||
+					if ((!exact &&
+						 (best_match_len <= len && len <= name_len &&
+						  (len == 1 || strncmp(mount_entry->me_mountdir, elem->name, len) == 0))) ||
 						(exact && strcmp(mount_entry->me_mountdir, elem->name) == 0)) {
 						struct fs_usage fsp;
 
-						if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >= 0) {
+						if (get_fs_usage(mount_entry->me_mountdir, mount_entry->me_devname, &fsp) >=
+							0) {
 							best_match = mount_entry;
 							best_match_len = len;
 						}
@@ -507,7 +517,8 @@ void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mou
 			if (best_match) {
 				elem->best_match = best_match;
 			} else {
-				elem->best_match = NULL; /* Not sure why this is needed as it should be null on initialisation */
+				elem->best_match =
+					NULL; /* Not sure why this is needed as it should be null on initialisation */
 			}
 
 			// No filesystem without a mount_entry!

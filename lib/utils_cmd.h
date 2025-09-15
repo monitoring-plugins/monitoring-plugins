@@ -5,17 +5,17 @@
  * Header file for Monitoring Plugins utils_cmd.c
  *
  */
+#include "../config.h"
+#include <stddef.h>
 
 /** types **/
-struct output {
+typedef struct {
 	char *buf;     /* output buffer */
 	size_t buflen; /* output buffer content length */
 	char **line;   /* array of lines (points to buf) */
 	size_t *lens;  /* string lengths */
 	size_t lines;  /* lines of output */
-};
-
-typedef struct output output;
+} output;
 
 /** prototypes **/
 int cmd_run(const char *, output *, output *, int);

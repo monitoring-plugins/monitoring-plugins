@@ -45,18 +45,19 @@ int main(int argc, char **argv) {
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	if (argc < 2)
+	if (argc < 2) {
 		usage4(_("Could not parse arguments"));
-	else if (strcmp(argv[1], "-V") == 0 || strcmp(argv[1], "--version") == 0) {
+	} else if (strcmp(argv[1], "-V") == 0 || strcmp(argv[1], "--version") == 0) {
 		print_revision(progname, NP_VERSION);
 		exit(STATE_UNKNOWN);
 	} else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		print_help();
 		exit(STATE_UNKNOWN);
-	} else if (!is_integer(argv[1]))
+	} else if (!is_integer(argv[1])) {
 		usage4(_("Arguments to check_dummy must be an integer"));
-	else
+	} else {
 		result = atoi(argv[1]);
+	}
 
 	switch (result) {
 	case STATE_OK:
@@ -78,8 +79,9 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
-	if (argc >= 3)
+	if (argc >= 3) {
 		printf(": %s", argv[2]);
+	}
 
 	printf("\n");
 
@@ -92,7 +94,8 @@ void print_help(void) {
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("This plugin will simply return the state corresponding to the numeric value"));
+	printf("%s\n",
+		   _("This plugin will simply return the state corresponding to the numeric value"));
 
 	printf("%s\n", _("of the <state> argument with optional text"));
 

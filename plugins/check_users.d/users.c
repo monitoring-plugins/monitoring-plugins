@@ -23,7 +23,8 @@ get_num_of_users_wrapper get_num_of_users_windows() {
 		LPTSTR username;
 		DWORD size;
 
-		if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, wtsinfo[index].SessionId, WTSUserName, &username, &size)) {
+		if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, wtsinfo[index].SessionId,
+										WTSUserName, &username, &size)) {
 			continue;
 		}
 
@@ -150,7 +151,8 @@ get_num_of_users_wrapper get_num_of_users_who_command() {
 
 	/* check STDERR */
 	if (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		// if this fails, something broke and the result can not be relied upon or so is the theorie here
+		// if this fails, something broke and the result can not be relied upon or so is the theorie
+		// here
 		result.errorcode = STDERR_COULD_NOT_BE_READ;
 	}
 	(void)fclose(child_stderr);

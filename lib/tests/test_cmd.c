@@ -38,36 +38,35 @@ char *get_command(char *const *line) {
 }
 
 int main(int argc, char **argv) {
-	char **command_line = malloc(sizeof(char *) * COMMAND_LINE);
-	char *command = NULL;
-	char *perl;
-	output chld_out, chld_err;
-	int c;
-	int result = UNSET;
-
 	plan_tests(51);
 
 	diag("Running plain echo command, set one");
 
 	/* ensure everything is empty before we begin */
+
+	output chld_out;
 	memset(&chld_out, 0, sizeof(output));
+	output chld_err;
 	memset(&chld_err, 0, sizeof(output));
 	ok(chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok(chld_err.lines == 0, "(initialised) Checking stderr is reset");
+	int result = UNSET;
 	ok(result == UNSET, "(initialised) Checking exit code is reset");
 
+	char **command_line = malloc(sizeof(char *) * COMMAND_LINE);
 	command_line[0] = strdup("/bin/echo");
 	command_line[1] = strdup("this");
 	command_line[2] = strdup("is");
 	command_line[3] = strdup("test");
 	command_line[4] = strdup("one");
 
-	command = get_command(command_line);
+	char *command = get_command(command_line);
 
 	result = cmd_run_array(command_line, &chld_out, &chld_err, 0);
 	ok(chld_out.lines == 1, "(array) Check for expected number of stdout lines");
 	ok(chld_err.lines == 0, "(array) Check for expected number of stderr lines");
-	ok(strcmp(chld_out.line[0], "this is test one") == 0, "(array) Check for expected stdout output");
+	ok(strcmp(chld_out.line[0], "this is test one") == 0,
+	   "(array) Check for expected stdout output");
 	ok(result == 0, "(array) Checking exit code");
 
 	/* ensure everything is empty again */
@@ -82,7 +81,8 @@ int main(int argc, char **argv) {
 
 	ok(chld_out.lines == 1, "(string) Check for expected number of stdout lines");
 	ok(chld_err.lines == 0, "(string) Check for expected number of stderr lines");
-	ok(strcmp(chld_out.line[0], "this is test one") == 0, "(string) Check for expected stdout output");
+	ok(strcmp(chld_out.line[0], "this is test one") == 0,
+	   "(string) Check for expected stdout output");
 	ok(result == 0, "(string) Checking exit code");
 
 	diag("Running plain echo command, set two");
@@ -104,7 +104,8 @@ int main(int argc, char **argv) {
 	result = cmd_run_array(command_line, &chld_out, &chld_err, 0);
 	ok(chld_out.lines == 1, "(array) Check for expected number of stdout lines");
 	ok(chld_err.lines == 0, "(array) Check for expected number of stderr lines");
-	ok(strcmp(chld_out.line[0], "this is test two") == 0, "(array) Check for expected stdout output");
+	ok(strcmp(chld_out.line[0], "this is test two") == 0,
+	   "(array) Check for expected stdout output");
 	ok(result == 0, "(array) Checking exit code");
 
 	/* ensure everything is empty again */
@@ -119,7 +120,8 @@ int main(int argc, char **argv) {
 
 	ok(chld_out.lines == 1, "(string) Check for expected number of stdout lines");
 	ok(chld_err.lines == 0, "(string) Check for expected number of stderr lines");
-	ok(strcmp(chld_out.line[0], "this is test one") == 0, "(string) Check for expected stdout output");
+	ok(strcmp(chld_out.line[0], "this is test one") == 0,
+	   "(string) Check for expected stdout output");
 	ok(result == 0, "(string) Checking exit code");
 
 	/* ensure everything is empty again */
@@ -130,7 +132,8 @@ int main(int argc, char **argv) {
 	ok(chld_err.lines == 0, "(initialised) Checking stderr is reset");
 	ok(result == UNSET, "(initialised) Checking exit code is reset");
 
-	/* Pass linefeeds via parameters through - those should be evaluated by echo to give multi line output */
+	/* Pass linefeeds via parameters through - those should be evaluated by echo to give multi line
+	 * output */
 	command_line[0] = strdup("/bin/echo");
 	command_line[1] = strdup("this is a test via echo\nline two\nit's line 3");
 	command_line[2] = strdup("and (note space between '3' and 'and') $$ will not get evaluated");
@@ -138,9 +141,12 @@ int main(int argc, char **argv) {
 	result = cmd_run_array(command_line, &chld_out, &chld_err, 0);
 	ok(chld_out.lines == 3, "(array) Check for expected number of stdout lines");
 	ok(chld_err.lines == 0, "(array) Check for expected number of stderr lines");
-	ok(strcmp(chld_out.line[0], "this is a test via echo") == 0, "(array) Check line 1 for expected stdout output");
-	ok(strcmp(chld_out.line[1], "line two") == 0, "(array) Check line 2 for expected stdout output");
-	ok(strcmp(chld_out.line[2], "it's line 3 and (note space between '3' and 'and') $$ will not get evaluated") == 0,
+	ok(strcmp(chld_out.line[0], "this is a test via echo") == 0,
+	   "(array) Check line 1 for expected stdout output");
+	ok(strcmp(chld_out.line[1], "line two") == 0,
+	   "(array) Check line 2 for expected stdout output");
+	ok(strcmp(chld_out.line[2],
+			  "it's line 3 and (note space between '3' and 'and') $$ will not get evaluated") == 0,
 	   "(array) Check line 3 for expected stdout output");
 	ok(result == 0, "(array) Checking exit code");
 
@@ -171,7 +177,8 @@ int main(int argc, char **argv) {
 
 	ok(chld_out.lines == 0, "/bin/sh returns no stdout when file is missing...");
 	ok(chld_err.lines == 1, "...but does give an error line");
-	ok(strstr(chld_err.line[0], "non-existent-file") != NULL, "And missing filename is in error message");
+	ok(strstr(chld_err.line[0], "non-existent-file") != NULL,
+	   "And missing filename is in error message");
 	ok(result != 0, "Get non-zero return code from /bin/sh");
 
 	/* ensure everything is empty again */

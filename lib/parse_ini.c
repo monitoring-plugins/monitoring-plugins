@@ -40,26 +40,29 @@ typedef struct {
 	char *stanza;
 } np_ini_info;
 
-static char *default_ini_file_names[] = {"monitoring-plugins.ini", "plugins.ini", "nagios-plugins.ini", NULL};
+static char *default_ini_file_names[] = {"monitoring-plugins.ini", "plugins.ini",
+										 "nagios-plugins.ini", NULL};
 
 static char *default_ini_path_names[] = {
-	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini", "/usr/local/etc/monitoring-plugins.ini",
-	"/etc/monitoring-plugins/monitoring-plugins.ini", "/etc/monitoring-plugins.ini",
+	"/usr/local/etc/monitoring-plugins/monitoring-plugins.ini",
+	"/usr/local/etc/monitoring-plugins.ini", "/etc/monitoring-plugins/monitoring-plugins.ini",
+	"/etc/monitoring-plugins.ini",
 	/* deprecated path names (for backward compatibility): */
-	"/etc/nagios/plugins.ini", "/usr/local/nagios/etc/plugins.ini", "/usr/local/etc/nagios/plugins.ini", "/etc/opt/nagios/plugins.ini",
-	"/etc/nagios-plugins.ini", "/usr/local/etc/nagios-plugins.ini", "/etc/opt/nagios-plugins.ini", NULL};
+	"/etc/nagios/plugins.ini", "/usr/local/nagios/etc/plugins.ini",
+	"/usr/local/etc/nagios/plugins.ini", "/etc/opt/nagios/plugins.ini", "/etc/nagios-plugins.ini",
+	"/usr/local/etc/nagios-plugins.ini", "/etc/opt/nagios-plugins.ini", NULL};
 
 /* eat all characters from a FILE pointer until n is encountered */
-#define GOBBLE_TO(f, c, n)                                                                                                                 \
-	do {                                                                                                                                   \
-		(c) = fgetc((f));                                                                                                                  \
+#define GOBBLE_TO(f, c, n)                                                                         \
+	do {                                                                                           \
+		(c) = fgetc((f));                                                                          \
 	} while ((c) != EOF && (c) != (n))
 
 /* internal function that returns the constructed defaults options */
-static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts);
+static bool read_defaults(FILE *defaults_file, const char *stanza, np_arg_list **opts);
 
 /* internal function that converts a single line into options format */
-static int add_option(FILE *f, np_arg_list **optlst);
+static int add_option(FILE *filePointer, np_arg_list **optlst);
 
 /* internal functions to find default file */
 static char *default_file(void);
@@ -71,7 +74,8 @@ static char *default_file_in_path(void);
  * into its separate parts.
  */
 static void parse_locator(const char *locator, const char *def_stanza, np_ini_info *i) {
-	size_t locator_len = 0, stanza_len = 0;
+	size_t locator_len = 0;
+	size_t stanza_len = 0;
 
 	/* if locator is NULL we'll use default values */
 	if (locator != NULL) {
@@ -87,8 +91,9 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 		i->stanza = strdup(def_stanza);
 	}
 
-	if (i->stanza == NULL)
+	if (i->stanza == NULL) {
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
+	}
 
 	/* check whether there's an @file part */
 	if (stanza_len == locator_len) {
@@ -99,39 +104,46 @@ static void parse_locator(const char *locator, const char *def_stanza, np_ini_in
 		i->file_string_on_heap = true;
 	}
 
-	if (i->file == NULL || i->file[0] == '\0')
+	if (i->file == NULL || i->file[0] == '\0') {
 		die(STATE_UNKNOWN, _("Cannot find config file in any standard location.\n"));
+	}
 }
 
 /*
  * This is the externally visible function used by extra_opts.
  */
 np_arg_list *np_get_defaults(const char *locator, const char *default_section) {
-	FILE *inifile = NULL;
-	np_arg_list *defaults = NULL;
-	np_ini_info i;
 	int is_suid_plugin = mp_suid();
 
-	if (is_suid_plugin && idpriv_temp_drop() == -1)
+	if (is_suid_plugin && idpriv_temp_drop() == -1) {
 		die(STATE_UNKNOWN, _("Cannot drop privileges: %s\n"), strerror(errno));
-
-	parse_locator(locator, default_section, &i);
-	inifile = strcmp(i.file, "-") == 0 ? stdin : fopen(i.file, "r");
-
-	if (inifile == NULL)
-		die(STATE_UNKNOWN, _("Can't read config file: %s\n"), strerror(errno));
-	if (!read_defaults(inifile, i.stanza, &defaults))
-		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), i.stanza, i.file);
-
-	if (i.file_string_on_heap) {
-		free(i.file);
 	}
 
-	if (inifile != stdin)
+	FILE *inifile = NULL;
+	np_ini_info ini_info;
+	parse_locator(locator, default_section, &ini_info);
+	inifile = strcmp(ini_info.file, "-") == 0 ? stdin : fopen(ini_info.file, "r");
+
+	if (inifile == NULL) {
+		die(STATE_UNKNOWN, _("Can't read config file: %s\n"), strerror(errno));
+	}
+
+	np_arg_list *defaults = NULL;
+	if (!read_defaults(inifile, ini_info.stanza, &defaults)) {
+		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), ini_info.stanza, ini_info.file);
+	}
+
+	if (ini_info.file_string_on_heap) {
+		free(ini_info.file);
+	}
+
+	if (inifile != stdin) {
 		fclose(inifile);
-	free(i.stanza);
-	if (is_suid_plugin && idpriv_temp_restore() == -1)
+	}
+	free(ini_info.stanza);
+	if (is_suid_plugin && idpriv_temp_restore() == -1) {
 		die(STATE_UNKNOWN, _("Cannot restore privileges: %s\n"), strerror(errno));
+	}
 
 	return defaults;
 }
@@ -143,54 +155,58 @@ np_arg_list *np_get_defaults(const char *locator, const char *default_section) {
  * be extra careful about user-supplied input (i.e. avoiding possible
  * format string vulnerabilities, etc).
  */
-static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts) {
-	int c = 0;
+static bool read_defaults(FILE *defaults_file, const char *stanza, np_arg_list **opts) {
 	bool status = false;
-	size_t i, stanza_len;
 	enum {
 		NOSTANZA,
 		WRONGSTANZA,
 		RIGHTSTANZA
 	} stanzastate = NOSTANZA;
 
-	stanza_len = strlen(stanza);
+	size_t stanza_len = strlen(stanza);
 
 	/* our little stanza-parsing state machine */
-	while ((c = fgetc(f)) != EOF) {
+	int current_char = 0;
+	while ((current_char = fgetc(defaults_file)) != EOF) {
 		/* gobble up leading whitespace */
-		if (isspace(c))
+		if (isspace(current_char)) {
 			continue;
-		switch (c) {
+		}
+		switch (current_char) {
 			/* globble up comment lines */
 		case ';':
 		case '#':
-			GOBBLE_TO(f, c, '\n');
+			GOBBLE_TO(defaults_file, current_char, '\n');
 			break;
 			/* start of a stanza, check to see if it matches */
-		case '[':
+		case '[': {
 			stanzastate = WRONGSTANZA;
+			size_t i;
 			for (i = 0; i < stanza_len; i++) {
-				c = fgetc(f);
+				current_char = fgetc(defaults_file);
 				/* strip leading whitespace */
-				if (i == 0)
-					for (; isspace(c); c = fgetc(f))
-						continue;
+				if (i == 0) {
+					for (; isspace(current_char); current_char = fgetc(defaults_file)) {
+					}
+				}
 				/* nope, read to the end of the line */
-				if (c != stanza[i]) {
-					GOBBLE_TO(f, c, '\n');
+				if (current_char != stanza[i]) {
+					GOBBLE_TO(defaults_file, current_char, '\n');
 					break;
 				}
 			}
+
 			/* if it matched up to here and the next char is ']'... */
 			if (i == stanza_len) {
-				c = fgetc(f);
+				current_char = fgetc(defaults_file);
 				/* strip trailing whitespace */
-				for (; isspace(c); c = fgetc(f))
-					continue;
-				if (c == ']')
+				for (; isspace(current_char); current_char = fgetc(defaults_file)) {
+				}
+				if (current_char == ']') {
 					stanzastate = RIGHTSTANZA;
+				}
 			}
-			break;
+		} break;
 			/* otherwise, we're in the body of a stanza or a parse error */
 		default:
 			switch (stanzastate) {
@@ -201,12 +217,12 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts) {
 				die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 				/* we're in a stanza, but for a different plugin */
 			case WRONGSTANZA:
-				GOBBLE_TO(f, c, '\n');
+				GOBBLE_TO(defaults_file, current_char, '\n');
 				break;
 				/* okay, this is where we start taking the config */
 			case RIGHTSTANZA:
-				ungetc(c, f);
-				if (add_option(f, opts)) {
+				ungetc(current_char, defaults_file);
+				if (add_option(defaults_file, opts)) {
 					die(STATE_UNKNOWN, "%s\n", _("Config file error"));
 				}
 				status = true;
@@ -225,13 +241,12 @@ static int read_defaults(FILE *f, const char *stanza, np_arg_list **opts) {
  * 	--option[=value]
  * appending it to the linked list optbuf.
  */
-static int add_option(FILE *f, np_arg_list **optlst) {
-	np_arg_list *opttmp = *optlst, *optnew;
-	char *linebuf = NULL, *lineend = NULL, *optptr = NULL, *optend = NULL;
-	char *eqptr = NULL, *valptr = NULL, *valend = NULL;
-	short done_reading = 0, equals = 0, value = 0;
-	size_t cfg_len = 0, read_sz = 8, linebuf_sz = 0, read_pos = 0;
-	size_t opt_len = 0, val_len = 0;
+static int add_option(FILE *filePointer, np_arg_list **optlst) {
+	char *linebuf = NULL;
+	bool done_reading = false;
+	const size_t read_sz = 8;
+	size_t linebuf_sz = 0;
+	size_t read_pos = 0;
 
 	/* read one line from the file */
 	while (!done_reading) {
@@ -239,74 +254,101 @@ static int add_option(FILE *f, np_arg_list **optlst) {
 		if (linebuf == NULL || read_pos + read_sz >= linebuf_sz) {
 			linebuf_sz = linebuf_sz > 0 ? linebuf_sz << 1 : read_sz;
 			linebuf = realloc(linebuf, linebuf_sz);
-			if (linebuf == NULL)
+			if (linebuf == NULL) {
 				die(STATE_UNKNOWN, _("malloc() failed!\n"));
+			}
 		}
-		if (fgets(&linebuf[read_pos], (int)read_sz, f) == NULL)
-			done_reading = 1;
-		else {
+
+		if (fgets(&linebuf[read_pos], (int)read_sz, filePointer) == NULL) {
+			done_reading = true;
+		} else {
 			read_pos = strlen(linebuf);
 			if (linebuf[read_pos - 1] == '\n') {
 				linebuf[--read_pos] = '\0';
-				done_reading = 1;
+				done_reading = true;
 			}
 		}
 	}
-	lineend = &linebuf[read_pos];
+
+	char *lineend = &linebuf[read_pos];
 	/* all that to read one line, isn't C fun? :) now comes the parsing :/ */
 
 	/* skip leading whitespace */
-	for (optptr = linebuf; optptr < lineend && isspace(*optptr); optptr++)
-		continue;
-	/* continue to '=' or EOL, watching for spaces that might precede it */
-	for (eqptr = optptr; eqptr < lineend && *eqptr != '='; eqptr++) {
-		if (isspace(*eqptr) && optend == NULL)
-			optend = eqptr;
-		else
-			optend = NULL;
+	char *optptr = NULL;
+	for (optptr = linebuf; optptr < lineend && isspace(*optptr); optptr++) {
 	}
-	if (optend == NULL)
+
+	/* continue to '=' or EOL, watching for spaces that might precede it */
+	char *eqptr = NULL;
+	char *optend = NULL;
+	for (eqptr = optptr; eqptr < lineend && *eqptr != '='; eqptr++) {
+		if (isspace(*eqptr) && optend == NULL) {
+			optend = eqptr;
+		} else {
+			optend = NULL;
+		}
+	}
+
+	if (optend == NULL) {
 		optend = eqptr;
+	}
+
 	--optend;
+
 	/* ^[[:space:]]*=foo is a syntax error */
-	if (optptr == eqptr)
+	if (optptr == eqptr) {
 		die(STATE_UNKNOWN, "%s\n", _("Config file error"));
+	}
+
 	/* continue from '=' to start of value or EOL */
-	for (valptr = eqptr + 1; valptr < lineend && isspace(*valptr); valptr++)
-		continue;
+	char *valptr = NULL;
+	for (valptr = eqptr + 1; valptr < lineend && isspace(*valptr); valptr++) {
+	}
+
 	/* continue to the end of value */
-	for (valend = valptr; valend < lineend; valend++)
-		continue;
+	char *valend = NULL;
+	for (valend = valptr; valend < lineend; valend++) {
+	}
+
 	--valend;
+
 	/* finally trim off trailing spaces */
-	for (; isspace(*valend); valend--)
-		continue;
+	for (; isspace(*valend); valend--) {
+	}
+
 	/* calculate the length of "--foo" */
-	opt_len = (size_t)(1 + optend - optptr);
+	size_t opt_len = (size_t)(1 + optend - optptr);
 	/* 1-character params needs only one dash */
-	if (opt_len == 1)
+	size_t cfg_len = 0;
+	if (opt_len == 1) {
 		cfg_len = 1 + (opt_len);
-	else
+	} else {
 		cfg_len = 2 + (opt_len);
+	}
+
+	size_t val_len = 0;
+	bool equals = false;
+	bool value = false;
 	/* if valptr<lineend then we have to also allocate space for "=bar" */
 	if (valptr < lineend) {
-		equals = value = 1;
+		equals = value = true;
 		val_len = (size_t)(1 + valend - valptr);
 		cfg_len += 1 + val_len;
-	}
-	/* if valptr==valend then we have "=" but no "bar" */
-	else if (valptr == lineend) {
-		equals = 1;
+	} else if (valptr == lineend) {
+		/* if valptr==valend then we have "=" but no "bar" */
+		equals = true;
 		cfg_len += 1;
 	}
+
 	/* a line with no equal sign isn't valid */
-	if (equals == 0)
+	if (!equals) {
 		die(STATE_UNKNOWN, "%s\n", _("Config file error"));
+	}
 
 	/* okay, now we have all the info we need, so we create a new np_arg_list
 	 * element and set the argument...
 	 */
-	optnew = malloc(sizeof(np_arg_list));
+	np_arg_list *optnew = malloc(sizeof(np_arg_list));
 	optnew->next = NULL;
 
 	read_pos = 0;
@@ -329,11 +371,13 @@ static int add_option(FILE *f, np_arg_list **optlst) {
 	optnew->arg[read_pos] = '\0';
 
 	/* ...and put that to the end of the list */
-	if (*optlst == NULL)
+	if (*optlst == NULL) {
 		*optlst = optnew;
-	else {
-		while (opttmp->next != NULL)
+	} else {
+		np_arg_list *opttmp = *optlst;
+		while (opttmp->next != NULL) {
 			opttmp = opttmp->next;
+		}
 		opttmp->next = optnew;
 	}
 
@@ -344,7 +388,8 @@ static int add_option(FILE *f, np_arg_list **optlst) {
 static char *default_file(void) {
 	char *ini_file;
 
-	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL || (ini_file = default_file_in_path()) != NULL) {
+	if ((ini_file = getenv("MP_CONFIG_FILE")) != NULL ||
+		(ini_file = default_file_in_path()) != NULL) {
 		return ini_file;
 	}
 
@@ -357,19 +402,25 @@ static char *default_file(void) {
 }
 
 static char *default_file_in_path(void) {
-	char *config_path, **file;
-	char *dir, *ini_file, *tokens;
+	char *config_path;
+	char **file;
+	char *dir;
+	char *ini_file;
+	char *tokens;
 
-	if ((config_path = getenv("NAGIOS_CONFIG_PATH")) == NULL)
+	if ((config_path = getenv("NAGIOS_CONFIG_PATH")) == NULL) {
 		return NULL;
+	}
 	/* shall we spit out a warning that NAGIOS_CONFIG_PATH is deprecated? */
 
-	if ((tokens = strdup(config_path)) == NULL)
+	if ((tokens = strdup(config_path)) == NULL) {
 		die(STATE_UNKNOWN, "%s\n", _("Insufficient Memory"));
+	}
 	for (dir = strtok(tokens, ":"); dir != NULL; dir = strtok(NULL, ":")) {
 		for (file = default_ini_file_names; *file != NULL; file++) {
-			if ((asprintf(&ini_file, "%s/%s", dir, *file)) < 0)
+			if ((asprintf(&ini_file, "%s/%s", dir, *file)) < 0) {
 				die(STATE_UNKNOWN, "%s\n", _("Insufficient Memory"));
+			}
 			if (access(ini_file, F_OK) == 0) {
 				free(tokens);
 				return ini_file;

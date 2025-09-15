@@ -77,7 +77,8 @@ int main(int argc, char **argv) {
 
 	/* create the command line to execute */
 	char *command_line = NULL;
-	xasprintf(&command_line, "%s -raw %s -%s %s", PATH_TO_QSTAT, QSTAT_DATA_DELIMITER, config.game_type, config.server_ip);
+	xasprintf(&command_line, "%s -raw %s -%s %s", PATH_TO_QSTAT, QSTAT_DATA_DELIMITER,
+			  config.game_type, config.server_ip);
 
 	if (config.port) {
 		xasprintf(&command_line, "%s:%-d", command_line, config.port);
@@ -130,11 +131,13 @@ int main(int argc, char **argv) {
 		printf(_("CRITICAL - Game server timeout\n"));
 		result = STATE_CRITICAL;
 	} else {
-		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players], ret[config.qstat_game_players_max],
-			   ret[config.qstat_game_field], ret[config.qstat_map_field], ret[config.qstat_ping_field],
-			   perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0, true, 0, true,
-						atol(ret[config.qstat_game_players_max])),
-			   fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0, true, 0, false, 0));
+		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players],
+			   ret[config.qstat_game_players_max], ret[config.qstat_game_field],
+			   ret[config.qstat_map_field], ret[config.qstat_ping_field],
+			   perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0,
+						true, 0, true, atol(ret[config.qstat_game_players_max])),
+			   fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0,
+						 true, 0, false, 0));
 	}
 
 	exit(result);
@@ -144,19 +147,20 @@ int main(int argc, char **argv) {
 #define max_players_field_index 130
 
 check_game_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option long_opts[] = {{"help", no_argument, 0, 'h'},
-										{"version", no_argument, 0, 'V'},
-										{"verbose", no_argument, 0, 'v'},
-										{"timeout", required_argument, 0, 't'},
-										{"hostname", required_argument, 0, 'H'},
-										{"port", required_argument, 0, 'P'},
-										{"game-type", required_argument, 0, 'G'},
-										{"map-field", required_argument, 0, 'm'},
-										{"ping-field", required_argument, 0, 'p'},
-										{"game-field", required_argument, 0, 'g'},
-										{"players-field", required_argument, 0, players_field_index},
-										{"max-players-field", required_argument, 0, max_players_field_index},
-										{0, 0, 0, 0}};
+	static struct option long_opts[] = {
+		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{"verbose", no_argument, 0, 'v'},
+		{"timeout", required_argument, 0, 't'},
+		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'P'},
+		{"game-type", required_argument, 0, 'G'},
+		{"map-field", required_argument, 0, 'm'},
+		{"ping-field", required_argument, 0, 'p'},
+		{"game-field", required_argument, 0, 'g'},
+		{"players-field", required_argument, 0, players_field_index},
+		{"max-players-field", required_argument, 0, max_players_field_index},
+		{0, 0, 0, 0}};
 
 	check_game_config_wrapper result = {
 		.config = check_game_config_init(),
@@ -216,21 +220,24 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* index of ping field */
 			result.config.qstat_ping_field = atoi(optarg);
-			if (result.config.qstat_ping_field < 0 || result.config.qstat_ping_field > QSTAT_MAX_RETURN_ARGS) {
+			if (result.config.qstat_ping_field < 0 ||
+				result.config.qstat_ping_field > QSTAT_MAX_RETURN_ARGS) {
 				result.errorcode = ERROR;
 				return result;
 			}
 			break;
 		case 'm': /* index on map field */
 			result.config.qstat_map_field = atoi(optarg);
-			if (result.config.qstat_map_field < 0 || result.config.qstat_map_field > QSTAT_MAX_RETURN_ARGS) {
+			if (result.config.qstat_map_field < 0 ||
+				result.config.qstat_map_field > QSTAT_MAX_RETURN_ARGS) {
 				result.errorcode = ERROR;
 				return result;
 			}
 			break;
 		case 'g': /* index of game field */
 			result.config.qstat_game_field = atoi(optarg);
-			if (result.config.qstat_game_field < 0 || result.config.qstat_game_field > QSTAT_MAX_RETURN_ARGS) {
+			if (result.config.qstat_game_field < 0 ||
+				result.config.qstat_game_field > QSTAT_MAX_RETURN_ARGS) {
 				result.errorcode = ERROR;
 				return result;
 			}
@@ -240,14 +247,16 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 			if (result.config.qstat_game_players_max == 0) {
 				result.config.qstat_game_players_max = result.config.qstat_game_players - 1;
 			}
-			if (result.config.qstat_game_players < 0 || result.config.qstat_game_players > QSTAT_MAX_RETURN_ARGS) {
+			if (result.config.qstat_game_players < 0 ||
+				result.config.qstat_game_players > QSTAT_MAX_RETURN_ARGS) {
 				result.errorcode = ERROR;
 				return result;
 			}
 			break;
 		case max_players_field_index: /* index of max players field */
 			result.config.qstat_game_players_max = atoi(optarg);
-			if (result.config.qstat_game_players_max < 0 || result.config.qstat_game_players_max > QSTAT_MAX_RETURN_ARGS) {
+			if (result.config.qstat_game_players_max < 0 ||
+				result.config.qstat_game_players_max > QSTAT_MAX_RETURN_ARGS) {
 				result.errorcode = ERROR;
 				return result;
 			}
@@ -286,7 +295,7 @@ void print_help(void) {
 	printf(UT_HELP_VRSN);
 	printf(UT_EXTRA_OPTS);
 	printf(" -H, --hostname=ADDRESS\n"
-		  "    Host name, IP Address, or unix socket (must be an absolute path)\n");
+		   "    Host name, IP Address, or unix socket (must be an absolute path)\n");
 	printf(" %s\n", "-P");
 	printf("    %s\n", _("Optional port to connect to"));
 	printf(" %s\n", "-g");
@@ -300,8 +309,10 @@ void print_help(void) {
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("This plugin uses the 'qstat' command, the popular game server status query tool."));
-	printf(" %s\n", _("If you don't have the package installed, you will need to download it from"));
+	printf(" %s\n",
+		   _("This plugin uses the 'qstat' command, the popular game server status query tool."));
+	printf(" %s\n",
+		   _("If you don't have the package installed, you will need to download it from"));
 	printf(" %s\n", _("https://github.com/multiplay/qstat before you can use this plugin."));
 
 	printf(UT_SUPPORT);
@@ -309,7 +320,8 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s [-hvV] [-P port] [-t timeout] [-g game_field] [-m map_field] [-p ping_field] [-G game-time] [-H hostname] <game> "
+	printf(" %s [-hvV] [-P port] [-t timeout] [-g game_field] [-m map_field] [-p ping_field] [-G "
+		   "game-time] [-H hostname] <game> "
 		   "<ip_address>\n",
 		   progname);
 }

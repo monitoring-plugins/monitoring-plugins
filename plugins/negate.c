@@ -105,7 +105,8 @@ int main(int argc, char **argv) {
 				*sub = '\0';
 				sub += strlen(state_text(result));
 				/* then put everything back together */
-				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i], state_text(config.state[result]), sub);
+				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i],
+						  state_text(config.state[result]), sub);
 			}
 		}
 		printf("%s\n", chld_out.line[i]);
@@ -120,11 +121,12 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 static negate_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"help", no_argument, 0, 'h'},           {"version", no_argument, 0, 'V'},
-									   {"timeout", required_argument, 0, 't'},  {"timeout-result", required_argument, 0, 'T'},
-									   {"ok", required_argument, 0, 'o'},       {"warning", required_argument, 0, 'w'},
-									   {"critical", required_argument, 0, 'c'}, {"unknown", required_argument, 0, 'u'},
-									   {"substitute", no_argument, 0, 's'},     {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"help", no_argument, 0, 'h'},           {"version", no_argument, 0, 'V'},
+		{"timeout", required_argument, 0, 't'},  {"timeout-result", required_argument, 0, 'T'},
+		{"ok", required_argument, 0, 'o'},       {"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'}, {"unknown", required_argument, 0, 'u'},
+		{"substitute", no_argument, 0, 's'},     {0, 0, 0, 0}};
 
 	negate_config_wrapper result = {
 		.errorcode = OK,
@@ -159,31 +161,36 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'T': /* Result to return on timeouts */
 			if ((timeout_state = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, "
+						 "UNKNOWN) or integer (0-3)."));
 			}
 			break;
 		case 'o': /* replacement for OK */
 			if ((result.config.state[STATE_OK] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
 
 		case 'w': /* replacement for WARNING */
 			if ((result.config.state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'c': /* replacement for CRITICAL */
 			if ((result.config.state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'u': /* replacement for UNKNOWN */
 			if ((result.config.state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
@@ -208,7 +215,8 @@ negate_config_wrapper validate_arguments(negate_config_wrapper config_wrapper) {
 		usage4(_("Could not parse arguments"));
 	}
 
-	if (strncmp(config_wrapper.config.command_line[0], "/", 1) != 0 && strncmp(config_wrapper.config.command_line[0], "./", 2) != 0) {
+	if (strncmp(config_wrapper.config.command_line[0], "/", 1) != 0 &&
+		strncmp(config_wrapper.config.command_line[0], "./", 2) != 0) {
 		usage4(_("Require path to command"));
 	}
 
@@ -220,7 +228,8 @@ void print_help(void) {
 
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("Negates only the return code of a plugin (returns OK for CRITICAL and vice-versa) by default."));
+	printf("%s\n", _("Negates only the return code of a plugin (returns OK for CRITICAL and "
+					 "vice-versa) by default."));
 	printf("%s\n", _("Additional switches can be used to control:\n"));
 	printf("\t  - which state becomes what\n");
 	printf("\t  - changing the plugin output text to match the return code");
@@ -250,17 +259,20 @@ void print_help(void) {
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", "negate /usr/local/nagios/libexec/check_ping -H host");
 	printf("    %s\n", _("Run check_ping and invert result. Must use full path to plugin"));
-	printf(" %s\n", "negate -w OK -c UNKNOWN /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
+	printf(" %s\n",
+		   "negate -w OK -c UNKNOWN /usr/local/nagios/libexec/check_procs -a 'vi negate.c'");
 	printf("    %s\n", _("This will return OK instead of WARNING and UNKNOWN instead of CRITICAL"));
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("This plugin is a wrapper to take the output of another plugin and invert it."));
+	printf(" %s\n",
+		   _("This plugin is a wrapper to take the output of another plugin and invert it."));
 	printf(" %s\n", _("The full path of the plugin must be provided."));
 	printf(" %s\n", _("If the wrapped plugin returns OK, the wrapper will return CRITICAL."));
 	printf(" %s\n", _("If the wrapped plugin returns CRITICAL, the wrapper will return OK."));
 	printf(" %s\n", _("Otherwise, the output state of the wrapped plugin is unchanged."));
 	printf("\n");
-	printf(" %s\n", _("Using timeout-result, it is possible to override the timeout behaviour or a"));
+	printf(" %s\n",
+		   _("Using timeout-result, it is possible to override the timeout behaviour or a"));
 	printf(" %s\n", _("plugin by setting the negate timeout a bit lower."));
 
 	printf(UT_SUPPORT);

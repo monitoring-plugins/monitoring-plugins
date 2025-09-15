@@ -168,7 +168,8 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc1 = mp_subcheck_init();
 		scaled_load_sc1 = mp_set_subcheck_state(scaled_load_sc1, mp_get_pd_status(pd_scaled_load1));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc1, pd_scaled_load1);
-		xasprintf(&scaled_load_sc1.output, "1 Minute: %s", pd_value_to_string(pd_scaled_load1.value));
+		xasprintf(&scaled_load_sc1.output, "1 Minute: %s",
+				  pd_value_to_string(pd_scaled_load1.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc1);
 
 		mp_perfdata pd_scaled_load5 = perfdata_init();
@@ -179,7 +180,8 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc5 = mp_subcheck_init();
 		scaled_load_sc5 = mp_set_subcheck_state(scaled_load_sc5, mp_get_pd_status(pd_scaled_load5));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc5, pd_scaled_load5);
-		xasprintf(&scaled_load_sc5.output, "5 Minutes: %s", pd_value_to_string(pd_scaled_load5.value));
+		xasprintf(&scaled_load_sc5.output, "5 Minutes: %s",
+				  pd_value_to_string(pd_scaled_load5.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc5);
 
 		mp_perfdata pd_scaled_load15 = perfdata_init();
@@ -188,9 +190,11 @@ int main(int argc, char **argv) {
 		pd_scaled_load15 = mp_pd_set_thresholds(pd_scaled_load15, config.th_load[2]);
 
 		mp_subcheck scaled_load_sc15 = mp_subcheck_init();
-		scaled_load_sc15 = mp_set_subcheck_state(scaled_load_sc15, mp_get_pd_status(pd_scaled_load15));
+		scaled_load_sc15 =
+			mp_set_subcheck_state(scaled_load_sc15, mp_get_pd_status(pd_scaled_load15));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc15, pd_scaled_load15);
-		xasprintf(&scaled_load_sc15.output, "15 Minutes: %s", pd_value_to_string(pd_scaled_load15.value));
+		xasprintf(&scaled_load_sc15.output, "15 Minutes: %s",
+				  pd_value_to_string(pd_scaled_load15.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc15);
 
 		mp_add_subcheck_to_check(&overall, scaled_load_sc);
@@ -245,11 +249,13 @@ int main(int argc, char **argv) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
 		top_processes_result top_proc = print_top_consuming_processes(config.n_procs_to_show);
-		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes", config.n_procs_to_show);
+		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
+				  config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
 			for (unsigned long i = 0; i < config.n_procs_to_show; i++) {
-				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output, top_proc.top_processes[i]);
+				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
+						  top_proc.top_processes[i]);
 			}
 		}
 
@@ -417,7 +423,8 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n", progname);
+	printf("%s [-r] -w WLOAD1,WLOAD5,WLOAD15 -c CLOAD1,CLOAD5,CLOAD15 [-n NUMBER_OF_PROCS]\n",
+		   progname);
 }
 
 #ifdef PS_USES_PROCPCPU
@@ -445,8 +452,8 @@ static top_processes_result print_top_consuming_processes(unsigned long n_procs_
 	top_processes_result result = {
 		.errorcode = OK,
 	};
-	struct output chld_out;
-	struct output chld_err;
+	output chld_out;
+	output chld_err;
 	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		result.errorcode = ERROR;
@@ -462,7 +469,8 @@ static top_processes_result print_top_consuming_processes(unsigned long n_procs_
 #ifdef PS_USES_PROCPCPU
 	qsort(chld_out.line + 1, chld_out.lines - 1, sizeof(char *), cmpstringp);
 #endif /* PS_USES_PROCPCPU */
-	unsigned long lines_to_show = chld_out.lines < (size_t)(n_procs_to_show + 1) ? chld_out.lines : n_procs_to_show + 1;
+	unsigned long lines_to_show =
+		chld_out.lines < (size_t)(n_procs_to_show + 1) ? chld_out.lines : n_procs_to_show + 1;
 
 	result.top_processes = calloc(lines_to_show, sizeof(char *));
 	if (result.top_processes == NULL) {

@@ -112,25 +112,30 @@ int main(int argc, char **argv) {
 	int return_code = STATE_OK;
 	/* return the status of the cluster */
 	if (config.check_type == CHECK_SERVICES) {
-		return_code = get_status(total_services_warning + total_services_unknown + total_services_critical, config.thresholds);
-		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n", state_text(return_code),
-			   (config.label == NULL) ? "Service cluster" : config.label, total_services_ok, total_services_warning, total_services_unknown,
+		return_code =
+			get_status(total_services_warning + total_services_unknown + total_services_critical,
+					   config.thresholds);
+		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n",
+			   state_text(return_code), (config.label == NULL) ? "Service cluster" : config.label,
+			   total_services_ok, total_services_warning, total_services_unknown,
 			   total_services_critical);
 	} else {
 		return_code = get_status(total_hosts_down + total_hosts_unreachable, config.thresholds);
 		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n", state_text(return_code),
-			   (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up, total_hosts_down, total_hosts_unreachable);
+			   (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up,
+			   total_hosts_down, total_hosts_unreachable);
 	}
 
 	exit(return_code);
 }
 
 check_cluster_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"data", required_argument, 0, 'd'},     {"warning", required_argument, 0, 'w'},
-									   {"critical", required_argument, 0, 'c'}, {"label", required_argument, 0, 'l'},
-									   {"host", no_argument, 0, 'h'},           {"service", no_argument, 0, 's'},
-									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'H'},           {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"data", required_argument, 0, 'd'},     {"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'}, {"label", required_argument, 0, 'l'},
+		{"host", no_argument, 0, 'h'},           {"service", no_argument, 0, 's'},
+		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'H'},           {0, 0, 0, 0}};
 
 	check_cluster_config_wrapper result = {
 		.errorcode = OK,
@@ -251,7 +256,8 @@ void print_help(void) {
 	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n", "check_cluster -s -d 2,0,2,0 -c @3:");
-	printf("    %s\n", _("Will alert critical if there are 3 or more service data points in a non-OK"));
+	printf("    %s\n",
+		   _("Will alert critical if there are 3 or more service data points in a non-OK"));
 	printf("    %s\n", _("state."));
 
 	printf(UT_SUPPORT);

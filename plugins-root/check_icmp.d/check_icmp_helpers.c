@@ -76,7 +76,7 @@ check_icmp_state check_icmp_state_init() {
 
 ping_target_create_wrapper ping_target_create(struct sockaddr_storage address) {
 	ping_target_create_wrapper result = {
-		.errorcode = OK,
+		.errorcode = 0,
 	};
 
 	struct sockaddr_storage *tmp_addr = &address;
@@ -88,7 +88,7 @@ ping_target_create_wrapper ping_target_create(struct sockaddr_storage address) {
 		   ((struct sockaddr_in *)tmp_addr)->sin_addr.s_addr == INADDR_ANY))) ||
 		(tmp_addr->ss_family == AF_INET6 &&
 		 (((struct sockaddr_in6 *)tmp_addr)->sin6_addr.s6_addr == in6addr_any.s6_addr))) {
-		result.errorcode = ERROR;
+		result.errorcode = 1;
 		return result;
 	}
 

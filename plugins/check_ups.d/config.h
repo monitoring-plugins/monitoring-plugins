@@ -52,4 +52,3 @@ check_ups_config check_ups_config_init(void) {
 
 	return tmp;
 }
-

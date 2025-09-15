@@ -40,7 +40,6 @@
 
 /** includes **/
 #include "common.h"
-#include "utils.h"
 #include "utils_cmd.h"
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
@@ -62,16 +61,13 @@ static pid_t *_cmd_pids = NULL;
 #	include <sys/wait.h>
 #endif
 
-/* used in _cmd_open to pass the environment to commands */
-extern char **environ;
-
 /** macros **/
 #ifndef WEXITSTATUS
 #	define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif
 
 #ifndef WIFEXITED
-#	define WIFEXITED(stat_val) (((stat_val)&255) == 0)
+#	define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
 /* 4.3BSD Reno <signal.h> doesn't define SIG_ERR */
@@ -80,14 +76,12 @@ extern char **environ;
 #endif
 
 /** prototypes **/
-static int _cmd_open(char *const *, int *, int *) __attribute__((__nonnull__(1, 2, 3)));
+static int _cmd_open(char *const *argv, int *pfd, int *pfderr)
+	__attribute__((__nonnull__(1, 2, 3)));
 
-static int _cmd_fetch_output(int, output *, int) __attribute__((__nonnull__(2)));
+static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) __attribute__((__nonnull__(2)));
 
-static int _cmd_close(int);
-
-/* prototype imported from utils.h */
-extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
+static int _cmd_close(int fileDescriptor);
 
 /* this function is NOT async-safe. It is exported so multithreaded
  * plugins (or other apps) can call it prior to running any commands
@@ -103,26 +97,29 @@ void cmd_init(void) {
 		maxfd = MAXFD_LIMIT;
 	}
 
-	if (!_cmd_pids)
+	if (!_cmd_pids) {
 		_cmd_pids = calloc(maxfd, sizeof(pid_t));
+	}
 }
 
 /* Start running a command, array style */
 static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
-	pid_t pid;
 #ifdef RLIMIT_CORE
 	struct rlimit limit;
 #endif
 
 	int i = 0;
 
-	if (!_cmd_pids)
+	if (!_cmd_pids) {
 		CMD_INIT;
+	}
 
 	setenv("LC_ALL", "C", 1);
 
-	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0)
+	pid_t pid;
+	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0) {
 		return -1; /* errno set by the failing function */
+	}
 
 	/* child runs exceve() and _exit. */
 	if (pid == 0) {
@@ -147,9 +144,11 @@ static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
 		long maxfd = mp_open_max();
-		for (i = 0; i < maxfd; i++)
-			if (_cmd_pids[i] > 0)
+		for (i = 0; i < maxfd; i++) {
+			if (_cmd_pids[i] > 0) {
 				close(i);
+			}
+		}
 
 		execve(argv[0], argv, environ);
 		_exit(STATE_UNKNOWN);
@@ -166,87 +165,94 @@ static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 	return pfd[0];
 }
 
-static int _cmd_close(int fd) {
-	int status;
+static int _cmd_close(int fileDescriptor) {
 	pid_t pid;
 
 	/* make sure the provided fd was opened */
 	long maxfd = mp_open_max();
-	if (fd < 0 || fd > maxfd || !_cmd_pids || (pid = _cmd_pids[fd]) == 0)
+	if (fileDescriptor < 0 || fileDescriptor > maxfd || !_cmd_pids ||
+		(pid = _cmd_pids[fileDescriptor]) == 0) {
 		return -1;
+	}
 
-	_cmd_pids[fd] = 0;
-	if (close(fd) == -1)
+	_cmd_pids[fileDescriptor] = 0;
+	if (close(fileDescriptor) == -1) {
 		return -1;
+	}
 
 	/* EINTR is ok (sort of), everything else is bad */
-	while (waitpid(pid, &status, 0) < 0)
-		if (errno != EINTR)
+	int status;
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
 			return -1;
+		}
+	}
 
 	/* return child's termination status */
 	return (WIFEXITED(status)) ? WEXITSTATUS(status) : -1;
 }
 
-static int _cmd_fetch_output(int fd, output *op, int flags) {
-	size_t len = 0, i = 0, lineno = 0;
-	size_t rsf = 6, ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
-	char *buf = NULL;
-	int ret;
+static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) {
 	char tmpbuf[4096];
-
-	op->buf = NULL;
-	op->buflen = 0;
-	while ((ret = read(fd, tmpbuf, sizeof(tmpbuf))) > 0) {
-		len = (size_t)ret;
-		op->buf = realloc(op->buf, op->buflen + len + 1);
-		memcpy(op->buf + op->buflen, tmpbuf, len);
-		op->buflen += len;
-		i++;
+	cmd_output->buf = NULL;
+	cmd_output->buflen = 0;
+	ssize_t ret;
+	while ((ret = read(fileDescriptor, tmpbuf, sizeof(tmpbuf))) > 0) {
+		size_t len = (size_t)ret;
+		cmd_output->buf = realloc(cmd_output->buf, cmd_output->buflen + len + 1);
+		memcpy(cmd_output->buf + cmd_output->buflen, tmpbuf, len);
+		cmd_output->buflen += len;
 	}
 
 	if (ret < 0) {
-		printf("read() returned %d: %s\n", ret, strerror(errno));
+		printf("read() returned %zd: %s\n", ret, strerror(errno));
 		return ret;
 	}
 
 	/* some plugins may want to keep output unbroken, and some commands
 	 * will yield no output, so return here for those */
-	if (flags & CMD_NO_ARRAYS || !op->buf || !op->buflen)
-		return op->buflen;
+	if (flags & CMD_NO_ARRAYS || !cmd_output->buf || !cmd_output->buflen) {
+		return cmd_output->buflen;
+	}
 
 	/* and some may want both */
+	char *buf = NULL;
 	if (flags & CMD_NO_ASSOC) {
-		buf = malloc(op->buflen);
-		memcpy(buf, op->buf, op->buflen);
-	} else
-		buf = op->buf;
+		buf = malloc(cmd_output->buflen);
+		memcpy(buf, cmd_output->buf, cmd_output->buflen);
+	} else {
+		buf = cmd_output->buf;
+	}
 
-	op->line = NULL;
-	op->lens = NULL;
-	i = 0;
-	while (i < op->buflen) {
+	cmd_output->line = NULL;
+	cmd_output->lens = NULL;
+	size_t i = 0;
+	size_t ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
+	size_t rsf = 6;
+	size_t lineno = 0;
+	while (i < cmd_output->buflen) {
 		/* make sure we have enough memory */
 		if (lineno >= ary_size) {
 			/* ary_size must never be zero */
 			do {
-				ary_size = op->buflen >> --rsf;
+				ary_size = cmd_output->buflen >> --rsf;
 			} while (!ary_size);
 
-			op->line = realloc(op->line, ary_size * sizeof(char *));
-			op->lens = realloc(op->lens, ary_size * sizeof(size_t));
+			cmd_output->line = realloc(cmd_output->line, ary_size * sizeof(char *));
+			cmd_output->lens = realloc(cmd_output->lens, ary_size * sizeof(size_t));
 		}
 
 		/* set the pointer to the string */
-		op->line[lineno] = &buf[i];
+		cmd_output->line[lineno] = &buf[i];
 
 		/* hop to next newline or end of buffer */
-		while (buf[i] != '\n' && i < op->buflen)
+		while (buf[i] != '\n' && i < cmd_output->buflen) {
 			i++;
+		}
 		buf[i] = '\0';
 
 		/* calculate the string length using pointer difference */
-		op->lens[lineno] = (size_t)&buf[i] - (size_t)op->line[lineno];
+		cmd_output->lens[lineno] = (size_t)&buf[i] - (size_t)cmd_output->line[lineno];
 
 		lineno++;
 		i++;
@@ -256,41 +262,42 @@ static int _cmd_fetch_output(int fd, output *op, int flags) {
 }
 
 int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
-	int i = 0, argc;
-	size_t cmdlen;
-	char **argv = NULL;
-	char *cmd = NULL;
-	char *str = NULL;
-
-	if (cmdstring == NULL)
+	if (cmdstring == NULL) {
 		return -1;
+	}
 
 	/* initialize the structs */
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
-	if (err)
+	}
+	if (err) {
 		memset(err, 0, sizeof(output));
+	}
 
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
-	cmdlen = strlen(cmdstring);
-	if ((cmd = malloc(cmdlen + 1)) == NULL)
+	size_t cmdlen = strlen(cmdstring);
+	char *cmd = NULL;
+	if ((cmd = malloc(cmdlen + 1)) == NULL) {
 		return -1;
+	}
 	memcpy(cmd, cmdstring, cmdlen);
 	cmd[cmdlen] = '\0';
 
 	/* This is not a shell, so we don't handle "???" */
-	if (strstr(cmdstring, "\""))
+	if (strstr(cmdstring, "\"")) {
 		return -1;
+	}
 
 	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
-	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
+	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''")) {
 		return -1;
+	}
 
 	/* each arg must be whitespace-separated, so args can be a maximum
 	 * of (len / 2) + 1. We add 1 extra to the mix for NULL termination */
-	argc = (cmdlen >> 1) + 2;
-	argv = calloc((size_t)argc, sizeof(char *));
+	int argc = (cmdlen >> 1) + 2;
+	char **argv = calloc((size_t)argc, sizeof(char *));
 
 	if (argv == NULL) {
 		printf("%s\n", _("Could not malloc argv array in popen()"));
@@ -298,14 +305,16 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 	}
 
 	/* get command arguments (stupidly, but fairly quickly) */
+	int i = 0;
 	while (cmd) {
-		str = cmd;
+		char *str = cmd;
 		str += strspn(str, " \t\r\n"); /* trim any leading whitespace */
 
 		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
 			str++;
-			if (!strstr(str, "'"))
+			if (!strstr(str, "'")) {
 				return -1; /* balanced? */
+			}
 			cmd = 1 + strstr(str, "'");
 			str[strcspn(str, "'")] = 0;
 		} else {
@@ -317,8 +326,9 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 			}
 		}
 
-		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n"))
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n")) {
 			cmd = NULL;
+		}
 
 		argv[i++] = str;
 	}
@@ -327,53 +337,65 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 }
 
 int cmd_run_array(char *const *argv, output *out, output *err, int flags) {
-	int fd, pfd_out[2], pfd_err[2];
-
 	/* initialize the structs */
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
-	if (err)
+	}
+	if (err) {
 		memset(err, 0, sizeof(output));
+	}
 
-	if ((fd = _cmd_open(argv, pfd_out, pfd_err)) == -1)
+	int fd;
+	int pfd_out[2];
+	int pfd_err[2];
+	if ((fd = _cmd_open(argv, pfd_out, pfd_err)) == -1) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), argv[0]);
+	}
 
-	if (out)
+	if (out) {
 		out->lines = _cmd_fetch_output(pfd_out[0], out, flags);
-	if (err)
+	}
+	if (err) {
 		err->lines = _cmd_fetch_output(pfd_err[0], err, flags);
+	}
 
 	return _cmd_close(fd);
 }
 
 int cmd_file_read(const char *filename, output *out, int flags) {
 	int fd;
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
+	}
 
 	if ((fd = open(filename, O_RDONLY)) == -1) {
 		die(STATE_UNKNOWN, _("Error opening %s: %s"), filename, strerror(errno));
 	}
 
-	if (out)
+	if (out) {
 		out->lines = _cmd_fetch_output(fd, out, flags);
+	}
 
-	if (close(fd) == -1)
+	if (close(fd) == -1) {
 		die(STATE_UNKNOWN, _("Error closing %s: %s"), filename, strerror(errno));
+	}
 
 	return 0;
 }
 
 void timeout_alarm_handler(int signo) {
 	if (signo == SIGALRM) {
-		printf(_("%s - Plugin timed out after %d seconds\n"), state_text(timeout_state), timeout_interval);
+		printf(_("%s - Plugin timed out after %d seconds\n"), state_text(timeout_state),
+			   timeout_interval);
 
 		long maxfd = mp_open_max();
-		if (_cmd_pids)
+		if (_cmd_pids) {
 			for (long int i = 0; i < maxfd; i++) {
-				if (_cmd_pids[i] != 0)
+				if (_cmd_pids[i] != 0) {
 					kill(_cmd_pids[i], SIGKILL);
+				}
 			}
+		}
 
 		exit(timeout_state);
 	}

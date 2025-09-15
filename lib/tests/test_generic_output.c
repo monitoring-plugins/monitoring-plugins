@@ -110,7 +110,8 @@ void test_two_subchecks(void) {
 	sc1.output = "foobar";
 	sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 
-	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING, "Test subcheck state directly after setting it");
+	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING,
+	   "Test subcheck state directly after setting it");
 
 	mp_perfdata pd1 = perfdata_init();
 
@@ -129,7 +130,8 @@ void test_two_subchecks(void) {
 
 	mp_add_subcheck_to_subcheck(&sc1, sc2);
 
-	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING, "Test subcheck state after adding a subcheck");
+	ok(mp_compute_subcheck_state(sc1) == STATE_WARNING,
+	   "Test subcheck state after adding a subcheck");
 
 	mp_check check = mp_check_init();
 	mp_add_subcheck_to_check(&check, sc1);

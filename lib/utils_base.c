@@ -44,7 +44,7 @@
 
 monitoring_plugin *this_monitoring_plugin = NULL;
 
-int timeout_state = STATE_CRITICAL;
+mp_state_enum timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
 bool _np_state_read_file(FILE *state_file);
@@ -254,7 +254,7 @@ bool check_range(double value, range *my_range) {
 		yes = false;
 	}
 
-	if (!my_range->end_infinity&& !my_range->start_infinity) {
+	if (!my_range->end_infinity && !my_range->start_infinity) {
 		if ((my_range->start <= value) && (value <= my_range->end)) {
 			return no;
 		}
@@ -268,7 +268,7 @@ bool check_range(double value, range *my_range) {
 		return yes;
 	}
 
-	if (my_range->start_infinity && !my_range->end_infinity ) {
+	if (my_range->start_infinity && !my_range->end_infinity) {
 		if (value <= my_range->end) {
 			return no;
 		}

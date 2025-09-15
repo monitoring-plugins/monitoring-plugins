@@ -68,7 +68,7 @@ void popen_timeout_alarm_handler(int /*signo*/);
 #endif
 
 #ifndef WIFEXITED
-#	define WIFEXITED(stat_val) (((stat_val)&255) == 0)
+#	define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
 /* 4.3BSD Reno <signal.h> doesn't define SIG_ERR */
@@ -96,24 +96,28 @@ FILE *spopen(const char *cmdstring) {
 	env[1] = NULL;
 
 	/* if no command was passed, return with no error */
-	if (cmdstring == NULL)
+	if (cmdstring == NULL) {
 		return (NULL);
+	}
 
 	char *cmd = NULL;
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmd = malloc(strlen(cmdstring) + 1);
-	if (cmd == NULL)
+	if (cmd == NULL) {
 		return NULL;
+	}
 	strcpy(cmd, cmdstring);
 
 	/* This is not a shell, so we don't handle "???" */
-	if (strstr(cmdstring, "\""))
+	if (strstr(cmdstring, "\"")) {
 		return NULL;
+	}
 
 	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
-	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
+	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''")) {
 		return NULL;
+	}
 
 	int argc;
 	char **argv = NULL;
@@ -140,15 +144,17 @@ FILE *spopen(const char *cmdstring) {
 
 		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
 			str++;
-			if (!strstr(str, "'"))
+			if (!strstr(str, "'")) {
 				return NULL; /* balanced? */
+			}
 			cmd = 1 + strstr(str, "'");
 			str[strcspn(str, "'")] = 0;
 		} else if (strcspn(str, "'") < strcspn(str, " \t\r\n")) {
 			/* handle --option='foo bar' strings */
 			char *tmp = str + strcspn(str, "'") + 1;
-			if (!strstr(tmp, "'"))
+			if (!strstr(tmp, "'")) {
 				return NULL; /* balanced? */
+			}
 			tmp += strcspn(tmp, "'") + 1;
 			*tmp = 0;
 			cmd = tmp + 1;
@@ -161,8 +167,9 @@ FILE *spopen(const char *cmdstring) {
 			}
 		}
 
-		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n"))
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n")) {
 			cmd = NULL;
+		}
 
 		argv[i++] = str;
 	}
@@ -171,22 +178,26 @@ FILE *spopen(const char *cmdstring) {
 	long maxfd = mp_open_max();
 
 	if (childpid == NULL) { /* first time through */
-		if ((childpid = calloc((size_t)maxfd, sizeof(pid_t))) == NULL)
+		if ((childpid = calloc((size_t)maxfd, sizeof(pid_t))) == NULL) {
 			return (NULL);
+		}
 	}
 
 	if (child_stderr_array == NULL) { /* first time through */
-		if ((child_stderr_array = calloc((size_t)maxfd, sizeof(int))) == NULL)
+		if ((child_stderr_array = calloc((size_t)maxfd, sizeof(int))) == NULL) {
 			return (NULL);
+		}
 	}
 
 	int pfd[2];
-	if (pipe(pfd) < 0)
+	if (pipe(pfd) < 0) {
 		return (NULL); /* errno set by pipe() */
+	}
 
 	int pfderr[2];
-	if (pipe(pfderr) < 0)
+	if (pipe(pfderr) < 0) {
 		return (NULL); /* errno set by pipe() */
+	}
 
 #ifdef REDHAT_SPOPEN_ERROR
 	if (signal(SIGCHLD, popen_sigchld_handler) == SIG_ERR) {
@@ -195,8 +206,9 @@ FILE *spopen(const char *cmdstring) {
 #endif
 
 	pid_t pid;
-	if ((pid = fork()) < 0)
+	if ((pid = fork()) < 0) {
 		return (NULL); /* errno set by fork() */
+	}
 
 	if (pid == 0) { /* child */
 		close(pfd[0]);
@@ -210,17 +222,20 @@ FILE *spopen(const char *cmdstring) {
 			close(pfderr[1]);
 		}
 		/* close all descriptors in childpid[] */
-		for (i = 0; i < maxfd; i++)
-			if (childpid[i] > 0)
+		for (i = 0; i < maxfd; i++) {
+			if (childpid[i] > 0) {
 				close(i);
+			}
+		}
 
 		execve(argv[0], argv, env);
 		_exit(0);
 	}
 
 	close(pfd[1]); /* parent */
-	if ((child_process = fdopen(pfd[0], "r")) == NULL)
+	if ((child_process = fdopen(pfd[0], "r")) == NULL) {
 		return (NULL);
+	}
 	close(pfderr[1]);
 
 	childpid[fileno(child_process)] = pid;                 /* remember child pid for this fd */
@@ -229,17 +244,20 @@ FILE *spopen(const char *cmdstring) {
 }
 
 int spclose(FILE *fp) {
-	if (childpid == NULL)
+	if (childpid == NULL) {
 		return (1); /* popen() has never been called */
+	}
 
 	pid_t pid;
 	int fd = fileno(fp);
-	if ((pid = childpid[fd]) == 0)
+	if ((pid = childpid[fd]) == 0) {
 		return (1); /* fp wasn't opened by popen() */
+	}
 
 	childpid[fd] = 0;
-	if (fclose(fp) == EOF)
+	if (fclose(fp) == EOF) {
 		return (1);
+	}
 
 #ifdef REDHAT_SPOPEN_ERROR
 	while (!childtermd)
@@ -247,20 +265,24 @@ int spclose(FILE *fp) {
 #endif
 
 	int status;
-	while (waitpid(pid, &status, 0) < 0)
-		if (errno != EINTR)
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
 			return (1); /* error other than EINTR from waitpid() */
+		}
+	}
 
-	if (WIFEXITED(status))
+	if (WIFEXITED(status)) {
 		return (WEXITSTATUS(status)); /* return child's termination status */
+	}
 
 	return (1);
 }
 
 #ifdef REDHAT_SPOPEN_ERROR
 void popen_sigchld_handler(int signo) {
-	if (signo == SIGCHLD)
+	if (signo == SIGCHLD) {
 		childtermd = 1;
+	}
 }
 #endif
 

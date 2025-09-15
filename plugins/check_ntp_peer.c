@@ -83,9 +83,9 @@ typedef struct {
 /* bits 1,2 are the leap indicator */
 #define LI_MASK 0xc0
 #define LI(x)   ((x & LI_MASK) >> 6)
-#define LI_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 6) & LI_MASK);                                                                                                         \
+#define LI_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 6) & LI_MASK);                                                                 \
 	} while (0)
 /* and these are the values of the leap indicator */
 #define LI_NOWARNING  0x00
@@ -95,17 +95,17 @@ typedef struct {
 /* bits 3,4,5 are the ntp version */
 #define VN_MASK 0x38
 #define VN(x)   ((x & VN_MASK) >> 3)
-#define VN_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 3) & VN_MASK);                                                                                                         \
+#define VN_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 3) & VN_MASK);                                                                 \
 	} while (0)
 #define VN_RESERVED 0x02
 /* bits 6,7,8 are the ntp mode */
 #define MODE_MASK 0x07
 #define MODE(x)   (x & MODE_MASK)
-#define MODE_SET(x, y)                                                                                                                     \
-	do {                                                                                                                                   \
-		x |= (y & MODE_MASK);                                                                                                              \
+#define MODE_SET(x, y)                                                                             \
+	do {                                                                                           \
+		x |= (y & MODE_MASK);                                                                      \
 	} while (0)
 /* here are some values */
 #define MODE_CLIENT     0x03
@@ -117,9 +117,9 @@ typedef struct {
 #define REM_MORE  0x20
 /* In control message, bits 11 - 15 are opcode */
 #define OP_MASK 0x1f
-#define OP_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= (y & OP_MASK);                                                                                                                \
+#define OP_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= (y & OP_MASK);                                                                        \
 	} while (0)
 #define OP_READSTAT 0x01
 #define OP_READVAR  0x02
@@ -132,18 +132,19 @@ typedef struct {
 /* NTP control message header is 12 bytes, plus any data in the data
  * field, plus null padding to the nearest 32-bit boundary per rfc.
  */
-#define SIZEOF_NTPCM(m) (12 + ntohs(m.count) + ((ntohs(m.count) % 4) ? 4 - (ntohs(m.count) % 4) : 0))
+#define SIZEOF_NTPCM(m)                                                                            \
+	(12 + ntohs(m.count) + ((ntohs(m.count) % 4) ? 4 - (ntohs(m.count) % 4) : 0))
 
 /* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                                                             \
-	do {                                                                                                                                   \
-		if (verbose > 1) {                                                                                                                 \
-			x;                                                                                                                             \
-		}                                                                                                                                  \
+#define DBG(x)                                                                                     \
+	do {                                                                                           \
+		if (verbose > 1) {                                                                         \
+			x;                                                                                     \
+		}                                                                                          \
 	} while (0);
-#define PRINTSOCKADDR(x)                                                                                                                   \
-	do {                                                                                                                                   \
-		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);                                              \
+#define PRINTSOCKADDR(x)                                                                           \
+	do {                                                                                           \
+		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
 	} while (0);
 
 void print_ntp_control_message(const ntp_control_message *message) {
@@ -360,7 +361,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (req.op & REM_ERROR) {
 				if (strstr(getvar, "jitter")) {
 					if (verbose) {
-						printf("The command failed. This is usually caused by servers refusing the 'jitter'\nvariable. Restarting with "
+						printf("The command failed. This is usually caused by servers refusing the "
+							   "'jitter'\nvariable. Restarting with "
 							   "'dispersion'...\n");
 					}
 					getvar = "stratum,offset,dispersion";
@@ -404,7 +406,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				if (verbose) {
 					printf("%.10g\n", tmp_offset);
 				}
-				if (result.offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(result.offset)) {
+				if (result.offset_result == STATE_UNKNOWN ||
+					fabs(tmp_offset) < fabs(result.offset)) {
 					result.offset = tmp_offset;
 					result.offset_result = STATE_OK;
 				} else {
@@ -416,10 +419,12 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (config.do_jitter) {
 				/* get the jitter */
 				if (verbose) {
-					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
+					printf("parsing %s from peer %.2x: ",
+						   strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
 						   ntohs(peers[i].assoc));
 				}
-				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion"
+																					 : "jitter");
 				nptr = NULL;
 				/* Convert the value if we have one */
 				if (value != NULL) {
@@ -471,12 +476,15 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"verbose", no_argument, 0, 'v'},
-		{"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},       {"quiet", no_argument, 0, 'q'},
-		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {"swarn", required_argument, 0, 'W'},
-		{"scrit", required_argument, 0, 'C'},    {"jwarn", required_argument, 0, 'j'},    {"jcrit", required_argument, 0, 'k'},
-		{"twarn", required_argument, 0, 'm'},    {"tcrit", required_argument, 0, 'n'},    {"timeout", required_argument, 0, 't'},
-		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'p'},     {0, 0, 0, 0}};
+		{"version", no_argument, 0, 'V'},       {"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},       {"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},      {"quiet", no_argument, 0, 'q'},
+		{"warning", required_argument, 0, 'w'}, {"critical", required_argument, 0, 'c'},
+		{"swarn", required_argument, 0, 'W'},   {"scrit", required_argument, 0, 'C'},
+		{"jwarn", required_argument, 0, 'j'},   {"jcrit", required_argument, 0, 'k'},
+		{"twarn", required_argument, 0, 'm'},   {"tcrit", required_argument, 0, 'n'},
+		{"timeout", required_argument, 0, 't'}, {"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},    {0, 0, 0, 0}};
 
 	if (argc < 2) {
 		usage("\n");
@@ -489,7 +497,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
+		int option_char =
+			getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
 		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
 		}
@@ -581,22 +590,24 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
-					 0);
+	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
+					 offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 char *perfd_jitter(double jitter, bool do_jitter, thresholds *jitter_thresholds) {
-	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter, jitter_thresholds->critical->end, true, 0,
-					 false, 0);
+	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter,
+					 jitter_thresholds->critical->end, true, 0, false, 0);
 }
 
 char *perfd_stratum(int stratum, bool do_stratum, thresholds *stratum_thresholds) {
-	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end, do_stratum,
-					(int)stratum_thresholds->critical->end, true, 0, true, 16);
+	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end,
+					do_stratum, (int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
-char *perfd_truechimers(int num_truechimers, const bool do_truechimers, thresholds *truechimer_thresholds) {
-	return perfdata("truechimers", num_truechimers, "", do_truechimers, (int)truechimer_thresholds->warning->end, do_truechimers,
+char *perfd_truechimers(int num_truechimers, const bool do_truechimers,
+						thresholds *truechimer_thresholds) {
+	return perfdata("truechimers", num_truechimers, "", do_truechimers,
+					(int)truechimer_thresholds->warning->end, do_truechimers,
 					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
 
@@ -686,9 +697,11 @@ int main(int argc, char *argv[]) {
 		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
 		xasprintf(&perfdata_line, "");
 	} else if (oresult == STATE_WARNING) {
-		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"), ntp_res.offset);
+		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"),
+				  ntp_res.offset);
 	} else if (oresult == STATE_CRITICAL) {
-		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), ntp_res.offset);
+		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"),
+				  ntp_res.offset);
 	} else {
 		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), ntp_res.offset);
 	}
@@ -702,7 +715,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			xasprintf(&result_line, "%s, jitter=%f", result_line, ntp_res.jitter);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(ntp_res.jitter, config.do_jitter, config.jitter_thresholds));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line,
+				  perfd_jitter(ntp_res.jitter, config.do_jitter, config.jitter_thresholds));
 	}
 
 	if (config.do_stratum) {
@@ -713,19 +727,23 @@ int main(int argc, char *argv[]) {
 		} else {
 			xasprintf(&result_line, "%s, stratum=%li", result_line, ntp_res.stratum);
 		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
+		xasprintf(&perfdata_line, "%s %s", perfdata_line,
+				  perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
 	}
 
 	if (config.do_truechimers) {
 		if (tresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, ntp_res.num_truechimers);
+			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line,
+					  ntp_res.num_truechimers);
 		} else if (tresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line, ntp_res.num_truechimers);
+			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line,
+					  ntp_res.num_truechimers);
 		} else {
 			xasprintf(&result_line, "%s, truechimers=%i", result_line, ntp_res.num_truechimers);
 		}
 		xasprintf(&perfdata_line, "%s %s", perfdata_line,
-				  perfd_truechimers(ntp_res.num_truechimers, config.do_truechimers, config.truechimer_thresholds));
+				  perfd_truechimers(ntp_res.num_truechimers, config.do_truechimers,
+									config.truechimer_thresholds));
 	}
 
 	printf("%s|%s\n", result_line, perfdata_line);
@@ -753,7 +771,8 @@ void print_help(void) {
 	printf(UT_IPv46);
 	printf(UT_HOST_PORT, 'p', "123");
 	printf(" %s\n", "-q, --quiet");
-	printf("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
+	printf("    %s\n",
+		   _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
 	printf(" %s\n", "-w, --warning=THRESHOLD");
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
@@ -790,7 +809,8 @@ void print_help(void) {
 	printf(" %s\n", _("Simple NTP server check:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
 	printf("\n");
-	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
+	printf(" %s\n",
+		   _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf("\n");
