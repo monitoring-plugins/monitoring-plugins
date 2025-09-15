@@ -21,11 +21,10 @@
 #include "tap.h"
 
 int main(void) {
-	char **server_expect;
-	int server_expect_count = 3;
-
 	plan_tests(9);
 
+	char **server_expect;
+	const int server_expect_count = 3;
 	server_expect = malloc(sizeof(char *) * server_expect_count);
 
 	server_expect[0] = strdup("AA");

@@ -29,26 +29,30 @@
 bool is_option2(char *str) {
 	if (!str) {
 		return false;
-	} else if (strspn(str, "-") == 1 || strspn(str, "-") == 2) {
-		return true;
-	} else {
-		return false;
 	}
+
+	if (strspn(str, "-") == 1 || strspn(str, "-") == 2) {
+		return true;
+	}
+
+	return false;
 }
 
 /* this is the externally visible function used by plugins */
 char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
-	np_arg_list *extra_args = NULL, *ea1 = NULL, *ea_tmp = NULL;
-	char **argv_new = NULL;
-	char *argptr = NULL;
-	int i, j, optfound, argc_new, ea_num = *argc;
-
 	if (*argc < 2) {
 		/* No arguments provided */
 		return argv;
 	}
 
-	for (i = 1; i < *argc; i++) {
+	np_arg_list *extra_args = NULL;
+	np_arg_list *ea1 = NULL;
+	np_arg_list *ea_tmp = NULL;
+	char *argptr = NULL;
+	int optfound;
+	size_t ea_num = (size_t)*argc;
+
+	for (int i = 1; i < *argc; i++) {
 		argptr = NULL;
 		optfound = 0;
 
@@ -57,9 +61,10 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 			/* It is a single argument with value */
 			argptr = argv[i] + 13;
 			/* Delete the extra opts argument */
-			for (j = i; j < *argc; j++) {
+			for (int j = i; j < *argc; j++) {
 				argv[j] = argv[j + 1];
 			}
+
 			i--;
 			*argc -= 1;
 		} else if (strcmp(argv[i], "--extra-opts") == 0) {
@@ -67,9 +72,10 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 				/* It is a argument with separate value */
 				argptr = argv[i + 1];
 				/* Delete the extra-opts argument/value */
-				for (j = i; j < *argc - 1; j++) {
+				for (int j = i; j < *argc - 1; j++) {
 					argv[j] = argv[j + 2];
 				}
+
 				i -= 2;
 				*argc -= 2;
 				ea_num--;
@@ -77,9 +83,10 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 				/* It has no value */
 				optfound = 1;
 				/* Delete the extra opts argument */
-				for (j = i; j < *argc; j++) {
+				for (int j = i; j < *argc; j++) {
 					argv[j] = argv[j + 1];
 				}
+
 				i--;
 				*argc -= 1;
 			}
@@ -115,20 +122,20 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 		}
 	} /* lather, rince, repeat */
 
-	if (ea_num == *argc && extra_args == NULL) {
+	if (ea_num == (size_t)*argc && extra_args == NULL) {
 		/* No extra-opts */
 		return argv;
 	}
 
 	/* done processing arguments. now create a new argv array... */
-	argv_new = (char **)malloc((ea_num + 1) * sizeof(char **));
+	char **argv_new = (char **)malloc((ea_num + 1) * sizeof(char **));
 	if (argv_new == NULL) {
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
 	}
 
 	/* starting with program name */
 	argv_new[0] = argv[0];
-	argc_new = 1;
+	int argc_new = 1;
 	/* then parsed ini opts (frying them up in the same run) */
 	while (extra_args) {
 		argv_new[argc_new++] = extra_args->arg;
@@ -137,7 +144,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 		free(ea1);
 	}
 	/* finally the rest of the argv array */
-	for (i = 1; i < *argc; i++) {
+	for (int i = 1; i < *argc; i++) {
 		argv_new[argc_new++] = argv[i];
 	}
 	*argc = argc_new;

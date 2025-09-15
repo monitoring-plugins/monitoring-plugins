@@ -50,11 +50,10 @@ char *list2str(np_arg_list *optlst) {
 }
 
 int main(int argc, char **argv) {
-	char *optstr = NULL;
 
 	plan_tests(12);
 
-	optstr = list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
+	char *optstr = list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
 	ok(!strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"),
 	   "config-tiny.ini's section as expected");
 	my_free(optstr);

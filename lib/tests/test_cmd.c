@@ -38,31 +38,29 @@ char *get_command(char *const *line) {
 }
 
 int main(int argc, char **argv) {
-	char **command_line = malloc(sizeof(char *) * COMMAND_LINE);
-	char *command = NULL;
-	char *perl;
-	output chld_out, chld_err;
-	int c;
-	int result = UNSET;
-
 	plan_tests(51);
 
 	diag("Running plain echo command, set one");
 
 	/* ensure everything is empty before we begin */
+
+	output chld_out;
 	memset(&chld_out, 0, sizeof(output));
+	output chld_err;
 	memset(&chld_err, 0, sizeof(output));
 	ok(chld_out.lines == 0, "(initialised) Checking stdout is reset");
 	ok(chld_err.lines == 0, "(initialised) Checking stderr is reset");
+	int result = UNSET;
 	ok(result == UNSET, "(initialised) Checking exit code is reset");
 
+	char **command_line = malloc(sizeof(char *) * COMMAND_LINE);
 	command_line[0] = strdup("/bin/echo");
 	command_line[1] = strdup("this");
 	command_line[2] = strdup("is");
 	command_line[3] = strdup("test");
 	command_line[4] = strdup("one");
 
-	command = get_command(command_line);
+	char *command = get_command(command_line);
 
 	result = cmd_run_array(command_line, &chld_out, &chld_err, 0);
 	ok(chld_out.lines == 1, "(array) Check for expected number of stdout lines");
