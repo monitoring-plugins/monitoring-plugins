@@ -66,6 +66,7 @@ EXTRA_DIST = t \
 			 check_hpjd.d \
 			 check_game.d \
 			 check_radius.d \
+			 check_curl.d \
 			 check_disk.d \
 			 check_time.d \
 			 check_users.d \
@@ -91,6 +92,8 @@ EXTRA_DIST = t \
 			 check_mysql.d \
 			 check_ntp_time.d \
 			 check_dig.d \
+			 check_cluster.d \
+			 check_curl.d \
 			 check_cluster.d \
 			 check_ups.d \
 			 check_fping.d
@@ -132,6 +135,7 @@ check_cluster_LDADD = $(BASEOBJS)
 check_curl_CFLAGS = $(AM_CFLAGS) $(LIBCURLCFLAGS) $(URIPARSERCFLAGS) $(LIBCURLINCLUDE) $(URIPARSERINCLUDE) -Ipicohttpparser
 check_curl_CPPFLAGS = $(AM_CPPFLAGS) $(LIBCURLCFLAGS) $(URIPARSERCFLAGS) $(LIBCURLINCLUDE) $(URIPARSERINCLUDE) -Ipicohttpparser
 check_curl_LDADD = $(NETLIBS) $(LIBCURLLIBS) $(SSLOBJS) $(URIPARSERLIBS) picohttpparser/libpicohttpparser.a
+check_curl_SOURCES = check_curl.c check_curl.d/check_curl_helpers.c
 check_dbi_LDADD = $(NETLIBS) $(DBILIBS)
 check_dig_LDADD = $(NETLIBS)
 check_disk_LDADD = $(BASEOBJS)

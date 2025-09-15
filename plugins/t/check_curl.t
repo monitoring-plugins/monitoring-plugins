@@ -13,12 +13,12 @@ use vars qw($tests $has_ipv6);
 BEGIN {
     use NPTest;
     $has_ipv6 = NPTest::has_ipv6();
-    $tests = $has_ipv6 ? 59 : 57;
+    $tests = $has_ipv6 ? 55 : 53;
     plan tests => $tests;
 }
 
 
-my $successOutput = '/OK.*HTTP.*second/';
+my $successOutput = '/.*HTTP.*second/';
 
 my $res;
 my $plugin = 'check_http';
@@ -63,7 +63,7 @@ $res = NPTest->testCmd(
     );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
-like( $res->output, "/HTTP CRITICAL - Invalid HTTP response received from host on port 80: cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
 
 $res = NPTest->testCmd(
     "./$plugin $hostname_invalid -wt 1 -ct 2"
@@ -124,14 +124,14 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing'" );
         cmp_ok( $res->return_code, "==", 2, "Not got 'mONiTORing'");
-        like ( $res->output, "/pattern not found/", "Error message says 'pattern not found'");
+        like ( $res->output, "/matched not/", "Error message says 'matched not'");
 
         $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -R 'mONiTORing'" );
         cmp_ok( $res->return_code, "==", 0, "But case insensitive doesn't mind 'mONiTORing'");
 
         $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'monitoring' --invert-regex" );
         cmp_ok( $res->return_code, "==", 2, "Invert results work when found");
-        like ( $res->output, "/pattern found/", "Error message says 'pattern found'");
+        like ( $res->output, "/matched/", "Error message says 'matched'");
 
         $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 -r 'mONiTORing' --invert-regex" );
         cmp_ok( $res->return_code, "==", 0, "And also when not found");
@@ -151,63 +151,74 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin -C 8000,1 --ssl $host_tls_http" );
         cmp_ok( $res->return_code, '==', 1, "Checking certificate for $host_tls_http");
-        like  ( $res->output, qr/WARNING - Certificate '$host_tls_cert' expires in \d+ day/, "Output Warning" );
+        like  ( $res->output, qr/Certificate '$host_tls_cert' expires in \d+ day/, "Output Warning" );
 
         $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
         is( $res->return_code, 0, "Old syntax for cert checking okay" );
-        is( $res->output, $saved_cert_output, "Same output as new syntax" );
+        # deactivated since different timings will change the output
+        # TODO compare without perfdata
+        # is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
         $res = NPTest->testCmd( "./$plugin -H $host_tls_http -C 1" );
         is( $res->return_code, 0, "Updated syntax for cert checking okay" );
-        is( $res->output, $saved_cert_output, "Same output as new syntax" );
+        # deactivated since different timings will change the output
+        # TODO compare without perfdata
+        # is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
         $res = NPTest->testCmd( "./$plugin -C 1 $host_tls_http" );
-        cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
+        # deactivated since different timings will change the output
+        # TODO compare without perfdata
+        # cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
 
         $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
-        cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
+        # deactivated since different timings will change the output
+        # TODO compare without perfdata
+        # cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
         # run some certificate checks with faketime
         SKIP: {
                 skip "No faketime binary found", 12 if !$faketime;
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/OK - Certificate '$host_tls_cert' will expire on/, "Catch cert output");
+                like($res->output, qr/Certificate '$host_tls_cert' will expire on/, "Catch cert output");
                 is( $res->return_code, 0, "Catch cert output exit code" );
+
                 my($mon,$day,$hour,$min,$sec,$year) = ($res->output =~ /(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+(\d+)/);
                 if(!defined $year) {
                     die("parsing date failed from: ".$res->output);
                 }
+
                 my $months = {'Jan' => 0, 'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5, 'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11};
                 my $ts   = mktime($sec, $min, $hour, $day, $months->{$mon}, $year-1900);
                 my $time = strftime("%Y-%m-%d %H:%M:%S", localtime($ts));
+
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts))."' ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' just expired/, "Output on expire date");
+                like($res->output, qr/Certificate '$host_tls_cert' just expired/, "Output on expire date");
                 is( $res->return_code, 2, "Output on expire date" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-1))."' ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
+                like($res->output, qr/Certificate '$host_tls_cert' expires in 0 minutes/, "cert expires in 1 second output");
                 is( $res->return_code, 2, "cert expires in 1 second exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-120))."' ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
+                like($res->output, qr/Certificate '$host_tls_cert' expires in 2 minutes/, "cert expires in 2 minutes output");
                 is( $res->return_code, 2, "cert expires in 2 minutes exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts-7200))."' ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
+                like($res->output, qr/Certificate '$host_tls_cert' expires in 2 hours/, "cert expires in 2 hours output");
                 is( $res->return_code, 2, "cert expires in 2 hours exit code" );
 
                 $res = NPTest->testCmd("LC_TIME=C TZ=UTC faketime -f '".strftime("%Y-%m-%d %H:%M:%S", localtime($ts+1))."' ./$plugin -C 1 $host_tls_http");
-                like($res->output, qr/CRITICAL - Certificate '$host_tls_cert' expired on/, "Certificate expired output");
+                like($res->output, qr/Certificate '$host_tls_cert' expired on/, "Certificate expired output");
                 is( $res->return_code, 2, "Certificate expired exit code" );
         };
 
         $res = NPTest->testCmd( "./$plugin --ssl $host_tls_http -E" );
-        like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
-        like  ( $res->output, '/time_ssl=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
+        like  ( $res->output, '/\'time_connect\'=[\d\.]+/', 'Extended Performance Data Output OK' );
+        like  ( $res->output, '/\'time_tls\'=[\d\.]+/', 'Extended Performance Data SSL Output OK' );
 
         $res = NPTest->testCmd( "./$plugin -H monitoring-plugins.org -u /download.html -f follow" );
         is( $res->return_code, 0, "Redirection based on location is okay");
 
         $res = NPTest->testCmd( "./$plugin -H monitoring-plugins.org --extended-perfdata" );
-        like  ( $res->output, '/time_connect=[\d\.]+/', 'Extended Performance Data Output OK' );
+        like  ( $res->output, '/\'time_connect\'=[\d\.]+/', 'Extended Performance Data Output OK' );
 }
