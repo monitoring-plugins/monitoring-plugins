@@ -21,6 +21,7 @@ typedef struct {
 	command_construct cmd;
 
 	bool unknown_timeout;
+	bool unknown_on_stderr;
 	bool warn_on_stderr;
 	int skip_stdout;
 	int skip_stderr;
@@ -46,6 +47,7 @@ check_by_ssh_config check_by_ssh_config_init() {
 			},
 
 		.unknown_timeout = false,
+		.unknown_on_stderr = false,
 		.warn_on_stderr = false,
 		.skip_stderr = 0,
 		.skip_stdout = 0,

@@ -119,13 +119,14 @@ int main(int argc, char **argv) {
 		skip_stderr = config.skip_stderr;
 	}
 
-	/* UNKNOWN or worse if (non-skipped) output found on stderr */
-	if (chld_err.lines > (size_t)skip_stderr) {
+	/* Allow UNKNOWN or WARNING state for (non-skipped) output found on stderr */
+	if (chld_err.lines > (size_t)skip_stderr && (config.unknown_on_stderr || config.warn_on_stderr)) {
 		printf(_("Remote command execution failed: %s\n"), chld_err.line[skip_stderr]);
-		if (config.warn_on_stderr) {
+		if (config.unknown_on_stderr) {
+			return max_state_alt(result, STATE_UNKNOWN);
+		} else if (config.warn_on_stderr) {
 			return max_state_alt(result, STATE_WARNING);
 		}
-		return max_state_alt(result, STATE_UNKNOWN);
 	}
 
 	/* this is simple if we're not supposed to be passive.
@@ -191,12 +192,13 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 		{"name", required_argument, 0, 'n'},
 		{"services", required_argument, 0, 's'},
 		{"identity", required_argument, 0, 'i'},
-		{"user", required_argument, 0, 'u'},
+		{"user", required_argument, 0, 'u'}, /* backwards compatibility */
 		{"logname", required_argument, 0, 'l'},
 		{"command", required_argument, 0, 'C'},
 		{"skip", optional_argument, 0, 'S'}, /* backwards compatibility */
 		{"skip-stdout", optional_argument, 0, 'S'},
 		{"skip-stderr", optional_argument, 0, 'E'},
+		{"unknown-on-stderr", no_argument, 0, 'e'},
 		{"warn-on-stderr", no_argument, 0, 'W'},
 		{"proto1", no_argument, 0, '1'},
 		{"proto2", no_argument, 0, '2'},
@@ -341,6 +343,9 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.skip_stderr = atoi(optarg);
 			}
 			break;
+		case 'e': /* exit with unknown if there is an output on stderr */
+			result.config.unknown_on_stderr = true;
+			break;
 		case 'W': /* exit with warning if there is an output on stderr */
 			result.config.warn_on_stderr = true;
 			break;
@@ -468,8 +473,10 @@ void print_help(void) {
 	printf("    %s\n", _("Ignore all or (if specified) first n lines on STDOUT [optional]"));
 	printf(" %s\n", "-E, --skip-stderr[=n]");
 	printf("    %s\n", _("Ignore all or (if specified) first n lines on STDERR [optional]"));
-	printf(" %s\n", "-W, --warn-on-stderr]");
-	printf("    %s\n", _("Exit with an warning, if there is an output on STDERR"));
+	printf(" %s\n", "-e, --unknown-on-stderr");
+	printf("    %s\n", _("Exit with UNKNOWN, if there is output on STDERR"));
+	printf(" %s\n", "-W, --warn-on-stderr");
+	printf("    %s\n", _("Exit with WARNING, if there is output on STDERR"));
 	printf(" %s\n", "-f");
 	printf("    %s\n", _("tells ssh to fork rather than create a tty [optional]. This will always "
 						 "return OK if ssh is executed"));
@@ -522,7 +529,7 @@ void print_help(void) {
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf(" %s -H <host> -C <command> [-fqvU] [-1|-2] [-4|-6]\n"
-		   "       [-S [lines]] [-E [lines]] [-W] [-t timeout] [-i identity]\n"
+		   "       [-S [lines]] [-E [lines]] [-e|-W] [-t timeout] [-i identity]\n"
 		   "       [-l user] [-n name] [-s servicelist] [-O outputfile]\n"
 		   "       [-p port] [-o ssh-option] [-F configfile]\n",
 		   progname);
