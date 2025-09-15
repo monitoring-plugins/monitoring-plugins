@@ -233,6 +233,14 @@ plugins/check_disk.d/.dirstamp
 /plugins/check_swap.d/.deps
 /plugins/check_swap.d/.dirstamp
 
+# /plugins/check_snmp.d
+/plugins/check_snmp.d/.deps
+/plugins/check_snmp.d/.dirstamp
+
+# /plugins/check_curl.d
+/plugins/check_curl.d/.deps
+/plugins/check_curl.d/.dirstamp
+
 # /plugins-root/
 /plugins-root/.deps
 /plugins-root/.libs
@@ -241,6 +249,8 @@ plugins/check_disk.d/.dirstamp
 /plugins-root/check_dhcp
 /plugins-root/check_icmp
 /plugins-root/pst3
+/plugins-root/check_icmp.d/.dirstamp
+/plugins-root/check_icmp.d/.deps
 
 # /plugins-scripts/
 /plugins-scripts/Makefile
