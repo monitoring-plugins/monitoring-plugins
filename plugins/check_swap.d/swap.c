@@ -52,10 +52,10 @@ swap_result get_swap_data(swap_config config) {
 	}
 #	else // HAVE_SWAP
 #		ifdef CHECK_SWAP_SWAPCTL_SVR4
-	return getSwapFromSwapctl_SRV4();
+	return getSwapFromSwapctl_SRV4(config);
 #		else // CHECK_SWAP_SWAPCTL_SVR4
 #			ifdef CHECK_SWAP_SWAPCTL_BSD
-	return getSwapFromSwapctl_BSD();
+	return getSwapFromSwapctl_BSD(config);
 #			else // CHECK_SWAP_SWAPCTL_BSD
 #				error No way found to retrieve swap
 #			endif /* CHECK_SWAP_SWAPCTL_BSD */
