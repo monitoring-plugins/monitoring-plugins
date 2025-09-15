@@ -155,23 +155,23 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
         is( $res->return_code, 0, "Old syntax for cert checking okay" );
-        # deactived since different timings will change the output
+        # deactivated since different timings will change the output
         # TODO compare without perfdata
         # is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
         $res = NPTest->testCmd( "./$plugin -H $host_tls_http -C 1" );
         is( $res->return_code, 0, "Updated syntax for cert checking okay" );
-        # deactived since different timings will change the output
+        # deactivated since different timings will change the output
         # TODO compare without perfdata
         # is( $res->output, $saved_cert_output, "Same output as new syntax" );
 
         $res = NPTest->testCmd( "./$plugin -C 1 $host_tls_http" );
-        # deactived since different timings will change the output
+        # deactivated since different timings will change the output
         # TODO compare without perfdata
         # cmp_ok( $res->output, 'eq', $saved_cert_output, "--ssl option automatically added");
 
         $res = NPTest->testCmd( "./$plugin $host_tls_http -C 1" );
-        # deactived since different timings will change the output
+        # deactivated since different timings will change the output
         # TODO compare without perfdata
         # cmp_ok( $res->output, 'eq', $saved_cert_output, "Old syntax for cert checking still works");
 
