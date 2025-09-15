@@ -632,6 +632,8 @@ check_curl_config check_curl_config_init() {
 
 		.show_extended_perfdata = false,
 		.show_body = false,
+
+		.output_format_is_set = false,
 	};
 
 	snprintf(tmp.curl_config.user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",

@@ -139,6 +139,10 @@ int main(int argc, char **argv) {
 
 	const check_curl_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	check_curl_working_state working_state = config.initial_config;
 
 	mp_check overall = mp_check_init();
@@ -828,7 +832,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		AUTOMATIC_DECOMPRESSION,
 		COOKIE_JAR,
 		HAPROXY_PROTOCOL,
-		STATE_REGEX
+		STATE_REGEX,
+		OUTPUT_FORMAT
 	};
 
 	static struct option longopts[] = {
@@ -875,6 +880,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"enable-automatic-decompression", no_argument, 0, AUTOMATIC_DECOMPRESSION},
 		{"cookie-jar", required_argument, 0, COOKIE_JAR},
 		{"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
+		{"output-format", required_argument, 0, OUTPUT_FORMAT},
 		{0, 0, 0, 0}};
 
 	check_curl_config_wrapper result = {
@@ -1301,6 +1307,18 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			/* print short usage statement if args not parsable */
 			usage5();
 			break;
+		case OUTPUT_FORMAT: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -1601,6 +1619,8 @@ void print_help(void) {
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf(UT_VERBOSE);
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
