@@ -16,7 +16,7 @@ typedef struct {
 	bool only_critical;   /* whether to warn about non-critical updates */
 	bool list;            /* list packages available for upgrade */
 	/* number of packages available for upgrade to return WARNING status */
-	int packages_warning;
+	size_t packages_warning;
 
 	char *upgrade_opts;   /* options to override defaults for upgrade */
 	char *update_opts;    /* options to override defaults for update */

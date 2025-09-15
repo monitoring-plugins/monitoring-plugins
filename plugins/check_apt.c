@@ -29,11 +29,11 @@
  *
  *****************************************************************************/
 
-#include "states.h"
 const char *progname = "check_apt";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "states.h"
 #include "common.h"
 #include "runcmd.h"
 #include "utils.h"
@@ -71,8 +71,8 @@ static int run_update(char * /*update_opts*/);
 
 typedef struct {
 	int errorcode;
-	int package_count;
-	int security_package_count;
+	size_t package_count;
+	size_t security_package_count;
 	char **packages_list;
 	char **secpackages_list;
 } run_upgrade_result;
@@ -126,8 +126,8 @@ int main(int argc, char **argv) {
 		run_upgrade(config.upgrade, config.do_include, config.do_exclude, config.do_critical, config.upgrade_opts, config.input_filename);
 
 	result = max_state(result, upgrad_res.errorcode);
-	int packages_available = upgrad_res.package_count;
-	int sec_count = upgrad_res.security_package_count;
+	size_t packages_available = upgrad_res.package_count;
+	size_t sec_count = upgrad_res.security_package_count;
 	char **packages_list = upgrad_res.packages_list;
 	char **secpackages_list = upgrad_res.secpackages_list;
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 		result = STATE_UNKNOWN;
 	}
 
-	printf(_("APT %s: %d packages available for %s (%d critical updates). %s%s%s%s|available_upgrades=%d;;;0 critical_updates=%d;;;0\n"),
+	printf(_("APT %s: %zu packages available for %s (%zu critical updates). %s%s%s%s|available_upgrades=%zu;;;0 critical_updates=%zu;;;0\n"),
 		   state_text(result), packages_available, (config.upgrade == DIST_UPGRADE) ? "dist-upgrade" : "upgrade", sec_count,
 		   (stderr_warning) ? " warnings detected" : "", (stderr_warning && exec_warning) ? "," : "",
 		   (exec_warning) ? " errors detected" : "", (stderr_warning || exec_warning) ? "." : "", packages_available, sec_count);
@@ -148,12 +148,12 @@ int main(int argc, char **argv) {
 		qsort(secpackages_list, sec_count, sizeof(char *), cmpstringp);
 		qsort(packages_list, packages_available - sec_count, sizeof(char *), cmpstringp);
 
-		for (int i = 0; i < sec_count; i++) {
+		for (size_t i = 0; i < sec_count; i++) {
 			printf("%s (security)\n", secpackages_list[i]);
 		}
 
 		if (!config.only_critical) {
-			for (int i = 0; i < packages_available - sec_count; i++) {
+			for (size_t i = 0; i < packages_available - sec_count; i++) {
 				printf("%s\n", packages_list[i]);
 			}
 		}
@@ -349,8 +349,8 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 	 * we may need to switch to the --print-uris output format,
 	 * in which case the logic here will slightly change.
 	 */
-	int package_counter = 0;
-	int security_package_counter = 0;
+	size_t package_counter = 0;
+	size_t security_package_counter = 0;
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (verbose) {
 			printf("%s\n", chld_out.line[i]);
@@ -520,7 +520,7 @@ char *construct_cmdline(upgrade_type upgrade, const char *opts) {
 		break;
 	}
 
-	int len = 0;
+	size_t len = 0;
 	len += strlen(PATH_TO_APTGET) + 1; /* "/usr/bin/apt-get " */
 	len += strlen(opts_ptr) + 1;       /* "opts " */
 	len += strlen(aptcmd) + 1;         /* "upgrade\0" */
