@@ -29,31 +29,33 @@
  *
  *****************************************************************************/
 
+#include "perfdata.h"
 const char *progname = "check_apt";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "states.h"
+#include "output.h"
 #include "common.h"
 #include "runcmd.h"
 #include "utils.h"
 #include "regex.h"
 #include "check_apt.d/config.h"
 
-/* Character for hidden input file option (for testing). */
-#define INPUT_FILE_OPT CHAR_MAX + 1
 /* the default opts can be overridden via the cmdline */
-#define UPGRADE_DEFAULT_OPTS "-o 'Debug::NoLocking=true' -s -qq"
-#define UPDATE_DEFAULT_OPTS  "-q"
+const char *UPGRADE_DEFAULT_OPTS = "-o 'Debug::NoLocking=true' -s -qq";
+const char *UPDATE_DEFAULT_OPTS = "-q";
+
 /* until i commit the configure.in patch which gets this, i'll define
  * it here as well */
 #ifndef PATH_TO_APTGET
 #	define PATH_TO_APTGET "/usr/bin/apt-get"
 #endif /* PATH_TO_APTGET */
+
 /* String found at the beginning of the apt output lines we're interested in */
-#define PKGINST_PREFIX "Inst "
+const char *PKGINST_PREFIX = "Inst ";
 /* the RE that catches security updates */
-#define SECURITY_RE "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)"
+const char *SECURITY_RE = "^[^\\(]*\\(.* (Debian-Security:|Ubuntu:[^/]*/[^-]*-security)";
 
 /* some standard functions */
 typedef struct {
@@ -66,8 +68,14 @@ void print_usage(void);
 
 /* construct the appropriate apt-get cmdline */
 static char *construct_cmdline(upgrade_type /*u*/, const char * /*opts*/);
+
 /* run an apt-get update */
-static int run_update(char * /*update_opts*/);
+typedef struct {
+	mp_subcheck sc;
+	bool stderr_warning;
+	bool exec_warning;
+} run_update_result;
+static run_update_result run_update(char *update_opts);
 
 typedef struct {
 	int errorcode;
@@ -75,11 +83,13 @@ typedef struct {
 	size_t security_package_count;
 	char **packages_list;
 	char **secpackages_list;
+	bool exec_warning;
 } run_upgrade_result;
 
 /* run an apt-get upgrade */
-run_upgrade_result run_upgrade(upgrade_type upgrade, const char *do_include, const char *do_exclude, const char *do_critical,
-							   const char *upgrade_opts, const char *input_filename);
+run_upgrade_result run_upgrade(upgrade_type upgrade, const char *do_include, const char *do_exclude,
+							   const char *do_critical, const char *upgrade_opts,
+							   const char *input_filename);
 
 /* add another clause to a regexp */
 static char *add_to_regexp(char * /*expr*/, const char * /*next*/);
@@ -107,6 +117,10 @@ int main(int argc, char **argv) {
 
 	const check_apt_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		usage_va(_("Cannot catch SIGALRM"));
@@ -115,55 +129,91 @@ int main(int argc, char **argv) {
 	/* handle timeouts gracefully... */
 	alarm(timeout_interval);
 
-	mp_state_enum result = STATE_UNKNOWN;
+	mp_check overall = mp_check_init();
 	/* if they want to run apt-get update first... */
 	if (config.do_update) {
-		result = run_update(config.update_opts);
+		run_update_result update_result = run_update(config.update_opts);
+
+		mp_add_subcheck_to_check(&overall, update_result.sc);
 	}
 
 	/* apt-get upgrade */
 	run_upgrade_result upgrad_res =
-		run_upgrade(config.upgrade, config.do_include, config.do_exclude, config.do_critical, config.upgrade_opts, config.input_filename);
+		run_upgrade(config.upgrade, config.do_include, config.do_exclude, config.do_critical,
+					config.upgrade_opts, config.input_filename);
 
-	result = max_state(result, upgrad_res.errorcode);
+	mp_subcheck sc_run_upgrade = mp_subcheck_init();
+	if (upgrad_res.errorcode == OK) {
+		sc_run_upgrade = mp_set_subcheck_state(sc_run_upgrade, STATE_OK);
+	}
+	xasprintf(&sc_run_upgrade.output, "Executed apt upgrade (dry run)");
+
+	mp_add_subcheck_to_check(&overall, sc_run_upgrade);
+
 	size_t packages_available = upgrad_res.package_count;
-	size_t sec_count = upgrad_res.security_package_count;
+	size_t number_of_security_updates = upgrad_res.security_package_count;
 	char **packages_list = upgrad_res.packages_list;
 	char **secpackages_list = upgrad_res.secpackages_list;
 
-	if (sec_count > 0) {
-		result = max_state(result, STATE_CRITICAL);
-	} else if (packages_available >= config.packages_warning && !config.only_critical) {
-		result = max_state(result, STATE_WARNING);
-	} else if (result > STATE_UNKNOWN) {
-		result = STATE_UNKNOWN;
+	mp_perfdata pd_security_updates = perfdata_init();
+	pd_security_updates.value = mp_create_pd_value(number_of_security_updates);
+	pd_security_updates.label = "critical_updates";
+
+	mp_subcheck sc_security_updates = mp_subcheck_init();
+	xasprintf(&sc_security_updates.output, "Security updates available: %zu",
+			  number_of_security_updates);
+	mp_add_perfdata_to_subcheck(&sc_security_updates, pd_security_updates);
+
+	if (number_of_security_updates > 0) {
+		sc_security_updates = mp_set_subcheck_state(sc_security_updates, STATE_CRITICAL);
+	} else {
+		sc_security_updates = mp_set_subcheck_state(sc_security_updates, STATE_OK);
 	}
 
-	printf(_("APT %s: %zu packages available for %s (%zu critical updates). %s%s%s%s|available_upgrades=%zu;;;0 critical_updates=%zu;;;0\n"),
-		   state_text(result), packages_available, (config.upgrade == DIST_UPGRADE) ? "dist-upgrade" : "upgrade", sec_count,
-		   (stderr_warning) ? " warnings detected" : "", (stderr_warning && exec_warning) ? "," : "",
-		   (exec_warning) ? " errors detected" : "", (stderr_warning || exec_warning) ? "." : "", packages_available, sec_count);
+	mp_perfdata pd_other_updates = perfdata_init();
+	pd_other_updates.value = mp_create_pd_value(packages_available);
+	pd_other_updates.label = "available_upgrades";
+
+	mp_subcheck sc_other_updates = mp_subcheck_init();
+
+	xasprintf(&sc_other_updates.output, "Updates available: %zu", packages_available);
+	mp_set_subcheck_default_state(sc_other_updates, STATE_OK);
+	mp_add_perfdata_to_subcheck(&sc_other_updates, pd_other_updates);
+
+	if (packages_available >= config.packages_warning && !config.only_critical) {
+		sc_other_updates = mp_set_subcheck_state(sc_other_updates, STATE_WARNING);
+	}
 
 	if (config.list) {
-		qsort(secpackages_list, sec_count, sizeof(char *), cmpstringp);
-		qsort(packages_list, packages_available - sec_count, sizeof(char *), cmpstringp);
+		qsort(secpackages_list, number_of_security_updates, sizeof(char *), cmpstringp);
+		qsort(packages_list, packages_available - number_of_security_updates, sizeof(char *),
+			  cmpstringp);
 
-		for (size_t i = 0; i < sec_count; i++) {
-			printf("%s (security)\n", secpackages_list[i]);
+		for (size_t i = 0; i < number_of_security_updates; i++) {
+			xasprintf(&sc_security_updates.output, "%s\n%s (security)", sc_security_updates.output,
+					  secpackages_list[i]);
 		}
 
 		if (!config.only_critical) {
-			for (size_t i = 0; i < packages_available - sec_count; i++) {
-				printf("%s\n", packages_list[i]);
+			for (size_t i = 0; i < packages_available - number_of_security_updates; i++) {
+				xasprintf(&sc_other_updates.output, "%s\n%s", sc_other_updates.output,
+						  packages_list[i]);
 			}
 		}
 	}
+	mp_add_subcheck_to_check(&overall, sc_security_updates);
+	mp_add_subcheck_to_check(&overall, sc_other_updates);
 
-	return result;
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_apt_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		/* Character for hidden input file option (for testing). */
+		INPUT_FILE_OPT = CHAR_MAX + 1,
+		output_format_index,
+	};
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -179,6 +229,7 @@ check_apt_config_wrapper process_arguments(int argc, char **argv) {
 									   {"only-critical", no_argument, 0, 'o'},
 									   {"input-file", required_argument, 0, INPUT_FILE_OPT},
 									   {"packages-warning", required_argument, 0, 'w'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_apt_config_wrapper result = {
@@ -257,6 +308,18 @@ check_apt_config_wrapper process_arguments(int argc, char **argv) {
 		case 'w':
 			result.config.packages_warning = atoi(optarg);
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		default:
 			/* print short usage statement if args not parsable */
 			usage5();
@@ -267,37 +330,38 @@ check_apt_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 /* run an apt-get upgrade */
-run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_include, const char *do_exclude, const char *do_critical,
+run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_include,
+							   const char *do_exclude, const char *do_critical,
 							   const char *upgrade_opts, const char *input_filename) {
-	regex_t ereg;
+	regex_t exclude_regex;
 	/* initialize ereg as it is possible it is printed while uninitialized */
-	memset(&ereg, '\0', sizeof(ereg.buffer));
+	memset(&exclude_regex, '\0', sizeof(exclude_regex.buffer));
 
 	run_upgrade_result result = {
-		.errorcode = STATE_UNKNOWN,
+		.errorcode = OK,
 	};
 
 	if (upgrade == NO_UPGRADE) {
-		result.errorcode = STATE_OK;
+		result.errorcode = OK;
 		return result;
 	}
 
 	int regres = 0;
-	regex_t ireg;
+	regex_t include_regex;
 	char rerrbuf[64];
 	/* compile the regexps */
 	if (do_include != NULL) {
-		regres = regcomp(&ireg, do_include, REG_EXTENDED);
+		regres = regcomp(&include_regex, do_include, REG_EXTENDED);
 		if (regres != 0) {
-			regerror(regres, &ireg, rerrbuf, 64);
+			regerror(regres, &include_regex, rerrbuf, 64);
 			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 		}
 	}
 
 	if (do_exclude != NULL) {
-		regres = regcomp(&ereg, do_exclude, REG_EXTENDED);
+		regres = regcomp(&exclude_regex, do_exclude, REG_EXTENDED);
 		if (regres != 0) {
-			regerror(regres, &ereg, rerrbuf, 64);
+			regerror(regres, &exclude_regex, rerrbuf, 64);
 			die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 		}
 	}
@@ -306,7 +370,7 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 	const char *crit_ptr = (do_critical != NULL) ? do_critical : SECURITY_RE;
 	regres = regcomp(&sreg, crit_ptr, REG_EXTENDED);
 	if (regres != 0) {
-		regerror(regres, &ereg, rerrbuf, 64);
+		regerror(regres, &exclude_regex, rerrbuf, 64);
 		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 	}
 
@@ -322,13 +386,12 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 		result.errorcode = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	}
 
-	/* apt-get upgrade only changes exit status if there is an
-	 * internal error when run in dry-run mode.  therefore we will
-	 * treat such an error as UNKNOWN */
-	if (result.errorcode != STATE_OK) {
-		exec_warning = 1;
-		result.errorcode = STATE_UNKNOWN;
-		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
+	// apt-get upgrade only changes exit status if there is an
+	// internal error when run in dry-run mode.
+	if (result.errorcode != 0) {
+		result.exec_warning = true;
+		result.errorcode = ERROR;
+		// fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
 
 	char **pkglist = malloc(sizeof(char *) * chld_out.lines);
@@ -355,21 +418,25 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 		if (verbose) {
 			printf("%s\n", chld_out.line[i]);
 		}
+
 		/* if it is a package we care about */
 		if (strncmp(PKGINST_PREFIX, chld_out.line[i], strlen(PKGINST_PREFIX)) == 0 &&
-			(do_include == NULL || regexec(&ireg, chld_out.line[i], 0, NULL, 0) == 0)) {
+			(do_include == NULL || regexec(&include_regex, chld_out.line[i], 0, NULL, 0) == 0)) {
 			/* if we're not excluding, or it's not in the
 			 * list of stuff to exclude */
-			if (do_exclude == NULL || regexec(&ereg, chld_out.line[i], 0, NULL, 0) != 0) {
+			if (do_exclude == NULL || regexec(&exclude_regex, chld_out.line[i], 0, NULL, 0) != 0) {
 				package_counter++;
 				if (regexec(&sreg, chld_out.line[i], 0, NULL, 0) == 0) {
 					security_package_counter++;
+
 					if (verbose) {
 						printf("*");
 					}
+
 					(secpkglist)[security_package_counter - 1] = pkg_name(chld_out.line[i]);
 				} else {
-					(pkglist)[package_counter - security_package_counter - 1] = pkg_name(chld_out.line[i]);
+					(pkglist)[package_counter - security_package_counter - 1] =
+						pkg_name(chld_out.line[i]);
 				}
 				if (verbose) {
 					printf("*%s\n", chld_out.line[i]);
@@ -377,6 +444,7 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 			}
 		}
 	}
+
 	result.package_count = package_counter;
 	result.security_package_count = security_package_counter;
 	result.packages_list = pkglist;
@@ -385,41 +453,55 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 	/* If we get anything on stderr, at least set warning */
 	if (input_filename == NULL && chld_err.buflen) {
 		stderr_warning = true;
-		result.errorcode = max_state(result.errorcode, STATE_WARNING);
+		result.errorcode = ERROR;
+
 		if (verbose) {
 			for (size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}
 	}
+
 	if (do_include != NULL) {
-		regfree(&ireg);
+		regfree(&include_regex);
 	}
+
 	regfree(&sreg);
+
 	if (do_exclude != NULL) {
-		regfree(&ereg);
+		regfree(&exclude_regex);
 	}
+
 	free(cmdline);
+
 	return result;
 }
 
 /* run an apt-get update (needs root) */
-int run_update(char *update_opts) {
-	int result = STATE_UNKNOWN;
+run_update_result run_update(char *update_opts) {
 	char *cmdline;
 	/* run the update */
 	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
 
+	run_update_result result = {
+		.exec_warning = false,
+		.stderr_warning = false,
+		.sc = mp_subcheck_init(),
+	};
+
+	result.sc = mp_set_subcheck_default_state(result.sc, STATE_OK);
+	xasprintf(&result.sc.output, "executing '%s' first", cmdline);
+
 	struct output chld_out;
 	struct output chld_err;
-	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	int cmd_error = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
 	 * since we were explicitly asked to do so, this is treated as
 	 * a critical error. */
-	if (result != 0) {
+	if (cmd_error != 0) {
 		exec_warning = true;
-		result = STATE_CRITICAL;
-		fprintf(stderr, _("'%s' exited with non-zero status.\n"), cmdline);
+		result.sc = mp_set_subcheck_state(result.sc, STATE_CRITICAL);
+		xasprintf(&result.sc.output, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
 
 	if (verbose) {
@@ -430,15 +512,18 @@ int run_update(char *update_opts) {
 
 	/* If we get anything on stderr, at least set warning */
 	if (chld_err.buflen) {
-		stderr_warning = 1;
-		result = max_state(result, STATE_WARNING);
+		stderr_warning = true;
+		result.sc = mp_set_subcheck_state(
+			result.sc, max_state(mp_compute_subcheck_state(result.sc), STATE_WARNING));
 		if (verbose) {
 			for (size_t i = 0; i < chld_err.lines; i++) {
 				fprintf(stderr, "%s\n", chld_err.line[i]);
 			}
 		}
 	}
+
 	free(cmdline);
+
 	return result;
 }
 
@@ -558,7 +643,8 @@ void print_help(void) {
 	printf("    %s\n", _("List packages available for upgrade.  Packages are printed sorted by"));
 	printf("    %s\n", _("name with security packages listed first."));
 	printf(" %s\n", "-i, --include=REGEXP");
-	printf("    %s\n", _("Include only packages matching REGEXP.  Can be specified multiple times"));
+	printf("    %s\n",
+		   _("Include only packages matching REGEXP.  Can be specified multiple times"));
 	printf("    %s\n", _("the values will be combined together.  Any packages matching this list"));
 	printf("    %s\n", _("cause the plugin to return WARNING status.  Others will be ignored."));
 	printf("    %s\n", _("Default is to include all packages."));
@@ -567,7 +653,8 @@ void print_help(void) {
 	printf("    %s\n", _("otherwise be included.  Can be specified multiple times; the values"));
 	printf("    %s\n", _("will be combined together.  Default is to exclude no packages."));
 	printf(" %s\n", "-c, --critical=REGEXP");
-	printf("    %s\n", _("If the full package information of any of the upgradable packages match"));
+	printf("    %s\n",
+		   _("If the full package information of any of the upgradable packages match"));
 	printf("    %s\n", _("this REGEXP, the plugin will return CRITICAL status.  Can be specified"));
 	printf("    %s\n", _("multiple times like above.  Default is a regexp matching security"));
 	printf("    %s\n", _("upgrades for Debian and Ubuntu:"));
@@ -576,15 +663,21 @@ void print_help(void) {
 	printf("    %s\n", _("information is compared against the critical list."));
 	printf(" %s\n", "-o, --only-critical");
 	printf("    %s\n", _("Only warn about upgrades matching the critical list.  The total number"));
-	printf("    %s\n", _("of upgrades will be printed, but any non-critical upgrades will not cause"));
+	printf("    %s\n",
+		   _("of upgrades will be printed, but any non-critical upgrades will not cause"));
 	printf("    %s\n", _("the plugin to return WARNING status."));
 	printf(" %s\n", "-w, --packages-warning");
-	printf("    %s\n", _("Minimum number of packages available for upgrade to return WARNING status."));
+	printf("    %s\n",
+		   _("Minimum number of packages available for upgrade to return WARNING status."));
 	printf("    %s\n\n", _("Default is 1 package."));
 
-	printf("%s\n\n", _("The following options require root privileges and should be used with care:"));
+	printf(UT_OUTPUT_FORMAT);
+
+	printf("%s\n\n",
+		   _("The following options require root privileges and should be used with care:"));
 	printf(" %s\n", "-u, --update=OPTS");
-	printf("    %s\n", _("First perform an 'apt-get update'.  An optional OPTS parameter overrides"));
+	printf("    %s\n",
+		   _("First perform an 'apt-get update'.  An optional OPTS parameter overrides"));
 	printf("    %s\n", _("the default options.  Note: you may also need to adjust the global"));
 	printf("    %s\n", _("timeout (with -t) to prevent the plugin from timing out if apt-get"));
 	printf("    %s\n", _("upgrade is expected to take longer than the default timeout."));
@@ -593,8 +686,10 @@ void print_help(void) {
 	printf("    %s\n", _("apt-get will be run with these command line options instead of the"));
 	printf("    %s", _("default "));
 	printf("(%s).\n", UPGRADE_DEFAULT_OPTS);
-	printf("    %s\n", _("Note that you may be required to have root privileges if you do not use"));
-	printf("    %s\n", _("the default options, which will only run a simulation and NOT perform the upgrade"));
+	printf("    %s\n",
+		   _("Note that you may be required to have root privileges if you do not use"));
+	printf("    %s\n",
+		   _("the default options, which will only run a simulation and NOT perform the upgrade"));
 	printf(" %s\n", "-d, --dist-upgrade=OPTS");
 	printf("    %s\n", _("Perform a dist-upgrade instead of normal upgrade. Like with -U OPTS"));
 	printf("    %s\n", _("can be provided to override the default options."));
