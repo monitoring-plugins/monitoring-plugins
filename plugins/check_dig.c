@@ -81,8 +81,9 @@ int main(int argc, char **argv) {
 
 	char *command_line;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG, config.dig_args, config.query_transport,
-			  config.server_port, config.dns_server, config.query_address, config.record_type, config.number_tries, timeout_interval_dig);
+	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG,
+			  config.dig_args, config.query_transport, config.server_port, config.dns_server,
+			  config.query_address, config.record_type, config.number_tries, timeout_interval_dig);
 
 	alarm(timeout_interval);
 	struct timeval start_time;
@@ -118,8 +119,9 @@ int main(int argc, char **argv) {
 					printf("%s\n", chld_out.line[i]);
 				}
 
-				if (strcasestr(chld_out.line[i], (config.expected_address == NULL ? config.query_address : config.expected_address)) !=
-					NULL) {
+				if (strcasestr(chld_out.line[i], (config.expected_address == NULL
+													  ? config.query_address
+													  : config.expected_address)) != NULL) {
 					msg = chld_out.line[i];
 					result = STATE_OK;
 
@@ -174,8 +176,9 @@ int main(int argc, char **argv) {
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
-		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED), config.warning_interval,
-					 (config.critical_interval > UNDEFINED), config.critical_interval, true, 0, false, 0));
+		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
+					 config.warning_interval, (config.critical_interval > UNDEFINED),
+					 config.critical_interval, true, 0, false, 0));
 	exit(result);
 }
 
@@ -335,7 +338,8 @@ void print_help(void) {
 	printf(" %s\n", "-T, --record_type=STRING");
 	printf("    %s\n", _("Record type to lookup (default: A)"));
 	printf(" %s\n", "-a, --expected_address=STRING");
-	printf("    %s\n", _("An address expected to be in the answer section. If not set, uses whatever"));
+	printf("    %s\n",
+		   _("An address expected to be in the answer section. If not set, uses whatever"));
 	printf("    %s\n", _("was in -l"));
 	printf(" %s\n", "-A, --dig-arguments=STRING");
 	printf("    %s\n", _("Pass STRING as argument(s) to dig"));

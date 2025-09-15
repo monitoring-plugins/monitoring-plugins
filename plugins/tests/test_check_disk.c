@@ -21,7 +21,8 @@
 #include "../../tap/tap.h"
 #include "regex.h"
 
-void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc);
+void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags,
+							   int expect, char *desc);
 
 int main(int argc, char **argv) {
 	plan_tests(35);
@@ -70,16 +71,26 @@ int main(int argc, char **argv) {
 
 	int cflags = REG_NOSUB | REG_EXTENDED;
 	np_test_mount_entry_regex(dummy_mount_list, strdup("/"), cflags, 3, strdup("a"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("/dev"), cflags, 3, strdup("regex on dev names:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("/foo"), cflags, 0, strdup("regex on non existent dev/path:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("/Foo"), cflags | REG_ICASE, 0, strdup("regi on non existent dev/path:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("/c.t0"), cflags, 3, strdup("partial devname regex match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("c0t0"), cflags, 1, strdup("partial devname regex match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("C0t0"), cflags | REG_ICASE, 1, strdup("partial devname regi match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("home"), cflags, 1, strdup("partial pathname regex match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("hOme"), cflags | REG_ICASE, 1, strdup("partial pathname regi match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("(/home)|(/var)"), cflags, 2, strdup("grouped regex pathname match:"));
-	np_test_mount_entry_regex(dummy_mount_list, strdup("(/homE)|(/Var)"), cflags | REG_ICASE, 2, strdup("grouped regi pathname match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("/dev"), cflags, 3,
+							  strdup("regex on dev names:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("/foo"), cflags, 0,
+							  strdup("regex on non existent dev/path:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("/Foo"), cflags | REG_ICASE, 0,
+							  strdup("regi on non existent dev/path:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("/c.t0"), cflags, 3,
+							  strdup("partial devname regex match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("c0t0"), cflags, 1,
+							  strdup("partial devname regex match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("C0t0"), cflags | REG_ICASE, 1,
+							  strdup("partial devname regi match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("home"), cflags, 1,
+							  strdup("partial pathname regex match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("hOme"), cflags | REG_ICASE, 1,
+							  strdup("partial pathname regi match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("(/home)|(/var)"), cflags, 2,
+							  strdup("grouped regex pathname match:"));
+	np_test_mount_entry_regex(dummy_mount_list, strdup("(/homE)|(/Var)"), cflags | REG_ICASE, 2,
+							  strdup("grouped regi pathname match:"));
 
 	filesystem_list test_paths = filesystem_list_init();
 	mp_int_fs_list_append(&test_paths, "/home/groups");
@@ -94,15 +105,18 @@ int main(int argc, char **argv) {
 		struct mount_entry *temp_me;
 		temp_me = p->best_match;
 		if (!strcmp(p->name, "/home/groups")) {
-			ok(temp_me && !strcmp(temp_me->me_mountdir, "/home"), "/home/groups got right best match: /home");
+			ok(temp_me && !strcmp(temp_me->me_mountdir, "/home"),
+			   "/home/groups got right best match: /home");
 		} else if (!strcmp(p->name, "/var")) {
 			ok(temp_me && !strcmp(temp_me->me_mountdir, "/var"), "/var got right best match: /var");
 		} else if (!strcmp(p->name, "/tmp")) {
 			ok(temp_me && !strcmp(temp_me->me_mountdir, "/"), "/tmp got right best match: /");
 		} else if (!strcmp(p->name, "/home/tonvoon")) {
-			ok(temp_me && !strcmp(temp_me->me_mountdir, "/home"), "/home/tonvoon got right best match: /home");
+			ok(temp_me && !strcmp(temp_me->me_mountdir, "/home"),
+			   "/home/tonvoon got right best match: /home");
 		} else if (!strcmp(p->name, "/dev/c2t0d0s0")) {
-			ok(temp_me && !strcmp(temp_me->me_devname, "/dev/c2t0d0s0"), "/dev/c2t0d0s0 got right best match: /dev/c2t0d0s0");
+			ok(temp_me && !strcmp(temp_me->me_devname, "/dev/c2t0d0s0"),
+			   "/dev/c2t0d0s0 got right best match: /dev/c2t0d0s0");
 		}
 	}
 
@@ -180,7 +194,8 @@ int main(int argc, char **argv) {
 	return exit_status();
 }
 
-void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags, int expect, char *desc) {
+void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regstr, int cflags,
+							   int expect, char *desc) {
 	regex_t regex;
 	if (regcomp(&regex, regstr, cflags) == 0) {
 		int matches = 0;
@@ -189,7 +204,8 @@ void np_test_mount_entry_regex(struct mount_entry *dummy_mount_list, char *regst
 				matches++;
 			}
 		}
-		ok(matches == expect, "%s '%s' matched %i/3 entries. ok: %i/3", desc, regstr, expect, matches);
+		ok(matches == expect, "%s '%s' matched %i/3 entries. ok: %i/3", desc, regstr, expect,
+		   matches);
 
 	} else {
 		ok(false, "regex '%s' not compilable", regstr);

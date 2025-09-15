@@ -63,7 +63,8 @@ void socket_timeout_alarm_handler(int sig) {
 /* connects to a host on a specified tcp port, sends a string, and gets a
 	 response. loops on select-recv until timeout or eof to get all of a
 	 multi-packet answer */
-int process_tcp_request2(const char *server_address, int server_port, const char *send_buffer, char *recv_buffer, int recv_size) {
+int process_tcp_request2(const char *server_address, int server_port, const char *send_buffer,
+						 char *recv_buffer, int recv_size) {
 
 	int result;
 	int send_result;
@@ -104,7 +105,8 @@ int process_tcp_request2(const char *server_address, int server_port, const char
 			}
 			break;
 		} else { /* it has */
-			recv_result = recv(sd, recv_buffer + recv_length, (size_t)recv_size - recv_length - 1, 0);
+			recv_result =
+				recv(sd, recv_buffer + recv_length, (size_t)recv_size - recv_length - 1, 0);
 			if (recv_result == -1) {
 				/* recv failed, bail out */
 				strcpy(recv_buffer + recv_length, "");
@@ -133,7 +135,8 @@ int process_tcp_request2(const char *server_address, int server_port, const char
 
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-int process_request(const char *server_address, int server_port, int proto, const char *send_buffer, char *recv_buffer, int recv_size) {
+int process_request(const char *server_address, int server_port, int proto, const char *send_buffer,
+					char *recv_buffer, int recv_size) {
 	int result;
 	int sd;
 
@@ -253,7 +256,8 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 			if (is_socket) {
 				// printf("connect to file socket %s: %s\n", host_name, strerror(errno));
 			} else {
-				// printf("connect to address %s and port %d: %s\n", host_name, port, strerror(errno));
+				// printf("connect to address %s and port %d: %s\n", host_name, port,
+				// strerror(errno));
 			}
 			return STATE_CRITICAL;
 			break;

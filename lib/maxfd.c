@@ -31,10 +31,11 @@ long mp_open_max(void) {
 #ifdef _SC_OPEN_MAX
 	errno = 0;
 	if ((maxfd = sysconf(_SC_OPEN_MAX)) < 0) {
-		if (errno == 0)
+		if (errno == 0) {
 			maxfd = DEFAULT_MAXFD; /* it's indeterminate */
-		else
+		} else {
 			die(STATE_UNKNOWN, _("sysconf error for _SC_OPEN_MAX\n"));
+		}
 	}
 #elif defined(OPEN_MAX)
 	return OPEN_MAX

@@ -42,8 +42,9 @@ char *list2str(np_arg_list *optlst) {
 		free(optltmp);
 	}
 	/* Strip last whitespace */
-	if (strlen(optstr) > 1)
+	if (strlen(optstr) > 1) {
 		optstr[strlen(optstr) - 1] = '\0';
+	}
 
 	return optstr;
 }
@@ -54,15 +55,18 @@ int main(int argc, char **argv) {
 	plan_tests(12);
 
 	optstr = list2str(np_get_defaults("section@./config-tiny.ini", "check_disk"));
-	ok(!strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "config-tiny.ini's section as expected");
+	ok(!strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"),
+	   "config-tiny.ini's section as expected");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("@./config-tiny.ini", "section"));
-	ok(!strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"), "Used default section name, without specific");
+	ok(!strcmp(optstr, "--one=two --Foo=Bar --this=Your Mother! --blank"),
+	   "Used default section name, without specific");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("Section Two@./config-tiny.ini", "check_disk"));
-	ok(!strcmp(optstr, "--something else=blah --remove=whitespace"), "config-tiny.ini's Section Two as expected");
+	ok(!strcmp(optstr, "--something else=blah --remove=whitespace"),
+	   "config-tiny.ini's Section Two as expected");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("/path/to/file.txt@./config-tiny.ini", "check_disk"));
@@ -70,15 +74,18 @@ int main(int argc, char **argv) {
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("section2@./config-tiny.ini", "check_disk"));
-	ok(!strcmp(optstr, "--this=that"), "config-tiny.ini's section2 with whitespace before section name");
+	ok(!strcmp(optstr, "--this=that"),
+	   "config-tiny.ini's section2 with whitespace before section name");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("section3@./config-tiny.ini", "check_disk"));
-	ok(!strcmp(optstr, "--this=that"), "config-tiny.ini's section3 with whitespace after section name");
+	ok(!strcmp(optstr, "--this=that"),
+	   "config-tiny.ini's section3 with whitespace after section name");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("check_mysql@./plugin.ini", "check_disk"));
-	ok(!strcmp(optstr, "--username=operator --password=secret"), "plugin.ini's check_mysql as expected");
+	ok(!strcmp(optstr, "--username=operator --password=secret"),
+	   "plugin.ini's check_mysql as expected");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("check_mysql2@./plugin.ini", "check_disk"));
@@ -90,29 +97,39 @@ int main(int argc, char **argv) {
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("Section Two@./config-dos.ini", "check_disk"));
-	ok(!strcmp(optstr, "--something else=blah --remove=whitespace"), "config-dos.ini's Section Two as expected");
+	ok(!strcmp(optstr, "--something else=blah --remove=whitespace"),
+	   "config-dos.ini's Section Two as expected");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("section_twice@./plugin.ini", "check_disk"));
-	ok(!strcmp(optstr, "--foo=bar --bar=foo"), "plugin.ini's section_twice defined twice in the file");
+	ok(!strcmp(optstr, "--foo=bar --bar=foo"),
+	   "plugin.ini's section_twice defined twice in the file");
 	my_free(optstr);
 
 	optstr = list2str(np_get_defaults("tcp_long_lines@plugins.ini", "check_tcp"));
-	ok(!strcmp(optstr, "--escape --send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar "
+	ok(!strcmp(optstr, "--escape --send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "yadda Foo bar BAZ yadda yadda yadda Foo bar "
 					   "BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar "
+					   "BAZ yadda yadda yadda Foo bar BAZ yadda "
 					   "yadda yadda Foo bar BAZ yadda yadda yadda Foo "
-					   "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+					   "yadda yadda Foo bar BAZ yadda yadda "
 					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
-					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda --expect=Foo bar BAZ yadda yadda "
+					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "yadda --expect=Foo bar BAZ yadda yadda "
 					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
-					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo "
+					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "yadda Foo bar BAZ yadda yadda yadda Foo "
 					   "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar "
+					   "BAZ yadda yadda yadda Foo bar BAZ yadda "
 					   "yadda yadda Foo bar BAZ yadda yadda yadda Foo "
-					   "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+					   "yadda yadda Foo bar BAZ yadda yadda "
 					   "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
-					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo "
+					   "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+					   "yadda Foo bar BAZ yadda yadda yadda Foo "
 					   "bar BAZ yadda yadda yadda --jail"),
 	   "Long options");
 	my_free(optstr);

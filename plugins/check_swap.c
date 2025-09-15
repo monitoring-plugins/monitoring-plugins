@@ -172,7 +172,8 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.warn_is_set) {
-		if ((config.warn.is_percentage && (percent_used >= (100 - (double)config.warn.value))) || config.warn.value >= data.metrics.free) {
+		if ((config.warn.is_percentage && (percent_used >= (100 - (double)config.warn.value))) ||
+			config.warn.value >= data.metrics.free) {
 			sc1 = mp_set_subcheck_state(sc1, STATE_WARNING);
 		}
 	}
@@ -182,13 +183,14 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.crit_is_set) {
-		if ((config.crit.is_percentage && (percent_used >= (100 - (double)config.crit.value))) || config.crit.value >= data.metrics.free) {
+		if ((config.crit.is_percentage && (percent_used >= (100 - (double)config.crit.value))) ||
+			config.crit.value >= data.metrics.free) {
 			sc1 = mp_set_subcheck_state(sc1, STATE_CRITICAL);
 		}
 	}
 
-	xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used), data.metrics.free >> 20,
-			  data.metrics.total >> 20);
+	xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
+			  data.metrics.free >> 20, data.metrics.total >> 20);
 
 	overall.summary = "Swap";
 	mp_add_subcheck_to_check(&overall, sc1);
@@ -201,7 +203,9 @@ int check_swap(float free_swap_mb, float total_swap_mb, swap_config config) {
 		return config.no_swap_state;
 	}
 
-	uint64_t free_swap = (uint64_t)(free_swap_mb * (1024 * 1024)); /* Convert back to bytes as warn and crit specified in bytes */
+	uint64_t free_swap =
+		(uint64_t)(free_swap_mb *
+				   (1024 * 1024)); /* Convert back to bytes as warn and crit specified in bytes */
 
 	if (!config.crit.is_percentage && config.crit.value >= free_swap) {
 		return STATE_CRITICAL;
@@ -210,13 +214,16 @@ int check_swap(float free_swap_mb, float total_swap_mb, swap_config config) {
 		return STATE_WARNING;
 	}
 
-	uint64_t usage_percentage = (uint64_t)((total_swap_mb - free_swap_mb) / total_swap_mb) * HUNDRED_PERCENT;
+	uint64_t usage_percentage =
+		(uint64_t)((total_swap_mb - free_swap_mb) / total_swap_mb) * HUNDRED_PERCENT;
 
-	if (config.crit.is_percentage && config.crit.value != 0 && usage_percentage >= (HUNDRED_PERCENT - config.crit.value)) {
+	if (config.crit.is_percentage && config.crit.value != 0 &&
+		usage_percentage >= (HUNDRED_PERCENT - config.crit.value)) {
 		return STATE_CRITICAL;
 	}
 
-	if (config.warn.is_percentage && config.warn.value != 0 && usage_percentage >= (HUNDRED_PERCENT - config.warn.value)) {
+	if (config.warn.is_percentage && config.warn.value != 0 &&
+		usage_percentage >= (HUNDRED_PERCENT - config.warn.value)) {
 		return STATE_WARNING;
 	}
 

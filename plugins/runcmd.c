@@ -53,7 +53,7 @@
 #endif
 
 #ifndef WIFEXITED
-#	define WIFEXITED(stat_val) (((stat_val)&255) == 0)
+#	define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
 /* 4.3BSD Reno <signal.h> doesn't define SIG_ERR */
@@ -87,8 +87,9 @@ extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(
  * through this api and thus achieve async-safeness throughout the api */
 void np_runcmd_init(void) {
 	long maxfd = mp_open_max();
-	if (!np_pids)
+	if (!np_pids) {
 		np_pids = calloc(maxfd, sizeof(pid_t));
+	}
 }
 
 /* Start running a command */
@@ -106,8 +107,9 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 
 	int i = 0;
 
-	if (!np_pids)
+	if (!np_pids) {
 		NP_RUNCMD_INIT;
+	}
 
 	env[0] = strdup("LC_ALL=C");
 	env[1] = NULL;
@@ -115,18 +117,21 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 	/* make copy of command string so strtok() doesn't silently modify it */
 	/* (the calling program may want to access it later) */
 	cmdlen = strlen(cmdstring);
-	if ((cmd = malloc(cmdlen + 1)) == NULL)
+	if ((cmd = malloc(cmdlen + 1)) == NULL) {
 		return -1;
+	}
 	memcpy(cmd, cmdstring, cmdlen);
 	cmd[cmdlen] = '\0';
 
 	/* This is not a shell, so we don't handle "???" */
-	if (strstr(cmdstring, "\""))
+	if (strstr(cmdstring, "\"")) {
 		return -1;
+	}
 
 	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
-	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''"))
+	if (strstr(cmdstring, " ' ") || strstr(cmdstring, "'''")) {
 		return -1;
+	}
 
 	/* each arg must be whitespace-separated, so args can be a maximum
 	 * of (len / 2) + 1. We add 1 extra to the mix for NULL termination */
@@ -145,8 +150,9 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 
 		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
 			str++;
-			if (!strstr(str, "'"))
+			if (!strstr(str, "'")) {
 				return -1; /* balanced? */
+			}
 			cmd = 1 + strstr(str, "'");
 			str[strcspn(str, "'")] = 0;
 		} else {
@@ -158,14 +164,16 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 			}
 		}
 
-		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n"))
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n")) {
 			cmd = NULL;
+		}
 
 		argv[i++] = str;
 	}
 
-	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0)
+	if (pipe(pfd) < 0 || pipe(pfderr) < 0 || (pid = fork()) < 0) {
 		return -1; /* errno set by the failing function */
+	}
 
 	/* child runs exceve() and _exit. */
 	if (pid == 0) {
@@ -190,9 +198,11 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
 		long maxfd = mp_open_max();
-		for (i = 0; i < maxfd; i++)
-			if (np_pids[i] > 0)
+		for (i = 0; i < maxfd; i++) {
+			if (np_pids[i] > 0) {
 				close(i);
+			}
+		}
 
 		execve(argv[0], argv, env);
 		_exit(STATE_UNKNOWN);
@@ -215,17 +225,21 @@ static int np_runcmd_close(int fd) {
 
 	/* make sure this fd was opened by popen() */
 	long maxfd = mp_open_max();
-	if (fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0)
+	if (fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0) {
 		return -1;
+	}
 
 	np_pids[fd] = 0;
-	if (close(fd) == -1)
+	if (close(fd) == -1) {
 		return -1;
+	}
 
 	/* EINTR is ok (sort of), everything else is bad */
-	while (waitpid(pid, &status, 0) < 0)
-		if (errno != EINTR)
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
 			return -1;
+		}
+	}
 
 	/* return child's termination status */
 	return (WIFEXITED(status)) ? WEXITSTATUS(status) : -1;
@@ -233,15 +247,18 @@ static int np_runcmd_close(int fd) {
 
 void runcmd_timeout_alarm_handler(int signo) {
 
-	if (signo == SIGALRM)
+	if (signo == SIGALRM) {
 		puts(_("CRITICAL - Plugin timed out while executing system call"));
+	}
 
 	long maxfd = mp_open_max();
-	if (np_pids)
+	if (np_pids) {
 		for (long int i = 0; i < maxfd; i++) {
-			if (np_pids[i] != 0)
+			if (np_pids[i] != 0) {
 				kill(np_pids[i], SIGKILL);
+			}
 		}
+	}
 
 	exit(STATE_CRITICAL);
 }
@@ -270,15 +287,17 @@ static int np_fetch_output(int fd, output *op, int flags) {
 
 	/* some plugins may want to keep output unbroken, and some commands
 	 * will yield no output, so return here for those */
-	if (flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen)
+	if (flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen) {
 		return op->buflen;
+	}
 
 	/* and some may want both */
 	if (flags & RUNCMD_NO_ASSOC) {
 		buf = malloc(op->buflen);
 		memcpy(buf, op->buf, op->buflen);
-	} else
+	} else {
 		buf = op->buf;
+	}
 
 	op->line = NULL;
 	op->lens = NULL;
@@ -299,8 +318,9 @@ static int np_fetch_output(int fd, output *op, int flags) {
 		op->line[lineno] = &buf[i];
 
 		/* hop to next newline or end of buffer */
-		while (buf[i] != '\n' && i < op->buflen)
+		while (buf[i] != '\n' && i < op->buflen) {
 			i++;
+		}
 		buf[i] = '\0';
 
 		/* calculate the string length using pointer difference */
@@ -317,18 +337,23 @@ int np_runcmd(const char *cmd, output *out, output *err, int flags) {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
-	if (out)
+	if (out) {
 		memset(out, 0, sizeof(output));
-	if (err)
+	}
+	if (err) {
 		memset(err, 0, sizeof(output));
+	}
 
-	if ((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1)
+	if ((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
+	}
 
-	if (out)
+	if (out) {
 		out->lines = np_fetch_output(pfd_out[0], out, flags);
-	if (err)
+	}
+	if (err) {
 		err->lines = np_fetch_output(pfd_err[0], err, flags);
+	}
 
 	return np_runcmd_close(fd);
 }

@@ -96,7 +96,8 @@ int main(int argc, char **argv) {
 		xasprintf(&send_buffer, "%s&1", config.req_password);
 		fetch_data(config.server_address, config.server_port, send_buffer);
 		if (config.value_list != NULL && strcmp(recv_buffer, config.value_list) != 0) {
-			xasprintf(&output_message, _("Wrong client version - running: %s, required: %s"), recv_buffer, config.value_list);
+			xasprintf(&output_message, _("Wrong client version - running: %s, required: %s"),
+					  recv_buffer, config.value_list);
 			return_code = STATE_WARNING;
 		} else {
 			xasprintf(&output_message, "%s", recv_buffer);
@@ -116,9 +117,12 @@ int main(int argc, char **argv) {
 
 			/* loop until one of the parameters is wrong or not present */
 			int offset = 0;
-			while (lvalue_list[0 + offset] > (unsigned long)0 && lvalue_list[0 + offset] <= (unsigned long)17280 &&
-				   lvalue_list[1 + offset] > (unsigned long)0 && lvalue_list[1 + offset] <= (unsigned long)100 &&
-				   lvalue_list[2 + offset] > (unsigned long)0 && lvalue_list[2 + offset] <= (unsigned long)100) {
+			while (lvalue_list[0 + offset] > (unsigned long)0 &&
+				   lvalue_list[0 + offset] <= (unsigned long)17280 &&
+				   lvalue_list[1 + offset] > (unsigned long)0 &&
+				   lvalue_list[1 + offset] <= (unsigned long)100 &&
+				   lvalue_list[2 + offset] > (unsigned long)0 &&
+				   lvalue_list[2 + offset] <= (unsigned long)100) {
 
 				/* Send request and retrieve data */
 				xasprintf(&send_buffer, "%s&2&%lu", config.req_password, lvalue_list[0 + offset]);
@@ -133,10 +137,12 @@ int main(int argc, char **argv) {
 					return_code = STATE_WARNING;
 				}
 
-				xasprintf(&output_message, _(" %lu%% (%lu min average)"), utilization, lvalue_list[0 + offset]);
+				xasprintf(&output_message, _(" %lu%% (%lu min average)"), utilization,
+						  lvalue_list[0 + offset]);
 				xasprintf(&temp_string, "%s%s", temp_string, output_message);
-				xasprintf(&perfdata, _(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"), lvalue_list[0 + offset], utilization,
-						  lvalue_list[1 + offset], lvalue_list[2 + offset]);
+				xasprintf(&perfdata, _(" '%lu min avg Load'=%lu%%;%lu;%lu;0;100"),
+						  lvalue_list[0 + offset], utilization, lvalue_list[1 + offset],
+						  lvalue_list[2 + offset]);
 				xasprintf(&temp_string_perf, "%s%s", temp_string_perf, perfdata);
 				offset += 3; /* move across the array */
 			}
@@ -154,8 +160,10 @@ int main(int argc, char **argv) {
 		if (config.value_list == NULL) {
 			tmp_value_list = "minutes";
 		}
-		if (strncmp(tmp_value_list, "seconds", strlen("seconds") + 1) && strncmp(tmp_value_list, "minutes", strlen("minutes") + 1) &&
-			strncmp(config.value_list, "hours", strlen("hours") + 1) && strncmp(tmp_value_list, "days", strlen("days") + 1)) {
+		if (strncmp(tmp_value_list, "seconds", strlen("seconds") + 1) &&
+			strncmp(tmp_value_list, "minutes", strlen("minutes") + 1) &&
+			strncmp(config.value_list, "hours", strlen("hours") + 1) &&
+			strncmp(tmp_value_list, "days", strlen("days") + 1)) {
 
 			output_message = strdup(_("wrong -l argument"));
 		} else {
@@ -175,8 +183,9 @@ int main(int argc, char **argv) {
 			}
 			/* else uptime in seconds, nothing to do */
 
-			xasprintf(&output_message, _("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"), updays, uphours, upminutes,
-					  uptime);
+			xasprintf(&output_message,
+					  _("System Uptime - %u day(s) %u hour(s) %u minute(s) |uptime=%lu"), updays,
+					  uphours, upminutes, uptime);
 
 			if (config.check_critical_value && uptime <= config.critical_value) {
 				return_code = STATE_CRITICAL;
@@ -207,20 +216,27 @@ int main(int argc, char **argv) {
 			}
 
 			if (total_disk_space > 0 && free_disk_space >= 0) {
-				double percent_used_space = ((total_disk_space - free_disk_space) / total_disk_space) * 100;
+				double percent_used_space =
+					((total_disk_space - free_disk_space) / total_disk_space) * 100;
 				double warning_used_space = ((float)config.warning_value / 100) * total_disk_space;
-				double critical_used_space = ((float)config.critical_value / 100) * total_disk_space;
+				double critical_used_space =
+					((float)config.critical_value / 100) * total_disk_space;
 
-				xasprintf(&temp_string, _("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"), config.value_list,
-						  total_disk_space / 1073741824, (total_disk_space - free_disk_space) / 1073741824, percent_used_space,
-						  free_disk_space / 1073741824, (free_disk_space / total_disk_space) * 100);
-				xasprintf(&temp_string_perf, _("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"), config.value_list,
-						  (total_disk_space - free_disk_space) / 1073741824, warning_used_space / 1073741824,
-						  critical_used_space / 1073741824, total_disk_space / 1073741824);
+				xasprintf(
+					&temp_string,
+					_("%s:\\ - total: %.2f Gb - used: %.2f Gb (%.0f%%) - free %.2f Gb (%.0f%%)"),
+					config.value_list, total_disk_space / 1073741824,
+					(total_disk_space - free_disk_space) / 1073741824, percent_used_space,
+					free_disk_space / 1073741824, (free_disk_space / total_disk_space) * 100);
+				xasprintf(&temp_string_perf, _("'%s:\\ Used Space'=%.2fGb;%.2f;%.2f;0.00;%.2f"),
+						  config.value_list, (total_disk_space - free_disk_space) / 1073741824,
+						  warning_used_space / 1073741824, critical_used_space / 1073741824,
+						  total_disk_space / 1073741824);
 
 				if (config.check_critical_value && percent_used_space >= config.critical_value) {
 					return_code = STATE_CRITICAL;
-				} else if (config.check_warning_value && percent_used_space >= config.warning_value) {
+				} else if (config.check_warning_value &&
+						   percent_used_space >= config.warning_value) {
 					return_code = STATE_WARNING;
 				} else {
 					return_code = STATE_OK;
@@ -239,8 +255,10 @@ int main(int argc, char **argv) {
 		if (config.value_list == NULL) {
 			output_message = strdup(_("No service/process specified"));
 		} else {
-			preparelist(config.value_list); /* replace , between services with & to send the request */
-			xasprintf(&send_buffer, "%s&%u&%s&%s", config.req_password, (config.vars_to_check == CHECK_SERVICESTATE) ? 5 : 6,
+			preparelist(
+				config.value_list); /* replace , between services with & to send the request */
+			xasprintf(&send_buffer, "%s&%u&%s&%s", config.req_password,
+					  (config.vars_to_check == CHECK_SERVICESTATE) ? 5 : 6,
 					  (config.show_all) ? "ShowAll" : "ShowFail", config.value_list);
 			fetch_data(config.server_address, config.server_port, send_buffer);
 			char *numstr = strtok(recv_buffer, "&");
@@ -271,10 +289,14 @@ int main(int argc, char **argv) {
 
 		/* Divisor should be 1048567, not 3044515, as we are measuring "Commit Charge" here,
 		which equals RAM + Pagefiles. */
-		xasprintf(&output_message, _("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
-				  mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space, (mem_commitLimit - mem_commitByte) / 1048567,
-				  (mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
-		xasprintf(&perfdata, _("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"), mem_commitByte / 1048567, warning_used_space / 1048567,
+		xasprintf(
+			&output_message,
+			_("Memory usage: total:%.2f MB - used: %.2f MB (%.0f%%) - free: %.2f MB (%.0f%%)"),
+			mem_commitLimit / 1048567, mem_commitByte / 1048567, percent_used_space,
+			(mem_commitLimit - mem_commitByte) / 1048567,
+			(mem_commitLimit - mem_commitByte) / mem_commitLimit * 100);
+		xasprintf(&perfdata, _("'Memory usage'=%.2fMB;%.2f;%.2f;0.00;%.2f"),
+				  mem_commitByte / 1048567, warning_used_space / 1048567,
 				  critical_used_space / 1048567, mem_commitLimit / 1048567);
 
 		return_code = STATE_OK;
@@ -302,16 +324,17 @@ int main(int argc, char **argv) {
 		 the counter unit - that is, the dimensions of the counter you're getting. Examples:
 		 pages/s, packets transferred, etc.
 
-		4) If you want, you may provide the minimum and maximum values to expect. They aren't mandatory,
-		 but once specified they MUST have the same order of magnitude and units of -w and -c; otherwise.
-		 strange things will happen when you make graphs of your data.
+		4) If you want, you may provide the minimum and maximum values to expect. They aren't
+		mandatory, but once specified they MUST have the same order of magnitude and units of -w and
+		-c; otherwise. strange things will happen when you make graphs of your data.
 		*/
 
 		double counter_value = 0.0;
 		if (config.value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
-			preparelist(config.value_list); /* replace , between services with & to send the request */
+			preparelist(
+				config.value_list); /* replace , between services with & to send the request */
 			bool isPercent = (strchr(config.value_list, '%') != NULL);
 
 			strtok(config.value_list, "&"); /* burn the first parameters */
@@ -358,15 +381,18 @@ int main(int argc, char **argv) {
 			if (allRight) {
 				/* Let's format the output string, finally... */
 				if (strstr(description, "%") == NULL) {
-					xasprintf(&output_message, "%s = %.2f %s", description, counter_value, counter_unit);
+					xasprintf(&output_message, "%s = %.2f %s", description, counter_value,
+							  counter_unit);
 				} else {
 					/* has formatting, will segv if wrong */
 					xasprintf(&output_message, description, counter_value);
 				}
 				xasprintf(&output_message, "%s |", output_message);
 				xasprintf(&output_message, "%s %s", output_message,
-						  fperfdata(description, counter_value, counter_unit, 1, config.warning_value, 1, config.critical_value,
-									(!(isPercent) && (minval != NULL)), fminval, (!(isPercent) && (minval != NULL)), fmaxval));
+						  fperfdata(description, counter_value, counter_unit, 1,
+									config.warning_value, 1, config.critical_value,
+									(!(isPercent) && (minval != NULL)), fminval,
+									(!(isPercent) && (minval != NULL)), fmaxval));
 			}
 		}
 
@@ -391,7 +417,8 @@ int main(int argc, char **argv) {
 		if (config.value_list == NULL) {
 			output_message = strdup(_("No counter specified"));
 		} else {
-			preparelist(config.value_list); /* replace , between services with & to send the request */
+			preparelist(
+				config.value_list); /* replace , between services with & to send the request */
 			xasprintf(&send_buffer, "%s&9&%s", config.req_password, config.value_list);
 			fetch_data(config.server_address, config.server_port, send_buffer);
 			unsigned long age_in_minutes = atoi(strtok(recv_buffer, "&"));
@@ -724,25 +751,31 @@ void print_help(void) {
 	printf("  %s\n", "\"%%.f %%%% paging file used.\"");
 	printf(" %s\n", "INSTANCES =");
 	printf("  %s\n", _("Check any performance counter object of Windows NT/2000."));
-	printf("  %s\n", _("Syntax: check_nt -H <hostname> -p <port> -v INSTANCES -l <counter object>"));
+	printf("  %s\n",
+		   _("Syntax: check_nt -H <hostname> -p <port> -v INSTANCES -l <counter object>"));
 	printf("  %s\n", _("<counter object> is a Windows Perfmon Counter object (eg. Process),"));
 	printf("  %s\n", _("if it is two words, it should be enclosed in quotes"));
 	printf("  %s\n", _("The returned results will be a comma-separated list of instances on "));
 	printf("  %s\n", _(" the selected computer for that object."));
-	printf("  %s\n", _("The purpose of this is to be run from command line to determine what instances"));
-	printf("  %s\n", _(" are available for monitoring without having to log onto the Windows server"));
+	printf("  %s\n",
+		   _("The purpose of this is to be run from command line to determine what instances"));
+	printf("  %s\n",
+		   _(" are available for monitoring without having to log onto the Windows server"));
 	printf("  %s\n", _("  to run Perfmon directly."));
-	printf("  %s\n", _("It can also be used in scripts that automatically create the monitoring service"));
+	printf("  %s\n",
+		   _("It can also be used in scripts that automatically create the monitoring service"));
 	printf("  %s\n", _(" configuration files."));
 	printf("  %s\n", _("Some examples:"));
 	printf("  %s\n\n", _("check_nt -H 192.168.1.1 -p 1248 -v INSTANCES -l Process"));
 
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("- The NSClient service should be running on the server to get any information"));
+	printf(" %s\n",
+		   _("- The NSClient service should be running on the server to get any information"));
 	printf("   %s\n", "(http://nsclient.ready2run.nl).");
 	printf(" %s\n", _("- Critical thresholds should be lower than warning thresholds"));
 	printf(" %s\n", _("- Default port 1248 is sometimes in use by other services. The error"));
-	printf("   %s\n", _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
+	printf("   %s\n",
+		   _("output when this happens contains \"Cannot map xxxxx to protocol number\"."));
 	printf("   %s\n", _("One fix for this is to change the port to something else on check_nt "));
 	printf("   %s\n", _("and on the client service it\'s connecting to."));
 

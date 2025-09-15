@@ -56,7 +56,8 @@ static check_radius_config_wrapper process_arguments(int /*argc*/, char ** /*arg
 static void print_help(void);
 void print_usage(void);
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
+	defined(HAVE_LIBRADCLI)
 #	define my_rc_conf_str(a) rc_conf_str(rch, a)
 #	if defined(HAVE_LIBRADCLI)
 #		define my_rc_send_server(a, b) rc_send_server(rch, a, b, AUTH)
@@ -157,12 +158,14 @@ int main(int argc, char **argv) {
 
 	check_radius_config config = tmp_config.config;
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
+	defined(HAVE_LIBRADCLI)
 	rc_handle *rch = NULL;
 #endif
 
 	char *str = strdup("dictionary");
-	if ((config.config_file && my_rc_read_config(config.config_file, &rch)) || my_rc_read_dictionary(my_rc_conf_str(str))) {
+	if ((config.config_file && my_rc_read_config(config.config_file, &rch)) ||
+		my_rc_read_dictionary(my_rc_conf_str(str))) {
 		die(STATE_UNKNOWN, _("Config file error\n"));
 	}
 
@@ -200,7 +203,8 @@ int main(int argc, char **argv) {
 		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
 	}
 
-	my_rc_buildreq(&data, PW_ACCESS_REQUEST, config.server, config.port, (int)timeout_interval, config.retries);
+	my_rc_buildreq(&data, PW_ACCESS_REQUEST, config.server, config.port, (int)timeout_interval,
+				   config.retries);
 
 #ifdef RC_BUFFER_LEN
 	char msg[RC_BUFFER_LEN];
@@ -251,13 +255,14 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_radius_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'P'},
-									   {"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'},
-									   {"nas-id", required_argument, 0, 'n'},   {"nas-ip-address", required_argument, 0, 'N'},
-									   {"filename", required_argument, 0, 'F'}, {"expect", required_argument, 0, 'e'},
-									   {"retries", required_argument, 0, 'r'},  {"timeout", required_argument, 0, 't'},
-									   {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'P'},
+		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'},
+		{"nas-id", required_argument, 0, 'n'},   {"nas-ip-address", required_argument, 0, 'N'},
+		{"filename", required_argument, 0, 'F'}, {"expect", required_argument, 0, 'e'},
+		{"retries", required_argument, 0, 'r'},  {"timeout", required_argument, 0, 't'},
+		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
 
 	check_radius_config_wrapper result = {
 		.errorcode = OK,
@@ -397,9 +402,11 @@ void print_help(void) {
 	printf("%s\n", _("name and password. A configuration file must be present. The format of"));
 	printf("%s\n", _("the configuration file is described in the radiusclient library sources."));
 	printf("%s\n", _("The password option presents a substantial security issue because the"));
-	printf("%s\n", _("password can possibly be determined by careful watching of the command line"));
+	printf("%s\n",
+		   _("password can possibly be determined by careful watching of the command line"));
 	printf("%s\n", _("in a process listing. This risk is exacerbated because the plugin will"));
-	printf("%s\n", _("typically be executed at regular predictable intervals. Please be sure that"));
+	printf("%s\n",
+		   _("typically be executed at regular predictable intervals. Please be sure that"));
 	printf("%s\n", _("the password used does not allow access to sensitive system resources."));
 
 	printf(UT_SUPPORT);
@@ -414,7 +421,8 @@ void print_usage(void) {
 }
 
 int my_rc_read_config(char *config_file_name, rc_handle **rch) {
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) || defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
+	defined(HAVE_LIBRADCLI)
 	*rch = rc_read_config(config_file_name);
 	return (rch == NULL) ? 1 : 0;
 #else

@@ -36,7 +36,6 @@ typedef struct {
 	unsigned int fwmark;
 	bool fwmark_set;
 
-
 	// only available with fping version >= 5.3
 	// Setting icmp_timestamp tells fping to use ICMP Timestamp (ICMP type 13) instead
 	// of ICMP Echo

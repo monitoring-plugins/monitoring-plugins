@@ -377,7 +377,9 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 
 			while (tmp_string != NULL) {
 				*tmp_string = '\0';
-				asprintf(&intermediate_string, "%s%s\n%s", intermediate_string,check.output, generate_indentation_string(indentation+1)); // one more indentation to make it look better
+				asprintf(&intermediate_string, "%s%s\n%s", intermediate_string, check.output,
+						 generate_indentation_string(
+							 indentation + 1)); // one more indentation to make it look better
 
 				if (*(tmp_string + 1) != '\0') {
 					check.output = tmp_string + 1;
@@ -394,13 +396,14 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 			// add the rest (if any)
 			if (have_residual_chars) {
 				char *tmp = check.output;
-				xasprintf(&check.output, "%s\n%s%s", intermediate_string, generate_indentation_string(indentation+1), tmp);
+				xasprintf(&check.output, "%s\n%s%s", intermediate_string,
+						  generate_indentation_string(indentation + 1), tmp);
 			} else {
 				check.output = intermediate_string;
 			}
 		}
-		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation), state_text(mp_compute_subcheck_state(check)),
-				 check.output);
+		asprintf(&result, "%s\\_[%s] - %s", generate_indentation_string(indentation),
+				 state_text(mp_compute_subcheck_state(check)), check.output);
 
 		subchecks = check.subchecks;
 

@@ -129,7 +129,8 @@ int main(int argc, char **argv) {
 	time_t current_time;
 	time(&current_time);
 	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		printf(_("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
+		printf(_("MRTG data has expired (%d minutes old)\n"),
+			   (int)((current_time - timestamp) / 60));
 		return STATE_WARNING;
 	}
 
@@ -148,20 +149,29 @@ int main(int argc, char **argv) {
 		result = STATE_WARNING;
 	}
 
-	printf("%s. %s = %lu %s|%s\n", (config.use_average) ? _("Avg") : _("Max"), config.label, rate, config.units,
-		   perfdata(config.label, (long)rate, config.units, config.value_warning_threshold_set, (long)config.value_warning_threshold,
-					config.value_critical_threshold_set, (long)config.value_critical_threshold, 0, 0, 0, 0));
+	printf("%s. %s = %lu %s|%s\n", (config.use_average) ? _("Avg") : _("Max"), config.label, rate,
+		   config.units,
+		   perfdata(config.label, (long)rate, config.units, config.value_warning_threshold_set,
+					(long)config.value_warning_threshold, config.value_critical_threshold_set,
+					(long)config.value_critical_threshold, 0, 0, 0, 0));
 
 	return result;
 }
 
 /* process command-line arguments */
 check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"logfile", required_argument, 0, 'F'},  {"expires", required_argument, 0, 'e'},  {"aggregation", required_argument, 0, 'a'},
-		{"variable", required_argument, 0, 'v'}, {"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},
-		{"label", required_argument, 0, 'l'},    {"units", required_argument, 0, 'u'},    {"variable", required_argument, 0, 'v'},
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	static struct option longopts[] = {{"logfile", required_argument, 0, 'F'},
+									   {"expires", required_argument, 0, 'e'},
+									   {"aggregation", required_argument, 0, 'a'},
+									   {"variable", required_argument, 0, 'v'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"label", required_argument, 0, 'l'},
+									   {"units", required_argument, 0, 'u'},
+									   {"variable", required_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {0, 0, 0, 0}};
 
 	check_mrtg_config_wrapper result = {
 		.errorcode = OK,
@@ -242,7 +252,9 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		if (is_intpos(argv[option_char])) {
 			result.config.expire_minutes = atoi(argv[option_char++]);
 		} else {
-			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[option_char], progname);
+			die(STATE_UNKNOWN,
+				_("%s is not a valid expiration time\nUse '%s -h' for additional help\n"),
+				argv[option_char], progname);
 		}
 	}
 
@@ -334,25 +346,32 @@ void print_help(void) {
 	printf("   %s\n", _("\"Bytes Per Second\", \"%% Utilization\")"));
 
 	printf("\n");
-	printf(" %s\n", _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
+	printf(" %s\n",
+		   _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
 	printf(" %s\n", _("the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If"));
 	printf(" %s\n", _("the data in the log file is older than <expire_minutes> old, a WARNING"));
 	printf(" %s\n", _("status is returned and a warning message is printed."));
 
 	printf("\n");
-	printf(" %s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
-	printf(" %s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
-	printf(" %s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
-	printf(" %s\n", _("packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"));
+	printf(" %s\n",
+		   _("This plugin is useful for monitoring MRTG data that does not correspond to"));
+	printf(" %s\n",
+		   _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
+	printf(" %s\n",
+		   _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
+	printf(" %s\n",
+		   _("packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"));
 	printf(" %s\n", _("me to track processor utilization, user connections, drive space, etc and"));
 	printf(" %s\n\n", _("this plugin works well for monitoring that kind of data as well."));
 
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("- This plugin only monitors one of the two variables stored in the MRTG log"));
+	printf(" %s\n",
+		   _("- This plugin only monitors one of the two variables stored in the MRTG log"));
 	printf("   %s\n", _("file.  If you want to monitor both values you will have to define two"));
 	printf("   %s\n", _("commands with different values for the <variable> argument.  Of course,"));
 	printf("   %s\n", _("you can always hack the code to make this plugin work for you..."));
-	printf(" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
+	printf(" %s\n",
+		   _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
 	printf("   %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
 
 	printf(UT_SUPPORT);

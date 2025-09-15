@@ -128,10 +128,14 @@ int main(int argc, char **argv) {
 
 	switch (tmp_status) {
 	case STATE_WARNING:
-		xasprintf(&sc_users.output, "%d users currently logged in. This violates the warning threshold", user_wrapper.users);
+		xasprintf(&sc_users.output,
+				  "%d users currently logged in. This violates the warning threshold",
+				  user_wrapper.users);
 		break;
 	case STATE_CRITICAL:
-		xasprintf(&sc_users.output, "%d users currently logged in. This violates the critical threshold", user_wrapper.users);
+		xasprintf(&sc_users.output,
+				  "%d users currently logged in. This violates the critical threshold",
+				  user_wrapper.users);
 		break;
 	default:
 		xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
@@ -218,7 +222,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 		printf("Warning threshold missing\n");
 		print_usage();
 		exit(STATE_UNKNOWN);
-		}
+	}
 
 	if (tmp.error == MP_PARSING_SUCCES) {
 		result.config.thresholds.warning = tmp.range;
@@ -254,7 +258,8 @@ void print_help(void) {
 	printf(COPYRIGHT, copyright, email);
 
 	printf("%s\n", _("This plugin checks the number of users currently logged in on the local"));
-	printf("%s\n", _("system and generates an error if the number exceeds the thresholds specified."));
+	printf("%s\n",
+		   _("system and generates an error if the number exceeds the thresholds specified."));
 
 	printf("\n\n");
 
@@ -264,9 +269,11 @@ void print_help(void) {
 	printf(UT_EXTRA_OPTS);
 
 	printf(" %s\n", "-w, --warning=RANGE_EXPRESSION");
-	printf("    %s\n", _("Set WARNING status if number of logged in users violates RANGE_EXPRESSION"));
+	printf("    %s\n",
+		   _("Set WARNING status if number of logged in users violates RANGE_EXPRESSION"));
 	printf(" %s\n", "-c, --critical=RANGE_EXPRESSION");
-	printf("    %s\n", _("Set CRITICAL status if number of logged in users violates RANGE_EXPRESSION"));
+	printf("    %s\n",
+		   _("Set CRITICAL status if number of logged in users violates RANGE_EXPRESSION"));
 	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_SUPPORT);

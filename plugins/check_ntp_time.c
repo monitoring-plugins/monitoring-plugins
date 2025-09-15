@@ -93,9 +93,9 @@ typedef struct {
 /* bits 1,2 are the leap indicator */
 #define LI_MASK 0xc0
 #define LI(x)   ((x & LI_MASK) >> 6)
-#define LI_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 6) & LI_MASK);                                                                                                         \
+#define LI_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 6) & LI_MASK);                                                                 \
 	} while (0)
 /* and these are the values of the leap indicator */
 #define LI_NOWARNING  0x00
@@ -105,17 +105,17 @@ typedef struct {
 /* bits 3,4,5 are the ntp version */
 #define VN_MASK 0x38
 #define VN(x)   ((x & VN_MASK) >> 3)
-#define VN_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 3) & VN_MASK);                                                                                                         \
+#define VN_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 3) & VN_MASK);                                                                 \
 	} while (0)
 #define VN_RESERVED 0x02
 /* bits 6,7,8 are the ntp mode */
 #define MODE_MASK 0x07
 #define MODE(x)   (x & MODE_MASK)
-#define MODE_SET(x, y)                                                                                                                     \
-	do {                                                                                                                                   \
-		x |= (y & MODE_MASK);                                                                                                              \
+#define MODE_SET(x, y)                                                                             \
+	do {                                                                                           \
+		x |= (y & MODE_MASK);                                                                      \
 	} while (0)
 /* here are some values */
 #define MODE_CLIENT     0x03
@@ -127,9 +127,9 @@ typedef struct {
 #define REM_MORE  0x20
 /* In control message, bits 11 - 15 are opcode */
 #define OP_MASK 0x1f
-#define OP_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= (y & OP_MASK);                                                                                                                \
+#define OP_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= (y & OP_MASK);                                                                        \
 	} while (0)
 #define OP_READSTAT 0x01
 #define OP_READVAR  0x02
@@ -163,32 +163,34 @@ typedef struct {
 #define NTP32asDOUBLE(x) (ntohs(L16(x)) + ((double)ntohs(R16(x)) / 65536.0))
 
 /* likewise for a 64-bit ntp fp number */
-#define NTP64asDOUBLE(n)                                                                                                                   \
-	(double)(((uint64_t)n) ? (ntohl(L32(n)) - EPOCHDIFF) + (.00000001 * (0.5 + (double)(ntohl(R32(n)) / 42.94967296))) : 0)
+#define NTP64asDOUBLE(n)                                                                           \
+	(double)(((uint64_t)n) ? (ntohl(L32(n)) - EPOCHDIFF) +                                         \
+								 (.00000001 * (0.5 + (double)(ntohl(R32(n)) / 42.94967296)))       \
+						   : 0)
 
 /* convert a struct timeval to a double */
 #define TVasDOUBLE(x) (double)(x.tv_sec + (0.000001 * x.tv_usec))
 
 /* convert an ntp 64-bit fp number to a struct timeval */
-#define NTP64toTV(n, t)                                                                                                                    \
-	do {                                                                                                                                   \
-		if (!n)                                                                                                                            \
-			t.tv_sec = t.tv_usec = 0;                                                                                                      \
-		else {                                                                                                                             \
-			t.tv_sec = ntohl(L32(n)) - EPOCHDIFF;                                                                                          \
-			t.tv_usec = (int)(0.5 + (double)(ntohl(R32(n)) / 4294.967296));                                                                \
-		}                                                                                                                                  \
+#define NTP64toTV(n, t)                                                                            \
+	do {                                                                                           \
+		if (!n)                                                                                    \
+			t.tv_sec = t.tv_usec = 0;                                                              \
+		else {                                                                                     \
+			t.tv_sec = ntohl(L32(n)) - EPOCHDIFF;                                                  \
+			t.tv_usec = (int)(0.5 + (double)(ntohl(R32(n)) / 4294.967296));                        \
+		}                                                                                          \
 	} while (0)
 
 /* convert a struct timeval to an ntp 64-bit fp number */
-#define TVtoNTP64(t, n)                                                                                                                    \
-	do {                                                                                                                                   \
-		if (!t.tv_usec && !t.tv_sec)                                                                                                       \
-			n = 0x0UL;                                                                                                                     \
-		else {                                                                                                                             \
-			L32(n) = htonl(t.tv_sec + EPOCHDIFF);                                                                                          \
-			R32(n) = htonl((uint64_t)((4294.967296 * t.tv_usec) + .5));                                                                    \
-		}                                                                                                                                  \
+#define TVtoNTP64(t, n)                                                                            \
+	do {                                                                                           \
+		if (!t.tv_usec && !t.tv_sec)                                                               \
+			n = 0x0UL;                                                                             \
+		else {                                                                                     \
+			L32(n) = htonl(t.tv_sec + EPOCHDIFF);                                                  \
+			R32(n) = htonl((uint64_t)((4294.967296 * t.tv_usec) + .5));                            \
+		}                                                                                          \
 	} while (0)
 
 /* NTP control message header is 12 bytes, plus any data in the data
@@ -197,15 +199,15 @@ typedef struct {
 #define SIZEOF_NTPCM(m) (12 + ntohs(m.count) + ((m.count) ? 4 - (ntohs(m.count) % 4) : 0))
 
 /* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                                                             \
-	do {                                                                                                                                   \
-		if (verbose > 1) {                                                                                                                 \
-			x;                                                                                                                             \
-		}                                                                                                                                  \
+#define DBG(x)                                                                                     \
+	do {                                                                                           \
+		if (verbose > 1) {                                                                         \
+			x;                                                                                     \
+		}                                                                                          \
 	} while (0);
-#define PRINTSOCKADDR(x)                                                                                                                   \
-	do {                                                                                                                                   \
-		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);                                              \
+#define PRINTSOCKADDR(x)                                                                           \
+	do {                                                                                           \
+		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
 	} while (0);
 
 /* calculate the offset of the local clock */
@@ -358,7 +360,8 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 		die(STATE_UNKNOWN, "can not allocate socket array");
 	}
 
-	ntp_server_results *servers = (ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
+	ntp_server_results *servers =
+		(ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
 	if (servers == NULL) {
 		die(STATE_UNKNOWN, "can not allocate server array");
 	}
@@ -585,8 +588,8 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
-					 0);
+	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
+					 offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 int main(int argc, char *argv[]) {
@@ -613,7 +616,8 @@ int main(int argc, char *argv[]) {
 
 	mp_state_enum offset_result = STATE_OK;
 	mp_state_enum result = STATE_OK;
-	double offset = offset_request(config.server_address, config.port, &offset_result, config.time_offset);
+	double offset =
+		offset_request(config.server_address, config.port, &offset_result, config.time_offset);
 	if (offset_result == STATE_UNKNOWN) {
 		result = ((!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
 	} else {
@@ -701,5 +705,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n",
+		   progname);
 }

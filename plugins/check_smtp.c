@@ -58,7 +58,8 @@ typedef struct {
 } check_smtp_config_wrapper;
 static check_smtp_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 
-int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor, bool ssl_established) {
+int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor,
+			bool ssl_established) {
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
 		return np_net_ssl_read(buf, num);
@@ -69,7 +70,8 @@ int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor,
 #endif
 }
 
-int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor, bool ssl_established) {
+int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor,
+			bool ssl_established) {
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
 
@@ -83,10 +85,12 @@ int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor,
 
 static void print_help(void);
 void print_usage(void);
-static char *smtp_quit(check_smtp_config /*config*/, char /*buffer*/[MAX_INPUT_BUFFER], int /*socket_descriptor*/,
-					   bool /*ssl_established*/);
-static int recvline(char * /*buf*/, size_t /*bufsize*/, check_smtp_config /*config*/, int /*socket_descriptor*/, bool /*ssl_established*/);
-static int recvlines(check_smtp_config /*config*/, char * /*buf*/, size_t /*bufsize*/, int /*socket_descriptor*/, bool /*ssl_established*/);
+static char *smtp_quit(check_smtp_config /*config*/, char /*buffer*/[MAX_INPUT_BUFFER],
+					   int /*socket_descriptor*/, bool /*ssl_established*/);
+static int recvline(char * /*buf*/, size_t /*bufsize*/, check_smtp_config /*config*/,
+					int /*socket_descriptor*/, bool /*ssl_established*/);
+static int recvlines(check_smtp_config /*config*/, char * /*buf*/, size_t /*bufsize*/,
+					 int /*socket_descriptor*/, bool /*ssl_established*/);
 static int my_close(int /*socket_descriptor*/);
 
 static int verbose = 0;
@@ -158,7 +162,8 @@ int main(int argc, char **argv) {
 
 	int socket_descriptor = 0;
 	/* try to connect to the host at the given port number */
-	mp_state_enum result = my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
+	mp_state_enum result =
+		my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
 
 	char *error_msg = "";
 	char buffer[MAX_INPUT_BUFFER];
@@ -174,7 +179,8 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_SSL
 		if (config.use_ssl) {
-			result = np_net_ssl_init_with_hostname(socket_descriptor, (config.use_sni ? config.server_address : NULL));
+			result = np_net_ssl_init_with_hostname(socket_descriptor,
+												   (config.use_sni ? config.server_address : NULL));
 			if (result != STATE_OK) {
 				printf(_("CRITICAL - Cannot create SSL context.\n"));
 				close(socket_descriptor);
@@ -223,14 +229,16 @@ int main(int argc, char **argv) {
 			/* send the STARTTLS command */
 			send(socket_descriptor, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
-			recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established); /* wait for it */
+			recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+					  ssl_established); /* wait for it */
 			if (!strstr(buffer, SMTP_EXPECT)) {
 				printf(_("Server does not support STARTTLS\n"));
 				smtp_quit(config, buffer, socket_descriptor, ssl_established);
 				exit(STATE_UNKNOWN);
 			}
 
-			result = np_net_ssl_init_with_hostname(socket_descriptor, (config.use_sni ? config.server_address : NULL));
+			result = np_net_ssl_init_with_hostname(socket_descriptor,
+												   (config.use_sni ? config.server_address : NULL));
 			if (result != STATE_OK) {
 				printf(_("CRITICAL - Cannot create SSL context.\n"));
 				close(socket_descriptor);
@@ -251,7 +259,8 @@ int main(int argc, char **argv) {
 			 * reason, some MTAs will not allow an AUTH LOGIN command before
 			 * we resent EHLO via TLS.
 			 */
-			if (my_send(config, helocmd, strlen(helocmd), socket_descriptor, ssl_established) <= 0) {
+			if (my_send(config, helocmd, strlen(helocmd), socket_descriptor, ssl_established) <=
+				0) {
 				printf("%s\n", _("SMTP UNKNOWN - Cannot send EHLO command via TLS."));
 				my_close(socket_descriptor);
 				exit(STATE_UNKNOWN);
@@ -261,7 +270,8 @@ int main(int argc, char **argv) {
 				printf(_("sent %s"), helocmd);
 			}
 
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
+			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <=
+				0) {
 				printf("%s\n", _("SMTP UNKNOWN - Cannot read EHLO response via TLS."));
 				my_close(socket_descriptor);
 				exit(STATE_UNKNOWN);
@@ -273,7 +283,8 @@ int main(int argc, char **argv) {
 
 #	ifdef USE_OPENSSL
 			if (config.check_cert) {
-				result = np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
+				result =
+					np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
 				smtp_quit(config, buffer, socket_descriptor, ssl_established);
 				my_close(socket_descriptor);
 				exit(result);
@@ -296,14 +307,17 @@ int main(int argc, char **argv) {
 			if (config.server_port == SMTP_PORT) {
 				printf(_("Invalid SMTP response received from host: %s\n"), server_response);
 			} else {
-				printf(_("Invalid SMTP response received from host on port %d: %s\n"), config.server_port, server_response);
+				printf(_("Invalid SMTP response received from host on port %d: %s\n"),
+					   config.server_port, server_response);
 			}
 			exit(STATE_WARNING);
 		}
 
 		if (config.send_mail_from) {
 			my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >= 1 && verbose) {
+			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >=
+					1 &&
+				verbose) {
 				printf("%s", buffer);
 			}
 		}
@@ -312,7 +326,9 @@ int main(int argc, char **argv) {
 		while (counter < config.ncommands) {
 			xasprintf(&cmd_str, "%s%s", config.commands[counter], "\r\n");
 			my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >= 1 && verbose) {
+			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >=
+					1 &&
+				verbose) {
 				printf("%s", buffer);
 			}
 			strip(buffer);
@@ -334,7 +350,8 @@ int main(int argc, char **argv) {
 					result = STATE_OK;
 				} else if (excode == REG_NOMATCH) {
 					result = STATE_WARNING;
-					printf(_("SMTP %s - Invalid response '%s' to command '%s'\n"), state_text(result), buffer, config.commands[counter]);
+					printf(_("SMTP %s - Invalid response '%s' to command '%s'\n"),
+						   state_text(result), buffer, config.commands[counter]);
 				} else {
 					regerror(excode, &preg, errbuf, MAX_INPUT_BUFFER);
 					printf(_("Execute Error: %s\n"), errbuf);
@@ -361,12 +378,14 @@ int main(int argc, char **argv) {
 					}
 
 					/* send AUTH LOGIN */
-					my_send(config, SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN), socket_descriptor, ssl_established);
+					my_send(config, SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN), socket_descriptor,
+							ssl_established);
 					if (verbose) {
 						printf(_("sent %s\n"), "AUTH LOGIN");
 					}
 
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established)) <= 0) {
+					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+										 ssl_established)) <= 0) {
 						xasprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
 						result = STATE_WARNING;
 						break;
@@ -389,7 +408,8 @@ int main(int argc, char **argv) {
 						printf(_("sent %s\n"), abuf);
 					}
 
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established)) <= 0) {
+					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+										 ssl_established)) <= 0) {
 						result = STATE_CRITICAL;
 						xasprintf(&error_msg, _("recv() failed after sending authuser, "));
 						break;
@@ -409,7 +429,8 @@ int main(int argc, char **argv) {
 					if (verbose) {
 						printf(_("sent %s\n"), abuf);
 					}
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established)) <= 0) {
+					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+										 ssl_established)) <= 0) {
 						result = STATE_CRITICAL;
 						xasprintf(&error_msg, _("recv() failed after sending authpass, "));
 						break;
@@ -451,10 +472,10 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	printf(_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"), state_text(result), error_msg, elapsed_time, verbose ? ", " : "",
-		   verbose ? buffer : "",
-		   fperfdata("time", elapsed_time, "s", config.check_warning_time, config.warning_time, config.check_critical_time,
-					 config.critical_time, true, 0, false, 0));
+	printf(_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"), state_text(result), error_msg,
+		   elapsed_time, verbose ? ", " : "", verbose ? buffer : "",
+		   fperfdata("time", elapsed_time, "s", config.check_warning_time, config.warning_time,
+					 config.check_critical_time, config.critical_time, true, 0, false, 0));
 
 	exit(result);
 }
@@ -519,7 +540,8 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	bool implicit_tls = false;
 	int server_port_option = 0;
 	while (true) {
-		int opt_index = getopt_long(argc, argv, "+hVv46Lrt:p:f:e:c:w:H:C:R:sSD:F:A:U:P:q", longopts, &option);
+		int opt_index =
+			getopt_long(argc, argv, "+hVv46Lrt:p:f:e:c:w:H:C:R:sSD:F:A:U:P:q", longopts, &option);
 
 		if (opt_index == -1 || opt_index == EOF) {
 			break;
@@ -546,7 +568,8 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* from argument */
 			result.config.from_arg = optarg + strspn(optarg, "<");
-			result.config.from_arg = strndup(result.config.from_arg, strcspn(result.config.from_arg, ">"));
+			result.config.from_arg =
+				strndup(result.config.from_arg, strcspn(result.config.from_arg, ">"));
 			result.config.send_mail_from = true;
 			break;
 		case 'A':
@@ -565,9 +588,11 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 		case 'C': /* commands  */
 			if (result.config.ncommands >= command_size) {
 				command_size += 8;
-				result.config.commands = realloc(result.config.commands, sizeof(char *) * command_size);
+				result.config.commands =
+					realloc(result.config.commands, sizeof(char *) * command_size);
 				if (result.config.commands == NULL) {
-					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"), result.config.ncommands);
+					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"),
+						result.config.ncommands);
 				}
 			}
 			result.config.commands[result.config.ncommands] = (char *)malloc(sizeof(char) * 255);
@@ -577,9 +602,11 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 		case 'R': /* server responses */
 			if (result.config.nresponses >= response_size) {
 				response_size += 8;
-				result.config.responses = realloc(result.config.responses, sizeof(char *) * response_size);
+				result.config.responses =
+					realloc(result.config.responses, sizeof(char *) * response_size);
 				if (result.config.responses == NULL) {
-					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"), result.config.nresponses);
+					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"),
+						result.config.nresponses);
 				}
 			}
 			result.config.responses[result.config.nresponses] = (char *)malloc(sizeof(char) * 255);
@@ -718,8 +745,10 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	return result;
 }
 
-char *smtp_quit(check_smtp_config config, char buffer[MAX_INPUT_BUFFER], int socket_descriptor, bool ssl_established) {
-	int sent_bytes = my_send(config, SMTP_QUIT, strlen(SMTP_QUIT), socket_descriptor, ssl_established);
+char *smtp_quit(check_smtp_config config, char buffer[MAX_INPUT_BUFFER], int socket_descriptor,
+				bool ssl_established) {
+	int sent_bytes =
+		my_send(config, SMTP_QUIT, strlen(SMTP_QUIT), socket_descriptor, ssl_established);
 	if (sent_bytes < 0) {
 		if (config.ignore_send_quit_failure) {
 			if (verbose) {
@@ -759,7 +788,8 @@ char *smtp_quit(check_smtp_config config, char buffer[MAX_INPUT_BUFFER], int soc
  * function which buffers the data, move that to netutils.c and change
  * check_smtp and other plugins to use that.  Also, remove (\r)\n.
  */
-int recvline(char *buf, size_t bufsize, check_smtp_config config, int socket_descriptor, bool ssl_established) {
+int recvline(char *buf, size_t bufsize, check_smtp_config config, int socket_descriptor,
+			 bool ssl_established) {
 	int result;
 	int counter;
 
@@ -789,13 +819,16 @@ int recvline(char *buf, size_t bufsize, check_smtp_config config, int socket_des
  *
  * TODO: Move this to netutils.c.  Also, remove \r and possibly the final \n.
  */
-int recvlines(check_smtp_config config, char *buf, size_t bufsize, int socket_descriptor, bool ssl_established) {
+int recvlines(check_smtp_config config, char *buf, size_t bufsize, int socket_descriptor,
+			  bool ssl_established) {
 	int result;
 	int counter;
 
 	for (counter = 0; /* forever */; counter += result) {
-		if (!((result = recvline(buf + counter, bufsize - counter, config, socket_descriptor, ssl_established)) > 3 &&
-			  isdigit((int)buf[counter]) && isdigit((int)buf[counter + 1]) && isdigit((int)buf[counter + 2]) && buf[counter + 3] == '-')) {
+		if (!((result = recvline(buf + counter, bufsize - counter, config, socket_descriptor,
+								 ssl_established)) > 3 &&
+			  isdigit((int)buf[counter]) && isdigit((int)buf[counter + 1]) &&
+			  isdigit((int)buf[counter + 2]) && buf[counter + 3] == '-')) {
 			break;
 		}
 	}
@@ -835,13 +868,15 @@ void print_help(void) {
 	printf(UT_IPv46);
 
 	printf(" %s\n", "-e, --expect=STRING");
-	printf(_("    String to expect in first line of server response (default: '%s')\n"), SMTP_EXPECT);
+	printf(_("    String to expect in first line of server response (default: '%s')\n"),
+		   SMTP_EXPECT);
 	printf(" %s\n", "-C, --command=STRING");
 	printf("    %s\n", _("SMTP command (may be used repeatedly)"));
 	printf(" %s\n", "-R, --response=STRING");
 	printf("    %s\n", _("Expected response to command (may be used repeatedly)"));
 	printf(" %s\n", "-f, --from=STRING");
-	printf("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")), printf(" %s\n", "-F, --fqdn=STRING");
+	printf("    %s\n", _("FROM-address to include in MAIL command, required by Exchange 2000")),
+		printf(" %s\n", "-F, --fqdn=STRING");
 	printf("    %s\n", _("FQDN used for HELO"));
 	printf(" %s\n", "-r, --proxy");
 	printf("    %s\n", _("Use PROXY protocol prefix for the connection."));
@@ -885,7 +920,9 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n", progname);
+	printf("%s -H host [-p port] [-4|-6] [-e expect] [-C command] [-R response] [-f from addr]\n",
+		   progname);
 	printf("[-A authtype -U authuser -P authpass] [-w warn] [-c crit] [-t timeout] [-q]\n");
-	printf("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [--sni] [-v] \n");
+	printf("[-F fqdn] [-S] [-L] [-D warn days cert expire[,crit days cert expire]] [-r] [--sni] "
+		   "[-v] \n");
 }

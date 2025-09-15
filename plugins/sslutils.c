@@ -437,16 +437,14 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 		xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName, timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 	} else if (days_left == 0) {
-		xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName,
-				  timestamp);
+		xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName, timestamp);
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 		} else {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		}
 	} else {
-		xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName,
-				  timestamp);
+		xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName, timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_OK);
 	}
 	X509_free(certificate);

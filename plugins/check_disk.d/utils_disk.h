@@ -141,12 +141,15 @@ parameter_list_elem *mp_int_fs_list_append(filesystem_list *list, const char *na
 parameter_list_elem *mp_int_fs_list_find(filesystem_list list, const char *name);
 parameter_list_elem *mp_int_fs_list_del(filesystem_list *list, parameter_list_elem *item);
 parameter_list_elem *mp_int_fs_list_get_next(parameter_list_elem *current);
-void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mount_list, bool exact);
+void mp_int_fs_list_set_best_match(filesystem_list list, struct mount_entry *mount_list,
+								   bool exact);
 
 measurement_unit measurement_unit_init();
 measurement_unit_list *add_measurement_list(measurement_unit_list *list, measurement_unit elem);
-measurement_unit add_filesystem_to_measurement_unit(measurement_unit unit, parameter_list_elem filesystem);
-measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem filesystem, bool display_mntp);
+measurement_unit add_filesystem_to_measurement_unit(measurement_unit unit,
+													parameter_list_elem filesystem);
+measurement_unit create_measurement_unit_from_filesystem(parameter_list_elem filesystem,
+														 bool display_mntp);
 
 int search_parameter_list(parameter_list_elem *list, const char *name);
 bool np_regex_match_mount_entry(struct mount_entry *, regex_t *);

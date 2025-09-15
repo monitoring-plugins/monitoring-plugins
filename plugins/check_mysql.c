@@ -50,15 +50,23 @@ static int verbose = 0;
 
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
-	"Open_files", "Open_tables", "Qcache_free_memory", "Qcache_queries_in_cache", "Threads_connected", "Threads_running"};
+	"Open_files",        "Open_tables",    "Qcache_free_memory", "Qcache_queries_in_cache",
+	"Threads_connected", "Threads_running"};
 
 #define LENGTH_METRIC_COUNTER 9
-static const char *metric_counter[LENGTH_METRIC_COUNTER] = {
-	"Connections", "Qcache_hits",        "Qcache_inserts", "Qcache_lowmem_prunes", "Qcache_not_cached", "Queries",
-	"Questions",   "Table_locks_waited", "Uptime"};
+static const char *metric_counter[LENGTH_METRIC_COUNTER] = {"Connections",
+															"Qcache_hits",
+															"Qcache_inserts",
+															"Qcache_lowmem_prunes",
+															"Qcache_not_cached",
+															"Queries",
+															"Questions",
+															"Table_locks_waited",
+															"Uptime"};
 
-#define MYSQLDUMP_THREADS_QUERY                                                                                                            \
-	"SELECT COUNT(1) mysqldumpThreads FROM information_schema.processlist WHERE info LIKE 'SELECT /*!40001 SQL_NO_CACHE */%'"
+#define MYSQLDUMP_THREADS_QUERY                                                                    \
+	"SELECT COUNT(1) mysqldumpThreads FROM information_schema.processlist WHERE info LIKE "        \
+	"'SELECT /*!40001 SQL_NO_CACHE */%'"
 
 typedef struct {
 	int errorcode;
@@ -99,16 +107,19 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.ssl) {
-		mysql_ssl_set(&mysql, config.key, config.cert, config.ca_cert, config.ca_dir, config.ciphers);
+		mysql_ssl_set(&mysql, config.key, config.cert, config.ca_cert, config.ca_dir,
+					  config.ciphers);
 	}
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db, config.db_port, config.db_socket, 0)) {
+	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
+							config.db_port, config.db_socket, 0)) {
 		/* Depending on internally-selected auth plugin MySQL might return */
 		/* ER_ACCESS_DENIED_NO_PASSWORD_ERROR or ER_ACCESS_DENIED_ERROR. */
 		/* Semantically these errors are the same. */
-		if (config.ignore_auth &&
-			(mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR || mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
-			printf("MySQL OK - Version: %s (protocol %d)\n", mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
+		if (config.ignore_auth && (mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR ||
+								   mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
+			printf("MySQL OK - Version: %s (protocol %d)\n", mysql_get_server_info(&mysql),
+				   mysql_get_proto_info(&mysql));
 			mysql_close(&mysql);
 			return STATE_OK;
 		}
@@ -157,13 +168,17 @@ int main(int argc, char **argv) {
 		while ((row = mysql_fetch_row(res)) != NULL) {
 			for (int i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
-					xasprintf(&perf, "%s%s ", perf, perfdata(metric_unit[i], atol(row[1]), "", false, 0, false, 0, false, 0, false, 0));
+					xasprintf(&perf, "%s%s ", perf,
+							  perfdata(metric_unit[i], atol(row[1]), "", false, 0, false, 0, false,
+									   0, false, 0));
 					continue;
 				}
 			}
 			for (int i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
-					xasprintf(&perf, "%s%s ", perf, perfdata(metric_counter[i], atol(row[1]), "c", false, 0, false, 0, false, 0, false, 0));
+					xasprintf(&perf, "%s%s ", perf,
+							  perfdata(metric_counter[i], atol(row[1]), "c", false, 0, false, 0,
+									   false, 0, false, 0));
 					continue;
 				}
 			}
@@ -189,8 +204,8 @@ int main(int argc, char **argv) {
 		unsigned long minor_version = (server_verion_int % 10000) / 100;
 		unsigned long patch_version = (server_verion_int % 100);
 		if (verbose) {
-			printf("Found MariaDB: %s, main version: %lu, minor version: %lu, patch version: %lu\n", server_version, major_version,
-				   minor_version, patch_version);
+			printf("Found MariaDB: %s, main version: %lu, minor version: %lu, patch version: %lu\n",
+				   server_version, major_version, minor_version, patch_version);
 		}
 
 		if (strstr(server_version, "MariaDB") != NULL) {
@@ -292,11 +307,15 @@ int main(int argc, char **argv) {
 			}
 
 			/* Save replica status in replica_result */
-			snprintf(replica_result, REPLICA_RESULTSIZE, "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s", row[replica_io_field],
-					 row[replica_sql_field], seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
+			snprintf(replica_result, REPLICA_RESULTSIZE,
+					 "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s",
+					 row[replica_io_field], row[replica_sql_field],
+					 seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
 
-			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no mysqldump threads running */
-			if (strcmp(row[replica_io_field], "Yes") != 0 || strcmp(row[replica_sql_field], "Yes") != 0) {
+			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no
+			 * mysqldump threads running */
+			if (strcmp(row[replica_io_field], "Yes") != 0 ||
+				strcmp(row[replica_sql_field], "Yes") != 0) {
 				MYSQL_RES *res_mysqldump;
 				MYSQL_ROW row_mysqldump;
 				unsigned int mysqldump_threads = 0;
@@ -325,20 +344,23 @@ int main(int argc, char **argv) {
 				if (seconds_behind_field == -1) {
 					printf("seconds_behind_field not found\n");
 				} else {
-					printf("seconds_behind_field(index %d)=%s\n", seconds_behind_field, row[seconds_behind_field]);
+					printf("seconds_behind_field(index %d)=%s\n", seconds_behind_field,
+						   row[seconds_behind_field]);
 				}
 			}
 
 			/* Check Seconds Behind against threshold */
-			if ((seconds_behind_field != -1) && (row[seconds_behind_field] != NULL && strcmp(row[seconds_behind_field], "NULL") != 0)) {
+			if ((seconds_behind_field != -1) && (row[seconds_behind_field] != NULL &&
+												 strcmp(row[seconds_behind_field], "NULL") != 0)) {
 				double value = atof(row[seconds_behind_field]);
 				int status;
 
 				status = get_status(value, config.my_threshold);
 
 				xasprintf(&perf, "%s %s", perf,
-						  fperfdata("seconds behind master", value, "s", true, (double)config.warning_time, true,
-									(double)config.critical_time, false, 0, false, 0));
+						  fperfdata("seconds behind master", value, "s", true,
+									(double)config.warning_time, true, (double)config.critical_time,
+									false, 0, false, 0));
 
 				if (status == STATE_WARNING) {
 					printf("SLOW_REPLICA %s: %s|%s\n", _("WARNING"), replica_result, perf);
@@ -410,7 +432,8 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	while (true) {
-		int option_index = getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+		int option_index =
+			getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -580,15 +603,17 @@ void print_help(void) {
 	printf("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
 	printf("    %s\n", _("Your clear-text password could be visible as a process table entry"));
 	printf(" %s\n", "-S, --check-slave");
-	printf("    %s\n",
-		   _("Check if the slave thread is running properly. This option is deprecated in favour of check-replica, which does the same"));
+	printf("    %s\n", _("Check if the slave thread is running properly. This option is deprecated "
+						 "in favour of check-replica, which does the same"));
 	printf(" %s\n", "--check-replica");
 	printf("    %s\n", _("Check if the replica thread is running properly."));
 	printf(" %s\n", "-w, --warning");
-	printf("    %s\n", _("Exit with WARNING status if replica server is more than INTEGER seconds"));
+	printf("    %s\n",
+		   _("Exit with WARNING status if replica server is more than INTEGER seconds"));
 	printf("    %s\n", _("behind master"));
 	printf(" %s\n", "-c, --critical");
-	printf("    %s\n", _("Exit with CRITICAL status if replica server is more then INTEGER seconds"));
+	printf("    %s\n",
+		   _("Exit with CRITICAL status if replica server is more then INTEGER seconds"));
 	printf("    %s\n", _("behind master"));
 	printf(" %s\n", "-l, --ssl");
 	printf("    %s\n", _("Use ssl encryption"));
@@ -604,7 +629,8 @@ void print_help(void) {
 	printf("    %s\n", _("List of valid SSL ciphers"));
 
 	printf("\n");
-	printf(" %s\n", _("There are no required arguments. By default, the local database is checked"));
+	printf(" %s\n",
+		   _("There are no required arguments. By default, the local database is checked"));
 	printf(" %s\n", _("using the default unix socket. You can force TCP on localhost by using an"));
 	printf(" %s\n", _("IP address or FQDN ('localhost' will use the socket as well)."));
 
