@@ -23,15 +23,16 @@
 
 void my_free(int *argc, char **newargv, char **argv) {
 	/* Free stuff (and print while we're at it) */
-	int i, freeflag = 1;
+	bool freeflag = true;
+
 	printf("    Arg(%i): ", *argc + 1);
 	printf("'%s' ", newargv[0]);
-	for (i = 1; i < *argc; i++) {
+	for (int i = 1; i < *argc; i++) {
 		printf("'%s' ", newargv[i]);
 		/* Stop freeing when we get to the start of the original array */
 		if (freeflag) {
 			if (newargv[i] == argv[1]) {
-				freeflag = 0;
+				freeflag = false;
 			} else {
 				free(newargv[i]);
 			}
@@ -46,13 +47,12 @@ void my_free(int *argc, char **newargv, char **argv) {
 }
 
 int array_diff(int i1, char **a1, int i2, char **a2) {
-	int i;
-
 	if (i1 != i2) {
 		printf("    Argument count doesn't match!\n");
 		return 0;
 	}
-	for (i = 0; i <= i1; i++) {
+
+	for (int i = 0; i <= i1; i++) {
 		if (a1[i] == NULL && a2[i] == NULL) {
 			continue;
 		}
@@ -69,11 +69,10 @@ int array_diff(int i1, char **a1, int i2, char **a2) {
 }
 
 int main(int argc, char **argv) {
-	char **argv_new = NULL;
-	int i, argc_test;
-
 	plan_tests(5);
 
+	char **argv_new = NULL;
+	int argc_test;
 	{
 		char *argv_test[] = {"prog_name", "arg1", "--extra-opts", "--arg3", "val2", (char *)NULL};
 		argc_test = 5;

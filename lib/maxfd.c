@@ -19,7 +19,6 @@
  *****************************************************************************/
 
 #include "./maxfd.h"
-#include <errno.h>
 
 long mp_open_max(void) {
 	long maxfd = 0L;

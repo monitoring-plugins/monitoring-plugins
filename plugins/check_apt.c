@@ -310,8 +310,8 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 		die(STATE_UNKNOWN, _("%s: Error compiling regexp: %s"), progname, rerrbuf);
 	}
 
-	struct output chld_out;
-	struct output chld_err;
+	output chld_out;
+	output chld_err;
 	char *cmdline = NULL;
 	cmdline = construct_cmdline(upgrade, upgrade_opts);
 	if (input_filename != NULL) {
@@ -410,8 +410,8 @@ int run_update(char *update_opts) {
 	/* run the update */
 	cmdline = construct_cmdline(NO_UPGRADE, update_opts);
 
-	struct output chld_out;
-	struct output chld_err;
+	output chld_out;
+	output chld_err;
 	result = np_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
 	 * since we were explicitly asked to do so, this is treated as

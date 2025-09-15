@@ -30,13 +30,14 @@
 #include "common.h"
 #include "output.h"
 #include "states.h"
+#include <sys/types.h>
 #include "netutils.h"
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
-unsigned int socket_timeout_state = STATE_CRITICAL;
-
-int econn_refuse_state = STATE_CRITICAL;
+mp_state_enum socket_timeout_state = STATE_CRITICAL;
+mp_state_enum econn_refuse_state = STATE_CRITICAL;
 bool was_refused = false;
+
 #if USE_IPV6
 int address_family = AF_UNSPEC;
 #else
@@ -63,39 +64,40 @@ void socket_timeout_alarm_handler(int sig) {
 /* connects to a host on a specified tcp port, sends a string, and gets a
 	 response. loops on select-recv until timeout or eof to get all of a
 	 multi-packet answer */
-int process_tcp_request2(const char *server_address, int server_port, const char *send_buffer,
-						 char *recv_buffer, int recv_size) {
+mp_state_enum process_tcp_request2(const char *server_address, const int server_port,
+								   const char *send_buffer, char *recv_buffer,
+								   const int recv_size) {
 
-	int result;
-	int send_result;
-	int recv_result;
-	int sd;
-	struct timeval tv;
-	fd_set readfds;
-	int recv_length = 0;
+	int socket;
 
-	result = np_net_connect(server_address, server_port, &sd, IPPROTO_TCP);
-	if (result != STATE_OK) {
+	mp_state_enum connect_result =
+		np_net_connect(server_address, server_port, &socket, IPPROTO_TCP);
+	if (connect_result != STATE_OK) {
 		return STATE_CRITICAL;
 	}
 
-	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
+	mp_state_enum result;
+	ssize_t send_result = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
 		// printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
 	}
 
-	while (1) {
+	fd_set readfds;
+	ssize_t recv_length = 0;
+	while (true) {
 		/* wait up to the number of seconds for socket timeout
 		   minus one for data from the host */
-		tv.tv_sec = socket_timeout - 1;
-		tv.tv_usec = 0;
+		struct timeval timeout = {
+			.tv_sec = socket_timeout - 1,
+			.tv_usec = 0,
+		};
 		FD_ZERO(&readfds);
-		FD_SET(sd, &readfds);
-		select(sd + 1, &readfds, NULL, NULL, &tv);
+		FD_SET(socket, &readfds);
+		select(socket + 1, &readfds, NULL, NULL, &timeout);
 
 		/* make sure some data has arrived */
-		if (!FD_ISSET(sd, &readfds)) { /* it hasn't */
+		if (!FD_ISSET(socket, &readfds)) { /* it hasn't */
 			if (!recv_length) {
 				strcpy(recv_buffer, "");
 				// printf("%s\n", _("No data was received from host!"));
@@ -104,72 +106,69 @@ int process_tcp_request2(const char *server_address, int server_port, const char
 				recv_buffer[recv_length] = 0;
 			}
 			break;
-		} else { /* it has */
-			recv_result =
-				recv(sd, recv_buffer + recv_length, (size_t)recv_size - recv_length - 1, 0);
-			if (recv_result == -1) {
-				/* recv failed, bail out */
-				strcpy(recv_buffer + recv_length, "");
-				result = STATE_WARNING;
-				break;
-			} else if (recv_result == 0) {
-				/* end of file ? */
-				recv_buffer[recv_length] = 0;
-				break;
-			} else { /* we got data! */
-				recv_length += recv_result;
-				if (recv_length >= recv_size - 1) {
-					/* buffer full, we're done */
-					recv_buffer[recv_size - 1] = 0;
-					break;
-				}
-			}
+		} /* it has */
+
+		ssize_t recv_result =
+			recv(socket, recv_buffer + recv_length, (size_t)(recv_size - recv_length - 1), 0);
+		if (recv_result == -1) {
+			/* recv failed, bail out */
+			strcpy(recv_buffer + recv_length, "");
+			result = STATE_WARNING;
+			break;
+		}
+
+		if (recv_result == 0) {
+			/* end of file ? */
+			recv_buffer[recv_length] = 0;
+			break;
+		}
+
+		/* we got data! */
+		recv_length += recv_result;
+		if (recv_length >= recv_size - 1) {
+			/* buffer full, we're done */
+			recv_buffer[recv_size - 1] = 0;
+			break;
 		}
 		/* end if(!FD_ISSET(sd,&readfds)) */
 	}
-	/* end while(1) */
 
-	close(sd);
+	close(socket);
 	return result;
 }
 
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-int process_request(const char *server_address, int server_port, int proto, const char *send_buffer,
-					char *recv_buffer, int recv_size) {
-	int result;
-	int sd;
+mp_state_enum process_request(const char *server_address, const int server_port, const int proto,
+							  const char *send_buffer, char *recv_buffer, const int recv_size) {
 
-	result = STATE_OK;
-
-	result = np_net_connect(server_address, server_port, &sd, proto);
+	mp_state_enum result = STATE_OK;
+	int socket;
+	result = np_net_connect(server_address, server_port, &socket, proto);
 	if (result != STATE_OK) {
 		return STATE_CRITICAL;
 	}
 
-	result = send_request(sd, proto, send_buffer, recv_buffer, recv_size);
+	result = send_request(socket, proto, send_buffer, recv_buffer, recv_size);
 
-	close(sd);
+	close(socket);
 
 	return result;
 }
 
 /* opens a tcp or udp connection to a remote host or local socket */
-int np_net_connect(const char *host_name, int port, int *sd, int proto) {
+mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescriptor,
+							 const int proto) {
 	/* send back STATE_UNKOWN if there's an error
 	   send back STATE_OK if we connect
 	   send back STATE_CRITICAL if we can't connect.
 	   Let upstream figure out what to send to the user. */
-	struct addrinfo hints;
-	struct addrinfo *r, *res;
-	struct sockaddr_un su;
-	char port_str[6], host[MAX_HOST_ADDRESS_LENGTH];
-	size_t len;
-	int socktype, result;
-	short is_socket = (host_name[0] == '/');
+	bool is_socket = (host_name[0] == '/');
+	int socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
-	socktype = (proto == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
-
+	struct addrinfo hints = {};
+	struct addrinfo *res = NULL;
+	int result;
 	/* as long as it doesn't start with a '/', it's assumed a host or ip */
 	if (!is_socket) {
 		memset(&hints, 0, sizeof(hints));
@@ -177,38 +176,46 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 		hints.ai_protocol = proto;
 		hints.ai_socktype = socktype;
 
-		len = strlen(host_name);
+		size_t len = strlen(host_name);
 		/* check for an [IPv6] address (and strip the brackets) */
 		if (len >= 2 && host_name[0] == '[' && host_name[len - 1] == ']') {
 			host_name++;
 			len -= 2;
 		}
+
+		char host[MAX_HOST_ADDRESS_LENGTH];
+
 		if (len >= sizeof(host)) {
 			return STATE_UNKNOWN;
 		}
+
 		memcpy(host, host_name, len);
 		host[len] = '\0';
-		snprintf(port_str, sizeof(port_str), "%d", port);
-		result = getaddrinfo(host, port_str, &hints, &res);
 
-		if (result != 0) {
+		char port_str[6];
+		snprintf(port_str, sizeof(port_str), "%d", port);
+		int getaddrinfo_err = getaddrinfo(host, port_str, &hints, &res);
+
+		if (getaddrinfo_err != 0) {
 			// printf("%s\n", gai_strerror(result));
 			return STATE_UNKNOWN;
 		}
 
-		r = res;
-		while (r) {
+		struct addrinfo *addressPointer = res;
+		while (addressPointer) {
 			/* attempt to create a socket */
-			*sd = socket(r->ai_family, socktype, r->ai_protocol);
+			*socketDescriptor =
+				socket(addressPointer->ai_family, socktype, addressPointer->ai_protocol);
 
-			if (*sd < 0) {
+			if (*socketDescriptor < 0) {
 				// printf("%s\n", _("Socket creation failed"));
-				freeaddrinfo(r);
+				freeaddrinfo(addressPointer);
 				return STATE_UNKNOWN;
 			}
 
 			/* attempt to open a connection */
-			result = connect(*sd, r->ai_addr, r->ai_addrlen);
+			result =
+				connect(*socketDescriptor, addressPointer->ai_addr, addressPointer->ai_addrlen);
 
 			if (result == 0) {
 				was_refused = false;
@@ -223,24 +230,28 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 				}
 			}
 
-			close(*sd);
-			r = r->ai_next;
+			close(*socketDescriptor);
+			addressPointer = addressPointer->ai_next;
 		}
+
 		freeaddrinfo(res);
-	}
-	/* else the hostname is interpreted as a path to a unix socket */
-	else {
+
+	} else {
+		/* else the hostname is interpreted as a path to a unix socket */
 		if (strlen(host_name) >= UNIX_PATH_MAX) {
 			die(STATE_UNKNOWN, _("Supplied path too long unix domain socket"));
 		}
-		memset(&su, 0, sizeof(su));
+
+		struct sockaddr_un su = {};
 		su.sun_family = AF_UNIX;
 		strncpy(su.sun_path, host_name, UNIX_PATH_MAX);
-		*sd = socket(PF_UNIX, SOCK_STREAM, 0);
-		if (*sd < 0) {
+		*socketDescriptor = socket(PF_UNIX, SOCK_STREAM, 0);
+
+		if (*socketDescriptor < 0) {
 			die(STATE_UNKNOWN, _("Socket creation failed"));
 		}
-		result = connect(*sd, (struct sockaddr *)&su, sizeof(su));
+
+		result = connect(*socketDescriptor, (struct sockaddr *)&su, sizeof(su));
 		if (result < 0 && errno == ECONNREFUSED) {
 			was_refused = true;
 		}
@@ -248,7 +259,9 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 
 	if (result == 0) {
 		return STATE_OK;
-	} else if (was_refused) {
+	}
+
+	if (was_refused) {
 		switch (econn_refuse_state) { /* a user-defined expected outcome */
 		case STATE_OK:
 		case STATE_WARNING:  /* user wants WARN or OK on refusal, or... */
@@ -275,14 +288,11 @@ int np_net_connect(const char *host_name, int port, int *sd, int proto) {
 	}
 }
 
-int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size) {
-	int result = STATE_OK;
-	int send_result;
-	int recv_result;
-	struct timeval tv;
-	fd_set readfds;
+mp_state_enum send_request(const int socket, const int proto, const char *send_buffer,
+						   char *recv_buffer, const int recv_size) {
+	mp_state_enum result = STATE_OK;
 
-	send_result = send(sd, send_buffer, strlen(send_buffer), 0);
+	ssize_t send_result = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
 		// printf("%s\n", _("Send failed"));
 		result = STATE_WARNING;
@@ -290,21 +300,22 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 
 	/* wait up to the number of seconds for socket timeout minus one
 	   for data from the host */
-	tv.tv_sec = socket_timeout - 1;
-	tv.tv_usec = 0;
+	struct timeval timestamp = {
+		.tv_sec = socket_timeout - 1,
+		.tv_usec = 0,
+	};
+	fd_set readfds;
 	FD_ZERO(&readfds);
-	FD_SET(sd, &readfds);
-	select(sd + 1, &readfds, NULL, NULL, &tv);
+	FD_SET(socket, &readfds);
+	select(socket + 1, &readfds, NULL, NULL, &timestamp);
 
 	/* make sure some data has arrived */
-	if (!FD_ISSET(sd, &readfds)) {
+	if (!FD_ISSET(socket, &readfds)) {
 		strcpy(recv_buffer, "");
 		// printf("%s\n", _("No data was received from host!"));
 		result = STATE_WARNING;
-	}
-
-	else {
-		recv_result = recv(sd, recv_buffer, (size_t)recv_size - 1, 0);
+	} else {
+		ssize_t recv_result = recv(socket, recv_buffer, (size_t)(recv_size - 1), 0);
 		if (recv_result == -1) {
 			strcpy(recv_buffer, "");
 			if (proto != IPPROTO_TCP) {
@@ -318,6 +329,7 @@ int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, 
 		/* die returned string */
 		recv_buffer[recv_size - 1] = 0;
 	}
+
 	return result;
 }
 
@@ -339,27 +351,27 @@ bool is_addr(const char *address) {
 #ifdef USE_IPV6
 	if (address_family == AF_INET && is_inet_addr(address)) {
 		return true;
-	} else if (address_family == AF_INET6 && is_inet6_addr(address)) {
+	}
+
+	if (address_family == AF_INET6 && is_inet6_addr(address)) {
 		return true;
 	}
 #else
 	if (is_inet_addr(address)) {
-		return (true);
+		return true;
 	}
 #endif
 
-	return (false);
+	return false;
 }
 
-int dns_lookup(const char *in, struct sockaddr_storage *ss, int family) {
+bool dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int family) {
 	struct addrinfo hints;
-	struct addrinfo *res;
-	int retval;
-
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
 
-	retval = getaddrinfo(in, NULL, &hints, &res);
+	struct addrinfo *res;
+	int retval = getaddrinfo(node_string, NULL, &hints, &res);
 	if (retval != 0) {
 		return false;
 	}
@@ -367,6 +379,8 @@ int dns_lookup(const char *in, struct sockaddr_storage *ss, int family) {
 	if (ss != NULL) {
 		memcpy(ss, res->ai_addr, res->ai_addrlen);
 	}
+
 	freeaddrinfo(res);
+
 	return true;
 }

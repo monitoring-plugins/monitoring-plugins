@@ -26,8 +26,10 @@
  *
  *****************************************************************************/
 
-#include "common.h"
+#include "../config.h"
 #include "utils_tcp.h"
+#include <stdio.h>
+#include <string.h>
 
 #define VERBOSE(message)                                                                           \
 	do {                                                                                           \
@@ -37,9 +39,9 @@
 
 enum np_match_result np_expect_match(char *status, char **server_expect, int expect_count,
 									 int flags) {
-	int i, match = 0, partial = 0;
-
-	for (i = 0; i < expect_count; i++) {
+	int match = 0;
+	int partial = 0;
+	for (int i = 0; i < expect_count; i++) {
 		if (flags & NP_MATCH_VERBOSE) {
 			printf("looking for [%s] %s [%s]\n", server_expect[i],
 				   (flags & NP_MATCH_EXACT) ? "in beginning of" : "anywhere in", status);
@@ -50,7 +52,9 @@ enum np_match_result np_expect_match(char *status, char **server_expect, int exp
 				VERBOSE("found it");
 				match++;
 				continue;
-			} else if (strncmp(status, server_expect[i], strlen(status)) == 0) {
+			}
+
+			if (strncmp(status, server_expect[i], strlen(status)) == 0) {
 				VERBOSE("found a substring");
 				partial++;
 				continue;
@@ -66,9 +70,9 @@ enum np_match_result np_expect_match(char *status, char **server_expect, int exp
 	if ((flags & NP_MATCH_ALL && match == expect_count) ||
 		(!(flags & NP_MATCH_ALL) && match >= 1)) {
 		return NP_MATCH_SUCCESS;
-	} else if (partial > 0 || !(flags & NP_MATCH_EXACT)) {
-		return NP_MATCH_RETRY;
-	} else {
-		return NP_MATCH_FAILURE;
 	}
+	if (partial > 0 || !(flags & NP_MATCH_EXACT)) {
+		return NP_MATCH_RETRY;
+	}
+	return NP_MATCH_FAILURE;
 }

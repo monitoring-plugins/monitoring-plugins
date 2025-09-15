@@ -44,7 +44,7 @@
 
 monitoring_plugin *this_monitoring_plugin = NULL;
 
-int timeout_state = STATE_CRITICAL;
+mp_state_enum timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
 bool _np_state_read_file(FILE *state_file);

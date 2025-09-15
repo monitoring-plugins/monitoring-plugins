@@ -31,7 +31,6 @@
 #ifndef _NETUTILS_H_
 #define _NETUTILS_H_
 
-#include "common.h"
 #include "output.h"
 #include "states.h"
 #include "utils.h"
@@ -56,25 +55,26 @@
 	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)
 #define process_udp_request(addr, port, sbuf, rbuf, rsize)                                         \
 	process_request(addr, port, IPPROTO_UDP, sbuf, rbuf, rsize)
-int process_tcp_request2(const char *address, int port, const char *sbuffer, char *rbuffer,
-						 int rsize);
-int process_request(const char *address, int port, int proto, const char *sbuffer, char *rbuffer,
-					int rsize);
+mp_state_enum process_tcp_request2(const char *server_address, int server_port,
+								   const char *send_buffer, char *recv_buffer, int recv_size);
+mp_state_enum process_request(const char *server_address, int server_port, int proto,
+							  const char *send_buffer, char *recv_buffer, int recv_size);
 
 /* my_connect and wrapper macros */
 #define my_tcp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_TCP)
 #define my_udp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_UDP)
-int np_net_connect(const char *address, int port, int *sd, int proto);
+mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescriptor, int proto);
 
 /* send_request and wrapper macros */
 #define send_tcp_request(s, sbuf, rbuf, rsize) send_request(s, IPPROTO_TCP, sbuf, rbuf, rsize)
 #define send_udp_request(s, sbuf, rbuf, rsize) send_request(s, IPPROTO_UDP, sbuf, rbuf, rsize)
-int send_request(int sd, int proto, const char *send_buffer, char *recv_buffer, int recv_size);
+mp_state_enum send_request(int socket, int proto, const char *send_buffer, char *recv_buffer,
+						   int recv_size);
 
 /* "is_*" wrapper macros and functions */
 bool is_host(const char *);
 bool is_addr(const char *);
-int dns_lookup(const char *, struct sockaddr_storage *, int);
+bool dns_lookup(const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);
 #define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
 #define is_inet_addr(addr)                 resolve_host_or_addr(addr, AF_INET)
@@ -86,8 +86,8 @@ void host_or_die(const char *str);
 #endif
 
 extern unsigned int socket_timeout;
-extern unsigned int socket_timeout_state;
-extern int econn_refuse_state;
+extern mp_state_enum socket_timeout_state;
+extern mp_state_enum econn_refuse_state;
 extern bool was_refused;
 extern int address_family;
 
@@ -106,12 +106,12 @@ void socket_timeout_alarm_handler(int) __attribute__((noreturn));
 #	define MP_TLSv1_1_OR_NEWER 9
 #	define MP_TLSv1_2_OR_NEWER 10
 /* maybe this could be merged with the above np_net_connect, via some flags */
-int np_net_ssl_init(int sd);
-int np_net_ssl_init_with_hostname(int sd, char *host_name);
-int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version);
-int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert,
-												   char *privkey);
-void np_net_ssl_cleanup();
+int np_net_ssl_init(int socket);
+int np_net_ssl_init_with_hostname(int socket, char *host_name);
+int np_net_ssl_init_with_hostname_and_version(int socket, char *host_name, int version);
+int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
+												   char *cert, char *privkey);
+void np_net_ssl_cleanup(void);
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);

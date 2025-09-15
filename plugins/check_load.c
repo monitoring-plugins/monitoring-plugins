@@ -452,8 +452,8 @@ static top_processes_result print_top_consuming_processes(unsigned long n_procs_
 	top_processes_result result = {
 		.errorcode = OK,
 	};
-	struct output chld_out;
-	struct output chld_err;
+	output chld_out;
+	output chld_err;
 	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		result.errorcode = ERROR;

@@ -41,7 +41,7 @@ bool mp_check_range(mp_perfdata_value, mp_range);
 mp_state_enum get_status(double, thresholds *);
 
 /* Handle timeouts */
-extern int timeout_state;
+extern mp_state_enum timeout_state;
 extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */
