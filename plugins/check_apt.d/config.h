@@ -2,6 +2,7 @@
 
 #include "../../config.h"
 #include <stddef.h>
+#include "../lib/output.h"
 
 /* some constants */
 typedef enum {
@@ -16,7 +17,7 @@ typedef struct {
 	bool only_critical;   /* whether to warn about non-critical updates */
 	bool list;            /* list packages available for upgrade */
 	/* number of packages available for upgrade to return WARNING status */
-	int packages_warning;
+	size_t packages_warning;
 
 	char *upgrade_opts;   /* options to override defaults for upgrade */
 	char *update_opts;    /* options to override defaults for update */
@@ -24,6 +25,9 @@ typedef struct {
 	char *do_exclude;     /* regexp to only exclude certain packages */
 	char *do_critical;    /* regexp specifying critical packages */
 	char *input_filename; /* input filename for testing */
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_apt_config;
 
 check_apt_config check_apt_config_init() {
@@ -36,6 +40,7 @@ check_apt_config check_apt_config_init() {
 							.do_include = NULL,
 							.do_exclude = NULL,
 							.do_critical = NULL,
-							.input_filename = NULL};
+							.input_filename = NULL,
+							.output_format_is_set = false};
 	return tmp;
 }

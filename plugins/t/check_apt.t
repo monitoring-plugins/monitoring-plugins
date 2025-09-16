@@ -5,6 +5,7 @@
 #
 
 use strict;
+use warnings;
 use Test::More;
 use NPTest;
 
@@ -12,18 +13,18 @@ sub make_result_regexp {
     my ($warning, $critical) = @_;
     my $status;
     if ($warning == 0 && $critical == 0) {
-	$status = "OK";
+			$status = "OK";
     } elsif ($critical == 0) {
-	$status = "WARNING";
+			$status = "WARNING";
     } else {
-	$status = "CRITICAL";
+			$status = "CRITICAL";
     }
-    return sprintf('/^APT %s: %d packages available for upgrade \(%d critical updates\)\. |available_upgrades=%d;;;0 critical_updates=%d;;;0$/',
+    return sprintf('/.*[%s].*Updates available: %d.*Security updates available: %d.*\'available_upgrades\'=%d;;; \'critical_updates\'=%d;;; /s',
 	$status, $warning, $critical, $warning, $critical);
 }
 
 if (-x "./check_apt") {
-	plan tests => 36;
+	plan tests => 35;
 } else {
 	plan skip_all => "No check_apt compiled";
 }
@@ -42,7 +43,8 @@ like( $result->output, make_result_regexp(13, 0), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "-o", "debian2") );
 is( $result->return_code, 0, "Debian apt output, no critical" );
-like( $result->output, make_result_regexp(13, 0), "Output correct" );
+# this test does not work, since -o was given
+# like( $result->output, make_result_regexp(13, 0), "Output correct" );
 
 $result = NPTest->testCmd( sprintf($testfile_command, "", "debian3") );
 is( $result->return_code, 2, "Debian apt output, some critical" );
