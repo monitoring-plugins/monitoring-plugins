@@ -76,21 +76,6 @@ static mp_state_enum do_query(dbi_conn /*conn*/, const char ** /*res_val_str*/,
 							  mp_dbi_type /*type*/, char * /*np_dbi_query*/);
 
 int main(int argc, char **argv) {
-	int status = STATE_UNKNOWN;
-
-	dbi_driver driver;
-	dbi_conn conn;
-
-	unsigned int server_version;
-
-	struct timeval start_timeval;
-	struct timeval end_timeval;
-	double conn_time = 0.0;
-	double query_time = 0.0;
-
-	const char *query_val_str = NULL;
-	double query_val = 0.0;
-
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -116,8 +101,7 @@ int main(int argc, char **argv) {
 		printf("Initializing DBI\n");
 	}
 
-	dbi_inst *instance_p = {0};
-
+	dbi_inst *instance_p = NULL;
 	if (dbi_initialize_r(NULL, instance_p) < 0) {
 		printf(
 			"UNKNOWN - failed to initialize DBI; possibly you don't have any drivers installed.\n");
@@ -133,7 +117,7 @@ int main(int argc, char **argv) {
 		printf("Opening DBI driver '%s'\n", config.dbi_driver);
 	}
 
-	driver = dbi_driver_open_r(config.dbi_driver, instance_p);
+	dbi_driver driver = dbi_driver_open_r(config.dbi_driver, instance_p);
 	if (!driver) {
 		printf("UNKNOWN - failed to open DBI driver '%s'; possibly it's not installed.\n",
 			   config.dbi_driver);
@@ -147,9 +131,10 @@ int main(int argc, char **argv) {
 	}
 
 	/* make a connection to the database */
+	struct timeval start_timeval;
 	gettimeofday(&start_timeval, NULL);
 
-	conn = dbi_conn_open(driver);
+	dbi_conn conn = dbi_conn_open(driver);
 	if (!conn) {
 		printf("UNKNOWN - failed top open connection object.\n");
 		dbi_conn_close(conn);
@@ -210,14 +195,16 @@ int main(int argc, char **argv) {
 		return STATE_UNKNOWN;
 	}
 
+	struct timeval end_timeval;
 	gettimeofday(&end_timeval, NULL);
-	conn_time = timediff(start_timeval, end_timeval);
+	double conn_time = timediff(start_timeval, end_timeval);
 
-	server_version = dbi_conn_get_engine_version(conn);
+	unsigned int server_version = dbi_conn_get_engine_version(conn);
 	if (verbose) {
 		printf("Connected to server version %u\n", server_version);
 	}
 
+	int status = STATE_UNKNOWN;
 	if (config.metric == METRIC_SERVER_VERSION) {
 		status = get_status(server_version, config.dbi_thresholds);
 	}
@@ -243,6 +230,10 @@ int main(int argc, char **argv) {
 		}
 	}
 
+
+	const char *query_val_str = NULL;
+	double query_val = 0.0;
+	double query_time = 0.0;
 	if (config.dbi_query) {
 		/* execute query */
 		status = do_query(conn, &query_val_str, &query_val, &query_time, config.metric, config.type,
