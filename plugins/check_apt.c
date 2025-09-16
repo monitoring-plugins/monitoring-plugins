@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_other_updates = mp_subcheck_init();
 
 	xasprintf(&sc_other_updates.output, "Updates available: %zu", packages_available);
-	mp_set_subcheck_default_state(sc_other_updates, STATE_OK);
+	sc_other_updates = mp_set_subcheck_default_state(sc_other_updates, STATE_OK);
 	mp_add_perfdata_to_subcheck(&sc_other_updates, pd_other_updates);
 
 	if (packages_available >= config.packages_warning && !config.only_critical) {
