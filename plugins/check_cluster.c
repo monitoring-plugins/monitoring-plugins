@@ -26,6 +26,8 @@ const char *progname = "check_cluster";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "output.h"
+#include "states.h"
 #include "common.h"
 #include "utils.h"
 #include "utils_base.h"
@@ -57,6 +59,10 @@ int main(int argc, char **argv) {
 
 	const check_cluster_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* Initialize the thresholds */
 	if (verbose) {
 		print_thresholds("check_cluster", config.thresholds);
@@ -72,7 +78,6 @@ int main(int argc, char **argv) {
 	int total_hosts_unreachable = 0;
 	/* check the data values */
 	for (char *ptr = strtok(config.data_vals, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
-
 		data_val = atoi(ptr);
 
 		if (config.check_type == CHECK_SERVICES) {
@@ -109,33 +114,49 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	int return_code = STATE_OK;
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_real_test = mp_subcheck_init();
+	sc_real_test = mp_set_subcheck_default_state(sc_real_test, STATE_OK);
+
 	/* return the status of the cluster */
 	if (config.check_type == CHECK_SERVICES) {
-		return_code =
+		sc_real_test = mp_set_subcheck_state(
+			sc_real_test,
 			get_status(total_services_warning + total_services_unknown + total_services_critical,
-					   config.thresholds);
-		printf("CLUSTER %s: %s: %d ok, %d warning, %d unknown, %d critical\n",
-			   state_text(return_code), (config.label == NULL) ? "Service cluster" : config.label,
-			   total_services_ok, total_services_warning, total_services_unknown,
-			   total_services_critical);
+					   config.thresholds));
+		xasprintf(&sc_real_test.output, "%s: %d ok, %d warning, %d unknown, %d critical",
+				  (config.label == NULL) ? "Service cluster" : config.label, total_services_ok,
+				  total_services_warning, total_services_unknown, total_services_critical);
 	} else {
-		return_code = get_status(total_hosts_down + total_hosts_unreachable, config.thresholds);
-		printf("CLUSTER %s: %s: %d up, %d down, %d unreachable\n", state_text(return_code),
-			   (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up,
-			   total_hosts_down, total_hosts_unreachable);
+		sc_real_test = mp_set_subcheck_state(
+			sc_real_test,
+			get_status(total_hosts_down + total_hosts_unreachable, config.thresholds));
+		xasprintf(&sc_real_test.output, "%s: %d up, %d down, %d unreachable\n",
+				  (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up,
+				  total_hosts_down, total_hosts_unreachable);
 	}
 
-	exit(return_code);
+	mp_add_subcheck_to_check(&overall, sc_real_test);
+
+	mp_exit(overall);
 }
 
 check_cluster_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"data", required_argument, 0, 'd'},     {"warning", required_argument, 0, 'w'},
-		{"critical", required_argument, 0, 'c'}, {"label", required_argument, 0, 'l'},
-		{"host", no_argument, 0, 'h'},           {"service", no_argument, 0, 's'},
-		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'H'},           {0, 0, 0, 0}};
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	static struct option longopts[] = {{"data", required_argument, 0, 'd'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"label", required_argument, 0, 'l'},
+									   {"host", no_argument, 0, 'h'},
+									   {"service", no_argument, 0, 's'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'H'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	check_cluster_config_wrapper result = {
 		.errorcode = OK,
@@ -202,6 +223,18 @@ check_cluster_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		default:
 			result.errorcode = ERROR;
 			return result;
@@ -248,6 +281,8 @@ void print_help(void) {
 	printf("    %s\n", _("commas"));
 
 	printf(UT_VERBOSE);
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
