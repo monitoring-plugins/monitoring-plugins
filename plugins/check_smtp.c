@@ -246,17 +246,17 @@ int main(int argc, char **argv) {
 		mp_exit(overall);
 	}
 
-	bool supports_tls = false;
 	if (config.use_ehlo || config.use_lhlo) {
-		if (strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) {
-			supports_tls = true;
-		}
-	}
+		if ((strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) &&
+			(config.use_starttls)) {
+			smtp_quit(config, buffer, socket_descriptor, ssl_established);
 
-	if (config.use_starttls && !supports_tls) {
-		printf(_("WARNING - TLS not supported by server\n"));
-		smtp_quit(config, buffer, socket_descriptor, ssl_established);
-		exit(STATE_WARNING);
+			mp_subcheck sc_supports_starttls = mp_subcheck_init();
+			xasprintf(&sc_supports_starttls.output, _("STARTTLS not supported by server"));
+			sc_supports_starttls = mp_set_subcheck_state(sc_supports_starttls, STATE_WARNING);
+			mp_add_subcheck_to_check(&overall, sc_supports_starttls);
+			mp_exit(overall);
+		}
 	}
 
 #ifdef HAVE_SSL
