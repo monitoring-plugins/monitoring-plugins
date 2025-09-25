@@ -420,7 +420,7 @@ int main(int argc, char **argv) {
 			mp_subcheck sc_regex_match = mp_subcheck_init();
 			int excode = regexec(&preg, buffer, 10, pmatch, eflags);
 			if (excode == 0) {
-				// successfull match
+				// successful match
 				sc_regex_match = mp_set_subcheck_state(sc_regex_match, STATE_OK);
 				xasprintf(&sc_regex_match.output, _("Regular expression matched"));
 			} else if (excode == REG_NOMATCH) {
@@ -705,7 +705,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.time_thresholds =
 						mp_thresholds_set_crit(result.config.time_thresholds, tmp_crit.range);
 				} else {
-					usage2(_("Critial time invalid: %s"), optarg);
+					usage2(_("Critical time invalid: %s"), optarg);
 				}
 			}
 			break;
@@ -718,7 +718,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.time_thresholds =
 						mp_thresholds_set_warn(result.config.time_thresholds, tmp_warn.range);
 				} else {
-					usage2(_("Critial time invalid: %s"), optarg);
+					usage2(_("Warning time invalid: %s"), optarg);
 				}
 			}
 			break;
