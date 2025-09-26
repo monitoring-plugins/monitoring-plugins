@@ -41,8 +41,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include "../lib/output.h"
 #include "check_snmp.d/check_snmp_helpers.h"
 
-#include <bits/getopt_core.h>
-#include <bits/getopt_ext.h>
 #include <strings.h>
 #include <stdint.h>
 
