@@ -219,16 +219,13 @@ int main(int argc, char **argv) {
 					use_deprecated_slave_status = true;
 				}
 			}
-		} else if (strstr(server_version, "MySQL") != NULL) {
-			// Looks like MySQL
+		} else {
+			// Looks like MySQL or at least not like MariaDB
 			if (major_version < 8) {
 				use_deprecated_slave_status = true;
 			} else if (major_version == 10 && minor_version < 4) {
 				use_deprecated_slave_status = true;
 			}
-		} else {
-			printf("Not a known sever implementation: %s\n", server_version);
-			exit(STATE_UNKNOWN);
 		}
 
 		char *replica_query = NULL;
