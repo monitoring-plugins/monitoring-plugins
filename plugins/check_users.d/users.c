@@ -113,8 +113,8 @@ get_num_of_users_wrapper get_num_of_users_utmp() {
 #			ifndef HAVE_UTMPX_H
 //  Fall back option here for the others (probably still not on windows)
 
-#				include "../popen.h"
 #				include "../common.h"
+#				include "../popen.h"
 #				include "../utils.h"
 
 get_num_of_users_wrapper get_num_of_users_who_command() {
