@@ -51,8 +51,6 @@ const char *email = "devel@monitoring-plugins.org";
 #	define ERROR -1
 #elif HAVE_UTMPX_H
 #	include <utmpx.h>
-#else
-#	include "popen.h"
 #endif
 
 #ifdef HAVE_LIBSYSTEMD
