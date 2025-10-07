@@ -19,6 +19,8 @@ typedef struct {
 
 	double warning_interval;
 	double critical_interval;
+	char *require_flags;
+	char *forbid_flags;
 } check_dig_config;
 
 check_dig_config check_dig_config_init() {
@@ -34,6 +36,8 @@ check_dig_config check_dig_config_init() {
 
 		.warning_interval = UNDEFINED,
 		.critical_interval = UNDEFINED,
+		.require_flags = NULL,
+		.forbid_flags = NULL,
 
 	};
 	return tmp;

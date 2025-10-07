@@ -36,6 +36,7 @@ const char *progname = "check_dig";
 const char *copyright = "2002-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include <ctype.h>
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -55,6 +56,12 @@ static void print_help(void);
 void print_usage(void);
 
 static int verbose = 0;
+
+/* helpers for flag parsing */
+static bool parse_flags_line(const char *line, char ***out_flags, size_t *out_count);
+static void free_flags(char **flags, size_t count);
+static bool list_contains(char **flags, size_t count, const char *needle);
+static void split_csv_trim(const char *csv, char ***out_items, size_t *out_count);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -101,11 +108,29 @@ int main(int argc, char **argv) {
 	output chld_out;
 	output chld_err;
 	char *msg = NULL;
+	char **dig_flags = NULL;
+	size_t dig_flags_cnt = 0;
+
 	mp_state_enum result = STATE_UNKNOWN;
 	/* run the command */
 	if (np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
 		result = STATE_WARNING;
 		msg = (char *)_("dig returned an error status");
+	}
+
+	/* extract ';; flags: ...' from stdout (first occurrence) */
+	for (size_t i = 0; i < chld_out.lines; i++) {
+		if (strstr(chld_out.line[i], "flags:")) {
+			if (verbose) printf("Raw flags line: %s\n", chld_out.line[i]);
+			if (parse_flags_line(chld_out.line[i], &dig_flags, &dig_flags_cnt)) {
+				if (verbose) {
+					printf(_("Parsed flags:"));
+	        		for (size_t k = 0; k < dig_flags_cnt; k++) printf(" %s", dig_flags[k]);
+	        		printf("\n");
+	      		}
+	    	}
+	    break;
+	  	}
 	}
 
 	for (size_t i = 0; i < chld_out.lines; i++) {
@@ -174,6 +199,49 @@ int main(int argc, char **argv) {
 		result = STATE_WARNING;
 	}
 
+	/* Optional: evaluate dig flags only if -E/-X were provided */
+	if ((config.require_flags && *config.require_flags) || (config.forbid_flags && *config.forbid_flags)) {
+		if (dig_flags_cnt > 0) {
+			if (config.require_flags && *config.require_flags) {
+				char **req = NULL; size_t reqn = 0;
+				split_csv_trim(config.require_flags, &req, &reqn);
+				for (size_t r = 0; r < reqn; r++) {
+					if (!list_contains(dig_flags, dig_flags_cnt, req[r])) {
+						result = STATE_CRITICAL;
+						if (!msg) {
+							xasprintf(&msg, _("Missing required DNS flag: %s"), req[r]);
+						} else {
+							char *newmsg = NULL;
+							xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg, req[r]);
+							msg = newmsg;
+						}
+					}
+				}
+				free_flags(req, reqn);
+			}
+			if (config.forbid_flags && *config.forbid_flags) {
+				char **bad = NULL; size_t badn = 0;
+				split_csv_trim(config.forbid_flags, &bad, &badn);
+				for (size_t r = 0; r < badn; r++) {
+					if (list_contains(dig_flags, dig_flags_cnt, bad[r])) {
+						result = STATE_CRITICAL;
+						if (!msg) {
+							xasprintf(&msg, _("Forbidden DNS flag present: %s"), bad[r]);
+						} else {
+							char *newmsg = NULL;
+							xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg, bad[r]);
+							msg = newmsg;
+						}
+					}
+				}
+				free_flags(bad, badn);
+			}
+		}
+	}
+
+	/* cleanup flags buffer */
+	free_flags(dig_flags, dig_flags_cnt);
+
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
 		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
@@ -190,6 +258,8 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 									   {"critical", required_argument, 0, 'c'},
 									   {"timeout", required_argument, 0, 't'},
 									   {"dig-arguments", required_argument, 0, 'A'},
+									   {"require-flags", required_argument, 0, 'E'},
+									   {"forbid-flags", required_argument, 0, 'X'},
 									   {"verbose", no_argument, 0, 'v'},
 									   {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
@@ -212,7 +282,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	while (true) {
-		int option_index = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:46", longopts, &option);
+		int option_index = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:E:X:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -262,6 +332,12 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'A': /* dig arguments */
 			result.config.dig_args = strdup(optarg);
+			break;
+		case 'E': /* require flags */
+			result.config.require_flags = strdup(optarg);
+			break;
+		case 'X': /* forbid flags */
+			result.config.forbid_flags = strdup(optarg);
 			break;
 		case 'v': /* verbose */
 			verbose++;
@@ -343,6 +419,10 @@ void print_help(void) {
 	printf("    %s\n", _("was in -l"));
 	printf(" %s\n", "-A, --dig-arguments=STRING");
 	printf("    %s\n", _("Pass STRING as argument(s) to dig"));
+	printf(" %s\n", "-E, --require-flags=LIST");
+	printf("    %s\n", _("Comma-separated dig flags that must be present (e.g. 'aa,qr')"));
+	printf(" %s\n", "-X, --forbid-flags=LIST");
+	printf("    %s\n", _("Comma-separated dig flags that must NOT be present"));
 	printf(UT_WARN_CRIT);
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
@@ -359,5 +439,74 @@ void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf("%s -l <query_address> [-H <host>] [-p <server port>]\n", progname);
 	printf(" [-T <query type>] [-w <warning interval>] [-c <critical interval>]\n");
-	printf(" [-t <timeout>] [-a <expected answer address>] [-v]\n");
+	printf(" [-t <timeout>] [-a <expected answer address>] [-E <flags>] [-X <flags>] [-v]\n");
+}
+
+/* helpers */
+
+static bool parse_flags_line(const char *line, char ***out_flags, size_t *out_count) {
+	if (!line || !out_flags || !out_count) return false;
+	*out_flags = NULL; *out_count = 0;
+
+	const char *p = strstr(line, "flags:");
+	if (!p) return false;
+	p += 6;
+
+	while (*p && isspace((unsigned char)*p)) p++;
+	const char *q = strchr(p, ';');
+	if (!q) return false;
+
+	size_t len = (size_t)(q - p);
+	if (len == 0) return false;
+
+	char *buf = (char*)malloc(len + 1);
+	if (!buf) return false;
+	memcpy(buf, p, len); buf[len] = '\0';
+
+	char **arr = NULL; size_t cnt = 0;
+	char *saveptr = NULL;
+	char *tok = strtok_r(buf, " \t", &saveptr);
+	while (tok) {
+		arr = (char**)realloc(arr, (cnt + 1) * sizeof(char*));
+		arr[cnt++] = strdup(tok);
+		tok = strtok_r(NULL, " \t", &saveptr);
+	}
+	free(buf);
+
+	*out_flags = arr;
+	*out_count = cnt;
+	return (cnt > 0);
+}
+
+static void free_flags(char **flags, size_t count) {
+	if (!flags) return;
+	for (size_t i = 0; i < count; i++) free(flags[i]);
+	free(flags);
+}
+
+static bool list_contains(char **flags, size_t count, const char *needle) {
+	if (!needle || !*needle) return false;
+	for (size_t i = 0; i < count; i++) {
+		if (strcasecmp(flags[i], needle) == 0) return true;
+	}
+	return false;
+}
+
+static void split_csv_trim(const char *csv, char ***out_items, size_t *out_count) {
+	*out_items = NULL; *out_count = 0;
+	if (!csv || !*csv) return;
+
+	char *tmp = strdup(csv);
+	char *s = tmp;
+	char *token = NULL;
+	while ((token = strsep(&s, ",")) != NULL) {
+		while (*token && isspace((unsigned char)*token)) token++;
+		char *end = token + strlen(token);
+		while (end > token && isspace((unsigned char)end[-1])) *--end = '\0';
+		if (*token) {
+			*out_items = (char**)realloc(*out_items, (*out_count + 1) * sizeof(char*));
+			(*out_items)[(*out_count)++] = strdup(token);
+		}
+	}
+	free(tmp);
 }
