@@ -29,6 +29,7 @@
  *
  *****************************************************************************/
 
+#include "states.h"
 const char *progname = "check_dbi";
 const char *copyright = "2011-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -101,12 +102,14 @@ int main(int argc, char **argv) {
 		printf("Initializing DBI\n");
 	}
 
-	dbi_inst *instance_p = NULL;
-	if (dbi_initialize_r(NULL, instance_p) < 0) {
+	dbi_inst instance_p = NULL;
+	if (dbi_initialize_r(NULL, &instance_p) < 0) {
 		printf(
 			"UNKNOWN - failed to initialize DBI; possibly you don't have any drivers installed.\n");
 		return STATE_UNKNOWN;
 	}
+
+	dbi_set_verbosity_r(0, instance_p);
 
 	if (instance_p == NULL) {
 		printf("UNKNOWN - failed to initialize DBI.\n");
@@ -230,7 +233,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-
 	const char *query_val_str = NULL;
 	double query_val = 0.0;
 	double query_time = 0.0;
@@ -251,10 +253,15 @@ int main(int argc, char **argv) {
 					status = STATE_OK;
 				}
 			} else if (config.expect_re_str) {
-				int err;
-
+				int comp_err;
 				regex_t expect_re = {};
-				err = regexec(&expect_re, query_val_str, 0, NULL, /* flags = */ 0);
+				comp_err = regcomp(&expect_re, config.expect_re_str, config.expect_re_cflags);
+				if (comp_err != 0) {
+					// TODO error, failed to compile regex
+					return STATE_UNKNOWN;
+				}
+
+				int err = regexec(&expect_re, query_val_str, 0, NULL, /* flags = */ 0);
 				if (!err) {
 					status = STATE_OK;
 				} else if (err == REG_NOMATCH) {
