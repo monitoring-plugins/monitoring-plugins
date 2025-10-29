@@ -100,6 +100,10 @@ int main(int argc, char **argv) {
 
 	const check_dbi_config config = tmp.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
 		usage4(_("Cannot catch SIGALRM"));
@@ -421,6 +425,9 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_dbi_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
 
 	int option = 0;
 	static struct option longopts[] = {STD_LONG_OPTS,
@@ -432,6 +439,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 									   {"option", required_argument, 0, 'o'},
 									   {"query", required_argument, 0, 'q'},
 									   {"database", required_argument, 0, 'D'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_dbi_config_wrapper result = {
@@ -556,6 +564,18 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 		case 'D':
 			result.config.dbi_database = optarg;
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 

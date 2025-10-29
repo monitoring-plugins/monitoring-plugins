@@ -38,6 +38,8 @@ typedef struct {
 	char *critical_range;
 	thresholds *dbi_thresholds;
 
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_dbi_config;
 
 check_dbi_config check_dbi_config_init() {
@@ -58,6 +60,8 @@ check_dbi_config check_dbi_config_init() {
 		.warning_range = NULL,
 		.critical_range = NULL,
 		.dbi_thresholds = NULL,
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }
