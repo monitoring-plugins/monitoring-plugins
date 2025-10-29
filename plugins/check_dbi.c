@@ -394,7 +394,7 @@ int main(int argc, char **argv) {
 				mp_set_subcheck_state(sc_query, query_time_status);
 
 				if (query_time_status == STATE_OK) {
-					xasprintf(&sc_query.output, "Query duration '%f' is withing given thresholds",
+					xasprintf(&sc_query.output, "Query duration '%f' is within given thresholds",
 							  query_res.query_duration);
 				} else {
 					xasprintf(&sc_query.output, "Query duration '%f' violates the given thresholds",
@@ -895,7 +895,7 @@ static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type
 		printf("Query duration: %f\n", result.query_duration);
 	}
 
-	// Default state is OK, all error will be set explicitely
+	// Default state is OK, all error will be set explicitly
 	mp_state_enum query_processing_state = STATE_OK;
 	{
 
