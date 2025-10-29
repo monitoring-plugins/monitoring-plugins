@@ -358,7 +358,7 @@ int main(int argc, char **argv) {
 						// so we expected a number
 						// this is a CRITICAL
 						xasprintf(&sc_query.output, "Query '%s' result is not numeric",
-								  config.dbi_query, query_res.result_string);
+								  config.dbi_query);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 
 					} else {
@@ -490,7 +490,6 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		}
-
 		case 'm':
 			if (!strcasecmp(optarg, "CONN_TIME")) {
 				result.config.metric = METRIC_CONN_TIME;
@@ -510,7 +509,6 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				timeout_interval = atoi(optarg);
 			}
-
 			break;
 		case 'H': /* host */
 			if (!is_host(optarg)) {
@@ -522,7 +520,6 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 		case 'v':
 			verbose++;
 			break;
-
 		case 'd':
 			result.config.dbi_driver = optarg;
 			break;
@@ -718,21 +715,12 @@ void print_usage(void) {
 	printf(" [-e <string>] [-r|-R <regex>]\n");
 }
 
-const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_type,
-						  mp_dbi_metric metric, mp_dbi_type type) {
-	const char *str;
-
-	if (field_type != DBI_TYPE_STRING) {
-		printf("CRITICAL - result value is not a string\n");
-		return NULL;
-	}
-
-	str = dbi_result_get_string_idx(res, 1);
+const char *get_field_str(dbi_result res, mp_dbi_metric metric, mp_dbi_type type) {
+	const char *str = dbi_result_get_string_idx(res, 1);
 	if ((!str) || (strcmp(str, "ERROR") == 0)) {
 		if (metric != METRIC_QUERY_RESULT) {
 			return NULL;
 		}
-		np_dbi_print_error(conn, "CRITICAL - failed to fetch string value");
 		return NULL;
 	}
 
@@ -742,36 +730,50 @@ const char *get_field_str(dbi_conn conn, dbi_result res, unsigned short field_ty
 	return str;
 }
 
-double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type, mp_dbi_metric metric,
-				 mp_dbi_type type) {
-	double val = NAN;
+typedef struct {
+	double value;
+	int error_code;
+	int dbi_error_code; // not sure if useful
+} get_field_wrapper;
+get_field_wrapper get_field(dbi_result res, mp_dbi_metric metric, mp_dbi_type type) {
 
-	if (*field_type == DBI_TYPE_INTEGER) {
-		val = (double)dbi_result_get_longlong_idx(res, 1);
-	} else if (*field_type == DBI_TYPE_DECIMAL) {
-		val = dbi_result_get_double_idx(res, 1);
-	} else if (*field_type == DBI_TYPE_STRING) {
+	unsigned short field_type = dbi_result_get_field_type_idx(res, 1);
+	get_field_wrapper result = {
+		.value = NAN,
+		.error_code = OK,
+	};
+
+	if (field_type == DBI_TYPE_INTEGER) {
+		result.value = (double)dbi_result_get_longlong_idx(res, 1);
+	} else if (field_type == DBI_TYPE_DECIMAL) {
+		result.value = dbi_result_get_double_idx(res, 1);
+	} else if (field_type == DBI_TYPE_STRING) {
 		const char *val_str;
 		char *endptr = NULL;
 
-		val_str = get_field_str(conn, res, *field_type, metric, type);
+		val_str = get_field_str(res, metric, type);
 		if (!val_str) {
-			if (metric != METRIC_QUERY_RESULT) {
-				return NAN;
-			}
-			*field_type = DBI_TYPE_ERROR;
-			return NAN;
+			result.error_code = ERROR;
+			field_type = DBI_TYPE_ERROR;
+			return result;
 		}
 
-		val = strtod(val_str, &endptr);
+		result.value = strtod(val_str, &endptr);
 		if (endptr == val_str) {
 			if (metric != METRIC_QUERY_RESULT) {
-				return NAN;
+				result.error_code = ERROR;
+				return result;
 			}
-			printf("CRITICAL - result value is not a numeric: %s\n", val_str);
-			*field_type = DBI_TYPE_ERROR;
-			return NAN;
+
+			if (verbose) {
+				printf("CRITICAL - result value is not a numeric: %s\n", val_str);
+			}
+
+			field_type = DBI_TYPE_ERROR;
+			result.error_code = ERROR;
+			return result;
 		}
+
 		if ((endptr != NULL) && (*endptr != '\0')) {
 			if (verbose) {
 				printf("Garbage after value: %s\n", endptr);
@@ -779,86 +781,18 @@ double get_field(dbi_conn conn, dbi_result res, unsigned short *field_type, mp_d
 		}
 	} else {
 		if (metric != METRIC_QUERY_RESULT) {
-			return NAN;
+			result.error_code = ERROR;
+			return result;
 		}
-		printf("CRITICAL - cannot parse value of type %s (%i)\n",
-			   (*field_type == DBI_TYPE_BINARY)     ? "BINARY"
-			   : (*field_type == DBI_TYPE_DATETIME) ? "DATETIME"
-													: "<unknown>",
-			   *field_type);
-		*field_type = DBI_TYPE_ERROR;
-		return NAN;
+		// printf("CRITICAL - cannot parse value of type %s (%i)\n",
+		// (*field_type == DBI_TYPE_BINARY)     ? "BINARY"
+		// : (*field_type == DBI_TYPE_DATETIME) ? "DATETIME"
+		// : "<unknown>",
+		// *field_type);
+		field_type = DBI_TYPE_ERROR;
+		result.error_code = ERROR;
 	}
-	return val;
-}
-
-mp_state_enum get_query_result(dbi_conn conn, dbi_result res, const char **res_val_str,
-							   double *res_val, mp_dbi_metric metric, mp_dbi_type type) {
-	unsigned short field_type;
-	double val = NAN;
-
-	if (dbi_result_get_numrows(res) == DBI_ROW_ERROR) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		np_dbi_print_error(conn, "CRITICAL - failed to fetch rows");
-		return STATE_CRITICAL;
-	}
-
-	if (dbi_result_get_numrows(res) < 1) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		printf("WARNING - no rows returned\n");
-		return STATE_WARNING;
-	}
-
-	if (dbi_result_get_numfields(res) == DBI_FIELD_ERROR) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		np_dbi_print_error(conn, "CRITICAL - failed to fetch fields");
-		return STATE_CRITICAL;
-	}
-
-	if (dbi_result_get_numfields(res) < 1) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		printf("WARNING - no fields returned\n");
-		return STATE_WARNING;
-	}
-
-	if (dbi_result_first_row(res) != 1) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		np_dbi_print_error(conn, "CRITICAL - failed to fetch first row");
-		return STATE_CRITICAL;
-	}
-
-	field_type = dbi_result_get_field_type_idx(res, 1);
-	if (field_type != DBI_TYPE_ERROR) {
-		if (type == TYPE_STRING) {
-			/* the value will be freed in dbi_result_free */
-			*res_val_str = strdup(get_field_str(conn, res, field_type, metric, type));
-		} else {
-			val = get_field(conn, res, &field_type, metric, type);
-		}
-	}
-
-	*res_val = val;
-
-	if (field_type == DBI_TYPE_ERROR) {
-		if (metric != METRIC_QUERY_RESULT) {
-			return STATE_OK;
-		}
-		np_dbi_print_error(conn, "CRITICAL - failed to fetch data");
-		return STATE_CRITICAL;
-	}
-
-	dbi_result_free(res);
-	return STATE_OK;
+	return result;
 }
 
 static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type type,
@@ -942,10 +876,10 @@ static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type
 			unsigned short field_type = dbi_result_get_field_type_idx(res, 1);
 			if (field_type != DBI_TYPE_ERROR) {
 				if (type == TYPE_STRING) {
-					result.result_string =
-						strdup(get_field_str(conn, res, field_type, metric, type));
+					result.result_string = strdup(get_field_str(res, metric, type));
 				} else {
-					result.result_number = get_field(conn, res, &field_type, metric, type);
+					get_field_wrapper gfw = get_field(res, metric, type);
+					result.result_number = gfw.value;
 				}
 			} else {
 				// Error when retrieving the field, that is OK if the Query result is not of
@@ -967,7 +901,7 @@ static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type
 	return result;
 }
 
-double timediff(struct timeval start, struct timeval end) {
+static double timediff(struct timeval start, struct timeval end) {
 	double diff;
 
 	while (start.tv_usec > end.tv_usec) {
@@ -978,7 +912,7 @@ double timediff(struct timeval start, struct timeval end) {
 	return diff;
 }
 
-void np_dbi_print_error(dbi_conn conn, char *fmt, ...) {
+static void np_dbi_print_error(dbi_conn conn, char *fmt, ...) {
 	const char *errmsg = NULL;
 	va_list ap;
 
