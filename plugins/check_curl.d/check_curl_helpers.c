@@ -817,6 +817,8 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 		buf = start;
 	}
 
+	// Accept either LF or CRLF as end of line for the status line
+	// CRLF is the standard (RFC9112), but it is recommended to accept both
 	size_t length_of_first_line = strcspn(buf, "\r\n");
 	const char *first_line_end = &buf[length_of_first_line];
 	if (first_line_end == NULL) {
