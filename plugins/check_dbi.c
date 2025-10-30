@@ -34,6 +34,7 @@ const char *copyright = "2011-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 #include "../lib/monitoringplug.h"
+#include "thresholds.h"
 #include "perfdata.h"
 #include "output.h"
 #include "states.h"
@@ -66,7 +67,6 @@ typedef struct {
 } check_dbi_config_wrapper;
 
 static check_dbi_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-static check_dbi_config_wrapper validate_arguments(check_dbi_config_wrapper /*config_wrapper*/);
 void print_usage(void);
 static void print_help(void);
 
@@ -82,7 +82,8 @@ typedef struct {
 	const char *error_string;
 	mp_state_enum query_processing_status;
 } do_query_result;
-static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type type, char *query);
+static do_query_result do_query(dbi_conn conn, check_dbi_metric metric, check_dbi_type type,
+								char *query);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -228,8 +229,8 @@ int main(int argc, char **argv) {
 	pd_conn_duration = mp_set_pd_value(pd_conn_duration, conn_time);
 
 	if (config.metric == METRIC_CONN_TIME) {
-		// TODO set pd thresholds
-		mp_state_enum status = get_status(conn_time, config.dbi_thresholds);
+		pd_conn_duration = mp_pd_set_thresholds(pd_conn_duration, config.thresholds);
+		mp_state_enum status = mp_get_pd_status(pd_conn_duration);
 		sc_connection_time = mp_set_subcheck_state(sc_connection_time, status);
 		if (status != STATE_OK) {
 			xasprintf(&sc_connection_time.output, "%s violates thresholds",
@@ -250,7 +251,11 @@ int main(int argc, char **argv) {
 	xasprintf(&sc_server_version.output, "Connected to server version %u", server_version);
 
 	if (config.metric == METRIC_SERVER_VERSION) {
-		mp_state_enum status = get_status(server_version, config.dbi_thresholds);
+		mp_perfdata pd_server_version = perfdata_init();
+		pd_server_version = mp_set_pd_value(pd_server_version, server_version);
+		pd_server_version = mp_pd_set_thresholds(pd_server_version, config.thresholds);
+		mp_state_enum status = mp_get_pd_status(pd_server_version);
+		mp_add_perfdata_to_subcheck(&sc_server_version, pd_server_version);
 
 		sc_server_version = mp_set_subcheck_state(sc_server_version, status);
 
@@ -262,17 +267,16 @@ int main(int argc, char **argv) {
 	mp_add_subcheck_to_check(&overall, sc_server_version);
 
 	/* select a database */
-	if (config.dbi_database) {
+	if (config.database) {
 		if (verbose > 1) {
-			printf("Selecting database '%s'\n", config.dbi_database);
+			printf("Selecting database '%s'\n", config.database);
 		}
 
 		mp_subcheck sc_select_db = mp_subcheck_init();
 		sc_select_db = mp_set_subcheck_default_state(sc_select_db, STATE_OK);
 
-		if (dbi_conn_select_db(conn, config.dbi_database)) {
-			np_dbi_print_error(conn, "UNKNOWN - failed to select database '%s'",
-							   config.dbi_database);
+		if (dbi_conn_select_db(conn, config.database)) {
+			np_dbi_print_error(conn, "UNKNOWN - failed to select database '%s'", config.database);
 			exit(STATE_UNKNOWN);
 		} else {
 			mp_add_subcheck_to_check(&overall, sc_select_db);
@@ -280,12 +284,12 @@ int main(int argc, char **argv) {
 	}
 
 	// Do a query (if configured)
-	if (config.dbi_query) {
+	if (config.query) {
 		mp_subcheck sc_query = mp_subcheck_init();
 		sc_query = mp_set_subcheck_default_state(sc_query, STATE_UNKNOWN);
 
 		/* execute query */
-		do_query_result query_res = do_query(conn, config.metric, config.type, config.dbi_query);
+		do_query_result query_res = do_query(conn, config.metric, config.type, config.query);
 
 		if (query_res.error_code != 0) {
 			xasprintf(&sc_query.output, "Query failed: %s", query_res.error_string);
@@ -299,7 +303,7 @@ int main(int argc, char **argv) {
 			sc_query = mp_set_subcheck_state(sc_query, query_res.query_processing_status);
 		} else {
 			// query succeeded in general
-			xasprintf(&sc_query.output, "Query '%s' succeeded", config.dbi_query);
+			xasprintf(&sc_query.output, "Query '%s' succeeded", config.query);
 
 			// that's a OK by default now
 			sc_query = mp_set_subcheck_default_state(sc_query, STATE_OK);
@@ -309,7 +313,7 @@ int main(int argc, char **argv) {
 			pd_query_duration = mp_set_pd_value(pd_query_duration, query_res.query_duration);
 			pd_query_duration.label = "querytime";
 			if (config.metric == METRIC_QUERY_TIME) {
-				// TODO set thresholds
+				pd_query_duration = mp_pd_set_thresholds(pd_query_duration, config.thresholds);
 			}
 
 			mp_add_perfdata_to_subcheck(&sc_query, pd_query_duration);
@@ -362,19 +366,20 @@ int main(int argc, char **argv) {
 						// so we expected a number
 						// this is a CRITICAL
 						xasprintf(&sc_query.output, "Query '%s' result is not numeric",
-								  config.dbi_query);
+								  config.query);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 
 					} else {
-						mp_state_enum query_numerical_result =
-							get_status(query_res.result_number, config.dbi_thresholds);
-						sc_query = mp_set_subcheck_state(sc_query, query_numerical_result);
 
 						mp_perfdata pd_query_val = perfdata_init();
 						pd_query_val = mp_set_pd_value(pd_query_val, query_res.result_number);
 						pd_query_val.label = "query";
-						mp_add_perfdata_to_subcheck(&sc_query, pd_query_val);
+						pd_query_val = mp_pd_set_thresholds(pd_query_val, config.thresholds);
 
+						mp_add_perfdata_to_subcheck(&sc_query, pd_query_val);
+						mp_state_enum query_numerical_result = mp_get_pd_status(pd_query_val);
+
+						sc_query = mp_set_subcheck_state(sc_query, query_numerical_result);
 						// TODO set pd thresholds
 						// if (config.dbi_thresholds->warning) {
 						// pd_query_val.warn= config.dbi_thresholds->warning
@@ -393,8 +398,7 @@ int main(int argc, char **argv) {
 					}
 				}
 			} else if (config.metric == METRIC_QUERY_TIME) {
-				mp_state_enum query_time_status =
-					get_status(query_res.query_duration, config.dbi_thresholds);
+				mp_state_enum query_time_status = mp_get_pd_status(pd_query_duration);
 				mp_set_subcheck_state(sc_query, query_time_status);
 
 				if (query_time_status == STATE_OK) {
@@ -464,14 +468,22 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 
-		case 'c': /* critical range */
-			result.config.critical_range = optarg;
+		case 'c': /* critical range */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical threshold");
+			}
+			result.config.thresholds = mp_thresholds_set_crit(result.config.thresholds, tmp.range);
 			result.config.type = TYPE_NUMERIC;
-			break;
-		case 'w': /* warning range */
-			result.config.warning_range = optarg;
+		} break;
+		case 'w': /* warning range */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
+			}
+			result.config.thresholds = mp_thresholds_set_warn(result.config.thresholds, tmp.range);
 			result.config.type = TYPE_NUMERIC;
-			break;
+		} break;
 		case 'e':
 			result.config.expect = optarg;
 			result.config.type = TYPE_STRING;
@@ -559,10 +571,10 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			new->value = value;
 		} break;
 		case 'q':
-			result.config.dbi_query = optarg;
+			result.config.query = optarg;
 			break;
 		case 'D':
-			result.config.dbi_database = optarg;
+			result.config.database = optarg;
 			break;
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
@@ -579,57 +591,48 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	set_thresholds(&result.config.dbi_thresholds, result.config.warning_range,
-				   result.config.critical_range);
-
-	return validate_arguments(result);
-}
-
-check_dbi_config_wrapper validate_arguments(check_dbi_config_wrapper config_wrapper) {
-	if (!config_wrapper.config.dbi_driver) {
+	if (!result.config.dbi_driver) {
 		usage("Must specify a DBI driver");
 	}
 
-	if (((config_wrapper.config.metric == METRIC_QUERY_RESULT) ||
-		 (config_wrapper.config.metric == METRIC_QUERY_TIME)) &&
-		(!config_wrapper.config.dbi_query)) {
+	if (((result.config.metric == METRIC_QUERY_RESULT) ||
+		 (result.config.metric == METRIC_QUERY_TIME)) &&
+		(!result.config.query)) {
 		usage("Must specify a query to execute (metric == QUERY_RESULT)");
 	}
 
-	if ((config_wrapper.config.metric != METRIC_CONN_TIME) &&
-		(config_wrapper.config.metric != METRIC_SERVER_VERSION) &&
-		(config_wrapper.config.metric != METRIC_QUERY_RESULT) &&
-		(config_wrapper.config.metric != METRIC_QUERY_TIME)) {
+	if ((result.config.metric != METRIC_CONN_TIME) &&
+		(result.config.metric != METRIC_SERVER_VERSION) &&
+		(result.config.metric != METRIC_QUERY_RESULT) &&
+		(result.config.metric != METRIC_QUERY_TIME)) {
 		usage("Invalid metric specified");
 	}
 
-	if (config_wrapper.config.expect &&
-		(config_wrapper.config.warning_range || config_wrapper.config.critical_range ||
-		 config_wrapper.config.expect_re_str)) {
+	if (result.config.expect &&
+		(result.config.thresholds.warning_is_set || result.config.thresholds.critical_is_set ||
+		 result.config.expect_re_str)) {
 		usage("Do not mix -e and -w/-c/-r/-R");
 	}
 
-	if (config_wrapper.config.expect_re_str &&
-		(config_wrapper.config.warning_range || config_wrapper.config.critical_range ||
-		 config_wrapper.config.expect)) {
+	if (result.config.expect_re_str &&
+		(result.config.thresholds.warning_is_set || result.config.thresholds.critical_is_set ||
+		 result.config.expect)) {
 		usage("Do not mix -r/-R and -w/-c/-e");
 	}
 
-	if (config_wrapper.config.expect && (config_wrapper.config.metric != METRIC_QUERY_RESULT)) {
+	if (result.config.expect && (result.config.metric != METRIC_QUERY_RESULT)) {
 		usage("Option -e requires metric QUERY_RESULT");
 	}
 
-	if (config_wrapper.config.expect_re_str &&
-		(config_wrapper.config.metric != METRIC_QUERY_RESULT)) {
+	if (result.config.expect_re_str && (result.config.metric != METRIC_QUERY_RESULT)) {
 		usage("Options -r/-R require metric QUERY_RESULT");
 	}
 
-	if (config_wrapper.config.type == TYPE_STRING) {
-		assert(config_wrapper.config.expect || config_wrapper.config.expect_re_str);
+	if (result.config.type == TYPE_STRING) {
+		assert(result.config.expect || result.config.expect_re_str);
 	}
 
-	config_wrapper.errorcode = OK;
-	return config_wrapper;
+	return result;
 }
 
 void print_help(void) {
@@ -735,7 +738,7 @@ void print_usage(void) {
 	printf(" [-e <string>] [-r|-R <regex>]\n");
 }
 
-const char *get_field_str(dbi_result res, mp_dbi_metric metric, mp_dbi_type type) {
+const char *get_field_str(dbi_result res, check_dbi_metric metric, check_dbi_type type) {
 	const char *str = dbi_result_get_string_idx(res, 1);
 	if ((!str) || (strcmp(str, "ERROR") == 0)) {
 		if (metric != METRIC_QUERY_RESULT) {
@@ -755,7 +758,7 @@ typedef struct {
 	int error_code;
 	int dbi_error_code; // not sure if useful
 } get_field_wrapper;
-get_field_wrapper get_field(dbi_result res, mp_dbi_metric metric, mp_dbi_type type) {
+get_field_wrapper get_field(dbi_result res, check_dbi_metric metric, check_dbi_type type) {
 
 	unsigned short field_type = dbi_result_get_field_type_idx(res, 1);
 	get_field_wrapper result = {
@@ -815,7 +818,7 @@ get_field_wrapper get_field(dbi_result res, mp_dbi_metric metric, mp_dbi_type ty
 	return result;
 }
 
-static do_query_result do_query(dbi_conn conn, mp_dbi_metric metric, mp_dbi_type type,
+static do_query_result do_query(dbi_conn conn, check_dbi_metric metric, check_dbi_type type,
 								char *query) {
 	assert(query);
 
