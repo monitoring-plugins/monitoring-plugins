@@ -35,11 +35,11 @@
  *
  *****************************************************************************/
 
-#include "thresholds.h"
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "thresholds.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -47,8 +47,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include "check_ntp_peer.d/config.h"
 
 static int verbose = 0;
-static bool syncsource_found = false;
-static bool li_alarm = false;
 
 typedef struct {
 	int errorcode;
@@ -198,9 +196,7 @@ void setup_control_request(ntp_control_message *message, uint8_t opcode, uint16_
  *    positive value means a success retrieving the value.
  *  - status is set to WARNING if there's no sync.peer (otherwise OK) and is
  *    the return value of the function.
- *  status is pretty much useless as syncsource_found is a global variable
- *  used later in main to check is the server was synchronized. It works
- *  so I left it alone */
+ */
 typedef struct {
 	mp_state_enum state;
 	mp_state_enum offset_result;
@@ -208,6 +204,8 @@ typedef struct {
 	double jitter;
 	long stratum;
 	int num_truechimers;
+	bool syncsource_found;
+	bool li_alarm;
 } ntp_request_result;
 ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
@@ -217,6 +215,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		.jitter = -1,
 		.stratum = -1,
 		.num_truechimers = 0,
+		.syncsource_found = false,
+		.li_alarm = false,
 	};
 
 	/* Long-winded explanation:
@@ -235,19 +235,16 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	 * 4) Extract the offset, jitter and stratum value from the data[]
 	 *    (it's ASCII)
 	 */
-	int min_peer_sel = PEER_INCLUDED;
-	int num_candidates = 0;
-	void *tmp;
-	ntp_assoc_status_pair *peers = NULL;
-	int peer_offset = 0;
-	size_t peers_size = 0;
-	size_t npeers = 0;
 	int conn = -1;
 	my_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
 	ntp_control_message req;
+	ntp_assoc_status_pair *peers = NULL;
+	int peer_offset = 0;
+	size_t peers_size = 0;
+	size_t npeers = 0;
 	do {
 		setup_control_request(&req, OP_READSTAT, 1);
 		DBG(printf("sending READSTAT request"));
@@ -269,12 +266,13 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		} while (!(req.op & OP_READSTAT && ntohs(req.seq) == 1));
 
 		if (LI(req.flags) == LI_ALARM) {
-			li_alarm = true;
+			result.li_alarm = true;
 		}
 		/* Each peer identifier is 4 bytes in the data section, which
 		 * we represent as a ntp_assoc_status_pair datatype.
 		 */
 		peers_size += ntohs(req.count);
+		void *tmp;
 		if ((tmp = realloc(peers, peers_size)) == NULL) {
 			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
 		}
@@ -287,13 +285,15 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	/* first, let's find out if we have a sync source, or if there are
 	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
+	int min_peer_sel = PEER_INCLUDED;
+	int num_candidates = 0;
 	for (size_t i = 0; i < npeers; i++) {
 		if (PEER_SEL(peers[i].status) >= PEER_TRUECHIMER) {
 			result.num_truechimers++;
 			if (PEER_SEL(peers[i].status) >= PEER_INCLUDED) {
 				num_candidates++;
 				if (PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE) {
-					syncsource_found = true;
+					result.syncsource_found = true;
 					min_peer_sel = PEER_SYNCSOURCE;
 				}
 			}
@@ -302,18 +302,18 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 	if (verbose) {
 		printf("%d candidate peers available\n", num_candidates);
-	}
-	if (verbose && syncsource_found) {
-		printf("synchronization source found\n");
+		if (result.syncsource_found) {
+			printf("synchronization source found\n");
+		}
 	}
 
-	if (!syncsource_found) {
+	if (!result.syncsource_found) {
 		result.state = STATE_WARNING;
 		if (verbose) {
 			printf("warning: no synchronization source found\n");
 		}
 	}
-	if (li_alarm) {
+	if (result.li_alarm) {
 		result.state = STATE_WARNING;
 		if (verbose) {
 			printf("warning: LI_ALARM bit is set\n");
@@ -634,7 +634,7 @@ int main(int argc, char *argv[]) {
 	alarm(socket_timeout);
 
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
-	ntp_request_result ntp_res = ntp_request(config);
+	const ntp_request_result ntp_res = ntp_request(config);
 	mp_state_enum result = STATE_UNKNOWN;
 
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
@@ -686,9 +686,9 @@ int main(int argc, char *argv[]) {
 		break;
 	}
 
-	if (!syncsource_found) {
+	if (!ntp_res.syncsource_found) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
-	} else if (li_alarm) {
+	} else if (ntp_res.li_alarm) {
 		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
 	}
 
