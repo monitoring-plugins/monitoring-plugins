@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../utils.h"
 #include "check_curl.d/config.h"
 #include "output.h"
@@ -816,7 +817,10 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 		buf = start;
 	}
 
-	char *first_line_end = strstr(buf, "\r\n");
+	// Accept either LF or CRLF as end of line for the status line
+	// CRLF is the standard (RFC9112), but it is recommended to accept both
+	size_t length_of_first_line = strcspn(buf, "\r\n");
+	const char *first_line_end = &buf[length_of_first_line];
 	if (first_line_end == NULL) {
 		return -1;
 	}
@@ -826,6 +830,7 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 	if (status_line->first_line == NULL) {
 		return -1;
 	}
+
 	memcpy(status_line->first_line, buf, first_line_len);
 	status_line->first_line[first_line_len] = '\0';
 	char *first_line_buf = strdup(status_line->first_line);
@@ -833,23 +838,34 @@ int curlhelp_parse_statusline(const char *buf, curlhelp_statusline *status_line)
 	/* protocol and version: "HTTP/x.x" SP or "HTTP/2" SP */
 	char *temp_string = strtok(first_line_buf, "/");
 	if (temp_string == NULL) {
-		free(first_line_buf);
-		return -1;
-	}
-	if (strcmp(temp_string, "HTTP") != 0) {
+		if (verbose > 1) {
+			printf("%s: no / found\n", __func__);
+		}
 		free(first_line_buf);
 		return -1;
 	}
 
+	if (strcmp(temp_string, "HTTP") != 0) {
+		if (verbose > 1) {
+			printf("%s: string 'HTTP' not found\n", __func__);
+		}
+		free(first_line_buf);
+		return -1;
+	}
+
+	// try to find a space in the remaining string?
+	// the space after HTTP/1.1 probably
 	temp_string = strtok(NULL, " ");
 	if (temp_string == NULL) {
+		if (verbose > 1) {
+			printf("%s: no space after protocol definition\n", __func__);
+		}
 		free(first_line_buf);
 		return -1;
 	}
 
 	char *temp_string_2;
 	if (strchr(temp_string, '.') != NULL) {
-
 		/* HTTP 1.x case */
 		strtok(temp_string, ".");
 		status_line->http_major = (int)strtol(temp_string, &temp_string_2, 10);
