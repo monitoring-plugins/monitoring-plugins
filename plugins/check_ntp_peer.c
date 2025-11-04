@@ -527,7 +527,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse warning offset threshold");
 			}
 
-			mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
+			result.config.offset_thresholds =
+				mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
@@ -535,7 +536,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse critical offset threshold");
 			}
 
-			mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+			result.config.offset_thresholds =
+				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
 		} break;
 		case 'W': {
 			result.config.do_stratum = true;
@@ -544,7 +546,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse warning stratum threshold");
 			}
 
-			mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
+			result.config.stratum_thresholds =
+				mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
 		} break;
 		case 'C': {
 			result.config.do_stratum = true;
@@ -553,7 +556,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse critical stratum threshold");
 			}
 
-			mp_thresholds_set_crit(result.config.stratum_thresholds, tmp.range);
+			result.config.stratum_thresholds =
+				mp_thresholds_set_crit(result.config.stratum_thresholds, tmp.range);
 		} break;
 		case 'j': {
 			result.config.do_jitter = true;
@@ -562,7 +566,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse warning jitter threshold");
 			}
 
-			mp_thresholds_set_warn(result.config.jitter_thresholds, tmp.range);
+			result.config.jitter_thresholds =
+				mp_thresholds_set_warn(result.config.jitter_thresholds, tmp.range);
 		} break;
 		case 'k': {
 			result.config.do_jitter = true;
@@ -571,7 +576,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse critical jitter threshold");
 			}
 
-			mp_thresholds_set_crit(result.config.jitter_thresholds, tmp.range);
+			result.config.jitter_thresholds =
+				mp_thresholds_set_crit(result.config.jitter_thresholds, tmp.range);
 		} break;
 		case 'm': {
 			result.config.do_truechimers = true;
@@ -580,7 +586,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse warning truechimer threshold");
 			}
 
-			mp_thresholds_set_warn(result.config.truechimer_thresholds, tmp.range);
+			result.config.truechimer_thresholds =
+				mp_thresholds_set_warn(result.config.truechimer_thresholds, tmp.range);
 		} break;
 		case 'n': {
 			result.config.do_truechimers = true;
@@ -589,7 +596,8 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse critical truechimer threshold");
 			}
 
-			mp_thresholds_set_crit(result.config.truechimer_thresholds, tmp.range);
+			result.config.truechimer_thresholds =
+				mp_thresholds_set_crit(result.config.truechimer_thresholds, tmp.range);
 		} break;
 		case 'H':
 			if (!is_host(optarg)) {
