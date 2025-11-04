@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "perfdata.h"
 #include "thresholds.h"
 #include <stddef.h>
 #include <pg_config_manual.h>
@@ -24,11 +25,8 @@ typedef struct {
 	char *pgquery;
 	char *pgqueryname;
 
-	double twarn;
-	double tcrit;
-	thresholds *qthresholds;
-	char *query_warning;
-	char *query_critical;
+	mp_thresholds time_thresholds;
+	mp_thresholds qthresholds;
 } check_pgsql_config;
 
 /* begin, by setting the parameters for a backend connection if the
@@ -51,11 +49,16 @@ check_pgsql_config check_pgsql_config_init() {
 		.pgquery = NULL,
 		.pgqueryname = NULL,
 
-		.twarn = (double)DEFAULT_WARN,
-		.tcrit = (double)DEFAULT_CRIT,
-		.qthresholds = NULL,
-		.query_warning = NULL,
-		.query_critical = NULL,
+		.time_thresholds = mp_thresholds_init(),
+		.qthresholds = mp_thresholds_init(),
 	};
+
+	mp_range tmp_range = mp_range_init();
+	tmp_range = mp_range_set_end(tmp_range, mp_create_pd_value(DEFAULT_WARN));
+	tmp.time_thresholds = mp_thresholds_set_warn(tmp.time_thresholds, tmp_range);
+
+	tmp_range = mp_range_set_end(tmp_range, mp_create_pd_value(DEFAULT_CRIT));
+	tmp.time_thresholds = mp_thresholds_set_crit(tmp.time_thresholds, tmp_range);
+
 	return tmp;
 }

@@ -28,6 +28,8 @@
  *
  *****************************************************************************/
 
+#include "output.h"
+#include "perfdata.h"
 #include "states.h"
 #include "common.h"
 #include "utils.h"
@@ -46,8 +48,9 @@ const char *email = "devel@monitoring-plugins.org";
 
 /* return the PSQL server version as a 3-tuple */
 #define PSQL_SERVER_VERSION3(server_version)                                                       \
-	(server_version) / 10000, (server_version) / 100 - (int)((server_version) / 10000) * 100,      \
-		(server_version) - (int)((server_version) / 100) * 100
+	((server_version) / 10000),                                                                    \
+		(((server_version) / 100) - (int)(((server_version) / 10000) * 100)),                      \
+		(server_version) - (int)(((server_version) / 100) * 100)
 /* return true if the given host is a UNIX domain socket */
 #define PSQL_IS_UNIX_DOMAIN_SOCKET(host) ((NULL == (host)) || ('\0' == *(host)) || ('/' == *(host)))
 /* return a 3-tuple identifying a host/port independent of the socket type */
@@ -63,9 +66,21 @@ static check_pgsql_config_wrapper process_arguments(int /*argc*/, char ** /*argv
 
 static void print_help(void);
 static bool is_pg_logname(char * /*username*/);
-static mp_state_enum do_query(PGconn * /*conn*/, char * /*query*/, const char /*pgqueryname*/[],
-							  thresholds * /*qthresholds*/, char * /*query_warning*/,
-							  char * /*query_critical*/);
+
+typedef enum {
+	QUERY_OK,
+	ERROR_WITH_QUERY,     // critical
+	NO_ROWS_RETURNED,     // warning
+	NO_COLUMNS_RETURNED,  // warning
+	NO_DATA_RETURNED,     // critica/
+	RESULT_IS_NOT_NUMERIC // critical
+} do_query_errorcode;
+
+typedef struct {
+	do_query_errorcode error_code;
+	double numerical_result;
+} do_query_wrapper;
+static do_query_wrapper do_query(PGconn * /*conn*/, char * /*query*/);
 void print_usage(void);
 
 static int verbose = 0;
@@ -196,20 +211,40 @@ int main(int argc, char **argv) {
 	if (verbose) {
 		printf("Verifying connection\n");
 	}
+
+	mp_check overall = mp_check_init();
+
+	mp_subcheck sc_connection = mp_subcheck_init();
+
 	if (PQstatus(conn) == CONNECTION_BAD) {
-		printf(_("CRITICAL - no connection to '%s' (%s).\n"), config.dbName, PQerrorMessage(conn));
+		sc_connection = mp_set_subcheck_state(sc_connection, STATE_CRITICAL);
+		xasprintf(&sc_connection.output, "no connection to '%s' (%s)", config.dbName,
+				  PQerrorMessage(conn));
 		PQfinish(conn);
-		return STATE_CRITICAL;
+		mp_add_subcheck_to_check(&overall, sc_connection);
+		mp_exit(overall);
+	} else {
+		sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
+		xasprintf(&sc_connection.output, "connected to '%s'", config.dbName);
+		mp_add_subcheck_to_check(&overall, sc_connection);
 	}
 
-	mp_state_enum status = STATE_UNKNOWN;
-	if (elapsed_time > config.tcrit) {
-		status = STATE_CRITICAL;
-	} else if (elapsed_time > config.twarn) {
-		status = STATE_WARNING;
-	} else {
-		status = STATE_OK;
-	}
+	mp_subcheck sc_connection_time = mp_subcheck_init();
+	sc_connection_time = mp_set_subcheck_default_state(sc_connection_time, STATE_UNKNOWN);
+
+	xasprintf(&sc_connection_time.output, "connection time: %.10g", elapsed_time);
+
+	mp_perfdata pd_connection_time = perfdata_init();
+	pd_connection_time.label = "time";
+	pd_connection_time.uom = "s";
+	pd_connection_time = mp_set_pd_value(pd_connection_time, elapsed_time);
+	pd_connection_time = mp_pd_set_thresholds(pd_connection_time, config.time_thresholds);
+
+	mp_add_perfdata_to_subcheck(&sc_connection_time, pd_connection_time);
+	sc_connection_time =
+		mp_set_subcheck_state(sc_connection_time, mp_get_pd_status(pd_connection_time));
+
+	mp_add_subcheck_to_check(&overall, sc_connection_time);
 
 	if (verbose) {
 		char *server_host = PQhost(conn);
@@ -222,25 +257,81 @@ int main(int argc, char **argv) {
 			   PSQL_SERVER_VERSION3(server_version), PQprotocolVersion(conn), PQbackendPID(conn));
 	}
 
-	printf(_(" %s - database %s (%f sec.)|%s\n"), state_text(status), config.dbName, elapsed_time,
-		   fperfdata("time", elapsed_time, "s", (config.twarn > 0.0), config.twarn,
-					 (config.tcrit > 0.0), config.tcrit, true, 0, false, 0));
-
-	mp_state_enum query_status = STATE_UNKNOWN;
 	if (config.pgquery) {
-		query_status = do_query(conn, config.pgquery, config.pgqueryname, config.qthresholds,
-								config.query_warning, config.query_critical);
+		mp_subcheck sc_query = mp_subcheck_init();
+		sc_query = mp_set_subcheck_default_state(sc_query, STATE_UNKNOWN);
+		if (config.pgqueryname) {
+			xasprintf(&sc_query.output, "query '%s'", config.pgqueryname);
+		} else {
+			xasprintf(&sc_query.output, "query '%s'", config.pgquery);
+		}
+
+		do_query_wrapper query_result = do_query(conn, config.pgquery);
+
+		switch (query_result.error_code) {
+		case QUERY_OK: {
+			// Query was succesful and there is a numerical result
+			sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
+			xasprintf(&sc_query.output, "%s succeeded", sc_query.output);
+
+			mp_perfdata pd_query = perfdata_init();
+			pd_query = mp_set_pd_value(pd_query, query_result.numerical_result);
+			pd_query = mp_pd_set_thresholds(pd_query, config.qthresholds);
+			pd_query.label = "query";
+
+			mp_subcheck sc_query_compare = mp_subcheck_init();
+			mp_state_enum query_compare_state = mp_get_pd_status(pd_query);
+
+			sc_query_compare = mp_set_subcheck_state(sc_query_compare, query_compare_state);
+			mp_add_perfdata_to_subcheck(&sc_query_compare, pd_query);
+
+			if (query_compare_state == STATE_OK) {
+				xasprintf(&sc_query_compare.output, "query result '%f' is withing thresholds",
+						  query_result.numerical_result);
+			} else {
+				xasprintf(&sc_query_compare.output, "query result '%f' is violating thresholds",
+						  query_result.numerical_result);
+			}
+			mp_add_subcheck_to_check(&overall, sc_query_compare);
+
+		} break;
+		case ERROR_WITH_QUERY:
+			xasprintf(&sc_query.output, "%s - Error with query: %s", sc_query.output,
+					  PQerrorMessage(conn));
+			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
+			break;
+		case NO_ROWS_RETURNED:
+			xasprintf(&sc_query.output, "%s - no rows were returned by the query", sc_query.output);
+			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
+			break;
+		case NO_COLUMNS_RETURNED:
+			xasprintf(&sc_query.output, "%s - no columns were returned by the query",
+					  sc_query.output);
+			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
+			break;
+		case NO_DATA_RETURNED:
+			xasprintf(&sc_query.output, "%s - no data was returned by the query", sc_query.output);
+			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
+			break;
+		case RESULT_IS_NOT_NUMERIC:
+			xasprintf(&sc_query.output, "%s - result of the query is not numeric", sc_query.output);
+			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
+			break;
+		};
+
+		mp_add_subcheck_to_check(&overall, sc_query);
 	}
 
 	if (verbose) {
 		printf("Closing connection\n");
 	}
 	PQfinish(conn);
-	return (config.pgquery && query_status > status) ? query_status : status;
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
-check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
+static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 
 	enum {
 		OPTID_QUERYNAME = CHAR_MAX + 1,
@@ -295,26 +386,40 @@ check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 				timeout_interval = atoi(optarg);
 			}
 			break;
-		case 'c': /* critical time threshold */
-			if (!is_nonnegative(optarg)) {
-				usage2(_("Critical threshold must be a positive integer"), optarg);
-			} else {
-				result.config.tcrit = strtod(optarg, NULL);
+		case 'c': /* critical time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical time threshold");
 			}
-			break;
-		case 'w': /* warning time threshold */
-			if (!is_nonnegative(optarg)) {
-				usage2(_("Warning threshold must be a positive integer"), optarg);
-			} else {
-				result.config.twarn = strtod(optarg, NULL);
+			result.config.time_thresholds =
+				mp_thresholds_set_crit(result.config.time_thresholds, tmp.range);
+		} break;
+		case 'w': /* warning time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning time threshold");
 			}
-			break;
-		case 'C': /* critical query threshold */
-			result.config.query_critical = optarg;
-			break;
-		case 'W': /* warning query threshold */
-			result.config.query_warning = optarg;
-			break;
+			result.config.time_thresholds =
+				mp_thresholds_set_warn(result.config.time_thresholds, tmp.range);
+		} break;
+		case 'C': /* critical query threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical query threshold");
+			}
+
+			result.config.qthresholds =
+				mp_thresholds_set_crit(result.config.qthresholds, tmp.range);
+
+		} break;
+		case 'W': /* warning query threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning query threshold");
+			}
+			result.config.qthresholds =
+				mp_thresholds_set_warn(result.config.qthresholds, tmp.range);
+		} break;
 		case 'H': /* host */
 			if ((*optarg != '/') && (!is_host(optarg))) {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -365,9 +470,6 @@ check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	set_thresholds(&result.config.qthresholds, result.config.query_warning,
-				   result.config.query_critical);
-
 	return result;
 }
 
@@ -395,7 +497,7 @@ should be added.</para>
 -@@
 ******************************************************************************/
 
-bool is_pg_logname(char *username) {
+static bool is_pg_logname(char *username) {
 	if (strlen(username) > NAMEDATALEN - 1) {
 		return (false);
 	}
@@ -449,9 +551,9 @@ void print_help(void) {
 	printf(" %s\n", "--queryname=STRING");
 	printf("    %s\n", _("A name for the query, this string is used instead of the query"));
 	printf("    %s\n", _("in the long output of the plugin"));
-	printf(" %s\n", "-W, --query-warning=RANGE");
+	printf(" %s\n", "-W, --query_warning=RANGE");
 	printf("    %s\n", _("SQL query value to result in warning status (double)"));
-	printf(" %s\n", "-C, --query-critical=RANGE");
+	printf(" %s\n", "-C, --query_critical=RANGE");
 	printf("    %s\n", _("SQL query value to result in critical status (double)"));
 
 	printf(UT_VERBOSE);
@@ -511,33 +613,44 @@ void print_usage(void) {
 		   "[-q <query>] [-C <critical query range>] [-W <warning query range>]\n");
 }
 
-mp_state_enum do_query(PGconn *conn, char *query, const char pgqueryname[], thresholds *qthresholds,
-					   char *query_warning, char *query_critical) {
+static do_query_wrapper do_query(PGconn *conn, char *query) {
 	if (verbose) {
 		printf("Executing SQL query \"%s\".\n", query);
 	}
 	PGresult *res = PQexec(conn, query);
 
+	do_query_wrapper result = {
+		.error_code = QUERY_OK,
+	};
+
 	if (PGRES_TUPLES_OK != PQresultStatus(res)) {
-		printf(_("QUERY %s - %s: %s.\n"), _("CRITICAL"), _("Error with query"),
-			   PQerrorMessage(conn));
-		return STATE_CRITICAL;
+		// TODO
+		// printf(_("QUERY %s - %s: %s.\n"), _("CRITICAL"), _("Error with query"),
+		// PQerrorMessage(conn));
+		result.error_code = ERROR_WITH_QUERY;
+		return result;
 	}
 
 	if (PQntuples(res) < 1) {
-		printf("QUERY %s - %s.\n", _("WARNING"), _("No rows returned"));
-		return STATE_WARNING;
+		// TODO
+		// printf("QUERY %s - %s.\n", _("WARNING"), _("No rows returned"));
+		result.error_code = NO_ROWS_RETURNED;
+		return result;
 	}
 
 	if (PQnfields(res) < 1) {
-		printf("QUERY %s - %s.\n", _("WARNING"), _("No columns returned"));
-		return STATE_WARNING;
+		// TODO
+		// printf("QUERY %s - %s.\n", _("WARNING"), _("No columns returned"));
+		result.error_code = NO_COLUMNS_RETURNED;
+		return result;
 	}
 
 	char *val_str = PQgetvalue(res, 0, 0);
 	if (!val_str) {
-		printf("QUERY %s - %s.\n", _("CRITICAL"), _("No data returned"));
-		return STATE_CRITICAL;
+		// TODO
+		// printf("QUERY %s - %s.\n", _("CRITICAL"), _("No data returned"));
+		result.error_code = NO_DATA_RETURNED;
+		return result;
 	}
 
 	char *endptr = NULL;
@@ -547,8 +660,10 @@ mp_state_enum do_query(PGconn *conn, char *query, const char pgqueryname[], thre
 	}
 
 	if (endptr == val_str) {
-		printf("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
-		return STATE_CRITICAL;
+		// TODO
+		// printf("QUERY %s - %s: %s\n", _("CRITICAL"), _("Is not a numeric"), val_str);
+		result.error_code = RESULT_IS_NOT_NUMERIC;
+		return result;
 	}
 
 	if ((endptr != NULL) && (*endptr != '\0')) {
@@ -557,24 +672,22 @@ mp_state_enum do_query(PGconn *conn, char *query, const char pgqueryname[], thre
 		}
 	}
 
-	mp_state_enum my_status = get_status(value, qthresholds);
-	printf("QUERY %s - ", (my_status == STATE_OK)         ? _("OK")
-						  : (my_status == STATE_WARNING)  ? _("WARNING")
-						  : (my_status == STATE_CRITICAL) ? _("CRITICAL")
-														  : _("UNKNOWN"));
-	if (pgqueryname) {
-		printf(_("%s returned %f"), pgqueryname, value);
-	} else {
-		printf(_("'%s' returned %f"), query, value);
-	}
+	result.numerical_result = value;
 
-	printf("|query=%f;%s;%s;;\n", value, query_warning ? query_warning : "",
-		   query_critical ? query_critical : "");
-	if (PQnfields(res) > 1) {
-		char *extra_info = PQgetvalue(res, 0, 1);
-		if (extra_info != NULL) {
-			printf("Extra Info: %s\n", extra_info);
-		}
-	}
-	return my_status;
+	// if (pgqueryname) {
+	// 	printf(_("%s returned %f"), pgqueryname, value);
+	// } else {
+	// 	printf(_("'%s' returned %f"), query, value);
+	// }
+
+	// printf("|query=%f;%s;%s;;\n", value, query_warning ? query_warning : "",
+	// 	   query_critical ? query_critical : "");
+	// if (PQnfields(res) > 1) {
+	// 	char *extra_info = PQgetvalue(res, 0, 1);
+	// 	if (extra_info != NULL) {
+	// 		printf("Extra Info: %s\n", extra_info);
+	// 	}
+	// }
+
+	return result;
 }
