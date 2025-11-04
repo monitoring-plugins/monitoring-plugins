@@ -39,6 +39,9 @@ const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "output.h"
+#include "perfdata.h"
+#include <openssl/x509.h>
 #include "thresholds.h"
 #include "common.h"
 #include "netutils.h"
@@ -329,7 +332,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (verbose) {
 				printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
 			}
-			xasprintf(&data, "");
+			data = strdup("");
 			do {
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
@@ -518,36 +521,76 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'q':
 			result.config.quiet = true;
 			break;
-		case 'w':
-			result.config.owarn = optarg;
-			break;
-		case 'c':
-			result.config.ocrit = optarg;
-			break;
-		case 'W':
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning offset threshold");
+			}
+
+			mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical offset threshold");
+			}
+
+			mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'W': {
 			result.config.do_stratum = true;
-			result.config.swarn = optarg;
-			break;
-		case 'C':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning stratum threshold");
+			}
+
+			mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
+		} break;
+		case 'C': {
 			result.config.do_stratum = true;
-			result.config.scrit = optarg;
-			break;
-		case 'j':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical stratum threshold");
+			}
+
+			mp_thresholds_set_crit(result.config.stratum_thresholds, tmp.range);
+		} break;
+		case 'j': {
 			result.config.do_jitter = true;
-			result.config.jwarn = optarg;
-			break;
-		case 'k':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning jitter threshold");
+			}
+
+			mp_thresholds_set_warn(result.config.jitter_thresholds, tmp.range);
+		} break;
+		case 'k': {
 			result.config.do_jitter = true;
-			result.config.jcrit = optarg;
-			break;
-		case 'm':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical jitter threshold");
+			}
+
+			mp_thresholds_set_crit(result.config.jitter_thresholds, tmp.range);
+		} break;
+		case 'm': {
 			result.config.do_truechimers = true;
-			result.config.twarn = optarg;
-			break;
-		case 'n':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning truechimer threshold");
+			}
+
+			mp_thresholds_set_warn(result.config.truechimer_thresholds, tmp.range);
+		} break;
+		case 'n': {
 			result.config.do_truechimers = true;
-			result.config.tcrit = optarg;
-			break;
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical truechimer threshold");
+			}
+
+			mp_thresholds_set_crit(result.config.truechimer_thresholds, tmp.range);
+		} break;
 		case 'H':
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -580,11 +623,6 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 	if (result.config.server_address == NULL) {
 		usage4(_("Hostname was not supplied"));
 	}
-
-	set_thresholds(&result.config.offset_thresholds, result.config.owarn, result.config.ocrit);
-	set_thresholds(&result.config.jitter_thresholds, result.config.jwarn, result.config.jcrit);
-	set_thresholds(&result.config.stratum_thresholds, result.config.swarn, result.config.scrit);
-	set_thresholds(&result.config.truechimer_thresholds, result.config.twarn, result.config.tcrit);
 
 	return result;
 }
@@ -635,124 +673,100 @@ int main(int argc, char *argv[]) {
 
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
 	const ntp_request_result ntp_res = ntp_request(config);
-	mp_state_enum result = STATE_UNKNOWN;
+	mp_check overall = mp_check_init();
 
+	mp_subcheck sc_offset = mp_subcheck_init();
+	xasprintf(&sc_offset.output, "offset");
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
-		result = (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL);
+		sc_offset =
+			mp_set_subcheck_state(sc_offset, (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL));
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (config.quiet && result == STATE_WARNING) {
-			result = STATE_UNKNOWN;
+		mp_state_enum tmp = STATE_OK;
+		if (config.quiet && ntp_res.state == STATE_WARNING) {
+			tmp = STATE_UNKNOWN;
 		}
-		result = max_state_alt(result, get_status(fabs(ntp_res.offset), config.offset_thresholds));
+
+		mp_perfdata pd_offset = perfdata_init();
+		pd_offset.value = mp_create_pd_value(fabs(ntp_res.offset));
+		pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+
+		tmp = max_state_alt(tmp, mp_get_pd_status(pd_offset));
+		sc_offset = mp_set_subcheck_state(sc_offset, tmp);
 	}
 
-	mp_state_enum oresult = result;
-	mp_state_enum tresult = STATE_UNKNOWN;
+	mp_add_subcheck_to_check(&overall, sc_offset);
 
+	// truechimers
 	if (config.do_truechimers) {
-		tresult = get_status(ntp_res.num_truechimers, config.truechimer_thresholds);
-		result = max_state_alt(result, tresult);
-	}
+		mp_subcheck sc_truechimers;
+		xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
 
-	mp_state_enum sresult = STATE_UNKNOWN;
+		mp_perfdata pd_truechimers = perfdata_init();
+		pd_truechimers.value = mp_create_pd_value(ntp_res.num_truechimers);
+		mp_pd_set_thresholds(pd_truechimers, config.truechimer_thresholds);
+		mp_add_perfdata_to_subcheck(&sc_truechimers, pd_truechimers);
+
+		sc_truechimers = mp_set_subcheck_state(sc_truechimers, mp_get_pd_status(pd_truechimers));
+
+		mp_add_subcheck_to_check(&overall, sc_truechimers);
+	}
 
 	if (config.do_stratum) {
-		sresult = get_status((double)ntp_res.stratum, config.stratum_thresholds);
-		result = max_state_alt(result, sresult);
-	}
+		mp_subcheck sc_stratum = mp_subcheck_init();
+		xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
 
-	mp_state_enum jresult = STATE_UNKNOWN;
+		mp_perfdata pd_stratum = perfdata_init();
+		pd_stratum.value = mp_create_pd_value(ntp_res.stratum);
+		pd_stratum = mp_pd_set_thresholds(pd_stratum, config.stratum_thresholds);
+		mp_add_perfdata_to_subcheck(&sc_stratum, pd_stratum);
+
+		sc_stratum = mp_set_subcheck_state(sc_stratum, mp_get_pd_status(pd_stratum));
+
+		mp_add_subcheck_to_check(&overall, sc_stratum);
+	}
 
 	if (config.do_jitter) {
-		jresult = get_status(ntp_res.jitter, config.jitter_thresholds);
-		result = max_state_alt(result, jresult);
+		mp_subcheck sc_jitter = mp_subcheck_init();
+		xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
+
+		mp_perfdata pd_jitter = perfdata_init();
+		pd_jitter.value = mp_create_pd_value(ntp_res.jitter);
+		pd_jitter = mp_pd_set_thresholds(pd_jitter, config.jitter_thresholds);
+		mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter);
+
+		sc_jitter = mp_set_subcheck_state(sc_jitter, mp_get_pd_status(pd_jitter));
+		mp_add_subcheck_to_check(&overall, sc_jitter);
 	}
 
-	char *result_line;
-	switch (result) {
-	case STATE_CRITICAL:
-		xasprintf(&result_line, _("NTP CRITICAL:"));
-		break;
-	case STATE_WARNING:
-		xasprintf(&result_line, _("NTP WARNING:"));
-		break;
-	case STATE_OK:
-		xasprintf(&result_line, _("NTP OK:"));
-		break;
-	default:
-		xasprintf(&result_line, _("NTP UNKNOWN:"));
-		break;
-	}
-
+	mp_subcheck sc_other_info = mp_subcheck_init();
+	sc_other_info = mp_set_subcheck_default_state(sc_other_info, STATE_OK);
 	if (!ntp_res.syncsource_found) {
-		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
+		xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
+		mp_add_subcheck_to_check(&overall, sc_other_info);
 	} else if (ntp_res.li_alarm) {
-		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
+		xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
+		mp_add_subcheck_to_check(&overall, sc_other_info);
 	}
 
-	char *perfdata_line;
-	if (ntp_res.offset_result == STATE_UNKNOWN) {
-		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		xasprintf(&perfdata_line, "");
-	} else if (oresult == STATE_WARNING) {
-		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"),
-				  ntp_res.offset);
-	} else if (oresult == STATE_CRITICAL) {
-		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"),
-				  ntp_res.offset);
-	} else {
-		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), ntp_res.offset);
-	}
-	xasprintf(&perfdata_line, "%s", perfd_offset(ntp_res.offset, config.offset_thresholds));
+	{
+		mp_subcheck sc_offset = mp_subcheck_init();
+		sc_offset = mp_set_subcheck_default_state(sc_offset, STATE_OK);
+		xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
 
-	if (config.do_jitter) {
-		if (jresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, ntp_res.jitter);
-		} else if (jresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, jitter=%f (CRITICAL)", result_line, ntp_res.jitter);
-		} else {
-			xasprintf(&result_line, "%s, jitter=%f", result_line, ntp_res.jitter);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line,
-				  perfd_jitter(ntp_res.jitter, config.do_jitter, config.jitter_thresholds));
-	}
+		mp_perfdata pd_offset = perfdata_init();
+		pd_offset.value = mp_create_pd_value(ntp_res.offset);
+		pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
 
-	if (config.do_stratum) {
-		if (sresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, stratum=%li (WARNING)", result_line, ntp_res.stratum);
-		} else if (sresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, stratum=%li (CRITICAL)", result_line, ntp_res.stratum);
-		} else {
-			xasprintf(&result_line, "%s, stratum=%li", result_line, ntp_res.stratum);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line,
-				  perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
+		sc_offset = mp_set_subcheck_state(sc_offset, ntp_res.offset_result);
 	}
-
-	if (config.do_truechimers) {
-		if (tresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line,
-					  ntp_res.num_truechimers);
-		} else if (tresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line,
-					  ntp_res.num_truechimers);
-		} else {
-			xasprintf(&result_line, "%s, truechimers=%i", result_line, ntp_res.num_truechimers);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line,
-				  perfd_truechimers(ntp_res.num_truechimers, config.do_truechimers,
-									config.truechimer_thresholds));
-	}
-
-	printf("%s|%s\n", result_line, perfdata_line);
 
 	if (config.server_address != NULL) {
 		free(config.server_address);
 	}
 
-	exit(result);
+	mp_exit(overall);
 }
 
 void print_help(void) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "perfdata.h"
 #include "thresholds.h"
 #include <stddef.h>
 
@@ -16,26 +17,18 @@ typedef struct {
 
 	// truechimer stuff
 	bool do_truechimers;
-	char *twarn;
-	char *tcrit;
-	thresholds *truechimer_thresholds;
+	mp_thresholds truechimer_thresholds;
 
-	char *owarn;
-	char *ocrit;
-	thresholds *offset_thresholds;
+	// offset thresholds
+	mp_thresholds offset_thresholds;
 
 	// stratum stuff
 	bool do_stratum;
-	char *swarn;
-	char *scrit;
-	thresholds *stratum_thresholds;
+	mp_thresholds stratum_thresholds;
 
 	// jitter stuff
 	bool do_jitter;
-	char *jwarn;
-	char *jcrit;
-	thresholds *jitter_thresholds;
-
+	mp_thresholds jitter_thresholds;
 } check_ntp_peer_config;
 
 check_ntp_peer_config check_ntp_peer_config_init() {
@@ -45,23 +38,38 @@ check_ntp_peer_config check_ntp_peer_config_init() {
 
 		.quiet = false,
 		.do_truechimers = false,
-		.twarn = "0:",
-		.tcrit = "0:",
-		.truechimer_thresholds = NULL,
+		.truechimer_thresholds = mp_thresholds_init(),
 
-		.owarn = "60",
-		.ocrit = "120",
-		.offset_thresholds = NULL,
+		.offset_thresholds = mp_thresholds_init(),
 
 		.do_stratum = false,
-		.swarn = "-1:16",
-		.scrit = "-1:16",
-		.stratum_thresholds = NULL,
+		.stratum_thresholds = mp_thresholds_init(),
 
 		.do_jitter = false,
-		.jwarn = "-1:5000",
-		.jcrit = "-1:10000",
-		.jitter_thresholds = NULL,
+		.jitter_thresholds = mp_thresholds_init(),
 	};
+
+	mp_range stratum_default = mp_range_init();
+	stratum_default = mp_range_set_start(stratum_default, mp_create_pd_value(-1));
+	stratum_default = mp_range_set_end(stratum_default, mp_create_pd_value(16));
+	tmp.stratum_thresholds = mp_thresholds_set_warn(tmp.stratum_thresholds, stratum_default);
+	tmp.stratum_thresholds = mp_thresholds_set_crit(tmp.stratum_thresholds, stratum_default);
+
+	mp_range jitter_w_default = mp_range_init();
+	jitter_w_default = mp_range_set_start(jitter_w_default, mp_create_pd_value(-1));
+	jitter_w_default = mp_range_set_end(jitter_w_default, mp_create_pd_value(5000));
+	tmp.jitter_thresholds = mp_thresholds_set_warn(tmp.jitter_thresholds, jitter_w_default);
+
+	mp_range jitter_c_default = mp_range_init();
+	jitter_c_default = mp_range_set_start(jitter_c_default, mp_create_pd_value(-1));
+	jitter_c_default = mp_range_set_end(jitter_c_default, mp_create_pd_value(10000));
+	tmp.jitter_thresholds = mp_thresholds_set_crit(tmp.jitter_thresholds, jitter_c_default);
+
+	mp_range offset_w_default = mp_range_init();
+	offset_w_default = mp_range_set_start(offset_w_default, mp_create_pd_value(60));
+	tmp.offset_thresholds = mp_thresholds_set_warn(tmp.offset_thresholds, offset_w_default);
+	mp_range offset_c_default = mp_range_init();
+	offset_c_default = mp_range_set_start(offset_c_default, mp_create_pd_value(120));
+	tmp.offset_thresholds = mp_thresholds_set_crit(tmp.offset_thresholds, offset_c_default);
 	return tmp;
 }
