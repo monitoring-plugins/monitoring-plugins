@@ -29,19 +29,18 @@
  *****************************************************************************/
 
 #include "states.h"
-const char *progname = "check_pgsql";
-const char *copyright = "1999-2024";
-const char *email = "devel@monitoring-plugins.org";
-
 #include "common.h"
 #include "utils.h"
 #include "utils_cmd.h"
 #include "check_pgsql.d/config.h"
 #include "thresholds.h"
-
 #include "netutils.h"
 #include <libpq-fe.h>
 #include <pg_config_manual.h>
+
+const char *progname = "check_pgsql";
+const char *copyright = "1999-2024";
+const char *email = "devel@monitoring-plugins.org";
 
 #define DEFAULT_HOST "127.0.0.1"
 
