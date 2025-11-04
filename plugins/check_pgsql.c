@@ -71,8 +71,6 @@ void print_usage(void);
 
 static int verbose = 0;
 
-#define OPTID_QUERYNAME -1000
-
 /******************************************************************************
 
 The (pseudo?)literate programming XML is contained within \@\@\- <XML> \-\@\@
@@ -244,6 +242,11 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
+
+	enum {
+		OPTID_QUERYNAME = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
 									   {"timeout", required_argument, 0, 't'},
