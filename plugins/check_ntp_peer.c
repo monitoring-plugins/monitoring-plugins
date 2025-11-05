@@ -689,6 +689,7 @@ int main(int argc, char *argv[]) {
 		/* if there's no sync peer (this overrides ntp_request output): */
 		sc_offset =
 			mp_set_subcheck_state(sc_offset, (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL));
+		xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
 	} else {
 		/* Be quiet if there's no candidates either */
 		mp_state_enum tmp = STATE_OK;
@@ -696,9 +697,14 @@ int main(int argc, char *argv[]) {
 			tmp = STATE_UNKNOWN;
 		}
 
+		xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
+
 		mp_perfdata pd_offset = perfdata_init();
 		pd_offset.value = mp_create_pd_value(fabs(ntp_res.offset));
 		pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+		pd_offset.label = "offset";
+		pd_offset.uom = "s";
+		mp_add_perfdata_to_subcheck(&sc_offset, pd_offset);
 
 		tmp = max_state_alt(tmp, mp_get_pd_status(pd_offset));
 		sc_offset = mp_set_subcheck_state(sc_offset, tmp);
@@ -708,12 +714,14 @@ int main(int argc, char *argv[]) {
 
 	// truechimers
 	if (config.do_truechimers) {
-		mp_subcheck sc_truechimers;
+		mp_subcheck sc_truechimers = mp_subcheck_init();
 		xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
 
 		mp_perfdata pd_truechimers = perfdata_init();
 		pd_truechimers.value = mp_create_pd_value(ntp_res.num_truechimers);
-		mp_pd_set_thresholds(pd_truechimers, config.truechimer_thresholds);
+		pd_truechimers.label = "truechimers";
+		pd_truechimers = mp_pd_set_thresholds(pd_truechimers, config.truechimer_thresholds);
+
 		mp_add_perfdata_to_subcheck(&sc_truechimers, pd_truechimers);
 
 		sc_truechimers = mp_set_subcheck_state(sc_truechimers, mp_get_pd_status(pd_truechimers));
@@ -728,6 +736,8 @@ int main(int argc, char *argv[]) {
 		mp_perfdata pd_stratum = perfdata_init();
 		pd_stratum.value = mp_create_pd_value(ntp_res.stratum);
 		pd_stratum = mp_pd_set_thresholds(pd_stratum, config.stratum_thresholds);
+		pd_stratum.label = "stratum";
+
 		mp_add_perfdata_to_subcheck(&sc_stratum, pd_stratum);
 
 		sc_stratum = mp_set_subcheck_state(sc_stratum, mp_get_pd_status(pd_stratum));
@@ -742,6 +752,8 @@ int main(int argc, char *argv[]) {
 		mp_perfdata pd_jitter = perfdata_init();
 		pd_jitter.value = mp_create_pd_value(ntp_res.jitter);
 		pd_jitter = mp_pd_set_thresholds(pd_jitter, config.jitter_thresholds);
+		pd_jitter.label = "jitter";
+
 		mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter);
 
 		sc_jitter = mp_set_subcheck_state(sc_jitter, mp_get_pd_status(pd_jitter));

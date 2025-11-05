@@ -66,10 +66,11 @@ check_ntp_peer_config check_ntp_peer_config_init() {
 	tmp.jitter_thresholds = mp_thresholds_set_crit(tmp.jitter_thresholds, jitter_c_default);
 
 	mp_range offset_w_default = mp_range_init();
-	offset_w_default = mp_range_set_start(offset_w_default, mp_create_pd_value(60));
+	offset_w_default = mp_range_set_end(offset_w_default, mp_create_pd_value(60));
 	tmp.offset_thresholds = mp_thresholds_set_warn(tmp.offset_thresholds, offset_w_default);
+
 	mp_range offset_c_default = mp_range_init();
-	offset_c_default = mp_range_set_start(offset_c_default, mp_create_pd_value(120));
+	offset_c_default = mp_range_set_end(offset_c_default, mp_create_pd_value(120));
 	tmp.offset_thresholds = mp_thresholds_set_crit(tmp.offset_thresholds, offset_c_default);
 	return tmp;
 }
