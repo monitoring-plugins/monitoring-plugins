@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "perfdata.h"
 #include "thresholds.h"
 #include <stddef.h>
@@ -29,6 +30,9 @@ typedef struct {
 	// jitter stuff
 	bool do_jitter;
 	mp_thresholds jitter_thresholds;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_ntp_peer_config;
 
 check_ntp_peer_config check_ntp_peer_config_init() {
@@ -47,6 +51,8 @@ check_ntp_peer_config check_ntp_peer_config_init() {
 
 		.do_jitter = false,
 		.jitter_thresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 
 	mp_range stratum_default = mp_range_init();

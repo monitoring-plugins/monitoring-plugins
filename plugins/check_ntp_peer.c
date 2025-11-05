@@ -478,16 +478,30 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 }
 
 check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"version", no_argument, 0, 'V'},       {"help", no_argument, 0, 'h'},
-		{"verbose", no_argument, 0, 'v'},       {"use-ipv4", no_argument, 0, '4'},
-		{"use-ipv6", no_argument, 0, '6'},      {"quiet", no_argument, 0, 'q'},
-		{"warning", required_argument, 0, 'w'}, {"critical", required_argument, 0, 'c'},
-		{"swarn", required_argument, 0, 'W'},   {"scrit", required_argument, 0, 'C'},
-		{"jwarn", required_argument, 0, 'j'},   {"jcrit", required_argument, 0, 'k'},
-		{"twarn", required_argument, 0, 'm'},   {"tcrit", required_argument, 0, 'n'},
-		{"timeout", required_argument, 0, 't'}, {"hostname", required_argument, 0, 'H'},
-		{"port", required_argument, 0, 'p'},    {0, 0, 0, 0}};
+
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"use-ipv4", no_argument, 0, '4'},
+									   {"use-ipv6", no_argument, 0, '6'},
+									   {"quiet", no_argument, 0, 'q'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"swarn", required_argument, 0, 'W'},
+									   {"scrit", required_argument, 0, 'C'},
+									   {"jwarn", required_argument, 0, 'j'},
+									   {"jcrit", required_argument, 0, 'k'},
+									   {"twarn", required_argument, 0, 'm'},
+									   {"tcrit", required_argument, 0, 'n'},
+									   {"timeout", required_argument, 0, 't'},
+									   {"hostname", required_argument, 0, 'H'},
+									   {"port", required_argument, 0, 'p'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
 		usage("\n");
@@ -507,6 +521,17 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		}
 
 		switch (option_char) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -673,6 +698,10 @@ int main(int argc, char *argv[]) {
 
 	const check_ntp_peer_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
@@ -825,6 +854,7 @@ void print_help(void) {
 	printf("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks an NTP server independent of any commandline"));
