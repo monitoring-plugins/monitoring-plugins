@@ -34,18 +34,20 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_ntp_time";
-const char *copyright = "2006-2024";
-const char *email = "devel@monitoring-plugins.org";
-
+#include "output.h"
 #include "common.h"
 #include "netutils.h"
+#include "perfdata.h"
 #include "utils.h"
 #include "states.h"
 #include "thresholds.h"
 #include "check_ntp_time.d/config.h"
 
 static int verbose = 0;
+
+const char *progname = "check_ntp_time";
+const char *copyright = "2006-2024";
+const char *email = "devel@monitoring-plugins.org";
 
 typedef struct {
 	int errorcode;
@@ -60,9 +62,6 @@ void print_usage(void);
 #ifndef AVG_NUM
 #	define AVG_NUM 4
 #endif
-
-/* max size of control message data */
-#define MAX_CM_SIZE 468
 
 /* this structure holds everything in an ntp request/response as per rfc1305 */
 typedef struct {
@@ -169,7 +168,9 @@ typedef struct {
 						   : 0)
 
 /* convert a struct timeval to a double */
-#define TVasDOUBLE(x) (double)(x.tv_sec + (0.000001 * x.tv_usec))
+static double TVasDOUBLE(struct timeval time) {
+	return ((double)time.tv_sec + (0.000001 * (double)time.tv_usec));
+}
 
 /* convert an ntp 64-bit fp number to a struct timeval */
 #define NTP64toTV(n, t)                                                                            \
@@ -262,8 +263,8 @@ void setup_request(ntp_message *message) {
 /* select the "best" server from a list of servers, and return its index.
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
-int best_offset_server(const ntp_server_results *slist, int nservers) {
-	int best_server = -1;
+static int best_offset_server(const ntp_server_results *slist, int nservers) {
+	int best_server_index = -1;
 
 	/* for each server */
 	for (int cserver = 0; cserver < nservers; cserver++) {
@@ -286,33 +287,33 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
 		}
 
 		/* If we don't have a server yet, use the first one */
-		if (best_server == -1) {
-			best_server = cserver;
-			DBG(printf("using peer %d as our first candidate\n", best_server));
+		if (best_server_index == -1) {
+			best_server_index = cserver;
+			DBG(printf("using peer %d as our first candidate\n", best_server_index));
 			continue;
 		}
 
 		/* compare the server to the best one we've seen so far */
 		/* does it have an equal or better stratum? */
-		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server));
-		if (slist[cserver].stratum <= slist[best_server].stratum) {
-			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server));
+		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server_index));
+		if (slist[cserver].stratum <= slist[best_server_index].stratum) {
+			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server_index));
 			/* does it have an equal or better dispersion? */
-			if (slist[cserver].rtdisp <= slist[best_server].rtdisp) {
-				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server));
+			if (slist[cserver].rtdisp <= slist[best_server_index].rtdisp) {
+				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server_index));
 				/* does it have a better rtdelay? */
-				if (slist[cserver].rtdelay < slist[best_server].rtdelay) {
-					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server));
-					best_server = cserver;
-					DBG(printf("peer %d is now our best candidate\n", best_server));
+				if (slist[cserver].rtdelay < slist[best_server_index].rtdelay) {
+					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server_index));
+					best_server_index = cserver;
+					DBG(printf("peer %d is now our best candidate\n", best_server_index));
 				}
 			}
 		}
 	}
 
-	if (best_server >= 0) {
-		DBG(printf("best server selected: peer %d\n", best_server));
-		return best_server;
+	if (best_server_index >= 0) {
+		DBG(printf("best server selected: peer %d\n", best_server_index));
+		return best_server_index;
 	}
 	DBG(printf("no peers meeting synchronization criteria :(\n"));
 	return -1;
@@ -323,7 +324,11 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
  *   we don't waste time sitting around waiting for single packets.
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host, const char *port, mp_state_enum *status, int time_offset) {
+typedef struct {
+	mp_state_enum offset_result;
+	double offset;
+} offset_request_wrapper;
+static offset_request_wrapper offset_request(const char *host, const char *port, int time_offset) {
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -462,12 +467,18 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 		die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 	}
 
+	offset_request_wrapper result = {
+		.offset = 0,
+		.offset_result = STATE_UNKNOWN,
+	};
+
 	/* now, pick the best server from the list */
 	double avg_offset = 0.;
 	int best_index = best_offset_server(servers, num_hosts);
 	if (best_index < 0) {
-		*status = STATE_UNKNOWN;
+		result.offset_result = STATE_UNKNOWN;
 	} else {
+		result.offset_result = STATE_OK;
 		/* finally, calculate the average offset */
 		for (int i = 0; i < servers[best_index].num_responses; i++) {
 			avg_offset += servers[best_index].offset[i];
@@ -488,17 +499,19 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 	if (verbose) {
 		printf("overall average offset: %.10g\n", avg_offset);
 	}
-	return avg_offset;
+
+	result.offset = avg_offset;
+	return result;
 }
 
-check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
+static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
 									   {"use-ipv4", no_argument, 0, '4'},
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {"quiet", no_argument, 0, 'q'},
-									   {"time-offset", optional_argument, 0, 'o'},
+									   {"time-offset", required_argument, 0, 'o'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"timeout", required_argument, 0, 't'},
@@ -514,9 +527,6 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		.errorcode = OK,
 		.config = check_ntp_time_config_init(),
 	};
-
-	char *owarn = "60";
-	char *ocrit = "120";
 
 	while (true) {
 		int option = 0;
@@ -540,12 +550,24 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		case 'q':
 			result.config.quiet = true;
 			break;
-		case 'w':
-			owarn = optarg;
-			break;
-		case 'c':
-			ocrit = optarg;
-			break;
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse crit threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+		} break;
 		case 'H':
 			if (!is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -582,14 +604,7 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	set_thresholds(&result.config.offset_thresholds, owarn, ocrit);
-
 	return result;
-}
-
-char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
-					 offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 int main(int argc, char *argv[]) {
@@ -614,46 +629,37 @@ int main(int argc, char *argv[]) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	mp_state_enum offset_result = STATE_OK;
-	mp_state_enum result = STATE_OK;
-	double offset =
-		offset_request(config.server_address, config.port, &offset_result, config.time_offset);
-	if (offset_result == STATE_UNKNOWN) {
-		result = ((!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
-	} else {
-		result = get_status(fabs(offset), config.offset_thresholds);
+	mp_check overall = mp_check_init();
+
+	mp_subcheck sc_offset = mp_subcheck_init();
+	offset_request_wrapper offset_result =
+		offset_request(config.server_address, config.port, config.time_offset);
+
+	if (offset_result.offset_result == STATE_UNKNOWN) {
+		sc_offset =
+			mp_set_subcheck_state(sc_offset, (!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
+		xasprintf(&sc_offset.output, "Offset unknown");
+		mp_add_subcheck_to_check(&overall, sc_offset);
+		mp_exit(overall);
 	}
 
-	char *result_line;
-	switch (result) {
-	case STATE_CRITICAL:
-		xasprintf(&result_line, _("NTP CRITICAL:"));
-		break;
-	case STATE_WARNING:
-		xasprintf(&result_line, _("NTP WARNING:"));
-		break;
-	case STATE_OK:
-		xasprintf(&result_line, _("NTP OK:"));
-		break;
-	default:
-		xasprintf(&result_line, _("NTP UNKNOWN:"));
-		break;
-	}
+	xasprintf(&sc_offset.output, "Offset: %.6fs", offset_result.offset);
 
-	char *perfdata_line;
-	if (offset_result == STATE_UNKNOWN) {
-		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		xasprintf(&perfdata_line, "");
-	} else {
-		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		xasprintf(&perfdata_line, "%s", perfd_offset(offset, config.offset_thresholds));
-	}
-	printf("%s|%s\n", result_line, perfdata_line);
+	mp_perfdata pd_offset = perfdata_init();
+	pd_offset = mp_set_pd_value(pd_offset, fabs(offset_result.offset));
+	pd_offset.label = "offset";
+	pd_offset.uom = "s";
+	pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+
+	sc_offset = mp_set_subcheck_state(sc_offset, mp_get_pd_status(pd_offset));
+
+	mp_add_perfdata_to_subcheck(&sc_offset, pd_offset);
+	mp_add_subcheck_to_check(&overall, sc_offset);
 
 	if (config.server_address != NULL) {
 		free(config.server_address);
 	}
-	exit(result);
+	mp_exit(overall);
 }
 
 void print_help(void) {
@@ -677,7 +683,7 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf(" %s\n", "-o, --time_offset=INTEGER");
+	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
