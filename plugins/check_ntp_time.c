@@ -511,7 +511,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {"use-ipv4", no_argument, 0, '4'},
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {"quiet", no_argument, 0, 'q'},
-									   {"time-offset", optional_argument, 0, 'o'},
+									   {"time-offset", required_argument, 0, 'o'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"timeout", required_argument, 0, 't'},
@@ -682,7 +682,7 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf(" %s\n", "-o, --time_offset=INTEGER");
+	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
