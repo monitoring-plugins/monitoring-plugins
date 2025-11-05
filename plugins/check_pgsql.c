@@ -674,20 +674,5 @@ static do_query_wrapper do_query(PGconn *conn, char *query) {
 
 	result.numerical_result = value;
 
-	// if (pgqueryname) {
-	// 	printf(_("%s returned %f"), pgqueryname, value);
-	// } else {
-	// 	printf(_("'%s' returned %f"), query, value);
-	// }
-
-	// printf("|query=%f;%s;%s;;\n", value, query_warning ? query_warning : "",
-	// 	   query_critical ? query_critical : "");
-	// if (PQnfields(res) > 1) {
-	// 	char *extra_info = PQgetvalue(res, 0, 1);
-	// 	if (extra_info != NULL) {
-	// 		printf("Extra Info: %s\n", extra_info);
-	// 	}
-	// }
-
 	return result;
 }
