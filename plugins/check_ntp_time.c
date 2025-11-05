@@ -478,6 +478,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 	if (best_index < 0) {
 		result.offset_result = STATE_UNKNOWN;
 	} else {
+		result.offset_result = STATE_OK;
 		/* finally, calculate the average offset */
 		for (int i = 0; i < servers[best_index].num_responses; i++) {
 			avg_offset += servers[best_index].offset[i];
