@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "perfdata.h"
 #include "thresholds.h"
 #include <stddef.h>
@@ -27,6 +28,9 @@ typedef struct {
 
 	mp_thresholds time_thresholds;
 	mp_thresholds qthresholds;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_pgsql_config;
 
 /* begin, by setting the parameters for a backend connection if the
@@ -51,6 +55,8 @@ check_pgsql_config check_pgsql_config_init() {
 
 		.time_thresholds = mp_thresholds_init(),
 		.qthresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 
 	mp_range tmp_range = mp_range_init();

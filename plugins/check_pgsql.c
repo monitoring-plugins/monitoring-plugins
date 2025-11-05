@@ -150,8 +150,8 @@ int main(int argc, char **argv) {
 
 	const check_pgsql_config config = tmp_config.config;
 
-	if (verbose > 2) {
-		printf("Arguments initialized\n");
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
 	}
 
 	/* Set signal handling and alarm */
@@ -335,6 +335,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 
 	enum {
 		OPTID_QUERYNAME = CHAR_MAX + 1,
+		output_format_index,
 	};
 
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
@@ -354,6 +355,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 									   {"query_critical", required_argument, 0, 'C'},
 									   {"query_warning", required_argument, 0, 'W'},
 									   {"verbose", no_argument, 0, 'v'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_pgsql_config_wrapper result = {
@@ -371,6 +373,17 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		}
 
 		switch (option_char) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case '?': /* usage */
 			usage5();
 		case 'h': /* help */
@@ -557,6 +570,7 @@ void print_help(void) {
 	printf("    %s\n", _("SQL query value to result in critical status (double)"));
 
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf(" %s\n", _("All parameters are optional."));
