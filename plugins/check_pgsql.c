@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
 		switch (query_result.error_code) {
 		case QUERY_OK: {
-			// Query was succesful and there is a numerical result
+			// Query was successful and there is a numerical result
 			sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
 			xasprintf(&sc_query.output, "%s succeeded", sc_query.output);
 
@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
 			mp_add_perfdata_to_subcheck(&sc_query_compare, pd_query);
 
 			if (query_compare_state == STATE_OK) {
-				xasprintf(&sc_query_compare.output, "query result '%f' is withing thresholds",
+				xasprintf(&sc_query_compare.output, "query result '%f' is within thresholds",
 						  query_result.numerical_result);
 			} else {
 				xasprintf(&sc_query_compare.output, "query result '%f' is violating thresholds",
