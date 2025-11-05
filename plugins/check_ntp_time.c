@@ -643,11 +643,12 @@ int main(int argc, char *argv[]) {
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_offset.output, "Offset: %.10g s", offset_result.offset);
+	xasprintf(&sc_offset.output, "Offset: %.6fs", offset_result.offset);
 
 	mp_perfdata pd_offset = perfdata_init();
 	pd_offset = mp_set_pd_value(pd_offset, fabs(offset_result.offset));
 	pd_offset.label = "offset";
+	pd_offset.uom = "s";
 	pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
 
 	sc_offset = mp_set_subcheck_state(sc_offset, mp_get_pd_status(pd_offset));
