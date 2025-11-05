@@ -505,6 +505,11 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 }
 
 static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
+
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
@@ -517,6 +522,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {"timeout", required_argument, 0, 't'},
 									   {"hostname", required_argument, 0, 'H'},
 									   {"port", required_argument, 0, 'p'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -536,6 +542,17 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		}
 
 		switch (option_char) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -623,6 +640,10 @@ int main(int argc, char *argv[]) {
 
 	const check_ntp_time_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
@@ -687,6 +708,7 @@ void print_help(void) {
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks the clock offset between the local host and a"));
