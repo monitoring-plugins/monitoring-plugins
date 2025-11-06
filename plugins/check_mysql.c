@@ -401,10 +401,13 @@ int main(int argc, char **argv) {
 	return STATE_OK;
 }
 
-#define CHECK_REPLICA_OPT CHAR_MAX + 1
-
 /* process command-line arguments */
 check_mysql_config_wrapper process_arguments(int argc, char **argv) {
+
+	enum {
+		CHECK_REPLICA_OPT = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"socket", required_argument, 0, 's'},
 									   {"database", required_argument, 0, 'd'},
