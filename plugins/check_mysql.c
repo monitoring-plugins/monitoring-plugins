@@ -30,13 +30,11 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_mysql";
-const char *copyright = "1999-2024";
-const char *email = "devel@monitoring-plugins.org";
-
-#define REPLICA_RESULTSIZE 96
-
 #include "common.h"
+#include "output.h"
+#include "perfdata.h"
+#include "states.h"
+#include "thresholds.h"
 #include "utils.h"
 #include "utils_base.h"
 #include "netutils.h"
@@ -46,7 +44,13 @@ const char *email = "devel@monitoring-plugins.org";
 #include <mysqld_error.h>
 #include <errmsg.h>
 
+const char *progname = "check_mysql";
+const char *copyright = "1999-2024";
+const char *email = "devel@monitoring-plugins.org";
+
 static int verbose = 0;
+
+#define REPLICA_RESULTSIZE 96
 
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
@@ -110,7 +114,11 @@ int main(int argc, char **argv) {
 		mysql_ssl_set(&mysql, config.key, config.cert, config.ca_cert, config.ca_dir,
 					  config.ciphers);
 	}
-	/* establish a connection to the server and error checking */
+
+	mp_check overall = mp_check_init();
+
+	mp_subcheck sc_connection = mp_subcheck_init();
+	/* establish a connection to the server and check for errors */
 	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
 							config.db_port, config.db_socket, 0)) {
 		/* Depending on internally-selected auth plugin MySQL might return */
@@ -118,78 +126,115 @@ int main(int argc, char **argv) {
 		/* Semantically these errors are the same. */
 		if (config.ignore_auth && (mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR ||
 								   mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
-			printf("MySQL OK - Version: %s (protocol %d)\n", mysql_get_server_info(&mysql),
-				   mysql_get_proto_info(&mysql));
+			xasprintf(&sc_connection.output, "Version: %s (protocol %d)",
+					  mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
+			sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
+
 			mysql_close(&mysql);
-			return STATE_OK;
+		} else {
+			if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_WARNING);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_WARNING);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			} else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY) {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_WARNING);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			} else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR) {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_WARNING);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			} else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR) {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_WARNING);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			} else {
+				sc_connection = mp_set_subcheck_state(sc_connection, STATE_CRITICAL);
+				xasprintf(&sc_connection.output, "%s", mysql_error(&mysql));
+			}
 		}
 
-		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
-			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
-			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY) {
-			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR) {
-			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR) {
-			die(STATE_WARNING, "%s\n", mysql_error(&mysql));
-		} else {
-			die(STATE_CRITICAL, "%s\n", mysql_error(&mysql));
-		}
+		mp_add_subcheck_to_check(&overall, sc_connection);
+		mp_exit(overall);
+	} else {
+		// successful connection
+		sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
+		xasprintf(&sc_connection.output, "Version: %s (protocol %d)", mysql_get_server_info(&mysql),
+				  mysql_get_proto_info(&mysql));
+		mp_add_subcheck_to_check(&overall, sc_connection);
 	}
 
 	/* get the server stats */
-	char *result = strdup(mysql_stat(&mysql));
+	char *mysql_stats = strdup(mysql_stat(&mysql));
+
+	mp_subcheck sc_stats = mp_subcheck_init();
+	sc_stats = mp_set_subcheck_default_state(sc_stats, STATE_OK);
 
 	/* error checking once more */
-	if (mysql_error(&mysql)) {
-		if (mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) {
-			die(STATE_CRITICAL, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_SERVER_LOST) {
-			die(STATE_CRITICAL, "%s\n", mysql_error(&mysql));
-		} else if (mysql_errno(&mysql) == CR_UNKNOWN_ERROR) {
-			die(STATE_CRITICAL, "%s\n", mysql_error(&mysql));
+	if (mysql_errno(&mysql) != 0) {
+		if ((mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) ||
+			(mysql_errno(&mysql) == CR_SERVER_LOST) || (mysql_errno(&mysql) == CR_UNKNOWN_ERROR)) {
+			sc_stats = mp_set_subcheck_state(sc_stats, STATE_CRITICAL);
+			xasprintf(&sc_stats.output, "Retrieving stats failed: %s", mysql_error(&mysql));
+		} else {
+			// not sure which error modes occur here, but mysql_error indicates an error
+			sc_stats = mp_set_subcheck_state(sc_stats, STATE_WARNING);
+			xasprintf(&sc_stats.output, "retrieving stats caused an error: %s",
+					  mysql_error(&mysql));
 		}
+
+		mp_add_subcheck_to_check(&overall, sc_stats);
+		mp_exit(overall);
+	} else {
+		xasprintf(&sc_stats.output, "retrieved stats: %s", mysql_stats);
+		sc_stats = mp_set_subcheck_state(sc_stats, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_stats);
 	}
 
-	char *perf = strdup("");
-	char *error = NULL;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
+	mp_subcheck sc_query = mp_subcheck_init();
 	/* try to fetch some perf data */
 	if (mysql_query(&mysql, "show global status") == 0) {
 		if ((res = mysql_store_result(&mysql)) == NULL) {
-			error = strdup(mysql_error(&mysql));
+			xasprintf(&sc_connection.output, "query failed - status store_result error: %s",
+					  mysql_error(&mysql));
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("status store_result error: %s\n"), error);
+
+			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_query);
+			mp_exit(overall);
 		}
 
 		while ((row = mysql_fetch_row(res)) != NULL) {
 			for (int i = 0; i < LENGTH_METRIC_UNIT; i++) {
 				if (strcmp(row[0], metric_unit[i]) == 0) {
-					xasprintf(&perf, "%s%s ", perf,
-							  perfdata(metric_unit[i], atol(row[1]), "", false, 0, false, 0, false,
-									   0, false, 0));
+					mp_perfdata pd_mysql_stat = perfdata_init();
+					pd_mysql_stat.label = (char *)metric_unit[i];
+					pd_mysql_stat.value = mp_create_pd_value(atol(row[1]));
+					mp_add_perfdata_to_subcheck(&sc_stats, pd_mysql_stat);
 					continue;
 				}
 			}
+
 			for (int i = 0; i < LENGTH_METRIC_COUNTER; i++) {
 				if (strcmp(row[0], metric_counter[i]) == 0) {
-					xasprintf(&perf, "%s%s ", perf,
-							  perfdata(metric_counter[i], atol(row[1]), "c", false, 0, false, 0,
-									   false, 0, false, 0));
+					mp_perfdata pd_mysql_stat = perfdata_init();
+					pd_mysql_stat.label = (char *)metric_counter[i];
+					pd_mysql_stat.value = mp_create_pd_value(atol(row[1]));
+					pd_mysql_stat.uom = "c";
+					mp_add_perfdata_to_subcheck(&sc_stats, pd_mysql_stat);
 					continue;
 				}
 			}
 		}
-		/* remove trailing space */
-		if (strlen(perf) > 0) {
-			perf[strlen(perf) - 1] = '\0';
-		}
+	} else {
+		// Query failed!
+		xasprintf(&sc_connection.output, "query failed");
+		sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_query);
+		mp_exit(overall);
 	}
 
-	char replica_result[REPLICA_RESULTSIZE] = {0};
 	if (config.check_replica) {
 		// Detect which version we are, on older version
 		// "show slave status" should work, on newer ones
@@ -203,8 +248,10 @@ int main(int argc, char **argv) {
 		unsigned long major_version = server_verion_int / 10000;
 		unsigned long minor_version = (server_verion_int % 10000) / 100;
 		unsigned long patch_version = (server_verion_int % 100);
+
 		if (verbose) {
-			printf("Found MariaDB: %s, main version: %lu, minor version: %lu, patch version: %lu\n",
+			printf("Found MariaDB/MySQL: %s, main version: %lu, minor version: %lu, patch version: "
+				   "%lu\n",
 				   server_version, major_version, minor_version, patch_version);
 		}
 
@@ -235,43 +282,60 @@ int main(int argc, char **argv) {
 			replica_query = "show replica status";
 		}
 
+		mp_subcheck sc_replica = mp_subcheck_init();
+
 		/* check the replica status */
 		if (mysql_query(&mysql, replica_query) != 0) {
-			error = strdup(mysql_error(&mysql));
+			xasprintf(&sc_replica.output, "replica query error: %s", mysql_error(&mysql));
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("replica query error: %s\n"), error);
+
+			sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_replica);
+			mp_exit(overall);
 		}
 
 		/* store the result */
 		if ((res = mysql_store_result(&mysql)) == NULL) {
-			error = strdup(mysql_error(&mysql));
+			xasprintf(&sc_replica.output, "replica store_result error: %s", mysql_error(&mysql));
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("replica store_result error: %s\n"), error);
+
+			sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_replica);
+			mp_exit(overall);
 		}
 
 		/* Check there is some data */
 		if (mysql_num_rows(res) == 0) {
 			mysql_close(&mysql);
-			die(STATE_WARNING, "%s\n", _("No replicas defined"));
+
+			xasprintf(&sc_replica.output, "no replicas defined");
+			sc_replica = mp_set_subcheck_state(sc_replica, STATE_WARNING);
+			mp_add_subcheck_to_check(&overall, sc_replica);
+			mp_exit(overall);
 		}
 
 		/* fetch the first row */
 		if ((row = mysql_fetch_row(res)) == NULL) {
-			error = strdup(mysql_error(&mysql));
+			xasprintf(&sc_replica.output, "replica fetch row error: %s", mysql_error(&mysql));
 			mysql_free_result(res);
 			mysql_close(&mysql);
-			die(STATE_CRITICAL, _("replica fetch row error: %s\n"), error);
+
+			sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_replica);
+			mp_exit(overall);
 		}
 
 		if (mysql_field_count(&mysql) == 12) {
 			/* mysql 3.23.x */
-			snprintf(replica_result, REPLICA_RESULTSIZE, _("Replica running: %s"), row[6]);
+			xasprintf(&sc_replica.output, "Replica running: %s", row[6]);
 			if (strcmp(row[6], "Yes") != 0) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
-				die(STATE_CRITICAL, "%s\n", replica_result);
-			}
 
+				sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+				mp_add_subcheck_to_check(&overall, sc_replica);
+				mp_exit(overall);
+			}
 		} else {
 			/* mysql 4.x.x and mysql 5.x.x */
 			int replica_io_field = -1;
@@ -315,14 +379,18 @@ int main(int argc, char **argv) {
 			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0)) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
-				die(STATE_CRITICAL, "Replica status unavailable\n");
+
+				xasprintf(&sc_replica.output, "Replica status unavailable");
+				sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+				mp_add_subcheck_to_check(&overall, sc_replica);
+				mp_exit(overall);
 			}
 
 			/* Save replica status in replica_result */
-			snprintf(replica_result, REPLICA_RESULTSIZE,
-					 "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s",
-					 row[replica_io_field], row[replica_sql_field],
-					 seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
+			xasprintf(&sc_replica.output,
+					  "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s",
+					  row[replica_io_field], row[replica_sql_field],
+					  seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
 
 			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no
 			 * mysqldump threads running */
@@ -345,10 +413,14 @@ int main(int argc, char **argv) {
 					}
 					mysql_close(&mysql);
 				}
+
 				if (mysqldump_threads == 0) {
-					die(STATE_CRITICAL, "%s\n", replica_result);
+					sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
+					mp_add_subcheck_to_check(&overall, sc_replica);
+					mp_exit(overall);
 				} else {
-					strncat(replica_result, " Mysqldump: in progress", REPLICA_RESULTSIZE - 1);
+					xasprintf(&sc_replica.output, "%s %s", sc_replica.output,
+							  " Mysqldump: in progress");
 				}
 			}
 
@@ -364,22 +436,22 @@ int main(int argc, char **argv) {
 			/* Check Seconds Behind against threshold */
 			if ((seconds_behind_field != -1) && (row[seconds_behind_field] != NULL &&
 												 strcmp(row[seconds_behind_field], "NULL") != 0)) {
-				double value = atof(row[seconds_behind_field]);
-				int status;
+				mp_perfdata pd_seconds_behind = perfdata_init();
+				pd_seconds_behind.label = "seconds behind master";
+				pd_seconds_behind.value = mp_create_pd_value(atof(row[seconds_behind_field]));
+				pd_seconds_behind =
+					mp_pd_set_thresholds(pd_seconds_behind, config.replica_thresholds);
+				pd_seconds_behind.uom = "s";
+				mp_add_perfdata_to_subcheck(&sc_replica, pd_seconds_behind);
 
-				status = get_status(value, config.my_threshold);
+				mp_state_enum status = mp_get_pd_status(pd_seconds_behind);
 
-				xasprintf(&perf, "%s %s", perf,
-						  fperfdata("seconds behind master", value, "s", true,
-									(double)config.warning_time, true, (double)config.critical_time,
-									false, 0, false, 0));
+				sc_replica = mp_set_subcheck_state(sc_replica, status);
 
-				if (status == STATE_WARNING) {
-					printf("SLOW_REPLICA %s: %s|%s\n", _("WARNING"), replica_result, perf);
-					exit(STATE_WARNING);
-				} else if (status == STATE_CRITICAL) {
-					printf("SLOW_REPLICA %s: %s|%s\n", _("CRITICAL"), replica_result, perf);
-					exit(STATE_CRITICAL);
+				if (status != STATE_OK) {
+					xasprintf(&sc_replica.output, "slow replica - %s", sc_replica.output);
+					mp_add_subcheck_to_check(&overall, sc_replica);
+					mp_exit(overall);
 				}
 			}
 		}
@@ -391,14 +463,7 @@ int main(int argc, char **argv) {
 	/* close the connection */
 	mysql_close(&mysql);
 
-	/* print out the result of stats */
-	if (config.check_replica) {
-		printf("%s %s|%s\n", result, replica_result, perf);
-	} else {
-		printf("%s|%s\n", result, perf);
-	}
-
-	return STATE_OK;
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
@@ -441,9 +506,6 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 		result.errorcode = ERROR;
 		return result;
 	}
-
-	char *warning = NULL;
-	char *critical = NULL;
 
 	int option = 0;
 	while (true) {
@@ -516,14 +578,22 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 		case 'n':
 			result.config.ignore_auth = true; /* ignore-auth */
 			break;
-		case 'w':
-			warning = optarg;
-			result.config.warning_time = strtod(warning, NULL);
-			break;
-		case 'c':
-			critical = optarg;
-			result.config.critical_time = strtod(critical, NULL);
-			break;
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning time threshold");
+			}
+			result.config.replica_thresholds =
+				mp_thresholds_set_warn(result.config.replica_thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical time threshold");
+			}
+			result.config.replica_thresholds =
+				mp_thresholds_set_crit(result.config.replica_thresholds, tmp.range);
+		} break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
@@ -539,8 +609,6 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	int index = optind;
-
-	set_thresholds(&result.config.my_threshold, warning, critical);
 
 	while (argc > index) {
 		if (result.config.db_host == NULL) {
