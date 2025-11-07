@@ -269,7 +269,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
 			if (tmp.error != MP_PARSING_SUCCES) {
-				die(STATE_UNKNOWN, "failed to parse warnign threshold");
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
 			}
 			result.config.thresholds = mp_thresholds_set_warn(result.config.thresholds, tmp.range);
 		} break;
