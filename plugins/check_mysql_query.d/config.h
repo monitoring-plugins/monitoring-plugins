@@ -15,7 +15,7 @@ typedef struct {
 	unsigned int db_port;
 
 	char *sql_query;
-	thresholds *my_thresholds;
+	mp_thresholds thresholds;
 } check_mysql_query_config;
 
 check_mysql_query_config check_mysql_query_config_init() {
@@ -30,7 +30,7 @@ check_mysql_query_config check_mysql_query_config_init() {
 		.db_port = MYSQL_PORT,
 
 		.sql_query = NULL,
-		.my_thresholds = NULL,
+		.thresholds = mp_thresholds_init(),
 	};
 	return tmp;
 }

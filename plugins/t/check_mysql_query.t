@@ -54,5 +54,5 @@ like( $result->output, "/No rows returned/", "No rows error message");
 
 $result = NPTest->testCmd("./check_mysql_query -q 'SHOW VARIABLES' -H $mysqlserver $mysql_login_details");
 cmp_ok( $result->return_code, '==', 2, "Data not numeric");
-like( $result->output, "/Is not a numeric/", "Data not numeric error message");
+like( $result->output, "/is not numeric/", "Data not numeric error message");
 
