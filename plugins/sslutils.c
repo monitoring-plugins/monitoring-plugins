@@ -316,7 +316,7 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 #	ifdef USE_OPENSSL
 	retrieve_expiration_time_result result = {
 		.errors = ALL_OK,
-		.remaining_seconds = {},
+		.remaining_seconds = 0,
 	};
 
 	if (!certificate) {
