@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "thresholds.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -18,20 +19,18 @@ typedef struct {
 	char *server_expect;
 	bool ignore_send_quit_failure;
 
-	double warning_time;
-	bool check_warning_time;
-	double critical_time;
-	bool check_critical_time;
+	mp_thresholds connection_time;
+
 	bool use_ehlo;
 	bool use_lhlo;
 
 	char *from_arg;
 	bool send_mail_from;
 
-	int ncommands;
+	unsigned long ncommands;
 	char **commands;
 
-	int nresponses;
+	unsigned long nresponses;
 	char **responses;
 
 	char *authtype;
@@ -58,10 +57,7 @@ check_smtp_config check_smtp_config_init() {
 		.server_expect = SMTP_EXPECT,
 		.ignore_send_quit_failure = false,
 
-		.warning_time = 0,
-		.check_warning_time = false,
-		.critical_time = 0,
-		.check_critical_time = false,
+		.connection_time = mp_thresholds_init(),
 		.use_ehlo = false,
 		.use_lhlo = false,
 
