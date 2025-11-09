@@ -114,6 +114,26 @@ int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, 
 void np_net_ssl_cleanup(void);
 int np_net_ssl_write(const void *buf, int num);
 int np_net_ssl_read(void *buf, int num);
+
+typedef enum {
+	ALL_OK,
+	NO_SERVER_CERTIFICATE_PRESENT,
+	UNABLE_TO_RETRIEVE_CERTIFICATE_SUBJECT,
+	WRONG_TIME_FORMAT_IN_CERTIFICATE,
+} retrieve_expiration_date_errors;
+
+typedef struct {
+	double remaining_seconds;
+	retrieve_expiration_date_errors errors;
+} retrieve_expiration_time_result;
+
+typedef struct {
+	mp_state_enum result_state;
+	double remaining_seconds;
+	retrieve_expiration_date_errors errors;
+} net_ssl_check_cert_result;
+net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int days_till_exp_crit);
+
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 #endif /* HAVE_SSL */
