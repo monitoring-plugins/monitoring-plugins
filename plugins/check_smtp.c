@@ -37,6 +37,7 @@
 #include "base64.h"
 #include "regex.h"
 
+#include <bits/getopt_ext.h>
 #include <ctype.h>
 #include <string.h>
 #include "check_smtp.d/config.h"
@@ -347,9 +348,19 @@ int main(int argc, char **argv) {
 
 		switch (cert_check_result.errors) {
 		case ALL_OK: {
-			xasprintf(&sc_cert_check.output, "Certificate expiration. Remaining time %g days",
-					  cert_check_result.remaining_seconds / 86400);
-			sc_cert_check = mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+
+			if (cert_check_result.result_state != STATE_OK &&
+				config.ignore_certificate_expiration) {
+				xasprintf(&sc_cert_check.output,
+						  "Remaining certificate lifetime: %d days. Expiration will be ignored",
+						  (int)(cert_check_result.remaining_seconds / 86400));
+				sc_cert_check = mp_set_subcheck_state(sc_cert_check, STATE_OK);
+			} else {
+				xasprintf(&sc_cert_check.output, "Remaining certificate lifetime: %d days",
+						  (int)(cert_check_result.remaining_seconds / 86400));
+				sc_cert_check =
+					mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+			}
 		} break;
 		case NO_SERVER_CERTIFICATE_PRESENT: {
 			xasprintf(&sc_cert_check.output, "no server certificate present");
@@ -366,12 +377,6 @@ int main(int argc, char **argv) {
 		};
 
 		mp_add_subcheck_to_check(&overall, sc_cert_check);
-
-		if (config.check_cert) {
-			smtp_quit(config, buffer, socket_descriptor, ssl_established);
-			my_close(socket_descriptor);
-			mp_exit(overall);
-		}
 	}
 #	endif /* USE_OPENSSL */
 
@@ -584,37 +589,40 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
 		SNI_OPTION = CHAR_MAX + 1,
 		output_format_index,
+		ignore_certificate_expiration_index,
 	};
 
 	int option = 0;
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
-									   {"expect", required_argument, 0, 'e'},
-									   {"critical", required_argument, 0, 'c'},
-									   {"warning", required_argument, 0, 'w'},
-									   {"timeout", required_argument, 0, 't'},
-									   {"port", required_argument, 0, 'p'},
-									   {"from", required_argument, 0, 'f'},
-									   {"fqdn", required_argument, 0, 'F'},
-									   {"authtype", required_argument, 0, 'A'},
-									   {"authuser", required_argument, 0, 'U'},
-									   {"authpass", required_argument, 0, 'P'},
-									   {"command", required_argument, 0, 'C'},
-									   {"response", required_argument, 0, 'R'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"version", no_argument, 0, 'V'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"help", no_argument, 0, 'h'},
-									   {"lmtp", no_argument, 0, 'L'},
-									   {"ssl", no_argument, 0, 's'},
-									   {"tls", no_argument, 0, 's'},
-									   {"starttls", no_argument, 0, 'S'},
-									   {"sni", no_argument, 0, SNI_OPTION},
-									   {"certificate", required_argument, 0, 'D'},
-									   {"ignore-quit-failure", no_argument, 0, 'q'},
-									   {"proxy", no_argument, 0, 'r'},
-									   {"output-format", required_argument, 0, output_format_index},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"hostname", required_argument, 0, 'H'},
+		{"expect", required_argument, 0, 'e'},
+		{"critical", required_argument, 0, 'c'},
+		{"warning", required_argument, 0, 'w'},
+		{"timeout", required_argument, 0, 't'},
+		{"port", required_argument, 0, 'p'},
+		{"from", required_argument, 0, 'f'},
+		{"fqdn", required_argument, 0, 'F'},
+		{"authtype", required_argument, 0, 'A'},
+		{"authuser", required_argument, 0, 'U'},
+		{"authpass", required_argument, 0, 'P'},
+		{"command", required_argument, 0, 'C'},
+		{"response", required_argument, 0, 'R'},
+		{"verbose", no_argument, 0, 'v'},
+		{"version", no_argument, 0, 'V'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
+		{"help", no_argument, 0, 'h'},
+		{"lmtp", no_argument, 0, 'L'},
+		{"ssl", no_argument, 0, 's'},
+		{"tls", no_argument, 0, 's'},
+		{"starttls", no_argument, 0, 'S'},
+		{"sni", no_argument, 0, SNI_OPTION},
+		{"certificate", required_argument, 0, 'D'},
+		{"ignore-quit-failure", no_argument, 0, 'q'},
+		{"proxy", no_argument, 0, 'r'},
+		{"ignore-certificate-expiration", no_argument, 0, ignore_certificate_expiration_index},
+		{"output-format", required_argument, 0, output_format_index},
+		{0, 0, 0, 0}};
 
 	check_smtp_config_wrapper result = {
 		.config = check_smtp_config_init(),
@@ -766,7 +774,6 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 				}
 				result.config.days_till_exp_warn = atoi(optarg);
 			}
-			result.config.check_cert = true;
 			result.config.ignore_send_quit_failure = true;
 #else
 			usage(_("SSL support not available - install OpenSSL and recompile"));
@@ -826,6 +833,9 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.output_format_is_set = true;
 			result.config.output_format = parser.output_format;
 			break;
+		}
+		case ignore_certificate_expiration_index: {
+			result.config.ignore_certificate_expiration = true;
 		}
 		}
 	}
@@ -1028,6 +1038,8 @@ void print_help(void) {
 	printf("    %s\n", _("Send LHLO instead of HELO/EHLO"));
 	printf(" %s\n", "-q, --ignore-quit-failure");
 	printf("    %s\n", _("Ignore failure when sending QUIT command to server"));
+	printf(" %s\n", "--ignore-certificate-expiration");
+	printf("    %s\n", _("Ignore certificate expiration"));
 
 	printf(UT_WARN_CRIT);
 

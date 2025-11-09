@@ -40,12 +40,13 @@ typedef struct {
 
 	bool use_proxy_prefix;
 #ifdef HAVE_SSL
-	bool check_cert;
 	int days_till_exp_warn;
 	int days_till_exp_crit;
 	bool use_ssl;
 	bool use_starttls;
 	bool use_sni;
+
+	bool ignore_certificate_expiration;
 #endif
 
 	bool output_format_is_set;
@@ -80,12 +81,13 @@ check_smtp_config check_smtp_config_init() {
 
 		.use_proxy_prefix = false,
 #ifdef HAVE_SSL
-		.check_cert = false,
 		.days_till_exp_warn = 0,
 		.days_till_exp_crit = 0,
 		.use_ssl = false,
 		.use_starttls = false,
 		.use_sni = false,
+
+		.ignore_certificate_expiration = false,
 #endif
 
 		.output_format_is_set = false,
