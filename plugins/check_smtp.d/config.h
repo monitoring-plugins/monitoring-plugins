@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "thresholds.h"
 #include <stddef.h>
 #include <string.h>
@@ -46,6 +47,9 @@ typedef struct {
 	bool use_starttls;
 	bool use_sni;
 #endif
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_smtp_config;
 
 check_smtp_config check_smtp_config_init() {
@@ -83,6 +87,8 @@ check_smtp_config check_smtp_config_init() {
 		.use_starttls = false,
 		.use_sni = false,
 #endif
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

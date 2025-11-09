@@ -115,6 +115,10 @@ int main(int argc, char **argv) {
 
 	const check_smtp_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* If localhostname not set on command line, use gethostname to set */
 	char *localhostname = config.localhostname;
 	if (!localhostname) {
@@ -578,7 +582,8 @@ int main(int argc, char **argv) {
 /* process command-line arguments */
 check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
-		SNI_OPTION = CHAR_MAX + 1
+		SNI_OPTION = CHAR_MAX + 1,
+		output_format_index,
 	};
 
 	int option = 0;
@@ -608,6 +613,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 									   {"certificate", required_argument, 0, 'D'},
 									   {"ignore-quit-failure", no_argument, 0, 'q'},
 									   {"proxy", no_argument, 0, 'r'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_smtp_config_wrapper result = {
@@ -809,6 +815,18 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -1014,6 +1032,8 @@ void print_help(void) {
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_VERBOSE);
 
