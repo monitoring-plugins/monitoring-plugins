@@ -103,7 +103,24 @@ int main(int argc, char **argv) {
 		sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_ssh_execution);
 		mp_exit(overall);
+	} else if (child_result.cmd_error_code != 0) {
+		xasprintf(&sc_ssh_execution.output, "SSH connection failed: ");
+
+		if (child_result.stderr.lines > 0) {
+			for (size_t i = 0; i < child_result.stderr.lines; i++) {
+				xasprintf(&sc_ssh_execution.output, "%s\n%s", sc_ssh_execution.output,
+						  child_result.stderr.line[i]);
+			}
+		} else {
+			xasprintf(&sc_ssh_execution.output, "%s %s", sc_ssh_execution.output,
+					  "no output on stderr");
+		}
+
+		sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_ssh_execution);
+		mp_exit(overall);
 	}
+
 	xasprintf(&sc_ssh_execution.output, "SSH connection succeeded");
 	sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_OK);
 	mp_add_subcheck_to_check(&overall, sc_ssh_execution);
