@@ -599,9 +599,8 @@ void print_help(void) {
 	printf(" %s\n", _("all of -O, -s, and -n options (servicelist order must match '-C'options)"));
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf(
-		" %s\n",
-		"$ check_by_ssh -H localhost -n lh -s c1:c2:c3 -C uptime -C uptime -C uptime -O /tmp/foo");
+	printf(" %s\n", "$ check_by_ssh -H localhost -n lh -s c1:c2:c3 -C uptime -C uptime -C "
+					"uptime -O /tmp/foo");
 	printf(" %s\n", "$ cat /tmp/foo");
 	printf(" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c1;0; up 2 days");
 	printf(" %s\n", "[1080933700] PROCESS_SERVICE_CHECK_RESULT;flint;c2;0; up 2 days");
