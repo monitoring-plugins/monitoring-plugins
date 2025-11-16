@@ -36,7 +36,6 @@
  *
  *****************************************************************************/
 
-#include <stddef.h>
 #define NAGIOSPLUG_API_C 1
 
 /** includes **/
@@ -57,6 +56,7 @@ static pid_t *_cmd_pids = NULL;
 #include "./maxfd.h"
 
 #include <fcntl.h>
+#include <stddef.h>
 
 #ifdef HAVE_SYS_WAIT_H
 #	include <sys/wait.h>
@@ -601,6 +601,7 @@ cmd_run_result cmd_run_array2(char *const *cmd, int flags) {
 	if (cmd_open_result.error_code != 0) {
 		// result.error_code = -1;
 		// return result;
+		// TODO properly handle this without dying
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd[0]);
 	}
 
