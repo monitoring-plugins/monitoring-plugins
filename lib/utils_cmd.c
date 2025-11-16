@@ -36,6 +36,7 @@
  *
  *****************************************************************************/
 
+#include <stddef.h>
 #define NAGIOSPLUG_API_C 1
 
 /** includes **/
@@ -79,7 +80,8 @@ static pid_t *_cmd_pids = NULL;
 static int _cmd_open(char *const *argv, int *pfd, int *pfderr)
 	__attribute__((__nonnull__(1, 2, 3)));
 
-static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) __attribute__((__nonnull__(2)));
+static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags)
+	__attribute__((__nonnull__(2)));
 
 static int _cmd_close(int fileDescriptor);
 
@@ -102,13 +104,84 @@ void cmd_init(void) {
 	}
 }
 
+typedef struct {
+	int stdout_pipe_fd[2];
+	int stderr_pipe_fd[2];
+	int file_descriptor;
+	int error_code;
+} int_cmd_open_result;
+static int_cmd_open_result _cmd_open2(char *const *argv) {
+#ifdef RLIMIT_CORE
+	struct rlimit limit;
+#endif
+
+	if (!_cmd_pids) {
+		CMD_INIT;
+	}
+
+	setenv("LC_ALL", "C", 1);
+
+	int_cmd_open_result result = {
+		.error_code = 0,
+		.stdout_pipe_fd = {0, 0},
+		.stderr_pipe_fd = {0, 0},
+	};
+	pid_t pid;
+	if (pipe(result.stdout_pipe_fd) < 0 || pipe(result.stderr_pipe_fd) < 0 || (pid = fork()) < 0) {
+		result.error_code = -1;
+		return result; /* errno set by the failing function */
+	}
+
+	/* child runs exceve() and _exit. */
+	if (pid == 0) {
+#ifdef RLIMIT_CORE
+		/* the program we execve shouldn't leave core files */
+		getrlimit(RLIMIT_CORE, &limit);
+		limit.rlim_cur = 0;
+		setrlimit(RLIMIT_CORE, &limit);
+#endif
+		close(result.stdout_pipe_fd[0]);
+		if (result.stdout_pipe_fd[1] != STDOUT_FILENO) {
+			dup2(result.stdout_pipe_fd[1], STDOUT_FILENO);
+			close(result.stdout_pipe_fd[1]);
+		}
+		close(result.stderr_pipe_fd[0]);
+		if (result.stderr_pipe_fd[1] != STDERR_FILENO) {
+			dup2(result.stderr_pipe_fd[1], STDERR_FILENO);
+			close(result.stderr_pipe_fd[1]);
+		}
+
+		/* close all descriptors in _cmd_pids[]
+		 * This is executed in a separate address space (pure child),
+		 * so we don't have to worry about async safety */
+		long maxfd = mp_open_max();
+		for (int i = 0; i < maxfd; i++) {
+			if (_cmd_pids[i] > 0) {
+				close(i);
+			}
+		}
+
+		execve(argv[0], argv, environ);
+		_exit(STATE_UNKNOWN);
+	}
+
+	/* parent picks up execution here */
+	/* close children descriptors in our address space */
+	close(result.stdout_pipe_fd[1]);
+	close(result.stderr_pipe_fd[1]);
+
+	/* tag our file's entry in the pid-list and return it */
+	_cmd_pids[result.stdout_pipe_fd[0]] = pid;
+
+	result.file_descriptor = result.stdout_pipe_fd[0];
+	return result;
+}
+
 /* Start running a command, array style */
 static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 #ifdef RLIMIT_CORE
 	struct rlimit limit;
 #endif
-
-	int i = 0;
 
 	if (!_cmd_pids) {
 		CMD_INIT;
@@ -144,7 +217,7 @@ static int _cmd_open(char *const *argv, int *pfd, int *pfderr) {
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
 		long maxfd = mp_open_max();
-		for (i = 0; i < maxfd; i++) {
+		for (int i = 0; i < maxfd; i++) {
 			if (_cmd_pids[i] > 0) {
 				close(i);
 			}
@@ -192,6 +265,87 @@ static int _cmd_close(int fileDescriptor) {
 	return (WIFEXITED(status)) ? WEXITSTATUS(status) : -1;
 }
 
+typedef struct {
+	int error_code;
+	output output_container;
+} int_cmd_fetch_output2;
+static int_cmd_fetch_output2 _cmd_fetch_output2(int fileDescriptor, int flags) {
+	char tmpbuf[4096];
+
+	int_cmd_fetch_output2 result = {
+		.error_code = 0,
+		.output_container =
+			{
+				.buf = NULL,
+				.buflen = 0,
+				.line = NULL,
+				.lines = 0,
+			},
+	};
+	ssize_t ret;
+	while ((ret = read(fileDescriptor, tmpbuf, sizeof(tmpbuf))) > 0) {
+		size_t len = (size_t)ret;
+		result.output_container.buf =
+			realloc(result.output_container.buf, result.output_container.buflen + len + 1);
+		memcpy(result.output_container.buf + result.output_container.buflen, tmpbuf, len);
+		result.output_container.buflen += len;
+	}
+
+	if (ret < 0) {
+		printf("read() returned %zd: %s\n", ret, strerror(errno));
+		result.error_code = -1;
+		return result;
+	}
+
+	/* some plugins may want to keep output unbroken, and some commands
+	 * will yield no output, so return here for those */
+	if (flags & CMD_NO_ARRAYS || !result.output_container.buf || !result.output_container.buflen) {
+		return result;
+	}
+
+	/* and some may want both */
+	char *buf = NULL;
+	if (flags & CMD_NO_ASSOC) {
+		buf = malloc(result.output_container.buflen);
+		memcpy(buf, result.output_container.buf, result.output_container.buflen);
+	} else {
+		buf = result.output_container.buf;
+	}
+
+	result.output_container.line = NULL;
+	size_t ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
+	size_t rsf = 6;
+	size_t lineno = 0;
+	for (size_t i = 0; i < result.output_container.buflen;) {
+		/* make sure we have enough memory */
+		if (lineno >= ary_size) {
+			/* ary_size must never be zero */
+			do {
+				ary_size = result.output_container.buflen >> --rsf;
+			} while (!ary_size);
+
+			result.output_container.line =
+				realloc(result.output_container.line, ary_size * sizeof(char *));
+		}
+
+		/* set the pointer to the string */
+		result.output_container.line[lineno] = &buf[i];
+
+		/* hop to next newline or end of buffer */
+		while (buf[i] != '\n' && i < result.output_container.buflen) {
+			i++;
+		}
+		buf[i] = '\0';
+
+		lineno++;
+		i++;
+	}
+
+	result.output_container.lines = lineno;
+
+	return result;
+}
+
 static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) {
 	char tmpbuf[4096];
 	cmd_output->buf = NULL;
@@ -225,7 +379,6 @@ static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) 
 	}
 
 	cmd_output->line = NULL;
-	cmd_output->lens = NULL;
 	size_t i = 0;
 	size_t ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
 	size_t rsf = 6;
@@ -239,7 +392,6 @@ static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) 
 			} while (!ary_size);
 
 			cmd_output->line = realloc(cmd_output->line, ary_size * sizeof(char *));
-			cmd_output->lens = realloc(cmd_output->lens, ary_size * sizeof(size_t));
 		}
 
 		/* set the pointer to the string */
@@ -250,9 +402,6 @@ static int _cmd_fetch_output(int fileDescriptor, output *cmd_output, int flags) 
 			i++;
 		}
 		buf[i] = '\0';
-
-		/* calculate the string length using pointer difference */
-		cmd_output->lens[lineno] = (size_t)&buf[i] - (size_t)cmd_output->line[lineno];
 
 		lineno++;
 		i++;
@@ -334,6 +483,138 @@ int cmd_run(const char *cmdstring, output *out, output *err, int flags) {
 	}
 
 	return cmd_run_array(argv, out, err, flags);
+}
+
+cmd_run_result cmd_run2(const char *cmd_string, int flags) {
+	cmd_run_result result = {
+		.cmd_error_code = 0,
+		.error_code = 0,
+		.stderr =
+			{
+				.buf = NULL,
+				.buflen = 0,
+				.line = NULL,
+				.lines = 0,
+			},
+		.stdout =
+			{
+				.buf = NULL,
+				.buflen = 0,
+				.line = NULL,
+				.lines = 0,
+			},
+	};
+
+	if (cmd_string == NULL) {
+		result.error_code = -1;
+		return result;
+	}
+
+	/* make copy of command string so strtok() doesn't silently modify it */
+	/* (the calling program may want to access it later) */
+	char *cmd = strdup(cmd_string);
+	if (cmd == NULL) {
+		result.error_code = -1;
+		return result;
+	}
+
+	/* This is not a shell, so we don't handle "???" */
+	if (strstr(cmd, "\"")) {
+		result.error_code = -1;
+		return result;
+	}
+
+	/* allow single quotes, but only if non-whitesapce doesn't occur on both sides */
+	if (strstr(cmd, " ' ") || strstr(cmd, "'''")) {
+		result.error_code = -1;
+		return result;
+	}
+
+	/* each arg must be whitespace-separated, so args can be a maximum
+	 * of (len / 2) + 1. We add 1 extra to the mix for NULL termination */
+	size_t cmdlen = strlen(cmd_string);
+	size_t argc = (cmdlen >> 1) + 2;
+	char **argv = calloc(argc, sizeof(char *));
+
+	if (argv == NULL) {
+		printf("%s\n", _("Could not malloc argv array in popen()"));
+		result.error_code = -1;
+		return result;
+	}
+
+	/* get command arguments (stupidly, but fairly quickly) */
+	for (int i = 0; cmd; i++) {
+		char *str = cmd;
+		str += strspn(str, " \t\r\n"); /* trim any leading whitespace */
+
+		if (strstr(str, "'") == str) { /* handle SIMPLE quoted strings */
+			str++;
+			if (!strstr(str, "'")) {
+				result.error_code = -1;
+				return result; /* balanced? */
+			}
+
+			cmd = 1 + strstr(str, "'");
+			str[strcspn(str, "'")] = 0;
+		} else {
+			if (strpbrk(str, " \t\r\n")) {
+				cmd = 1 + strpbrk(str, " \t\r\n");
+				str[strcspn(str, " \t\r\n")] = 0;
+			} else {
+				cmd = NULL;
+			}
+		}
+
+		if (cmd && strlen(cmd) == strspn(cmd, " \t\r\n")) {
+			cmd = NULL;
+		}
+
+		argv[i++] = str;
+	}
+
+	result = cmd_run_array2(argv, flags);
+
+	return result;
+}
+
+cmd_run_result cmd_run_array2(char *const *cmd, int flags) {
+	cmd_run_result result = {
+		.cmd_error_code = 0,
+		.error_code = 0,
+		.stderr =
+			{
+				.buf = NULL,
+				.buflen = 0,
+				.line = NULL,
+				.lines = 0,
+			},
+		.stdout =
+			{
+				.buf = NULL,
+				.buflen = 0,
+				.line = NULL,
+				.lines = 0,
+			},
+	};
+
+	int_cmd_open_result cmd_open_result = _cmd_open2(cmd);
+	if (cmd_open_result.error_code != 0) {
+		// result.error_code = -1;
+		// return result;
+		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd[0]);
+	}
+
+	int file_descriptor = cmd_open_result.file_descriptor;
+	int pfd_out[2] = {cmd_open_result.stdout_pipe_fd[0], cmd_open_result.stdout_pipe_fd[1]};
+	int pfd_err[2] = {cmd_open_result.stderr_pipe_fd[0], cmd_open_result.stderr_pipe_fd[1]};
+
+	int_cmd_fetch_output2 tmp_stdout = _cmd_fetch_output2(pfd_out[0], flags);
+	result.stdout = tmp_stdout.output_container;
+	int_cmd_fetch_output2 tmp_stderr = _cmd_fetch_output2(pfd_err[0], flags);
+	result.stderr = tmp_stderr.output_container;
+
+	result.cmd_error_code = _cmd_close(file_descriptor);
+	return result;
 }
 
 int cmd_run_array(char *const *argv, output *out, output *err, int flags) {
