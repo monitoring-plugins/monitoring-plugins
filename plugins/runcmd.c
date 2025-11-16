@@ -300,7 +300,6 @@ static int np_fetch_output(int fd, output *op, int flags) {
 	}
 
 	op->line = NULL;
-	op->lens = NULL;
 	i = 0;
 	while (i < op->buflen) {
 		/* make sure we have enough memory */
@@ -311,7 +310,6 @@ static int np_fetch_output(int fd, output *op, int flags) {
 			} while (!ary_size);
 
 			op->line = realloc(op->line, ary_size * sizeof(char *));
-			op->lens = realloc(op->lens, ary_size * sizeof(size_t));
 		}
 
 		/* set the pointer to the string */
@@ -322,9 +320,6 @@ static int np_fetch_output(int fd, output *op, int flags) {
 			i++;
 		}
 		buf[i] = '\0';
-
-		/* calculate the string length using pointer difference */
-		op->lens[lineno] = (size_t)&buf[i] - (size_t)op->line[lineno];
 
 		lineno++;
 		i++;
