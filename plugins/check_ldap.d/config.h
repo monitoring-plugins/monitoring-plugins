@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "thresholds.h"
 #include <stddef.h>
 
@@ -27,6 +28,9 @@ typedef struct {
 
 	mp_thresholds entries_thresholds;
 	mp_thresholds connection_time_threshold;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_ldap_config;
 
 check_ldap_config check_ldap_config_init() {
@@ -45,6 +49,8 @@ check_ldap_config check_ldap_config_init() {
 
 		.entries_thresholds = mp_thresholds_init(),
 		.connection_time_threshold = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

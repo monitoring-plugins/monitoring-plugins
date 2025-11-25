@@ -82,6 +82,10 @@ int main(int argc, char *argv[]) {
 
 	const check_ldap_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
@@ -306,6 +310,10 @@ int main(int argc, char *argv[]) {
 
 /* process command-line arguments */
 check_ldap_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	/* initialize the long option struct */
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
@@ -329,6 +337,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 									   {"warn-entries", required_argument, 0, 'W'},
 									   {"crit-entries", required_argument, 0, 'C'},
 									   {"verbose", no_argument, 0, 'v'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_ldap_config_wrapper result = {
@@ -458,6 +467,18 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			usage(_("IPv6 support not available\n"));
 #endif
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		default:
 			usage5();
 		}
@@ -553,6 +574,7 @@ void print_help(void) {
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
