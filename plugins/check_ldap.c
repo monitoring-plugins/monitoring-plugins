@@ -300,6 +300,7 @@ int main(int argc, char *argv[]) {
 	pd_num_entries = mp_pd_set_thresholds(pd_num_entries, config.entries_thresholds);
 
 	mp_subcheck sc_num_entries = mp_subcheck_init();
+	mp_add_perfdata_to_subcheck(&sc_num_entries, pd_num_entries);
 	xasprintf(&sc_num_entries.output, "found %d entries", num_entries);
 	sc_num_entries = mp_set_subcheck_state(sc_num_entries, mp_get_pd_status(pd_num_entries));
 
