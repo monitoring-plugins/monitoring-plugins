@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
 	sc_connection_time = mp_set_subcheck_state(sc_connection_time, connection_time_state);
 
 	if (connection_time_state == STATE_OK) {
-		xasprintf(&sc_connection_time.output, "connection time %.3fs is withing thresholds",
+		xasprintf(&sc_connection_time.output, "connection time %.3fs is within thresholds",
 				  elapsed_time);
 	} else {
 		xasprintf(&sc_connection_time.output, "connection time %.3fs is violating thresholds",
