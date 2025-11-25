@@ -419,7 +419,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			if (tmp.error != MP_PARSING_SUCCES) {
 				die(STATE_UNKNOWN, "failed to parse number of entries warning threshold");
 			}
-			result.config.connection_time_threshold =
+			result.config.entries_thresholds =
 				mp_thresholds_set_warn(result.config.entries_thresholds, tmp.range);
 		} break;
 		case 'C': {
@@ -427,8 +427,8 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			if (tmp.error != MP_PARSING_SUCCES) {
 				die(STATE_UNKNOWN, "failed to parse number of entries critical threshold");
 			}
-			result.config.connection_time_threshold =
-				mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
+			result.config.entries_thresholds =
+				 mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
 		} break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':
