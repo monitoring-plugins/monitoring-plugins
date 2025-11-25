@@ -28,19 +28,24 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_smtp";
-const char *copyright = "2000-2024";
-const char *email = "devel@monitoring-plugins.org";
-
 #include "common.h"
 #include "netutils.h"
+#include "output.h"
+#include "perfdata.h"
+#include "thresholds.h"
 #include "utils.h"
 #include "base64.h"
 #include "regex.h"
 
+#include <bits/getopt_ext.h>
 #include <ctype.h>
+#include <string.h>
 #include "check_smtp.d/config.h"
 #include "../lib/states.h"
+
+const char *progname = "check_smtp";
+const char *copyright = "2000-2024";
+const char *email = "devel@monitoring-plugins.org";
 
 #define PROXY_PREFIX    "PROXY TCP4 0.0.0.0 0.0.0.0 25 25\r\n"
 #define SMTP_HELO       "HELO "
@@ -111,6 +116,10 @@ int main(int argc, char **argv) {
 
 	const check_smtp_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* If localhostname not set on command line, use gethostname to set */
 	char *localhostname = config.localhostname;
 	if (!localhostname) {
@@ -161,302 +170,397 @@ int main(int argc, char **argv) {
 	gettimeofday(&start_time, NULL);
 
 	int socket_descriptor = 0;
+
 	/* try to connect to the host at the given port number */
-	mp_state_enum result =
+	mp_state_enum tcp_result =
 		my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
 
-	char *error_msg = "";
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_tcp_connect = mp_subcheck_init();
 	char buffer[MAX_INPUT_BUFFER];
 	bool ssl_established = false;
-	if (result == STATE_OK) { /* we connected */
-		/* If requested, send PROXY header */
-		if (config.use_proxy_prefix) {
-			if (verbose) {
-				printf("Sending header %s\n", PROXY_PREFIX);
-			}
-			my_send(config, PROXY_PREFIX, strlen(PROXY_PREFIX), socket_descriptor, ssl_established);
+
+	if (tcp_result != STATE_OK) {
+		// Connect failed
+		sc_tcp_connect = mp_set_subcheck_state(sc_tcp_connect, STATE_CRITICAL);
+		xasprintf(&sc_tcp_connect.output, "TCP connect to '%s' failed", config.server_address);
+		mp_add_subcheck_to_check(&overall, sc_tcp_connect);
+		mp_exit(overall);
+	}
+
+	/* we connected */
+	/* If requested, send PROXY header */
+	if (config.use_proxy_prefix) {
+		if (verbose) {
+			printf("Sending header %s\n", PROXY_PREFIX);
 		}
+		my_send(config, PROXY_PREFIX, strlen(PROXY_PREFIX), socket_descriptor, ssl_established);
+	}
 
 #ifdef HAVE_SSL
-		if (config.use_ssl) {
-			result = np_net_ssl_init_with_hostname(socket_descriptor,
-												   (config.use_sni ? config.server_address : NULL));
-			if (result != STATE_OK) {
-				printf(_("CRITICAL - Cannot create SSL context.\n"));
-				close(socket_descriptor);
-				np_net_ssl_cleanup();
-				exit(STATE_CRITICAL);
-			}
-			ssl_established = true;
+	if (config.use_ssl) {
+		int tls_result = np_net_ssl_init_with_hostname(
+			socket_descriptor, (config.use_sni ? config.server_address : NULL));
+
+		mp_subcheck sc_tls_connection = mp_subcheck_init();
+
+		if (tls_result != STATE_OK) {
+			close(socket_descriptor);
+			np_net_ssl_cleanup();
+
+			sc_tls_connection = mp_set_subcheck_state(sc_tls_connection, STATE_CRITICAL);
+			xasprintf(&sc_tls_connection.output, "cannot create TLS context");
+			mp_add_subcheck_to_check(&overall, sc_tls_connection);
+			mp_exit(overall);
 		}
+
+		sc_tls_connection = mp_set_subcheck_state(sc_tls_connection, STATE_OK);
+		xasprintf(&sc_tls_connection.output, "TLS context established");
+		mp_add_subcheck_to_check(&overall, sc_tls_connection);
+		ssl_established = true;
+	}
 #endif
 
-		/* watch for the SMTP connection string and */
-		/* return a WARNING status if we couldn't read any data */
-		if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
-			printf(_("recv() failed\n"));
-			exit(STATE_WARNING);
+	/* watch for the SMTP connection string and */
+	/* return a WARNING status if we couldn't read any data */
+	if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
+		mp_subcheck sc_read_data = mp_subcheck_init();
+		sc_read_data = mp_set_subcheck_state(sc_read_data, STATE_WARNING);
+		xasprintf(&sc_read_data.output, "recv() failed");
+		mp_add_subcheck_to_check(&overall, sc_read_data);
+		mp_exit(overall);
+	}
+
+	char *server_response = NULL;
+	/* save connect return (220 hostname ..) for later use */
+	xasprintf(&server_response, "%s", buffer);
+
+	/* send the HELO/EHLO command */
+	my_send(config, helocmd, (int)strlen(helocmd), socket_descriptor, ssl_established);
+
+	/* allow for response to helo command to reach us */
+	if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
+		mp_subcheck sc_read_data = mp_subcheck_init();
+		sc_read_data = mp_set_subcheck_state(sc_read_data, STATE_WARNING);
+		xasprintf(&sc_read_data.output, "recv() failed");
+		mp_add_subcheck_to_check(&overall, sc_read_data);
+		mp_exit(overall);
+	}
+
+	bool supports_tls = false;
+	if (config.use_ehlo || config.use_lhlo) {
+		if (strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) {
+			supports_tls = true;
 		}
+	}
 
-		char *server_response = NULL;
-		/* save connect return (220 hostname ..) for later use */
-		xasprintf(&server_response, "%s", buffer);
+	if (config.use_starttls && !supports_tls) {
+		smtp_quit(config, buffer, socket_descriptor, ssl_established);
 
-		/* send the HELO/EHLO command */
-		my_send(config, helocmd, (int)strlen(helocmd), socket_descriptor, ssl_established);
+		mp_subcheck sc_read_data = mp_subcheck_init();
+		sc_read_data = mp_set_subcheck_state(sc_read_data, STATE_WARNING);
+		xasprintf(&sc_read_data.output, "StartTLS not supported by server");
+		mp_add_subcheck_to_check(&overall, sc_read_data);
+		mp_exit(overall);
+	}
 
-		/* allow for response to helo command to reach us */
-		if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
-			printf(_("recv() failed\n"));
-			exit(STATE_WARNING);
-		}
+#ifdef HAVE_SSL
+	if (config.use_starttls) {
+		/* send the STARTTLS command */
+		send(socket_descriptor, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
 
-		bool supports_tls = false;
-		if (config.use_ehlo || config.use_lhlo) {
-			if (strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) {
-				supports_tls = true;
-			}
-		}
-
-		if (config.use_starttls && !supports_tls) {
-			printf(_("WARNING - TLS not supported by server\n"));
+		mp_subcheck sc_starttls_init = mp_subcheck_init();
+		recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+				  ssl_established); /* wait for it */
+		if (!strstr(buffer, SMTP_EXPECT)) {
 			smtp_quit(config, buffer, socket_descriptor, ssl_established);
-			exit(STATE_WARNING);
+
+			xasprintf(&sc_starttls_init.output, "StartTLS not supported by server");
+			sc_starttls_init = mp_set_subcheck_state(sc_starttls_init, STATE_UNKNOWN);
+			mp_add_subcheck_to_check(&overall, sc_starttls_init);
+			mp_exit(overall);
 		}
 
-#ifdef HAVE_SSL
-		if (config.use_starttls) {
-			/* send the STARTTLS command */
-			send(socket_descriptor, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
+		mp_state_enum starttls_result = np_net_ssl_init_with_hostname(
+			socket_descriptor, (config.use_sni ? config.server_address : NULL));
+		if (starttls_result != STATE_OK) {
+			close(socket_descriptor);
+			np_net_ssl_cleanup();
 
-			recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-					  ssl_established); /* wait for it */
-			if (!strstr(buffer, SMTP_EXPECT)) {
-				printf(_("Server does not support STARTTLS\n"));
-				smtp_quit(config, buffer, socket_descriptor, ssl_established);
-				exit(STATE_UNKNOWN);
-			}
-
-			result = np_net_ssl_init_with_hostname(socket_descriptor,
-												   (config.use_sni ? config.server_address : NULL));
-			if (result != STATE_OK) {
-				printf(_("CRITICAL - Cannot create SSL context.\n"));
-				close(socket_descriptor);
-				np_net_ssl_cleanup();
-				exit(STATE_CRITICAL);
-			}
-
-			ssl_established = true;
-
-			/*
-			 * Resend the EHLO command.
-			 *
-			 * RFC 3207 (4.2) says: ``The client MUST discard any knowledge
-			 * obtained from the server, such as the list of SMTP service
-			 * extensions, which was not obtained from the TLS negotiation
-			 * itself.  The client SHOULD send an EHLO command as the first
-			 * command after a successful TLS negotiation.''  For this
-			 * reason, some MTAs will not allow an AUTH LOGIN command before
-			 * we resent EHLO via TLS.
-			 */
-			if (my_send(config, helocmd, strlen(helocmd), socket_descriptor, ssl_established) <=
-				0) {
-				printf("%s\n", _("SMTP UNKNOWN - Cannot send EHLO command via TLS."));
-				my_close(socket_descriptor);
-				exit(STATE_UNKNOWN);
-			}
-
-			if (verbose) {
-				printf(_("sent %s"), helocmd);
-			}
-
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <=
-				0) {
-				printf("%s\n", _("SMTP UNKNOWN - Cannot read EHLO response via TLS."));
-				my_close(socket_descriptor);
-				exit(STATE_UNKNOWN);
-			}
-
-			if (verbose) {
-				printf("%s", buffer);
-			}
-
-#	ifdef USE_OPENSSL
-			if (config.check_cert) {
-				result =
-					np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
-				smtp_quit(config, buffer, socket_descriptor, ssl_established);
-				my_close(socket_descriptor);
-				exit(result);
-			}
-#	endif /* USE_OPENSSL */
+			sc_starttls_init = mp_set_subcheck_state(sc_starttls_init, STATE_CRITICAL);
+			xasprintf(&sc_starttls_init.output, "failed to create StartTLS context");
+			mp_add_subcheck_to_check(&overall, sc_starttls_init);
+			mp_exit(overall);
 		}
-#endif
+		sc_starttls_init = mp_set_subcheck_state(sc_starttls_init, STATE_OK);
+		xasprintf(&sc_starttls_init.output, "created StartTLS context");
+		mp_add_subcheck_to_check(&overall, sc_starttls_init);
+
+		ssl_established = true;
+
+		/*
+		 * Resend the EHLO command.
+		 *
+		 * RFC 3207 (4.2) says: ``The client MUST discard any knowledge
+		 * obtained from the server, such as the list of SMTP service
+		 * extensions, which was not obtained from the TLS negotiation
+		 * itself.  The client SHOULD send an EHLO command as the first
+		 * command after a successful TLS negotiation.''  For this
+		 * reason, some MTAs will not allow an AUTH LOGIN command before
+		 * we resent EHLO via TLS.
+		 */
+		if (my_send(config, helocmd, (int)strlen(helocmd), socket_descriptor, ssl_established) <=
+			0) {
+			my_close(socket_descriptor);
+
+			mp_subcheck sc_ehlo = mp_subcheck_init();
+			sc_ehlo = mp_set_subcheck_state(sc_ehlo, STATE_UNKNOWN);
+			xasprintf(&sc_ehlo.output, "cannot send EHLO command via StartTLS");
+			mp_add_subcheck_to_check(&overall, sc_ehlo);
+			mp_exit(overall);
+		}
+
+		if (verbose) {
+			printf(_("sent %s"), helocmd);
+		}
+
+		if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) <= 0) {
+			my_close(socket_descriptor);
+
+			mp_subcheck sc_ehlo = mp_subcheck_init();
+			sc_ehlo = mp_set_subcheck_state(sc_ehlo, STATE_UNKNOWN);
+			xasprintf(&sc_ehlo.output, "cannot read EHLO response via StartTLS");
+			mp_add_subcheck_to_check(&overall, sc_ehlo);
+			mp_exit(overall);
+		}
 
 		if (verbose) {
 			printf("%s", buffer);
 		}
-
-		/* save buffer for later use */
-		xasprintf(&server_response, "%s%s", server_response, buffer);
-		/* strip the buffer of carriage returns */
-		strip(server_response);
-
-		/* make sure we find the droids we are looking for */
-		if (!strstr(server_response, config.server_expect)) {
-			if (config.server_port == SMTP_PORT) {
-				printf(_("Invalid SMTP response received from host: %s\n"), server_response);
-			} else {
-				printf(_("Invalid SMTP response received from host on port %d: %s\n"),
-					   config.server_port, server_response);
-			}
-			exit(STATE_WARNING);
-		}
-
-		if (config.send_mail_from) {
-			my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >=
-					1 &&
-				verbose) {
-				printf("%s", buffer);
-			}
-		}
-
-		int counter = 0;
-		while (counter < config.ncommands) {
-			xasprintf(&cmd_str, "%s%s", config.commands[counter], "\r\n");
-			my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
-			if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >=
-					1 &&
-				verbose) {
-				printf("%s", buffer);
-			}
-			strip(buffer);
-			if (counter < config.nresponses) {
-				int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
-				regex_t preg;
-				int errcode = regcomp(&preg, config.responses[counter], cflags);
-				char errbuf[MAX_INPUT_BUFFER];
-				if (errcode != 0) {
-					regerror(errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-					printf(_("Could Not Compile Regular Expression"));
-					exit(STATE_UNKNOWN);
-				}
-
-				regmatch_t pmatch[10];
-				int eflags = 0;
-				int excode = regexec(&preg, buffer, 10, pmatch, eflags);
-				if (excode == 0) {
-					result = STATE_OK;
-				} else if (excode == REG_NOMATCH) {
-					result = STATE_WARNING;
-					printf(_("SMTP %s - Invalid response '%s' to command '%s'\n"),
-						   state_text(result), buffer, config.commands[counter]);
-				} else {
-					regerror(excode, &preg, errbuf, MAX_INPUT_BUFFER);
-					printf(_("Execute Error: %s\n"), errbuf);
-					result = STATE_UNKNOWN;
-				}
-			}
-			counter++;
-		}
-
-		if (config.authtype != NULL) {
-			if (strcmp(config.authtype, "LOGIN") == 0) {
-				char *abuf;
-				int ret;
-				do {
-					if (config.authuser == NULL) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("no authuser specified, "));
-						break;
-					}
-					if (config.authpass == NULL) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("no authpass specified, "));
-						break;
-					}
-
-					/* send AUTH LOGIN */
-					my_send(config, SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN), socket_descriptor,
-							ssl_established);
-					if (verbose) {
-						printf(_("sent %s\n"), "AUTH LOGIN");
-					}
-
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-										 ssl_established)) <= 0) {
-						xasprintf(&error_msg, _("recv() failed after AUTH LOGIN, "));
-						result = STATE_WARNING;
-						break;
-					}
-					if (verbose) {
-						printf(_("received %s\n"), buffer);
-					}
-
-					if (strncmp(buffer, "334", 3) != 0) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("invalid response received after AUTH LOGIN, "));
-						break;
-					}
-
-					/* encode authuser with base64 */
-					base64_encode_alloc(config.authuser, strlen(config.authuser), &abuf);
-					xasprintf(&abuf, "%s\r\n", abuf);
-					my_send(config, abuf, (int)strlen(abuf), socket_descriptor, ssl_established);
-					if (verbose) {
-						printf(_("sent %s\n"), abuf);
-					}
-
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-										 ssl_established)) <= 0) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("recv() failed after sending authuser, "));
-						break;
-					}
-					if (verbose) {
-						printf(_("received %s\n"), buffer);
-					}
-					if (strncmp(buffer, "334", 3) != 0) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("invalid response received after authuser, "));
-						break;
-					}
-					/* encode authpass with base64 */
-					base64_encode_alloc(config.authpass, strlen(config.authpass), &abuf);
-					xasprintf(&abuf, "%s\r\n", abuf);
-					my_send(config, abuf, (int)strlen(abuf), socket_descriptor, ssl_established);
-					if (verbose) {
-						printf(_("sent %s\n"), abuf);
-					}
-					if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-										 ssl_established)) <= 0) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("recv() failed after sending authpass, "));
-						break;
-					}
-					if (verbose) {
-						printf(_("received %s\n"), buffer);
-					}
-					if (strncmp(buffer, "235", 3) != 0) {
-						result = STATE_CRITICAL;
-						xasprintf(&error_msg, _("invalid response received after authpass, "));
-						break;
-					}
-					break;
-				} while (false);
-			} else {
-				result = STATE_CRITICAL;
-				xasprintf(&error_msg, _("only authtype LOGIN is supported, "));
-			}
-		}
-
-		/* tell the server we're done */
-		smtp_quit(config, buffer, socket_descriptor, ssl_established);
-
-		/* finally close the connection */
-		close(socket_descriptor);
 	}
+
+#	ifdef USE_OPENSSL
+	if (ssl_established) {
+		net_ssl_check_cert_result cert_check_result =
+			np_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
+
+		mp_subcheck sc_cert_check = mp_subcheck_init();
+
+		switch (cert_check_result.errors) {
+		case ALL_OK: {
+
+			if (cert_check_result.result_state != STATE_OK &&
+				config.ignore_certificate_expiration) {
+				xasprintf(&sc_cert_check.output,
+						  "Remaining certificate lifetime: %d days. Expiration will be ignored",
+						  (int)(cert_check_result.remaining_seconds / 86400));
+				sc_cert_check = mp_set_subcheck_state(sc_cert_check, STATE_OK);
+			} else {
+				xasprintf(&sc_cert_check.output, "Remaining certificate lifetime: %d days",
+						  (int)(cert_check_result.remaining_seconds / 86400));
+				sc_cert_check =
+					mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+			}
+		} break;
+		case NO_SERVER_CERTIFICATE_PRESENT: {
+			xasprintf(&sc_cert_check.output, "no server certificate present");
+			sc_cert_check = mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+		} break;
+		case UNABLE_TO_RETRIEVE_CERTIFICATE_SUBJECT: {
+			xasprintf(&sc_cert_check.output, "can not retrieve certificate subject");
+			sc_cert_check = mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+		} break;
+		case WRONG_TIME_FORMAT_IN_CERTIFICATE: {
+			xasprintf(&sc_cert_check.output, "wrong time format in certificate");
+			sc_cert_check = mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
+		} break;
+		};
+
+		mp_add_subcheck_to_check(&overall, sc_cert_check);
+	}
+#	endif /* USE_OPENSSL */
+
+#endif
+
+	if (verbose) {
+		printf("%s", buffer);
+	}
+
+	/* save buffer for later use */
+	xasprintf(&server_response, "%s%s", server_response, buffer);
+	/* strip the buffer of carriage returns */
+	strip(server_response);
+
+	/* make sure we find the droids we are looking for */
+	mp_subcheck sc_expect_response = mp_subcheck_init();
+
+	if (!strstr(server_response, config.server_expect)) {
+		sc_expect_response = mp_set_subcheck_state(sc_expect_response, STATE_WARNING);
+		if (config.server_port == SMTP_PORT) {
+			xasprintf(&sc_expect_response.output, _("invalid SMTP response received from host: %s"),
+					  server_response);
+		} else {
+			xasprintf(&sc_expect_response.output,
+					  _("invalid SMTP response received from host on port %d: %s"),
+					  config.server_port, server_response);
+		}
+		exit(STATE_WARNING);
+	} else {
+		xasprintf(&sc_expect_response.output, "received valid SMTP response '%s' from host: '%s'",
+				  config.server_expect, server_response);
+		sc_expect_response = mp_set_subcheck_state(sc_expect_response, STATE_OK);
+	}
+
+	mp_add_subcheck_to_check(&overall, sc_expect_response);
+
+	if (config.send_mail_from) {
+		my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
+		if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >= 1 &&
+			verbose) {
+			printf("%s", buffer);
+		}
+	}
+
+	size_t counter = 0;
+	while (counter < config.ncommands) {
+		xasprintf(&cmd_str, "%s%s", config.commands[counter], "\r\n");
+		my_send(config, cmd_str, (int)strlen(cmd_str), socket_descriptor, ssl_established);
+		if (recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor, ssl_established) >= 1 &&
+			verbose) {
+			printf("%s", buffer);
+		}
+
+		strip(buffer);
+
+		if (counter < config.nresponses) {
+			int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+			regex_t preg;
+			int errcode = regcomp(&preg, config.responses[counter], cflags);
+			char errbuf[MAX_INPUT_BUFFER];
+			if (errcode != 0) {
+				regerror(errcode, &preg, errbuf, MAX_INPUT_BUFFER);
+				printf(_("Could Not Compile Regular Expression"));
+				exit(STATE_UNKNOWN);
+			}
+
+			regmatch_t pmatch[10];
+			int eflags = 0;
+			int excode = regexec(&preg, buffer, 10, pmatch, eflags);
+			mp_subcheck sc_expected_responses = mp_subcheck_init();
+			if (excode == 0) {
+				xasprintf(&sc_expected_responses.output, "valid response '%s' to command '%s'",
+						  buffer, config.commands[counter]);
+				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_OK);
+			} else if (excode == REG_NOMATCH) {
+				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_WARNING);
+				xasprintf(&sc_expected_responses.output, "invalid response '%s' to command '%s'",
+						  buffer, config.commands[counter]);
+			} else {
+				regerror(excode, &preg, errbuf, MAX_INPUT_BUFFER);
+				xasprintf(&sc_expected_responses.output, "regexec execute error: %s", errbuf);
+				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_UNKNOWN);
+			}
+		}
+		counter++;
+	}
+
+	if (config.authtype != NULL) {
+		mp_subcheck sc_auth = mp_subcheck_init();
+
+		if (strcmp(config.authtype, "LOGIN") == 0) {
+			char *abuf;
+			int ret;
+			do {
+				/* send AUTH LOGIN */
+				my_send(config, SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN), socket_descriptor,
+						ssl_established);
+
+				if (verbose) {
+					printf(_("sent %s\n"), "AUTH LOGIN");
+				}
+
+				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+									 ssl_established)) <= 0) {
+					xasprintf(&sc_auth.output, _("recv() failed after AUTH LOGIN"));
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_WARNING);
+					break;
+				}
+
+				if (verbose) {
+					printf(_("received %s\n"), buffer);
+				}
+
+				if (strncmp(buffer, "334", 3) != 0) {
+					xasprintf(&sc_auth.output, "invalid response received after AUTH LOGIN");
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+					break;
+				}
+
+				/* encode authuser with base64 */
+				base64_encode_alloc(config.authuser, strlen(config.authuser), &abuf);
+				xasprintf(&abuf, "%s\r\n", abuf);
+				my_send(config, abuf, (int)strlen(abuf), socket_descriptor, ssl_established);
+				if (verbose) {
+					printf(_("sent %s\n"), abuf);
+				}
+
+				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+									 ssl_established)) <= 0) {
+					xasprintf(&sc_auth.output, "recv() failed after sending authuser");
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+					break;
+				}
+
+				if (verbose) {
+					printf(_("received %s\n"), buffer);
+				}
+
+				if (strncmp(buffer, "334", 3) != 0) {
+					xasprintf(&sc_auth.output, "invalid response received after authuser");
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+					break;
+				}
+
+				/* encode authpass with base64 */
+				base64_encode_alloc(config.authpass, strlen(config.authpass), &abuf);
+				xasprintf(&abuf, "%s\r\n", abuf);
+				my_send(config, abuf, (int)strlen(abuf), socket_descriptor, ssl_established);
+
+				if (verbose) {
+					printf(_("sent %s\n"), abuf);
+				}
+
+				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+									 ssl_established)) <= 0) {
+					xasprintf(&sc_auth.output, "recv() failed after sending authpass");
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+					break;
+				}
+
+				if (verbose) {
+					printf(_("received %s\n"), buffer);
+				}
+
+				if (strncmp(buffer, "235", 3) != 0) {
+					xasprintf(&sc_auth.output, "invalid response received after authpass");
+					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+					break;
+				}
+				break;
+			} while (false);
+		} else {
+			sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
+			xasprintf(&sc_auth.output, "only authtype LOGIN is supported");
+		}
+
+		mp_add_subcheck_to_check(&overall, sc_auth);
+	}
+
+	/* tell the server we're done */
+	smtp_quit(config, buffer, socket_descriptor, ssl_established);
+
+	/* finally close the connection */
+	close(socket_descriptor);
 
 	/* reset the alarm */
 	alarm(0);
@@ -464,56 +568,61 @@ int main(int argc, char **argv) {
 	long microsec = deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
-	if (result == STATE_OK) {
-		if (config.check_critical_time && elapsed_time > config.critical_time) {
-			result = STATE_CRITICAL;
-		} else if (config.check_warning_time && elapsed_time > config.warning_time) {
-			result = STATE_WARNING;
-		}
-	}
+	mp_perfdata pd_elapsed_time = perfdata_init();
+	pd_elapsed_time = mp_set_pd_value(pd_elapsed_time, elapsed_time);
+	pd_elapsed_time.label = "time";
+	pd_elapsed_time.uom = "s";
 
-	printf(_("SMTP %s - %s%.3f sec. response time%s%s|%s\n"), state_text(result), error_msg,
-		   elapsed_time, verbose ? ", " : "", verbose ? buffer : "",
-		   fperfdata("time", elapsed_time, "s", config.check_warning_time, config.warning_time,
-					 config.check_critical_time, config.critical_time, true, 0, false, 0));
+	pd_elapsed_time = mp_pd_set_thresholds(pd_elapsed_time, config.connection_time);
 
-	exit(result);
+	mp_subcheck sc_connection_time = mp_subcheck_init();
+	xasprintf(&sc_connection_time.output, "connection time: %.3gs", elapsed_time);
+	sc_connection_time =
+		mp_set_subcheck_state(sc_connection_time, mp_get_pd_status(pd_elapsed_time));
+	mp_add_subcheck_to_check(&overall, sc_connection_time);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
-		SNI_OPTION = CHAR_MAX + 1
+		SNI_OPTION = CHAR_MAX + 1,
+		output_format_index,
+		ignore_certificate_expiration_index,
 	};
 
 	int option = 0;
-	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
-									   {"expect", required_argument, 0, 'e'},
-									   {"critical", required_argument, 0, 'c'},
-									   {"warning", required_argument, 0, 'w'},
-									   {"timeout", required_argument, 0, 't'},
-									   {"port", required_argument, 0, 'p'},
-									   {"from", required_argument, 0, 'f'},
-									   {"fqdn", required_argument, 0, 'F'},
-									   {"authtype", required_argument, 0, 'A'},
-									   {"authuser", required_argument, 0, 'U'},
-									   {"authpass", required_argument, 0, 'P'},
-									   {"command", required_argument, 0, 'C'},
-									   {"response", required_argument, 0, 'R'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"version", no_argument, 0, 'V'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"help", no_argument, 0, 'h'},
-									   {"lmtp", no_argument, 0, 'L'},
-									   {"ssl", no_argument, 0, 's'},
-									   {"tls", no_argument, 0, 's'},
-									   {"starttls", no_argument, 0, 'S'},
-									   {"sni", no_argument, 0, SNI_OPTION},
-									   {"certificate", required_argument, 0, 'D'},
-									   {"ignore-quit-failure", no_argument, 0, 'q'},
-									   {"proxy", no_argument, 0, 'r'},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"hostname", required_argument, 0, 'H'},
+		{"expect", required_argument, 0, 'e'},
+		{"critical", required_argument, 0, 'c'},
+		{"warning", required_argument, 0, 'w'},
+		{"timeout", required_argument, 0, 't'},
+		{"port", required_argument, 0, 'p'},
+		{"from", required_argument, 0, 'f'},
+		{"fqdn", required_argument, 0, 'F'},
+		{"authtype", required_argument, 0, 'A'},
+		{"authuser", required_argument, 0, 'U'},
+		{"authpass", required_argument, 0, 'P'},
+		{"command", required_argument, 0, 'C'},
+		{"response", required_argument, 0, 'R'},
+		{"verbose", no_argument, 0, 'v'},
+		{"version", no_argument, 0, 'V'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
+		{"help", no_argument, 0, 'h'},
+		{"lmtp", no_argument, 0, 'L'},
+		{"ssl", no_argument, 0, 's'},
+		{"tls", no_argument, 0, 's'},
+		{"starttls", no_argument, 0, 'S'},
+		{"sni", no_argument, 0, SNI_OPTION},
+		{"certificate", required_argument, 0, 'D'},
+		{"ignore-quit-failure", no_argument, 0, 'q'},
+		{"proxy", no_argument, 0, 'r'},
+		{"ignore-certificate-expiration", no_argument, 0, ignore_certificate_expiration_index},
+		{"output-format", required_argument, 0, output_format_index},
+		{0, 0, 0, 0}};
 
 	check_smtp_config_wrapper result = {
 		.config = check_smtp_config_init(),
@@ -535,8 +644,8 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	int command_size = 0;
-	int response_size = 0;
+	unsigned long command_size = 0;
+	unsigned long response_size = 0;
 	bool implicit_tls = false;
 	int server_port_option = 0;
 	while (true) {
@@ -591,7 +700,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.commands =
 					realloc(result.config.commands, sizeof(char *) * command_size);
 				if (result.config.commands == NULL) {
-					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"),
+					die(STATE_UNKNOWN, _("Could not realloc() units [%lu]\n"),
 						result.config.ncommands);
 				}
 			}
@@ -605,7 +714,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.responses =
 					realloc(result.config.responses, sizeof(char *) * response_size);
 				if (result.config.responses == NULL) {
-					die(STATE_UNKNOWN, _("Could not realloc() units [%d]\n"),
+					die(STATE_UNKNOWN, _("Could not realloc() units [%lu]\n"),
 						result.config.nresponses);
 				}
 			}
@@ -613,22 +722,22 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			strncpy(result.config.responses[result.config.nresponses], optarg, 255);
 			result.config.nresponses++;
 			break;
-		case 'c': /* critical time threshold */
-			if (!is_nonnegative(optarg)) {
-				usage4(_("Critical time must be a positive"));
-			} else {
-				result.config.critical_time = strtod(optarg, NULL);
-				result.config.check_critical_time = true;
+		case 'c': /* critical time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical time threshold");
 			}
-			break;
-		case 'w': /* warning time threshold */
-			if (!is_nonnegative(optarg)) {
-				usage4(_("Warning time must be a positive"));
-			} else {
-				result.config.warning_time = strtod(optarg, NULL);
-				result.config.check_warning_time = true;
+			result.config.connection_time =
+				mp_thresholds_set_warn(result.config.connection_time, tmp.range);
+		} break;
+		case 'w': /* warning time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning time threshold");
 			}
-			break;
+			result.config.connection_time =
+				mp_thresholds_set_crit(result.config.connection_time, tmp.range);
+		} break;
 		case 'v': /* verbose */
 			verbose++;
 			break;
@@ -665,7 +774,6 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 				}
 				result.config.days_till_exp_warn = atoi(optarg);
 			}
-			result.config.check_cert = true;
 			result.config.ignore_send_quit_failure = true;
 #else
 			usage(_("SSL support not available - install OpenSSL and recompile"));
@@ -714,6 +822,21 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
+		case ignore_certificate_expiration_index: {
+			result.config.ignore_certificate_expiration = true;
+		}
 		}
 	}
 
@@ -740,6 +863,19 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (server_port_option != 0) {
 		result.config.server_port = server_port_option;
+	}
+
+	if (result.config.authtype) {
+		if (strcmp(result.config.authtype, "LOGIN") == 0) {
+			if (result.config.authuser == NULL) {
+				usage4("no authuser specified");
+			}
+			if (result.config.authpass == NULL) {
+				usage4("no authpass specified");
+			}
+		} else {
+			usage4("only authtype LOGIN is supported");
+		}
 	}
 
 	return result;
@@ -791,7 +927,7 @@ char *smtp_quit(check_smtp_config config, char buffer[MAX_INPUT_BUFFER], int soc
 int recvline(char *buf, size_t bufsize, check_smtp_config config, int socket_descriptor,
 			 bool ssl_established) {
 	int result;
-	int counter;
+	size_t counter;
 
 	for (counter = result = 0; counter < bufsize - 1; counter++) {
 		if ((result = my_recv(config, &buf[counter], 1, socket_descriptor, ssl_established)) != 1) {
@@ -799,7 +935,7 @@ int recvline(char *buf, size_t bufsize, check_smtp_config config, int socket_des
 		}
 		if (buf[counter] == '\n') {
 			buf[++counter] = '\0';
-			return counter;
+			return (int)counter;
 		}
 	}
 	return (result == 1 || counter == 0) ? -2 : result; /* -2 if out of space */
@@ -902,10 +1038,14 @@ void print_help(void) {
 	printf("    %s\n", _("Send LHLO instead of HELO/EHLO"));
 	printf(" %s\n", "-q, --ignore-quit-failure");
 	printf("    %s\n", _("Ignore failure when sending QUIT command to server"));
+	printf(" %s\n", "--ignore-certificate-expiration");
+	printf("    %s\n", _("Ignore certificate expiration"));
 
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_VERBOSE);
 

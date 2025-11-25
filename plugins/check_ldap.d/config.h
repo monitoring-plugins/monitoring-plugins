@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "thresholds.h"
 #include <stddef.h>
 
@@ -25,13 +26,11 @@ typedef struct {
 	int ld_protocol;
 #endif
 
-	char *warn_entries;
-	char *crit_entries;
-	thresholds *entries_thresholds;
-	bool warn_time_set;
-	double warn_time;
-	bool crit_time_set;
-	double crit_time;
+	mp_thresholds entries_thresholds;
+	mp_thresholds connection_time_threshold;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_ldap_config;
 
 check_ldap_config check_ldap_config_init() {
@@ -48,13 +47,10 @@ check_ldap_config check_ldap_config_init() {
 		.ld_protocol = DEFAULT_PROTOCOL,
 #endif
 
-		.warn_entries = NULL,
-		.crit_entries = NULL,
-		.entries_thresholds = NULL,
-		.warn_time_set = false,
-		.warn_time = 0,
-		.crit_time_set = false,
-		.crit_time = 0,
+		.entries_thresholds = mp_thresholds_init(),
+		.connection_time_threshold = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

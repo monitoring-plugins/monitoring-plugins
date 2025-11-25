@@ -312,6 +312,138 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 #	endif /* USE_OPENSSL */
 }
 
+retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate) {
+#	ifdef USE_OPENSSL
+	retrieve_expiration_time_result result = {
+		.errors = ALL_OK,
+		.remaining_seconds = 0,
+	};
+
+	if (!certificate) {
+		// printf("%s\n", _("CRITICAL - No server certificate present to inspect."));
+		result.errors = NO_SERVER_CERTIFICATE_PRESENT;
+		return result;
+	}
+
+	/* Extract CN from certificate subject */
+	X509_NAME *subj = X509_get_subject_name(certificate);
+
+	if (!subj) {
+		// printf("%s\n", _("CRITICAL - Cannot retrieve certificate subject."));
+		result.errors = UNABLE_TO_RETRIEVE_CERTIFICATE_SUBJECT;
+		return result;
+	}
+
+	char cn[MAX_CN_LENGTH] = "";
+	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
+	if (cnlen == -1) {
+		strcpy(cn, _("Unknown CN"));
+	}
+
+	/* Retrieve timestamp of certificate */
+	ASN1_STRING *expiration_timestamp = X509_get_notAfter(certificate);
+
+	int offset = 0;
+	struct tm stamp = {};
+	/* Generate tm structure to process timestamp */
+	if (expiration_timestamp->type == V_ASN1_UTCTIME) {
+		if (expiration_timestamp->length < 10) {
+			result.errors = WRONG_TIME_FORMAT_IN_CERTIFICATE;
+			return result;
+		}
+
+		stamp.tm_year =
+			(expiration_timestamp->data[0] - '0') * 10 + (expiration_timestamp->data[1] - '0');
+		if (stamp.tm_year < 50) {
+			stamp.tm_year += 100;
+		}
+		offset = 0;
+	} else {
+		if (expiration_timestamp->length < 12) {
+			result.errors = WRONG_TIME_FORMAT_IN_CERTIFICATE;
+			return result;
+		}
+
+		stamp.tm_year = (expiration_timestamp->data[0] - '0') * 1000 +
+						(expiration_timestamp->data[1] - '0') * 100 +
+						(expiration_timestamp->data[2] - '0') * 10 +
+						(expiration_timestamp->data[3] - '0');
+		stamp.tm_year -= 1900;
+		offset = 2;
+	}
+	stamp.tm_mon = (expiration_timestamp->data[2 + offset] - '0') * 10 +
+				   (expiration_timestamp->data[3 + offset] - '0') - 1;
+	stamp.tm_mday = (expiration_timestamp->data[4 + offset] - '0') * 10 +
+					(expiration_timestamp->data[5 + offset] - '0');
+	stamp.tm_hour = (expiration_timestamp->data[6 + offset] - '0') * 10 +
+					(expiration_timestamp->data[7 + offset] - '0');
+	stamp.tm_min = (expiration_timestamp->data[8 + offset] - '0') * 10 +
+				   (expiration_timestamp->data[9 + offset] - '0');
+	stamp.tm_sec = (expiration_timestamp->data[10 + offset] - '0') * 10 +
+				   (expiration_timestamp->data[11 + offset] - '0');
+	stamp.tm_isdst = -1;
+
+	time_t tm_t = timegm(&stamp);
+	double time_left = difftime(tm_t, time(NULL));
+	result.remaining_seconds = time_left;
+
+	char *timezone = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+
+	char timestamp[50] = "";
+	strftime(timestamp, 50, "%c %z", localtime(&tm_t));
+	if (timezone) {
+		setenv("TZ", timezone, 1);
+	} else {
+		unsetenv("TZ");
+	}
+
+	tzset();
+
+	X509_free(certificate);
+
+	return result;
+#	else  /* ifndef USE_OPENSSL */
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	return STATE_WARNING;
+#	endif /* USE_OPENSSL */
+}
+
+net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int days_till_exp_crit) {
+#	ifdef USE_OPENSSL
+	X509 *certificate = NULL;
+	certificate = SSL_get_peer_certificate(s);
+
+	retrieve_expiration_time_result expiration_date = np_net_ssl_get_cert_expiration(certificate);
+
+	net_ssl_check_cert_result result = {
+		.result_state = STATE_UNKNOWN,
+		.remaining_seconds = expiration_date.remaining_seconds,
+		.errors = expiration_date.errors,
+	};
+
+	if (expiration_date.errors == ALL_OK) {
+		// got a valid expiration date
+		unsigned int remaining_days = result.remaining_seconds / 86400;
+
+		if (remaining_days < days_till_exp_crit) {
+			result.result_state = STATE_CRITICAL;
+		} else if (remaining_days < days_till_exp_warn) {
+			result.result_state = STATE_WARNING;
+		} else {
+			result.result_state = STATE_OK;
+		}
+	}
+
+	return result;
+
+#	else  /* ifndef USE_OPENSSL */
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	return STATE_WARNING;
+#	endif /* USE_OPENSSL */
+}
+
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
 #	ifdef USE_OPENSSL
 	X509 *certificate = NULL;

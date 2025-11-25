@@ -11,6 +11,7 @@
 #  mysql -u$user -p$password -h$host $db
 
 use strict;
+use warnings;
 use Test::More;
 use NPTest;
 
@@ -40,7 +41,7 @@ SKIP: {
 
 	$result = NPTest->testCmd("./check_mysql -S -H $mysqlserver $mysql_login_details");
 	cmp_ok( $result->return_code, "==", 1, "No replicas defined" );
-	like( $result->output, "/No replicas defined/", "Correct error message");
+	like( $result->output, "/no replicas defined/", "Correct error message");
 }
 
 SKIP: {
@@ -54,7 +55,7 @@ SKIP: {
 
 	$result = NPTest->testCmd("./check_mysql -S -s $mysqlsocket $mysql_login_details");
 	cmp_ok( $result->return_code, "==", 1, "No replicas defined" );
-	like( $result->output, "/No replicas defined/", "Correct error message");
+	like( $result->output, "/no replicas defined/", "Correct error message");
 }
 
 SKIP: {
@@ -70,5 +71,5 @@ SKIP: {
 
 	$result = NPTest->testCmd("./check_mysql -S -H $with_replica $with_replica_login -w 60:");
 	cmp_ok( $result->return_code, '==', 1, 'Alert warning if < 60 seconds behind');
-	like( $result->output, "/^SLOW_REPLICA WARNING:/", "Output okay");
+	like( $result->output, "/^slow_replica/", "Output okay");
 }

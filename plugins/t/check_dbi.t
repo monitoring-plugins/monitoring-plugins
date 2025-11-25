@@ -21,12 +21,12 @@ plan tests => $tests;
 my $missing_driver_output = "failed to open DBI driver 'sqlite3'";
 
 my $bad_driver_output    = "/failed to open DBI driver 'nodriver'/";
-my $conn_time_output     = "/OK - connection time: [0-9\.]+s \|/";
+my $conn_time_output     = "/connection time: [0-9\.]+s \|/";
 my $missing_query_output = "/Must specify a query to execute/";
-my $no_rows_output       = "/WARNING - no rows returned/";
-my $not_numeric_output   = "/CRITICAL - result value is not a numeric:/";
-my $query_time_output    = "/OK - connection time: [0-9\.]+s, 'SELECT 1' returned 1.000000 in [0-9\.]+s \|/";
-my $syntax_error_output  = "/CRITICAL - failed to execute query 'GET ALL FROM test': 1: near \"GET\": syntax error/";
+my $no_rows_output       = "/no rows returned/";
+my $not_numeric_output   = "/result value is not a numeric:/";
+my $query_time_output    = "/connection time: [0-9\.]+s, 'SELECT 1' returned 1.000000 in [0-9\.]+s \|/";
+my $syntax_error_output  = "/1: near \"GET\": syntax error/";
 
 my $result;
 

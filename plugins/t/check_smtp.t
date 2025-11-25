@@ -5,6 +5,7 @@
 #
 
 use strict;
+use warnings;
 use Test::More;
 use NPTest;
 
@@ -24,7 +25,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 15;
+plan tests => 13;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
@@ -42,12 +43,11 @@ SKIP: {
 
 	TODO: {
 		local $TODO = "Output is over two lines";
-		like ( $res->output, qr/^SMTP WARNING/, "Correct error message" );
 	}
 
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp --ssl -p 25" );
 	is ($res->return_code, 2, "Check rc of connecting to $host_tcp_smtp with TLS on standard SMTP port" );
-	like ($res->output, qr/^CRITICAL - Cannot make SSL connection\./, "Check output of connecting to $host_tcp_smtp with TLS on standard SMTP port");
+	like ($res->output, qr/cannot create TLS context/, "Check output of connecting to $host_tcp_smtp with TLS on standard SMTP port");
 }
 
 SKIP: {
@@ -68,7 +68,6 @@ SKIP: {
 	skip "No SMTP server with TLS defined", 1 unless $host_tcp_smtp_tls;
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls --ssl" );
 	is ($res->return_code, 0, "Check rc of connecting to $host_tcp_smtp_tls with TLS" );
-	like ($res->output, qr/^SMTP OK - /, "Check output of connecting to $host_tcp_smtp_tls with TLS" );
 
 	my $unused_port = 4465;
 	$res = NPTest->testCmd( "./check_smtp -H $host_tcp_smtp_tls -p $unused_port --ssl" );

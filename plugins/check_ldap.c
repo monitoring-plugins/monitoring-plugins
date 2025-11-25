@@ -27,12 +27,11 @@
  *****************************************************************************/
 
 /* progname may be check_ldaps */
-char *progname = "check_ldap";
-const char *copyright = "2000-2024";
-const char *email = "devel@monitoring-plugins.org";
-
+#include "output.h"
 #include "common.h"
 #include "netutils.h"
+#include "perfdata.h"
+#include "thresholds.h"
 #include "utils.h"
 #include "check_ldap.d/config.h"
 
@@ -40,6 +39,10 @@ const char *email = "devel@monitoring-plugins.org";
 #include <lber.h>
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
+
+char *progname = "check_ldap";
+const char *copyright = "2000-2024";
+const char *email = "devel@monitoring-plugins.org";
 
 enum {
 	DEFAULT_PORT = 389
@@ -79,6 +82,10 @@ int main(int argc, char *argv[]) {
 
 	const check_ldap_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
@@ -89,101 +96,172 @@ int main(int argc, char *argv[]) {
 	struct timeval start_time;
 	gettimeofday(&start_time, NULL);
 
+	mp_check overall = mp_check_init();
+
 	LDAP *ldap_connection;
 	/* initialize ldap */
+	{
 #ifdef HAVE_LDAP_INIT
-	if (!(ldap_connection = ldap_init(config.ld_host, config.ld_port))) {
-		printf("Could not connect to the server at port %i\n", config.ld_port);
-		return STATE_CRITICAL;
-	}
-#else
-	if (!(ld = ldap_open(config.ld_host, config.ld_port))) {
-		if (verbose) {
-			ldap_perror(ldap_connection, "ldap_open");
+		mp_subcheck sc_ldap_init = mp_subcheck_init();
+		if (!(ldap_connection = ldap_init(config.ld_host, config.ld_port))) {
+			xasprintf(&sc_ldap_init.output, "could not connect to the server at port %i",
+					  config.ld_port);
+			sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_ldap_init);
+			mp_exit(overall);
+		} else {
+			xasprintf(&sc_ldap_init.output, "connected to the server at port %i", config.ld_port);
+			sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_OK);
+			mp_add_subcheck_to_check(&overall, sc_ldap_init);
 		}
-		printf(_("Could not connect to the server at port %i\n"), config.ld_port);
-		return STATE_CRITICAL;
-	}
+#else
+		mp_subcheck sc_ldap_init = mp_subcheck_init();
+		if (!(ld = ldap_open(config.ld_host, config.ld_port))) {
+			if (verbose) {
+				ldap_perror(ldap_connection, "ldap_open");
+			}
+		xasprintf(&sc_ldap_init.output, "Could not connect to the server at port %i"), config.ld_port);
+		sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_ldap_init);
+		mp_exit(overall);
+		} else {
+			xasprintf(&sc_ldap_init.output, "connected to the server at port %i", config.ld_port);
+			sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_OK);
+			mp_add_subcheck_to_check(&overall, sc_ldap_init);
+		}
 #endif /* HAVE_LDAP_INIT */
+	}
 
 #ifdef HAVE_LDAP_SET_OPTION
 	/* set ldap options */
+	mp_subcheck sc_ldap_set_opts = mp_subcheck_init();
 	if (ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &config.ld_protocol) !=
 		LDAP_OPT_SUCCESS) {
-		printf(_("Could not set protocol version %d\n"), config.ld_protocol);
-		return STATE_CRITICAL;
+		xasprintf(&sc_ldap_set_opts.output, "Could not set protocol version %d",
+				  config.ld_protocol);
+		sc_ldap_set_opts = mp_set_subcheck_state(sc_ldap_set_opts, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_ldap_set_opts);
+		mp_exit(overall);
+	} else {
+		xasprintf(&sc_ldap_set_opts.output, "set protocol version %d", config.ld_protocol);
+		sc_ldap_set_opts = mp_set_subcheck_state(sc_ldap_set_opts, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_ldap_set_opts);
 	}
 #endif
 
 	int version = 3;
 	int tls;
-	if (config.ld_port == LDAPS_PORT || config.ssl_on_connect) {
+	{
+		if (config.ld_port == LDAPS_PORT || config.ssl_on_connect) {
 #if defined(HAVE_LDAP_SET_OPTION) && defined(LDAP_OPT_X_TLS)
-		/* ldaps: set option tls */
-		tls = LDAP_OPT_X_TLS_HARD;
+			/* ldaps: set option tls */
+			tls = LDAP_OPT_X_TLS_HARD;
 
-		if (ldap_set_option(ldap_connection, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS) {
-			if (verbose) {
-				ldap_perror(ldap_connection, "ldaps_option");
+			mp_subcheck sc_ldap_tls_init = mp_subcheck_init();
+			if (ldap_set_option(ldap_connection, LDAP_OPT_X_TLS, &tls) != LDAP_SUCCESS) {
+				if (verbose) {
+					ldap_perror(ldap_connection, "ldaps_option");
+				}
+				xasprintf(&sc_ldap_tls_init.output, "could not init TLS at port %i!",
+						  config.ld_port);
+				sc_ldap_tls_init = mp_set_subcheck_state(sc_ldap_tls_init, STATE_CRITICAL);
+				mp_add_subcheck_to_check(&overall, sc_ldap_tls_init);
+				mp_exit(overall);
+			} else {
+				xasprintf(&sc_ldap_tls_init.output, "initiated TLS at port %i!", config.ld_port);
+				sc_ldap_tls_init = mp_set_subcheck_state(sc_ldap_tls_init, STATE_OK);
+				mp_add_subcheck_to_check(&overall, sc_ldap_tls_init);
 			}
-			printf(_("Could not init TLS at port %i!\n"), config.ld_port);
-			return STATE_CRITICAL;
-		}
 #else
-		printf(_("TLS not supported by the libraries!\n"));
-		return STATE_CRITICAL;
+			printf(_("TLS not supported by the libraries!\n"));
+			exit(STATE_CRITICAL);
 #endif /* LDAP_OPT_X_TLS */
-	} else if (config.starttls) {
+		} else if (config.starttls) {
 #if defined(HAVE_LDAP_SET_OPTION) && defined(HAVE_LDAP_START_TLS_S)
-		/* ldap with startTLS: set option version */
-		if (ldap_get_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version) ==
-			LDAP_OPT_SUCCESS) {
-			if (version < LDAP_VERSION3) {
-				version = LDAP_VERSION3;
-				ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version);
+			/* ldap with startTLS: set option version */
+			if (ldap_get_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version) ==
+				LDAP_OPT_SUCCESS) {
+				if (version < LDAP_VERSION3) {
+					version = LDAP_VERSION3;
+					ldap_set_option(ldap_connection, LDAP_OPT_PROTOCOL_VERSION, &version);
+				}
 			}
-		}
-		/* call start_tls */
-		if (ldap_start_tls_s(ldap_connection, NULL, NULL) != LDAP_SUCCESS) {
-			if (verbose) {
-				ldap_perror(ldap_connection, "ldap_start_tls");
+			/* call start_tls */
+			mp_subcheck sc_ldap_starttls = mp_subcheck_init();
+			if (ldap_start_tls_s(ldap_connection, NULL, NULL) != LDAP_SUCCESS) {
+				if (verbose) {
+					ldap_perror(ldap_connection, "ldap_start_tls");
+				}
+				xasprintf(&sc_ldap_starttls.output, "could not init STARTTLS at port %i!",
+						  config.ld_port);
+				sc_ldap_starttls = mp_set_subcheck_state(sc_ldap_starttls, STATE_CRITICAL);
+				mp_add_subcheck_to_check(&overall, sc_ldap_starttls);
+				mp_exit(overall);
+			} else {
+				xasprintf(&sc_ldap_starttls.output, "initiated STARTTLS at port %i!",
+						  config.ld_port);
+				sc_ldap_starttls = mp_set_subcheck_state(sc_ldap_starttls, STATE_OK);
+				mp_add_subcheck_to_check(&overall, sc_ldap_starttls);
 			}
-			printf(_("Could not init startTLS at port %i!\n"), config.ld_port);
-			return STATE_CRITICAL;
-		}
 #else
-		printf(_("startTLS not supported by the library, needs LDAPv3!\n"));
-		return STATE_CRITICAL;
+			printf(_("startTLS not supported by the library, needs LDAPv3!\n"));
+			exit(STATE_CRITICAL);
 #endif /* HAVE_LDAP_START_TLS_S */
+		}
 	}
 
 	/* bind to the ldap server */
-	if (ldap_bind_s(ldap_connection, config.ld_binddn, config.ld_passwd, LDAP_AUTH_SIMPLE) !=
-		LDAP_SUCCESS) {
-		if (verbose) {
-			ldap_perror(ldap_connection, "ldap_bind");
+	{
+		mp_subcheck sc_ldap_bind = mp_subcheck_init();
+		int ldap_error =
+			ldap_bind_s(ldap_connection, config.ld_binddn, config.ld_passwd, LDAP_AUTH_SIMPLE);
+		if (ldap_error != LDAP_SUCCESS) {
+			if (verbose) {
+				ldap_perror(ldap_connection, "ldap_bind");
+			}
+
+			xasprintf(&sc_ldap_bind.output, "could not bind to the LDAP server: %s",
+					  ldap_err2string(ldap_error));
+			sc_ldap_bind = mp_set_subcheck_state(sc_ldap_bind, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_ldap_bind);
+			mp_exit(overall);
+		} else {
+			xasprintf(&sc_ldap_bind.output, "execute bind to the LDAP server");
+			sc_ldap_bind = mp_set_subcheck_state(sc_ldap_bind, STATE_OK);
+			mp_add_subcheck_to_check(&overall, sc_ldap_bind);
 		}
-		printf(_("Could not bind to the LDAP server\n"));
-		return STATE_CRITICAL;
 	}
 
 	LDAPMessage *result;
-	int num_entries = 0;
 	/* do a search of all objectclasses in the base dn */
-	if (ldap_search_s(ldap_connection, config.ld_base,
-					  (config.crit_entries != NULL || config.warn_entries != NULL)
-						  ? LDAP_SCOPE_SUBTREE
-						  : LDAP_SCOPE_BASE,
-					  config.ld_attr, NULL, 0, &result) != LDAP_SUCCESS) {
-		if (verbose) {
-			ldap_perror(ldap_connection, "ldap_search");
+	{
+		mp_subcheck sc_ldap_search = mp_subcheck_init();
+		int ldap_error = ldap_search_s(
+			ldap_connection, config.ld_base,
+			(config.entries_thresholds.warning_is_set || config.entries_thresholds.critical_is_set)
+				? LDAP_SCOPE_SUBTREE
+				: LDAP_SCOPE_BASE,
+			config.ld_attr, NULL, 0, &result);
+
+		if (ldap_error != LDAP_SUCCESS) {
+			if (verbose) {
+				ldap_perror(ldap_connection, "ldap_search");
+			}
+			xasprintf(&sc_ldap_search.output, "could not search/find objectclasses in %s: %s",
+					  config.ld_base, ldap_err2string(ldap_error));
+			sc_ldap_search = mp_set_subcheck_state(sc_ldap_search, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_ldap_search);
+			mp_exit(overall);
+		} else {
+			xasprintf(&sc_ldap_search.output, "search/find objectclasses in %s", config.ld_base);
+			sc_ldap_search = mp_set_subcheck_state(sc_ldap_search, STATE_OK);
+			mp_add_subcheck_to_check(&overall, sc_ldap_search);
 		}
-		printf(_("Could not search/find objectclasses in %s\n"), config.ld_base);
-		return STATE_CRITICAL;
 	}
 
-	if (config.crit_entries != NULL || config.warn_entries != NULL) {
-		num_entries = ldap_count_entries(ldap_connection, result);
+	int num_entries = ldap_count_entries(ldap_connection, result);
+	if (verbose) {
+		printf("entries found: %d\n", num_entries);
 	}
 
 	/* unbind from the ldap server */
@@ -193,50 +271,50 @@ int main(int argc, char *argv[]) {
 	alarm(0);
 
 	/* calculate the elapsed time and compare to thresholds */
-
 	long microsec = deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
-	mp_state_enum status = STATE_UNKNOWN;
-	if (config.crit_time_set && elapsed_time > config.crit_time) {
-		status = STATE_CRITICAL;
-	} else if (config.warn_time_set && elapsed_time > config.warn_time) {
-		status = STATE_WARNING;
+	mp_perfdata pd_connection_time = perfdata_init();
+	pd_connection_time.label = "time";
+	pd_connection_time.value = mp_create_pd_value(elapsed_time);
+	pd_connection_time = mp_pd_set_thresholds(pd_connection_time, config.connection_time_threshold);
+
+	mp_subcheck sc_connection_time = mp_subcheck_init();
+	mp_add_perfdata_to_subcheck(&sc_connection_time, pd_connection_time);
+
+	mp_state_enum connection_time_state = mp_get_pd_status(pd_connection_time);
+	sc_connection_time = mp_set_subcheck_state(sc_connection_time, connection_time_state);
+
+	if (connection_time_state == STATE_OK) {
+		xasprintf(&sc_connection_time.output, "connection time %.3fs is within thresholds",
+				  elapsed_time);
 	} else {
-		status = STATE_OK;
+		xasprintf(&sc_connection_time.output, "connection time %.3fs is violating thresholds",
+				  elapsed_time);
 	}
 
-	if (config.entries_thresholds != NULL) {
-		if (verbose) {
-			printf("entries found: %d\n", num_entries);
-			print_thresholds("entry thresholds", config.entries_thresholds);
-		}
-		mp_state_enum status_entries = get_status(num_entries, config.entries_thresholds);
-		if (status_entries == STATE_CRITICAL) {
-			status = STATE_CRITICAL;
-		} else if (status != STATE_CRITICAL) {
-			status = status_entries;
-		}
-	}
+	mp_add_subcheck_to_check(&overall, sc_connection_time);
 
-	/* print out the result */
-	if (config.crit_entries != NULL || config.warn_entries != NULL) {
-		printf(_("LDAP %s - found %d entries in %.3f seconds|%s %s\n"), state_text(status),
-			   num_entries, elapsed_time,
-			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time,
-						 config.crit_time_set, config.crit_time, true, 0, false, 0),
-			   sperfdata("entries", (double)num_entries, "", config.warn_entries,
-						 config.crit_entries, true, 0.0, false, 0.0));
-	} else {
-		printf(_("LDAP %s - %.3f seconds response time|%s\n"), state_text(status), elapsed_time,
-			   fperfdata("time", elapsed_time, "s", config.warn_time_set, config.warn_time,
-						 config.crit_time_set, config.crit_time, true, 0, false, 0));
-	}
+	mp_perfdata pd_num_entries = perfdata_init();
+	pd_num_entries.label = "entries";
+	pd_num_entries.value = mp_create_pd_value(num_entries);
+	pd_num_entries = mp_pd_set_thresholds(pd_num_entries, config.entries_thresholds);
 
-	exit(status);
+	mp_subcheck sc_num_entries = mp_subcheck_init();
+	mp_add_perfdata_to_subcheck(&sc_num_entries, pd_num_entries);
+	xasprintf(&sc_num_entries.output, "found %d entries", num_entries);
+	sc_num_entries = mp_set_subcheck_state(sc_num_entries, mp_get_pd_status(pd_num_entries));
+
+	mp_add_subcheck_to_check(&overall, sc_num_entries);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_ldap_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	/* initialize the long option struct */
 	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
 									   {"version", no_argument, 0, 'V'},
@@ -260,6 +338,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 									   {"warn-entries", required_argument, 0, 'W'},
 									   {"crit-entries", required_argument, 0, 'C'},
 									   {"verbose", no_argument, 0, 'v'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_ldap_config_wrapper result = {
@@ -319,20 +398,38 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		case 'P':
 			result.config.ld_passwd = optarg;
 			break;
-		case 'w':
-			result.config.warn_time_set = true;
-			result.config.warn_time = strtod(optarg, NULL);
-			break;
-		case 'c':
-			result.config.crit_time_set = true;
-			result.config.crit_time = strtod(optarg, NULL);
-			break;
-		case 'W':
-			result.config.warn_entries = optarg;
-			break;
-		case 'C':
-			result.config.crit_entries = optarg;
-			break;
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning connection time threshold");
+			}
+			result.config.connection_time_threshold =
+				mp_thresholds_set_warn(result.config.connection_time_threshold, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical connection time threshold");
+			}
+			result.config.connection_time_threshold =
+				mp_thresholds_set_crit(result.config.connection_time_threshold, tmp.range);
+		} break;
+		case 'W': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse number of entries warning threshold");
+			}
+			result.config.entries_thresholds =
+				mp_thresholds_set_warn(result.config.entries_thresholds, tmp.range);
+		} break;
+		case 'C': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse number of entries critical threshold");
+			}
+			result.config.entries_thresholds =
+				 mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
+		} break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':
 			result.config.ld_protocol = 2;
@@ -371,6 +468,18 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			usage(_("IPv6 support not available\n"));
 #endif
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		default:
 			usage5();
 		}
@@ -404,11 +513,6 @@ check_ldap_config_wrapper validate_arguments(check_ldap_config_wrapper config_wr
 
 	if (config_wrapper.config.ld_base == NULL) {
 		usage4(_("Please specify the LDAP base\n"));
-	}
-
-	if (config_wrapper.config.crit_entries != NULL || config_wrapper.config.warn_entries != NULL) {
-		set_thresholds(&config_wrapper.config.entries_thresholds,
-					   config_wrapper.config.warn_entries, config_wrapper.config.crit_entries);
 	}
 
 	if (config_wrapper.config.ld_passwd == NULL) {
@@ -471,6 +575,7 @@ void print_help(void) {
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
