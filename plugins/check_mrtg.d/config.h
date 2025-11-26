@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
+#include "thresholds.h"
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -12,10 +14,10 @@ typedef struct {
 	char *units;
 	char *log_file;
 
-	bool value_warning_threshold_set;
-	unsigned long value_warning_threshold;
-	bool value_critical_threshold_set;
-	unsigned long value_critical_threshold;
+	mp_thresholds values_threshold;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_mrtg_config;
 
 check_mrtg_config check_mrtg_config_init() {
@@ -27,10 +29,9 @@ check_mrtg_config check_mrtg_config_init() {
 		.units = NULL,
 		.log_file = NULL,
 
-		.value_warning_threshold_set = false,
-		.value_warning_threshold = 0,
-		.value_critical_threshold_set = false,
-		.value_critical_threshold = 0,
+		.values_threshold = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }
