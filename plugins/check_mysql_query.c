@@ -73,6 +73,10 @@ int main(int argc, char **argv) {
 
 	const check_mysql_query_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
@@ -185,6 +189,10 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
 									   {"socket", required_argument, 0, 's'},
 									   {"database", required_argument, 0, 'd'},
@@ -199,6 +207,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 									   {"query", required_argument, 0, 'q'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_mysql_query_config_wrapper result = {
@@ -282,6 +291,17 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -343,6 +363,8 @@ void print_help(void) {
 	printf("    %s\n", _("Password to login with"));
 	printf("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
 	printf("    %s\n", _("Your clear-text password could be visible as a process table entry"));
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf(" %s\n", _("A query is required. The result from the query should be numeric."));

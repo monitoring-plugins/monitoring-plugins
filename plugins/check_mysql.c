@@ -96,6 +96,10 @@ int main(int argc, char **argv) {
 
 	const check_mysql_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
@@ -471,6 +475,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 
 	enum {
 		CHECK_REPLICA_OPT = CHAR_MAX + 1,
+		output_format_index,
 	};
 
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
@@ -495,6 +500,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 									   {"cert", required_argument, 0, 'a'},
 									   {"ca-dir", required_argument, 0, 'D'},
 									   {"ciphers", required_argument, 0, 'L'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_mysql_config_wrapper result = {
@@ -605,6 +611,17 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -710,6 +727,8 @@ void print_help(void) {
 	printf("    %s\n", _("Path to CA directory"));
 	printf(" %s\n", "-L, --ciphers=STRING");
 	printf("    %s\n", _("List of valid SSL ciphers"));
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf(" %s\n",
