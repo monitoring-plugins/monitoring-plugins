@@ -3,7 +3,7 @@
  * Monitoring check_dig plugin
  *
  * License: GPL
- * Copyright (c) 2002-2024 Monitoring Plugins Development Team
+ * Copyright (c) 2002-2025 Monitoring Plugins Development Team
  *
  * Description:
  *
@@ -33,7 +33,7 @@
  *  because on some architectures those strings are in non-writable memory */
 
 const char *progname = "check_dig";
-const char *copyright = "2002-2024";
+const char *copyright = "2002-2025";
 const char *email = "devel@monitoring-plugins.org";
 
 #include <ctype.h>
@@ -58,10 +58,14 @@ void print_usage(void);
 static int verbose = 0;
 
 /* helpers for flag parsing */
-static bool parse_flags_line(const char *line, char ***out_flags, size_t *out_count);
-static void free_flags(char **flags, size_t count);
-static bool list_contains(char **flags, size_t count, const char *needle);
-static void split_csv_trim(const char *csv, char ***out_items, size_t *out_count);
+typedef struct {
+	char **items;
+	size_t count;
+} flag_list;
+static flag_list parse_flags_line(const char *line);
+static flag_list split_csv_trim(const char *csv);
+static bool flag_list_contains(const flag_list *list, const char *needle);
+static void free_flag_list(flag_list *list);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -108,10 +112,9 @@ int main(int argc, char **argv) {
 	output chld_out;
 	output chld_err;
 	char *msg = NULL;
-	char **dig_flags = NULL;
-	size_t dig_flags_cnt = 0;
-
+	flag_list dig_flags = {.items = NULL, .count = 0};
 	mp_state_enum result = STATE_UNKNOWN;
+
 	/* run the command */
 	if (np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
 		result = STATE_WARNING;
@@ -121,16 +124,21 @@ int main(int argc, char **argv) {
 	/* extract ';; flags: ...' from stdout (first occurrence) */
 	for (size_t i = 0; i < chld_out.lines; i++) {
 		if (strstr(chld_out.line[i], "flags:")) {
-			if (verbose) printf("Raw flags line: %s\n", chld_out.line[i]);
-			if (parse_flags_line(chld_out.line[i], &dig_flags, &dig_flags_cnt)) {
-				if (verbose) {
-					printf(_("Parsed flags:"));
-	        		for (size_t k = 0; k < dig_flags_cnt; k++) printf(" %s", dig_flags[k]);
-	        		printf("\n");
-	      		}
-	    	}
-	    break;
-	  	}
+			if (verbose) {
+				printf("Raw flags line: %s\n", chld_out.line[i]);
+			}
+
+			dig_flags = parse_flags_line(chld_out.line[i]);
+
+			if (verbose && dig_flags.count > 0) {
+				printf(_("Parsed flags:"));
+				for (size_t k = 0; k < dig_flags.count; k++) {
+					printf(" %s", dig_flags.items[k]);
+				}
+				printf("\n");
+			}
+			break;
+		}
 	}
 
 	for (size_t i = 0; i < chld_out.lines; i++) {
@@ -200,47 +208,55 @@ int main(int argc, char **argv) {
 	}
 
 	/* Optional: evaluate dig flags only if -E/-X were provided */
-	if ((config.require_flags && *config.require_flags) || (config.forbid_flags && *config.forbid_flags)) {
-		if (dig_flags_cnt > 0) {
+	if ((config.require_flags && *config.require_flags) ||
+		(config.forbid_flags && *config.forbid_flags)) {
+
+		if (dig_flags.count > 0) {
+
 			if (config.require_flags && *config.require_flags) {
-				char **req = NULL; size_t reqn = 0;
-				split_csv_trim(config.require_flags, &req, &reqn);
-				for (size_t r = 0; r < reqn; r++) {
-					if (!list_contains(dig_flags, dig_flags_cnt, req[r])) {
+				flag_list req = split_csv_trim(config.require_flags);
+
+				for (size_t r = 0; r < req.count; r++) {
+					if (!flag_list_contains(&dig_flags, req.items[r])) {
 						result = STATE_CRITICAL;
 						if (!msg) {
-							xasprintf(&msg, _("Missing required DNS flag: %s"), req[r]);
+							xasprintf(&msg, _("Missing required DNS flag: %s"), req.items[r]);
 						} else {
 							char *newmsg = NULL;
-							xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg, req[r]);
+							xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
+									  req.items[r]);
 							msg = newmsg;
 						}
 					}
 				}
-				free_flags(req, reqn);
+
+				free_flag_list(&req);
 			}
+
 			if (config.forbid_flags && *config.forbid_flags) {
-				char **bad = NULL; size_t badn = 0;
-				split_csv_trim(config.forbid_flags, &bad, &badn);
-				for (size_t r = 0; r < badn; r++) {
-					if (list_contains(dig_flags, dig_flags_cnt, bad[r])) {
+				flag_list bad = split_csv_trim(config.forbid_flags);
+
+				for (size_t r = 0; r < bad.count; r++) {
+					if (flag_list_contains(&dig_flags, bad.items[r])) {
 						result = STATE_CRITICAL;
 						if (!msg) {
-							xasprintf(&msg, _("Forbidden DNS flag present: %s"), bad[r]);
+							xasprintf(&msg, _("Forbidden DNS flag present: %s"), bad.items[r]);
 						} else {
 							char *newmsg = NULL;
-							xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg, bad[r]);
+							xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
+									  bad.items[r]);
 							msg = newmsg;
 						}
 					}
 				}
-				free_flags(bad, badn);
+
+				free_flag_list(&bad);
 			}
 		}
 	}
 
 	/* cleanup flags buffer */
-	free_flags(dig_flags, dig_flags_cnt);
+	free_flag_list(&dig_flags);
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
@@ -282,7 +298,8 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option = 0;
 	while (true) {
-		int option_index = getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:E:X:46", longopts, &option);
+		int option_index =
+			getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:E:X:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF) {
 			break;
@@ -444,69 +461,180 @@ void print_usage(void) {
 
 /* helpers */
 
-static bool parse_flags_line(const char *line, char ***out_flags, size_t *out_count) {
-	if (!line || !out_flags || !out_count) return false;
-	*out_flags = NULL; *out_count = 0;
+/**
+ * parse_flags_line - Parse a dig output line and extract DNS header flags.
+ *
+ * Input:
+ *   line - NUL terminated dig output line, e.g. ";; flags: qr rd ra; ..."
+ *
+ * Returns:
+ *   flag_list where:
+ *     - items: array of NUL terminated flag strings (heap allocated)
+ *     - count: number of entries in items
+ *   On parse failure or if no flags were found, count is 0 and items is NULL.
+ */
+static flag_list parse_flags_line(const char *line) {
+	flag_list result = {.items = NULL, .count = 0};
 
+	if (!line) {
+		return result;
+	}
+
+	/* Locate start of DNS header flags in dig output */
 	const char *p = strstr(line, "flags:");
-	if (!p) return false;
-	p += 6;
+	if (!p) {
+		return result;
+	}
+	p += 6; /* skip literal "flags:" */
 
-	while (*p && isspace((unsigned char)*p)) p++;
+	/* Skip whitespace after "flags:" */
+	while (*p && isspace((unsigned char)*p)) {
+		p++;
+	}
+
+	/* Flags are terminated by the next semicolon e.g. "qr rd ra;" */
 	const char *q = strchr(p, ';');
-	if (!q) return false;
+	if (!q) {
+		return result;
+	}
 
+	/* Extract substring containing the flag block */
 	size_t len = (size_t)(q - p);
-	if (len == 0) return false;
+	if (len == 0) {
+		return result;
+	}
 
-	char *buf = (char*)malloc(len + 1);
-	if (!buf) return false;
-	memcpy(buf, p, len); buf[len] = '\0';
+	char *buf = (char *)malloc(len + 1);
+	if (!buf) {
+		return result;
+	}
+	memcpy(buf, p, len);
+	buf[len] = '\0';
 
-	char **arr = NULL; size_t cnt = 0;
+	/* Tokenize flags separated by whitespace */
+	char **arr = NULL;
+	size_t cnt = 0;
 	char *saveptr = NULL;
 	char *tok = strtok_r(buf, " \t", &saveptr);
+
 	while (tok) {
-		arr = (char**)realloc(arr, (cnt + 1) * sizeof(char*));
+		/* Expand array for the next flag token */
+		char **tmp = (char **)realloc(arr, (cnt + 1) * sizeof(char *));
+		if (!tmp) {
+			/* On allocation failure keep what we have and return it */
+			break;
+		}
+		arr = tmp;
 		arr[cnt++] = strdup(tok);
 		tok = strtok_r(NULL, " \t", &saveptr);
 	}
+
 	free(buf);
 
-	*out_flags = arr;
-	*out_count = cnt;
-	return (cnt > 0);
+	result.items = arr;
+	result.count = cnt;
+	return result;
 }
 
-static void free_flags(char **flags, size_t count) {
-	if (!flags) return;
-	for (size_t i = 0; i < count; i++) free(flags[i]);
-	free(flags);
+/**
+ * split_csv_trim - Split a comma separated string into trimmed tokens.
+ *
+ * Input:
+ *   csv - NUL terminated string, e.g. "aa, qr , rd"
+ *
+ * Returns:
+ *   flag_list where:
+ *     - items: array of NUL terminated tokens (heap allocated, whitespace trimmed)
+ *     - count: number of tokens
+ *   On empty input, count is 0 and items is NULL
+ */
+static flag_list split_csv_trim(const char *csv) {
+	flag_list result = {.items = NULL, .count = 0};
+
+	if (!csv || !*csv) {
+		return result;
+	}
+
+	char *tmp = strdup(csv);
+	if (!tmp) {
+		return result;
+	}
+
+	char *s = tmp;
+	char *token = NULL;
+
+	/* Split CSV by commas, trimming whitespace on each token */
+	while ((token = strsep(&s, ",")) != NULL) {
+		/* trim leading whitespace */
+		while (*token && isspace((unsigned char)*token)) {
+			token++;
+		}
+
+		/* trim trailing whitespace */
+		char *end = token + strlen(token);
+		while (end > token && isspace((unsigned char)end[-1])) {
+			*--end = '\0';
+		}
+
+		if (*token) {
+			/* Expand the items array and append the token */
+			char **arr = (char **)realloc(result.items, (result.count + 1) * sizeof(char *));
+			if (!arr) {
+				/* Allocation failed, stop and return what we have */
+				break;
+			}
+			result.items = arr;
+			result.items[result.count++] = strdup(token);
+		}
+	}
+
+	free(tmp);
+	return result;
 }
 
-static bool list_contains(char **flags, size_t count, const char *needle) {
-	if (!needle || !*needle) return false;
-	for (size_t i = 0; i < count; i++) {
-		if (strcasecmp(flags[i], needle) == 0) return true;
+/**
+ * flag_list_contains - Case-insensitive membership test in a flag_list.
+ *
+ * Input:
+ *   list   - pointer to a flag_list
+ *   needle - NUL terminated string to search for
+ *
+ * Returns:
+ *   true  if needle is contained in list (strcasecmp)
+ *   false otherwise
+ */
+static bool flag_list_contains(const flag_list *list, const char *needle) {
+	if (!list || !needle || !*needle) {
+		return false;
+	}
+
+	for (size_t i = 0; i < list->count; i++) {
+		if (strcasecmp(list->items[i], needle) == 0) {
+			return true;
+		}
 	}
 	return false;
 }
 
-static void split_csv_trim(const char *csv, char ***out_items, size_t *out_count) {
-	*out_items = NULL; *out_count = 0;
-	if (!csv || !*csv) return;
-
-	char *tmp = strdup(csv);
-	char *s = tmp;
-	char *token = NULL;
-	while ((token = strsep(&s, ",")) != NULL) {
-		while (*token && isspace((unsigned char)*token)) token++;
-		char *end = token + strlen(token);
-		while (end > token && isspace((unsigned char)end[-1])) *--end = '\0';
-		if (*token) {
-			*out_items = (char**)realloc(*out_items, (*out_count + 1) * sizeof(char*));
-			(*out_items)[(*out_count)++] = strdup(token);
-		}
+/**
+ * free_flag_list - Release all heap allocations held by a flag_list.
+ *
+ * Input:
+ *   list - pointer to a flag_list whose items were allocated by
+ *          parse_flags_line() or split_csv_trim().
+ *
+ * After this call list->items is NULL and list->count is 0.
+ */
+static void free_flag_list(flag_list *list) {
+	if (!list || !list->items) {
+		return;
 	}
-	free(tmp);
+
+	for (size_t i = 0; i < list->count; i++) {
+		free(list->items[i]);
+	}
+	free(list->items);
+
+	list->items = NULL;
+	list->count = 0;
 }
