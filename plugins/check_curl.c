@@ -672,6 +672,11 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 
 	char *location = get_header_value(headers, nof_headers, "location");
 
+	if (location == NULL) {
+		// location header not found
+		die(STATE_UNKNOWN, "HTTP UNKNOWN - could not find \"location\" header\n");
+	}
+
 	if (verbose >= 2) {
 		printf(_("* Seen redirect location %s\n"), location);
 	}
