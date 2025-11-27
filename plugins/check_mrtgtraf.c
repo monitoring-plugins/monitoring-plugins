@@ -29,13 +29,17 @@
  *
  *****************************************************************************/
 
+#include "check_mrtgtraf.d/config.h"
+#include "common.h"
+#include "output.h"
+#include "perfdata.h"
+#include "states.h"
+#include "thresholds.h"
+#include "utils.h"
+
 const char *progname = "check_mrtgtraf";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
-
-#include "check_mrtgtraf.d/config.h"
-#include "common.h"
-#include "utils.h"
 
 typedef struct {
 	int errorcode;
@@ -61,10 +65,24 @@ int main(int argc, char **argv) {
 
 	const check_mrtgtraf_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
+
 	/* open the MRTG log file for reading */
 	FILE *mrtg_log_file_ptr = fopen(config.log_file, "r");
 	if (mrtg_log_file_ptr == NULL) {
-		usage4(_("Unable to open MRTG log file"));
+		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_UNKNOWN);
+		xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
+		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
+		mp_exit(overall);
+	} else {
+		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_OK);
+		xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
+		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 	}
 
 	time_t timestamp = 0L;
@@ -75,7 +93,6 @@ int main(int argc, char **argv) {
 	unsigned long maximum_outgoing_rate = 0L;
 	int line = 0;
 	while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, mrtg_log_file_ptr)) {
-
 		line++;
 
 		/* skip the first line of the log file */
@@ -121,10 +138,19 @@ int main(int argc, char **argv) {
 	/* make sure the MRTG data isn't too old */
 	time_t current_time;
 	time(&current_time);
+	mp_subcheck sc_expired = mp_subcheck_init();
 	if ((config.expire_minutes > 0) && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		die(STATE_WARNING, _("MRTG data has expired (%d minutes old)\n"),
-			(int)((current_time - timestamp) / 60));
+		xasprintf(&sc_expired.output, "MRTG data has expired (%d minutes old)",
+				  (int)((current_time - timestamp) / 60));
+		sc_expired = mp_set_subcheck_state(sc_expired, STATE_WARNING);
+		mp_add_subcheck_to_check(&overall, sc_expired);
+		mp_exit(overall);
 	}
+
+	xasprintf(&sc_expired.output, "MRTG data should be valid (%d minutes old)",
+			  (int)((current_time - timestamp) / 60));
+	sc_expired = mp_set_subcheck_state(sc_expired, STATE_WARNING);
+	mp_add_subcheck_to_check(&overall, sc_expired);
 
 	unsigned long incoming_rate = 0L;
 	unsigned long outgoing_rate = 0L;
@@ -148,65 +174,72 @@ int main(int argc, char **argv) {
 	/* report incoming traffic in KBytes/sec */
 	else if (incoming_rate < (1024 * 1024)) {
 		strcpy(incoming_speed_rating, "KB");
-		adjusted_incoming_rate = (double)(incoming_rate / 1024.0);
+		adjusted_incoming_rate = ((double)incoming_rate / 1024.0);
 	}
 
 	/* report incoming traffic in MBytes/sec */
 	else {
 		strcpy(incoming_speed_rating, "MB");
-		adjusted_incoming_rate = (double)(incoming_rate / 1024.0 / 1024.0);
+		adjusted_incoming_rate = ((double)incoming_rate / 1024.0 / 1024.0);
 	}
 
 	double adjusted_outgoing_rate = 0.0;
 	char outgoing_speed_rating[8];
-	/* report outgoing traffic in Bytes/sec */
 	if (outgoing_rate < 1024) {
+		/* report outgoing traffic in Bytes/sec */
 		strcpy(outgoing_speed_rating, "B");
 		adjusted_outgoing_rate = (double)outgoing_rate;
-	}
-
-	/* report outgoing traffic in KBytes/sec */
-	else if (outgoing_rate < (1024 * 1024)) {
+	} else if (outgoing_rate < (1024 * 1024)) {
+		/* report outgoing traffic in KBytes/sec */
 		strcpy(outgoing_speed_rating, "KB");
-		adjusted_outgoing_rate = (double)(outgoing_rate / 1024.0);
-	}
-
-	/* report outgoing traffic in MBytes/sec */
-	else {
+		adjusted_outgoing_rate = ((double)outgoing_rate / 1024.0);
+	} else {
+		/* report outgoing traffic in MBytes/sec */
 		strcpy(outgoing_speed_rating, "MB");
-		adjusted_outgoing_rate = (outgoing_rate / 1024.0 / 1024.0);
+		adjusted_outgoing_rate = ((double)outgoing_rate / 1024.0 / 1024.0);
 	}
 
-	int result = STATE_OK;
-	if (incoming_rate > config.incoming_critical_threshold ||
-		outgoing_rate > config.outgoing_critical_threshold) {
-		result = STATE_CRITICAL;
-	} else if (incoming_rate > config.incoming_warning_threshold ||
-			   outgoing_rate > config.outgoing_warning_threshold) {
-		result = STATE_WARNING;
-	}
+	mp_perfdata pd_rate_in = perfdata_init();
+	pd_rate_in.label = "in";
+	pd_rate_in = mp_set_pd_value(pd_rate_in, incoming_rate);
+	pd_rate_in.uom = "B";
+	pd_rate_in = mp_pd_set_thresholds(pd_rate_in, config.incoming_thresholds);
 
-	char *error_message;
-	xasprintf(&error_message, _("%s. In = %0.1f %s/s, %s. Out = %0.1f %s/s|%s %s\n"),
-			  (config.use_average) ? _("Avg") : _("Max"), adjusted_incoming_rate,
-			  incoming_speed_rating, (config.use_average) ? _("Avg") : _("Max"),
-			  adjusted_outgoing_rate, outgoing_speed_rating,
-			  fperfdata("in", adjusted_incoming_rate, incoming_speed_rating,
-						(int)config.incoming_warning_threshold, config.incoming_warning_threshold,
-						(int)config.incoming_critical_threshold, config.incoming_critical_threshold,
-						true, 0, false, 0),
-			  fperfdata("out", adjusted_outgoing_rate, outgoing_speed_rating,
-						(int)config.outgoing_warning_threshold, config.outgoing_warning_threshold,
-						(int)config.outgoing_critical_threshold, config.outgoing_critical_threshold,
-						true, 0, false, 0));
+	mp_perfdata pd_rate_out = perfdata_init();
+	pd_rate_out.label = "out";
+	pd_rate_out = mp_set_pd_value(pd_rate_out, outgoing_rate);
+	pd_rate_out.uom = "B";
+	pd_rate_out = mp_pd_set_thresholds(pd_rate_out, config.outgoing_thresholds);
 
-	printf(_("Traffic %s - %s\n"), state_text(result), error_message);
+	mp_subcheck sc_rate_in = mp_subcheck_init();
+	sc_rate_in = mp_set_subcheck_state(sc_rate_in, mp_get_pd_status(pd_rate_in));
+	mp_add_perfdata_to_subcheck(&sc_rate_in, pd_rate_in);
+	xasprintf(&sc_rate_in.output, "%s. In = %0.1f %s/s", (config.use_average) ? _("Avg") : _("Max"),
+			  adjusted_incoming_rate, incoming_speed_rating);
 
-	return result;
+	mp_subcheck sc_rate_out = mp_subcheck_init();
+	sc_rate_out = mp_set_subcheck_state(sc_rate_out, mp_get_pd_status(pd_rate_out));
+	mp_add_perfdata_to_subcheck(&sc_rate_out, pd_rate_out);
+	xasprintf(&sc_rate_out.output, "%s. Out = %0.1f %s/s",
+			  (config.use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
+			  outgoing_speed_rating);
+
+	mp_subcheck sc_rate = mp_subcheck_init();
+	xasprintf(&sc_rate.output, "Traffic");
+	mp_add_subcheck_to_subcheck(&sc_rate, sc_rate_in);
+	mp_add_subcheck_to_subcheck(&sc_rate, sc_rate_out);
+
+	mp_add_subcheck_to_check(&overall, sc_rate);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"filename", required_argument, 0, 'F'},
 									   {"expires", required_argument, 0, 'e'},
 									   {"aggregation", required_argument, 0, 'a'},
@@ -214,6 +247,7 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 									   {"warning", required_argument, 0, 'w'},
 									   {"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	check_mrtgtraf_config_wrapper result = {
@@ -237,6 +271,14 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option_char;
 	int option = 0;
+	unsigned long incoming_warning_threshold = 0;
+	unsigned long incoming_critical_threshold = 0;
+	unsigned long outgoing_warning_threshold = 0;
+	unsigned long outgoing_critical_threshold = 0;
+	bool incoming_warning_set = false;
+	bool incoming_critical_set = false;
+	bool outgoing_warning_set = false;
+	bool outgoing_critical_set = false;
 	while (true) {
 		option_char = getopt_long(argc, argv, "hVF:e:a:c:w:", longopts, &option);
 
@@ -254,13 +296,15 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 		case 'a': /* aggregation (AVE or MAX) */
 			result.config.use_average = (bool)(strcmp(optarg, "MAX"));
 			break;
-		case 'c': /* warning threshold */
-			sscanf(optarg, "%lu,%lu", &result.config.incoming_critical_threshold,
-				   &result.config.outgoing_critical_threshold);
+		case 'c': /* critical threshold */
+			sscanf(optarg, "%lu,%lu", &incoming_critical_threshold, &outgoing_critical_threshold);
+			incoming_critical_set = true;
+			outgoing_critical_set = true;
 			break;
-		case 'w': /* critical threshold */
-			sscanf(optarg, "%lu,%lu", &result.config.incoming_warning_threshold,
-				   &result.config.outgoing_warning_threshold);
+		case 'w': /* warning threshold */
+			sscanf(optarg, "%lu,%lu", &incoming_warning_threshold, &outgoing_warning_threshold);
+			incoming_warning_set = true;
+			incoming_critical_set = true;
 			break;
 		case 'V': /* version */
 			print_revision(progname, NP_VERSION);
@@ -270,6 +314,17 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -290,21 +345,61 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 		option_char++;
 	}
 
-	if (argc > option_char && result.config.incoming_warning_threshold == 0) {
-		result.config.incoming_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && incoming_warning_threshold == 0) {
+		incoming_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+		incoming_warning_set = true;
 	}
 
-	if (argc > option_char && result.config.incoming_critical_threshold == 0) {
-		result.config.incoming_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && incoming_critical_threshold == 0) {
+		incoming_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+		incoming_critical_set = true;
 	}
 
-	if (argc > option_char && result.config.outgoing_warning_threshold == 0) {
-		result.config.outgoing_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && outgoing_warning_threshold == 0) {
+		outgoing_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+		outgoing_warning_set = true;
 	}
 
-	if (argc > option_char && result.config.outgoing_critical_threshold == 0) {
-		result.config.outgoing_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && outgoing_critical_threshold == 0) {
+		outgoing_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+		outgoing_critical_set = true;
 	}
+
+	mp_range incoming_warning = mp_range_init();
+	if (incoming_warning_set) {
+		incoming_warning =
+			mp_range_set_end(incoming_warning, mp_create_pd_value(incoming_warning_threshold));
+	}
+
+	result.config.incoming_thresholds =
+		mp_thresholds_set_warn(result.config.incoming_thresholds, incoming_warning);
+
+	mp_range incoming_critical = mp_range_init();
+	if (incoming_critical_set) {
+		incoming_critical =
+			mp_range_set_end(incoming_critical, mp_create_pd_value(incoming_critical_threshold));
+	}
+
+	result.config.incoming_thresholds =
+		mp_thresholds_set_crit(result.config.incoming_thresholds, incoming_critical);
+
+	mp_range outgoing_warning = mp_range_init();
+	if (outgoing_warning_set) {
+		outgoing_warning =
+			mp_range_set_end(outgoing_warning, mp_create_pd_value(outgoing_warning_threshold));
+	}
+
+	result.config.outgoing_thresholds =
+		mp_thresholds_set_warn(result.config.outgoing_thresholds, outgoing_warning);
+
+	mp_range outgoing_critical = mp_range_init();
+	if (outgoing_critical_set) {
+		outgoing_critical =
+			mp_range_set_end(outgoing_critical, mp_create_pd_value(outgoing_critical_threshold));
+	}
+
+	result.config.outgoing_thresholds =
+		mp_thresholds_set_crit(result.config.outgoing_thresholds, outgoing_critical);
 
 	return result;
 }
@@ -339,6 +434,8 @@ void print_help(void) {
 	printf("    %s\n", _("Warning threshold pair <incoming>,<outgoing>"));
 	printf(" %s\n", "-c, --critical");
 	printf("    %s\n", _("Critical threshold pair <incoming>,<outgoing>"));
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
