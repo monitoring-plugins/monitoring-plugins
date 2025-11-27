@@ -688,6 +688,8 @@ void print_help(void) {
 
 	printf(UT_VERBOSE);
 
+	printf(UT_OUTPUT_FORMAT);
+
 	printf("\n");
 	printf(" %s\n", _("A DBI driver (-d option) is required. If the specified metric operates"));
 	printf(" %s\n\n", _("on a query, one has to be specified (-q option)."));

@@ -672,6 +672,11 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 
 	char *location = get_header_value(headers, nof_headers, "location");
 
+	if (location == NULL) {
+		// location header not found
+		die(STATE_UNKNOWN, "HTTP UNKNOWN - could not find \"location\" header\n");
+	}
+
 	if (verbose >= 2) {
 		printf(_("* Seen redirect location %s\n"), location);
 	}
@@ -1480,7 +1485,9 @@ void print_help(void) {
 	printf("    %s\n", _("Append a port to include it in the header (eg: example.com:5000)"));
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
-		   _("IP address or name (use numeric address if possible to bypass DNS lookup)."));
+		   "IP address or name (use numeric address if possible to bypass DNS lookup).");
+	printf("    %s\n",
+		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
 	printf("    %s", _("Port number (default: "));
 	printf("%d)\n", HTTP_PORT);
@@ -1544,6 +1551,7 @@ void print_help(void) {
 	printf("    %s\n", _("String to expect in the content"));
 	printf(" %s\n", "-u, --url=PATH");
 	printf("    %s\n", _("URL to GET or POST (default: /)"));
+	printf("    %s\n", _("This is the part after the address in a URL, so for \"https://example.com/index.html\" it would be '-u /index.html'"));
 	printf(" %s\n", "-P, --post=STRING");
 	printf("    %s\n", _("URL decoded http POST data"));
 	printf(" %s\n",
@@ -1556,7 +1564,7 @@ void print_help(void) {
 	printf("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
 	printf("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
 	printf(" %s\n", "-T, --content-type=STRING");
-	printf("    %s\n", _("specify Content-Type header media type when POSTing\n"));
+	printf("    %s\n", _("specify Content-Type header media type when POSTing"));
 	printf(" %s\n", "-l, --linespan");
 	printf("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
 	printf(" %s\n", "-r, --regex, --ereg=STRING");
@@ -1685,7 +1693,7 @@ void print_help(void) {
 	printf(" %s\n", _("It is recommended to use an environment proxy like:"));
 	printf(" %s\n",
 		   _("https_proxy=http://192.168.100.35:3128 ./check_curl -H www.verisign.com -S"));
-	printf(" %s\n", _("legacy proxy requests in check_http style still work:"));
+	printf(" %s\n", _("legacy proxy requests in check_http style might still work, but are frowned upon, so DONT:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u https://www.verisign.com/ -S -j "
 					  "CONNECT -H www.verisign.com "));
 	printf(" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> "
