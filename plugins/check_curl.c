@@ -1480,7 +1480,9 @@ void print_help(void) {
 	printf("    %s\n", _("Append a port to include it in the header (eg: example.com:5000)"));
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
-		   _("IP address or name (use numeric address if possible to bypass DNS lookup)."));
+		   "IP address or name (use numeric address if possible to bypass DNS lookup).\n");
+	printf("    %s\n",
+		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
 	printf("    %s", _("Port number (default: "));
 	printf("%d)\n", HTTP_PORT);
@@ -1544,6 +1546,7 @@ void print_help(void) {
 	printf("    %s\n", _("String to expect in the content"));
 	printf(" %s\n", "-u, --url=PATH");
 	printf("    %s\n", _("URL to GET or POST (default: /)"));
+	printf("    %s\n", _("This is the part after the address in a URL, so for \"https://example.com/index.html\" it would be '-u /index.html'"));
 	printf(" %s\n", "-P, --post=STRING");
 	printf("    %s\n", _("URL decoded http POST data"));
 	printf(" %s\n",
@@ -1685,7 +1688,7 @@ void print_help(void) {
 	printf(" %s\n", _("It is recommended to use an environment proxy like:"));
 	printf(" %s\n",
 		   _("https_proxy=http://192.168.100.35:3128 ./check_curl -H www.verisign.com -S"));
-	printf(" %s\n", _("legacy proxy requests in check_http style still work:"));
+	printf(" %s\n", _("legacy proxy requests in check_http style might still work, but are frowned upon, so DONT:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u https://www.verisign.com/ -S -j "
 					  "CONNECT -H www.verisign.com "));
 	printf(" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> "
