@@ -1480,7 +1480,7 @@ void print_help(void) {
 	printf("    %s\n", _("Append a port to include it in the header (eg: example.com:5000)"));
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
-		   "IP address or name (use numeric address if possible to bypass DNS lookup).\n");
+		   "IP address or name (use numeric address if possible to bypass DNS lookup).");
 	printf("    %s\n",
 		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
@@ -1559,7 +1559,7 @@ void print_help(void) {
 	printf("    %s\n", _("Warn if document is more than SECONDS old. the number can also be of"));
 	printf("    %s\n", _("the form \"10m\" for minutes, \"10h\" for hours, or \"10d\" for days."));
 	printf(" %s\n", "-T, --content-type=STRING");
-	printf("    %s\n", _("specify Content-Type header media type when POSTing\n"));
+	printf("    %s\n", _("specify Content-Type header media type when POSTing"));
 	printf(" %s\n", "-l, --linespan");
 	printf("    %s\n", _("Allow regex to span newlines (must precede -r or -R)"));
 	printf(" %s\n", "-r, --regex, --ereg=STRING");
