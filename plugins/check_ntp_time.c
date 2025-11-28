@@ -42,6 +42,8 @@
 #include "states.h"
 #include "thresholds.h"
 #include "check_ntp_time.d/config.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 static int verbose = 0;
 
@@ -336,17 +338,26 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	/* fill in ai with the list of hosts resolved by the host name */
+	bool is_socket;
 	struct addrinfo *addresses = NULL;
-	int ga_result = getaddrinfo(host, port, &hints, &addresses);
-	if (ga_result != 0) {
-		die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
-	}
-
-	/* count the number of returned hosts, and allocate stuff accordingly */
 	size_t num_hosts = 0;
-	for (struct addrinfo *ai_tmp = addresses; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
-		num_hosts++;
+	if (host[0] == '/') {
+		num_hosts = 1;
+		is_socket = true;
+	} else {
+		is_socket = false;
+
+		/* fill in ai with the list of hosts resolved by the host name */
+		struct addrinfo *addresses = NULL;
+		int ga_result = getaddrinfo(host, port, &hints, &addresses);
+		if (ga_result != 0) {
+			die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
+		}
+
+		/* count the number of returned hosts, and allocate stuff accordingly */
+		for (struct addrinfo *ai_tmp = addresses; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
+			num_hosts++;
+		}
 	}
 
 	ntp_message *req = (ntp_message *)malloc(sizeof(ntp_message) * num_hosts);
@@ -374,25 +385,51 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 	DBG(printf("Found %zu peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
-	struct addrinfo *ai_tmp = addresses;
-	for (int i = 0; ai_tmp; i++) {
-		socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-		if (socklist[i] == -1) {
-			perror(NULL);
-			die(STATE_UNKNOWN, "can not create new socket");
+	if (is_socket) {
+		socklist[0] = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (socklist[0] == -1) {
+			DBG(printf("can't create socket: %s\n", strerror(errno)));
+			die(STATE_UNKNOWN, "can not create new socket\n");
 		}
-		if (connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)) {
+
+		struct sockaddr_un unix_socket = {
+			.sun_family = AF_UNIX,
+		};
+
+		strncpy(unix_socket.sun_path, host, strlen(host));
+
+		if (connect(socklist[0], &unix_socket, sizeof(unix_socket))) {
 			/* don't die here, because it is enough if there is one server
 			   answering in time. This also would break for dual ipv4/6 stacked
 			   ntp servers when the client only supports on of them.
 			 */
-			DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
+			DBG(printf("can't create socket connection on peer %i: %s\n", 0, strerror(errno)));
 		} else {
-			ufds[i].fd = socklist[i];
-			ufds[i].events = POLLIN;
-			ufds[i].revents = 0;
+			ufds[0].fd = socklist[0];
+			ufds[0].events = POLLIN;
+			ufds[0].revents = 0;
 		}
-		ai_tmp = ai_tmp->ai_next;
+	} else {
+		struct addrinfo *ai_tmp = addresses;
+		for (int i = 0; ai_tmp; i++) {
+			socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+			if (socklist[i] == -1) {
+				perror(NULL);
+				die(STATE_UNKNOWN, "can not create new socket");
+			}
+			if (connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)) {
+				/* don't die here, because it is enough if there is one server
+				   answering in time. This also would break for dual ipv4/6 stacked
+				   ntp servers when the client only supports on of them.
+				 */
+				DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
+			} else {
+				ufds[i].fd = socklist[i];
+				ufds[i].events = POLLIN;
+				ufds[i].revents = 0;
+			}
+			ai_tmp = ai_tmp->ai_next;
+		}
 	}
 
 	/* now do AVG_NUM checks to each host. We stop before timeout/2 seconds
@@ -586,7 +623,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
 		} break;
 		case 'H':
-			if (!is_host(optarg)) {
+			if (!is_host(optarg) && (optarg[0] != '/')) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
