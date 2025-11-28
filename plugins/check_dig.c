@@ -58,10 +58,6 @@ void print_usage(void);
 static int verbose = 0;
 
 /* helpers for flag parsing */
-typedef struct {
-	char **items;
-	size_t count;
-} flag_list;
 static flag_list parse_flags_line(const char *line);
 static flag_list split_csv_trim(const char *csv);
 static bool flag_list_contains(const flag_list *list, const char *needle);
@@ -208,49 +204,36 @@ int main(int argc, char **argv) {
 	}
 
 	/* Optional: evaluate dig flags only if -E/-X were provided */
-	if ((config.require_flags && *config.require_flags) ||
-		(config.forbid_flags && *config.forbid_flags)) {
-
+	if ((config.require_flags.count > 0) || (config.forbid_flags.count > 0)) {
 		if (dig_flags.count > 0) {
-
-			if (config.require_flags && *config.require_flags) {
-				flag_list req = split_csv_trim(config.require_flags);
-
-				for (size_t r = 0; r < req.count; r++) {
-					if (!flag_list_contains(&dig_flags, req.items[r])) {
-						result = STATE_CRITICAL;
-						if (!msg) {
-							xasprintf(&msg, _("Missing required DNS flag: %s"), req.items[r]);
-						} else {
-							char *newmsg = NULL;
-							xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
-									  req.items[r]);
-							msg = newmsg;
-						}
+			for (size_t r = 0; r < config.require_flags.count; r++) {
+				if (!flag_list_contains(&dig_flags, config.require_flags.items[r])) {
+					result = STATE_CRITICAL;
+					if (!msg) {
+						xasprintf(&msg, _("Missing required DNS flag: %s"),
+								  config.require_flags.items[r]);
+					} else {
+						char *newmsg = NULL;
+						xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
+								  config.require_flags.items[r]);
+						msg = newmsg;
 					}
 				}
-
-				free_flag_list(&req);
 			}
 
-			if (config.forbid_flags && *config.forbid_flags) {
-				flag_list bad = split_csv_trim(config.forbid_flags);
-
-				for (size_t r = 0; r < bad.count; r++) {
-					if (flag_list_contains(&dig_flags, bad.items[r])) {
-						result = STATE_CRITICAL;
-						if (!msg) {
-							xasprintf(&msg, _("Forbidden DNS flag present: %s"), bad.items[r]);
-						} else {
-							char *newmsg = NULL;
-							xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
-									  bad.items[r]);
-							msg = newmsg;
-						}
+			for (size_t r = 0; r < config.forbid_flags.count; r++) {
+				if (flag_list_contains(&dig_flags, config.forbid_flags.items[r])) {
+					result = STATE_CRITICAL;
+					if (!msg) {
+						xasprintf(&msg, _("Forbidden DNS flag present: %s"),
+								  config.forbid_flags.items[r]);
+					} else {
+						char *newmsg = NULL;
+						xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
+								  config.forbid_flags.items[r]);
+						msg = newmsg;
 					}
 				}
-
-				free_flag_list(&bad);
 			}
 		}
 	}
@@ -351,10 +334,10 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.dig_args = strdup(optarg);
 			break;
 		case 'E': /* require flags */
-			result.config.require_flags = strdup(optarg);
+			result.config.require_flags = split_csv_trim(optarg);
 			break;
 		case 'X': /* forbid flags */
-			result.config.forbid_flags = strdup(optarg);
+			result.config.forbid_flags = split_csv_trim(optarg);
 			break;
 		case 'v': /* verbose */
 			verbose++;
