@@ -128,8 +128,20 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
 	if (working_state.use_ssl && working_state.host_name != NULL) {
+		char *tmp_mod_address;
+
+		/* lookup_host() requires an IPv6 address without the brackets. */
+		if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) &&
+			(working_state.server_address[0] == '[')) {
+			// Duplicate and strip the leading '['
+			tmp_mod_address =
+				strndup(working_state.server_address + 1, strlen(working_state.server_address) - 2);
+		} else {
+			tmp_mod_address = working_state.server_address;
+		}
+
 		int res;
-		if ((res = lookup_host(working_state.server_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
+		if ((res = lookup_host(tmp_mod_address, addrstr, DEFAULT_BUFFER_SIZE / 2,
 							   config.sin_family)) != 0) {
 			die(STATE_CRITICAL,
 				_("Unable to lookup IP address for '%s': getaddrinfo returned %d - %s"),

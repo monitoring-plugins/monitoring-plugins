@@ -69,10 +69,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netdb.h>
 
 enum {
-	MAX_IPV4_HOSTLENGTH = 255,
-};
-
-enum {
 	REGS = 2,
 };
 
