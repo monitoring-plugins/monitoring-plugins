@@ -82,7 +82,7 @@ foreach my $plugin (@PLUGINS1) {
 		"./$plugin -H $hostname_invalid"
 		);
 	cmp_ok( $res->return_code, '==', 3, "$plugin: Invalid hostname/address" );
-	like( $res->output, $ntp_nosuchhost, "$plugin: Output match invalid hostname/address" );
+	like( $res->output, '/Name or service not known/', "$plugin: Output match invalid hostname/address" );
 
 }
 
