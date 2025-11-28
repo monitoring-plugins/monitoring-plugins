@@ -345,37 +345,23 @@ int main(int argc, char **argv) {
 			int replica_io_field = -1;
 			int replica_sql_field = -1;
 			int seconds_behind_field = -1;
-			int num_fields;
-			MYSQL_FIELD *fields;
-			num_fields = mysql_num_fields(res);
-			fields = mysql_fetch_fields(res);
-			for (int i = 0; i < num_fields; i++) {
-				if (use_deprecated_slave_status) {
-					if (strcmp(fields[i].name, "Slave_IO_Running") == 0) {
-						replica_io_field = i;
-						continue;
-					}
-					if (strcmp(fields[i].name, "Slave_SQL_Running") == 0) {
-						replica_sql_field = i;
-						continue;
-					}
-					if (strcmp(fields[i].name, "Seconds_Behind_Master") == 0) {
-						seconds_behind_field = i;
-						continue;
-					}
-				} else {
-					if (strcmp(fields[i].name, "Replica_IO_Running") == 0) {
-						replica_io_field = i;
-						continue;
-					}
-					if (strcmp(fields[i].name, "Replica_SQL_Running") == 0) {
-						replica_sql_field = i;
-						continue;
-					}
-					if (strcmp(fields[i].name, "Seconds_Behind_Source") == 0) {
-						seconds_behind_field = i;
-						continue;
-					}
+			unsigned int num_fields = mysql_num_fields(res);
+			MYSQL_FIELD *fields = mysql_fetch_fields(res);
+			for (int i = 0; i < (int)num_fields; i++) {
+				if ((strcasecmp(fields[i].name, "Slave_IO_Running") == 0) ||
+					(strcasecmp(fields[i].name, "Replica_IO_Running") == 0)) {
+					replica_io_field = i;
+					continue;
+				}
+				if ((strcasecmp(fields[i].name, "Slave_SQL_Running") == 0) ||
+					(strcasecmp(fields[i].name, "Replica_SQL_Running") == 0)) {
+					replica_sql_field = i;
+					continue;
+				}
+				if ((strcasecmp(fields[i].name, "Seconds_Behind_Master") == 0) ||
+					(strcasecmp(fields[i].name, "Seconds_Behind_Source") == 0)) {
+					seconds_behind_field = i;
+					continue;
 				}
 			}
 

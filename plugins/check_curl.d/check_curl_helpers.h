@@ -7,6 +7,10 @@
 #	include <openssl/opensslv.h>
 #endif
 
+enum {
+	MAX_IPV4_HOSTLENGTH = 255,
+};
+
 /* for buffers for header and body */
 typedef struct {
 	size_t buflen;
