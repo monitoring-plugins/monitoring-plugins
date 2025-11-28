@@ -69,10 +69,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include <netdb.h>
 
 enum {
-	MAX_IPV4_HOSTLENGTH = 255,
-};
-
-enum {
 	REGS = 2,
 };
 
@@ -789,21 +785,21 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	/* set new values for redirected request */
 
 	if (!(config.followsticky & STICKY_HOST)) {
-		free(working_state.server_address);
+		// free(working_state.server_address);
 		working_state.server_address = strndup(new_host, MAX_IPV4_HOSTLENGTH);
 	}
 	if (!(config.followsticky & STICKY_PORT)) {
 		working_state.serverPort = (unsigned short)new_port;
 	}
 
-	free(working_state.host_name);
+	// free(working_state.host_name);
 	working_state.host_name = strndup(new_host, MAX_IPV4_HOSTLENGTH);
 
 	/* reset virtual port */
 	working_state.virtualPort = working_state.serverPort;
 
 	free(new_host);
-	free(working_state.server_url);
+	// free(working_state.server_url);
 	working_state.server_url = new_url;
 
 	uriFreeUriMembersA(&uri);
