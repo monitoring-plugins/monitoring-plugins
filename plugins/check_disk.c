@@ -442,9 +442,9 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 	result.config.mount_list = read_file_system_list(false);
 
 	np_add_regex(&result.config.fs_exclude_list, "iso9660", REG_EXTENDED);
-	np_add_regex(&result.config.fs_exclude_list, "tmpfs", REG_EXTENDED);
 	np_add_regex(&result.config.fs_exclude_list, "devtmpfs", REG_EXTENDED);
 	np_add_regex(&result.config.fs_exclude_list, "tracefs", REG_EXTENDED);
+	np_add_regex(&result.config.fs_exclude_list, "efivars", REG_EXTENDED);
 
 	while (true) {
 		int option = 0;
