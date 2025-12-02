@@ -665,19 +665,6 @@ Provides check_nt of the Monitoring Plugins.
 
 
 
-# check_ntp
-%package ntp
-Summary:  Monitoring Plugins - check_ntp
-Requires: %{name} = %{version}-%{release}
-
-%description ntp
-Provides check_ntp of the Monitoring Plugins.
-
-%files ntp
-%{plugindir}/check_ntp
-
-
-
 # check_ntp_peer
 %package ntp_peer
 Summary:  Monitoring Plugins - check_ntp_peer
