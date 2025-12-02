@@ -1,5 +1,33 @@
 This file documents the major additions and syntax changes between releases.
 
+3.0.0-rc1 2025-12-02
+
+	GENERAL
+	* Uniform formatting for the C part of the project
+	* General refactoring to avoid global variabes and attempt to make the code "simler"
+	* Centralised output generation for some plugins
+	* Sync with the latest Gnulib code (d4ec02b3cc) (gnulib v1.0)
+
+	CHANGES
+	* check_snmp: links not directly agains net-snmp, no `snmpget`(next) anymore
+
+	FIXES
+	* check_curl: some bug fixes regarding different scenarios
+	* check_mysql: adapt to different naming schemes in MySQL in newer versions for replica check
+	* check_ssh: fix a buffer overflow
+	* check_ntp_peer and check_ntp_time should now be able to handle Unix sockets instead of network addresses, too
+
+	ENHANCEMENTS
+	* check_dig: New options to require or forbid specific DNS flags
+	* check_ifstatus: New option to exclude specific ports
+	* Add dontfrag / random options to fping check
+
+	REMOVALS
+	* check_nwstat was removed, since there is no use case anymore
+
+	DEPRECATIONS
+	* check_http is now considered deprecated and will receive no further maintenance
+
 2.4.0 25th Jul 2024
 	FIXES
 	* check_dbi: Compiler warning for uninitialized variable
