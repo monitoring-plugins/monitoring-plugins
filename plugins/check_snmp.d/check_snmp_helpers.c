@@ -446,7 +446,8 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		long long treated_value = (long long)response.value.uIntVal;
 
 		if (eval_params.multiplier_set || eval_params.offset_set) {
-			double processed = 0;
+			double processed = (double)response.value.uIntVal;
+
 			if (eval_params.offset_set) {
 				processed += eval_params.offset;
 			}
@@ -480,13 +481,14 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	} break;
 	case ASN_INTEGER: {
 		if (eval_params.multiplier_set || eval_params.offset_set) {
-			double processed = 0;
-			if (eval_params.multiplier_set) {
-				processed = (double)response.value.intVal * eval_params.multiplier;
-			}
+			double processed = (double)response.value.intVal;
 
 			if (eval_params.offset_set) {
 				processed += eval_params.offset;
+			}
+
+			if (eval_params.multiplier_set) {
+				processed *= eval_params.multiplier;
 			}
 
 			result_state.value.doubleVal = processed;

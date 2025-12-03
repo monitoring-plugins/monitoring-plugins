@@ -652,19 +652,6 @@ Provides check_nagios of the Monitoring Plugins.
 
 
 
-# check_nt
-%package nt
-Summary:  Monitoring Plugins - check_nt
-Requires: %{name} = %{version}-%{release}
-
-%description nt
-Provides check_nt of the Monitoring Plugins.
-
-%files nt
-%{plugindir}/check_nt
-
-
-
 # check_ntp_peer
 %package ntp_peer
 Summary:  Monitoring Plugins - check_ntp_peer
