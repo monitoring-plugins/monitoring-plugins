@@ -174,7 +174,6 @@ plugins/check_disk.d/.dirstamp
 /plugins/check_netsaint
 /plugins/check_nntp
 /plugins/check_nntps
-/plugins/check_nt
 /plugins/check_ntp
 /plugins/check_ntp_peer
 /plugins/check_ntp_time
