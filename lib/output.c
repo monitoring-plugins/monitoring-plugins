@@ -42,7 +42,7 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
 
 	while (subchecks != NULL) {
 		if (added > 0) {
-			added = asprintf(&result, "%s%s", result, fmt_subcheck_perfdata(subchecks->subcheck));
+			added = asprintf(&result, "%s %s", result, fmt_subcheck_perfdata(subchecks->subcheck));
 		} else {
 			// TODO free previous result here?
 			added = asprintf(&result, "%s", fmt_subcheck_perfdata(subchecks->subcheck));
