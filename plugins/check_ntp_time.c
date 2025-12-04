@@ -348,7 +348,6 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 		is_socket = false;
 
 		/* fill in ai with the list of hosts resolved by the host name */
-		struct addrinfo *addresses = NULL;
 		int ga_result = getaddrinfo(host, port, &hints, &addresses);
 		if (ga_result != 0) {
 			die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
