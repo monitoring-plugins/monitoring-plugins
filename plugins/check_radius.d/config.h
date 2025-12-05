@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include <stddef.h>
 #if defined(HAVE_LIBRADCLI)
 #	include <radcli/radcli.h>
@@ -23,6 +24,9 @@ typedef struct {
 	unsigned short port;
 
 	char *expect;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_radius_config;
 
 check_radius_config check_radius_config_init() {
@@ -37,6 +41,8 @@ check_radius_config check_radius_config_init() {
 		.port = PW_AUTH_UDP_PORT,
 
 		.expect = NULL,
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }
