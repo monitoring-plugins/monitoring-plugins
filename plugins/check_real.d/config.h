@@ -1,11 +1,15 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
+#include "thresholds.h"
 #include <stddef.h>
 
 enum {
 	PORT = 554
 };
+
+const char *default_expect = "RTSP/1.";
 
 typedef struct {
 	char *server_address;
@@ -14,10 +18,11 @@ typedef struct {
 	char *server_url;
 
 	char *server_expect;
-	int warning_time;
-	bool check_warning_time;
-	int critical_time;
-	bool check_critical_time;
+
+	mp_thresholds time_thresholds;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_real_config;
 
 check_real_config check_real_config_init() {
@@ -27,11 +32,11 @@ check_real_config check_real_config_init() {
 		.server_port = PORT,
 		.server_url = NULL,
 
-		.server_expect = NULL,
-		.warning_time = 0,
-		.check_warning_time = false,
-		.critical_time = 0,
-		.check_critical_time = false,
+		.server_expect = default_expect,
+
+		.time_thresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }
