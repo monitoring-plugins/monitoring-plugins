@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
 	}
 
 	sc_read_config = mp_set_subcheck_state(sc_read_config, STATE_OK);
-	xasprintf(&sc_read_config.output, "read config file succesfully");
+	xasprintf(&sc_read_config.output, "read config file successfully");
 	mp_add_subcheck_to_check(&overall, sc_read_config);
 
 	uint32_t service = PW_AUTHENTICATE_ONLY;
