@@ -28,19 +28,21 @@
  *
  *****************************************************************************/
 
+#include "output.h"
+#include "perfdata.h"
 #include "states.h"
 #include <stdio.h>
+#include "common.h"
+#include "netutils.h"
+#include "thresholds.h"
+#include "utils.h"
+#include "check_real.d/config.h"
+
 const char *progname = "check_real";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
-#include "common.h"
-#include "netutils.h"
-#include "utils.h"
-#include "check_real.d/config.h"
-
-#define EXPECT "RTSP/1."
-#define URL    ""
+#define URL ""
 
 typedef struct {
 	int errorcode;
@@ -68,42 +70,68 @@ int main(int argc, char **argv) {
 
 	const check_real_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
+	time_t start_time;
 	time(&start_time);
+
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_connect = mp_subcheck_init();
 
 	/* try to connect to the host at the given port number */
 	int socket;
 	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
-		die(STATE_CRITICAL, _("Unable to connect to %s on port %d\n"), config.server_address,
-			config.server_port);
+		xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
+				  config.server_address, config.server_port);
+		sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_connect);
+		mp_exit(overall);
 	}
 
+	xasprintf(&sc_connect.output, _("connected to %s on port %d"), config.server_address,
+			  config.server_port);
+	sc_connect = mp_set_subcheck_state(sc_connect, STATE_OK);
+	mp_add_subcheck_to_check(&overall, sc_connect);
+
 	/* Part I - Server Check */
+	mp_subcheck sc_send = mp_subcheck_init();
 
 	/* send the OPTIONS request */
 	char buffer[MAX_INPUT_BUFFER];
 	sprintf(buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", config.host_name, config.server_port);
 	ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
 	if (sent_bytes == -1) {
-		die(STATE_CRITICAL, _("Sending options to %s failed\n"), config.host_name);
+		xasprintf(&sc_send.output, _("Sending options to %s failed"), config.host_name);
+		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_send);
+		mp_exit(overall);
 	}
 
 	/* send the header sync */
 	sprintf(buffer, "CSeq: 1\r\n");
 	sent_bytes = send(socket, buffer, strlen(buffer), 0);
 	if (sent_bytes == -1) {
-		die(STATE_CRITICAL, _("Sending header sync to %s failed\n"), config.host_name);
+		xasprintf(&sc_send.output, _("Sending header sync to %s failed"), config.host_name);
+		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_send);
+		mp_exit(overall);
 	}
 
 	/* send a newline so the server knows we're done with the request */
 	sprintf(buffer, "\r\n");
 	sent_bytes = send(socket, buffer, strlen(buffer), 0);
 	if (sent_bytes == -1) {
-		die(STATE_CRITICAL, _("Sending newline to %s failed\n"), config.host_name);
+		xasprintf(&sc_send.output, _("Sending newline to %s failed"), config.host_name);
+		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_send);
+		mp_exit(overall);
 	}
 
 	/* watch for the REAL connection string */
@@ -111,60 +139,75 @@ int main(int argc, char **argv) {
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (received_bytes == -1) {
-		die(STATE_CRITICAL, _("No data received from %s\n"), config.host_name);
+		xasprintf(&sc_send.output, _("No data received from %s"), config.host_name);
+		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_send);
+		mp_exit(overall);
 	}
 
-	mp_state_enum result = STATE_OK;
-	char *status_line = NULL;
-	/* make sure we find the response we are looking for */
-	if (!strstr(buffer, config.server_expect)) {
-		if (config.server_port == PORT) {
-			printf("%s\n", _("Invalid REAL response received from host"));
+	time_t end_time;
+	{
+		mp_subcheck sc_options_request = mp_subcheck_init();
+		mp_state_enum options_result = STATE_OK;
+		/* make sure we find the response we are looking for */
+		if (!strstr(buffer, config.server_expect)) {
+			if (config.server_port == PORT) {
+				xasprintf(&sc_options_request.output, "invalid REAL response received from host");
+			} else {
+				xasprintf(&sc_options_request.output,
+						  "invalid REAL response received from host on port %d",
+						  config.server_port);
+			}
 		} else {
-			printf(_("Invalid REAL response received from host on port %d\n"), config.server_port);
+			/* else we got the REAL string, so check the return code */
+			time(&end_time);
+
+			options_result = STATE_OK;
+
+			char *status_line = strtok(buffer, "\n");
+			xasprintf(&sc_options_request.output, "status line: %s", status_line);
+
+			if (strstr(status_line, "200")) {
+				options_result = STATE_OK;
+			}
+			/* client errors options_result in a warning state */
+			else if (strstr(status_line, "400")) {
+				options_result = STATE_WARNING;
+			} else if (strstr(status_line, "401")) {
+				options_result = STATE_WARNING;
+			} else if (strstr(status_line, "402")) {
+				options_result = STATE_WARNING;
+			} else if (strstr(status_line, "403")) {
+				options_result = STATE_WARNING;
+			} else if (strstr(status_line, "404")) {
+				options_result = STATE_WARNING;
+			} else if (strstr(status_line, "500")) {
+				/* server errors options_result in a critical state */
+				options_result = STATE_CRITICAL;
+			} else if (strstr(status_line, "501")) {
+				options_result = STATE_CRITICAL;
+			} else if (strstr(status_line, "502")) {
+				options_result = STATE_CRITICAL;
+			} else if (strstr(status_line, "503")) {
+				options_result = STATE_CRITICAL;
+			} else {
+				options_result = STATE_UNKNOWN;
+			}
 		}
-	} else {
-		/* else we got the REAL string, so check the return code */
 
-		time(&end_time);
+		sc_options_request = mp_set_subcheck_state(sc_options_request, options_result);
+		mp_add_subcheck_to_check(&overall, sc_options_request);
 
-		result = STATE_OK;
-
-		status_line = strtok(buffer, "\n");
-
-		if (strstr(status_line, "200")) {
-			result = STATE_OK;
-		}
-
-		/* client errors result in a warning state */
-		else if (strstr(status_line, "400")) {
-			result = STATE_WARNING;
-		} else if (strstr(status_line, "401")) {
-			result = STATE_WARNING;
-		} else if (strstr(status_line, "402")) {
-			result = STATE_WARNING;
-		} else if (strstr(status_line, "403")) {
-			result = STATE_WARNING;
-		} else if (strstr(status_line, "404")) {
-			result = STATE_WARNING;
-		} else if (strstr(status_line, "500")) {
-			/* server errors result in a critical state */
-			result = STATE_CRITICAL;
-		} else if (strstr(status_line, "501")) {
-			result = STATE_CRITICAL;
-		} else if (strstr(status_line, "502")) {
-			result = STATE_CRITICAL;
-		} else if (strstr(status_line, "503")) {
-			result = STATE_CRITICAL;
-		} else {
-			result = STATE_UNKNOWN;
+		if (options_result != STATE_OK) {
+			// exit here if Setting options already failed
+			mp_exit(overall);
 		}
 	}
 
 	/* Part II - Check stream exists and is ok */
-	if ((result == STATE_OK) && (config.server_url != NULL)) {
-
+	if (config.server_url != NULL) {
 		/* Part I - Server Check */
+		mp_subcheck sc_describe = mp_subcheck_init();
 
 		/* send the DESCRIBE request */
 		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name,
@@ -172,98 +215,115 @@ int main(int argc, char **argv) {
 
 		ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
 		if (sent_bytes == -1) {
-			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
+			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+					  config.host_name);
+			mp_add_subcheck_to_check(&overall, sc_describe);
+			mp_exit(overall);
 		}
 
 		/* send the header sync */
 		sprintf(buffer, "CSeq: 2\r\n");
 		sent_bytes = send(socket, buffer, strlen(buffer), 0);
 		if (sent_bytes == -1) {
-			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
+			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+					  config.host_name);
+			mp_add_subcheck_to_check(&overall, sc_describe);
+			mp_exit(overall);
 		}
 
 		/* send a newline so the server knows we're done with the request */
 		sprintf(buffer, "\r\n");
 		sent_bytes = send(socket, buffer, strlen(buffer), 0);
 		if (sent_bytes == -1) {
-			die(STATE_CRITICAL, _("Sending DESCRIBE request to %s failed\n"), config.host_name);
+			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
+			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+					  config.host_name);
+			mp_add_subcheck_to_check(&overall, sc_describe);
+			mp_exit(overall);
 		}
 
 		/* watch for the REAL connection string */
 		ssize_t recv_bytes = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
 		if (recv_bytes == -1) {
 			/* return a CRITICAL status if we couldn't read any data */
-			printf(_("No data received from host\n"));
-			result = STATE_CRITICAL;
+			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
+			xasprintf(&sc_describe.output, "No data received from host on DESCRIBE request");
+			mp_add_subcheck_to_check(&overall, sc_describe);
+			mp_exit(overall);
 		} else {
-			buffer[result] = '\0'; /* null terminate received buffer */
+			buffer[recv_bytes] = '\0'; /* null terminate received buffer */
 			/* make sure we find the response we are looking for */
 			if (!strstr(buffer, config.server_expect)) {
 				if (config.server_port == PORT) {
-					printf("%s\n", _("Invalid REAL response received from host"));
+					xasprintf(&sc_describe.output, "invalid REAL response received from host");
 				} else {
-					printf(_("Invalid REAL response received from host on port %d\n"),
-						   config.server_port);
+					xasprintf(&sc_describe.output,
+							  "invalid REAL response received from host on port %d",
+							  config.server_port);
 				}
-			} else {
 
+				sc_describe = mp_set_subcheck_state(sc_describe, STATE_UNKNOWN);
+				mp_add_subcheck_to_check(&overall, sc_describe);
+				mp_exit(overall);
+			} else {
 				/* else we got the REAL string, so check the return code */
 
 				time(&end_time);
 
-				result = STATE_OK;
+				char *status_line = strtok(buffer, "\n");
+				xasprintf(&sc_describe.output, "status line: %s", status_line);
 
-				status_line = strtok(buffer, "\n");
-
+				mp_state_enum describe_result;
 				if (strstr(status_line, "200")) {
-					result = STATE_OK;
+					describe_result = STATE_OK;
 				}
-
-				/* client errors result in a warning state */
+				/* client errors describe_result in a warning state */
 				else if (strstr(status_line, "400")) {
-					result = STATE_WARNING;
+					describe_result = STATE_WARNING;
 				} else if (strstr(status_line, "401")) {
-					result = STATE_WARNING;
+					describe_result = STATE_WARNING;
 				} else if (strstr(status_line, "402")) {
-					result = STATE_WARNING;
+					describe_result = STATE_WARNING;
 				} else if (strstr(status_line, "403")) {
-					result = STATE_WARNING;
+					describe_result = STATE_WARNING;
 				} else if (strstr(status_line, "404")) {
-					result = STATE_WARNING;
+					describe_result = STATE_WARNING;
 				}
-
-				/* server errors result in a critical state */
+				/* server errors describe_result in a critical state */
 				else if (strstr(status_line, "500")) {
-					result = STATE_CRITICAL;
+					describe_result = STATE_CRITICAL;
 				} else if (strstr(status_line, "501")) {
-					result = STATE_CRITICAL;
+					describe_result = STATE_CRITICAL;
 				} else if (strstr(status_line, "502")) {
-					result = STATE_CRITICAL;
+					describe_result = STATE_CRITICAL;
 				} else if (strstr(status_line, "503")) {
-					result = STATE_CRITICAL;
+					describe_result = STATE_CRITICAL;
+				} else {
+					describe_result = STATE_UNKNOWN;
 				}
 
-				else {
-					result = STATE_UNKNOWN;
-				}
+				sc_describe = mp_set_subcheck_state(sc_describe, describe_result);
+				mp_add_subcheck_to_check(&overall, sc_describe);
 			}
 		}
 	}
 
 	/* Return results */
-	if (result == STATE_OK) {
-		if (config.check_critical_time && (end_time - start_time) > config.critical_time) {
-			result = STATE_CRITICAL;
-		} else if (config.check_warning_time && (end_time - start_time) > config.warning_time) {
-			result = STATE_WARNING;
-		}
+	mp_subcheck sc_timing = mp_subcheck_init();
+	xasprintf(&sc_timing.output, "response time: %lds", end_time - start_time);
+	sc_timing = mp_set_subcheck_default_state(sc_timing, STATE_OK);
 
-		/* Put some HTML in here to create a dynamic link */
-		printf(_("REAL %s - %d second response time\n"), state_text(result),
-			   (int)(end_time - start_time));
-	} else {
-		printf("%s\n", status_line);
-	}
+	mp_perfdata pd_response_time = perfdata_init();
+	pd_response_time = mp_set_pd_value(pd_response_time, (end_time - start_time));
+	pd_response_time.label = "response_time";
+	pd_response_time.uom = "s";
+	pd_response_time = mp_pd_set_thresholds(pd_response_time, config.time_thresholds);
+	mp_add_perfdata_to_subcheck(&sc_connect, pd_response_time);
+	sc_timing = mp_set_subcheck_state(sc_timing, mp_get_pd_status(pd_response_time));
+
+	mp_add_subcheck_to_check(&overall, sc_timing);
 
 	/* close the connection */
 	close(socket);
@@ -271,18 +331,28 @@ int main(int argc, char **argv) {
 	/* reset the alarm */
 	alarm(0);
 
-	exit(result);
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_real_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"IPaddress", required_argument, 0, 'I'},
-		{"expect", required_argument, 0, 'e'},   {"url", required_argument, 0, 'u'},
-		{"port", required_argument, 0, 'p'},     {"critical", required_argument, 0, 'c'},
-		{"warning", required_argument, 0, 'w'},  {"timeout", required_argument, 0, 't'},
-		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"IPaddress", required_argument, 0, 'I'},
+									   {"expect", required_argument, 0, 'e'},
+									   {"url", required_argument, 0, 'u'},
+									   {"port", required_argument, 0, 'p'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"timeout", required_argument, 0, 't'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	check_real_config_wrapper result = {
 		.errorcode = OK,
@@ -337,21 +407,23 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'w': /* warning time threshold */
-			if (is_intnonneg(optarg)) {
-				result.config.warning_time = atoi(optarg);
-				result.config.check_warning_time = true;
-			} else {
-				usage4(_("Warning time must be a positive integer"));
+		{
+			mp_range_parsed critical_range = mp_parse_range_string(optarg);
+			if (critical_range.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold: %s", optarg);
 			}
-			break;
+			result.config.time_thresholds =
+				mp_thresholds_set_warn(result.config.time_thresholds, critical_range.range);
+		} break;
 		case 'c': /* critical time threshold */
-			if (is_intnonneg(optarg)) {
-				result.config.critical_time = atoi(optarg);
-				result.config.check_critical_time = true;
-			} else {
-				usage4(_("Critical time must be a positive integer"));
+		{
+			mp_range_parsed critical_range = mp_parse_range_string(optarg);
+			if (critical_range.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical threshold: %s", optarg);
 			}
-			break;
+			result.config.time_thresholds =
+				mp_thresholds_set_crit(result.config.time_thresholds, critical_range.range);
+		} break;
 		case 'v': /* verbose */
 			verbose = true;
 			break;
@@ -368,6 +440,18 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case '?': /* usage */
 			usage5();
 		}
@@ -388,10 +472,6 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (result.config.host_name == NULL) {
 		result.config.host_name = strdup(result.config.server_address);
-	}
-
-	if (result.config.server_expect == NULL) {
-		result.config.server_expect = strdup(EXPECT);
 	}
 
 	return result;
@@ -420,7 +500,7 @@ void print_help(void) {
 	printf(" %s\n", "-u, --url=STRING");
 	printf("    %s\n", _("Connect to this url"));
 	printf(" %s\n", "-e, --expect=STRING");
-	printf(_("String to expect in first line of server response (default: %s)\n"), EXPECT);
+	printf(_("String to expect in first line of server response (default: %s)\n"), default_expect);
 
 	printf(UT_WARN_CRIT);
 

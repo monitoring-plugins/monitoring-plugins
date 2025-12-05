@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
 
 	/* set socket timeout */
 	alarm(socket_timeout);
+	time_t start_time;
 	time(&start_time);
 
 	int socket;
@@ -113,6 +114,7 @@ int main(int argc, char **argv) {
 	close(socket);
 
 	/* reset the alarm */
+	time_t end_time;
 	time(&end_time);
 	alarm(0);
 
