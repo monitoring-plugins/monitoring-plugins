@@ -205,32 +205,46 @@ fi
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
+case $host in
+	*openbsd*)
+		_CRYPTLIB="crypto"
+		;;
+	*)
+		_CRYPTLIB="crypt"
+esac
+
 AC_ARG_WITH(pgsql,
 	ACX_HELP_STRING([--with-pgsql=DIR],
 		[sets path to pgsql installation]),
 	PGSQL=$withval,)
 AC_CHECK_LIB(crypt,main)
-if test "$ac_cv_lib_crypt_main" = "yes" -a "x$PGSQL" != "xno"; then
+AC_CHECK_LIB(crypto,main)
+if test \( "$ac_cv_lib_crypt_main" = "yes" -o "$ac_cv_lib_crypto_main" = "yes" \) -a "x$PGSQL" != "xno"; then
   if test -n "$PGSQL"; then
     LDFLAGS="$LDFLAGS -L$PGSQL/lib"
     CPPFLAGS="$CPPFLAGS -I$PGSQL/include"
   fi
-  AC_CHECK_LIB(pq,PQsetdbLogin,,,-lcrypt)
+  AC_CHECK_LIB(pq,PQsetdbLogin,,,"-l$_CRYPTLIB")
   if test "$ac_cv_lib_pq_PQsetdbLogin" = "yes"; then
     AC_CHECK_HEADERS(pgsql/libpq-fe.h)
     AC_CHECK_HEADERS(postgresql/libpq-fe.h)
     AC_CHECK_HEADERS(libpq-fe.h)
     if [[ -n "$PGSQL" -a "$ac_cv_header_libpq_fe_h" = "yes" ]]; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
       PGINCLUDE="-I$PGSQL/include"
     elif test  "$ac_cv_header_pgsql_libpq_fe_h" = "yes"; then
-      PGLIBS="-lpq -lcrypt"
+      PGLIBS="-lpq -l$_CRYPTLIB"
       PGINCLUDE="-I/usr/include/pgsql"
     elif test  "$ac_cv_header_postgresql_libpq_fe_h" = "yes"; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
-      PGINCLUDE="-I/usr/include/postgresql"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
+      case $host in
+        *openbsd*)
+          PGINCLUDE="-I$PGSQL/include/postgresql" ;;
+        *)
+          PGINCLUDE="-I/usr/include/postgresql"
+      esac
     elif test  "$ac_cv_header_libpq_fe_h" = "yes"; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
       PGINCLUDE="-I$PGSQL/include"
     fi
     if test -z "$PGINCLUDE"; then
