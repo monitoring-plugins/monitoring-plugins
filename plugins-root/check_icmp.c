@@ -54,6 +54,9 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 #include <sys/time.h>
+#if defined(SIOCGIFADDR)
+#include <sys/ioctl.h>
+#endif /* SIOCGIFADDR */
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
