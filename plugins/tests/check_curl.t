@@ -229,7 +229,7 @@ sub run_server {
 				# group 2 is uncaptured: (?:;(.*))?
 				# (? )? prevents the capture
 				# in between the ';' matches the first ever semicolon
-				# group3 is captured: any character stirng : (.*)
+				# group3 is captured: any character string : (.*)
                 my ($before_params, $params) = $uri =~ m{^([^;]*)(?:;(.*))?\?};
 				$before_params //= '';
 				$params //= '';
@@ -258,9 +258,9 @@ sub run_server {
 
                 # fragment: try to split into key=value pairs on ';' or '&' if present
                 my @fragment_pairs;
-				my $fragment_seperator = '';
+				my $fragment_separator = '';
                 if ($fragment ne '') {
-					$fragment_seperator = ($fragment =~ /&/ ? '&' : ';');
+					$fragment_separator = ($fragment =~ /&/ ? '&' : ';');
                     for my $f (split /[&;]/, $fragment) {
 						next unless length $f;
                         my ($key,$value) = split /=/, $f, 2;
@@ -310,7 +310,7 @@ sub run_server {
 
                 my $new_fragment_str = '';
                 if (@fragment_pairs) {
-                    $new_fragment_str = join($fragment_seperator, map { $_->[0] . '=' . $_->[1] } @fragment_pairs);
+                    $new_fragment_str = join($fragment_separator, map { $_->[0] . '=' . $_->[1] } @fragment_pairs);
                 }
 				$content .= " new_fragment_str: ${new_fragment_str}\n";
 
