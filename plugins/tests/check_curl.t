@@ -224,12 +224,13 @@ sub run_server {
 				#$content .= " before_slash: ${before_slash}\n";
 				#$content .= " after_slash: ${after_slash}\n";
 
-                # split the uri part and parameters. uri package cannot do this
-				# group 1 is captured: anything without a semicolon: ([^;])
-				# group 2 is uncaptured: (?:;(.*))?
-				# (? )? prevents the capture
-				# in between the ';' matches the first ever semicolon
+                # split the URI part and parameters. URI package cannot do this
+                # group 1 is captured: anything without a semicolon: ([^;]*)
+                # group 2 is uncaptured: (?:;(.*))?
+                # (?: ... )? prevents capturing the parameter section
+				# inside group 2, ';' matches the first ever semicolon
 				# group3 is captured: any character string : (.*)
+				# \? matches an actual ? mark, which starts the query parameters
                 my ($before_params, $params) = $uri =~ m{^([^;]*)(?:;(.*))?\?};
 				$before_params //= '';
 				$params //= '';
@@ -639,40 +640,53 @@ sub run_common_tests {
 	is( $result->return_code, 1, $cmd);
 	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count was not present, got redirected to / : ".$result->output );
 
+	# redirect_count=0 is parsed as a parameter and incremented. When it goes up to 3, the redirection returns HTTP OK
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count went up to 3: ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count went up to 3, and returned OK: ".$result->output );
 
+	# location_redirect_count=0 goes up to 3, which uses the HTTP 302 style of redirection with 'Location' header
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;location_redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
+	# fail_count parameter may also go up to 3, which returns a HTTP 403
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;fail_count=2' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 1, $cmd);
 	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, early due to fail_count reaching 3: ".$result->output );
 
+	# redirect_count=0, p1=1 , p2=ab => redirect_count=1, p1=2 , p2=bc => redirect_count=2, p1=3 , p2=cd => redirect_count=3 , p1=4 , p2=de
+	# Last visited URI returns HTTP OK instead of redirect, and the one before that contains the new_uri in its content
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*;p1=3;p2=cd\?*/', "Output correct, parsed and incremented both parameters p1 and p2 : ".$result->output );
+	like( $result->output, '/.*redirect_count=3;p1=4;p2=de\?*/', "Output correct, parsed and incremented both parameters p1 and p2 : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
+	# Same incrementation as before, uses the query parameters that come after the first '?' : qp1 and qp2
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*\?qp1=12&qp2=mn*/', "Output correct, parsed and incremented both query parameters qp1 and qp2 : ".$result->output );
+	like( $result->output, '/.*\?qp1=13&qp2=no*/', "Output correct, parsed and incremented both query parameters qp1 and qp2 : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
+	# Check if the query parameter order is kept intact
 	$cmd = "$command -p $port_http -u '/redirect_with_increment;redirect_count=0;?qp0=0&qp1=1&qp2=2&qp3=3&qp4=4&qp5=5' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*\?qp0=2&qp1=3&qp2=4&qp3=5&qp4=6&qp5=7*/', "Output correct, parsed and incremented query parameters qp1,qp2,qp3,qp4,qp5 in order : ".$result->output );
+	like( $result->output, '/.*\?qp0=3&qp1=4&qp2=5&qp3=6&qp4=7&qp5=8*/', "Output correct, parsed and incremented query parameters qp1,qp2,qp3,qp4,qp5 in order : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
+	# The fragment is a single item, and it should be kept during redirections as well.
+	# Increase the chars in strings. 'test' => 'uftu' => 'vguv' => 'whvw'
 	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*#f1=vguv*/', "Output correct, parsed and incremented fragment f1 : ".$result->output );
+	like( $result->output, '/.*#f1=whvw*/', "Output correct, parsed and incremented fragment f1 : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# These tests may block
 	# stickyport - on full urlS port is set back to 80 otherwise
