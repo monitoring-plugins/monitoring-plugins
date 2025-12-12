@@ -27,7 +27,7 @@ use HTTP::Daemon::SSL;
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 75;
+my $common_tests = 95;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -211,19 +211,6 @@ sub run_server {
 				$content .= " query: ${query}\n";
 				$content .= " fragment: ${fragment}\n";
 
-				# Sets and returns the scheme-specific part of the $uri (everything between the scheme and the fragment) as an escaped string.
-				#my $opaque = $uri->opaque;
-				#$content .= " opaque: ${opaque}\n";
-
-				# group 1 is captured: anything that is not '/' : ([^/]*)
-				# / matches the / directly
-				# group 2 is captured: anything : (.*)
-				#my ($before_slash, $after_slash) = $opaque =~ m{^/([^/]*)/(.*)$};
-				#$before_slash //= '';
-				#$after_slash //= '';
-				#$content .= " before_slash: ${before_slash}\n";
-				#$content .= " after_slash: ${after_slash}\n";
-
                 # split the URI part and parameters. URI package cannot do this
                 # group 1 is captured: anything without a semicolon: ([^;]*)
                 # group 2 is uncaptured: (?:;(.*))?
@@ -257,20 +244,6 @@ sub run_server {
 					$content .= " query: ${key} -> ${value}\n";
                 }
 
-                # fragment: try to split into key=value pairs on ';' or '&' if present
-                my @fragment_pairs;
-				my $fragment_separator = '';
-                if ($fragment ne '') {
-					$fragment_separator = ($fragment =~ /&/ ? '&' : ';');
-                    for my $f (split /[&;]/, $fragment) {
-						next unless length $f;
-                        my ($key,$value) = split /=/, $f, 2;
-                        $value //= '';
-                        push @fragment_pairs, [ $key, $value ];
-						$content .= " fragment: ${key} -> ${value}\n";
-                    }
-                }
-
                 # helper to increment value
                 my $increment = sub {
                     my ($v) = @_;
@@ -296,10 +269,6 @@ sub run_server {
                     $pair->[1] = $increment->($pair->[1]);
 					$content .= " query parameter new: " . $pair->[0] . " -> " . $pair->[1] . "\n";
                 }
-                for my $pair (@fragment_pairs) {
-                    $pair->[1] = $increment->($pair->[1]);
-					$content .= " fragment new: " . $pair->[0] . " -> " . $pair->[1] . "\n";
-                }
 
                 # rebuild strings
                 my $new_parameter_str = join(';', map { $_->[0] . '=' . $_->[1] } @parameter_pairs);
@@ -309,9 +278,13 @@ sub run_server {
                 my @new_query_form;
                 for my $p (@query_parameter_pairs) { push @new_query_form, $p->[0], $p->[1] }
 
-                my $new_fragment_str = '';
-                if (@fragment_pairs) {
-                    $new_fragment_str = join($fragment_separator, map { $_->[0] . '=' . $_->[1] } @fragment_pairs);
+				my $new_fragment_str = '';
+				for my $pair (@parameter_pairs) {
+					my $key = $pair->[0];
+					my $value = $pair->[1];
+					if ($key eq "fragment") {
+						$new_fragment_str = $value
+					}
                 }
 				$content .= " new_fragment_str: ${new_fragment_str}\n";
 
@@ -635,57 +608,58 @@ sub run_common_tests {
 	# The server at this point has dynamic redirection. It tries to increment values that it sees in these fields, then redirects.
 	# It also appends some debug log and writes it into HTTP content, pass the -vvv parameter to see them.
 
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2/path3/path4' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2/path3/path4' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 1, $cmd);
 	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count was not present, got redirected to / : ".$result->output );
 
 	# redirect_count=0 is parsed as a parameter and incremented. When it goes up to 3, the redirection returns HTTP OK
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count went up to 3, and returned OK: ".$result->output );
 
 	# location_redirect_count=0 goes up to 3, which uses the HTTP 302 style of redirection with 'Location' header
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;location_redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;location_redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# fail_count parameter may also go up to 3, which returns a HTTP 403
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;fail_count=2' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;fail_count=2' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 1, $cmd);
 	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, early due to fail_count reaching 3: ".$result->output );
 
 	# redirect_count=0, p1=1 , p2=ab => redirect_count=1, p1=2 , p2=bc => redirect_count=2, p1=3 , p2=cd => redirect_count=3 , p1=4 , p2=de
 	# Last visited URI returns HTTP OK instead of redirect, and the one before that contains the new_uri in its content
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*redirect_count=3;p1=4;p2=de\?*/', "Output correct, parsed and incremented both parameters p1 and p2 : ".$result->output );
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# Same incrementation as before, uses the query parameters that come after the first '?' : qp1 and qp2
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*\?qp1=13&qp2=no*/', "Output correct, parsed and incremented both query parameters qp1 and qp2 : ".$result->output );
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# Check if the query parameter order is kept intact
-	$cmd = "$command -p $port_http -u '/redirect_with_increment;redirect_count=0;?qp0=0&qp1=1&qp2=2&qp3=3&qp4=4&qp5=5' --onredirect=follow -vvv";
+	$cmd = "$command -u '/redirect_with_increment;redirect_count=0;?qp0=0&qp1=1&qp2=2&qp3=3&qp4=4&qp5=5' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*\?qp0=3&qp1=4&qp2=5&qp3=6&qp4=7&qp5=8*/', "Output correct, parsed and incremented query parameters qp1,qp2,qp3,qp4,qp5 in order : ".$result->output );
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
-	# The fragment is a single item, and it should be kept during redirections as well.
-	# Increase the chars in strings. 'test' => 'uftu' => 'vguv' => 'whvw'
-	$cmd = "$command -p $port_http -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	# The fragment is passed as another parameter.
+	# During the server redirects the fragment will be set to its value, if such a key is present.
+	# 'ebiil' => 'fcjjm' => 'gdkkn' => 'hello'
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;fragment=ebiil?qp1=0' --onredirect=follow -vvv";
 	$result = NPTest->testCmd( "$cmd" );
 	is( $result->return_code, 0, $cmd);
-	like( $result->output, '/.*#f1=whvw*/', "Output correct, parsed and incremented fragment f1 : ".$result->output );
+	like( $result->output, '/.*redirect_count=3;fragment=hello\?qp1=3#hello*/', "Output correct, fragments are specified by server and followed by check_curl: ".$result->output );
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# These tests may block
