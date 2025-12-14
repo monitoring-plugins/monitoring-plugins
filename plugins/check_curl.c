@@ -1648,6 +1648,8 @@ void print_help(void) {
 	printf(" %s\n", _("certificate matches the hostname of the server, or if the certificate"));
 	printf(" %s\n", _("has a valid chain of trust to one of the locally installed CAs."));
 	printf("\n");
+	printf(" %s\n", _("To also verify certificates, please set --verify-cert."));
+	printf("\n");
 	printf("%s\n", _("Examples:"));
 	printf(" %s\n\n", "CHECK CONTENT: check_curl -w 5 -c 10 --ssl -H www.verisign.com");
 	printf(" %s\n", _("When the 'www.verisign.com' server returns its content within 5 seconds,"));
@@ -1657,16 +1659,18 @@ void print_help(void) {
 		   _("the 5-second threshold, a STATE_WARNING will be returned. When an error occurs,"));
 	printf(" %s\n", _("a STATE_CRITICAL will be returned."));
 	printf("\n");
-	printf(" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 14");
+	printf(" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 14 -D");
 	printf(" %s\n",
 		   _("When the certificate of 'www.verisign.com' is valid for more than 14 days,"));
 	printf(" %s\n",
 		   _("a STATE_OK is returned. When the certificate is still valid, but for less than"));
 	printf(" %s\n",
 		   _("14 days, a STATE_WARNING is returned. A STATE_CRITICAL will be returned when"));
-	printf(" %s\n\n", _("the certificate is expired."));
+	printf(" %s\n", _("the certificate is expired."));
 	printf("\n");
-	printf(" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 30,14");
+	printf(" %s\n", _("The -D flag enforces a certificate validation beyond expiration time."));
+	printf("\n");
+	printf(" %s\n\n", "CHECK CERTIFICATE: check_curl -H www.verisign.com -C 30,14 -D");
 	printf(" %s\n",
 		   _("When the certificate of 'www.verisign.com' is valid for more than 30 days,"));
 	printf(" %s\n",
