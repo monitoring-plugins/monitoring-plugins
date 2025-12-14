@@ -1036,7 +1036,7 @@ int check_http(void) {
 			printf("SSL initialized\n");
 		}
 		if (result != STATE_OK) {
-			die(STATE_CRITICAL, NULL);
+			die(STATE_CRITICAL,  _("HTTP CRITICAL - SSL error\n"));
 		}
 		microsec_ssl = deltime(tv_temp);
 		elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
