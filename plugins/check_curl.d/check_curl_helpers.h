@@ -84,6 +84,10 @@ check_curl_configure_curl_wrapper check_curl_configure_curl(check_curl_static_cu
 
 void handle_curl_option_return_code(CURLcode res, const char *option);
 
+void handle_curl_easyoption(const struct curl_easyoption *option, const char *name);
+
+char *format_curl_easyoption(const struct curl_easyoption *option, char *buf, unsigned int buflen);
+
 int curlhelp_initwritebuffer(curlhelp_write_curlbuf **buf);
 size_t curlhelp_buffer_write_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/,
 									  void * /*stream*/);
