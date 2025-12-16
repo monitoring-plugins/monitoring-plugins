@@ -1051,8 +1051,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.curl_config.user_auth[MAX_INPUT_BUFFER - 1] = 0;
 			break;
 		case 'x': /* proxy info*/
-			strncpy(result.config.curl_config.proxy, optarg, DEFAULT_BUFFER_SIZE -1);
-			result.config.curl_config.user_auth[DEFAULT_BUFFER_SIZE -1] = 0;
+			strncpy(result.config.curl_config.proxy, optarg, DEFAULT_BUFFER_SIZE - 1);
+			result.config.curl_config.user_auth[DEFAULT_BUFFER_SIZE - 1] = 0;
 			break;
 		case 'b': /* proxy-authorization info */
 			strncpy(result.config.curl_config.proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
@@ -1733,13 +1733,16 @@ void print_help(void) {
 
 	printf("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
 	printf(" %s\n", _("Proxies are defined checked using the -x or --proxy parameter:"));
-	printf(" %s\n", _("The environment variables are only checked -x/--proxy arguments are not set:"));
-	printf(" %s\n", _("Depending on the SSL enablement, either http_proxy or https_proxy environment variable is used."));
-	printf(" %s\n", _("These variables can also be given in uppercase, but the lowercase ones will take predence if both are defined."));
+	printf(" %s\n",
+		   _("The environment variables are only checked -x/--proxy arguments are not set:"));
+	printf(" %s\n", _("Depending on the SSL enablement, either http_proxy or https_proxy "
+					  "environment variable is used."));
+	printf(" %s\n", _("These variables can also be given in uppercase, but the lowercase ones will "
+					  "take predence if both are defined."));
 	printf(" %s\n",
 		   _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
-	printf(" %s\n",
-		   _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org --ssl"));
+	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H "
+					  "www.monitoring-plugins.org --ssl"));
 	printf(" %s\n", _("legacy proxy requests in check_http style still work:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u http://www.monitoring-plugins.org/ "
 					  "-H www.monitoring-plugins.org"));
@@ -1772,7 +1775,8 @@ void print_usage(void) {
 	printf("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate "
 		   "file>] [-D]\n");
 	printf("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-x <proxy>]\n");
-	printf("       [-a auth] [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport|curl>]\n");
+	printf("       [-a auth] [-b proxy_auth] [-f "
+		   "<ok|warning|critical|follow|sticky|stickyport|curl>]\n");
 	printf("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive "
 		   "regex>]\n");
 	printf("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
