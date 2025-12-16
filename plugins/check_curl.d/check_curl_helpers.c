@@ -116,6 +116,54 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		curl_easy_setopt(result.curl_state.curl, CURLOPT_TIMEOUT, config.socket_timeout),
 		"CURLOPT_TIMEOUT");
 
+	/* set proxy */
+	const struct curl_easyoption *curlopt_proxy_easyoption = curl_easy_option_by_id(CURLOPT_PROXY);
+	handle_curl_easyoption(curlopt_proxy_easyoption,"CURLOPT_PROXY");
+	char proxy_option_str[DEFAULT_BUFFER_SIZE];
+	if (verbose >= 1 && curlopt_proxy_easyoption != NULL){
+		printf("* cURL Easy Option %s\n", format_curl_easyoption(curlopt_proxy_easyoption, proxy_option_str, DEFAULT_BUFFER_SIZE));
+	}
+	/* proxy can either be given from the command line, or taken from environment variables */
+	char curlopt_proxy[DEFAULT_BUFFER_SIZE];
+	if (config.proxy != NULL && strlen(config.proxy) > 0 ){
+		strcpy(curlopt_proxy, config.proxy);
+	}else{
+		char *http_proxy_env;
+		http_proxy_env = getenv("http_proxy");
+		char *http_proxy_uppercase_env;
+		http_proxy_uppercase_env = getenv("HTTP_PROXY");
+		char *https_proxy_env;
+		https_proxy_env = getenv("https_proxy");
+		char *https_proxy_uppercase_env;
+		https_proxy_uppercase_env = getenv("HTTPS_PROXY");
+		/* lower case proxy environment varialbes are generally more accepted. accept both, but take the lowercase one when both are available*/
+		if(working_state.use_ssl){
+			if(https_proxy_env != NULL && strlen(https_proxy_env) > 0){
+				strcpy(curlopt_proxy, https_proxy_env);
+				if(https_proxy_uppercase_env != NULL && verbose >=1){
+					printf("* cURL ignoring environment variable HTTPS_PROXY as https_proxy is set\n");
+				}
+			}else if(https_proxy_uppercase_env != NULL && strlen(https_proxy_uppercase_env) >= 0){
+				strcpy(curlopt_proxy, https_proxy_uppercase_env);
+			}
+			else{
+				strcpy(curlopt_proxy,"");
+			}
+		}else{
+			if(http_proxy_env != NULL && strlen(http_proxy_env) > 0){
+				strcpy(curlopt_proxy, http_proxy_env);
+				if(http_proxy_uppercase_env != NULL && verbose >=1){
+					printf("* cURL ignoring environment variable HTTP_PROXY as http_proxy is set\n");
+				}
+			}else if(http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0){
+				strcpy(curlopt_proxy, http_proxy_uppercase_env);
+			}else{
+				strcpy(curlopt_proxy,"");
+			}
+		}
+	}
+	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, curlopt_proxy), "CURLOPT_PROXY");
+
 	/* enable haproxy protocol */
 	if (config.haproxy_protocol) {
 		handle_curl_option_return_code(
@@ -123,11 +171,13 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			"CURLOPT_HAPROXYPROTOCOL");
 	}
 
-	// fill dns resolve cache to make curl connect to the given server_address instead of the
-	// host_name, only required for ssl, because we use the host_name later on to make SNI happy
+	/* fill dns resolve cache to make curl connect to the given server_address instead of the */
+	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
+	/* TODO: do not skip populating the DNS cache if the proxy scheme is socks4 or socks5.*/
+	/* If the proxy should resolve the hostname, socks4h and socks5h scheme is used.*/
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL) {
+	if (working_state.use_ssl && working_state.host_name != NULL && (curlopt_proxy != NULL && strlen(curlopt_proxy) == 0)) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
@@ -567,6 +617,53 @@ void handle_curl_option_return_code(CURLcode res, const char *option) {
 	}
 }
 
+void handle_curl_easyoption(const struct curl_easyoption *option, const char *name) {
+	if (option == NULL){
+		die(STATE_CRITICAL, _("Error while getting cURL option '%s': cURL option is null"), name);
+	}
+}
+
+char *format_curl_easyoption(const struct curl_easyoption *option, char *buf, unsigned int buflen){
+	if(option == NULL){
+		die(STATE_CRITICAL, _("Can not print details about an empty cURL option"));
+	}
+	int offset = snprintf(buf, buflen, "name: %s flags: %s", option->name, option->flags);
+	switch(option->type){
+		case CURLOT_LONG:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_LONG");
+			break;
+		case CURLOT_VALUES:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_VALUES");
+			break;
+		case CURLOT_OFF_T:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_OFF_T");
+			break;
+		case CURLOT_OBJECT:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_OBJECT");
+			break;
+		case CURLOT_STRING:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_STRING");
+			break;
+		case CURLOT_SLIST:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_SLIST");
+			break;
+		case CURLOT_CBPTR:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_CBPTR");
+			break;
+		case CURLOT_BLOB:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_BLOB");
+			break;
+		case CURLOT_FUNCTION:
+			offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_FUNCTION");
+			break;
+		default:
+			offset += snprintf(buf + offset, buflen - offset, " type: Unknown");
+			break;
+	}
+	offset += snprintf(buf + offset, buflen - offset, " id: %d", option->id);
+	return buf;
+}
+
 char *get_header_value(const struct phr_header *headers, const size_t nof_headers,
 					   const char *header) {
 	for (size_t i = 0; i < nof_headers; i++) {
@@ -612,6 +709,7 @@ check_curl_config check_curl_config_init() {
 				.ca_cert = NULL,
 				.verify_peer_and_host = false,
 				.user_agent = {'\0'},
+				.proxy = "",
 				.proxy_auth = "",
 				.user_auth = "",
 				.http_content_type = NULL,

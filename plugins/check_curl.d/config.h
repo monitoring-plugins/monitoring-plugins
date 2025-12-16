@@ -65,6 +65,7 @@ typedef struct {
 	char *client_privkey;
 	char *ca_cert;
 	bool verify_peer_and_host;
+	char proxy[DEFAULT_BUFFER_SIZE];
 	char user_agent[DEFAULT_BUFFER_SIZE];
 	char proxy_auth[MAX_INPUT_BUFFER];
 	char user_auth[MAX_INPUT_BUFFER];

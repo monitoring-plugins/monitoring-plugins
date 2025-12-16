@@ -889,6 +889,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"url", required_argument, 0, 'u'},
 		{"port", required_argument, 0, 'p'},
 		{"authorization", required_argument, 0, 'a'},
+		{"proxy", required_argument, 0, 'x'},
 		{"proxy-authorization", required_argument, 0, 'b'},
 		{"header-string", required_argument, 0, 'd'},
 		{"string", required_argument, 0, 's'},
@@ -961,7 +962,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option_index = getopt_long(
-			argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB",
+			argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:x:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB",
 			longopts, &option);
 		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
@@ -1048,6 +1049,10 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		case 'a': /* authorization info */
 			strncpy(result.config.curl_config.user_auth, optarg, MAX_INPUT_BUFFER - 1);
 			result.config.curl_config.user_auth[MAX_INPUT_BUFFER - 1] = 0;
+			break;
+		case 'x': /* proxy info*/
+			strncpy(result.config.curl_config.proxy, optarg, DEFAULT_BUFFER_SIZE -1);
+			result.config.curl_config.user_auth[DEFAULT_BUFFER_SIZE -1] = 0;
 			break;
 		case 'b': /* proxy-authorization info */
 			strncpy(result.config.curl_config.proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
@@ -1614,6 +1619,11 @@ void print_help(void) {
 	printf(" %s\n", "--state-regex=STATE");
 	printf("    %s\n", _("Return STATE if regex is found, OK if not. STATE can be one of "
 						 "\"critical\",\"warning\""));
+	printf(" %s\n", "-x, --proxy=PROXY_SERVER");
+	printf("    %s\n", _("Specify the proxy in form of <scheme>://<host(name)>:<port>"));
+	printf("    %s\n", _("Available schemes are http, https, socks4, socks4a, socks5, socks5a"));
+	printf("    %s\n", _("If port is not specified, libcurl defaults to 1080"));
+	printf("    %s\n", _("This value will be set as CURLOPT_PROXY"));
 	printf(" %s\n", "-a, --authorization=AUTH_PAIR");
 	printf("    %s\n", _("Username:password on sites with basic authentication"));
 	printf(" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
@@ -1722,9 +1732,14 @@ void print_help(void) {
 #endif
 
 	printf("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
-	printf(" %s\n", _("It is recommended to use an environment proxy like:"));
+	printf(" %s\n", _("Proxies are defined checked using the -x or --proxy parameter:"));
+	printf(" %s\n", _("The environment variables are only checked -x/--proxy arguments are not set:"));
+	printf(" %s\n", _("Depending on the SSL enablement, either http_proxy or https_proxy environment variable is used."));
+	printf(" %s\n", _("These variables can also be given in uppercase, but the lowercase ones will take predence if both are defined."));
 	printf(" %s\n",
 		   _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
+	printf(" %s\n",
+		   _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org --ssl"));
 	printf(" %s\n", _("legacy proxy requests in check_http style still work:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u http://www.monitoring-plugins.org/ "
 					  "-H www.monitoring-plugins.org"));
@@ -1756,8 +1771,8 @@ void print_usage(void) {
 	printf(" %s -H <vhost> | -I <IP-address> [-u <uri>] [-p <port>]\n", progname);
 	printf("       [-J <client certificate file>] [-K <private key>] [--ca-cert <CA certificate "
 		   "file>] [-D]\n");
-	printf("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-a auth]\n");
-	printf("       [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport|curl>]\n");
+	printf("       [-w <warn time>] [-c <critical time>] [-t <timeout>] [-L] [-E] [-x <proxy>]\n");
+	printf("       [-a auth] [-b proxy_auth] [-f <ok|warning|critical|follow|sticky|stickyport|curl>]\n");
 	printf("       [-e <expect>] [-d string] [-s string] [-l] [-r <regex> | -R <case-insensitive "
 		   "regex>]\n");
 	printf("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
