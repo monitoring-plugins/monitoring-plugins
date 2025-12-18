@@ -20,9 +20,14 @@ use Test::More;
 use NPTest;
 use FindBin qw($Bin);
 
+use URI;
+use URI::QueryParam;
+use HTTP::Daemon;
+use HTTP::Daemon::SSL;
+
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 75;
+my $common_tests = 95;
 my $ssl_only_tests = 8;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
@@ -186,6 +191,123 @@ sub run_server {
 				$c->send_response('moved to /redirect2');
 			} elsif ($r->url->path eq "/redir_timeout") {
 				$c->send_redirect( "/timeout" );
+            } elsif ($r->url->path =~ m{^/redirect_with_increment}) {
+				# <scheme>://<username>:<password>@<host>:<port>/<path>;<parameters>?<query>#<fragment>
+				# Find every parameter, query , and fragment keys and increment them
+
+				my $content = "";
+
+                # Use URI to help with query/fragment; parse path params manually.
+                my $original_url = $r->url->as_string;
+				$content .= " original_url: ${original_url}\n";
+                my $uri = URI->new($original_url);
+				$content .= " uri: ${uri}\n";
+
+				my $path = $uri->path // '';
+				my $query = $uri->query // '';
+				my $fragment = $uri->fragment // '';
+
+				$content .= " path: ${path}\n";
+				$content .= " query: ${query}\n";
+				$content .= " fragment: ${fragment}\n";
+
+                # split the URI part and parameters. URI package cannot do this
+                # group 1 is captured: anything without a semicolon: ([^;]*)
+                # group 2 is uncaptured: (?:;(.*))?
+                # (?: ... )? prevents capturing the parameter section
+				# inside group 2, ';' matches the first ever semicolon
+				# group3 is captured: any character string : (.*)
+				# \? matches an actual ? mark, which starts the query parameters
+                my ($before_params, $params) = $uri =~ m{^([^;]*)(?:;(.*))?\?};
+				$before_params //= '';
+				$params //= '';
+				$content .= " before_params: ${before_params}\n";
+				$content .= " params: ${params}\n";
+                my @parameter_pairs;
+                if (defined $params && length $params) {
+                    for my $p (split /;/, $params) {
+                        my ($key,$value) = split /=/, $p, 2;
+                        $value //= '';
+                        push @parameter_pairs, [ $key, $value ];
+						$content .= " parameter: ${key} -> ${value}\n";
+                    }
+                }
+
+                # query parameters are offered directly from the library
+                my @query_form = $uri->query_form;
+                my @query_parameter_pairs;
+                while (@query_form) {
+                    my $key = shift @query_form;
+                    my $value = shift @query_form;
+					$value //= ''; # there can be valueless keys
+                    push @query_parameter_pairs, [ $key, $value ];
+					$content .= " query: ${key} -> ${value}\n";
+                }
+
+                # helper to increment value
+                my $increment = sub {
+                    my ($v) = @_;
+                    return $v if !defined $v || $v eq '';
+                    # numeric integer
+                    if ($v =~ /^-?\d+$/) {
+                        return $v + 1;
+                    }
+                    # otherwise -> increment as if its an ascii character
+					# sed replacement syntax, but the $& holds the matched character
+                    if (length($v)) {
+                        (my $new_v = $v) =~ s/./chr(ord($&) + 1)/ge;
+        				return $new_v;
+                    }
+                };
+
+                # increment values in pairs
+                for my $pair (@parameter_pairs) {
+                    $pair->[1] = $increment->($pair->[1]);
+					$content .= " parameter new: " . $pair->[0] . " -> " . $pair->[1] . "\n";
+                }
+                for my $pair (@query_parameter_pairs) {
+                    $pair->[1] = $increment->($pair->[1]);
+					$content .= " query parameter new: " . $pair->[0] . " -> " . $pair->[1] . "\n";
+                }
+
+                # rebuild strings
+                my $new_parameter_str = join(';', map { $_->[0] . '=' . $_->[1] } @parameter_pairs);
+				$content .= " new_parameter_str: ${new_parameter_str}\n";
+
+				# library can rebuild from an array
+                my @new_query_form;
+                for my $p (@query_parameter_pairs) { push @new_query_form, $p->[0], $p->[1] }
+
+				my $new_fragment_str = '';
+				for my $pair (@parameter_pairs) {
+					my $key = $pair->[0];
+					my $value = $pair->[1];
+					if ($key eq "fragment") {
+						$new_fragment_str = $value
+					}
+                }
+				$content .= " new_fragment_str: ${new_fragment_str}\n";
+
+                # construct new URI using the library
+                my $new_uri = URI->new('');
+                $new_uri->path( $before_params . ($new_parameter_str ? ';' . $new_parameter_str : '') );
+                $new_uri->query_form( \@new_query_form ) if @new_query_form;
+                $new_uri->fragment( $new_fragment_str ) if $new_fragment_str ne '';
+				$content .= " new_uri: ${new_uri}\n";
+
+				# Redirect until fail_count or redirect_count reaches 3
+				if ($new_uri =~ /fail_count=3/){
+					$c->send_error(HTTP::Status->RC_FORBIDDEN, "fail count reached 3, url path:" . $r->url->path );
+				} elsif ($new_uri =~ /redirect_count=3/){
+					$c->send_response(HTTP::Response->new( 200, 'OK', undef , $content ));
+				} elsif ($new_uri =~ /location_redirect_count=3/){
+					$c->send_basic_header(302);
+					$c->send_header("Location", "$new_uri" );
+					$c->send_crlf;
+					$c->send_response("$content \n moved to $new_uri");
+				} else {
+                	$c->send_redirect( $new_uri->as_string, 301, $content );
+				}
 			} elsif ($r->url->path eq "/timeout") {
 				# Keep $c from being destroyed, but prevent severe leaks
 				unshift @persist, $c;
@@ -215,7 +337,7 @@ sub run_server {
 					return($chunk);
 				}));
 			} else {
-				$c->send_error(HTTP::Status->RC_FORBIDDEN);
+				$c->send_error(HTTP::Status->RC_FORBIDDEN, "unknown url path:" . $r->url->path );
 			}
 			$c->close;
 		}
@@ -481,6 +603,64 @@ sub run_common_tests {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct: ".$result->output );
+
+	# Redirect with increment tests. These are for checking if the url parameters, query parameters and fragment are parsed.
+	# The server at this point has dynamic redirection. It tries to increment values that it sees in these fields, then redirects.
+	# It also appends some debug log and writes it into HTTP content, pass the -vvv parameter to see them.
+
+	$cmd = "$command -u '/redirect_with_increment/path1/path2/path3/path4' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 1, $cmd);
+	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count was not present, got redirected to / : ".$result->output );
+
+	# redirect_count=0 is parsed as a parameter and incremented. When it goes up to 3, the redirection returns HTTP OK
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, redirect_count went up to 3, and returned OK: ".$result->output );
+
+	# location_redirect_count=0 goes up to 3, which uses the HTTP 302 style of redirection with 'Location' header
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;location_redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
+
+	# fail_count parameter may also go up to 3, which returns a HTTP 403
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;fail_count=2' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 1, $cmd);
+	like( $result->output, '/.*HTTP/1.1 403 Forbidden - \d+ bytes in [\d\.]+ second.*/', "Output correct, early due to fail_count reaching 3: ".$result->output );
+
+	# redirect_count=0, p1=1 , p2=ab => redirect_count=1, p1=2 , p2=bc => redirect_count=2, p1=3 , p2=cd => redirect_count=3 , p1=4 , p2=de
+	# Last visited URI returns HTTP OK instead of redirect, and the one before that contains the new_uri in its content
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*redirect_count=3;p1=4;p2=de\?*/', "Output correct, parsed and incremented both parameters p1 and p2 : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
+
+	# Same incrementation as before, uses the query parameters that come after the first '?' : qp1 and qp2
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;p1=1;p2=ab?qp1=10&qp2=kl#f1=test' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*\?qp1=13&qp2=no*/', "Output correct, parsed and incremented both query parameters qp1 and qp2 : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
+
+	# Check if the query parameter order is kept intact
+	$cmd = "$command -u '/redirect_with_increment;redirect_count=0;?qp0=0&qp1=1&qp2=2&qp3=3&qp4=4&qp5=5' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*\?qp0=3&qp1=4&qp2=5&qp3=6&qp4=7&qp5=8*/', "Output correct, parsed and incremented query parameters qp1,qp2,qp3,qp4,qp5 in order : ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
+
+	# The fragment is passed as another parameter.
+	# During the server redirects the fragment will be set to its value, if such a key is present.
+	# 'ebiil' => 'fcjjm' => 'gdkkn' => 'hello'
+	$cmd = "$command -u '/redirect_with_increment/path1/path2;redirect_count=0;fragment=ebiil?qp1=0' --onredirect=follow -vvv";
+	$result = NPTest->testCmd( "$cmd" );
+	is( $result->return_code, 0, $cmd);
+	like( $result->output, '/.*redirect_count=3;fragment=hello\?qp1=3#hello*/', "Output correct, fragments are specified by server and followed by check_curl: ".$result->output );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct, location_redirect_count went up to 3: ".$result->output );
 
 	# These tests may block
 	# stickyport - on full urlS port is set back to 80 otherwise

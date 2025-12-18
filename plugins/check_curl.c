@@ -761,7 +761,7 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	}
 
 	/* compose new path */
-	/* TODO: handle fragments and query part of URL */
+	/* TODO: handle fragments of URL */
 	char *new_url = (char *)calloc(1, DEFAULT_BUFFER_SIZE);
 	if (uri.pathHead) {
 		for (UriPathSegmentA *pathSegment = uri.pathHead; pathSegment;
@@ -769,6 +769,25 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			strncat(new_url, "/", DEFAULT_BUFFER_SIZE);
 			strncat(new_url, uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE),
 					DEFAULT_BUFFER_SIZE - 1);
+		}
+	}
+
+	/* missing components have null,null in their UriTextRangeA
+	 * add query parameters if they exist.
+	 */
+	if (uri.query.first && uri.query.afterLast){
+		// Ensure we have space for '?' + query_str + '\0' ahead of time, instead of calling strncat twice
+		size_t current_len = strlen(new_url);
+		size_t remaining_space = DEFAULT_BUFFER_SIZE - current_len - 1;
+
+		const char* query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		size_t query_str_len = strlen(query_str);
+
+		if (remaining_space >= query_str_len + 1) {
+			strcat(new_url, "?");
+			strcat(new_url, query_str);
+		}else{
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - No space to add query part of size %d to the buffer, buffer has remaining size %d"), query_str_len , current_len );
 		}
 	}
 
