@@ -84,9 +84,11 @@ check_curl_configure_curl_wrapper check_curl_configure_curl(check_curl_static_cu
 
 void handle_curl_option_return_code(CURLcode res, const char *option);
 
+/* curl_easyoption types are defined on 7.73.0*/
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0)
 void handle_curl_easyoption(const struct curl_easyoption *option, const char *name);
-
 char *format_curl_easyoption(const struct curl_easyoption *option, char *buf, unsigned int buflen);
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0) */
 
 int curlhelp_initwritebuffer(curlhelp_write_curlbuf **buf);
 size_t curlhelp_buffer_write_callback(void * /*buffer*/, size_t /*size*/, size_t /*nmemb*/,
