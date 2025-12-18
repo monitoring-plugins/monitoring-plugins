@@ -117,6 +117,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		"CURLOPT_TIMEOUT");
 
 	/* set proxy */
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0)
 	const struct curl_easyoption *curlopt_proxy_easyoption = curl_easy_option_by_id(CURLOPT_PROXY);
 	handle_curl_easyoption(curlopt_proxy_easyoption, "CURLOPT_PROXY");
 	char proxy_option_str[DEFAULT_BUFFER_SIZE];
@@ -125,21 +126,23 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			   format_curl_easyoption(curlopt_proxy_easyoption, proxy_option_str,
 									  DEFAULT_BUFFER_SIZE));
 	}
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0) */
 	/* proxy can either be given from the command line, or taken from environment variables */
 	char curlopt_proxy[DEFAULT_BUFFER_SIZE];
 	if (strlen(config.proxy) > 0) {
 		strcpy(curlopt_proxy, config.proxy);
 	} else {
+		/* lower case proxy environment variables are generally more accepted. discover both, but take
+		 * the lowercase one if both are present*/
 		char *http_proxy_env;
 		http_proxy_env = getenv("http_proxy");
 		char *http_proxy_uppercase_env;
 		http_proxy_uppercase_env = getenv("HTTP_PROXY");
+#ifdef LIBCURL_FEATURE_SSL
 		char *https_proxy_env;
 		https_proxy_env = getenv("https_proxy");
 		char *https_proxy_uppercase_env;
 		https_proxy_uppercase_env = getenv("HTTPS_PROXY");
-		/* lower case proxy environment variables are generally more accepted. accept both, but take
-		 * the lowercase one when both are available*/
 		if (working_state.use_ssl) {
 			if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
 				strcpy(curlopt_proxy, https_proxy_env);
@@ -153,7 +156,10 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			} else {
 				strcpy(curlopt_proxy, "");
 			}
-		} else {
+		}
+		else
+#endif /* LIBCURL_FEATURE_SSL */
+		{
 			if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
 				strcpy(curlopt_proxy, http_proxy_env);
 				if (http_proxy_uppercase_env != NULL && verbose >= 1) {
@@ -624,6 +630,8 @@ void handle_curl_option_return_code(CURLcode res, const char *option) {
 	}
 }
 
+/* curl_easyoption types are defined on 7.73.0*/
+#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0)
 void handle_curl_easyoption(const struct curl_easyoption *option, const char *name) {
 	if (option == NULL) {
 		die(STATE_CRITICAL, _("Error while getting cURL option '%s': cURL option is null"), name);
@@ -670,6 +678,7 @@ char *format_curl_easyoption(const struct curl_easyoption *option, char *buf, un
 	offset += snprintf(buf + offset, buflen - offset, " id: %d", option->id);
 	return buf;
 }
+#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0) */
 
 char *get_header_value(const struct phr_header *headers, const size_t nof_headers,
 					   const char *header) {
