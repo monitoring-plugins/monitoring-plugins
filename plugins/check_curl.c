@@ -1621,7 +1621,7 @@ void print_help(void) {
 						 "\"critical\",\"warning\""));
 	printf(" %s\n", "-x, --proxy=PROXY_SERVER");
 	printf("    %s\n", _("Specify the proxy in form of <scheme>://<host(name)>:<port>"));
-	printf("    %s\n", _("Available schemes are http, https, socks4, socks4a, socks5, socks5a"));
+	printf("    %s\n", _("Available schemes are http, https, socks4, socks4a, socks5, socks5h"));
 	printf("    %s\n", _("If port is not specified, libcurl defaults to 1080"));
 	printf("    %s\n", _("This value will be set as CURLOPT_PROXY"));
 	printf(" %s\n", "-a, --authorization=AUTH_PAIR");
