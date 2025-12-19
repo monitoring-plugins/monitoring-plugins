@@ -117,64 +117,71 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		"CURLOPT_TIMEOUT");
 
 	/* set proxy */
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0)
-	const struct curl_easyoption *curlopt_proxy_easyoption = curl_easy_option_by_id(CURLOPT_PROXY);
-	handle_curl_easyoption(curlopt_proxy_easyoption, "CURLOPT_PROXY");
-	char proxy_option_str[DEFAULT_BUFFER_SIZE];
-	if (verbose >= 1 && curlopt_proxy_easyoption != NULL) {
-		printf("* cURL Easy Option %s\n",
-			   format_curl_easyoption(curlopt_proxy_easyoption, proxy_option_str,
-									  DEFAULT_BUFFER_SIZE));
+	/* http(s) proxy can either be given from the command line, or taken from environment variables */
+	/* socks4(a) / socks5(h) proxy should be given using the command line */
+	char curlopt_proxy[DEFAULT_BUFFER_SIZE] = "";
+	/* first source to check is the environment variables */
+	/* Lower case proxy environment variables are almost always accepted, while some programs also checking
+	 uppercase ones. Discover both, but take the lowercase one if both are present*/
+	char *http_proxy_env;
+	http_proxy_env = getenv("http_proxy");
+	char *http_proxy_uppercase_env;
+	http_proxy_uppercase_env = getenv("HTTP_PROXY");
+#ifdef LIBCURL_FEATURE_SSL
+	char *https_proxy_env;
+	https_proxy_env = getenv("https_proxy");
+	char *https_proxy_uppercase_env;
+	https_proxy_uppercase_env = getenv("HTTPS_PROXY");
+	if (working_state.use_ssl) {
+		if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
+			strcpy(curlopt_proxy, https_proxy_env);
+			if (https_proxy_uppercase_env != NULL && verbose >= 1) {
+				printf(
+					"* cURL ignoring environment variable HTTPS_PROXY as https_proxy is set\n");
+			}
+		} else if (https_proxy_uppercase_env != NULL &&
+					strlen(https_proxy_uppercase_env) >= 0) {
+			strcpy(curlopt_proxy, https_proxy_uppercase_env);
+		}
 	}
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0) */
-	/* proxy can either be given from the command line, or taken from environment variables */
-	char curlopt_proxy[DEFAULT_BUFFER_SIZE];
+	else
+#endif /* LIBCURL_FEATURE_SSL */
+	{
+		if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
+			strcpy(curlopt_proxy, http_proxy_env);
+			if (http_proxy_uppercase_env != NULL && verbose >= 1) {
+				printf(
+					"* cURL ignoring environment variable HTTP_PROXY as http_proxy is set\n");
+			}
+		} else if (http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0) {
+			strcpy(curlopt_proxy, http_proxy_uppercase_env);
+		}
+	}
+	/* second source to check for proxies is command line argument, overwriting the environment variables */
 	if (strlen(config.proxy) > 0) {
 		strcpy(curlopt_proxy, config.proxy);
-	} else {
-		/* lower case proxy environment variables are generally more accepted. discover both, but take
-		 * the lowercase one if both are present*/
-		char *http_proxy_env;
-		http_proxy_env = getenv("http_proxy");
-		char *http_proxy_uppercase_env;
-		http_proxy_uppercase_env = getenv("HTTP_PROXY");
-#ifdef LIBCURL_FEATURE_SSL
-		char *https_proxy_env;
-		https_proxy_env = getenv("https_proxy");
-		char *https_proxy_uppercase_env;
-		https_proxy_uppercase_env = getenv("HTTPS_PROXY");
-		if (working_state.use_ssl) {
-			if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
-				strcpy(curlopt_proxy, https_proxy_env);
-				if (https_proxy_uppercase_env != NULL && verbose >= 1) {
-					printf(
-						"* cURL ignoring environment variable HTTPS_PROXY as https_proxy is set\n");
-				}
-			} else if (https_proxy_uppercase_env != NULL &&
-					   strlen(https_proxy_uppercase_env) >= 0) {
-				strcpy(curlopt_proxy, https_proxy_uppercase_env);
-			} else {
-				strcpy(curlopt_proxy, "");
-			}
-		}
-		else
-#endif /* LIBCURL_FEATURE_SSL */
-		{
-			if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
-				strcpy(curlopt_proxy, http_proxy_env);
-				if (http_proxy_uppercase_env != NULL && verbose >= 1) {
-					printf(
-						"* cURL ignoring environment variable HTTP_PROXY as http_proxy is set\n");
-				}
-			} else if (http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0) {
-				strcpy(curlopt_proxy, http_proxy_uppercase_env);
-			} else {
-				strcpy(curlopt_proxy, "");
-			}
-		}
 	}
+
 	handle_curl_option_return_code(
 		curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, curlopt_proxy), "CURLOPT_PROXY");
+	if (verbose >= 1) {
+		printf("* curl CURLOPT_PROXY: %s\n", curlopt_proxy);
+	}
+
+	/* Proxy resolves hostname in proxy schemes: http, https, socks4a and socks5h. */
+	/* if the curlopt_proxy i.e config.proxy is given with the scheme prefix use it */
+	bool proxy_resolves_hostname = strlen(curlopt_proxy) &&
+	(
+		strncmp(curlopt_proxy, "http://", 7) == 0 ||
+		strncmp(curlopt_proxy, "https://", 8) == 0 ||
+		strncmp(curlopt_proxy, "socks4a://", 10) == 0 ||
+		strncmp(curlopt_proxy, "socks5h://", 10) == 0
+	);
+	/* If CURLOPT_PROXYTYPE is specified, it should take priority over the CURLOPT_PROXY.
+	So far the code does not specify it. */
+	if (verbose >= 1) {
+		printf("* proxy_resolves_hostname: %d\n", proxy_resolves_hostname);
+	}
 
 	/* enable haproxy protocol */
 	if (config.haproxy_protocol) {
@@ -185,12 +192,9 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 	/* fill dns resolve cache to make curl connect to the given server_address instead of the */
 	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
-	/* TODO: do not skip populating the DNS cache if the proxy scheme is socks4 or socks5.*/
-	/* If the proxy should resolve the hostname, socks4h and socks5h scheme is used.*/
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL &&
-		(strlen(curlopt_proxy) == 0)) {
+	if (working_state.use_ssl && working_state.host_name != NULL && !proxy_resolves_hostname ) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
