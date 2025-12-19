@@ -634,56 +634,6 @@ void handle_curl_option_return_code(CURLcode res, const char *option) {
 	}
 }
 
-/* curl_easyoption types are defined on 7.73.0*/
-#if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0)
-void handle_curl_easyoption(const struct curl_easyoption *option, const char *name) {
-	if (option == NULL) {
-		die(STATE_CRITICAL, _("Error while getting cURL option '%s': cURL option is null"), name);
-	}
-}
-
-char *format_curl_easyoption(const struct curl_easyoption *option, char *buf, unsigned int buflen) {
-	if (option == NULL) {
-		die(STATE_CRITICAL, _("Can not print details about an empty cURL option"));
-	}
-	int offset = snprintf(buf, buflen, "name: %s flags: %u", option->name, option->flags);
-	switch (option->type) {
-	case CURLOT_LONG:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_LONG");
-		break;
-	case CURLOT_VALUES:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_VALUES");
-		break;
-	case CURLOT_OFF_T:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_OFF_T");
-		break;
-	case CURLOT_OBJECT:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_OBJECT");
-		break;
-	case CURLOT_STRING:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_STRING");
-		break;
-	case CURLOT_SLIST:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_SLIST");
-		break;
-	case CURLOT_CBPTR:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_CBPTR");
-		break;
-	case CURLOT_BLOB:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_BLOB");
-		break;
-	case CURLOT_FUNCTION:
-		offset += snprintf(buf + offset, buflen - offset, " type: CURLOT_FUNCTION");
-		break;
-	default:
-		offset += snprintf(buf + offset, buflen - offset, " type: Unknown");
-		break;
-	}
-	offset += snprintf(buf + offset, buflen - offset, " id: %d", option->id);
-	return buf;
-}
-#endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 73, 0) */
-
 char *get_header_value(const struct phr_header *headers, const size_t nof_headers,
 					   const char *header) {
 	for (size_t i = 0; i < nof_headers; i++) {
