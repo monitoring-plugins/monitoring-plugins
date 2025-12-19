@@ -1052,7 +1052,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'x': /* proxy info */
 			strncpy(result.config.curl_config.proxy, optarg, DEFAULT_BUFFER_SIZE - 1);
-			result.config.curl_config.user_auth[DEFAULT_BUFFER_SIZE - 1] = 0;
+			result.config.curl_config.proxy[DEFAULT_BUFFER_SIZE - 1] = 0;
 			break;
 		case 'b': /* proxy-authorization info */
 			strncpy(result.config.curl_config.proxy_auth, optarg, MAX_INPUT_BUFFER - 1);
