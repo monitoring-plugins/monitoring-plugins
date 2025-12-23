@@ -668,7 +668,7 @@ void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToS
 	fprintf(temp_file_pointer, "# NP State file\n");
 	fprintf(temp_file_pointer, "%d\n", NP_STATE_FORMAT_VERSION);
 	fprintf(temp_file_pointer, "%d\n", stateKey.data_version);
-	fprintf(temp_file_pointer, "%lu\n", current_time);
+	fprintf(temp_file_pointer, "%lld\n", (long long)current_time);
 	fprintf(temp_file_pointer, "%s\n", stringToStore);
 
 	fchmod(temp_file_desc, S_IRUSR | S_IWUSR | S_IRGRP);
