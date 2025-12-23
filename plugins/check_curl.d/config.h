@@ -57,10 +57,10 @@ typedef struct {
 	bool haproxy_protocol;
 	long socket_timeout;
 	sa_family_t sin_family;
-	int curl_http_version;
+	long curl_http_version;
 	char **http_opt_headers;
 	size_t http_opt_headers_count;
-	int ssl_version;
+	long ssl_version;
 	char *client_cert;
 	char *client_privkey;
 	char *ca_cert;
@@ -76,7 +76,7 @@ typedef struct {
 	check_curl_working_state initial_config;
 
 	check_curl_static_curl_config curl_config;
-	int max_depth;
+	long max_depth;
 	int followmethod;
 	int followsticky;
 
