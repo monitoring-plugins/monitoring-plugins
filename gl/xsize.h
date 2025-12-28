@@ -1,6 +1,6 @@
 /* xsize.h -- Checked size_t computations.
 
-   Copyright (C) 2003, 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2008-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -26,7 +26,7 @@
 /* Get size_t.  */
 #include <stddef.h>
 
-/* Get SIZE_MAX.  */
+/* Get INT_MAX, SIZE_MAX.  */
 #include <limits.h>
 #if HAVE_STDINT_H
 # include <stdint.h>
@@ -61,7 +61,8 @@ extern "C" {
       void *p = (size_in_bounds_p (size) ? malloc (size) : NULL);
 */
 
-/* Convert an arbitrary value >= 0 to type size_t.  */
+/* Convert an arbitrary N >= 0 to type size_t.
+   N should not have side effects.  */
 #define xcast_size_t(N) \
   ((N) <= SIZE_MAX ? (size_t) (N) : SIZE_MAX)
 
@@ -69,8 +70,15 @@ extern "C" {
 XSIZE_INLINE size_t ATTRIBUTE_PURE
 xsum (size_t size1, size_t size2)
 {
-  size_t sum = size1 + size2;
-  return (sum >= size1 ? sum : SIZE_MAX);
+  if (INT_MAX < SIZE_MAX)
+    {
+      /* Optimize for the common case where size_t arithmetic wraps
+         around without undefined behavior.  */
+      size_t sum = size1 + size2;
+      return size1 <= sum ? sum : SIZE_MAX;
+    }
+
+  return size1 <= SIZE_MAX - size2 ? size1 + size2 : SIZE_MAX;
 }
 
 /* Sum of three sizes, with overflow check.  */
@@ -98,6 +106,8 @@ xmax (size_t size1, size_t size2)
 
 /* Multiplication of a count with an element size, with overflow check.
    The count must be >= 0 and the element size must be > 0.
+   Arguments should not have side effects.
+   The element size's type should be no wider than size_t.
    This is a macro, not a function, so that it works correctly even
    when N is of a wider type and N > SIZE_MAX.  */
 #define xtimes(N, ELSIZE) \

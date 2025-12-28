@@ -1,9 +1,10 @@
 # math_h.m4
-# serial 138
-dnl Copyright (C) 2007-2024 Free Software Foundation, Inc.
+# serial 140.1
+dnl Copyright (C) 2007-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 AC_DEFUN_ONCE([gl_MATH_H],
 [
@@ -49,7 +50,7 @@ AC_DEFUN_ONCE([gl_MATH_H],
      ilogb ilogbf ilogbl
      ldexpf ldexpl
      log logf logl log10 log10f log10l log1p log1pf log1pl log2 log2f log2l
-     logb logbf logbl
+     logb logbf logbl logp1 log1pf logp1l
      modf modff modfl powf
      remainder remainderf remainderl
      rint rintf rintl round roundf roundl
@@ -153,6 +154,9 @@ AC_DEFUN([gl_MATH_H_REQUIRE_DEFAULTS],
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGB])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGBF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGBL])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGP1])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGP1F])
+    gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_LOGP1L])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_MODF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_MODFF])
     gl_MODULE_INDICATOR_INIT_VARIABLE([GNULIB_MODFL])
@@ -253,6 +257,9 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   HAVE_LOG1PL=1;                    AC_SUBST([HAVE_LOG1PL])
   HAVE_LOGBF=1;                     AC_SUBST([HAVE_LOGBF])
   HAVE_LOGBL=1;                     AC_SUBST([HAVE_LOGBL])
+  HAVE_LOGP1=1;                     AC_SUBST([HAVE_LOGP1])
+  HAVE_LOGP1F=1;                    AC_SUBST([HAVE_LOGP1F])
+  HAVE_LOGP1L=1;                    AC_SUBST([HAVE_LOGP1L])
   HAVE_MODFF=1;                     AC_SUBST([HAVE_MODFF])
   HAVE_MODFL=1;                     AC_SUBST([HAVE_MODFL])
   HAVE_POWF=1;                      AC_SUBST([HAVE_POWF])
@@ -392,6 +399,7 @@ AC_DEFUN([gl_MATH_H_DEFAULTS],
   REPLACE_SIGNBIT_USING_BUILTINS=0; AC_SUBST([REPLACE_SIGNBIT_USING_BUILTINS])
   REPLACE_SINF=0;                   AC_SUBST([REPLACE_SINF])
   REPLACE_SINHF=0;                  AC_SUBST([REPLACE_SINHF])
+  REPLACE_SINL=0;                   AC_SUBST([REPLACE_SINL])
   REPLACE_SQRTF=0;                  AC_SUBST([REPLACE_SQRTF])
   REPLACE_SQRTL=0;                  AC_SUBST([REPLACE_SQRTL])
   REPLACE_TANF=0;                   AC_SUBST([REPLACE_TANF])

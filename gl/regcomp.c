@@ -1,5 +1,5 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
@@ -831,7 +831,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
     if (table_size > pat_len)
       break;
 
-  dfa->state_table = calloc (sizeof (struct re_state_table_entry), table_size);
+  dfa->state_table = calloc (table_size, sizeof (struct re_state_table_entry));
   dfa->state_hash_mask = table_size - 1;
 
   dfa->mb_cur_max = MB_CUR_MAX;
@@ -862,7 +862,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
 	{
 	  int i, j, ch;
 
-	  dfa->sb_char = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+	  dfa->sb_char = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
 	  if (__glibc_unlikely (dfa->sb_char == NULL))
 	    return REG_ESPACE;
 
@@ -1001,21 +1001,25 @@ create_initial_state (re_dfa_t *dfa)
 	    Idx dest_idx = dfa->edests[node_idx].elems[0];
 	    if (!re_node_set_contains (&init_nodes, dest_idx))
 	      {
-		reg_errcode_t merge_err
+		err
                   = re_node_set_merge (&init_nodes, dfa->eclosures + dest_idx);
-		if (merge_err != REG_NOERROR)
-		  return merge_err;
+		if (err != REG_NOERROR)
+		  break;
 		i = 0;
 	      }
 	  }
       }
 
   /* It must be the first time to invoke acquire_state.  */
-  dfa->init_state = re_acquire_state_context (&err, dfa, &init_nodes, 0);
-  /* We don't check ERR here, since the initial state must not be NULL.  */
+  dfa->init_state
+    = (err == REG_NOERROR
+       ? re_acquire_state_context (&err, dfa, &init_nodes, 0)
+       : NULL);
   if (__glibc_unlikely (dfa->init_state == NULL))
-    return err;
-  if (dfa->init_state->has_constraint)
+    {
+      /* Don't check ERR here, as the initial state must not be null.  */
+    }
+  else if (dfa->init_state->has_constraint)
     {
       dfa->init_state_word = re_acquire_state_context (&err, dfa, &init_nodes,
 						       CONTEXT_WORD);
@@ -1025,17 +1029,13 @@ create_initial_state (re_dfa_t *dfa)
 							 &init_nodes,
 							 CONTEXT_NEWLINE
 							 | CONTEXT_BEGBUF);
-      if (__glibc_unlikely (dfa->init_state_word == NULL
-			    || dfa->init_state_nl == NULL
-			    || dfa->init_state_begbuf == NULL))
-	return err;
     }
   else
     dfa->init_state_word = dfa->init_state_nl
       = dfa->init_state_begbuf = dfa->init_state;
 
   re_node_set_free (&init_nodes);
-  return REG_NOERROR;
+  return err;
 }
 
 /* If it is possible to do searching in single byte encoding instead of UTF-8
@@ -1677,12 +1677,11 @@ calc_eclosure_iter (re_node_set *new_set, re_dfa_t *dfa, Idx node, bool root)
     {
       err = duplicate_node_closure (dfa, node, node, node,
 				    dfa->nodes[node].constraint);
-      if (__glibc_unlikely (err != REG_NOERROR))
-	return err;
     }
 
   /* Expand each epsilon destination nodes.  */
-  if (IS_EPSILON_NODE(dfa->nodes[node].type))
+  if (__glibc_likely (err == REG_NOERROR)
+      && IS_EPSILON_NODE (dfa->nodes[node].type))
     for (i = 0; i < dfa->edests[node].nelem; ++i)
       {
 	re_node_set eclosure_elem;
@@ -1700,14 +1699,14 @@ calc_eclosure_iter (re_node_set *new_set, re_dfa_t *dfa, Idx node, bool root)
 	  {
 	    err = calc_eclosure_iter (&eclosure_elem, dfa, edest, false);
 	    if (__glibc_unlikely (err != REG_NOERROR))
-	      return err;
+	      break;
 	  }
 	else
 	  eclosure_elem = dfa->eclosures[edest];
 	/* Merge the epsilon closure of 'edest'.  */
 	err = re_node_set_merge (&eclosure, &eclosure_elem);
 	if (__glibc_unlikely (err != REG_NOERROR))
-	  return err;
+	  break;
 	/* If the epsilon closure of 'edest' is incomplete,
 	   the epsilon closure of this node is also incomplete.  */
 	if (dfa->eclosures[edest].nelem == 0)
@@ -1717,12 +1716,18 @@ calc_eclosure_iter (re_node_set *new_set, re_dfa_t *dfa, Idx node, bool root)
 	  }
       }
 
-  if (incomplete && !root)
-    dfa->eclosures[node].nelem = 0;
+  if (err != REG_NOERROR)
+    re_node_set_free (&eclosure);
   else
-    dfa->eclosures[node] = eclosure;
-  *new_set = eclosure;
-  return REG_NOERROR;
+    {
+      if (incomplete && !root)
+	dfa->eclosures[node].nelem = 0;
+      else
+	dfa->eclosures[node] = eclosure;
+      *new_set = eclosure;
+    }
+
+  return err;
 }
 
 /* Functions for token which are used in the parser.  */
@@ -3055,8 +3060,8 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
 						   _NL_COLLATE_SYMB_EXTRAMB);
     }
 #endif
-  sbcset = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
-  mbcset = (re_charset_t *) calloc (sizeof (re_charset_t), 1);
+  sbcset = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
+  mbcset = (re_charset_t *) calloc (1, sizeof (re_charset_t));
   if (__glibc_unlikely (sbcset == NULL || mbcset == NULL))
     {
       re_free (sbcset);
@@ -3275,6 +3280,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
   else
     {
       free_charset (mbcset);
+      mbcset = NULL;
       /* Build a tree for simple bracket.  */
       br_token.type = SIMPLE_BRACKET;
       br_token.opr.sbcset = sbcset;
@@ -3288,7 +3294,8 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
   *err = REG_ESPACE;
  parse_bracket_exp_free_return:
   re_free (sbcset);
-  free_charset (mbcset);
+  if (__glibc_likely (mbcset != NULL))
+    free_charset (mbcset);
   return NULL;
 }
 
@@ -3548,13 +3555,13 @@ build_charclass_op (re_dfa_t *dfa, RE_TRANSLATE_TYPE trans,
   reg_errcode_t ret;
   bin_tree_t *tree;
 
-  sbcset = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+  sbcset = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
   if (__glibc_unlikely (sbcset == NULL))
     {
       *err = REG_ESPACE;
       return NULL;
     }
-  mbcset = (re_charset_t *) calloc (sizeof (re_charset_t), 1);
+  mbcset = (re_charset_t *) calloc (1, sizeof (re_charset_t));
   if (__glibc_unlikely (mbcset == NULL))
     {
       re_free (sbcset);

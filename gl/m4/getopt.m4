@@ -1,9 +1,10 @@
 # getopt.m4
-# serial 49
-dnl Copyright (C) 2002-2006, 2008-2024 Free Software Foundation, Inc.
+# serial 50
+dnl Copyright (C) 2002-2006, 2008-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 # Request a POSIX compliant getopt function.
 AC_DEFUN([gl_FUNC_GETOPT_POSIX],
@@ -77,7 +78,7 @@ AC_DEFUN([gl_GETOPT_CHECK_HEADERS],
   fi
 
   dnl POSIX 2008 does not specify leading '+' behavior, but see
-  dnl http://austingroupbugs.net/view.php?id=191 for a recommendation on
+  dnl https://austingroupbugs.net/view.php?id=191 for a recommendation on
   dnl the next version of POSIX.  For now, we only guarantee leading '+'
   dnl behavior with getopt-gnu.
   if test -z "$gl_replace_getopt"; then
@@ -366,14 +367,7 @@ dnl is ambiguous with environment values that contain newlines.
 
 AC_DEFUN([gl_GETOPT_SUBSTITUTE_HEADER],
 [
-  AC_CHECK_HEADERS_ONCE([sys/cdefs.h])
-  if test $ac_cv_header_sys_cdefs_h = yes; then
-    HAVE_SYS_CDEFS_H=1
-  else
-    HAVE_SYS_CDEFS_H=0
-  fi
-  AC_SUBST([HAVE_SYS_CDEFS_H])
-
+  gl_CHECK_HEADER_SYS_CDEFS_H
   AC_DEFINE([__GETOPT_PREFIX], [[rpl_]],
     [Define to rpl_ if the getopt replacement functions and variables
      should be used.])

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 2001-2002, 2004-2006, 2008-2024 Free Software
+/* Copyright (C) 1997, 2001-2002, 2004-2006, 2008-2025 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Philip Blundell <pjb27@cam.ac.uk>, 1997.
@@ -27,8 +27,8 @@
 # include <libintl.h>
 #else
 # include "gettext.h"
-# define _(String) gettext (String)
-# define N_(String) String
+# define _(msgid) dgettext ("gnulib", msgid)
+# define N_(msgid) msgid
 #endif
 
 #if HAVE_DECL_GAI_STRERROR

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995-2003, 2005-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 1995-2003, 2005-2025 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This file is free software: you can redistribute it and/or modify
@@ -38,11 +38,23 @@
 # include <unistd.h>
 #endif
 
+#if defined _WIN32 && ! defined __CYGWIN__
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
+#endif
+
 #if !_LIBC
 # include "malloca.h"
 #endif
 
+#if defined _WIN32 && ! defined __CYGWIN__
+/* Don't assume that UNICODE is not defined.  */
+# undef SetEnvironmentVariable
+# define SetEnvironmentVariable SetEnvironmentVariableA
+#endif
+
 #if _LIBC || !HAVE_SETENV
+#if !HAVE_DECL__PUTENV
 
 #if !_LIBC
 # define __environ      environ
@@ -215,8 +227,7 @@ __add_to_environ (const char *name, const char *value, const char *combined,
         }
 
       if (__environ != last_environ)
-        memcpy ((char *) new_environ, (char *) __environ,
-                size * sizeof (char *));
+        memcpy (new_environ, __environ, size * sizeof (char *));
 
       new_environ[size + 1] = NULL;
 
@@ -343,6 +354,84 @@ weak_alias (__setenv, setenv)
 weak_alias (__clearenv, clearenv)
 #endif
 
+#else /* HAVE_DECL__PUTENV */
+/* Native Windows */
+
+int
+setenv (const char *name, const char *value, int replace)
+{
+  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  /* The Microsoft documentation
+     <https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/putenv-wputenv>
+     says:
+       "Don't change an environment entry directly: instead,
+        use _putenv or _wputenv to change it."
+     Note: Microsoft's _putenv updates not only the contents of _environ but
+     also the contents of _wenviron, so that both are in kept in sync.  */
+  const char *existing_value = getenv (name);
+  if (existing_value != NULL)
+    {
+      if (replace)
+        {
+          if (strcmp (existing_value, value) == 0)
+            /* No need to allocate memory.  */
+            return 0;
+        }
+      else
+        /* Keep the existing value.  */
+        return 0;
+    }
+  /* Allocate a new environment entry in the heap.  */
+  /* _putenv ("NAME=") unsets NAME, so if VALUE is the empty string, invoke
+     _putenv ("NAME= ") and fix up the result afterwards.  */
+  const char *value_ = (value[0] == '\0' ? " " : value);
+  size_t name_len = strlen (name);
+  size_t value_len = strlen (value_);
+  char *string = (char *) malloc (name_len + 1 + value_len + 1);
+  if (string == NULL)
+    return -1;
+  memcpy (string, name, name_len);
+  string[name_len] = '=';
+  memcpy (&string[name_len + 1], value_, value_len + 1);
+  /* Use _putenv.  */
+  if (_putenv (string) < 0)
+    return -1;
+  if (value[0] == '\0')
+    {
+      /* Fix up the result.  */
+      char *new_value = getenv (name);
+      if (new_value != NULL && new_value[0] == ' ' && new_value[1] == '\0')
+        new_value[0] = '\0';
+# if defined _WIN32 && ! defined __CYGWIN__
+      /* _putenv propagated "NAME= " into the subprocess environment;
+         fix that by calling SetEnvironmentVariable directly.  */
+      /* Documentation:
+         <https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setenvironmentvariable>  */
+      if (!SetEnvironmentVariable (name, ""))
+        {
+          switch (GetLastError ())
+            {
+            case ERROR_NOT_ENOUGH_MEMORY:
+            case ERROR_OUTOFMEMORY:
+              errno = ENOMEM;
+              break;
+            default:
+              errno = EINVAL;
+              break;
+            }
+          return -1;
+        }
+# endif
+    }
+  return 0;
+}
+
+#endif /* HAVE_DECL__PUTENV */
 #endif /* _LIBC || !HAVE_SETENV */
 
 /* The rest of this file is called into use when replacing an existing
@@ -360,7 +449,7 @@ int
 rpl_setenv (const char *name, const char *value, int replace)
 {
   int result;
-  if (!name || !*name || strchr (name, '='))
+  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
       errno = EINVAL;
       return -1;

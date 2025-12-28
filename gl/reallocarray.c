@@ -1,6 +1,6 @@
 /* reallocarray function that is glibc compatible.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -33,6 +33,6 @@ reallocarray (void *ptr, size_t nmemb, size_t size)
       return NULL;
     }
 
-  /* Rely on the semantics of GNU realloc.  */
+  /* Call realloc, setting errno to ENOMEM on failure.  */
   return realloc (ptr, nbytes);
 }

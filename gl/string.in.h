@@ -1,6 +1,6 @@
 /* A GNU-like <string.h>.
 
-   Copyright (C) 1995-1996, 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-1996, 2001-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -20,7 +20,7 @@
 #endif
 @PRAGMA_COLUMNS@
 
-#if defined _GL_ALREADY_INCLUDING_STRING_H
+#if defined _@GUARD_PREFIX@_ALREADY_INCLUDING_STRING_H
 /* Special invocation convention:
    - On OS X/NetBSD we have a sequence of nested includes
        <string.h> -> <strings.h> -> "string.h"
@@ -34,12 +34,12 @@
 
 #ifndef _@GUARD_PREFIX@_STRING_H
 
-#define _GL_ALREADY_INCLUDING_STRING_H
+#define _@GUARD_PREFIX@_ALREADY_INCLUDING_STRING_H
 
 /* The include_next requires a split double-inclusion guard.  */
 #@INCLUDE_NEXT@ @NEXT_STRING_H@
 
-#undef _GL_ALREADY_INCLUDING_STRING_H
+#undef _@GUARD_PREFIX@_ALREADY_INCLUDING_STRING_H
 
 #ifndef _@GUARD_PREFIX@_STRING_H
 #define _@GUARD_PREFIX@_STRING_H
@@ -53,6 +53,11 @@
 
 /* NetBSD 5.0 mis-defines NULL.  */
 #include <stddef.h>
+
+#if @GNULIB_STRERROR_L@
+/* Get locale_t.  */
+# include <locale.h>
+#endif
 
 /* MirBSD defines mbslen as a macro.  */
 #if @GNULIB_MBSLEN@ && defined __MirBSD__
@@ -79,7 +84,7 @@
    that can be freed by passing them as the Ith argument to the
    function F.  */
 #ifndef _GL_ATTRIBUTE_DEALLOC
-# if __GNUC__ >= 11
+# if __GNUC__ >= 11 && !defined __clang__
 #  define _GL_ATTRIBUTE_DEALLOC(f, i) __attribute__ ((__malloc__ (f, i)))
 # else
 #  define _GL_ATTRIBUTE_DEALLOC(f, i)
@@ -111,11 +116,23 @@
 # endif
 #endif
 
+/* _GL_ATTRIBUTE_NONNULL_IF_NONZERO (NP, NI) declares that the argument NP
+   (a pointer) must not be NULL if the argument NI (an integer) is != 0.  */
+/* Applies to: functions.  */
+#ifndef _GL_ATTRIBUTE_NONNULL_IF_NONZERO
+# if __GNUC__ >= 15 && !defined __clang__
+#  define _GL_ATTRIBUTE_NONNULL_IF_NONZERO(np, ni) \
+     __attribute__ ((__nonnull_if_nonzero__ (np, ni)))
+# else
+#  define _GL_ATTRIBUTE_NONNULL_IF_NONZERO(np, ni)
+# endif
+#endif
+
 /* _GL_ATTRIBUTE_NOTHROW declares that the function does not throw exceptions.
  */
 #ifndef _GL_ATTRIBUTE_NOTHROW
 # if defined __cplusplus
-#  if (__GNUC__ + (__GNUC_MINOR__ >= 8) > 2) || __clang_major >= 4
+#  if (__GNUC__ + (__GNUC_MINOR__ >= 8) > 2) || __clang_major__ >= 4
 #   if __cplusplus >= 201103L
 #    define _GL_ATTRIBUTE_NOTHROW noexcept (true)
 #   else
@@ -148,6 +165,7 @@
 /* The definition of _GL_ARG_NONNULL is copied here.  */
 
 /* The definition of _GL_WARN_ON_USE is copied here.  */
+
 
 /* Make _GL_ATTRIBUTE_DEALLOC_FREE work, even though <stdlib.h> may not have
    been included yet.  */
@@ -193,12 +211,97 @@ _GL_EXTERN_C void free (void *);
 # endif
 #endif
 
+
+/* Declarations for ISO C N3322.  */
+#if defined __GNUC__ && __GNUC__ >= 15 && !defined __clang__
+# ifndef memcpy
+_GL_EXTERN_C void *memcpy (void *__dest, const void *__src, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# ifndef memccpy
+_GL_EXTERN_C void *memccpy (void *__dest, const void *__src, int __c, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 4)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 4);
+# endif
+# ifndef memmove
+_GL_EXTERN_C void *memmove (void *__dest, const void *__src, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# ifndef strncpy
+_GL_EXTERN_C char *strncpy (char *__dest, const char *__src, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# ifndef strndup
+_GL_EXTERN_C char *strndup (const char *__s, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2);
+# endif
+# ifndef strncat
+_GL_EXTERN_C char *strncat (char *__dest, const char *__src, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ARG_NONNULL ((1)) _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# ifndef memcmp
+_GL_EXTERN_C int memcmp (const void *__s1, const void *__s2, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# ifndef strncmp
+_GL_EXTERN_C int strncmp (const char *__s1, const char *__s2, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
+# endif
+# if !defined memchr && !defined __cplusplus
+_GL_EXTERN_C void *memchr (const void *__s, int __c, size_t __n)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3);
+_GL_EXTERN_C void *memrchr (const void *__s, int __c, size_t __n)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3);
+# endif
+# ifndef memset
+_GL_EXTERN_C void *memset (void *__s, int __c, size_t __n)
+#  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
+  _GL_ATTRIBUTE_NOTHROW
+#  endif
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3);
+# endif
+# ifndef memset_explicit
+_GL_EXTERN_C void *memset_explicit (void *__s, int __c, size_t __n)
+  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3);
+# endif
+#endif
+
+
 /* Clear a block of memory.  The compiler will not delete a call to
    this function, even if the block is dead after the call.  */
 #if @GNULIB_EXPLICIT_BZERO@
 # if ! @HAVE_EXPLICIT_BZERO@
 _GL_FUNCDECL_SYS (explicit_bzero, void,
-                  (void *__dest, size_t __n) _GL_ARG_NONNULL ((1)));
+                  (void *__dest, size_t __n), _GL_ARG_NONNULL ((1)));
 # endif
 _GL_CXXALIAS_SYS (explicit_bzero, void, (void *__dest, size_t __n));
 _GL_CXXALIASWARN (explicit_bzero);
@@ -210,10 +313,11 @@ _GL_WARN_ON_USE (explicit_bzero, "explicit_bzero is unportable - "
 # endif
 #endif
 
+
 /* Find the index of the least-significant set bit.  */
 #if @GNULIB_FFSL@
 # if !@HAVE_FFSL@
-_GL_FUNCDECL_SYS (ffsl, int, (long int i));
+_GL_FUNCDECL_SYS (ffsl, int, (long int i), );
 # endif
 _GL_CXXALIAS_SYS (ffsl, int, (long int i));
 _GL_CXXALIASWARN (ffsl);
@@ -231,11 +335,11 @@ _GL_WARN_ON_USE (ffsl, "ffsl is not portable - use the ffsl module");
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define ffsll rpl_ffsll
 #  endif
-_GL_FUNCDECL_RPL (ffsll, int, (long long int i));
+_GL_FUNCDECL_RPL (ffsll, int, (long long int i), );
 _GL_CXXALIAS_RPL (ffsll, int, (long long int i));
 # else
 #  if !@HAVE_FFSLL@
-_GL_FUNCDECL_SYS (ffsll, int, (long long int i));
+_GL_FUNCDECL_SYS (ffsll, int, (long long int i), );
 #  endif
 _GL_CXXALIAS_SYS (ffsll, int, (long long int i));
 # endif
@@ -274,9 +378,9 @@ _GL_CXXALIASWARN (memccpy);
 #   undef memchr
 #   define memchr rpl_memchr
 #  endif
-_GL_FUNCDECL_RPL (memchr, void *, (void const *__s, int __c, size_t __n)
+_GL_FUNCDECL_RPL (memchr, void *, (void const *__s, int __c, size_t __n),
                                   _GL_ATTRIBUTE_PURE
-                                  _GL_ARG_NONNULL ((1)));
+                                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3));
 _GL_CXXALIAS_RPL (memchr, void *, (void const *__s, int __c, size_t __n));
 # else
   /* On some systems, this function is defined as an overloaded function:
@@ -301,8 +405,10 @@ _GL_CXXALIASWARN (memchr);
 #elif defined GNULIB_POSIXCHECK
 # undef memchr
 /* Assume memchr is always declared.  */
-_GL_WARN_ON_USE (memchr, "memchr has platform-specific bugs - "
-                 "use gnulib module memchr for portability" );
+_GL_WARN_ON_USE_CXX (memchr,
+                     const void *, void *, (void const *, int, size_t),
+                     "memchr has platform-specific bugs - "
+                     "use gnulib module memchr for portability" );
 #endif
 
 /* Return the first occurrence of NEEDLE in HAYSTACK.  */
@@ -313,7 +419,7 @@ _GL_WARN_ON_USE (memchr, "memchr has platform-specific bugs - "
 #  endif
 _GL_FUNCDECL_RPL (memmem, void *,
                   (void const *__haystack, size_t __haystack_len,
-                   void const *__needle, size_t __needle_len)
+                   void const *__needle, size_t __needle_len),
                   _GL_ATTRIBUTE_PURE
                   _GL_ARG_NONNULL ((1, 3)));
 _GL_CXXALIAS_RPL (memmem, void *,
@@ -323,7 +429,7 @@ _GL_CXXALIAS_RPL (memmem, void *,
 #  if ! @HAVE_DECL_MEMMEM@
 _GL_FUNCDECL_SYS (memmem, void *,
                   (void const *__haystack, size_t __haystack_len,
-                   void const *__needle, size_t __needle_len)
+                   void const *__needle, size_t __needle_len),
                   _GL_ATTRIBUTE_PURE
                   _GL_ARG_NONNULL ((1, 3)));
 #  endif
@@ -351,7 +457,7 @@ _GL_WARN_ON_USE (memmem, "memmem is unportable and often quadratic - "
 #  endif
 _GL_FUNCDECL_RPL (mempcpy, void *,
                   (void *restrict __dest, void const *restrict __src,
-                   size_t __n)
+                   size_t __n),
                   _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (mempcpy, void *,
                   (void *restrict __dest, void const *restrict __src,
@@ -360,7 +466,7 @@ _GL_CXXALIAS_RPL (mempcpy, void *,
 #  if !@HAVE_MEMPCPY@
 _GL_FUNCDECL_SYS (mempcpy, void *,
                   (void *restrict __dest, void const *restrict __src,
-                   size_t __n)
+                   size_t __n),
                   _GL_ARG_NONNULL ((1, 2)));
 #  endif
 _GL_CXXALIAS_SYS (mempcpy, void *,
@@ -381,9 +487,9 @@ _GL_WARN_ON_USE (mempcpy, "mempcpy is unportable - "
 /* Search backwards through a block for a byte (specified as an int).  */
 #if @GNULIB_MEMRCHR@
 # if ! @HAVE_DECL_MEMRCHR@
-_GL_FUNCDECL_SYS (memrchr, void *, (void const *, int, size_t)
+_GL_FUNCDECL_SYS (memrchr, void *, (void const *, int, size_t),
                                    _GL_ATTRIBUTE_PURE
-                                   _GL_ARG_NONNULL ((1)));
+                                   _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3));
 # endif
   /* On some systems, this function is defined as an overloaded function:
        extern "C++" { const void * std::memrchr (const void *, int, size_t); }
@@ -420,16 +526,20 @@ _GL_WARN_ON_USE (memrchr, "memrchr is unportable - "
 #   define memset_explicit rpl_memset_explicit
 #  endif
 _GL_FUNCDECL_RPL (memset_explicit, void *,
-                  (void *__dest, int __c, size_t __n) _GL_ARG_NONNULL ((1)));
+                  (void *__dest, int __c, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3));
 _GL_CXXALIAS_RPL (memset_explicit, void *, (void *__dest, int __c, size_t __n));
 # else
 #  if !@HAVE_MEMSET_EXPLICIT@
 _GL_FUNCDECL_SYS (memset_explicit, void *,
-                  (void *__dest, int __c, size_t __n) _GL_ARG_NONNULL ((1)));
+                  (void *__dest, int __c, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3));
 #  endif
 _GL_CXXALIAS_SYS (memset_explicit, void *, (void *__dest, int __c, size_t __n));
 # endif
+# if __GLIBC__ >= 2
 _GL_CXXALIASWARN (memset_explicit);
+# endif
 #elif defined GNULIB_POSIXCHECK
 # undef memset_explicit
 # if HAVE_RAW_DECL_MEMSET_EXPLICIT
@@ -443,7 +553,7 @@ _GL_WARN_ON_USE (memset_explicit, "memset_explicit is unportable - "
    occur within N bytes.  */
 #if @GNULIB_RAWMEMCHR@
 # if ! @HAVE_RAWMEMCHR@
-_GL_FUNCDECL_SYS (rawmemchr, void *, (void const *__s, int __c_in)
+_GL_FUNCDECL_SYS (rawmemchr, void *, (void const *__s, int __c_in),
                                      _GL_ATTRIBUTE_PURE
                                      _GL_ARG_NONNULL ((1)));
 # endif
@@ -481,14 +591,14 @@ _GL_WARN_ON_USE (rawmemchr, "rawmemchr is unportable - "
 #   define stpcpy rpl_stpcpy
 #  endif
 _GL_FUNCDECL_RPL (stpcpy, char *,
-                  (char *restrict __dst, char const *restrict __src)
+                  (char *restrict __dst, char const *restrict __src),
                   _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (stpcpy, char *,
                   (char *restrict __dst, char const *restrict __src));
 # else
 #  if !@HAVE_STPCPY@
 _GL_FUNCDECL_SYS (stpcpy, char *,
-                  (char *restrict __dst, char const *restrict __src)
+                  (char *restrict __dst, char const *restrict __src),
                   _GL_ARG_NONNULL ((1, 2)));
 #  endif
 _GL_CXXALIAS_SYS (stpcpy, char *,
@@ -515,7 +625,7 @@ _GL_WARN_ON_USE (stpcpy, "stpcpy is unportable - "
 #  endif
 _GL_FUNCDECL_RPL (stpncpy, char *,
                   (char *restrict __dst, char const *restrict __src,
-                   size_t __n)
+                   size_t __n),
                   _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (stpncpy, char *,
                   (char *restrict __dst, char const *restrict __src,
@@ -524,7 +634,7 @@ _GL_CXXALIAS_RPL (stpncpy, char *,
 #  if ! @HAVE_STPNCPY@
 _GL_FUNCDECL_SYS (stpncpy, char *,
                   (char *restrict __dst, char const *restrict __src,
-                   size_t __n)
+                   size_t __n),
                   _GL_ARG_NONNULL ((1, 2)));
 #  endif
 _GL_CXXALIAS_SYS (stpncpy, char *,
@@ -560,14 +670,14 @@ _GL_WARN_ON_USE_CXX (strchr,
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define strchrnul rpl_strchrnul
 #  endif
-_GL_FUNCDECL_RPL (strchrnul, char *, (const char *__s, int __c_in)
+_GL_FUNCDECL_RPL (strchrnul, char *, (const char *__s, int __c_in),
                                      _GL_ATTRIBUTE_PURE
                                      _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (strchrnul, char *,
                   (const char *str, int ch));
 # else
 #  if ! @HAVE_STRCHRNUL@
-_GL_FUNCDECL_SYS (strchrnul, char *, (char const *__s, int __c_in)
+_GL_FUNCDECL_SYS (strchrnul, char *, (char const *__s, int __c_in),
                                      _GL_ATTRIBUTE_PURE
                                      _GL_ARG_NONNULL ((1)));
 #  endif
@@ -606,7 +716,7 @@ _GL_WARN_ON_USE (strchrnul, "strchrnul is unportable - "
 #   define strdup rpl_strdup
 #  endif
 _GL_FUNCDECL_RPL (strdup, char *,
-                  (char const *__s)
+                  (char const *__s),
                   _GL_ARG_NONNULL ((1))
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 _GL_CXXALIAS_RPL (strdup, char *, (char const *__s));
@@ -621,16 +731,17 @@ _GL_CXXALIAS_MDA (strdup, char *, (char const *__s));
     /* strdup exists as a function and as a macro.  Get rid of the macro.  */
 #   undef strdup
 #  endif
-#  if (!@HAVE_DECL_STRDUP@ || __GNUC__ >= 11) && !defined strdup
+#  if (!@HAVE_DECL_STRDUP@ || (__GNUC__ >= 11 && !defined __clang__)) \
+      && !defined strdup
 #   if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
 _GL_FUNCDECL_SYS (strdup, char *,
-                  (char const *__s)
-                  _GL_ATTRIBUTE_NOTHROW
+                  (char const *__s),
                   _GL_ARG_NONNULL ((1))
-                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE)
+                  _GL_ATTRIBUTE_NOTHROW;
 #   else
 _GL_FUNCDECL_SYS (strdup, char *,
-                  (char const *__s)
+                  (char const *__s),
                   _GL_ARG_NONNULL ((1))
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 #   endif
@@ -639,17 +750,17 @@ _GL_CXXALIAS_SYS (strdup, char *, (char const *__s));
 # endif
 _GL_CXXALIASWARN (strdup);
 #else
-# if __GNUC__ >= 11 && !defined strdup
+# if (__GNUC__ >= 11 && !defined __clang__) && !defined strdup
 /* For -Wmismatched-dealloc: Associate strdup with free or rpl_free.  */
 #  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
 _GL_FUNCDECL_SYS (strdup, char *,
-                  (char const *__s)
-                  _GL_ATTRIBUTE_NOTHROW
+                  (char const *__s),
                   _GL_ARG_NONNULL ((1))
-                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE)
+                  _GL_ATTRIBUTE_NOTHROW;
 #  else
 _GL_FUNCDECL_SYS (strdup, char *,
-                  (char const *__s)
+                  (char const *__s),
                   _GL_ARG_NONNULL ((1))
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 #  endif
@@ -688,8 +799,9 @@ _GL_CXXALIASWARN (strdup);
 #   define strncat rpl_strncat
 #  endif
 _GL_FUNCDECL_RPL (strncat, char *,
-                  (char *restrict dest, const char *restrict src, size_t n)
-                  _GL_ARG_NONNULL ((1, 2)));
+                  (char *restrict dest, const char *restrict src, size_t n),
+                  _GL_ARG_NONNULL ((1))
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3));
 _GL_CXXALIAS_RPL (strncat, char *,
                   (char *restrict dest, const char *restrict src, size_t n));
 # else
@@ -707,6 +819,35 @@ _GL_WARN_ON_USE (strncat, "strncat is unportable - "
 # endif
 #endif
 
+/* Copy no more than N bytes of SRC to DST, returning DST.  */
+#if @GNULIB_STRNCPY@
+# if @REPLACE_STRNCPY@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef strncpy
+#   define strncpy rpl_strncpy
+#  endif
+_GL_FUNCDECL_RPL (strncpy, char *,
+                  (char *restrict __dst, char const *restrict __src,
+                   size_t __n),
+                  _GL_ARG_NONNULL ((1, 2)));
+_GL_CXXALIAS_RPL (strncpy, char *,
+                  (char *restrict __dst, char const *restrict __src,
+                   size_t __n));
+# else
+_GL_CXXALIAS_SYS (strncpy, char *,
+                  (char *restrict __dst, char const *restrict __src,
+                   size_t __n));
+# endif
+# if __GLIBC__ >= 2
+_GL_CXXALIASWARN (strncpy);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# if HAVE_RAW_DECL_STRNCPY
+_GL_WARN_ON_USE (strncpy, "strncpy is unportable - "
+                 "use gnulib module strncpy for portability");
+# endif
+#endif
+
 /* Return a newly allocated copy of at most N bytes of STRING.  */
 #if @GNULIB_STRNDUP@
 # if @REPLACE_STRNDUP@
@@ -715,22 +856,23 @@ _GL_WARN_ON_USE (strncat, "strncat is unportable - "
 #   define strndup rpl_strndup
 #  endif
 _GL_FUNCDECL_RPL (strndup, char *,
-                  (char const *__s, size_t __n)
-                  _GL_ARG_NONNULL ((1))
+                  (char const *__s, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 _GL_CXXALIAS_RPL (strndup, char *, (char const *__s, size_t __n));
 # else
-#  if !@HAVE_DECL_STRNDUP@ || (__GNUC__ >= 11 && !defined strndup)
+#  if !@HAVE_DECL_STRNDUP@ \
+      || ((__GNUC__ >= 11 && !defined __clang__) && !defined strndup)
 #   if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
 _GL_FUNCDECL_SYS (strndup, char *,
-                  (char const *__s, size_t __n)
-                  _GL_ATTRIBUTE_NOTHROW
-                  _GL_ARG_NONNULL ((1))
-                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+                  (char const *__s, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2)
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE)
+                  _GL_ATTRIBUTE_NOTHROW;
 #   else
 _GL_FUNCDECL_SYS (strndup, char *,
-                  (char const *__s, size_t __n)
-                  _GL_ARG_NONNULL ((1))
+                  (char const *__s, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 #   endif
 #  endif
@@ -738,18 +880,18 @@ _GL_CXXALIAS_SYS (strndup, char *, (char const *__s, size_t __n));
 # endif
 _GL_CXXALIASWARN (strndup);
 #else
-# if __GNUC__ >= 11 && !defined strndup
+# if (__GNUC__ >= 11 && !defined __clang__) && !defined strndup
 /* For -Wmismatched-dealloc: Associate strndup with free or rpl_free.  */
 #  if __GLIBC__ + (__GLIBC_MINOR__ >= 2) > 2
 _GL_FUNCDECL_SYS (strndup, char *,
-                  (char const *__s, size_t __n)
-                  _GL_ATTRIBUTE_NOTHROW
-                  _GL_ARG_NONNULL ((1))
-                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
+                  (char const *__s, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2)
+                  _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE)
+                  _GL_ATTRIBUTE_NOTHROW;
 #  else
 _GL_FUNCDECL_SYS (strndup, char *,
-                  (char const *__s, size_t __n)
-                  _GL_ARG_NONNULL ((1))
+                  (char const *__s, size_t __n),
+                  _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 2)
                   _GL_ATTRIBUTE_MALLOC _GL_ATTRIBUTE_DEALLOC_FREE);
 #  endif
 # endif
@@ -771,13 +913,13 @@ _GL_WARN_ON_USE (strndup, "strndup is unportable - "
 #   undef strnlen
 #   define strnlen rpl_strnlen
 #  endif
-_GL_FUNCDECL_RPL (strnlen, size_t, (char const *__s, size_t __maxlen)
+_GL_FUNCDECL_RPL (strnlen, size_t, (char const *__s, size_t __maxlen),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (strnlen, size_t, (char const *__s, size_t __maxlen));
 # else
 #  if ! @HAVE_DECL_STRNLEN@
-_GL_FUNCDECL_SYS (strnlen, size_t, (char const *__s, size_t __maxlen)
+_GL_FUNCDECL_SYS (strnlen, size_t, (char const *__s, size_t __maxlen),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1)));
 #  endif
@@ -807,7 +949,7 @@ _GL_WARN_ON_USE (strcspn, "strcspn cannot work correctly on character strings "
 /* Find the first occurrence in S of any character in ACCEPT.  */
 #if @GNULIB_STRPBRK@
 # if ! @HAVE_STRPBRK@
-_GL_FUNCDECL_SYS (strpbrk, char *, (char const *__s, char const *__accept)
+_GL_FUNCDECL_SYS (strpbrk, char *, (char const *__s, char const *__accept),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1, 2)));
 # endif
@@ -892,7 +1034,7 @@ _GL_WARN_ON_USE_CXX (strrchr,
 #if @GNULIB_STRSEP@
 # if ! @HAVE_STRSEP@
 _GL_FUNCDECL_SYS (strsep, char *,
-                  (char **restrict __stringp, char const *restrict __delim)
+                  (char **restrict __stringp, char const *restrict __delim),
                   _GL_ARG_NONNULL ((1, 2)));
 # endif
 _GL_CXXALIAS_SYS (strsep, char *,
@@ -917,7 +1059,7 @@ _GL_WARN_ON_USE (strsep, "strsep is unportable - "
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define strstr rpl_strstr
 #  endif
-_GL_FUNCDECL_RPL (strstr, char *, (const char *haystack, const char *needle)
+_GL_FUNCDECL_RPL (strstr, char *, (const char *haystack, const char *needle),
                                   _GL_ATTRIBUTE_PURE
                                   _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (strstr, char *, (const char *haystack, const char *needle));
@@ -948,11 +1090,13 @@ _GL_CXXALIASWARN (strstr);
    as a sequence of bytes, not of characters.  */
 # undef strstr
 /* Assume strstr is always declared.  */
-_GL_WARN_ON_USE (strstr, "strstr is quadratic on many systems, and cannot "
-                 "work correctly on character strings in most "
-                 "multibyte locales - "
-                 "use mbsstr if you care about internationalization, "
-                 "or use strstr if you care about speed");
+_GL_WARN_ON_USE_CXX (strstr,
+                     const char *, char *, (const char *, const char *),
+                     "strstr is quadratic on many systems, and cannot "
+                     "work correctly on character strings in most "
+                     "multibyte locales - "
+                     "use mbsstr if you care about internationalization, "
+                     "or use strstr if you care about speed");
 #endif
 
 /* Find the first occurrence of NEEDLE in HAYSTACK, using case-insensitive
@@ -963,7 +1107,7 @@ _GL_WARN_ON_USE (strstr, "strstr is quadratic on many systems, and cannot "
 #   define strcasestr rpl_strcasestr
 #  endif
 _GL_FUNCDECL_RPL (strcasestr, char *,
-                  (const char *haystack, const char *needle)
+                  (const char *haystack, const char *needle),
                   _GL_ATTRIBUTE_PURE
                   _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (strcasestr, char *,
@@ -971,7 +1115,7 @@ _GL_CXXALIAS_RPL (strcasestr, char *,
 # else
 #  if ! @HAVE_STRCASESTR@
 _GL_FUNCDECL_SYS (strcasestr, char *,
-                  (const char *haystack, const char *needle)
+                  (const char *haystack, const char *needle),
                   _GL_ATTRIBUTE_PURE
                   _GL_ARG_NONNULL ((1, 2)));
 #  endif
@@ -1038,7 +1182,7 @@ _GL_WARN_ON_USE (strcasestr, "strcasestr does work correctly on character "
 #  endif
 _GL_FUNCDECL_RPL (strtok_r, char *,
                   (char *restrict s, char const *restrict delim,
-                   char **restrict save_ptr)
+                   char **restrict save_ptr),
                   _GL_ARG_NONNULL ((2, 3)));
 _GL_CXXALIAS_RPL (strtok_r, char *,
                   (char *restrict s, char const *restrict delim,
@@ -1050,7 +1194,7 @@ _GL_CXXALIAS_RPL (strtok_r, char *,
 #  if ! @HAVE_DECL_STRTOK_R@
 _GL_FUNCDECL_SYS (strtok_r, char *,
                   (char *restrict s, char const *restrict delim,
-                   char **restrict save_ptr)
+                   char **restrict save_ptr),
                   _GL_ARG_NONNULL ((2, 3)));
 #  endif
 _GL_CXXALIAS_SYS (strtok_r, char *,
@@ -1075,6 +1219,22 @@ _GL_WARN_ON_USE (strtok_r, "strtok_r is unportable - "
 /* The following functions are not specified by POSIX.  They are gnulib
    extensions.  */
 
+#if @GNULIB_STR_STARTSWITH@
+/* Returns true if STRING starts with PREFIX.
+   Returns false otherwise.  */
+_GL_EXTERN_C bool str_startswith (const char *string, const char *prefix)
+     _GL_ATTRIBUTE_PURE
+     _GL_ARG_NONNULL ((1, 2));
+#endif
+
+#if @GNULIB_STR_ENDSWITH@
+/* Returns true if STRING ends with SUFFIX.
+   Returns false otherwise.  */
+_GL_EXTERN_C bool str_endswith (const char *string, const char *prefix)
+     _GL_ATTRIBUTE_PURE
+     _GL_ARG_NONNULL ((1, 2));
+#endif
+
 #if @GNULIB_MBSLEN@
 /* Return the number of multibyte characters in the character string STRING.
    This considers multibyte characters, unlike strlen, which counts bytes.  */
@@ -1085,12 +1245,12 @@ _GL_WARN_ON_USE (strtok_r, "strtok_r is unportable - "
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define mbslen rpl_mbslen
 #  endif
-_GL_FUNCDECL_RPL (mbslen, size_t, (const char *string)
+_GL_FUNCDECL_RPL (mbslen, size_t, (const char *string),
                                   _GL_ATTRIBUTE_PURE
                                   _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (mbslen, size_t, (const char *string));
 # else
-_GL_FUNCDECL_SYS (mbslen, size_t, (const char *string)
+_GL_FUNCDECL_SYS (mbslen, size_t, (const char *string),
                                   _GL_ATTRIBUTE_PURE
                                   _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_SYS (mbslen, size_t, (const char *string));
@@ -1117,12 +1277,12 @@ _GL_EXTERN_C size_t mbsnlen (const char *string, size_t len)
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define mbschr rpl_mbschr /* avoid collision with HP-UX function */
 #  endif
-_GL_FUNCDECL_RPL (mbschr, char *, (const char *string, int c)
+_GL_FUNCDECL_RPL (mbschr, char *, (const char *string, int c),
                                   _GL_ATTRIBUTE_PURE
                                   _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (mbschr, char *, (const char *string, int c));
 # else
-_GL_FUNCDECL_SYS (mbschr, char *, (const char *string, int c)
+_GL_FUNCDECL_SYS (mbschr, char *, (const char *string, int c),
                                   _GL_ATTRIBUTE_PURE
                                   _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_SYS (mbschr, char *, (const char *string, int c));
@@ -1139,12 +1299,12 @@ _GL_CXXALIASWARN (mbschr);
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define mbsrchr rpl_mbsrchr /* avoid collision with system function */
 #  endif
-_GL_FUNCDECL_RPL (mbsrchr, char *, (const char *string, int c)
+_GL_FUNCDECL_RPL (mbsrchr, char *, (const char *string, int c),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_RPL (mbsrchr, char *, (const char *string, int c));
 # else
-_GL_FUNCDECL_SYS (mbsrchr, char *, (const char *string, int c)
+_GL_FUNCDECL_SYS (mbsrchr, char *, (const char *string, int c),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1)));
 _GL_CXXALIAS_SYS (mbsrchr, char *, (const char *string, int c));
@@ -1160,6 +1320,33 @@ _GL_CXXALIASWARN (mbsrchr);
 _GL_EXTERN_C char * mbsstr (const char *haystack, const char *needle)
      _GL_ATTRIBUTE_PURE
      _GL_ARG_NONNULL ((1, 2));
+# ifndef _GL_NO_CONST_GENERICS
+/* Don't silently convert a 'const char *' to a 'char *'.  Programmers want
+   compiler warnings for 'const' related mistakes.  */
+#  ifdef __cplusplus
+extern "C++" { /* needed for AIX */
+template <typename T>
+  T * mbsstr_template (T* haystack, const char *needle);
+template <>
+  inline char * mbsstr_template (char *haystack, const char *needle)
+  { return mbsstr (haystack, needle); }
+template <>
+  inline const char * mbsstr_template (const char *haystack, const char *needle)
+  { return mbsstr (haystack, needle); }
+}
+#   undef mbsstr
+#   define mbsstr mbsstr_template
+#  elif !defined mbsstr
+#   if ((__GNUC__ + (__GNUC_MINOR__ >= 9) > 4) || (__clang_major__ >= 3) \
+        || defined __ICC  || defined __TINYC__ \
+        || (__STDC_VERSION__ >= 201112L && !(defined __GNUC__ || defined __clang__)))
+#    define mbsstr(h,n) \
+       _Generic ((h), \
+                 char const *: (char const *) mbsstr ((h), (n)), \
+                 default     :                mbsstr ((h), (n)))
+#   endif
+#  endif
+# endif
 #endif
 
 #if @GNULIB_MBSCASECMP@
@@ -1201,6 +1388,33 @@ _GL_EXTERN_C int mbsncasecmp (const char *s1, const char *s2, size_t n)
 _GL_EXTERN_C char * mbspcasecmp (const char *string, const char *prefix)
      _GL_ATTRIBUTE_PURE
      _GL_ARG_NONNULL ((1, 2));
+# ifndef _GL_NO_CONST_GENERICS
+/* Don't silently convert a 'const char *' to a 'char *'.  Programmers want
+   compiler warnings for 'const' related mistakes.  */
+#  ifdef __cplusplus
+extern "C++" { /* needed for AIX */
+template <typename T>
+  T * mbspcasecmp_template (T* string, const char *prefix);
+template <>
+  inline char * mbspcasecmp_template (char *string, const char *prefix)
+  { return mbspcasecmp (string, prefix); }
+template <>
+  inline const char * mbspcasecmp_template (const char *string, const char *prefix)
+  { return mbspcasecmp (string, prefix); }
+}
+#   undef mbspcasecmp
+#   define mbspcasecmp mbspcasecmp_template
+#  elif !defined mbspcasecmp
+#   if ((__GNUC__ + (__GNUC_MINOR__ >= 9) > 4) || (__clang_major__ >= 3) \
+        || defined __ICC  || defined __TINYC__ \
+        || (__STDC_VERSION__ >= 201112L && !(defined __GNUC__ || defined __clang__)))
+#    define mbspcasecmp(s,p) \
+       _Generic ((s), \
+                 char const *: (char const *) mbspcasecmp ((s), (p)), \
+                 default     :                mbspcasecmp ((s), (p)))
+#   endif
+#  endif
+# endif
 #endif
 
 #if @GNULIB_MBSCASESTR@
@@ -1212,6 +1426,33 @@ _GL_EXTERN_C char * mbspcasecmp (const char *string, const char *prefix)
 _GL_EXTERN_C char * mbscasestr (const char *haystack, const char *needle)
      _GL_ATTRIBUTE_PURE
      _GL_ARG_NONNULL ((1, 2));
+# ifndef _GL_NO_CONST_GENERICS
+/* Don't silently convert a 'const char *' to a 'char *'.  Programmers want
+   compiler warnings for 'const' related mistakes.  */
+#  ifdef __cplusplus
+extern "C++" { /* needed for AIX */
+template <typename T>
+  T * mbscasestr_template (T* haystack, const char *needle);
+template <>
+  inline char * mbscasestr_template (char *haystack, const char *needle)
+  { return mbscasestr (haystack, needle); }
+template <>
+  inline const char * mbscasestr_template (const char *haystack, const char *needle)
+  { return mbscasestr (haystack, needle); }
+}
+#   undef mbscasestr
+#   define mbscasestr mbscasestr_template
+#  elif !defined mbscasestr
+#   if ((__GNUC__ + (__GNUC_MINOR__ >= 9) > 4) || (__clang_major__ >= 3) \
+        || defined __ICC  || defined __TINYC__ \
+        || (__STDC_VERSION__ >= 201112L && !(defined __GNUC__ || defined __clang__)))
+#    define mbscasestr(h,n) \
+       _Generic ((h), \
+                 char const *: (char const *) mbscasestr ((h), (n)), \
+                 default     :                mbscasestr ((h), (n)))
+#   endif
+#  endif
+# endif
 #endif
 
 #if @GNULIB_MBSCSPN@
@@ -1234,12 +1475,12 @@ _GL_EXTERN_C size_t mbscspn (const char *string, const char *accept)
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define mbspbrk rpl_mbspbrk /* avoid collision with HP-UX function */
 #  endif
-_GL_FUNCDECL_RPL (mbspbrk, char *, (const char *string, const char *accept)
+_GL_FUNCDECL_RPL (mbspbrk, char *, (const char *string, const char *accept),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (mbspbrk, char *, (const char *string, const char *accept));
 # else
-_GL_FUNCDECL_SYS (mbspbrk, char *, (const char *string, const char *accept)
+_GL_FUNCDECL_SYS (mbspbrk, char *, (const char *string, const char *accept),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_SYS (mbspbrk, char *, (const char *string, const char *accept));
@@ -1299,6 +1540,26 @@ _GL_EXTERN_C char * mbstok_r (char *restrict string, const char *delim,
      _GL_ARG_NONNULL ((2, 3));
 #endif
 
+#if @GNULIB_MBS_STARTSWITH@
+/* Returns true if STRING starts with PREFIX.
+   Returns false otherwise.  */
+_GL_EXTERN_C bool mbs_startswith (const char *string, const char *prefix)
+     _GL_ATTRIBUTE_PURE
+     _GL_ARG_NONNULL ((1, 2));
+/* No extra code is needed for multibyte locales for this function.  */
+# define mbs_startswith str_startswith
+#endif
+
+#if @GNULIB_MBS_ENDSWITH@
+/* Returns true if STRING ends with SUFFIX.
+   Returns false otherwise.
+   Unlike str_endswith(), this function works correctly in multibyte locales.
+ */
+_GL_EXTERN_C bool mbs_endswith (const char *string, const char *suffix)
+     _GL_ATTRIBUTE_PURE
+     _GL_ARG_NONNULL ((1, 2));
+#endif
+
 /* Map any int, typically from errno, into an error message.  */
 #if @GNULIB_STRERROR@
 # if @REPLACE_STRERROR@
@@ -1306,7 +1567,7 @@ _GL_EXTERN_C char * mbstok_r (char *restrict string, const char *delim,
 #   undef strerror
 #   define strerror rpl_strerror
 #  endif
-_GL_FUNCDECL_RPL (strerror, char *, (int));
+_GL_FUNCDECL_RPL (strerror, char *, (int), );
 _GL_CXXALIAS_RPL (strerror, char *, (int));
 # else
 _GL_CXXALIAS_SYS (strerror, char *, (int));
@@ -1329,12 +1590,12 @@ _GL_WARN_ON_USE (strerror, "strerror is unportable - "
 #   undef strerror_r
 #   define strerror_r rpl_strerror_r
 #  endif
-_GL_FUNCDECL_RPL (strerror_r, int, (int errnum, char *buf, size_t buflen)
+_GL_FUNCDECL_RPL (strerror_r, int, (int errnum, char *buf, size_t buflen),
                                    _GL_ARG_NONNULL ((2)));
 _GL_CXXALIAS_RPL (strerror_r, int, (int errnum, char *buf, size_t buflen));
 # else
 #  if !@HAVE_DECL_STRERROR_R@
-_GL_FUNCDECL_SYS (strerror_r, int, (int errnum, char *buf, size_t buflen)
+_GL_FUNCDECL_SYS (strerror_r, int, (int errnum, char *buf, size_t buflen),
                                    _GL_ARG_NONNULL ((2)));
 #  endif
 _GL_CXXALIAS_SYS (strerror_r, int, (int errnum, char *buf, size_t buflen));
@@ -1350,6 +1611,44 @@ _GL_WARN_ON_USE (strerror_r, "strerror_r is unportable - "
 # endif
 #endif
 
+/* Map any int, typically from errno, into an error message.
+   With locale_t argument.  */
+#if @GNULIB_STRERROR_L@
+# if @REPLACE_STRERROR_L@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef strerror_l
+#   define strerror_l rpl_strerror_l
+#  endif
+_GL_FUNCDECL_RPL (strerror_l, char *, (int errnum, locale_t locale),
+                                                   _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (strerror_l, char *, (int errnum, locale_t locale));
+# else
+#  if !@HAVE_STRERROR_L@
+_GL_FUNCDECL_SYS (strerror_l, char *, (int errnum, locale_t locale),
+                                                   _GL_ARG_NONNULL ((2)));
+#  endif
+_GL_CXXALIAS_SYS (strerror_l, char *, (int errnum, locale_t locale));
+# endif
+# if __GLIBC__ >= 2
+_GL_CXXALIASWARN (strerror_l);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef strerror_l
+# if HAVE_RAW_DECL_STRERROR_L
+_GL_WARN_ON_USE (strerror_l, "strerror_l is unportable - "
+                 "use gnulib module strerror_l for portability");
+# endif
+#endif
+
+/* Map any int, typically from errno, into an error message.  Multithread-safe,
+   with locale_t argument.
+   Not portable! Only provided by gnulib.  */
+#if @GNULIB_STRERROR_L@
+_GL_FUNCDECL_SYS (strerror_l_r, int,
+                  (int errnum, char *buf, size_t buflen, locale_t locale),
+                  _GL_ARG_NONNULL ((2, 4)));
+#endif
+
 /* Return the name of the system error code ERRNUM.  */
 #if @GNULIB_STRERRORNAME_NP@
 # if @REPLACE_STRERRORNAME_NP@
@@ -1357,15 +1656,17 @@ _GL_WARN_ON_USE (strerror_r, "strerror_r is unportable - "
 #   undef strerrorname_np
 #   define strerrorname_np rpl_strerrorname_np
 #  endif
-_GL_FUNCDECL_RPL (strerrorname_np, const char *, (int errnum));
+_GL_FUNCDECL_RPL (strerrorname_np, const char *, (int errnum), );
 _GL_CXXALIAS_RPL (strerrorname_np, const char *, (int errnum));
 # else
 #  if !@HAVE_STRERRORNAME_NP@
-_GL_FUNCDECL_SYS (strerrorname_np, const char *, (int errnum));
+_GL_FUNCDECL_SYS (strerrorname_np, const char *, (int errnum), );
 #  endif
 _GL_CXXALIAS_SYS (strerrorname_np, const char *, (int errnum));
 # endif
+# if __GLIBC__ >= 2
 _GL_CXXALIASWARN (strerrorname_np);
+# endif
 #elif defined GNULIB_POSIXCHECK
 # undef strerrorname_np
 # if HAVE_RAW_DECL_STRERRORNAME_NP
@@ -1377,7 +1678,7 @@ _GL_WARN_ON_USE (strerrorname_np, "strerrorname_np is unportable - "
 /* Return an abbreviation string for the signal number SIG.  */
 #if @GNULIB_SIGABBREV_NP@
 # if ! @HAVE_SIGABBREV_NP@
-_GL_FUNCDECL_SYS (sigabbrev_np, const char *, (int sig));
+_GL_FUNCDECL_SYS (sigabbrev_np, const char *, (int sig), );
 # endif
 _GL_CXXALIAS_SYS (sigabbrev_np, const char *, (int sig));
 _GL_CXXALIASWARN (sigabbrev_np);
@@ -1392,7 +1693,7 @@ _GL_WARN_ON_USE (sigabbrev_np, "sigabbrev_np is unportable - "
 /* Return an English description string for the signal number SIG.  */
 #if @GNULIB_SIGDESCR_NP@
 # if ! @HAVE_SIGDESCR_NP@
-_GL_FUNCDECL_SYS (sigdescr_np, const char *, (int sig));
+_GL_FUNCDECL_SYS (sigdescr_np, const char *, (int sig), );
 # endif
 _GL_CXXALIAS_SYS (sigdescr_np, const char *, (int sig));
 _GL_CXXALIASWARN (sigdescr_np);
@@ -1409,11 +1710,11 @@ _GL_WARN_ON_USE (sigdescr_np, "sigdescr_np is unportable - "
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define strsignal rpl_strsignal
 #  endif
-_GL_FUNCDECL_RPL (strsignal, char *, (int __sig));
+_GL_FUNCDECL_RPL (strsignal, char *, (int __sig), );
 _GL_CXXALIAS_RPL (strsignal, char *, (int __sig));
 # else
 #  if ! @HAVE_DECL_STRSIGNAL@
-_GL_FUNCDECL_SYS (strsignal, char *, (int __sig));
+_GL_FUNCDECL_SYS (strsignal, char *, (int __sig), );
 #  endif
 /* Need to cast, because on Cygwin 1.5.x systems, the return type is
    'const char *'.  */
@@ -1433,13 +1734,13 @@ _GL_WARN_ON_USE (strsignal, "strsignal is unportable - "
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define strverscmp rpl_strverscmp
 #  endif
-_GL_FUNCDECL_RPL (strverscmp, int, (const char *, const char *)
+_GL_FUNCDECL_RPL (strverscmp, int, (const char *, const char *),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1, 2)));
 _GL_CXXALIAS_RPL (strverscmp, int, (const char *, const char *));
 # else
 #  if !@HAVE_STRVERSCMP@
-_GL_FUNCDECL_SYS (strverscmp, int, (const char *, const char *)
+_GL_FUNCDECL_SYS (strverscmp, int, (const char *, const char *),
                                    _GL_ATTRIBUTE_PURE
                                    _GL_ARG_NONNULL ((1, 2)));
 #  endif

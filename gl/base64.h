@@ -1,5 +1,5 @@
 /* base64.h -- Encode binary data using printable characters.
-   Copyright (C) 2004-2006, 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2006, 2009-2025 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This file is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #include <idx.h>
 
 /* Pacify GCC in isubase64.  */
-#if defined __GNUC__ && 4 < __GNUC__ + (3 <= __GNUC_MINOR__)
+#if 4 < __GNUC__ + (3 <= __GNUC_MINOR__) && !defined __clang__
 # pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
 

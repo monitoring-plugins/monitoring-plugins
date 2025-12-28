@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <langinfo.h>.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -115,6 +115,18 @@ typedef int nl_item;
 # define ABMON_10    (ABMON_1 + 9)
 # define ABMON_11    (ABMON_1 + 10)
 # define ABMON_12    (ABMON_1 + 11)
+# define ABALTMON_1  10220
+# define ABALTMON_2  (ABALTMON_1 + 1)
+# define ABALTMON_3  (ABALTMON_1 + 2)
+# define ABALTMON_4  (ABALTMON_1 + 3)
+# define ABALTMON_5  (ABALTMON_1 + 4)
+# define ABALTMON_6  (ABALTMON_1 + 5)
+# define ABALTMON_7  (ABALTMON_1 + 6)
+# define ABALTMON_8  (ABALTMON_1 + 7)
+# define ABALTMON_9  (ABALTMON_1 + 8)
+# define ABALTMON_10 (ABALTMON_1 + 9)
+# define ABALTMON_11 (ABALTMON_1 + 10)
+# define ABALTMON_12 (ABALTMON_1 + 11)
 # define ERA         10047
 # define ERA_D_FMT   10048
 # define ERA_D_T_FMT 10049
@@ -171,6 +183,37 @@ typedef int nl_item;
 #  define GNULIB_defined_ALTMON 1
 # endif
 
+# if !@HAVE_LANGINFO_ABALTMON@
+#  if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 27
+#   define ABALTMON_1  _NL_ABALTMON_1
+#   define ABALTMON_2  _NL_ABALTMON_2
+#   define ABALTMON_3  _NL_ABALTMON_3
+#   define ABALTMON_4  _NL_ABALTMON_4
+#   define ABALTMON_5  _NL_ABALTMON_5
+#   define ABALTMON_6  _NL_ABALTMON_6
+#   define ABALTMON_7  _NL_ABALTMON_7
+#   define ABALTMON_8  _NL_ABALTMON_8
+#   define ABALTMON_9  _NL_ABALTMON_9
+#   define ABALTMON_10 _NL_ABALTMON_10
+#   define ABALTMON_11 _NL_ABALTMON_11
+#   define ABALTMON_12 _NL_ABALTMON_12
+#  else
+#   define ABALTMON_1  10220
+#   define ABALTMON_2  (ABALTMON_1 + 1)
+#   define ABALTMON_3  (ABALTMON_1 + 2)
+#   define ABALTMON_4  (ABALTMON_1 + 3)
+#   define ABALTMON_5  (ABALTMON_1 + 4)
+#   define ABALTMON_6  (ABALTMON_1 + 5)
+#   define ABALTMON_7  (ABALTMON_1 + 6)
+#   define ABALTMON_8  (ABALTMON_1 + 7)
+#   define ABALTMON_9  (ABALTMON_1 + 8)
+#   define ABALTMON_10 (ABALTMON_1 + 9)
+#   define ABALTMON_11 (ABALTMON_1 + 10)
+#   define ABALTMON_12 (ABALTMON_1 + 11)
+#   define GNULIB_defined_ABALTMON 1
+#  endif
+# endif
+
 # if !@HAVE_LANGINFO_ERA@
 #  define ERA         10047
 #  define ERA_D_FMT   10048
@@ -205,11 +248,11 @@ typedef int nl_item;
 #   undef nl_langinfo
 #   define nl_langinfo rpl_nl_langinfo
 #  endif
-_GL_FUNCDECL_RPL (nl_langinfo, char *, (nl_item item));
+_GL_FUNCDECL_RPL (nl_langinfo, char *, (nl_item item), );
 _GL_CXXALIAS_RPL (nl_langinfo, char *, (nl_item item));
 # else
 #  if !@HAVE_NL_LANGINFO@
-_GL_FUNCDECL_SYS (nl_langinfo, char *, (nl_item item));
+_GL_FUNCDECL_SYS (nl_langinfo, char *, (nl_item item), );
 #  endif
 _GL_CXXALIAS_SYS (nl_langinfo, char *, (nl_item item));
 # endif

@@ -1,5 +1,5 @@
 /* Safe automatic memory allocation.
-   Copyright (C) 2003, 2006-2007, 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2006-2007, 2009-2025 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2003, 2018.
 
    This file is free software: you can redistribute it and/or modify
@@ -93,7 +93,7 @@ mmalloca (size_t n)
   /* Out of memory.  */
   return NULL;
 #else
-# if !MALLOC_0_IS_NONNULL
+# if !HAVE_MALLOC_0_NONNULL
   if (n == 0)
     n = 1;
 # endif
@@ -118,7 +118,7 @@ freea (void *p)
       char *cp = p;
       small_t *sp = p;
 # if defined __CHERI_PURE_CAPABILITY__
-      void *mem = sp[-1];
+      void *mem = (void *) sp[-1];
 # else
       void *mem = cp - sp[-1];
 # endif
