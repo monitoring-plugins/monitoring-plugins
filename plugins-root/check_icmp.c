@@ -54,6 +54,9 @@ const char *email = "devel@monitoring-plugins.org";
 #endif
 
 #include <sys/time.h>
+#if defined(SIOCGIFADDR)
+#include <sys/ioctl.h>
+#endif /* SIOCGIFADDR */
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>
@@ -146,7 +149,7 @@ static get_timevar_wrapper get_timevar(const char *str);
 static time_t get_timevaldiff(struct timeval earlier, struct timeval later);
 static time_t get_timevaldiff_to_now(struct timeval earlier);
 
-static in_addr_t get_ip_address(const char *ifname);
+static in_addr_t get_ip_address(const char *ifname, const int icmp_sock);
 static void set_source_ip(char *arg, int icmp_sock, sa_family_t addr_family);
 
 /* Receiving data */
@@ -1769,7 +1772,7 @@ static void set_source_ip(char *arg, const int icmp_sock, sa_family_t addr_famil
 	memset(&src, 0, sizeof(src));
 	src.sin_family = addr_family;
 	if ((src.sin_addr.s_addr = inet_addr(arg)) == INADDR_NONE) {
-		src.sin_addr.s_addr = get_ip_address(arg);
+		src.sin_addr.s_addr = get_ip_address(arg, icmp_sock);
 	}
 	if (bind(icmp_sock, (struct sockaddr *)&src, sizeof(src)) == -1) {
 		crash("Cannot bind to IP address %s", arg);
@@ -1777,7 +1780,7 @@ static void set_source_ip(char *arg, const int icmp_sock, sa_family_t addr_famil
 }
 
 /* TODO: Move this to netutils.c and also change check_dhcp to use that. */
-static in_addr_t get_ip_address(const char *ifname) {
+static in_addr_t get_ip_address(const char *ifname, const int icmp_sock) {
 	// TODO: Rewrite this so the function return an error and we exit somewhere else
 	struct sockaddr_in ip_address;
 	ip_address.sin_addr.s_addr = 0; // Fake initialization to make compiler happy
@@ -1792,7 +1795,7 @@ static in_addr_t get_ip_address(const char *ifname) {
 		crash("Cannot determine IP address of interface %s", ifname);
 	}
 
-	memcpy(&ip, &ifr.ifr_addr, sizeof(ip));
+	memcpy(&ip_address, &ifr.ifr_addr, sizeof(ip_address));
 #else
 	(void)ifname;
 	errno = 0;

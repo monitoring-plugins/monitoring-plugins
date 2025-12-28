@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 	if (child_result.cmd_error_code == 255 && config.unknown_timeout) {
 		mp_subcheck sc_ssh_execution = mp_subcheck_init();
 		xasprintf(&sc_ssh_execution.output, "SSH connection failed: %s",
-				  child_result.stderr.lines > 0 ? child_result.stderr.line[0]
+				  child_result.err.lines > 0 ? child_result.err.line[0]
 												: "(no error output)");
 
 		sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_UNKNOWN);
@@ -107,34 +107,34 @@ int main(int argc, char **argv) {
 	}
 
 	if (verbose) {
-		for (size_t i = 0; i < child_result.stdout.lines; i++) {
-			printf("stdout: %s\n", child_result.stdout.line[i]);
+		for (size_t i = 0; i < child_result.out.lines; i++) {
+			printf("stdout: %s\n", child_result.out.line[i]);
 		}
-		for (size_t i = 0; i < child_result.stderr.lines; i++) {
-			printf("stderr: %s\n", child_result.stderr.line[i]);
+		for (size_t i = 0; i < child_result.err.lines; i++) {
+			printf("stderr: %s\n", child_result.err.line[i]);
 		}
 	}
 
 	size_t skip_stdout = 0;
 	if (config.skip_stdout) { /* --skip-stdout specified without argument */
-		skip_stdout = child_result.stdout.lines;
+		skip_stdout = child_result.out.lines;
 	} else {
 		skip_stdout = config.stdout_lines_to_ignore;
 	}
 
 	size_t skip_stderr = 0;
 	if (config.skip_stderr) { /* --skip-stderr specified without argument */
-		skip_stderr = child_result.stderr.lines;
+		skip_stderr = child_result.err.lines;
 	} else {
 		skip_stderr = config.sterr_lines_to_ignore;
 	}
 
 	/* Allow UNKNOWN or WARNING state for (non-skipped) output found on stderr */
-	if (child_result.stderr.lines > skip_stderr &&
+	if (child_result.err.lines > skip_stderr &&
 		(config.unknown_on_stderr || config.warn_on_stderr)) {
 		mp_subcheck sc_stderr = mp_subcheck_init();
 		xasprintf(&sc_stderr.output, "remote command execution failed: %s",
-				  child_result.stderr.line[skip_stderr]);
+				  child_result.err.line[skip_stderr]);
 
 		if (config.unknown_on_stderr) {
 			sc_stderr = mp_set_subcheck_state(sc_stderr, STATE_UNKNOWN);
@@ -154,10 +154,10 @@ int main(int argc, char **argv) {
 		mp_subcheck sc_active_check = mp_subcheck_init();
 		xasprintf(&sc_active_check.output, "command stdout:");
 
-		if (child_result.stdout.lines > skip_stdout) {
-			for (size_t i = skip_stdout; i < child_result.stdout.lines; i++) {
+		if (child_result.out.lines > skip_stdout) {
+			for (size_t i = skip_stdout; i < child_result.out.lines; i++) {
 				xasprintf(&sc_active_check.output, "%s\n%s", sc_active_check.output,
-						  child_result.stdout.line[i]);
+						  child_result.out.line[i]);
 			}
 		} else {
 			xasprintf(&sc_active_check.output, "remote command '%s' returned status %d",
@@ -209,10 +209,10 @@ int main(int argc, char **argv) {
 	char *status_text;
 	int cresult;
 	mp_subcheck sc_parse_passive = mp_subcheck_init();
-	for (size_t i = skip_stdout; i < child_result.stdout.lines; i++) {
-		status_text = child_result.stdout.line[i++];
-		if (i == child_result.stdout.lines ||
-			strstr(child_result.stdout.line[i], "STATUS CODE: ") == NULL) {
+	for (size_t i = skip_stdout; i < child_result.out.lines; i++) {
+		status_text = child_result.out.line[i++];
+		if (i == child_result.out.lines ||
+			strstr(child_result.out.line[i], "STATUS CODE: ") == NULL) {
 
 			sc_parse_passive = mp_set_subcheck_state(sc_parse_passive, STATE_UNKNOWN);
 			xasprintf(&sc_parse_passive.output, "failed to parse output");
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (config.service[commands] && status_text &&
-			sscanf(child_result.stdout.line[i], "STATUS CODE: %d", &cresult) == 1) {
+			sscanf(child_result.out.line[i], "STATUS CODE: %d", &cresult) == 1) {
 			fprintf(output_file, "[%d] PROCESS_SERVICE_CHECK_RESULT;%s;%s;%d;%s\n", (int)local_time,
 					config.host_shortname, config.service[commands++], cresult, status_text);
 		}

@@ -24,8 +24,8 @@ int cmd_file_read(const char *, output *, int);
 typedef struct {
  int error_code;
  int cmd_error_code;
- output stdout;
- output stderr;
+ output out;
+ output err;
 } cmd_run_result;
 cmd_run_result cmd_run2(const char *cmd, int flags);
 cmd_run_result cmd_run_array2(char * const *cmd, int flags);

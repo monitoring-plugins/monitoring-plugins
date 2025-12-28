@@ -489,14 +489,14 @@ cmd_run_result cmd_run2(const char *cmd_string, int flags) {
 	cmd_run_result result = {
 		.cmd_error_code = 0,
 		.error_code = 0,
-		.stderr =
+		.err =
 			{
 				.buf = NULL,
 				.buflen = 0,
 				.line = NULL,
 				.lines = 0,
 			},
-		.stdout =
+		.out =
 			{
 				.buf = NULL,
 				.buflen = 0,
@@ -581,14 +581,14 @@ cmd_run_result cmd_run_array2(char *const *cmd, int flags) {
 	cmd_run_result result = {
 		.cmd_error_code = 0,
 		.error_code = 0,
-		.stderr =
+		.err =
 			{
 				.buf = NULL,
 				.buflen = 0,
 				.line = NULL,
 				.lines = 0,
 			},
-		.stdout =
+		.out =
 			{
 				.buf = NULL,
 				.buflen = 0,
@@ -610,9 +610,9 @@ cmd_run_result cmd_run_array2(char *const *cmd, int flags) {
 	int pfd_err[2] = {cmd_open_result.stderr_pipe_fd[0], cmd_open_result.stderr_pipe_fd[1]};
 
 	int_cmd_fetch_output2 tmp_stdout = _cmd_fetch_output2(pfd_out[0], flags);
-	result.stdout = tmp_stdout.output_container;
+	result.out = tmp_stdout.output_container;
 	int_cmd_fetch_output2 tmp_stderr = _cmd_fetch_output2(pfd_err[0], flags);
-	result.stderr = tmp_stderr.output_container;
+	result.err = tmp_stderr.output_container;
 
 	result.cmd_error_code = _cmd_close(file_descriptor);
 	return result;

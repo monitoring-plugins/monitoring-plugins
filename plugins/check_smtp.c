@@ -37,7 +37,6 @@
 #include "base64.h"
 #include "regex.h"
 
-#include <bits/getopt_ext.h>
 #include <ctype.h>
 #include <string.h>
 #include "check_smtp.d/config.h"
