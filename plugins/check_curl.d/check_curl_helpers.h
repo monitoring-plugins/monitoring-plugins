@@ -80,7 +80,7 @@ check_curl_configure_curl_wrapper check_curl_configure_curl(check_curl_static_cu
 															check_curl_working_state working_state,
 															bool check_cert,
 															bool on_redirect_dependent,
-															int follow_method, int max_depth);
+															int follow_method, long max_depth);
 
 void handle_curl_option_return_code(CURLcode res, const char *option);
 
