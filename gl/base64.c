@@ -1,5 +1,5 @@
 /* base64.c -- Encode binary data using printable characters.
-   Copyright (C) 1999-2001, 2004-2006, 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2001, 2004-2006, 2009-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -48,7 +48,7 @@
 /* Get imalloc. */
 #include <ialloc.h>
 
-#include <intprops.h>
+#include <stdckdint.h>
 
 #include <string.h>
 
@@ -59,7 +59,7 @@ to_uchar (char ch)
   return ch;
 }
 
-static const char b64c[64] =
+static const char b64c[64] _GL_ATTRIBUTE_NONSTRING =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* Base64 encode IN array of size INLEN into OUT array. OUT needs
@@ -148,7 +148,7 @@ base64_encode_alloc (const char *in, idx_t inlen, char **out)
      Treat negative INLEN as overflow, for better compatibility with
      pre-2021-08-27 API, which used size_t.  */
   idx_t in_over_3 = inlen / 3 + (inlen % 3 != 0), outlen;
-  if (! INT_MULTIPLY_OK (in_over_3, 4, &outlen) || inlen < 0)
+  if (ckd_mul (&outlen, in_over_3, 4) || inlen < 0)
     {
       *out = NULL;
       return 0;

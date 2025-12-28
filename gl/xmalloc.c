@@ -1,6 +1,6 @@
 /* xmalloc.c -- malloc with out of memory checking
 
-   Copyright (C) 1990-2000, 2002-2006, 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2000, 2002-2006, 2008-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ void *
 xrealloc (void *p, size_t s)
 {
   void *r = realloc (p, s);
-  if (!r && (!p || s))
+  if (!r)
     xalloc_die ();
   return r;
 }
@@ -82,7 +82,7 @@ void *
 xreallocarray (void *p, size_t n, size_t s)
 {
   void *r = reallocarray (p, n, s);
-  if (!r && (!p || (n && s)))
+  if (!r)
     xalloc_die ();
   return r;
 }

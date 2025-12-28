@@ -1,6 +1,6 @@
 /* strerror-override.c --- POSIX compatible system error routine
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -296,6 +296,11 @@ strerror_override (int errnum)
 # if GNULIB_defined_EILSEQ
     case EILSEQ:
       return "Invalid or incomplete multibyte or wide character";
+# endif
+
+# if GNULIB_defined_ESOCKTNOSUPPORT
+    case ESOCKTNOSUPPORT:
+      return "Socket type not supported";
 # endif
 
     default:

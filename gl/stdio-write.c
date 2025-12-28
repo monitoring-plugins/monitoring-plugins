@@ -1,5 +1,5 @@
 /* POSIX compatible FILE stream write function.
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This file is free software: you can redistribute it and/or modify
@@ -162,6 +162,9 @@ vprintf (const char *format, va_list args)
 int
 vfprintf (FILE *stream, const char *format, va_list args)
 #undef vfprintf
+#if defined __MINGW32__ && !defined _UCRT && __USE_MINGW_ANSI_STDIO
+# define vfprintf gl_consolesafe_vfprintf
+#endif
 {
   CALL_WITH_SIGPIPE_EMULATION (int, vfprintf (stream, format, args), ret == EOF)
 }
@@ -198,6 +201,9 @@ puts (const char *string)
 size_t
 fwrite (const void *ptr, size_t s, size_t n, FILE *stream)
 #undef fwrite
+#if (defined _WIN32 && !defined __CYGWIN__) && !defined _UCRT
+# define fwrite gl_consolesafe_fwrite
+#endif
 {
   CALL_WITH_SIGPIPE_EMULATION (size_t, fwrite (ptr, s, n, stream), ret < n)
 }

@@ -1,14 +1,47 @@
 # vasnprintf.m4
-# serial 52
-dnl Copyright (C) 2002-2004, 2006-2024 Free Software Foundation, Inc.
+# serial 56
+dnl Copyright (C) 2002-2004, 2006-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 AC_DEFUN([gl_FUNC_VASNPRINTF],
 [
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
   AC_CHECK_FUNCS_ONCE([vasnprintf])
-  if test $ac_cv_func_vasnprintf = no; then
+  if test $ac_cv_func_vasnprintf = yes; then
+    dnl On Cygwin, in directives with a huge width, the width is ignored, and
+    dnl the function returns a wrong result.
+    AC_CACHE_CHECK([whether vasnprintf works],
+      [gl_cv_func_vasnprintf_works],
+      [AC_RUN_IFELSE(
+         [AC_LANG_SOURCE(
+            [[#include <stdio.h>
+            ]],
+            [[size_t len;
+              char *res = vasnprintf (NULL, &len, "x%03000000000dy\n", -17);
+              /* On Cygwin 3.4.6, res is "x-17y\n" and len == 6: wrong.  */
+              return (res != NULL && len < 10);
+            ]])
+         ],
+         [gl_cv_func_vasnprintf_works=yes],
+         [gl_cv_func_vasnprintf_works=no],
+         [case "$host_os" in
+                     # Guess no on Cygwin.
+            cygwin*) gl_cv_func_vasnprintf_works="guessing no";;
+                     # If we don't know, obey --enable-cross-guesses.
+            *)       gl_cv_func_vasnprintf_works="$gl_cross_guess_normal";;
+          esac
+         ])
+      ])
+  fi
+  if test $ac_cv_func_vasnprintf != yes \
+     || case "$gl_cv_func_vasnprintf_works" in
+          *yes) false;;
+          *)    true;;
+        esac
+  then
     gl_REPLACE_VASNPRINTF
   fi
 ])
@@ -42,7 +75,6 @@ AC_DEFUN([gl_FUNC_VASNWPRINTF],
 # Prerequisites of lib/printf-args.h, lib/printf-args.c.
 AC_DEFUN([gl_PREREQ_PRINTF_ARGS],
 [
-  AC_REQUIRE([gt_TYPE_WCHAR_T])
   AC_REQUIRE([gt_TYPE_WINT_T])
 ])
 
@@ -51,7 +83,6 @@ AC_DEFUN([gl_PREREQ_PRINTF_ARGS],
 AC_DEFUN([gl_PREREQ_PRINTF_PARSE],
 [
   AC_REQUIRE([gl_FEATURES_H])
-  AC_REQUIRE([gt_TYPE_WCHAR_T])
   AC_REQUIRE([gt_TYPE_WINT_T])
   AC_REQUIRE([AC_TYPE_SIZE_T])
   AC_CHECK_TYPE([ptrdiff_t], ,
@@ -185,7 +216,6 @@ int main()
 AC_DEFUN_ONCE([gl_PREREQ_VASNXPRINTF],
 [
   AC_REQUIRE([AC_FUNC_ALLOCA])
-  AC_REQUIRE([gt_TYPE_WCHAR_T])
   AC_REQUIRE([gt_TYPE_WINT_T])
   AC_CHECK_FUNCS([wcslen])
   dnl Knowing DBL_EXPBIT0_WORD and DBL_EXPBIT0_BIT enables an optimization
@@ -327,14 +357,38 @@ AC_DEFUN([gl_PREREQ_VASNPRINTF_DIRECTIVE_LC],
 # Extra prerequisites of lib/vasnprintf.c for supporting the ' flag.
 AC_DEFUN([gl_PREREQ_VASNPRINTF_FLAG_GROUPING],
 [
+  AC_REQUIRE([AC_CANONICAL_HOST])
   AC_REQUIRE([gl_PRINTF_FLAG_GROUPING])
-  case "$gl_cv_func_printf_flag_grouping" in
-    *yes)
-      ;;
-    *)
+  AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_INT_PRECISION])
+  AC_REQUIRE([gl_PRINTF_FLAG_GROUPING_MULTIBYTE])
+  case "$host_os" in
+    mingw* | windows*)
+      dnl MSVC does not support the ' flag at all.
+      dnl mingw does not support it, unless __USE_MINGW_ANSI_STDIO is defined.
+      dnl mingw also has other bugs regarding the ' flag.
       AC_DEFINE([NEED_PRINTF_FLAG_GROUPING], [1],
         [Define if the vasnprintf implementation needs special code for the
          ' flag.])
+      ;;
+    *)
+      case "$gl_cv_func_printf_flag_grouping,$gl_cv_func_printf_flag_grouping_multibyte" in
+        *yes,*yes)
+          case "$gl_cv_func_printf_flag_grouping_int_precision" in
+            *yes)
+              ;;
+            *)
+              AC_DEFINE([NEED_PRINTF_FLAG_GROUPING_INT], [1],
+                [Define if the vasnprintf implementation needs special code for the
+                 ' flag, for integer directives only.])
+              ;;
+          esac
+          ;;
+        *)
+          AC_DEFINE([NEED_PRINTF_FLAG_GROUPING], [1],
+            [Define if the vasnprintf implementation needs special code for the
+             ' flag.])
+          ;;
+      esac
       ;;
   esac
 ])

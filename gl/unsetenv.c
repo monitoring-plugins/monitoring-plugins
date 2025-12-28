@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995-2002, 2005-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 1995-2002, 2005-2025 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This file is free software: you can redistribute it and/or modify
@@ -57,7 +57,6 @@ int
 unsetenv (const char *name)
 {
   size_t len;
-  char **ep;
 
   if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
@@ -67,9 +66,37 @@ unsetenv (const char *name)
 
   len = strlen (name);
 
+#if HAVE_DECL__PUTENV /* native Windows */
+  /* The Microsoft documentation
+     <https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/putenv-wputenv>
+     says:
+       "Don't change an environment entry directly: instead,
+        use _putenv or _wputenv to change it."
+     Note: Microsoft's _putenv updates not only the contents of _environ but
+     also the contents of _wenviron, so that both are in kept in sync.
+
+     The way to remove an environment variable is to pass to _putenv a string
+     of the form "NAME=".  (NB: This is a different convention than with glibc
+     putenv, which expects a string of the form "NAME"!)  */
+  {
+    int putenv_result;
+    char *name_ = malloc (len + 2);
+    if (name_ == NULL)
+      return -1;
+    memcpy (name_, name, len);
+    name_[len] = '=';
+    name_[len + 1] = 0;
+    putenv_result = _putenv (name_);
+    /* In this particular case it is OK to free() the argument passed to
+       _putenv.  */
+    free (name_);
+    return putenv_result;
+  }
+#else
+
   LOCK;
 
-  ep = __environ;
+  char **ep = __environ;
   while (*ep != NULL)
     if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
       {
@@ -87,6 +114,7 @@ unsetenv (const char *name)
   UNLOCK;
 
   return 0;
+#endif
 }
 
 #ifdef _LIBC

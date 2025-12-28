@@ -1,6 +1,6 @@
 /* inet_ntop.c -- convert IPv4 and IPv6 addresses from binary to text form
 
-   Copyright (C) 2005-2006, 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -117,7 +117,7 @@ inet_ntop (int af, const void *restrict src,
  *      'dst' (as a const)
  * notes:
  *      (1) uses no statics
- *      (2) takes a u_char* not an in_addr as input
+ *      (2) takes a 'unsigned char *' not an in_addr as input
  * author:
  *      Paul Vixie, 1996.
  */

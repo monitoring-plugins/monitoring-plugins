@@ -1,5 +1,5 @@
 /* Work around platform bugs in stat.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -117,6 +117,10 @@ rpl_stat (char const *name, struct stat *buf)
   /* XXX Should we convert to wchar_t* and prepend '\\?\', in order to work
      around length limitations
      <https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file> ?  */
+
+  /* To ease portability.  Like in open.c.  */
+  if (strcmp (name, "/dev/null") == 0)
+    name = "NUL";
 
   /* POSIX <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_13>
      specifies: "More than two leading <slash> characters shall be treated as

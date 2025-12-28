@@ -1,6 +1,6 @@
 /* Provide file descriptor control.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -29,8 +29,7 @@
 #include <unistd.h>
 
 #ifdef __KLIBC__
-# define INCL_DOS
-# include <os2.h>
+# include <emx/io.h>
 #endif
 
 #if defined _WIN32 && ! defined __CYGWIN__
@@ -562,7 +561,8 @@ klibc_fcntl (int fd, int action, /* arg */...)
   if (result == -1 && (errno == EPERM || errno == ENOTSUP)
       && !fstat (fd, &sbuf) && S_ISDIR (sbuf.st_mode))
     {
-      ULONG ulMode;
+      PLIBCFH pFH;
+      unsigned fFlags;
 
       switch (action)
         {
@@ -574,34 +574,41 @@ klibc_fcntl (int fd, int action, /* arg */...)
           result = dup2 (fd, arg);
           break;
 
-        /* Using underlying APIs is right ? */
         case F_GETFD:
-          if (DosQueryFHState (fd, &ulMode))
-            break;
+          pFH = __libc_FH (fd);
+          if (!pFH)
+            {
+              errno = EBADF;
+              break;
+            }
 
-          result = (ulMode & OPEN_FLAGS_NOINHERIT) ? FD_CLOEXEC : 0;
+          result = (pFH->fFlags & ((FD_CLOEXEC << __LIBC_FH_FDFLAGS_SHIFT )
+                                   | O_NOINHERIT)) ? FD_CLOEXEC : 0;
           break;
 
         case F_SETFD:
           if (arg & ~FD_CLOEXEC)
             break;
 
-          if (DosQueryFHState (fd, &ulMode))
-            break;
+          pFH = __libc_FH (fd);
+          if (!pFH)
+            {
+              errno = EBADF;
+              break;
+            }
 
+          fFlags = pFH->fFlags;
           if (arg & FD_CLOEXEC)
-            ulMode |= OPEN_FLAGS_NOINHERIT;
+            fFlags |= (FD_CLOEXEC << __LIBC_FH_FDFLAGS_SHIFT) | O_NOINHERIT;
           else
-            ulMode &= ~OPEN_FLAGS_NOINHERIT;
+            fFlags &= ~((FD_CLOEXEC << __LIBC_FH_FDFLAGS_SHIFT) | O_NOINHERIT);
 
-          /* Filter supported flags.  */
-          ulMode &= (OPEN_FLAGS_WRITE_THROUGH | OPEN_FLAGS_FAIL_ON_ERROR
-                     | OPEN_FLAGS_NO_CACHE | OPEN_FLAGS_NOINHERIT);
-
-          if (DosSetFHState (fd, ulMode))
-            break;
-
-          result = 0;
+          result = __libc_FHSetFlags (pFH, fd, fFlags);
+          if (result < 0)
+            {
+              errno = -result;
+              result = -1;
+            }
           break;
 
         case F_GETFL:

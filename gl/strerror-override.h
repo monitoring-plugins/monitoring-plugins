@@ -1,6 +1,6 @@
 /* strerror-override.h --- POSIX compatible system error routine
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -57,7 +57,8 @@ extern "C" {
     || GNULIB_defined_ECANCELED \
     || GNULIB_defined_EOWNERDEAD \
     || GNULIB_defined_ENOTRECOVERABLE \
-    || GNULIB_defined_EILSEQ
+    || GNULIB_defined_EILSEQ \
+    || GNULIB_defined_ESOCKTNOSUPPORT
 extern const char *strerror_override (int errnum) _GL_ATTRIBUTE_CONST;
 #else
 # define strerror_override(ignored) NULL

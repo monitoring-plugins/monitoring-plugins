@@ -1,5 +1,5 @@
 /* Formatted output to strings.
-   Copyright (C) 1999, 2002, 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2002, 2006-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -25,6 +25,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "vasnprintf.h"
@@ -37,12 +38,21 @@ vasprintf (char **resultp, const char *format, va_list args)
   if (result == NULL)
     return -1;
 
+#if PTRDIFF_MAX > INT_MAX
   if (length > INT_MAX)
     {
       free (result);
-      errno = EOVERFLOW;
+      errno = (length > PTRDIFF_MAX ? ENOMEM : EOVERFLOW);
       return -1;
     }
+#else
+  if (length > PTRDIFF_MAX)
+    {
+      free (result);
+      errno = ENOMEM;
+      return -1;
+    }
+#endif
 
   *resultp = result;
   /* Return the number of resulting bytes, excluding the trailing NUL.  */
