@@ -922,3 +922,7 @@ Provides check_wave of the Monitoring Plugins.
 
 %files wave
 %{plugindir}/check_wave
+
+%changelog
+* Wed Oct 20 2011 John Doe <jdoe@example.com> 0.8.18.1-0.1
+- Initial RPM release
