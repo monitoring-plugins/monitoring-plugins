@@ -1,5 +1,5 @@
 /* Decomposed printf argument list.
-   Copyright (C) 1999, 2002-2003, 2005-2007, 2009-2024 Free Software
+   Copyright (C) 1999, 2002-2003, 2005-2007, 2009-2025 Free Software
    Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
@@ -31,6 +31,9 @@
 
 /* Get INT_WIDTH.  */
 #include <limits.h>
+
+/* Get abort().  */
+#include <stdlib.h>
 
 #ifdef STATIC
 STATIC
@@ -198,7 +201,6 @@ PRINTF_FETCHARGS (va_list args, arguments *a)
         if (ap->a.a_string == NULL)
           ap->a.a_string = "(NULL)";
         break;
-#if HAVE_WCHAR_T
       case TYPE_WIDE_STRING:
         ap->a.a_wide_string = va_arg (args, const wchar_t *);
         /* A null pointer is an invalid argument for "%ls", but in practice
@@ -216,7 +218,6 @@ PRINTF_FETCHARGS (va_list args, arguments *a)
             ap->a.a_wide_string = wide_null_string;
           }
         break;
-#endif
       case TYPE_POINTER:
         ap->a.a_pointer = va_arg (args, void *);
         break;
@@ -298,9 +299,19 @@ PRINTF_FETCHARGS (va_list args, arguments *a)
           }
         break;
 #endif
-      default:
-        /* Unknown type.  */
+      case TYPE_NONE:
+        /* Argument i is not used by any directive, but some argument with
+           number > i is used by a format directive.  POSIX says that this
+           is invalid:
+             "When numbered argument specifications are used, specifying the
+              Nth argument requires that all the leading arguments, from the
+              first to the (N-1)th, are specified in the format string."
+           The reason is that we cannot know how many bytes to skip in the
+           va_arg sequence.  */
         return -1;
+      default:
+        /* Unknown type.  Should not happen.  */
+        abort ();
       }
   return 0;
 }

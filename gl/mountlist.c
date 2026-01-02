@@ -1,6 +1,6 @@
 /* mountlist.c -- return a list of mounted file systems
 
-   Copyright (C) 1991-1992, 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-1992, 1997-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,19 +19,17 @@
 
 #include "mountlist.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
-#include "xalloc.h"
-
-#include <errno.h>
-
-#include <fcntl.h>
-
 #include <unistd.h>
+
+#include "c-ctype.h"
+#include "xalloc.h"
 
 #if HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -130,6 +128,10 @@
 # if !HAVE_ENDMNTENT            /* Android <= 4.4 */
 #  define endmntent(fp) fclose (fp)
 # endif
+#endif
+
+#if defined _WIN32 && !defined __CYGWIN__
+# include <windows.h>
 #endif
 
 #ifndef HAVE_HASMNTOPT
@@ -396,15 +398,18 @@ dev_from_mount_options (char const *mount_options)
   if (devopt)
     {
       char const *optval = devopt + sizeof dev_pattern - 1;
-      char *optvalend;
-      unsigned long int dev;
-      errno = 0;
-      dev = strtoul (optval, &optvalend, 16);
-      if (optval != optvalend
-          && (*optvalend == '\0' || *optvalend == ',')
-          && ! (dev == ULONG_MAX && errno == ERANGE)
-          && dev == (dev_t) dev)
-        return dev;
+      if (c_isxdigit (*optval))
+        {
+          char *optvalend;
+          unsigned long int dev;
+          errno = 0;
+          dev = strtoul (optval, &optvalend, 16);
+          if (optval != optvalend
+              && (*optvalend == '\0' || *optvalend == ',')
+              && ! (dev == ULONG_MAX && errno == ERANGE)
+              && dev == (dev_t) dev)
+            return dev;
+        }
     }
 
 # endif
@@ -452,12 +457,8 @@ terminate_at_blank (char *str)
     *s = '\0';
   return s;
 }
-#endif
 
-/* Return a list of the currently mounted file systems, or NULL on error.
-   Add each entry to the tail of the list so that they stay in order.
-   If NEED_FS_TYPE is true, ensure that the file system type fields in
-   the returned list are valid.  Otherwise, they might not be.  */
+#endif
 
 struct mount_entry *
 read_file_system_list (bool need_fs_type)
@@ -567,7 +568,7 @@ read_file_system_list (bool need_fs_type)
           goto free_then_fail;
       }
     else /* fallback to /proc/self/mounts (/etc/mtab).  */
-# endif /* __linux __ || __ANDROID__ */
+# endif /* __linux__ || __ANDROID__ */
       {
         struct mntent *mnt;
         char const *table = MOUNTED;
@@ -883,7 +884,9 @@ read_file_system_list (bool need_fs_type)
             me->me_mntroot = NULL;
             me->me_type = xstrdup (mnt.mnt_fstype);
             me->me_type_malloced = 1;
-            me->me_dummy = MNT_IGNORE (&mnt) != 0;
+            /* The cast from 'struct extmnttab *' to 'struct mnttab *' is OK
+               because 'struct extmnttab' extends 'struct mnttab'.  */
+            me->me_dummy = MNT_IGNORE ((struct mnttab *) &mnt) != 0;
             me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
             me->me_dev = makedev (mnt.mnt_major, mnt.mnt_minor);
 
@@ -1091,6 +1094,201 @@ read_file_system_list (bool need_fs_type)
     closedir (dirp);
   }
 #endif /* MOUNTED_INTERIX_STATVFS */
+
+#if defined _WIN32 && !defined __CYGWIN__  /* native Windows */
+/* Don't assume that UNICODE is not defined.  */
+# undef GetDriveType
+# define GetDriveType GetDriveTypeA
+# undef GetVolumeInformation
+# define GetVolumeInformation GetVolumeInformationA
+  {
+    /* Windows has drive prefixes which are similar to mount points.
+       GetLogicalDrives returns a bitmask where the i-th bit is set
+       if ASCII 'A' + i is an available drive.  See:
+       <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getlogicaldrives>.  */
+    DWORD value = GetLogicalDrives ();
+    unsigned int i;
+
+    for (i = 0; i < 26; ++i)
+      {
+        if (value & (1U << i))
+          {
+            char mountdir[4];
+            char fs_name[MAX_PATH + 1];
+            mountdir[0] = 'A' + i;
+            mountdir[1] = ':';
+            mountdir[2] = '\\';
+            mountdir[3] = '\0';
+            /* Test whether the drive actually exists, and
+               get the name of the file system.  See:
+               <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa>.  */
+            if (GetVolumeInformation (mountdir, NULL, 0, NULL, NULL, NULL,
+                                      fs_name, sizeof fs_name))
+              {
+                me = xmalloc (sizeof *me);
+                me->me_mountdir = xstrdup (mountdir);
+                /* Check if drive is remote.  See:
+                   <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea>.  */
+                me->me_remote = GetDriveType (mountdir) == DRIVE_REMOTE;
+                /* Here we could use
+                   QueryDosDeviceW -> returns something like '\Device\HarddiskVolume2'
+                   GetVolumeNameForVolumeMountPointW -> return something like '\\?\Volume{...}'
+                 */
+                me->me_devname = NULL;
+                {
+                  /* Find the SUBST or NET USE mapping of the given drive.
+                     <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-querydosdevicew>
+                     For testing of SUBST:   <https://ss64.com/nt/subst.html>
+                     For testing of NET USE: <https://ss64.com/nt/net-use.html>  */
+                  wchar_t drive[3];
+                  wchar_t mapping[MAX_PATH + 1];
+                  drive[0] = L'A' + i;
+                  drive[1] = L':';
+                  drive[2] = L'\0';
+                  DWORD mapping_len = QueryDosDeviceW (drive, mapping, sizeof (mapping) / sizeof (mapping[0]));
+                  if (mapping_len > 4 && wcsncmp (mapping, L"\\??\\", 4) == 0)
+                    {
+                      /* It's a SUBSTed drive.  */
+                      char subst_dir[MAX_PATH + 1];
+                      size_t subst_dir_len = wcstombs (subst_dir, mapping + 4, sizeof (subst_dir));
+                      if (subst_dir_len > 0 && subst_dir_len <= MAX_PATH)
+                        me->me_mntroot = xstrdup (subst_dir);
+                      else
+                        /* mapping is too long or not convertible to the
+                           locale encoding.  */
+                        me->me_mntroot = NULL;
+                    }
+                  else if (mapping_len > 26
+                           && wcsncmp (mapping, L"\\Device\\LanmanRedirector\\;", 26) == 0)
+                    {
+                      wchar_t *next_backslash = wcschr (mapping + 26, L'\\');
+                      if (next_backslash != NULL)
+                        {
+                          *--next_backslash = L'\\';
+                          char share_dir[MAX_PATH + 1];
+                          size_t share_dir_len = wcstombs (share_dir, next_backslash, sizeof (share_dir));
+                          if (share_dir_len > 0 && share_dir_len <= MAX_PATH)
+                            me->me_mntroot = xstrdup (share_dir);
+                          else
+                            /* mapping is too long or not convertible to the
+                               locale encoding.  */
+                            me->me_mntroot = NULL;
+                        }
+                      else
+                        /* mapping does not have the expected form.  */
+                        me->me_mntroot = NULL;
+                    }
+                  else
+                    /* It's neither a SUBSTed nor a NET USEd drive.  */
+                    me->me_mntroot = NULL;
+                }
+                me->me_dev = (dev_t) -1;
+                me->me_dummy = 0;
+                me->me_type = xstrdup (fs_name);
+                me->me_type_malloced = 1;
+
+                /* Add to the linked list. */
+                *mtail = me;
+                mtail = &me->me_next;
+              }
+          }
+      }
+  }
+  {
+    /* Windows also has true mount points, called "mounted folders".  See
+       <https://learn.microsoft.com/en-us/windows/win32/fileio/volume-mount-points>
+       For testing: <https://learn.microsoft.com/en-us/windows-server/storage/disk-management/assign-a-mount-point-folder-path-to-a-drive>  */
+    /* Enumerate the volumes.  See
+       <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findfirstvolumew>
+       <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findnextvolumew>
+       <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-findvolumeclose>  */
+    wchar_t vol_name[MAX_PATH + 1];
+    HANDLE h = FindFirstVolumeW (vol_name, sizeof (vol_name) / sizeof (vol_name[0]));
+    if (h != INVALID_HANDLE_VALUE)
+      {
+        do
+          {
+            /* Look where the volume vol_name is mounted.
+               There are two APIs for doing this:
+                 - FindFirstVolumeMountPointW, FindNextVolumeMountPointW,
+                   FindVolumeMountPointClose.  This API always fails with
+                   error code ERROR_ACCESS_DENIED.
+                 - GetVolumePathNamesForVolumeNameW.  This API works but
+                   may require a significantly larger buffer.
+                   <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumepathnamesforvolumenamew>  */
+            wchar_t stack_buf[MAX_PATH + 2];
+            wchar_t *malloced_buf = NULL;
+            wchar_t *buf = stack_buf;
+            DWORD bufsize = sizeof (stack_buf) / sizeof (wchar_t);
+            BOOL success;
+            for (;;)
+              {
+                success = GetVolumePathNamesForVolumeNameW (vol_name, buf, bufsize, &bufsize);
+                if (!success && GetLastError () == ERROR_MORE_DATA)
+                  {
+                    free (malloced_buf);
+                    malloced_buf = (wchar_t *) xmalloc (bufsize * sizeof (wchar_t));
+                    buf = malloced_buf;
+                  }
+                else
+                  break;
+              }
+            if (success)
+              {
+                wchar_t *mount_dir = buf;
+                while (*mount_dir != L'\0')
+                  {
+                    /* Drive mounts are already handled above.  */
+                    if (!(mount_dir[0] >= L'A' && mount_dir[0] <= L'Z'
+                          && mount_dir[1] == L':' && mount_dir[2] == L'\\'
+                          && mount_dir[3] == L'\0'))
+                      {
+                        char mountdir[MAX_PATH + 1];
+                        size_t mountdir_len = wcstombs (mountdir, mount_dir, sizeof (mountdir));
+                        if (mountdir_len > 0 && mountdir_len <= MAX_PATH)
+                          {
+                            char fs_name[MAX_PATH + 1];
+                            /* Get the name of the file system.  See:
+                               <https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationa>.  */
+                            if (GetVolumeInformation (mountdir, NULL, 0, NULL, NULL, NULL,
+                                                      fs_name, sizeof fs_name))
+                              {
+                                me = xmalloc (sizeof *me);
+                                me->me_mountdir = xstrdup (mountdir);
+                                me->me_remote = false;
+                                /* Here we could use vol_name, something like '\\?\Volume{...}'.  */
+                                me->me_devname = NULL;
+                                me->me_mntroot = NULL;
+                                me->me_dev = (dev_t) -1;
+                                me->me_dummy = 0;
+                                me->me_type = xstrdup (fs_name);
+                                me->me_type_malloced = 1;
+
+                                /* Add to the linked list. */
+                                *mtail = me;
+                                mtail = &me->me_next;
+                              }
+                          }
+                        else
+                          {
+                            /* mount_dir is too long or not convertible to the
+                               locale encoding.  */
+                          }
+                      }
+                    mount_dir += wcslen (mount_dir) + 1;
+                  }
+              }
+            free (malloced_buf);
+          }
+        while (FindNextVolumeW (h, vol_name, sizeof (vol_name) / sizeof (vol_name[0])));
+        FindVolumeClose (h);
+      }
+  }
+#endif
+
+#if MOUNTED_NOT_PORTED
+# error "Please port gnulib mountlist.c to your platform!"
+#endif
 
   *mtail = NULL;
   return mount_list;

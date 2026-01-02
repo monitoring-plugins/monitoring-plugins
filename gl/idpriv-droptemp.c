@@ -1,5 +1,5 @@
 /* Dropping uid/gid privileges of the current process temporarily.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,18 +25,18 @@
 
 /* The privileged uid and gid that the process had earlier.  */
 #if HAVE_GETUID
-static int saved_uid = -1;
+static uid_t saved_uid = -1;
 #endif
 #if HAVE_GETGID
-static int saved_gid = -1;
+static gid_t saved_gid = -1;
 #endif
 
 int
 idpriv_temp_drop (void)
 {
 #if HAVE_GETEUID && HAVE_GETEGID && (HAVE_SETRESUID || HAVE_SETREUID) && (HAVE_SETRESGID || HAVE_SETREGID)
-  int uid = getuid ();
-  int gid = getgid ();
+  uid_t uid = getuid ();
+  gid_t gid = getgid ();
 
   /* Find out about the privileged uid and gid at the first call.  */
   if (saved_uid == -1)
@@ -124,8 +124,8 @@ int
 idpriv_temp_restore (void)
 {
 #if HAVE_GETEUID && HAVE_GETEGID && (HAVE_SETRESUID || HAVE_SETREUID) && (HAVE_SETRESGID || HAVE_SETREGID)
-  int uid = getuid ();
-  int gid = getgid ();
+  uid_t uid = getuid ();
+  gid_t gid = getgid ();
 
   if (saved_uid == -1 || saved_gid == -1)
     /* Caller error: idpriv_temp_drop was never invoked.  */

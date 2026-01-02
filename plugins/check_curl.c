@@ -92,16 +92,16 @@ typedef struct {
 static check_curl_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 
 static mp_subcheck check_http(check_curl_config /*config*/, check_curl_working_state workingState,
-							  int redir_depth);
+							  long redir_depth);
 
 typedef struct {
-	int redir_depth;
+	long redir_depth;
 	check_curl_working_state working_state;
 	int error_code;
 	check_curl_global_state curl_state;
 } redir_wrapper;
 static redir_wrapper redir(curlhelp_write_curlbuf * /*header_buf*/, check_curl_config /*config*/,
-						   int redir_depth, check_curl_working_state working_state);
+						   long redir_depth, check_curl_working_state working_state);
 
 static void print_help(void);
 void print_usage(void);
@@ -198,7 +198,7 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 #endif     /* HAVE_SSL */
 
 mp_subcheck check_http(const check_curl_config config, check_curl_working_state workingState,
-					   int redir_depth) {
+					   long redir_depth) {
 
 	// =======================
 	// Initialisation for curl
@@ -441,19 +441,19 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 						"CURLINFO_REDIRECT_COUNT");
 
 					if (verbose >= 2) {
-						printf(_("* curl LIBINFO_REDIRECT_COUNT is %d\n"), redir_depth);
+						printf(_("* curl LIBINFO_REDIRECT_COUNT is %ld\n"), redir_depth);
 					}
 
 					mp_subcheck sc_redir_depth = mp_subcheck_init();
 					if (redir_depth > config.max_depth) {
 						xasprintf(&sc_redir_depth.output,
-								  "maximum redirection depth %d exceeded in libcurl",
+								  "maximum redirection depth %ld exceeded in libcurl",
 								  config.max_depth);
 						sc_redir_depth = mp_set_subcheck_state(sc_redir_depth, STATE_CRITICAL);
 						mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 						return sc_result;
 					}
-					xasprintf(&sc_redir_depth.output, "redirection depth %d (of a maximum %d)",
+					xasprintf(&sc_redir_depth.output, "redirection depth %ld (of a maximum %ld)",
 							  redir_depth, config.max_depth);
 					mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 
@@ -653,7 +653,7 @@ char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
 }
 
 redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config config,
-					int redir_depth, check_curl_working_state working_state) {
+					long redir_depth, check_curl_working_state working_state) {
 	curlhelp_statusline status_line;
 	struct phr_header headers[255];
 	size_t msglen;
@@ -678,7 +678,7 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	}
 
 	if (++redir_depth > config.max_depth) {
-		die(STATE_WARNING, _("HTTP WARNING - maximum redirection depth %d exceeded - %s\n"),
+		die(STATE_WARNING, _("HTTP WARNING - maximum redirection depth %ld exceeded - %s\n"),
 			config.max_depth, location);
 	}
 
@@ -761,7 +761,7 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	}
 
 	/* compose new path */
-	/* TODO: handle fragments and query part of URL */
+	/* TODO: handle fragments of URL */
 	char *new_url = (char *)calloc(1, DEFAULT_BUFFER_SIZE);
 	if (uri.pathHead) {
 		for (UriPathSegmentA *pathSegment = uri.pathHead; pathSegment;
@@ -769,6 +769,25 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			strncat(new_url, "/", DEFAULT_BUFFER_SIZE);
 			strncat(new_url, uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE),
 					DEFAULT_BUFFER_SIZE - 1);
+		}
+	}
+
+	/* missing components have null,null in their UriTextRangeA
+	 * add query parameters if they exist.
+	 */
+	if (uri.query.first && uri.query.afterLast){
+		// Ensure we have space for '?' + query_str + '\0' ahead of time, instead of calling strncat twice
+		size_t current_len = strlen(new_url);
+		size_t remaining_space = DEFAULT_BUFFER_SIZE - current_len - 1;
+
+		const char* query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		size_t query_str_len = strlen(query_str);
+
+		if (remaining_space >= query_str_len + 1) {
+			strcat(new_url, "?");
+			strcat(new_url, query_str);
+		}else{
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - No space to add query part of size %d to the buffer, buffer has remaining size %d"), query_str_len , current_len );
 		}
 	}
 
@@ -1400,7 +1419,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		}
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0) */
 		if (verbose >= 2) {
-			printf(_("* Set SSL/TLS version to %d\n"), result.config.curl_config.ssl_version);
+			printf(_("* Set SSL/TLS version to %ld\n"), result.config.curl_config.ssl_version);
 		}
 		if (!specify_port) {
 			result.config.initial_config.serverPort = HTTPS_PORT;

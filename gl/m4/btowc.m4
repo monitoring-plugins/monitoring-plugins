@@ -1,13 +1,15 @@
 # btowc.m4
-# serial 14
-dnl Copyright (C) 2008-2024 Free Software Foundation, Inc.
+# serial 15
+dnl Copyright (C) 2008-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 AC_DEFUN([gl_FUNC_BTOWC],
 [
   AC_REQUIRE([gl_WCHAR_H_DEFAULTS])
+  AC_REQUIRE([gt_TYPE_WINT_T])
 
   dnl Check whether <wchar.h> is usable at all, first. Otherwise the test
   dnl program below may lead to an endless loop. See
@@ -133,6 +135,13 @@ int main ()
           ])
       ])
 
+    if test $GNULIBHEADERS_OVERRIDE_WINT_T = 1; then
+      dnl On mingw/ucrt, we override the return type of btowc().
+      dnl While the original wint_t (= unsigned short) and the overridden wint_t
+      dnl (= unsigned int) are equivalent in function parameters, this is not
+      dnl the case for function return types.
+      REPLACE_BTOWC=1
+    fi
     case "$gl_cv_func_btowc_nul" in
       *yes) ;;
       *) REPLACE_BTOWC=1 ;;
