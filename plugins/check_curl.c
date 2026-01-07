@@ -891,7 +891,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"port", required_argument, 0, 'p'},
 		{"authorization", required_argument, 0, 'a'},
 		{"proxy", required_argument, 0, 'x'},
-		{"no-proxy", required_argument, 0, NO_PROXY},
+		{"noproxy", required_argument, 0, NO_PROXY},
 		{"proxy-authorization", required_argument, 0, 'b'},
 		{"header-string", required_argument, 0, 'd'},
 		{"string", required_argument, 0, 's'},
@@ -1629,7 +1629,7 @@ void print_help(void) {
 	printf("    %s\n", _("Available schemes are http, https, socks4, socks4a, socks5, socks5h"));
 	printf("    %s\n", _("If port is not specified, libcurl defaults to 1080"));
 	printf("    %s\n", _("This value will be set as CURLOPT_PROXY"));
-	printf(" %s\n", "--no-proxy=COMMA_SEPARATED_LIST");
+	printf(" %s\n", "--noproxy=COMMA_SEPARATED_LIST");
 	printf("    %s\n", _("Specify hostnames, addresses and subnets where proxy should not be used"));
 	printf("    %s\n", _("Example usage: \"example.com,::1,1.1.1.1,localhost,192.168.0.0/16\""));
 	printf("    %s\n", _("Do not use brackets when specifying IPv6 addresses"));
@@ -1745,11 +1745,11 @@ void print_help(void) {
 
 	printf("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
 	printf(" %s\n", _("Proxies are specified or disabled for certain hosts/addresses using environment variables"
-		" or -x/--proxy and --no-proxy arguments:"));
+		" or -x/--proxy and --noproxy arguments:"));
 	printf(" %s\n", _("Checked environment variables: all_proxy, http_proxy, https_proxy, no_proxy"));
 	printf(" %s\n", _("Environment variables can also be given in uppercase, but the lowercase ones will "
 					  "take predence if both are defined."));
-	printf(" %s\n", _("The environment variables are overwritten by -x/--proxy and --no-proxy arguments:"));
+	printf(" %s\n", _("The environment variables are overwritten by -x/--proxy and --noproxy arguments:"));
 	printf(" %s\n", _("all_proxy/ALL_PROXY environment variables are read first, but protocol "
 					"specific environment variables override them."));
 	printf(" %s\n", _("If SSL is enabled and used, https_proxy/HTTPS_PROXY will be checked and overwrite "
@@ -1766,7 +1766,7 @@ void print_help(void) {
 	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org --ssl"));
 	printf(" %s\n", _("  HTTPS_PROXY is read as --ssl is toggled"));
 	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org --proxy socks5h://192.168.122.21"));
-	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com --no-proxy '*'"));
+	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com --noproxy '*'"));
 	printf(" %s\n", _("  Disabled proxy for all hosts by using '*' in no_proxy ."));
 	printf(" %s\n", _("NO_PROXY=www.monitoring-plugins.org ./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com"));
 	printf(" %s\n", _("  Exact matches with the hostname/address work."));
@@ -1815,7 +1815,7 @@ void print_usage(void) {
 	printf("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
 	printf("       [-A string] [-k string] [-S <version>] [--sni] [--haproxy-protocol]\n");
 	printf("       [-T <content-type>] [-j method]\n");
-	printf("       [--no-proxy=<comma separated list of hosts, IP addresses, IP CIDR subnets>\n");
+	printf("       [--noproxy=<comma separated list of hosts, IP addresses, IP CIDR subnets>\n");
 	printf("       [--http-version=<version>] [--enable-automatic-decompression]\n");
 	printf("       [--cookie-jar=<cookie jar file>\n");
 	printf(" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n", progname);
