@@ -874,7 +874,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		COOKIE_JAR,
 		HAPROXY_PROTOCOL,
 		STATE_REGEX,
-		OUTPUT_FORMAT
+		OUTPUT_FORMAT,
+		NO_PROXY,
 	};
 
 	static struct option longopts[] = {
@@ -890,6 +891,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"port", required_argument, 0, 'p'},
 		{"authorization", required_argument, 0, 'a'},
 		{"proxy", required_argument, 0, 'x'},
+		{"no-proxy", required_argument, 0, NO_PROXY},
 		{"proxy-authorization", required_argument, 0, 'b'},
 		{"header-string", required_argument, 0, 'd'},
 		{"string", required_argument, 0, 's'},
@@ -1348,6 +1350,10 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case HAPROXY_PROTOCOL:
 			result.config.curl_config.haproxy_protocol = true;
+			break;
+		case NO_PROXY:
+			strncpy(result.config.curl_config.no_proxy, optarg, DEFAULT_BUFFER_SIZE - 1);
+			result.config.curl_config.no_proxy[DEFAULT_BUFFER_SIZE - 1] = 0;
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */

@@ -119,66 +119,97 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* set proxy */
 	/* http(s) proxy can either be given from the command line, or taken from environment variables */
 	/* socks4(a) / socks5(h) proxy should be given using the command line */
-	char curlopt_proxy[DEFAULT_BUFFER_SIZE] = "";
+
 	/* first source to check is the environment variables */
-	/* Lower case proxy environment variables are almost always accepted, while some programs also checking
-	 uppercase ones. Discover both, but take the lowercase one if both are present*/
-	char *http_proxy_env;
+	/* lower case proxy environment variables are almost always accepted, while some programs also checking
+	uppercase ones. discover both, but take the lowercase one if both are present */
+
+	/* first environment variable to read is all_proxy. it can be overridden by protocol specific environment variables */
+	char *all_proxy_env, *all_proxy_uppercase_env;
+	all_proxy_env = getenv("all_proxy");
+	all_proxy_uppercase_env = getenv("ALL_PROXY");
+	if (all_proxy_env != NULL && strlen(all_proxy_env)){
+		working_state.curlopt_proxy = strdup(all_proxy_env);
+		if (all_proxy_uppercase_env != NULL && verbose >= 1) {
+			printf("* cURL ignoring environment variable 'ALL_PROXY' as 'all_proxy' is set\n");
+		}
+	} else if (all_proxy_uppercase_env != NULL && strlen(all_proxy_uppercase_env) > 0) {
+		working_state.curlopt_proxy = strdup(all_proxy_uppercase_env);
+	}
+
+	/* second environment variable to read is http_proxy. only set curlopt_proxy if ssl is not toggled */
+	char *http_proxy_env, *http_proxy_uppercase_env;
 	http_proxy_env = getenv("http_proxy");
-	char *http_proxy_uppercase_env;
 	http_proxy_uppercase_env = getenv("HTTP_PROXY");
+	if (!working_state.use_ssl){
+		if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
+			working_state.curlopt_proxy = strdup(http_proxy_env);
+			if (http_proxy_uppercase_env != NULL && verbose >= 1) {
+				printf("* cURL ignoring environment variable 'HTTP_PROXY' as 'http_proxy' is set\n");
+			}
+		} else if (http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0) {
+			working_state.curlopt_proxy = strdup(http_proxy_uppercase_env);
+		}
+	}
 #ifdef LIBCURL_FEATURE_SSL
-	char *https_proxy_env;
+	/* optionally read https_proxy environment variable and set curlopt_proxy if ssl is toggled */
+	char *https_proxy_env, *https_proxy_uppercase_env;
 	https_proxy_env = getenv("https_proxy");
-	char *https_proxy_uppercase_env;
 	https_proxy_uppercase_env = getenv("HTTPS_PROXY");
 	if (working_state.use_ssl) {
 		if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
-			strcpy(curlopt_proxy, https_proxy_env);
+			strcpy(working_state.curlopt_proxy, https_proxy_env);
 			if (https_proxy_uppercase_env != NULL && verbose >= 1) {
-				printf(
-					"* cURL ignoring environment variable HTTPS_PROXY as https_proxy is set\n");
+				printf("* cURL ignoring environment variable 'HTTPS_PROXY' as 'https_proxy' is set\n");
 			}
-		} else if (https_proxy_uppercase_env != NULL &&
-					strlen(https_proxy_uppercase_env) >= 0) {
-			strcpy(curlopt_proxy, https_proxy_uppercase_env);
+		}
+		else if (https_proxy_uppercase_env != NULL && strlen(https_proxy_uppercase_env) >= 0) {
+			strcpy(working_state.curlopt_proxy, https_proxy_uppercase_env);
 		}
 	}
-	else
 #endif /* LIBCURL_FEATURE_SSL */
-	{
-		if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
-			strcpy(curlopt_proxy, http_proxy_env);
-			if (http_proxy_uppercase_env != NULL && verbose >= 1) {
-				printf(
-					"* cURL ignoring environment variable HTTP_PROXY as http_proxy is set\n");
-			}
-		} else if (http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0) {
-			strcpy(curlopt_proxy, http_proxy_uppercase_env);
-		}
-	}
+
 	/* second source to check for proxies is command line argument, overwriting the environment variables */
 	if (strlen(config.proxy) > 0) {
-		strcpy(curlopt_proxy, config.proxy);
+		working_state.curlopt_proxy = strdup(config.proxy);
 	}
 
-	handle_curl_option_return_code(
-		curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, curlopt_proxy), "CURLOPT_PROXY");
-	if (verbose >= 1) {
-		printf("* curl CURLOPT_PROXY: %s\n", curlopt_proxy);
+	if (working_state.curlopt_proxy != NULL && strlen(working_state.curlopt_proxy)){
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, working_state.curlopt_proxy), "CURLOPT_PROXY");
+		if (verbose >= 1) {
+			printf("* curl CURLOPT_PROXY: %s\n", working_state.curlopt_proxy);
+		}
 	}
 
-	/* Proxy resolves hostname in proxy schemes: http, https, socks4a and socks5h. */
-	/* if the curlopt_proxy i.e config.proxy is given with the scheme prefix use it */
-	bool proxy_resolves_hostname = strlen(curlopt_proxy) &&
-	(
-		strncmp(curlopt_proxy, "http://", 7) == 0 ||
-		strncmp(curlopt_proxy, "https://", 8) == 0 ||
-		strncmp(curlopt_proxy, "socks4a://", 10) == 0 ||
-		strncmp(curlopt_proxy, "socks5h://", 10) == 0
-	);
-	/* If CURLOPT_PROXYTYPE is specified, it should take priority over the CURLOPT_PROXY.
-	So far the code does not specify it. */
+	/* set no_proxy */
+	/* first source to check is environment variables */
+	char *no_proxy_env, *no_proxy_uppercase_env;
+	no_proxy_env = getenv("no_proxy");
+	no_proxy_uppercase_env = getenv("NO_PROXY");
+	if (no_proxy_env != NULL && strlen(no_proxy_env)){
+		working_state.curlopt_noproxy = strdup(no_proxy_env);
+		if (no_proxy_uppercase_env != NULL && verbose >= 1){
+			printf("* cURL ignoring environment variable 'NO_PROXY' as 'no_proxy' is set\n");
+		}
+	}else if (no_proxy_uppercase_env != NULL && strlen(no_proxy_uppercase_env) > 0){
+		working_state.curlopt_noproxy = strdup(no_proxy_uppercase_env);
+	}
+
+	/* second source to check for no_proxy is command line argument, overwriting the environment variables */
+	if (strlen(config.no_proxy) > 0) {
+		working_state.curlopt_noproxy = strdup(config.no_proxy);
+	}
+
+	if ( working_state.curlopt_noproxy != NULL && strlen(working_state.curlopt_noproxy)){
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_NOPROXY, working_state.curlopt_noproxy), "CURLOPT_NOPROXY");
+		if (verbose >= 1) {
+			printf("* curl CURLOPT_NOPROXY: %s\n", working_state.curlopt_noproxy);
+		}
+	}
+
+	int proxy_resolves_hostname = determine_hostname_resolver(working_state, config);
 	if (verbose >= 1) {
 		printf("* proxy_resolves_hostname: %d\n", proxy_resolves_hostname);
 	}
@@ -656,6 +687,8 @@ check_curl_working_state check_curl_working_state_init() {
 		.serverPort = HTTP_PORT,
 		.use_ssl = false,
 		.no_body = false,
+		.curlopt_proxy = NULL,
+		.curlopt_noproxy = NULL,
 	};
 	return result;
 }
@@ -680,6 +713,7 @@ check_curl_config check_curl_config_init() {
 				.verify_peer_and_host = false,
 				.user_agent = {'\0'},
 				.proxy = "",
+				.no_proxy = "",
 				.proxy_auth = "",
 				.user_auth = "",
 				.http_content_type = NULL,
@@ -1362,4 +1396,114 @@ char *fmt_url(check_curl_working_state workingState) {
 			 workingState.serverPort, workingState.server_url);
 
 	return url;
+}
+
+
+int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
+
+	/* check if the host matches contained in curlopt_noproxy */
+	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
+	/* curlopt_noproxy is specified as a comma separated list of
+	direct IPv4 or IPv6 addresses e.g 130.133.8.40, 2001:4860:4802:32::a ,
+	IPv4 or IPv6 CIDR regions e.g 10.241.0.0/16 , abcd:ef01:2345::/48 ,
+	direct hostnames e.g example.com, google.de */
+
+	char *server_address_clean = strdup(working_state.server_address);
+	/* the hostname that was passed might be a full ipv6 address encapsulated in square brackets */
+	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) && (working_state.server_address[0] == '[') && (working_state.server_address[strlen(working_state.server_address)-1] == ']') ) {
+		server_address_clean = strndup( working_state.server_address + 1, strlen(working_state.server_address) - 2);
+	}
+
+	char *host_name_display = working_state.host_name ? working_state.host_name : "NULL";
+
+	if (working_state.curlopt_noproxy != NULL){
+		char* curlopt_noproxy_copy = strdup( working_state.curlopt_noproxy);
+		char* noproxy_item = strtok(curlopt_noproxy_copy, ",");
+		while(noproxy_item != NULL){
+
+			/* direct comparison with the server_address */
+			if( server_address_clean != NULL && strlen(server_address_clean) == strlen(noproxy_item) && strcmp(server_address_clean, noproxy_item) == 0){
+				if (verbose >= 1){
+					printf("* server_address is in the no_proxy list: %s\n", noproxy_item);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
+			/* direct comparison with the host_name */
+			if( working_state.host_name != NULL && strlen(working_state.host_name) == strlen(noproxy_item) && strcmp(working_state.host_name, noproxy_item) == 0){
+				if (verbose >= 1){
+					printf("* host_name is in the no_proxy list: %s\n", noproxy_item);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
+			/* TODO: determine if its IPv4 or IPv6 CIDR notation, if a server_address is used check if its in the subnet specified by CIDR */
+
+			if (verbose >= 1){
+				printf("* no_proxy list has item: %s , cannot determine if it should be applied for host: %s or server_address: %s\n", noproxy_item, host_name_display , server_address_clean);
+			}
+
+			noproxy_item = strtok(NULL, ",");
+		}
+
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 1;
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "https://", 8) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is https, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 1;
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "socks4://", 9) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is socks, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 0;
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "socks4a://", 10) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is socks4a, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 1;
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "socks5://", 9) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is socks5, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 0;
+	}
+
+	if ( strncmp( working_state.curlopt_proxy, "socks5h://", 10) == 0){
+		if (verbose >= 1){
+			printf("* proxy scheme is socks5h, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+		free(server_address_clean);
+		return 1;
+	}
+
+	if (verbose >= 1){
+		printf("* proxy scheme is unknown, proxy: %s is assumed to not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+	}
+
+	free(server_address_clean);
+	return 0;
 }
