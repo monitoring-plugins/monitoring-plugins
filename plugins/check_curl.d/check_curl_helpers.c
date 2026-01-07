@@ -1466,56 +1466,58 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 
 	}
 
-	if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+	if (working_state.curlopt_noproxy != NULL){
+		if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
 		}
-		free(server_address_clean);
-		return 1;
-	}
 
-	if ( strncmp( working_state.curlopt_proxy, "https://", 8) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is https, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		if ( strncmp( working_state.curlopt_proxy, "https://", 8) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is https, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
 		}
-		free(server_address_clean);
-		return 1;
-	}
 
-	if ( strncmp( working_state.curlopt_proxy, "socks4://", 9) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is socks, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		if ( strncmp( working_state.curlopt_proxy, "socks4://", 9) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 0;
 		}
-		free(server_address_clean);
-		return 0;
-	}
 
-	if ( strncmp( working_state.curlopt_proxy, "socks4a://", 10) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is socks4a, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		if ( strncmp( working_state.curlopt_proxy, "socks4a://", 10) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks4a, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
 		}
-		free(server_address_clean);
-		return 1;
-	}
 
-	if ( strncmp( working_state.curlopt_proxy, "socks5://", 9) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is socks5, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		if ( strncmp( working_state.curlopt_proxy, "socks5://", 9) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks5, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 0;
 		}
-		free(server_address_clean);
-		return 0;
-	}
 
-	if ( strncmp( working_state.curlopt_proxy, "socks5h://", 10) == 0){
-		if (verbose >= 1){
-			printf("* proxy scheme is socks5h, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		if ( strncmp( working_state.curlopt_proxy, "socks5h://", 10) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks5h, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
 		}
-		free(server_address_clean);
-		return 1;
 	}
 
 	if (verbose >= 1){
-		printf("* proxy scheme is unknown, proxy: %s is assumed to not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+		printf("* proxy scheme is unknown/unavailable, no proxy is assumed for host: %s or server_address: %s\n", host_name_display, server_address_clean);
 	}
 
 	free(server_address_clean);
