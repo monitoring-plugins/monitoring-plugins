@@ -126,3 +126,6 @@ void test_file(char *path);
 mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
 										  int crit_days_till_exp);
 char *fmt_url(check_curl_working_state workingState);
+
+/* returns 0 if requester resolves the hostname locally, 1 if proxy resolves the hostname*/
+int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config);
