@@ -1533,8 +1533,8 @@ void print_help(void) {
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
 		   "IP address or name (use numeric address if possible to bypass DNS lookup).");
-	printf("    %s\n", "This overwrites the network address of the target while leaving everything "
-					   "else (HTTP headers) as they are");
+	printf("    %s\n",
+		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
 	printf("    %s", _("Port number (default: "));
 	printf("%d)\n", HTTP_PORT);
@@ -1598,8 +1598,7 @@ void print_help(void) {
 	printf("    %s\n", _("String to expect in the content"));
 	printf(" %s\n", "-u, --url=PATH");
 	printf("    %s\n", _("URL to GET or POST (default: /)"));
-	printf("    %s\n", _("This is the part after the address in a URL, so for "
-						 "\"https://example.com/index.html\" it would be '-u /index.html'"));
+	printf("    %s\n", _("This is the part after the address in a URL, so for \"https://example.com/index.html\" it would be '-u /index.html'"));
 	printf(" %s\n", "-P, --post=STRING");
 	printf("    %s\n", _("URL decoded http POST data"));
 	printf(" %s\n",
@@ -1630,6 +1629,13 @@ void print_help(void) {
 	printf("    %s\n", _("Available schemes are http, https, socks4, socks4a, socks5, socks5h"));
 	printf("    %s\n", _("If port is not specified, libcurl defaults to 1080"));
 	printf("    %s\n", _("This value will be set as CURLOPT_PROXY"));
+	printf(" %s\n", "--no-proxy=COMMA_SEPARATED_LIST");
+	printf("    %s\n", _("Specify hostnames, addresses and subnets where proxy should not be used"));
+	printf("    %s\n", _("Example usage: \"example.com,::1,1.1.1.1,localhost,192.168.0.0/16\""));
+	printf("    %s\n", _("Do not use brackets when specifying IPv6 addresses"));
+	printf("    %s\n", _("Special case when an item is '*' : matches all hosts/addresses "
+		"and effectively disables proxy."));
+	printf("    %s\n", _("This value will be set as CURLOPT_NOPROXY"));
 	printf(" %s\n", "-a, --authorization=AUTH_PAIR");
 	printf("    %s\n", _("Username:password on sites with basic authentication"));
 	printf(" %s\n", "-b, --proxy-authorization=AUTH_PAIR");
@@ -1738,18 +1744,39 @@ void print_help(void) {
 #endif
 
 	printf("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
-	printf(" %s\n", _("Proxies are defined checked using the -x or --proxy parameter:"));
-	printf(" %s\n",
-		   _("The environment variables are only checked -x/--proxy arguments are not set:"));
-	printf(" %s\n", _("Depending on the SSL enablement, either http_proxy or https_proxy "
-					  "environment variable is used."));
-	printf(" %s\n", _("These variables can also be given in uppercase, but the lowercase ones will "
+	printf(" %s\n", _("Proxies are specified or disabled for certain hosts/addresses using environment variables"
+		" or -x/--proxy and --no-proxy arguments:"));
+	printf(" %s\n", _("Checked environment variables: all_proxy, http_proxy, https_proxy, no_proxy"));
+	printf(" %s\n", _("Environment variables can also be given in uppercase, but the lowercase ones will "
 					  "take predence if both are defined."));
-	printf(" %s\n",
-		   _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
-	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H "
-					  "www.monitoring-plugins.org --ssl"));
-	printf(" %s\n", _("legacy proxy requests in check_http style still work:"));
+	printf(" %s\n", _("The environment variables are overwritten by -x/--proxy and --no-proxy arguments:"));
+	printf(" %s\n", _("all_proxy/ALL_PROXY environment variables are read first, but protocol "
+					"specific environment variables override them."));
+	printf(" %s\n", _("If SSL is enabled and used, https_proxy/HTTPS_PROXY will be checked and overwrite "
+			"http_proxy/HTTPS_PROXY."));
+	printf(" %s\n", _("Curl accepts proxies using http, https, socks4, socks4a, socks5 and socks5h schemes."));
+	printf(" %s\n", _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
+	printf(" %s\n", _("http_proxy=http://used.proxy.com HTTP_PROXY=http://ignored.proxy.com ./check_curl -H www.monitoring-plugins.org"));
+	printf(" %s\n", _("  Lowercase http_proxy takes predence over uppercase HTTP_PROXY"));
+	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://192.168.100.35:3128"));
+	printf(" %s\n", _("http_proxy=http://unused.proxy1.com HTTP_PROXY=http://unused.proxy2.com ./check_curl "
+			"-H www.monitoring-plugins.org --proxy http://used.proxy"));
+	printf(" %s\n", _("  Proxy specified by --proxy overrides any proxy specified by environment variable."));
+	printf(" %s\n", _("  Curl uses port 1080 by default as port is not specified"));
+	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org --ssl"));
+	printf(" %s\n", _("  HTTPS_PROXY is read as --ssl is toggled"));
+	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org --proxy socks5h://192.168.122.21"));
+	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com --no-proxy '*'"));
+	printf(" %s\n", _("  Disabled proxy for all hosts by using '*' in no_proxy ."));
+	printf(" %s\n", _("NO_PROXY=www.monitoring-plugins.org ./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com"));
+	printf(" %s\n", _("  Exact matches with the hostname/address work."));
+	printf(" %s\n", _("no_proxy=192.168.178.0/24 ./check_curl -I 192.168.178.10 -x http://proxy.acme.org"));
+	printf(" %s\n", _("no_proxy=acme.org ./check_curl -H nonpublic.internalwebapp.acme.org -x http://proxy.acme.org"));
+	printf(" %s\n", _("  Do not use proxy when accessing internal domains/addresses, but use a default proxy when accessing public web."));
+	printf(" %s\n", _("  IMPORTANT: Check_curl can not always determine whether itself or the proxy will "
+		"resolve a hostname before sending a request and getting an answer."
+		"This can lead to DNS resolvation issues if hostname is only resolvable over proxy."));
+	printf(" %s\n", _("Legacy proxy requests in check_http style still work:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u http://www.monitoring-plugins.org/ "
 					  "-H www.monitoring-plugins.org"));
 
@@ -1788,6 +1815,7 @@ void print_usage(void) {
 	printf("       [-P string] [-m <min_pg_size>:<max_pg_size>] [-4|-6] [-N] [-M <age>]\n");
 	printf("       [-A string] [-k string] [-S <version>] [--sni] [--haproxy-protocol]\n");
 	printf("       [-T <content-type>] [-j method]\n");
+	printf("       [--no-proxy=<comma separated list of hosts, IP addresses, IP CIDR subnets>\n");
 	printf("       [--http-version=<version>] [--enable-automatic-decompression]\n");
 	printf("       [--cookie-jar=<cookie jar file>\n");
 	printf(" %s -H <vhost> | -I <IP-address> -C <warn_age>[,<crit_age>]\n", progname);

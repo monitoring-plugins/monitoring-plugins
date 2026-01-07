@@ -1421,6 +1421,18 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 		char* noproxy_item = strtok(curlopt_noproxy_copy, ",");
 		while(noproxy_item != NULL){
 
+			/* CURLOPT_NOPROXY documentation: */
+			/* The only wildcard available is a single * character, which matches all hosts, and effectively disables the proxy. */
+			if ( strlen(noproxy_item) == 1 && noproxy_item[0] == '*'){
+				if (verbose >= 1){
+					printf("* noproxy includes '*' which disables proxy for all hosts including: %s or server_addresses including: %s\n", host_name_display , server_address_clean);
+
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
 			/* direct comparison with the server_address */
 			if( server_address_clean != NULL && strlen(server_address_clean) == strlen(noproxy_item) && strcmp(server_address_clean, noproxy_item) == 0){
 				if (verbose >= 1){
@@ -1440,6 +1452,8 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 				free(server_address_clean);
 				return 0;
 			}
+
+			/* TODO: determine if the hostname is a subdomain of the item, e.g www.example.com when token is example.com*/
 
 			/* TODO: determine if its IPv4 or IPv6 CIDR notation, if a server_address is used check if its in the subnet specified by CIDR */
 
