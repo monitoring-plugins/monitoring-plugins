@@ -352,15 +352,17 @@ static int add_option(FILE *filePointer, np_arg_list **optlst) {
 	optnew->next = NULL;
 
 	read_pos = 0;
-	optnew->arg = malloc(cfg_len + 1);
+	size_t arg_length = cfg_len + 1;
+	optnew->arg = malloc(arg_length);
 	/* 1-character params needs only one dash */
 	if (opt_len == 1) {
-		strncpy(&optnew->arg[read_pos], "-", 1);
+		strncpy(&optnew->arg[read_pos], "-", arg_length);
 		read_pos += 1;
 	} else {
-		strncpy(&optnew->arg[read_pos], "--", 2);
+		strncpy(&optnew->arg[read_pos], "--", arg_length);
 		read_pos += 2;
 	}
+
 	strncpy(&optnew->arg[read_pos], optptr, opt_len);
 	read_pos += opt_len;
 	if (value) {
