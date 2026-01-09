@@ -1214,7 +1214,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 		cert_ptr_union cert_ptr = {0};
 		cert_ptr.to_info = NULL;
-		CURLcode res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &cert_ptr.to_info);
+		CURLcode res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &cert_ptr.to_certinfo);
 		if (!res && cert_ptr.to_info) {
 #	ifdef USE_OPENSSL
 			/* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert
