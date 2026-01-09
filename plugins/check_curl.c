@@ -787,7 +787,7 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			strcat(new_url, "?");
 			strcat(new_url, query_str);
 		}else{
-			die(STATE_UNKNOWN, _("HTTP UNKNOWN - No space to add query part of size %d to the buffer, buffer has remaining size %d"), query_str_len , current_len );
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - No space to add query part of size %zu to the buffer, buffer has remaining size %zu"), query_str_len , current_len );
 		}
 	}
 
