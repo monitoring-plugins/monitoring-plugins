@@ -36,7 +36,8 @@ int check_snmp_set_thresholds(const char *threshold_string, check_snmp_test_unit
 			threshold_string++;
 		}
 
-		for (char *ptr = strtok(threshold_string, ", "); ptr != NULL;
+		char *thr_string_copy = strdup(threshold_string);
+		for (char *ptr = strtok(thr_string_copy, ", "); ptr != NULL;
 			 ptr = strtok(NULL, ", "), tu_index++) {
 
 			if (tu_index > max_test_units) {
@@ -64,6 +65,7 @@ int check_snmp_set_thresholds(const char *threshold_string, check_snmp_test_unit
 			}
 		}
 
+		free(thr_string_copy);
 	} else {
 		// Single value
 		// only valid for the first test unit
@@ -843,8 +845,8 @@ char *_np_state_calculate_location_prefix(void) {
  * Sets variables. Generates filename. Returns np_state_key. die with
  * UNKNOWN if exception
  */
-state_key np_enable_state(char *keyname, int expected_data_version, char *plugin_name, int argc,
-						  char **argv) {
+state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+						  int argc, char **argv) {
 	state_key *this_state = (state_key *)calloc(1, sizeof(state_key));
 	if (this_state == NULL) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
@@ -869,7 +871,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, char *plugin
 		tmp_char++;
 	}
 	this_state->name = temp_keyname;
-	this_state->plugin_name = plugin_name;
+	this_state->plugin_name = (char *)plugin_name;
 	this_state->data_version = expected_data_version;
 	this_state->state_data = NULL;
 

@@ -55,7 +55,7 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include <sys/time.h>
 #if defined(SIOCGIFADDR)
-#include <sys/ioctl.h>
+#	include <sys/ioctl.h>
 #endif /* SIOCGIFADDR */
 #include <errno.h>
 #include <signal.h>
@@ -1782,6 +1782,7 @@ static void set_source_ip(char *arg, const int icmp_sock, sa_family_t addr_famil
 /* TODO: Move this to netutils.c and also change check_dhcp to use that. */
 static in_addr_t get_ip_address(const char *ifname, const int icmp_sock) {
 	// TODO: Rewrite this so the function return an error and we exit somewhere else
+
 	struct sockaddr_in ip_address;
 	ip_address.sin_addr.s_addr = 0; // Fake initialization to make compiler happy
 #if defined(SIOCGIFADDR)
@@ -1797,6 +1798,9 @@ static in_addr_t get_ip_address(const char *ifname, const int icmp_sock) {
 
 	memcpy(&ip_address, &ifr.ifr_addr, sizeof(ip_address));
 #else
+	// fake operation to make the compiler happy
+	(void)icmp_sock;
+
 	(void)ifname;
 	errno = 0;
 	crash("Cannot get interface IP address on this platform.");
@@ -2046,7 +2050,7 @@ unsigned short icmp_checksum(uint16_t *packet, size_t packet_size) {
 
 	/* mop up the occasional odd byte */
 	if (packet_size == 1) {
-		sum += *((uint8_t *)packet - 1);
+		sum += *((uint8_t *)packet);
 	}
 
 	sum = (sum >> 16) + (sum & 0xffff); /* add hi 16 to low 16 */
@@ -2245,7 +2249,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		 * round trip jitter, but double the impact to latency
 		 * then add 10 for protocol latencies (in milliseconds).
 		 */
-		EffectiveLatency = ((double)rta / 1000) + target.jitter * 2 + 10;
+		EffectiveLatency = ((double)rta / 1000) + (target.jitter * 2) + 10;
 
 		double R;
 		if (EffectiveLatency < 160) {
@@ -2404,25 +2408,32 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.score_mode) {
 		mp_subcheck sc_score = mp_subcheck_init();
 		sc_score = mp_set_subcheck_default_state(sc_score, STATE_OK);
-		xasprintf(&sc_score.output, "Score %f", score);
 
-		if (score <= crit.score) {
-			sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
-			xasprintf(&sc_score.output, "%s <= %f", sc_score.output, crit.score);
-		} else if (score <= warn.score) {
-			sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
-			xasprintf(&sc_score.output, "%s <= %f", sc_score.output, warn.score);
-		}
+		if (target.icmp_recv > 1) {
+			xasprintf(&sc_score.output, "Score %f", score);
 
-		if (packet_loss < 100) {
-			mp_perfdata pd_score = perfdata_init();
-			xasprintf(&pd_score.label, "%sscore", address);
-			pd_score.value = mp_create_pd_value(score);
-			pd_score.warn = mp_range_set_end(pd_score.warn, mp_create_pd_value(warn.score));
-			pd_score.crit = mp_range_set_end(pd_score.crit, mp_create_pd_value(crit.score));
-			pd_score.min = mp_create_pd_value(0);
-			pd_score.max = mp_create_pd_value(100);
-			mp_add_perfdata_to_subcheck(&sc_score, pd_score);
+			if (score <= crit.score) {
+				sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
+				xasprintf(&sc_score.output, "%s <= %f", sc_score.output, crit.score);
+			} else if (score <= warn.score) {
+				sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
+				xasprintf(&sc_score.output, "%s <= %f", sc_score.output, warn.score);
+			}
+
+			if (packet_loss < 100) {
+				mp_perfdata pd_score = perfdata_init();
+				xasprintf(&pd_score.label, "%sscore", address);
+				pd_score.value = mp_create_pd_value(score);
+				pd_score.warn = mp_range_set_end(pd_score.warn, mp_create_pd_value(warn.score));
+				pd_score.crit = mp_range_set_end(pd_score.crit, mp_create_pd_value(crit.score));
+				pd_score.min = mp_create_pd_value(0);
+				pd_score.max = mp_create_pd_value(100);
+				mp_add_perfdata_to_subcheck(&sc_score, pd_score);
+			}
+
+		} else {
+			// score mode disabled due to not enough received packages
+			xasprintf(&sc_score.output, "Score mode disabled, not enough packets received");
 		}
 
 		mp_add_subcheck_to_subcheck(&result, sc_score);

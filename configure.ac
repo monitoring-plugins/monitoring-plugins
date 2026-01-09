@@ -810,7 +810,7 @@ elif ps axwo 'stat comm vsz rss user uid pid ppid etime args' 2>/dev/null | \
 then
 	ac_cv_ps_varlist="[procstat,&procuid,&procpid,&procppid,&procvsz,&procrss,&procpcpu,procetime,procprog,&pos]"
 	ac_cv_ps_command="$PATH_TO_PS axwo 'stat uid pid ppid vsz rss pcpu etime comm args'"
-	ac_cv_ps_format="%s %u %d %d %d %d %f %s %s %n"
+	ac_cv_ps_format="%s %d %d %d %d %d %f %s %s %n"
 	ac_cv_ps_cols=10
 	AC_MSG_RESULT([$ac_cv_ps_command])
 

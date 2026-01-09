@@ -775,19 +775,23 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	/* missing components have null,null in their UriTextRangeA
 	 * add query parameters if they exist.
 	 */
-	if (uri.query.first && uri.query.afterLast){
-		// Ensure we have space for '?' + query_str + '\0' ahead of time, instead of calling strncat twice
+	if (uri.query.first && uri.query.afterLast) {
+		// Ensure we have space for '?' + query_str + '\0' ahead of time, instead of calling strncat
+		// twice
 		size_t current_len = strlen(new_url);
 		size_t remaining_space = DEFAULT_BUFFER_SIZE - current_len - 1;
 
-		const char* query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		const char *query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
 		size_t query_str_len = strlen(query_str);
 
 		if (remaining_space >= query_str_len + 1) {
 			strcat(new_url, "?");
 			strcat(new_url, query_str);
-		}else{
-			die(STATE_UNKNOWN, _("HTTP UNKNOWN - No space to add query part of size %d to the buffer, buffer has remaining size %d"), query_str_len , current_len );
+		} else {
+			die(STATE_UNKNOWN,
+				_("HTTP UNKNOWN - No space to add query part of size %zu to the buffer, buffer has "
+				  "remaining size %zu"),
+				query_str_len, current_len);
 		}
 	}
 
@@ -1501,8 +1505,8 @@ void print_help(void) {
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
 		   "IP address or name (use numeric address if possible to bypass DNS lookup).");
-	printf("    %s\n",
-		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
+	printf("    %s\n", "This overwrites the network address of the target while leaving everything "
+					   "else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
 	printf("    %s", _("Port number (default: "));
 	printf("%d)\n", HTTP_PORT);
@@ -1566,7 +1570,8 @@ void print_help(void) {
 	printf("    %s\n", _("String to expect in the content"));
 	printf(" %s\n", "-u, --url=PATH");
 	printf("    %s\n", _("URL to GET or POST (default: /)"));
-	printf("    %s\n", _("This is the part after the address in a URL, so for \"https://example.com/index.html\" it would be '-u /index.html'"));
+	printf("    %s\n", _("This is the part after the address in a URL, so for "
+						 "\"https://example.com/index.html\" it would be '-u /index.html'"));
 	printf(" %s\n", "-P, --post=STRING");
 	printf("    %s\n", _("URL decoded http POST data"));
 	printf(" %s\n",
@@ -1712,7 +1717,8 @@ void print_help(void) {
 	printf(" %s\n", _("It is recommended to use an environment proxy like:"));
 	printf(" %s\n",
 		   _("https_proxy=http://192.168.100.35:3128 ./check_curl -H www.verisign.com -S"));
-	printf(" %s\n", _("legacy proxy requests in check_http style might still work, but are frowned upon, so DONT:"));
+	printf(" %s\n", _("legacy proxy requests in check_http style might still work, but are frowned "
+					  "upon, so DONT:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u https://www.verisign.com/ -S -j "
 					  "CONNECT -H www.verisign.com "));
 	printf(" %s\n", _("all these options are needed: -I <proxy> -p <proxy-port> -u <check-url> "
