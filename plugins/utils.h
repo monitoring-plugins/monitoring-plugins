@@ -32,8 +32,6 @@ suite of plugins. */
 void support(void);
 void print_revision(const char *, const char *);
 
-extern time_t start_time, end_time;
-
 /* Test input types */
 
 bool is_integer(char *);

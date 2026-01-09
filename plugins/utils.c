@@ -40,7 +40,6 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-time_t start_time, end_time;
 
 void usage(const char *msg) {
 	printf("%s\n", msg);
