@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "thresholds.h"
 #include <mysql.h>
 
@@ -15,7 +16,10 @@ typedef struct {
 	unsigned int db_port;
 
 	char *sql_query;
-	thresholds *my_thresholds;
+	mp_thresholds thresholds;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_mysql_query_config;
 
 check_mysql_query_config check_mysql_query_config_init() {
@@ -30,7 +34,9 @@ check_mysql_query_config check_mysql_query_config_init() {
 		.db_port = MYSQL_PORT,
 
 		.sql_query = NULL,
-		.my_thresholds = NULL,
+		.thresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

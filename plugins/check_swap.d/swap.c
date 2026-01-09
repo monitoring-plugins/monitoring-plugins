@@ -52,10 +52,10 @@ swap_result get_swap_data(swap_config config) {
 	}
 #	else // HAVE_SWAP
 #		ifdef CHECK_SWAP_SWAPCTL_SVR4
-	return getSwapFromSwapctl_SRV4();
+	return getSwapFromSwapctl_SRV4(config);
 #		else // CHECK_SWAP_SWAPCTL_SVR4
 #			ifdef CHECK_SWAP_SWAPCTL_BSD
-	return getSwapFromSwapctl_BSD();
+	return getSwapFromSwapctl_BSD(config);
 #			else // CHECK_SWAP_SWAPCTL_BSD
 #				error No way found to retrieve swap
 #			endif /* CHECK_SWAP_SWAPCTL_BSD */
@@ -95,12 +95,14 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 		 * 123 123" which exists on NetBSD (at least),
 		 * The unit should be Bytes
 		 */
-		if (sscanf(input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu", &swap_total, &swap_used, &swap_free) == 3) {
+		if (sscanf(input_buffer, "%*[S]%*[w]%*[a]%*[p]%*[:] %lu %lu %lu", &swap_total, &swap_used,
+				   &swap_free) == 3) {
 			found_total = true;
 			found_free = true;
 			// Set error
 			result.errorcode = STATE_OK;
-			// Break out of fgets here, since both scanf expressions might match (NetBSD for example)
+			// Break out of fgets here, since both scanf expressions might match (NetBSD for
+			// example)
 			break;
 		}
 
@@ -149,7 +151,8 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 	return result;
 }
 
-swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[], const char swap_format[]) {
+swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[],
+								   const char swap_format[]) {
 	swap_result result = {0};
 
 	char *temp_buffer;
@@ -212,7 +215,8 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 		used_swap_mb = total_swap_mb - free_swap_mb;
 
 		if (verbose >= 3) {
-			printf(_("total=%.0f, used=%.0f, free=%.0f\n"), total_swap_mb, used_swap_mb, free_swap_mb);
+			printf(_("total=%.0f, used=%.0f, free=%.0f\n"), total_swap_mb, used_swap_mb,
+				   free_swap_mb);
 		}
 	} else {
 		while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
@@ -398,7 +402,8 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 	}
 
 	/* initialize swap table + entries */
-	swaptbl_t *tbl = (swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * (unsigned long)nswaps));
+	swaptbl_t *tbl =
+		(swaptbl_t *)malloc(sizeof(swaptbl_t) + (sizeof(swapent_t) * (unsigned long)nswaps));
 
 	if (tbl == NULL) {
 		die(STATE_UNKNOWN, _("malloc() failed!\n"));
@@ -433,7 +438,8 @@ swap_result getSwapFromSwap_SRV4(swap_config config) {
 		dskused_mb = (dsktotal_mb - dskfree_mb);
 
 		if (verbose >= 3) {
-			printf("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n", dsktotal_mb, dskfree_mb, dskused_mb);
+			printf("dsktotal_mb=%.0f dskfree_mb=%.0f dskused_mb=%.0f\n", dsktotal_mb, dskfree_mb,
+				   dskused_mb);
 		}
 
 		if (config.allswaps && dsktotal_mb > 0) {

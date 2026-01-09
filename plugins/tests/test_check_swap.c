@@ -5,9 +5,7 @@
 int verbose = 0;
 
 void print_usage(void) {}
-void print_help(swap_config config) {
-	(void) config;
-}
+void print_help(swap_config config) { (void)config; }
 
 const char *progname = "test_check_swap";
 

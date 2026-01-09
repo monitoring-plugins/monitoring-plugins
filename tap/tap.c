@@ -65,7 +65,8 @@ static void _cleanup(void);
  * test_name -- the name of the test, may be NULL
  * test_comment -- a comment to print afterwards, may be NULL
  */
-unsigned int _gen_result(int ok, const char *func, char *file, unsigned int line, char *test_name, ...) {
+unsigned int _gen_result(int ok, const char *func, char *file, unsigned int line, char *test_name,
+						 ...) {
 	va_list ap;
 	char *local_test_name = NULL;
 	char *c;
@@ -95,7 +96,9 @@ unsigned int _gen_result(int ok, const char *func, char *file, unsigned int line
 			}
 
 			if (name_is_digits) {
-				diag("    You named your test '%s'.  You shouldn't use numbers for your test names.", local_test_name);
+				diag(
+					"    You named your test '%s'.  You shouldn't use numbers for your test names.",
+					local_test_name);
 				diag("    Very confusing.");
 			}
 		}
@@ -116,8 +119,9 @@ unsigned int _gen_result(int ok, const char *func, char *file, unsigned int line
 		if (local_test_name != NULL) {
 			flockfile(stdout);
 			for (c = local_test_name; *c != '\0'; c++) {
-				if (*c == '#')
+				if (*c == '#') {
 					fputc('\\', stdout);
+				}
 				fputc((int)*c, stdout);
 			}
 			funlockfile(stdout);
@@ -135,14 +139,16 @@ unsigned int _gen_result(int ok, const char *func, char *file, unsigned int line
 	   the test failed. */
 	if (todo) {
 		printf(" # TODO %s", todo_msg ? todo_msg : todo_msg_fixed);
-		if (!ok)
+		if (!ok) {
 			failures--;
+		}
 	}
 
 	printf("\n");
 
-	if (!ok)
+	if (!ok) {
 		diag("    Failed %stest (%s:%s() at line %d)", todo ? "(TODO) " : "", file, func, line);
+	}
 
 	free(local_test_name);
 
@@ -212,8 +218,9 @@ int plan_skip_all(char *reason) {
 
 	printf("1..0");
 
-	if (reason != NULL)
+	if (reason != NULL) {
 		printf(" # Skip %s", reason);
+	}
 
 	printf("\n");
 
@@ -294,7 +301,8 @@ int skip(unsigned int n, char *fmt, ...) {
 
 	while (n-- > 0) {
 		test_count++;
-		printf("ok %d # skip %s\n", test_count, skip_msg != NULL ? skip_msg : "libtap():malloc() failed");
+		printf("ok %d # skip %s\n", test_count,
+			   skip_msg != NULL ? skip_msg : "libtap():malloc() failed");
 	}
 
 	free(skip_msg);
@@ -396,8 +404,9 @@ void _cleanup(void) {
 		return;
 	}
 
-	if (failures)
+	if (failures) {
 		diag("Looks like you failed %d tests of %d.", failures, test_count);
+	}
 
 	UNLOCK;
 }

@@ -35,11 +35,14 @@
  *
  *****************************************************************************/
 
-#include "thresholds.h"
 const char *progname = "check_ntp_peer";
 const char *copyright = "2006-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "output.h"
+#include "perfdata.h"
+#include <openssl/x509.h>
+#include "thresholds.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -47,8 +50,6 @@ const char *email = "devel@monitoring-plugins.org";
 #include "check_ntp_peer.d/config.h"
 
 static int verbose = 0;
-static bool syncsource_found = false;
-static bool li_alarm = false;
 
 typedef struct {
 	int errorcode;
@@ -83,9 +84,9 @@ typedef struct {
 /* bits 1,2 are the leap indicator */
 #define LI_MASK 0xc0
 #define LI(x)   ((x & LI_MASK) >> 6)
-#define LI_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 6) & LI_MASK);                                                                                                         \
+#define LI_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 6) & LI_MASK);                                                                 \
 	} while (0)
 /* and these are the values of the leap indicator */
 #define LI_NOWARNING  0x00
@@ -95,17 +96,17 @@ typedef struct {
 /* bits 3,4,5 are the ntp version */
 #define VN_MASK 0x38
 #define VN(x)   ((x & VN_MASK) >> 3)
-#define VN_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 3) & VN_MASK);                                                                                                         \
+#define VN_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 3) & VN_MASK);                                                                 \
 	} while (0)
 #define VN_RESERVED 0x02
 /* bits 6,7,8 are the ntp mode */
 #define MODE_MASK 0x07
 #define MODE(x)   (x & MODE_MASK)
-#define MODE_SET(x, y)                                                                                                                     \
-	do {                                                                                                                                   \
-		x |= (y & MODE_MASK);                                                                                                              \
+#define MODE_SET(x, y)                                                                             \
+	do {                                                                                           \
+		x |= (y & MODE_MASK);                                                                      \
 	} while (0)
 /* here are some values */
 #define MODE_CLIENT     0x03
@@ -117,9 +118,9 @@ typedef struct {
 #define REM_MORE  0x20
 /* In control message, bits 11 - 15 are opcode */
 #define OP_MASK 0x1f
-#define OP_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= (y & OP_MASK);                                                                                                                \
+#define OP_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= (y & OP_MASK);                                                                        \
 	} while (0)
 #define OP_READSTAT 0x01
 #define OP_READVAR  0x02
@@ -132,18 +133,19 @@ typedef struct {
 /* NTP control message header is 12 bytes, plus any data in the data
  * field, plus null padding to the nearest 32-bit boundary per rfc.
  */
-#define SIZEOF_NTPCM(m) (12 + ntohs(m.count) + ((ntohs(m.count) % 4) ? 4 - (ntohs(m.count) % 4) : 0))
+#define SIZEOF_NTPCM(m)                                                                            \
+	(12 + ntohs(m.count) + ((ntohs(m.count) % 4) ? 4 - (ntohs(m.count) % 4) : 0))
 
 /* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                                                             \
-	do {                                                                                                                                   \
-		if (verbose > 1) {                                                                                                                 \
-			x;                                                                                                                             \
-		}                                                                                                                                  \
+#define DBG(x)                                                                                     \
+	do {                                                                                           \
+		if (verbose > 1) {                                                                         \
+			x;                                                                                     \
+		}                                                                                          \
 	} while (0);
-#define PRINTSOCKADDR(x)                                                                                                                   \
-	do {                                                                                                                                   \
-		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);                                              \
+#define PRINTSOCKADDR(x)                                                                           \
+	do {                                                                                           \
+		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
 	} while (0);
 
 void print_ntp_control_message(const ntp_control_message *message) {
@@ -197,9 +199,7 @@ void setup_control_request(ntp_control_message *message, uint8_t opcode, uint16_
  *    positive value means a success retrieving the value.
  *  - status is set to WARNING if there's no sync.peer (otherwise OK) and is
  *    the return value of the function.
- *  status is pretty much useless as syncsource_found is a global variable
- *  used later in main to check is the server was synchronized. It works
- *  so I left it alone */
+ */
 typedef struct {
 	mp_state_enum state;
 	mp_state_enum offset_result;
@@ -207,6 +207,8 @@ typedef struct {
 	double jitter;
 	long stratum;
 	int num_truechimers;
+	bool syncsource_found;
+	bool li_alarm;
 } ntp_request_result;
 ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
@@ -216,6 +218,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		.jitter = -1,
 		.stratum = -1,
 		.num_truechimers = 0,
+		.syncsource_found = false,
+		.li_alarm = false,
 	};
 
 	/* Long-winded explanation:
@@ -234,19 +238,16 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	 * 4) Extract the offset, jitter and stratum value from the data[]
 	 *    (it's ASCII)
 	 */
-	int min_peer_sel = PEER_INCLUDED;
-	int num_candidates = 0;
-	void *tmp;
-	ntp_assoc_status_pair *peers = NULL;
-	int peer_offset = 0;
-	size_t peers_size = 0;
-	size_t npeers = 0;
 	int conn = -1;
 	my_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
 	ntp_control_message req;
+	ntp_assoc_status_pair *peers = NULL;
+	int peer_offset = 0;
+	size_t peers_size = 0;
+	size_t npeers = 0;
 	do {
 		setup_control_request(&req, OP_READSTAT, 1);
 		DBG(printf("sending READSTAT request"));
@@ -268,12 +269,13 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		} while (!(req.op & OP_READSTAT && ntohs(req.seq) == 1));
 
 		if (LI(req.flags) == LI_ALARM) {
-			li_alarm = true;
+			result.li_alarm = true;
 		}
 		/* Each peer identifier is 4 bytes in the data section, which
 		 * we represent as a ntp_assoc_status_pair datatype.
 		 */
 		peers_size += ntohs(req.count);
+		void *tmp;
 		if ((tmp = realloc(peers, peers_size)) == NULL) {
 			free(peers), die(STATE_UNKNOWN, "can not (re)allocate 'peers' buffer\n");
 		}
@@ -286,13 +288,15 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	/* first, let's find out if we have a sync source, or if there are
 	 * at least some candidates. In the latter case we'll issue
 	 * a warning but go ahead with the check on them. */
+	int min_peer_sel = PEER_INCLUDED;
+	int num_candidates = 0;
 	for (size_t i = 0; i < npeers; i++) {
 		if (PEER_SEL(peers[i].status) >= PEER_TRUECHIMER) {
 			result.num_truechimers++;
 			if (PEER_SEL(peers[i].status) >= PEER_INCLUDED) {
 				num_candidates++;
 				if (PEER_SEL(peers[i].status) >= PEER_SYNCSOURCE) {
-					syncsource_found = true;
+					result.syncsource_found = true;
 					min_peer_sel = PEER_SYNCSOURCE;
 				}
 			}
@@ -301,18 +305,18 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 	if (verbose) {
 		printf("%d candidate peers available\n", num_candidates);
-	}
-	if (verbose && syncsource_found) {
-		printf("synchronization source found\n");
+		if (result.syncsource_found) {
+			printf("synchronization source found\n");
+		}
 	}
 
-	if (!syncsource_found) {
+	if (!result.syncsource_found) {
 		result.state = STATE_WARNING;
 		if (verbose) {
 			printf("warning: no synchronization source found\n");
 		}
 	}
-	if (li_alarm) {
+	if (result.li_alarm) {
 		result.state = STATE_WARNING;
 		if (verbose) {
 			printf("warning: LI_ALARM bit is set\n");
@@ -328,7 +332,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (verbose) {
 				printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
 			}
-			xasprintf(&data, "");
+			data = strdup("");
 			do {
 				setup_control_request(&req, OP_READVAR, 2);
 				req.assoc = peers[i].assoc;
@@ -360,7 +364,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (req.op & REM_ERROR) {
 				if (strstr(getvar, "jitter")) {
 					if (verbose) {
-						printf("The command failed. This is usually caused by servers refusing the 'jitter'\nvariable. Restarting with "
+						printf("The command failed. This is usually caused by servers refusing the "
+							   "'jitter'\nvariable. Restarting with "
 							   "'dispersion'...\n");
 					}
 					getvar = "stratum,offset,dispersion";
@@ -404,7 +409,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				if (verbose) {
 					printf("%.10g\n", tmp_offset);
 				}
-				if (result.offset_result == STATE_UNKNOWN || fabs(tmp_offset) < fabs(result.offset)) {
+				if (result.offset_result == STATE_UNKNOWN ||
+					fabs(tmp_offset) < fabs(result.offset)) {
 					result.offset = tmp_offset;
 					result.offset_result = STATE_OK;
 				} else {
@@ -416,10 +422,12 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (config.do_jitter) {
 				/* get the jitter */
 				if (verbose) {
-					printf("parsing %s from peer %.2x: ", strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
+					printf("parsing %s from peer %.2x: ",
+						   strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
 						   ntohs(peers[i].assoc));
 				}
-				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
+				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion"
+																					 : "jitter");
 				nptr = NULL;
 				/* Convert the value if we have one */
 				if (value != NULL) {
@@ -470,13 +478,30 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 }
 
 check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"verbose", no_argument, 0, 'v'},
-		{"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},       {"quiet", no_argument, 0, 'q'},
-		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {"swarn", required_argument, 0, 'W'},
-		{"scrit", required_argument, 0, 'C'},    {"jwarn", required_argument, 0, 'j'},    {"jcrit", required_argument, 0, 'k'},
-		{"twarn", required_argument, 0, 'm'},    {"tcrit", required_argument, 0, 'n'},    {"timeout", required_argument, 0, 't'},
-		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'p'},     {0, 0, 0, 0}};
+
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"use-ipv4", no_argument, 0, '4'},
+									   {"use-ipv6", no_argument, 0, '6'},
+									   {"quiet", no_argument, 0, 'q'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"swarn", required_argument, 0, 'W'},
+									   {"scrit", required_argument, 0, 'C'},
+									   {"jwarn", required_argument, 0, 'j'},
+									   {"jcrit", required_argument, 0, 'k'},
+									   {"twarn", required_argument, 0, 'm'},
+									   {"tcrit", required_argument, 0, 'n'},
+									   {"timeout", required_argument, 0, 't'},
+									   {"hostname", required_argument, 0, 'H'},
+									   {"port", required_argument, 0, 'p'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
 		usage("\n");
@@ -489,12 +514,24 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
+		int option_char =
+			getopt_long(argc, argv, "Vhv46qw:c:W:C:j:k:m:n:t:H:p:", longopts, &option);
 		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
 		}
 
 		switch (option_char) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -509,38 +546,86 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'q':
 			result.config.quiet = true;
 			break;
-		case 'w':
-			result.config.owarn = optarg;
-			break;
-		case 'c':
-			result.config.ocrit = optarg;
-			break;
-		case 'W':
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning offset threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical offset threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'W': {
 			result.config.do_stratum = true;
-			result.config.swarn = optarg;
-			break;
-		case 'C':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning stratum threshold");
+			}
+
+			result.config.stratum_thresholds =
+				mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
+		} break;
+		case 'C': {
 			result.config.do_stratum = true;
-			result.config.scrit = optarg;
-			break;
-		case 'j':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical stratum threshold");
+			}
+
+			result.config.stratum_thresholds =
+				mp_thresholds_set_crit(result.config.stratum_thresholds, tmp.range);
+		} break;
+		case 'j': {
 			result.config.do_jitter = true;
-			result.config.jwarn = optarg;
-			break;
-		case 'k':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning jitter threshold");
+			}
+
+			result.config.jitter_thresholds =
+				mp_thresholds_set_warn(result.config.jitter_thresholds, tmp.range);
+		} break;
+		case 'k': {
 			result.config.do_jitter = true;
-			result.config.jcrit = optarg;
-			break;
-		case 'm':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical jitter threshold");
+			}
+
+			result.config.jitter_thresholds =
+				mp_thresholds_set_crit(result.config.jitter_thresholds, tmp.range);
+		} break;
+		case 'm': {
 			result.config.do_truechimers = true;
-			result.config.twarn = optarg;
-			break;
-		case 'n':
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning truechimer threshold");
+			}
+
+			result.config.truechimer_thresholds =
+				mp_thresholds_set_warn(result.config.truechimer_thresholds, tmp.range);
+		} break;
+		case 'n': {
 			result.config.do_truechimers = true;
-			result.config.tcrit = optarg;
-			break;
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical truechimer threshold");
+			}
+
+			result.config.truechimer_thresholds =
+				mp_thresholds_set_crit(result.config.truechimer_thresholds, tmp.range);
+		} break;
 		case 'H':
-			if (!is_host(optarg)) {
+			if (!is_host(optarg) && (optarg[0] != '/')) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
@@ -572,31 +657,28 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	set_thresholds(&result.config.offset_thresholds, result.config.owarn, result.config.ocrit);
-	set_thresholds(&result.config.jitter_thresholds, result.config.jwarn, result.config.jcrit);
-	set_thresholds(&result.config.stratum_thresholds, result.config.swarn, result.config.scrit);
-	set_thresholds(&result.config.truechimer_thresholds, result.config.twarn, result.config.tcrit);
-
 	return result;
 }
 
 char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
-					 0);
+	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
+					 offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 char *perfd_jitter(double jitter, bool do_jitter, thresholds *jitter_thresholds) {
-	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter, jitter_thresholds->critical->end, true, 0,
-					 false, 0);
+	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter,
+					 jitter_thresholds->critical->end, true, 0, false, 0);
 }
 
 char *perfd_stratum(int stratum, bool do_stratum, thresholds *stratum_thresholds) {
-	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end, do_stratum,
-					(int)stratum_thresholds->critical->end, true, 0, true, 16);
+	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end,
+					do_stratum, (int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
-char *perfd_truechimers(int num_truechimers, const bool do_truechimers, thresholds *truechimer_thresholds) {
-	return perfdata("truechimers", num_truechimers, "", do_truechimers, (int)truechimer_thresholds->warning->end, do_truechimers,
+char *perfd_truechimers(int num_truechimers, const bool do_truechimers,
+						thresholds *truechimer_thresholds) {
+	return perfdata("truechimers", num_truechimers, "", do_truechimers,
+					(int)truechimer_thresholds->warning->end, do_truechimers,
 					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
 
@@ -616,6 +698,10 @@ int main(int argc, char *argv[]) {
 
 	const check_ntp_peer_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
@@ -623,118 +709,113 @@ int main(int argc, char *argv[]) {
 	alarm(socket_timeout);
 
 	/* This returns either OK or WARNING (See comment preceding ntp_request) */
-	ntp_request_result ntp_res = ntp_request(config);
-	mp_state_enum result = STATE_UNKNOWN;
+	const ntp_request_result ntp_res = ntp_request(config);
+	mp_check overall = mp_check_init();
 
+	mp_subcheck sc_offset = mp_subcheck_init();
+	xasprintf(&sc_offset.output, "offset");
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
-		result = (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL);
+		sc_offset =
+			mp_set_subcheck_state(sc_offset, (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL));
+		xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
 	} else {
 		/* Be quiet if there's no candidates either */
-		if (config.quiet && result == STATE_WARNING) {
-			result = STATE_UNKNOWN;
+		mp_state_enum tmp = STATE_OK;
+		if (config.quiet && ntp_res.state == STATE_WARNING) {
+			tmp = STATE_UNKNOWN;
 		}
-		result = max_state_alt(result, get_status(fabs(ntp_res.offset), config.offset_thresholds));
+
+		xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
+
+		mp_perfdata pd_offset = perfdata_init();
+		pd_offset.value = mp_create_pd_value(fabs(ntp_res.offset));
+		pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+		pd_offset.label = "offset";
+		pd_offset.uom = "s";
+		mp_add_perfdata_to_subcheck(&sc_offset, pd_offset);
+
+		tmp = max_state_alt(tmp, mp_get_pd_status(pd_offset));
+		sc_offset = mp_set_subcheck_state(sc_offset, tmp);
 	}
 
-	mp_state_enum oresult = result;
-	mp_state_enum tresult = STATE_UNKNOWN;
+	mp_add_subcheck_to_check(&overall, sc_offset);
 
+	// truechimers
 	if (config.do_truechimers) {
-		tresult = get_status(ntp_res.num_truechimers, config.truechimer_thresholds);
-		result = max_state_alt(result, tresult);
-	}
+		mp_subcheck sc_truechimers = mp_subcheck_init();
+		xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
 
-	mp_state_enum sresult = STATE_UNKNOWN;
+		mp_perfdata pd_truechimers = perfdata_init();
+		pd_truechimers.value = mp_create_pd_value(ntp_res.num_truechimers);
+		pd_truechimers.label = "truechimers";
+		pd_truechimers = mp_pd_set_thresholds(pd_truechimers, config.truechimer_thresholds);
 
-	if (config.do_stratum) {
-		sresult = get_status((double)ntp_res.stratum, config.stratum_thresholds);
-		result = max_state_alt(result, sresult);
-	}
+		mp_add_perfdata_to_subcheck(&sc_truechimers, pd_truechimers);
 
-	mp_state_enum jresult = STATE_UNKNOWN;
+		sc_truechimers = mp_set_subcheck_state(sc_truechimers, mp_get_pd_status(pd_truechimers));
 
-	if (config.do_jitter) {
-		jresult = get_status(ntp_res.jitter, config.jitter_thresholds);
-		result = max_state_alt(result, jresult);
-	}
-
-	char *result_line;
-	switch (result) {
-	case STATE_CRITICAL:
-		xasprintf(&result_line, _("NTP CRITICAL:"));
-		break;
-	case STATE_WARNING:
-		xasprintf(&result_line, _("NTP WARNING:"));
-		break;
-	case STATE_OK:
-		xasprintf(&result_line, _("NTP OK:"));
-		break;
-	default:
-		xasprintf(&result_line, _("NTP UNKNOWN:"));
-		break;
-	}
-
-	if (!syncsource_found) {
-		xasprintf(&result_line, "%s %s,", result_line, _("Server not synchronized"));
-	} else if (li_alarm) {
-		xasprintf(&result_line, "%s %s,", result_line, _("Server has the LI_ALARM bit set"));
-	}
-
-	char *perfdata_line;
-	if (ntp_res.offset_result == STATE_UNKNOWN) {
-		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		xasprintf(&perfdata_line, "");
-	} else if (oresult == STATE_WARNING) {
-		xasprintf(&result_line, "%s %s %.10g secs (WARNING)", result_line, _("Offset"), ntp_res.offset);
-	} else if (oresult == STATE_CRITICAL) {
-		xasprintf(&result_line, "%s %s %.10g secs (CRITICAL)", result_line, _("Offset"), ntp_res.offset);
-	} else {
-		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), ntp_res.offset);
-	}
-	xasprintf(&perfdata_line, "%s", perfd_offset(ntp_res.offset, config.offset_thresholds));
-
-	if (config.do_jitter) {
-		if (jresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, jitter=%f (WARNING)", result_line, ntp_res.jitter);
-		} else if (jresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, jitter=%f (CRITICAL)", result_line, ntp_res.jitter);
-		} else {
-			xasprintf(&result_line, "%s, jitter=%f", result_line, ntp_res.jitter);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_jitter(ntp_res.jitter, config.do_jitter, config.jitter_thresholds));
+		mp_add_subcheck_to_check(&overall, sc_truechimers);
 	}
 
 	if (config.do_stratum) {
-		if (sresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, stratum=%l (WARNING)", result_line, ntp_res.stratum);
-		} else if (sresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, stratum=%l (CRITICAL)", result_line, ntp_res.stratum);
-		} else {
-			xasprintf(&result_line, "%s, stratum=%l", result_line, ntp_res.stratum);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line, perfd_stratum(ntp_res.stratum, config.do_stratum, config.stratum_thresholds));
+		mp_subcheck sc_stratum = mp_subcheck_init();
+		xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
+
+		mp_perfdata pd_stratum = perfdata_init();
+		pd_stratum.value = mp_create_pd_value(ntp_res.stratum);
+		pd_stratum = mp_pd_set_thresholds(pd_stratum, config.stratum_thresholds);
+		pd_stratum.label = "stratum";
+
+		mp_add_perfdata_to_subcheck(&sc_stratum, pd_stratum);
+
+		sc_stratum = mp_set_subcheck_state(sc_stratum, mp_get_pd_status(pd_stratum));
+
+		mp_add_subcheck_to_check(&overall, sc_stratum);
 	}
 
-	if (config.do_truechimers) {
-		if (tresult == STATE_WARNING) {
-			xasprintf(&result_line, "%s, truechimers=%i (WARNING)", result_line, ntp_res.num_truechimers);
-		} else if (tresult == STATE_CRITICAL) {
-			xasprintf(&result_line, "%s, truechimers=%i (CRITICAL)", result_line, ntp_res.num_truechimers);
-		} else {
-			xasprintf(&result_line, "%s, truechimers=%i", result_line, ntp_res.num_truechimers);
-		}
-		xasprintf(&perfdata_line, "%s %s", perfdata_line,
-				  perfd_truechimers(ntp_res.num_truechimers, config.do_truechimers, config.truechimer_thresholds));
+	if (config.do_jitter) {
+		mp_subcheck sc_jitter = mp_subcheck_init();
+		xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
+
+		mp_perfdata pd_jitter = perfdata_init();
+		pd_jitter.value = mp_create_pd_value(ntp_res.jitter);
+		pd_jitter = mp_pd_set_thresholds(pd_jitter, config.jitter_thresholds);
+		pd_jitter.label = "jitter";
+
+		mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter);
+
+		sc_jitter = mp_set_subcheck_state(sc_jitter, mp_get_pd_status(pd_jitter));
+		mp_add_subcheck_to_check(&overall, sc_jitter);
 	}
 
-	printf("%s|%s\n", result_line, perfdata_line);
+	mp_subcheck sc_other_info = mp_subcheck_init();
+	sc_other_info = mp_set_subcheck_default_state(sc_other_info, STATE_OK);
+	if (!ntp_res.syncsource_found) {
+		xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
+		mp_add_subcheck_to_check(&overall, sc_other_info);
+	} else if (ntp_res.li_alarm) {
+		xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
+		mp_add_subcheck_to_check(&overall, sc_other_info);
+	}
+
+	{
+		mp_subcheck sc_offset = mp_subcheck_init();
+		sc_offset = mp_set_subcheck_default_state(sc_offset, STATE_OK);
+		xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
+
+		mp_perfdata pd_offset = perfdata_init();
+		pd_offset.value = mp_create_pd_value(ntp_res.offset);
+		pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+
+		sc_offset = mp_set_subcheck_state(sc_offset, ntp_res.offset_result);
+	}
 
 	if (config.server_address != NULL) {
 		free(config.server_address);
 	}
 
-	exit(result);
+	mp_exit(overall);
 }
 
 void print_help(void) {
@@ -753,7 +834,8 @@ void print_help(void) {
 	printf(UT_IPv46);
 	printf(UT_HOST_PORT, 'p', "123");
 	printf(" %s\n", "-q, --quiet");
-	printf("    %s\n", _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
+	printf("    %s\n",
+		   _("Returns UNKNOWN instead of CRITICAL or WARNING if server isn't synchronized"));
 	printf(" %s\n", "-w, --warning=THRESHOLD");
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
@@ -772,6 +854,7 @@ void print_help(void) {
 	printf("    %s\n", _("Critical threshold for number of usable time sources (\"truechimers\")"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks an NTP server independent of any commandline"));
@@ -790,7 +873,8 @@ void print_help(void) {
 	printf(" %s\n", _("Simple NTP server check:"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1"));
 	printf("\n");
-	printf(" %s\n", _("Check jitter too, avoiding critical notifications if jitter isn't available"));
+	printf(" %s\n",
+		   _("Check jitter too, avoiding critical notifications if jitter isn't available"));
 	printf(" %s\n", _("(See Notes above for more details on thresholds formats):"));
 	printf("  %s\n", ("./check_ntp_peer -H ntpserv -w 0.5 -c 1 -j -1:100 -k -1:200"));
 	printf("\n");

@@ -181,10 +181,10 @@ fi
 
 # Finally, define tests if we use libtap
 if test "$enable_libtap" = "yes" ; then
-	EXTRA_TEST="test_utils test_disk test_tcp test_cmd test_base64"
+	EXTRA_TEST="test_utils test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
 
-	EXTRA_PLUGIN_TESTS="tests/test_check_swap"
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk"
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
@@ -205,32 +205,46 @@ fi
 dnl Check for PostgreSQL libraries
 _SAVEDLIBS="$LIBS"
 _SAVEDCPPFLAGS="$CPPFLAGS"
+case $host in
+	*openbsd*)
+		_CRYPTLIB="crypto"
+		;;
+	*)
+		_CRYPTLIB="crypt"
+esac
+
 AC_ARG_WITH(pgsql,
 	ACX_HELP_STRING([--with-pgsql=DIR],
 		[sets path to pgsql installation]),
 	PGSQL=$withval,)
 AC_CHECK_LIB(crypt,main)
-if test "$ac_cv_lib_crypt_main" = "yes" -a "x$PGSQL" != "xno"; then
+AC_CHECK_LIB(crypto,main)
+if test \( "$ac_cv_lib_crypt_main" = "yes" -o "$ac_cv_lib_crypto_main" = "yes" \) -a "x$PGSQL" != "xno"; then
   if test -n "$PGSQL"; then
     LDFLAGS="$LDFLAGS -L$PGSQL/lib"
     CPPFLAGS="$CPPFLAGS -I$PGSQL/include"
   fi
-  AC_CHECK_LIB(pq,PQsetdbLogin,,,-lcrypt)
+  AC_CHECK_LIB(pq,PQsetdbLogin,,,"-l$_CRYPTLIB")
   if test "$ac_cv_lib_pq_PQsetdbLogin" = "yes"; then
     AC_CHECK_HEADERS(pgsql/libpq-fe.h)
     AC_CHECK_HEADERS(postgresql/libpq-fe.h)
     AC_CHECK_HEADERS(libpq-fe.h)
     if [[ -n "$PGSQL" -a "$ac_cv_header_libpq_fe_h" = "yes" ]]; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
       PGINCLUDE="-I$PGSQL/include"
     elif test  "$ac_cv_header_pgsql_libpq_fe_h" = "yes"; then
-      PGLIBS="-lpq -lcrypt"
+      PGLIBS="-lpq -l$_CRYPTLIB"
       PGINCLUDE="-I/usr/include/pgsql"
     elif test  "$ac_cv_header_postgresql_libpq_fe_h" = "yes"; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
-      PGINCLUDE="-I/usr/include/postgresql"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
+      case $host in
+        *openbsd*)
+          PGINCLUDE="-I$PGSQL/include/postgresql" ;;
+        *)
+          PGINCLUDE="-I/usr/include/postgresql"
+      esac
     elif test  "$ac_cv_header_libpq_fe_h" = "yes"; then
-      PGLIBS="-L$PGSQL/lib -lpq -lcrypt"
+      PGLIBS="-L$PGSQL/lib -lpq -l$_CRYPTLIB"
       PGINCLUDE="-I$PGSQL/include"
     fi
     if test -z "$PGINCLUDE"; then
@@ -1470,17 +1484,6 @@ AC_ARG_WITH(snmpgetnext_command,
 AS_IF([test -n "$PATH_TO_SNMPGET"], [
 	AC_DEFINE_UNQUOTED(PATH_TO_SNMPGET,"$PATH_TO_SNMPGET",[path to snmpget binary])
 	EXTRAS="$EXTRAS check_hpjd"
-
-	dnl PATH_TO_SNMPGETNEXT is used unconditionally in check_snmp:
-	dnl
-	dnl   https://github.com/nagios-plugins/nagios-plugins/issues/788
-	dnl
-	AS_IF([test -n "$PATH_TO_SNMPGETNEXT"], [
-		AC_DEFINE_UNQUOTED(PATH_TO_SNMPGETNEXT,"$PATH_TO_SNMPGETNEXT",[path to snmpgetnext binary])
-		EXTRAS="$EXTRAS check_snmp\$(EXEEXT)"
-	], [
-		AC_MSG_WARN([Get snmpgetnext from https://net-snmp.sourceforge.io/ to build the check_snmp plugin])
-	])
 ], [
 	AC_MSG_WARN([Get snmpget from https://net-snmp.sourceforge.io/ to build the check_hpjd and check_snmp plugins])
 ])
@@ -1492,6 +1495,16 @@ then
 else
 	AC_MSG_WARN([Tried $PERL - install Net::SNMP perl module if you want to use the perl snmp plugins])
 fi
+
+dnl Check whether DES encryption is available (might not on RHEL)
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <net-snmp/net-snmp-config.h>
+                #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmDESPrivProtocol;]]
+	)],
+	[AC_DEFINE(HAVE_USM_DES_PRIV_PROTOCOL,1,Define whether we have DES Privacy Protocol)],
+	[]
+)
 
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
@@ -1519,21 +1532,47 @@ then
 fi
 
 AC_PATH_PROG(PATH_TO_FPING,fping)
-AC_PATH_PROG(PATH_TO_FPING6,fping6)
 
 AC_ARG_WITH(fping_command,
             ACX_HELP_STRING([--with-fping-command=PATH],
                             [Path to fping command]), PATH_TO_FPING=$withval)
-AC_ARG_WITH(fping6_command,
-            ACX_HELP_STRING([--with-fping6-command=PATH],
-                            [Path to fping6 command]), PATH_TO_FPING6=$withval)
-
-if test -n "$PATH_TO_FPING"
-then
+if test -n "$PATH_TO_FPING"; then
 	AC_DEFINE_UNQUOTED(PATH_TO_FPING,"$PATH_TO_FPING",[path to fping])
 	EXTRAS="$EXTRAS check_fping\$(EXEEXT)"
-	if test x"$with_ipv6" != xno && test -n "$PATH_TO_FPING6"; then
-		AC_DEFINE_UNQUOTED(PATH_TO_FPING6,"$PATH_TO_FPING6",[path to fping6])
+
+	if test -z "$($PATH_TO_FPING --version)"  ; then
+		AC_MSG_NOTICE([failed to get version of fping])
+	else
+		FPING_MAJOR_VERSION="$($PATH_TO_FPING --version | sed 's/.*fping: Version //' | sed 's/\..*//')"
+		FPING_MINOR_VERSION="$($PATH_TO_FPING --version | sed 's/.*fping: Version //' | sed 's/.*\.//')"
+
+		if test $FPING_MAJOR_VERSION -eq 5 ; then
+			if test $FPING_MINOR_VERSION -ge 3 ; then
+				AC_DEFINE(FPING_VERSION_5_3_OR_HIGHER, "true", [fping is of version 5.3 or higher])
+				AC_MSG_NOTICE([fping is of version 5.3 or higher])
+				AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+				AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			elif test $FPING_MINOR_VERSION -ge 2 ; then
+				AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+				AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			else
+				AC_MSG_NOTICE([fping is of a version lower then 5.2])
+			fi
+
+		elif $FPING_MAJOR_VERSION > 5 ; then
+			AC_DEFINE(FPING_VERSION_5_2_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+			AC_MSG_NOTICE([fping is of version 5.2 or higher])
+			AC_DEFINE(FPING_VERSION_5_3_OR_HIGHER, "true", [fping is of version 5.2 or higher])
+			AC_MSG_NOTICE([fping is of version 5.3 or higher])
+		fi
+
+		if test "`fping --version | sed 's/.*fping: Version //'`" =  "5.2" ; then
+			AC_DEFINE(FPING_VERSION, "5.2", [the version of fping available])
+			AC_MSG_NOTICE([fping version: 5.2])
+		elif test "`fping --version | sed 's/.*fping: Version //'`" =  "5.3"; then
+			AC_DEFINE(FPING_VERSION, "5.3", [the version of fping available])
+			AC_MSG_NOTICE([fping version: 5.3])
+		fi
 	fi
 else
 	AC_MSG_WARN([Get fping from http://www.fping.com in order to make check_fping plugin])
@@ -1804,11 +1843,6 @@ AC_ARG_WITH(apt-get_command,
 AC_DEFINE_UNQUOTED(PATH_TO_APTGET,"$PATH_TO_APTGET",[Path to apt-get command, if present])
 if test -n "$PATH_TO_APTGET" ; then
 	EXTRAS="$EXTRAS check_apt\$(EXEEXT)"
-fi
-
-
-if test -f $srcdir/plugins/check_nt.c ; then
-  EXTRAS="$EXTRAS check_nt\$(EXEEXT)"
 fi
 
 

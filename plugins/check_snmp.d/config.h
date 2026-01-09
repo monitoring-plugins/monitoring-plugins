@@ -1,0 +1,81 @@
+#pragma once
+
+#include "../../lib/thresholds.h"
+#include "../../lib/states.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <regex.h>
+#include "../common.h"
+
+// defines for snmp libs
+#define u_char  unsigned char
+#define u_long  unsigned long
+#define u_short unsigned short
+#define u_int   unsigned int
+
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/library/snmp.h>
+#include <net-snmp/session_api.h>
+
+#define DEFAULT_PORT    "161"
+#define DEFAULT_RETRIES 5
+
+typedef struct eval_method {
+	bool crit_string;
+	bool crit_regex;
+} eval_method;
+
+typedef struct check_snmp_test_unit {
+	char *oid;
+	char *label;
+	char *unit_value;
+	eval_method eval_mthd;
+	mp_thresholds threshold;
+} check_snmp_test_unit;
+
+typedef struct {
+	struct snmp_session snmp_session;
+	// use getnet instead of get
+	bool use_getnext;
+
+	// TODO actually make these useful
+	bool ignore_mib_parsing_errors;
+	bool need_mibs;
+
+	check_snmp_test_unit *test_units;
+	size_t num_of_test_units;
+} check_snmp_config_snmp_parameters;
+
+typedef struct {
+	// State if an empty value is encountered
+	mp_state_enum nulloid_result;
+
+	// String evaluation stuff
+	bool invert_search;
+	regex_t regex_cmp_value; // regex to match query results against
+	char string_cmp_value[MAX_INPUT_BUFFER];
+
+	// Modify data
+	double multiplier;
+	bool multiplier_set;
+	double offset;
+	bool offset_set;
+
+	// Modify output
+	bool use_oid_as_perf_data_label;
+
+	// activate rate calculation
+	bool calculate_rate;
+	unsigned int rate_multiplier;
+} check_snmp_evaluation_parameters;
+
+typedef struct check_snmp_config {
+	// SNMP session to use
+	check_snmp_config_snmp_parameters snmp_params;
+
+	check_snmp_evaluation_parameters evaluation_params;
+
+	mp_output_format output_format;
+	bool output_format_is_set;
+} check_snmp_config;

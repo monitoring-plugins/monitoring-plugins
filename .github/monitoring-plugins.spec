@@ -88,6 +88,9 @@ BuildRequires: postgresql-devel
 # check_radius
 BuildRequires: radcli-devel
 
+# check_snmp
+BuildRequires: net-snmp-devel
+
 %description
 Common files for Monitoring Plugins
 
@@ -191,7 +194,6 @@ Requires: %{name}-nt
 Requires: %{name}-ntp
 Requires: %{name}-ntp_peer
 Requires: %{name}-ntp_time
-Requires: %{name}-nwstat
 Requires: %{name}-oracle
 Requires: %{name}-pgsql
 Requires: %{name}-ping
@@ -650,32 +652,6 @@ Provides check_nagios of the Monitoring Plugins.
 
 
 
-# check_nt
-%package nt
-Summary:  Monitoring Plugins - check_nt
-Requires: %{name} = %{version}-%{release}
-
-%description nt
-Provides check_nt of the Monitoring Plugins.
-
-%files nt
-%{plugindir}/check_nt
-
-
-
-# check_ntp
-%package ntp
-Summary:  Monitoring Plugins - check_ntp
-Requires: %{name} = %{version}-%{release}
-
-%description ntp
-Provides check_ntp of the Monitoring Plugins.
-
-%files ntp
-%{plugindir}/check_ntp
-
-
-
 # check_ntp_peer
 %package ntp_peer
 Summary:  Monitoring Plugins - check_ntp_peer
@@ -699,19 +675,6 @@ Provides check_ntp_time of the Monitoring Plugins.
 
 %files ntp_time
 %{plugindir}/check_ntp_time
-
-
-
-# check_nwstat
-%package nwstat
-Summary:  Monitoring Plugins - check_nwstat
-Requires: %{name} = %{version}-%{release}
-
-%description nwstat
-Provides check_nwstat of the Monitoring Plugins.
-
-%files nwstat
-%{plugindir}/check_nwstat
 
 
 
@@ -959,3 +922,7 @@ Provides check_wave of the Monitoring Plugins.
 
 %files wave
 %{plugindir}/check_wave
+
+%changelog
+* Wed Oct 20 2011 John Doe <jdoe@example.com> 0.8.18.1-0.1
+- Initial RPM release

@@ -28,7 +28,7 @@ typedef struct {
 /*
  * New range type with generic numerical values
  */
-typedef struct mp_range_struct {
+typedef struct {
 	mp_perfdata_value start;
 	bool start_infinity; /* false (default) or true */
 
@@ -41,11 +41,11 @@ typedef struct mp_range_struct {
 /*
  * Old range type with floating point values
  */
-typedef struct range_struct {
+typedef struct {
 	double start;
 	bool start_infinity;
 	double end;
-	int end_infinity;
+	bool end_infinity;
 	int alert_on; /* OUTSIDE (default) or INSIDE */
 	char *text;   /* original unparsed text input */
 } range;
@@ -53,7 +53,7 @@ typedef struct range_struct {
 /*
  * Perfdata type for storing perfdata output
  */
-typedef struct perfdata_struct {
+typedef struct {
 	char *label;
 	char *uom;
 	mp_perfdata_value value;
@@ -131,15 +131,15 @@ mp_range_parsed mp_parse_range_string(const char * /*input*/);
  */
 void pd_list_append(pd_list[1], mp_perfdata);
 
-#define mp_set_pd_value(P, V)                                                                                                              \
-	_Generic((V),                                                                                                                          \
-		float: mp_set_pd_value_float,                                                                                                      \
-		double: mp_set_pd_value_double,                                                                                                    \
-		int: mp_set_pd_value_int,                                                                                                          \
-		unsigned int: mp_set_pd_value_u_int,                                                                                               \
-		long: mp_set_pd_value_long,                                                                                                        \
-		unsigned long: mp_set_pd_value_u_long,                                                                                             \
-		long long: mp_set_pd_value_long_long,                                                                                              \
+#define mp_set_pd_value(P, V)                                                                      \
+	_Generic((V),                                                                                  \
+		float: mp_set_pd_value_float,                                                              \
+		double: mp_set_pd_value_double,                                                            \
+		int: mp_set_pd_value_int,                                                                  \
+		unsigned int: mp_set_pd_value_u_int,                                                       \
+		long: mp_set_pd_value_long,                                                                \
+		unsigned long: mp_set_pd_value_u_long,                                                     \
+		long long: mp_set_pd_value_long_long,                                                      \
 		unsigned long long: mp_set_pd_value_u_long_long)(P, V)
 
 mp_perfdata mp_set_pd_value_float(mp_perfdata, float);
@@ -151,19 +151,23 @@ mp_perfdata mp_set_pd_value_u_long(mp_perfdata, unsigned long);
 mp_perfdata mp_set_pd_value_long_long(mp_perfdata, long long);
 mp_perfdata mp_set_pd_value_u_long_long(mp_perfdata, unsigned long long);
 
-#define mp_create_pd_value(V)                                                                                                              \
-	_Generic((V),                                                                                                                          \
-		float: mp_create_pd_value_float,                                                                                                   \
-		double: mp_create_pd_value_double,                                                                                                 \
-		int: mp_create_pd_value_int,                                                                                                       \
-		unsigned int: mp_create_pd_value_u_int,                                                                                            \
-		long: mp_create_pd_value_long,                                                                                                     \
-		unsigned long: mp_create_pd_value_u_long,                                                                                          \
-		long long: mp_create_pd_value_long_long,                                                                                           \
+#define mp_create_pd_value(V)                                                                      \
+	_Generic((V),                                                                                  \
+		float: mp_create_pd_value_float,                                                           \
+		double: mp_create_pd_value_double,                                                         \
+		char: mp_create_pd_value_char,                                                             \
+		unsigned char: mp_create_pd_value_u_char,                                                  \
+		int: mp_create_pd_value_int,                                                               \
+		unsigned int: mp_create_pd_value_u_int,                                                    \
+		long: mp_create_pd_value_long,                                                             \
+		unsigned long: mp_create_pd_value_u_long,                                                  \
+		long long: mp_create_pd_value_long_long,                                                   \
 		unsigned long long: mp_create_pd_value_u_long_long)(V)
 
 mp_perfdata_value mp_create_pd_value_float(float);
 mp_perfdata_value mp_create_pd_value_double(double);
+mp_perfdata_value mp_create_pd_value_char(char);
+mp_perfdata_value mp_create_pd_value_u_char(unsigned char);
 mp_perfdata_value mp_create_pd_value_int(int);
 mp_perfdata_value mp_create_pd_value_u_int(unsigned int);
 mp_perfdata_value mp_create_pd_value_long(long);
@@ -171,12 +175,24 @@ mp_perfdata_value mp_create_pd_value_u_long(unsigned long);
 mp_perfdata_value mp_create_pd_value_long_long(long long);
 mp_perfdata_value mp_create_pd_value_u_long_long(unsigned long long);
 
+mp_perfdata mp_set_pd_max_value(mp_perfdata perfdata, mp_perfdata_value value);
+mp_perfdata mp_set_pd_min_value(mp_perfdata perfdata, mp_perfdata_value value);
+
+double mp_get_pd_value(mp_perfdata_value value);
+
 /*
  * Free the memory used by a pd_list
  */
 void pd_list_free(pd_list[1]);
 
 int cmp_perfdata_value(mp_perfdata_value, mp_perfdata_value);
+
+// ================
+// Helper functions
+// ================
+
+mp_perfdata_value mp_pd_value_multiply(mp_perfdata_value left, mp_perfdata_value right);
+mp_range mp_range_multiply(mp_range range, mp_perfdata_value factor);
 
 // =================
 // String formatters

@@ -40,7 +40,6 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-time_t start_time, end_time;
 
 void usage(const char *msg) {
 	printf("%s\n", msg);
@@ -285,7 +284,8 @@ double delta_time(struct timeval tv) {
 	struct timeval now;
 
 	gettimeofday(&now, NULL);
-	return ((double)(now.tv_sec - tv.tv_sec) + (double)(now.tv_usec - tv.tv_usec) / (double)1000000);
+	return ((double)(now.tv_sec - tv.tv_sec) +
+			(double)(now.tv_usec - tv.tv_usec) / (double)1000000);
 }
 
 long deltime(struct timeval tv) {
@@ -507,8 +507,8 @@ int xasprintf(char **strp, const char *fmt, ...) {
  *
  ******************************************************************************/
 
-char *perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn, bool critp, long int crit, bool minp,
-			   long int minv, bool maxp, long int maxv) {
+char *perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn,
+			   bool critp, long int crit, bool minp, long int minv, bool maxp, long int maxv) {
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
@@ -542,10 +542,11 @@ char *perfdata(const char *label, long int val, const char *uom, bool warnp, lon
 	return data;
 }
 
-char *perfdata_uint64(const char *label, uint64_t val, const char *uom, bool warnp, /* Warning present */
-					  uint64_t warn, bool critp,                                    /* Critical present */
-					  uint64_t crit, bool minp,                                     /* Minimum present */
-					  uint64_t minv, bool maxp,                                     /* Maximum present */
+char *perfdata_uint64(const char *label, uint64_t val, const char *uom,
+					  bool warnp,                /* Warning present */
+					  uint64_t warn, bool critp, /* Critical present */
+					  uint64_t crit, bool minp,  /* Minimum present */
+					  uint64_t minv, bool maxp,  /* Maximum present */
 					  uint64_t maxv) {
 	char *data = NULL;
 
@@ -580,10 +581,11 @@ char *perfdata_uint64(const char *label, uint64_t val, const char *uom, bool war
 	return data;
 }
 
-char *perfdata_int64(const char *label, int64_t val, const char *uom, bool warnp, /* Warning present */
-					 int64_t warn, bool critp,                                    /* Critical present */
-					 int64_t crit, bool minp,                                     /* Minimum present */
-					 int64_t minv, bool maxp,                                     /* Maximum present */
+char *perfdata_int64(const char *label, int64_t val, const char *uom,
+					 bool warnp,               /* Warning present */
+					 int64_t warn, bool critp, /* Critical present */
+					 int64_t crit, bool minp,  /* Minimum present */
+					 int64_t minv, bool maxp,  /* Maximum present */
 					 int64_t maxv) {
 	char *data = NULL;
 
@@ -618,8 +620,8 @@ char *perfdata_int64(const char *label, int64_t val, const char *uom, bool warnp
 	return data;
 }
 
-char *fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp, double crit, bool minp, double minv,
-				bool maxp, double maxv) {
+char *fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp,
+				double crit, bool minp, double minv, bool maxp, double maxv) {
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
@@ -655,7 +657,8 @@ char *fperfdata(const char *label, double val, const char *uom, bool warnp, doub
 	return data;
 }
 
-char *sperfdata(const char *label, double val, const char *uom, char *warn, char *crit, bool minp, double minv, bool maxp, double maxv) {
+char *sperfdata(const char *label, double val, const char *uom, char *warn, char *crit, bool minp,
+				double minv, bool maxp, double maxv) {
 	char *data = NULL;
 	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=", label);
@@ -690,7 +693,8 @@ char *sperfdata(const char *label, double val, const char *uom, char *warn, char
 	return data;
 }
 
-char *sperfdata_int(const char *label, int val, const char *uom, char *warn, char *crit, bool minp, int minv, bool maxp, int maxv) {
+char *sperfdata_int(const char *label, int val, const char *uom, char *warn, char *crit, bool minp,
+					int minv, bool maxp, int maxv) {
 	char *data = NULL;
 	if (strpbrk(label, "'= ")) {
 		xasprintf(&data, "'%s'=", label);

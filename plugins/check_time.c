@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
 
 	/* set socket timeout */
 	alarm(socket_timeout);
+	time_t start_time;
 	time(&start_time);
 
 	int socket;
@@ -87,7 +88,8 @@ int main(int argc, char **argv) {
 		} else {
 			result = STATE_UNKNOWN;
 		}
-		die(result, _("TIME UNKNOWN - could not connect to server %s, port %d\n"), config.server_address, config.server_port);
+		die(result, _("TIME UNKNOWN - could not connect to server %s, port %d\n"),
+			config.server_address, config.server_port);
 	}
 
 	if (config.use_udp) {
@@ -99,7 +101,8 @@ int main(int argc, char **argv) {
 			} else {
 				result = STATE_UNKNOWN;
 			}
-			die(result, _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"), config.server_address, config.server_port);
+			die(result, _("TIME UNKNOWN - could not send UDP request to server %s, port %d\n"),
+				config.server_address, config.server_port);
 		}
 	}
 
@@ -111,6 +114,7 @@ int main(int argc, char **argv) {
 	close(socket);
 
 	/* reset the alarm */
+	time_t end_time;
 	time(&end_time);
 	alarm(0);
 
@@ -123,7 +127,8 @@ int main(int argc, char **argv) {
 		} else {
 			result = STATE_UNKNOWN;
 		}
-		die(result, _("TIME UNKNOWN - no data received from server %s, port %d\n"), config.server_address, config.server_port);
+		die(result, _("TIME UNKNOWN - no data received from server %s, port %d\n"),
+			config.server_address, config.server_port);
 	}
 
 	result = STATE_OK;
@@ -137,7 +142,8 @@ int main(int argc, char **argv) {
 
 	if (result != STATE_OK) {
 		die(result, _("TIME %s - %d second response time|%s\n"), state_text(result), (int)conntime,
-			perfdata("time", (long)conntime, "s", config.check_warning_time, (long)config.warning_time, config.check_critical_time,
+			perfdata("time", (long)conntime, "s", config.check_warning_time,
+					 (long)config.warning_time, config.check_critical_time,
 					 (long)config.critical_time, true, 0, false, 0));
 	}
 
@@ -157,10 +163,11 @@ int main(int argc, char **argv) {
 	}
 
 	printf(_("TIME %s - %lu second time difference|%s %s\n"), state_text(result), diff_time,
-		   perfdata("time", (long)conntime, "s", config.check_warning_time, (long)config.warning_time, config.check_critical_time,
+		   perfdata("time", (long)conntime, "s", config.check_warning_time,
+					(long)config.warning_time, config.check_critical_time,
 					(long)config.critical_time, true, 0, false, 0),
-		   perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff, config.check_critical_diff,
-					config.critical_diff, true, 0, false, 0));
+		   perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff,
+					config.check_critical_diff, config.critical_diff, true, 0, false, 0));
 	return result;
 }
 
@@ -230,7 +237,8 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.warning_diff = strtoul(optarg, NULL, 10);
 				result.config.check_warning_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
-				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.warning_diff, &result.config.warning_time) == 2) {
+				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.warning_diff,
+						   &result.config.warning_time) == 2) {
 					result.config.check_warning_diff = true;
 					result.config.check_warning_time = true;
 				} else {
@@ -245,7 +253,8 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.critical_diff = strtoul(optarg, NULL, 10);
 				result.config.check_critical_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
-				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.critical_diff, &result.config.critical_time) == 2) {
+				if (sscanf(optarg, "%lu%*[:,]%d", &result.config.critical_diff,
+						   &result.config.critical_time) == 2) {
 					result.config.check_critical_diff = true;
 					result.config.check_critical_time = true;
 				} else {

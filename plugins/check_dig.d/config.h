@@ -8,6 +8,11 @@
 #define DEFAULT_TRIES 2
 
 typedef struct {
+	char **items;
+	size_t count;
+} flag_list;
+
+typedef struct {
 	char *query_address;
 	char *record_type;
 	char *expected_address;
@@ -19,6 +24,8 @@ typedef struct {
 
 	double warning_interval;
 	double critical_interval;
+	flag_list require_flags;
+	flag_list forbid_flags;
 } check_dig_config;
 
 check_dig_config check_dig_config_init() {
@@ -34,7 +41,8 @@ check_dig_config check_dig_config_init() {
 
 		.warning_interval = UNDEFINED,
 		.critical_interval = UNDEFINED,
-
+		.require_flags = {.count = 0, .items = NULL},
+		.forbid_flags = {.count = 0, .items = NULL},
 	};
 	return tmp;
 }

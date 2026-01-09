@@ -46,8 +46,9 @@ enum {
 	RTA = 1
 };
 
-static mp_state_enum textscan(char *buf, const char * /*server_name*/, bool /*crta_p*/, double /*crta*/, bool /*wrta_p*/, double /*wrta*/,
-							  bool /*cpl_p*/, int /*cpl*/, bool /*wpl_p*/, int /*wpl*/, bool /*alive_p*/);
+static mp_state_enum textscan(char *buf, const char * /*server_name*/, bool /*crta_p*/,
+							  double /*crta*/, bool /*wrta_p*/, double /*wrta*/, bool /*cpl_p*/,
+							  int /*cpl*/, bool /*wpl_p*/, int /*wpl*/, bool /*alive_p*/);
 
 typedef struct {
 	int errorcode;
@@ -79,6 +80,24 @@ int main(int argc, char **argv) {
 	server = strscpy(server, config.server_name);
 
 	char *option_string = "";
+	char *fping_prog = NULL;
+
+	/* First determine if the target is dualstack or ipv6 only. */
+	bool server_is_inet6_addr = is_inet6_addr(server);
+
+	/*
+	 * If the user requested -6 OR the user made no assertion and the address is v6 or dualstack
+	 *   -> we use ipv6
+	 * If the user requested -4 OR the user made no assertion and the address is v4 ONLY
+	 *   -> we use ipv4
+	 */
+	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
+		xasprintf(&option_string, "%s-6 ", option_string);
+	} else {
+		xasprintf(&option_string, "%s-4 ", option_string);
+	}
+	fping_prog = strdup(PATH_TO_FPING);
+
 	/* compose the command */
 	if (config.target_timeout) {
 		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
@@ -99,19 +118,28 @@ int main(int argc, char **argv) {
 		xasprintf(&option_string, "%s-R ", option_string);
 	}
 
-	char *fping_prog = NULL;
-#ifdef PATH_TO_FPING6
-	if (address_family != AF_INET && is_inet6_addr(server)) {
-		fping_prog = strdup(PATH_TO_FPING6);
-	} else {
-		fping_prog = strdup(PATH_TO_FPING);
+	if (config.fwmark_set) {
+		xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
 	}
-#else
-	fping_prog = strdup(PATH_TO_FPING);
-#endif
+
+	if (config.icmp_timestamp) {
+		xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
+	}
+
+	if (config.check_source) {
+		xasprintf(&option_string, "%s--check-source ", option_string);
+	}
 
 	char *command_line = NULL;
-	xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string, config.packet_size, config.packet_count, server);
+
+	if (config.icmp_timestamp) {
+		// no packet size settable for ICMP timestamp
+		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
+				  server);
+	} else {
+		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
+				  config.packet_size, config.packet_count, server);
+	}
 
 	if (verbose) {
 		printf("%s\n", command_line);
@@ -135,8 +163,9 @@ int main(int argc, char **argv) {
 		if (verbose) {
 			printf("%s", input_buffer);
 		}
-		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p, config.crta, config.wrta_p, config.wrta,
-											config.cpl_p, config.cpl, config.wpl_p, config.wpl, config.alive_p));
+		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p,
+											config.crta, config.wrta_p, config.wrta, config.cpl_p,
+											config.cpl, config.wpl_p, config.wpl, config.alive_p));
 	}
 
 	/* If we get anything on STDERR, at least set warning */
@@ -145,8 +174,9 @@ int main(int argc, char **argv) {
 		if (verbose) {
 			printf("%s", input_buffer);
 		}
-		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p, config.crta, config.wrta_p, config.wrta,
-											config.cpl_p, config.cpl, config.wpl_p, config.wpl, config.alive_p));
+		status = max_state(status, textscan(input_buffer, config.server_name, config.crta_p,
+											config.crta, config.wrta_p, config.wrta, config.cpl_p,
+											config.cpl, config.wpl_p, config.wpl, config.alive_p));
 	}
 	(void)fclose(child_stderr);
 
@@ -175,8 +205,8 @@ int main(int argc, char **argv) {
 	return status;
 }
 
-mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double crta, bool wrta_p, double wrta, bool cpl_p, int cpl,
-					   bool wpl_p, int wpl, bool alive_p) {
+mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double crta, bool wrta_p,
+					   double wrta, bool cpl_p, int cpl, bool wpl_p, int wpl, bool alive_p) {
 	/* stops testing after the first successful reply. */
 	double rta;
 	double loss;
@@ -189,7 +219,8 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		die(STATE_OK, _("FPING %s - %s (rta=%f ms)|%s\n"), state_text(STATE_OK), server_name, rta,
 			/* No loss since we only waited for the first reply
 			perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100), */
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0, false, 0));
+			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+					  false, 0));
 	}
 
 	mp_state_enum status = STATE_UNKNOWN;
@@ -230,9 +261,11 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		} else {
 			status = STATE_OK;
 		}
-		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status), server_name, loss, rta,
+		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status),
+			server_name, loss, rta,
 			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0),
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0, false, 0));
+			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+					  false, 0));
 
 	} else if (strstr(buf, "xmt/rcv/%loss")) {
 		/* no min/max/avg if host was unreachable in fping v2.2.b1 */
@@ -268,13 +301,38 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 
 /* process command-line arguments */
 check_fping_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"sourceip", required_argument, 0, 'S'}, {"sourceif", required_argument, 0, 'I'},
-		{"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},  {"alive", no_argument, 0, 'a'},
-		{"bytes", required_argument, 0, 'b'},    {"number", required_argument, 0, 'n'},   {"target-timeout", required_argument, 0, 'T'},
-		{"interval", required_argument, 0, 'i'}, {"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},           {"use-ipv4", no_argument, 0, '4'},       {"use-ipv6", no_argument, 0, '6'},
-		{"dontfrag", no_argument, 0, 'M'},       {"random", no_argument, 0, 'R'},         {0, 0, 0, 0}};
+	enum {
+		FWMARK_OPT = CHAR_MAX + 1,
+		ICMP_TIMESTAMP_OPT,
+		CHECK_SOURCE_OPT,
+	};
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"sourceip", required_argument, 0, 'S'},
+									   {"sourceif", required_argument, 0, 'I'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"alive", no_argument, 0, 'a'},
+									   {"bytes", required_argument, 0, 'b'},
+									   {"number", required_argument, 0, 'n'},
+									   {"target-timeout", required_argument, 0, 'T'},
+									   {"interval", required_argument, 0, 'i'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"use-ipv4", no_argument, 0, '4'},
+									   {"use-ipv6", no_argument, 0, '6'},
+									   {"dontfrag", no_argument, 0, 'M'},
+									   {"random", no_argument, 0, 'R'},
+#ifdef FPING_VERSION_5_2_OR_HIGHER
+									   // only available with fping version >= 5.2
+									   {"fwmark", required_argument, NULL, FWMARK_OPT},
+#	ifdef FPING_VERSION_5_3_OR_HIGHER
+									   // only available with fping version >= 5.3
+									   {"icmp-timestamp", no_argument, NULL, ICMP_TIMESTAMP_OPT},
+									   {"check-source", no_argument, NULL, CHECK_SOURCE_OPT},
+#	endif
+#endif
+									   {0, 0, 0, 0}};
 
 	char *rv[2];
 	rv[PL] = NULL;
@@ -299,8 +357,9 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		argc--;
 	}
 
-	while (1) {
-		int option_index = getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
+	while (true) {
+		int option_index =
+			getopt_long(argc, argv, "+hVvaH:S:c:w:b:n:T:i:I:M:R:46", longopts, &option);
 
 		if (option_index == -1 || option_index == EOF || option_index == 1) {
 			break;
@@ -340,11 +399,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET;
 			break;
 		case '6': /* IPv6 only */
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage(_("IPv6 support not available\n"));
-#endif
 			break;
 		case 'c':
 			get_threshold(optarg, rv);
@@ -406,6 +461,20 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		case 'M':
 			result.config.dontfrag = true;
 			break;
+		case FWMARK_OPT:
+			if (is_intpos(optarg)) {
+				result.config.fwmark = (unsigned int)atol(optarg);
+				result.config.fwmark_set = true;
+			} else {
+				usage(_("fwmark must be a positive integer"));
+			}
+			break;
+		case ICMP_TIMESTAMP_OPT:
+			result.config.icmp_timestamp = true;
+			break;
+		case CHECK_SOURCE_OPT:
+			result.config.check_source = true;
+			break;
 		}
 	}
 
@@ -427,10 +496,12 @@ int get_threshold(char *arg, char *rv[2]) {
 	if (arg2) {
 		arg1[strcspn(arg1, ",:")] = 0;
 		if (strstr(arg1, "%") && strstr(arg2, "%")) {
-			die(STATE_UNKNOWN, _("%s: Only one threshold may be packet loss (%s)\n"), progname, arg);
+			die(STATE_UNKNOWN, _("%s: Only one threshold may be packet loss (%s)\n"), progname,
+				arg);
 		}
 		if (!strstr(arg1, "%") && !strstr(arg2, "%")) {
-			die(STATE_UNKNOWN, _("%s: Only one threshold must be packet loss (%s)\n"), progname, arg);
+			die(STATE_UNKNOWN, _("%s: Only one threshold must be packet loss (%s)\n"), progname,
+				arg);
 		}
 	}
 
@@ -456,7 +527,8 @@ void print_help(void) {
 	printf("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("This plugin will use the fping command to ping the specified host for a fast check"));
+	printf("%s\n",
+		   _("This plugin will use the fping command to ping the specified host for a fast check"));
 
 	printf("%s\n", _("Note that it is necessary to set the suid flag on fping."));
 
@@ -470,7 +542,8 @@ void print_help(void) {
 	printf(UT_IPv46);
 
 	printf(" %s\n", "-H, --hostname=HOST");
-	printf("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, reducing system load)"));
+	printf("    %s\n", _("name or IP Address of host to ping (IP Address bypasses name lookup, "
+						 "reducing system load)"));
 	printf(" %s\n", "-w, --warning=THRESHOLD");
 	printf("    %s\n", _("warning threshold pair"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
@@ -484,7 +557,8 @@ void print_help(void) {
 	printf(" %s\n", "-T, --target-timeout=INTEGER");
 	printf("    %s (default: fping's default for -t)\n", _("Target timeout (ms)"));
 	printf(" %s\n", "-i, --interval=INTEGER");
-	printf("    %s (default: fping's default for -p)\n", _("Interval (ms) between sending packets"));
+	printf("    %s (default: fping's default for -p)\n",
+		   _("Interval (ms) between sending packets"));
 	printf(" %s\n", "-S, --sourceip=HOST");
 	printf("    %s\n", _("name or IP Address of sourceip"));
 	printf(" %s\n", "-I, --sourceif=IF");
@@ -493,9 +567,20 @@ void print_help(void) {
 	printf("    %s\n", _("set the Don't Fragment flag"));
 	printf(" %s\n", "-R, --random");
 	printf("    %s\n", _("random packet data (to foil link data compression)"));
+#ifdef FPING_VERSION_5_2_OR_HIGHER
+	printf(" %s\n", "--fwmark=INTEGER");
+	printf("    %s\n", _("set the routing mark to INTEGER (fping option)"));
+#	ifdef FPING_VERSION_5_3_OR_HIGHER
+	printf(" %s\n", "--icmp-timestamp");
+	printf("    %s\n", _("use ICMP Timestamp instead of ICMP Echo (fping option)"));
+	printf(" %s\n", "--check-source");
+	printf("    %s\n", _("discard replies not from target address (fping option)"));
+#	endif
+#endif
 	printf(UT_VERBOSE);
 	printf("\n");
-	printf(" %s\n", _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
+	printf(" %s\n",
+		   _("THRESHOLD is <rta>,<pl>%% where <rta> is the round trip average travel time (ms)"));
 	printf(" %s\n", _("which triggers a WARNING or CRITICAL state, and <pl> is the percentage of"));
 	printf(" %s\n", _("packet loss to trigger an alarm state."));
 
@@ -507,5 +592,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s <host_address> -w limit -c limit [-b size] [-n number] [-T number] [-i number]\n", progname);
+	printf(" %s <host_address> -w limit -c limit [-b size] [-n number] [-T number] [-i number]\n",
+		   progname);
 }

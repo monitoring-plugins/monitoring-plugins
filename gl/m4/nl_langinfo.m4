@@ -1,9 +1,10 @@
 # nl_langinfo.m4
-# serial 11
-dnl Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# serial 12.1
+dnl Copyright (C) 2009-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 AC_DEFUN([gl_FUNC_NL_LANGINFO],
 [
@@ -40,16 +41,18 @@ AC_DEFUN([gl_FUNC_NL_LANGINFO],
     AC_DEFINE_UNQUOTED([FUNC_NL_LANGINFO_YESEXPR_WORKS],
       [$FUNC_NL_LANGINFO_YESEXPR_WORKS],
       [Define to 1 if nl_langinfo (YESEXPR) returns a non-empty string.])
-    # On Solaris 10 and Solaris 11.3, nl_langinfo is not multithread-safe.
+    # On macOS 26, Solaris 10, and Solaris 11.3, nl_langinfo is not
+    # multithread-safe.
     case "$host_os" in
-      solaris*) NL_LANGINFO_MTSAFE=0 ;;
-      *)        NL_LANGINFO_MTSAFE=1 ;;
+      darwin* | solaris*) NL_LANGINFO_MTSAFE=0 ;;
+      *)                  NL_LANGINFO_MTSAFE=1 ;;
     esac
     AC_DEFINE_UNQUOTED([NL_LANGINFO_MTSAFE], [$NL_LANGINFO_MTSAFE],
       [Define to 1 if nl_langinfo is multithread-safe.])
     if test $HAVE_LANGINFO_CODESET = 1 \
        && test $HAVE_LANGINFO_T_FMT_AMPM = 1 \
        && test $HAVE_LANGINFO_ALTMON = 1 \
+       && test $HAVE_LANGINFO_ABALTMON = 1 \
        && test $HAVE_LANGINFO_ERA = 1 \
        && test $FUNC_NL_LANGINFO_YESEXPR_WORKS = 1 \
        && test $NL_LANGINFO_MTSAFE = 1; then

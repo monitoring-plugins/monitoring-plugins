@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
+#include "thresholds.h"
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -8,11 +10,12 @@ typedef struct {
 	char *log_file;
 	int expire_minutes;
 	bool use_average;
-	unsigned long incoming_warning_threshold;
-	unsigned long incoming_critical_threshold;
-	unsigned long outgoing_warning_threshold;
-	unsigned long outgoing_critical_threshold;
 
+	mp_thresholds incoming_thresholds;
+	mp_thresholds outgoing_thresholds;
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_mrtgtraf_config;
 
 check_mrtgtraf_config check_mrtgtraf_config_init() {
@@ -21,10 +24,10 @@ check_mrtgtraf_config check_mrtgtraf_config_init() {
 		.expire_minutes = -1,
 		.use_average = true,
 
-		.incoming_warning_threshold = 0,
-		.incoming_critical_threshold = 0,
-		.outgoing_warning_threshold = 0,
-		.outgoing_critical_threshold = 0,
+		.incoming_thresholds = mp_thresholds_init(),
+		.outgoing_thresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

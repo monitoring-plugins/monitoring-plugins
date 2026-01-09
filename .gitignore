@@ -114,7 +114,6 @@ NP-VERSION-FILE
 /lib/tests/Makefile.in
 /lib/tests/test_base64
 /lib/tests/test_cmd
-/lib/tests/test_disk
 /lib/tests/test_tcp
 /lib/tests/test_utils
 /lib/tests/utils_base.Po
@@ -153,6 +152,8 @@ NP-VERSION-FILE
 /plugins/check_dbi
 /plugins/check_dig
 /plugins/check_disk
+plugins/check_disk.d/.deps/
+plugins/check_disk.d/.dirstamp
 /plugins/check_dns
 /plugins/check_dummy
 /plugins/check_fping
@@ -173,11 +174,8 @@ NP-VERSION-FILE
 /plugins/check_netsaint
 /plugins/check_nntp
 /plugins/check_nntps
-/plugins/check_nt
-/plugins/check_ntp
 /plugins/check_ntp_peer
 /plugins/check_ntp_time
-/plugins/check_nwstat
 /plugins/check_pgsql
 /plugins/check_ping
 /plugins/check_pop
@@ -197,6 +195,8 @@ NP-VERSION-FILE
 /plugins/check_udp
 /plugins/check_ups
 /plugins/check_users
+/plugins/check_users.d/.deps
+/plugins/check_users.d/.dirstamp
 /plugins/check_vsz
 /plugins/config.h
 /plugins/config.h.in
@@ -222,7 +222,7 @@ NP-VERSION-FILE
 /plugins/tests/Makefile
 /plugins/tests/Makefile.in
 /plugins/tests/test_utils
-/plugins/tests/test_disk
+/plugins/tests/test_check_disk
 /plugins/tests/test_check_swap
 /plugins/tests/.deps
 /plugins/tests/.dirstamp
@@ -230,6 +230,14 @@ NP-VERSION-FILE
 # /plugins/check_swap.d
 /plugins/check_swap.d/.deps
 /plugins/check_swap.d/.dirstamp
+
+# /plugins/check_snmp.d
+/plugins/check_snmp.d/.deps
+/plugins/check_snmp.d/.dirstamp
+
+# /plugins/check_curl.d
+/plugins/check_curl.d/.deps
+/plugins/check_curl.d/.dirstamp
 
 # /plugins-root/
 /plugins-root/.deps
@@ -239,6 +247,8 @@ NP-VERSION-FILE
 /plugins-root/check_dhcp
 /plugins-root/check_icmp
 /plugins-root/pst3
+/plugins-root/check_icmp.d/.dirstamp
+/plugins-root/check_icmp.d/.deps
 
 # /plugins-scripts/
 /plugins-scripts/Makefile

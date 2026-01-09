@@ -29,6 +29,20 @@ typedef struct {
 	bool cpl_p;
 	int wpl;
 	bool wpl_p;
+
+	// only available with fping version >= 5.2
+	// for a given uint _fwmark_ fping sets _fwmark_ as a firewall mark
+	// in the packets
+	unsigned int fwmark;
+	bool fwmark_set;
+
+	// only available with fping version >= 5.3
+	// Setting icmp_timestamp tells fping to use ICMP Timestamp (ICMP type 13) instead
+	// of ICMP Echo
+	bool icmp_timestamp;
+
+	// Setting check_source lets fping  discard replies which are not from the target address
+	bool check_source;
 } check_fping_config;
 
 check_fping_config check_fping_config_init() {
@@ -53,6 +67,15 @@ check_fping_config check_fping_config_init() {
 		.cpl_p = false,
 		.wpl = 0,
 		.wpl_p = false,
+
+		// only available with fping version >= 5.2
+		.fwmark = 0,
+		.fwmark_set = false, // just to be deterministic
+
+		// only available with fping version >= 5.3
+		.icmp_timestamp = false,
+		.check_source = false,
+
 	};
 	return tmp;
 }

@@ -57,7 +57,8 @@ static process_arguments_wrapper process_arguments(int /*argc*/, char ** /*argv*
 static void print_help(void);
 void print_usage(void);
 
-static int ssh_connect(mp_check *overall, char *haddr, int hport, char *remote_version, char *remote_protocol);
+static int ssh_connect(mp_check *overall, char *haddr, int hport, char *remote_version,
+					   char *remote_protocol);
 
 int main(int argc, char **argv) {
 	setlocale(LC_ALL, "");
@@ -85,7 +86,8 @@ int main(int argc, char **argv) {
 	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */
-	ssh_connect(&overall, config.server_name, config.port, config.remote_version, config.remote_protocol);
+	ssh_connect(&overall, config.server_name, config.port, config.remote_version,
+				config.remote_protocol);
 
 	alarm(0);
 
@@ -96,19 +98,20 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 process_arguments_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"help", no_argument, 0, 'h'},
-									   {"version", no_argument, 0, 'V'},
-									   {"host", required_argument, 0, 'H'}, /* backward compatibility */
-									   {"hostname", required_argument, 0, 'H'},
-									   {"port", required_argument, 0, 'p'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"timeout", required_argument, 0, 't'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"remote-version", required_argument, 0, 'r'},
-									   {"remote-protocol", required_argument, 0, 'P'},
-									   {"output-format", required_argument, 0, output_format_index},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{"host", required_argument, 0, 'H'}, /* backward compatibility */
+		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
+		{"timeout", required_argument, 0, 't'},
+		{"verbose", no_argument, 0, 'v'},
+		{"remote-version", required_argument, 0, 'r'},
+		{"remote-protocol", required_argument, 0, 'P'},
+		{"output-format", required_argument, 0, output_format_index},
+		{0, 0, 0, 0}};
 
 	process_arguments_wrapper result = {
 		.config = check_ssh_config_init(),
@@ -228,7 +231,8 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
  *
  *-----------------------------------------------------------------------*/
 
-int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_version, char *desired_remote_protocol) {
+int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_version,
+				char *desired_remote_protocol) {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 
@@ -238,32 +242,34 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	mp_subcheck connection_sc = mp_subcheck_init();
 	if (result != STATE_OK) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output, "Failed to establish TCP connection to Host %s and Port %d", haddr, hport);
+		xasprintf(&connection_sc.output,
+				  "Failed to establish TCP connection to Host %s and Port %d", haddr, hport);
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return result;
 	}
 
 	char *output = (char *)calloc(BUFF_SZ + 1, sizeof(char));
 	char *buffer = NULL;
-	size_t recv_ret = 0;
+	ssize_t recv_ret = 0;
 	char *version_control_string = NULL;
 	size_t byte_offset = 0;
 	while ((version_control_string == NULL) &&
-		   (recv_ret = recv(socket, output + byte_offset, (unsigned long)(BUFF_SZ - byte_offset), 0) > 0)) {
+		   (recv_ret = recv(socket, output + byte_offset, (unsigned long)(BUFF_SZ - byte_offset),
+							0) > 0)) {
 
 		if (strchr(output, '\n')) { /* we've got at least one full line, start parsing*/
 			byte_offset = 0;
 
 			char *index = NULL;
-			unsigned long len = 0;
 			while ((index = strchr(output + byte_offset, '\n')) != NULL) {
 				/*Partition the buffer so that this line is a separate string,
 				 * by replacing the newline with NUL*/
 				output[(index - output)] = '\0';
-				len = strlen(output + byte_offset);
+				size_t len = strlen(output + byte_offset);
 
 				if ((len >= 4) && (strncmp(output + byte_offset, "SSH-", 4) == 0)) {
-					/*if the string starts with SSH-, this _should_ be a valid version control string*/
+					/*if the string starts with SSH-, this _should_ be a valid version control
+					 * string*/
 					version_control_string = output + byte_offset;
 					break;
 				}
@@ -273,21 +279,23 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 			}
 
 			if (version_control_string == NULL) {
-				/* move unconsumed data to beginning of buffer, null rest */
-				memmove((void *)output, (void *)(output + byte_offset + 1), BUFF_SZ - len + 1);
-				memset(output + byte_offset + 1, 0, BUFF_SZ - byte_offset + 1);
+				/* move unconsumed data to beginning of buffer */
+				memmove((void *)output, (void *)(output + byte_offset), BUFF_SZ - byte_offset);
 
 				/*start reading from end of current line chunk on next recv*/
 				byte_offset = strlen(output);
+
+				/* NUL the rest of the buffer */
+				memset(output + byte_offset, 0, BUFF_SZ - byte_offset);
 			}
 		} else {
-			byte_offset += recv_ret;
+			byte_offset += (size_t)recv_ret;
 		}
 	}
 
 	if (recv_ret < 0) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - %s", strerror(errno));
+		xasprintf(&connection_sc.output, "%s - %s", "SSH CRITICAL - ", strerror(errno));
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return OK;
 	}
@@ -333,7 +341,8 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	 * "1.x" (e.g., "1.5" or "1.3")."
 	 *		- RFC 4253:5
 	 */
-	char *ssh_server = ssh_proto + strspn(ssh_proto, "0123456789.") + 1; /* (+1 for the '-' separating protoversion from softwareversion) */
+	char *ssh_server = ssh_proto + strspn(ssh_proto, "0123456789.") +
+					   1; /* (+1 for the '-' separating protoversion from softwareversion) */
 
 	/* If there's a space in the version string, whatever's after the space is a comment
 	 * (which is NOT part of the server name/version)*/
@@ -345,13 +354,15 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	mp_subcheck protocol_validity_sc = mp_subcheck_init();
 	if (strlen(ssh_proto) == 0 || strlen(ssh_server) == 0) {
 		protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_CRITICAL);
-		xasprintf(&protocol_validity_sc.output, "Invalid protocol version control string %s", version_control_string);
+		xasprintf(&protocol_validity_sc.output, "Invalid protocol version control string %s",
+				  version_control_string);
 		mp_add_subcheck_to_check(overall, protocol_validity_sc);
 		return OK;
 	}
 
 	protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_OK);
-	xasprintf(&protocol_validity_sc.output, "Valid protocol version control string %s", version_control_string);
+	xasprintf(&protocol_validity_sc.output, "Valid protocol version control string %s",
+			  version_control_string);
 	mp_add_subcheck_to_check(overall, protocol_validity_sc);
 
 	ssh_proto[strspn(ssh_proto, "0123456789. ")] = 0;
@@ -366,8 +377,8 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	if (desired_remote_version && strcmp(desired_remote_version, ssh_server)) {
 		mp_subcheck remote_version_sc = mp_subcheck_init();
 		remote_version_sc = mp_set_subcheck_state(remote_version_sc, STATE_CRITICAL);
-		xasprintf(&remote_version_sc.output, _("%s (protocol %s) version mismatch, expected '%s'"), ssh_server, ssh_proto,
-				  desired_remote_version);
+		xasprintf(&remote_version_sc.output, _("%s (protocol %s) version mismatch, expected '%s'"),
+				  ssh_server, ssh_proto, desired_remote_version);
 		close(socket);
 		mp_add_subcheck_to_check(overall, remote_version_sc);
 		return OK;
@@ -385,11 +396,13 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	if (desired_remote_protocol && strcmp(desired_remote_protocol, ssh_proto)) {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_CRITICAL);
-		xasprintf(&protocol_version_sc.output, _("%s (protocol %s) protocol version mismatch, expected '%s'"), ssh_server, ssh_proto,
-				  desired_remote_protocol);
+		xasprintf(&protocol_version_sc.output,
+				  _("%s (protocol %s) protocol version mismatch, expected '%s'"), ssh_server,
+				  ssh_proto, desired_remote_protocol);
 	} else {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_OK);
-		xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)", ssh_server, ssh_proto);
+		xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)",
+				  ssh_server, ssh_proto);
 	}
 
 	mp_add_subcheck_to_check(overall, protocol_version_sc);
@@ -422,7 +435,8 @@ void print_help(void) {
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf(" %s\n", "-r, --remote-version=STRING");
-	printf("    %s\n", _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
+	printf("    %s\n",
+		   _("Alert if string doesn't match expected server version (ex: OpenSSH_3.9p1)"));
 
 	printf(" %s\n", "-P, --remote-protocol=STRING");
 	printf("    %s\n", _("Alert if protocol doesn't match expected protocol version (ex: 2.0)"));
@@ -435,5 +449,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] --hostname <host>\n", progname);
+	printf("%s  [-4|-6] [-t <timeout>] [-r <remote version>] [-p <port>] --hostname <host>\n",
+		   progname);
 }

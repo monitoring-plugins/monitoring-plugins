@@ -48,7 +48,8 @@ typedef struct {
 } check_dns_config_wrapper;
 static check_dns_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
 static check_dns_config_wrapper validate_arguments(check_dns_config_wrapper /*config_wrapper*/);
-static mp_state_enum error_scan(char * /*input_buffer*/, bool * /*is_nxdomain*/, const char /*dns_server*/[ADDRESS_LENGTH]);
+static mp_state_enum error_scan(char * /*input_buffer*/, bool * /*is_nxdomain*/,
+								const char /*dns_server*/[ADDRESS_LENGTH]);
 static bool ip_match_cidr(const char * /*addr*/, const char * /*cidr_ro*/);
 static unsigned long ip2long(const char * /*src*/);
 static void print_help(void);
@@ -127,7 +128,8 @@ int main(int argc, char **argv) {
 			puts(chld_out.line[i]);
 		}
 
-		if (strcasestr(chld_out.line[i], ".in-addr.arpa") || strcasestr(chld_out.line[i], ".ip6.arpa")) {
+		if (strcasestr(chld_out.line[i], ".in-addr.arpa") ||
+			strcasestr(chld_out.line[i], ".ip6.arpa")) {
 			if ((strstr(chld_out.line[i], "canonical name = ") != NULL)) {
 				continue;
 			}
@@ -145,7 +147,8 @@ int main(int argc, char **argv) {
 		if (strstr(chld_out.line[i], "Server:") && strlen(config.dns_server) > 0) {
 			char *temp_buffer = strchr(chld_out.line[i], ':');
 			if (temp_buffer == NULL) {
-				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Server line\n"), NSLOOKUP_COMMAND);
+				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Server line\n"),
+					NSLOOKUP_COMMAND);
 			}
 
 			temp_buffer++;
@@ -157,21 +160,25 @@ int main(int argc, char **argv) {
 
 			strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
-				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty server string\n"), NSLOOKUP_COMMAND);
+				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty server string\n"),
+					NSLOOKUP_COMMAND);
 			}
 
 			if (strcmp(temp_buffer, config.dns_server) != 0) {
-				die(STATE_CRITICAL, _("DNS CRITICAL - No response from DNS %s\n"), config.dns_server);
+				die(STATE_CRITICAL, _("DNS CRITICAL - No response from DNS %s\n"),
+					config.dns_server);
 			}
 		}
 
 		/* the server is responding, we just got the host name... */
 		if (strstr(chld_out.line[i], "Name:")) {
 			parse_address = true;
-		} else if (parse_address && (strstr(chld_out.line[i], "Address:") || strstr(chld_out.line[i], "Addresses:"))) {
+		} else if (parse_address && (strstr(chld_out.line[i], "Address:") ||
+									 strstr(chld_out.line[i], "Addresses:"))) {
 			char *temp_buffer = strchr(chld_out.line[i], ':');
 			if (temp_buffer == NULL) {
-				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Address line\n"), NSLOOKUP_COMMAND);
+				die(STATE_UNKNOWN, _("'%s' returned a weirdly formatted Address line\n"),
+					NSLOOKUP_COMMAND);
 			}
 
 			temp_buffer++;
@@ -183,7 +190,8 @@ int main(int argc, char **argv) {
 
 			strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
-				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"), NSLOOKUP_COMMAND);
+				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"),
+					NSLOOKUP_COMMAND);
 			}
 
 			addresses[n_addresses++] = strdup(temp_buffer);
@@ -209,7 +217,8 @@ int main(int argc, char **argv) {
 		}
 
 		if (error_scan(chld_err.line[i], &is_nxdomain, config.dns_server) != STATE_OK) {
-			result = max_state(result, error_scan(chld_err.line[i], &is_nxdomain, config.dns_server));
+			result =
+				max_state(result, error_scan(chld_err.line[i], &is_nxdomain, config.dns_server));
 			msg = strchr(input_buffer, ':');
 			if (msg) {
 				msg++;
@@ -242,7 +251,8 @@ int main(int argc, char **argv) {
 		}
 		*adrp = 0;
 	} else {
-		die(STATE_CRITICAL, _("DNS CRITICAL - '%s' msg parsing exited with no address\n"), NSLOOKUP_COMMAND);
+		die(STATE_CRITICAL, _("DNS CRITICAL - '%s' msg parsing exited with no address\n"),
+			NSLOOKUP_COMMAND);
 	}
 
 	/* compare to expected address */
@@ -255,7 +265,8 @@ int main(int argc, char **argv) {
 		for (size_t i = 0; i < config.expected_address_cnt; i++) {
 			/* check if we get a match on 'raw' ip or cidr */
 			for (size_t j = 0; j < n_addresses; j++) {
-				if (strcmp(addresses[j], config.expected_address[i]) == 0 || ip_match_cidr(addresses[j], config.expected_address[i])) {
+				if (strcmp(addresses[j], config.expected_address[i]) == 0 ||
+					ip_match_cidr(addresses[j], config.expected_address[i])) {
 					result = STATE_OK;
 					addr_match &= ~(1 << j);
 					expect_match &= ~(1 << i);
@@ -279,7 +290,8 @@ int main(int argc, char **argv) {
 	if (config.expect_nxdomain) {
 		if (!is_nxdomain) {
 			result = STATE_CRITICAL;
-			xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address, address);
+			xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
+					  address);
 		} else {
 			if (address != NULL) {
 				free(address);
@@ -291,7 +303,8 @@ int main(int argc, char **argv) {
 	/* check if authoritative */
 	if (result == STATE_OK && config.expect_authority && non_authoritative) {
 		result = STATE_CRITICAL;
-		xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server, config.query_address);
+		xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
+				  config.query_address);
 	}
 
 	long microsec = deltime(tv);
@@ -306,24 +319,36 @@ int main(int argc, char **argv) {
 		} else if (result == STATE_CRITICAL) {
 			printf("DNS %s: ", _("CRITICAL"));
 		}
-		printf(ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time), elapsed_time);
+		printf(ngettext("%.3f second response time", "%.3f seconds response time", elapsed_time),
+			   elapsed_time);
 		printf(_(". %s returns %s"), config.query_address, address);
-		if ((config.time_thresholds->warning != NULL) && (config.time_thresholds->critical != NULL)) {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end, true,
+		if ((config.time_thresholds->warning != NULL) &&
+			(config.time_thresholds->critical != NULL)) {
+			printf("|%s\n",
+				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+							 true, config.time_thresholds->critical->end, true, 0, false, 0));
+		} else if ((config.time_thresholds->warning == NULL) &&
+				   (config.time_thresholds->critical != NULL)) {
+			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, true,
 									  config.time_thresholds->critical->end, true, 0, false, 0));
-		} else if ((config.time_thresholds->warning == NULL) && (config.time_thresholds->critical != NULL)) {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, true, config.time_thresholds->critical->end, true, 0, false, 0));
-		} else if ((config.time_thresholds->warning != NULL) && (config.time_thresholds->critical == NULL)) {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end, false, 0, true, 0, false, 0));
+		} else if ((config.time_thresholds->warning != NULL) &&
+				   (config.time_thresholds->critical == NULL)) {
+			printf("|%s\n",
+				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+							 false, 0, true, 0, false, 0));
 		} else {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
+			printf("|%s\n",
+				   fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
 		}
 	} else if (result == STATE_WARNING) {
-		printf(_("DNS WARNING - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
+		printf(_("DNS WARNING - %s\n"),
+			   !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
 	} else if (result == STATE_CRITICAL) {
-		printf(_("DNS CRITICAL - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
+		printf(_("DNS CRITICAL - %s\n"),
+			   !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
 	} else {
-		printf(_("DNS UNKNOWN - %s\n"), !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
+		printf(_("DNS UNKNOWN - %s\n"),
+			   !strcmp(msg, "") ? _(" Probably a non-existent host/domain") : msg);
 	}
 
 	exit(result);
@@ -342,29 +367,34 @@ bool ip_match_cidr(const char *addr, const char *cidr_ro) {
 	mask = atoi(mask_c);
 
 	/* https://www.cryptobells.com/verifying-ips-in-a-subnet-in-php/ */
-	return (ip2long(addr) & ~((1 << (32 - mask)) - 1)) == (ip2long(subnet) >> (32 - mask)) << (32 - mask);
+	return (ip2long(addr) & ~((1 << (32 - mask)) - 1)) == (ip2long(subnet) >> (32 - mask))
+															  << (32 - mask);
 }
 
 unsigned long ip2long(const char *src) {
 	unsigned long ip[4];
 	/* http://computer-programming-forum.com/47-c-language/1376ffb92a12c471.htm */
-	return (sscanf(src, "%3lu.%3lu.%3lu.%3lu", &ip[0], &ip[1], &ip[2], &ip[3]) == 4 && ip[0] < 256 && ip[1] < 256 && ip[2] < 256 &&
-			ip[3] < 256)
+	return (sscanf(src, "%3lu.%3lu.%3lu.%3lu", &ip[0], &ip[1], &ip[2], &ip[3]) == 4 &&
+			ip[0] < 256 && ip[1] < 256 && ip[2] < 256 && ip[3] < 256)
 			   ? ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]
 			   : 0;
 }
 
-mp_state_enum error_scan(char *input_buffer, bool *is_nxdomain, const char dns_server[ADDRESS_LENGTH]) {
+mp_state_enum error_scan(char *input_buffer, bool *is_nxdomain,
+						 const char dns_server[ADDRESS_LENGTH]) {
 
-	const int nxdomain = strstr(input_buffer, "Non-existent") || strstr(input_buffer, "** server can't find") ||
+	const int nxdomain = strstr(input_buffer, "Non-existent") ||
+						 strstr(input_buffer, "** server can't find") ||
 						 strstr(input_buffer, "** Can't find") || strstr(input_buffer, "NXDOMAIN");
 	if (nxdomain) {
 		*is_nxdomain = true;
 	}
 
 	/* the DNS lookup timed out */
-	if (strstr(input_buffer, _("Note: nslookup is deprecated and may be removed from future releases.")) ||
-		strstr(input_buffer, _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
+	if (strstr(input_buffer,
+			   _("Note: nslookup is deprecated and may be removed from future releases.")) ||
+		strstr(input_buffer,
+			   _("Consider using the `dig' or `host' programs instead.  Run nslookup with")) ||
 		strstr(input_buffer, _("the `-sil[ent]' option to prevent this message from appearing."))) {
 		return STATE_OK;
 	}
@@ -382,8 +412,9 @@ mp_state_enum error_scan(char *input_buffer, bool *is_nxdomain, const char dns_s
 	}
 
 	/* Connection was refused */
-	else if (strstr(input_buffer, "Connection refused") || strstr(input_buffer, "Couldn't find server") ||
-			 strstr(input_buffer, "Refused") || (strstr(input_buffer, "** server can't find") && strstr(input_buffer, ": REFUSED"))) {
+	else if (strstr(input_buffer, "Connection refused") ||
+			 strstr(input_buffer, "Couldn't find server") || strstr(input_buffer, "Refused") ||
+			 (strstr(input_buffer, "** server can't find") && strstr(input_buffer, ": REFUSED"))) {
 		die(STATE_CRITICAL, _("Connection to DNS %s was refused\n"), dns_server);
 	}
 
@@ -504,20 +535,24 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 			if (strchr(optarg, ',') != NULL) {
 				char *comma = strchr(optarg, ',');
 				while (comma != NULL) {
-					result.config.expected_address =
-						(char **)realloc(result.config.expected_address, (result.config.expected_address_cnt + 1) * sizeof(char **));
-					result.config.expected_address[result.config.expected_address_cnt] = strndup(optarg, comma - optarg);
+					result.config.expected_address = (char **)realloc(
+						result.config.expected_address,
+						(result.config.expected_address_cnt + 1) * sizeof(char **));
+					result.config.expected_address[result.config.expected_address_cnt] =
+						strndup(optarg, comma - optarg);
 					result.config.expected_address_cnt++;
 					optarg = comma + 1;
 					comma = strchr(optarg, ',');
 				}
 				result.config.expected_address =
-					(char **)realloc(result.config.expected_address, (result.config.expected_address_cnt + 1) * sizeof(char **));
+					(char **)realloc(result.config.expected_address,
+									 (result.config.expected_address_cnt + 1) * sizeof(char **));
 				result.config.expected_address[result.config.expected_address_cnt] = strdup(optarg);
 				result.config.expected_address_cnt++;
 			} else {
 				result.config.expected_address =
-					(char **)realloc(result.config.expected_address, (result.config.expected_address_cnt + 1) * sizeof(char **));
+					(char **)realloc(result.config.expected_address,
+									 (result.config.expected_address_cnt + 1) * sizeof(char **));
 				result.config.expected_address[result.config.expected_address_cnt] = strdup(optarg);
 				result.config.expected_address_cnt++;
 			}
@@ -586,9 +621,11 @@ void print_help(void) {
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
 
-	printf("%s\n", _("This plugin uses the nslookup program to obtain the IP address for the given host/domain query."));
+	printf("%s\n", _("This plugin uses the nslookup program to obtain the IP address for the given "
+					 "host/domain query."));
 	printf("%s\n", _("An optional DNS server to use may be specified."));
-	printf("%s\n", _("If no DNS server is specified, the default server(s) specified in /etc/resolv.conf will be used."));
+	printf("%s\n", _("If no DNS server is specified, the default server(s) specified in "
+					 "/etc/resolv.conf will be used."));
 
 	printf("\n\n");
 
@@ -602,11 +639,14 @@ void print_help(void) {
 	printf(" -s, --server=HOST\n");
 	printf("    %s\n", _("Optional DNS server you want to use for the lookup"));
 	printf(" -a, --expected-address=IP-ADDRESS|CIDR|HOST\n");
-	printf("    %s\n", _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
-	printf("    %s\n", _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
+	printf("    %s\n",
+		   _("Optional IP-ADDRESS/CIDR you expect the DNS server to return. HOST must end"));
+	printf("    %s\n",
+		   _("with a dot (.). This option can be repeated multiple times (Returns OK if any"));
 	printf("    %s\n", _("value matches)."));
 	printf(" -n, --expect-nxdomain\n");
-	printf("    %s\n", _("Expect the DNS server to return NXDOMAIN (i.e. the domain was not found)"));
+	printf("    %s\n",
+		   _("Expect the DNS server to return NXDOMAIN (i.e. the domain was not found)"));
 	printf("    %s\n", _("Cannot be used together with -a"));
 	printf(" -A, --expect-authority\n");
 	printf("    %s\n", _("Optionally expect the DNS server to be authoritative for the lookup"));
@@ -615,7 +655,8 @@ void print_help(void) {
 	printf(" -c, --critical=seconds\n");
 	printf("    %s\n", _("Return critical if elapsed time exceeds value. Default off"));
 	printf(" -L, --all\n");
-	printf("    %s\n", _("Return critical if the list of expected addresses does not match all addresses"));
+	printf("    %s\n",
+		   _("Return critical if the list of expected addresses does not match all addresses"));
 	printf("    %s\n", _("returned. Default off"));
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
@@ -625,5 +666,7 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s -H host [-s server] [-a expected-address] [-n] [-A] [-t timeout] [-w warn] [-c crit] [-L]\n", progname);
+	printf("%s -H host [-s server] [-a expected-address] [-n] [-A] [-t timeout] [-w warn] [-c "
+		   "crit] [-L]\n",
+		   progname);
 }

@@ -1,14 +1,16 @@
 # getaddrinfo.m4
-# serial 35
-dnl Copyright (C) 2004-2024 Free Software Foundation, Inc.
+# serial 38
+dnl Copyright (C) 2004-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 AC_DEFUN([gl_GETADDRINFO],
 [
   AC_REQUIRE([gl_SYS_SOCKET_H])dnl for HAVE_SYS_SOCKET_H, HAVE_WINSOCK2_H
   AC_REQUIRE([gl_NETDB_H])dnl for HAVE_NETDB_H
+  AC_REQUIRE([AC_CANONICAL_HOST])
   GETADDRINFO_LIB=
   gai_saved_LIBS="$LIBS"
 
@@ -86,6 +88,46 @@ int getaddrinfo (const char *, const char *, const struct addrinfo *, struct add
     else
       HAVE_GETADDRINFO=0
     fi
+  fi
+  if test $HAVE_GETADDRINFO != 0; then
+    AC_CACHE_CHECK([whether getaddrinfo supports AI_NUMERICSERV],
+      [gl_cv_func_getaddrinfo_works],
+      [AC_RUN_IFELSE(
+         [AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#include <stddef.h>
+#include <string.h>
+            ]], [[
+              struct addrinfo hints;
+              struct addrinfo *ai;
+              memset (&hints, 0, sizeof (hints));
+              hints.ai_flags = AI_NUMERICSERV;
+              return getaddrinfo ("www.gnu.org", "http", &hints, &ai) != EAI_NONAME;
+            ]])
+         ],
+         [gl_cv_func_getaddrinfo_works=yes],
+         [gl_cv_func_getaddrinfo_works=no],
+         [case "$host_os" in
+                               # Guess no on native Windows.
+            mingw* | windows*) gl_cv_func_getaddrinfo_works="guessing no" ;;
+                               # Guess yes otherwise.
+            *)                 gl_cv_func_getaddrinfo_works="guessing yes" ;;
+          esac
+         ])
+      ])
+    case "$gl_cv_func_getaddrinfo_works" in
+      *yes) ;;
+      *) REPLACE_GETADDRINFO=1 ;;
+    esac
   fi
   AC_DEFINE_UNQUOTED([HAVE_GETADDRINFO], [$HAVE_GETADDRINFO],
     [Define to 1 if getaddrinfo exists, or to 0 otherwise.])

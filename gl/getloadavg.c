@@ -1,6 +1,6 @@
 /* Get the system load averages.
 
-   Copyright (C) 1985-1989, 1991-1995, 1997, 1999-2000, 2003-2024 Free Software
+   Copyright (C) 1985-1989, 1991-1995, 1997, 1999-2000, 2003-2025 Free Software
    Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with gnulib.
@@ -47,8 +47,6 @@
    N_NAME_POINTER               The nlist n_name element is a pointer,
                                 not an array.
    HAVE_STRUCT_NLIST_N_UN_N_NAME 'n_un.n_name' is member of 'struct nlist'.
-   LINUX_LDAV_FILE              [__linux__, __ANDROID__, __CYGWIN__]: File
-                                containing load averages.
 
    Specific system predefines this file uses, aside from setting
    default values if not emacs:
@@ -65,8 +63,7 @@
    UMAX4_3
    VMS
    _WIN32                       Native Windows (possibly also defined on Cygwin)
-   __linux__, __ANDROID__       Linux: assumes /proc file system mounted.
-                                Support from Michael K. Johnson.
+   __linux__, __ANDROID__       Linux: assumes sysinfo() call.
    __CYGWIN__                   Cygwin emulates linux /proc/loadavg.
    __NetBSD__                   NetBSD: assumes /kern file system mounted.
 
@@ -108,10 +105,10 @@
 # endif
 
 /* Same issues as for NeXT apply to the HURD-based GNU system.  */
-# ifdef __GNU__
+# if defined __gnu_hurd__ || defined NeXT
 #  undef BSD
 #  undef FSCALE
-# endif /* __GNU__ */
+# endif /* __gnu_hurd__ || NeXT */
 
 /* Set values that are different from the defaults, which are
    set a little farther down with #ifndef.  */
@@ -143,7 +140,7 @@
 #  define SUNOS_5
 # endif
 
-# if defined (__osf__) && (defined (__alpha) || defined (__alpha__))
+# if defined (__osf__) && defined (__alpha)
 #  define OSF_ALPHA
 #  include <sys/mbuf.h>
 #  include <sys/socket.h>
@@ -312,8 +309,7 @@
 #  endif
 # endif
 
-# if defined (__GNU__) && !defined (NeXT)
-/* Note that NeXT Openstep defines __GNU__ even though it should not.  */
+# if defined __gnu_hurd__ && !defined NeXT
 /* GNU system acts much like NeXT, for load average purposes,
    but not exactly.  */
 #  define NeXT
@@ -356,6 +352,11 @@
 
 # ifdef DGUX
 #  include <sys/dg_sys_info.h>
+# endif
+
+# if defined __linux__ || defined __ANDROID__
+#  include <sys/param.h>
+#  include <sys/sysinfo.h>
 # endif
 
 # if (defined __linux__ || defined __ANDROID__ \
@@ -498,20 +499,33 @@ getloadavg (double loadavg[], int nelem)
   }
 # endif
 
-# if !defined (LDAV_DONE) && (defined __linux__ || defined __ANDROID__ || defined __CYGWIN__)
-                                      /* Linux without glibc, Android, Cygwin */
+# if (!defined LDAV_DONE \
+      && (defined __ANDROID__ ? 13 <= __ANDROID_API__ : defined __linux__))
+                    /* non-Android Linux without glibc, Android 3.2+, Cygwin */
 #  define LDAV_DONE
 #  undef LOAD_AVE_TYPE
 
-#  ifndef LINUX_LDAV_FILE
-#   define LINUX_LDAV_FILE "/proc/loadavg"
-#  endif
+  {
+    struct sysinfo info;
+    if (sysinfo (&info) < 0)
+      return -1;
+    loadavg[0] = info.loads[0] / (double)(1U << SI_LOAD_SHIFT);
+    loadavg[1] = info.loads[1] / (double)(1U << SI_LOAD_SHIFT);
+    loadavg[2] = info.loads[2] / (double)(1U << SI_LOAD_SHIFT);
+    elem = 3;
+  }
+# endif /* __ANDROID__ ? 13 <= __ANDROID_API__ : __linux__ */
+
+# if !defined (LDAV_DONE) && defined __CYGWIN__
+                                      /* Cygwin */
+#  define LDAV_DONE
+#  undef LOAD_AVE_TYPE
 
   char ldavgbuf[3 * (INT_STRLEN_BOUND (int) + sizeof ".00 ")];
   char const *ptr = ldavgbuf;
   int fd, count, saved_errno;
 
-  fd = open (LINUX_LDAV_FILE, O_RDONLY | O_CLOEXEC);
+  fd = open ("/proc/loadavg", O_RDONLY | O_CLOEXEC);
   if (fd == -1)
     return -1;
   count = read (fd, ldavgbuf, sizeof ldavgbuf - 1);
@@ -554,7 +568,7 @@ getloadavg (double loadavg[], int nelem)
 
   return elem;
 
-# endif /* __linux__ || __ANDROID__ || __CYGWIN__ */
+# endif /* __CYGWIN__ */
 
 # if !defined (LDAV_DONE) && defined (__NetBSD__)          /* NetBSD < 0.9 */
 #  define LDAV_DONE

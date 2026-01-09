@@ -1,6 +1,6 @@
 /* Wrap openssl crypto hash routines in gnulib interface.  -*- coding: utf-8 -*-
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as

@@ -106,7 +106,8 @@ int main(int argc, char **argv) {
 		if (ups_status_flags & UPSSTATUS_OFF) {
 			xasprintf(&ups_status, "Off");
 			result = STATE_CRITICAL;
-		} else if ((ups_status_flags & (UPSSTATUS_OB | UPSSTATUS_LB)) == (UPSSTATUS_OB | UPSSTATUS_LB)) {
+		} else if ((ups_status_flags & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
+				   (UPSSTATUS_OB | UPSSTATUS_LB)) {
 			xasprintf(&ups_status, _("On Battery, Low Battery"));
 			result = STATE_CRITICAL;
 		} else {
@@ -192,11 +193,14 @@ int main(int argc, char **argv) {
 				result = max_state(result, STATE_WARNING);
 			}
 			xasprintf(&performance_data, "%s",
-					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", config.check_warn, (long)(1000 * config.warning_value),
-							   config.check_crit, (long)(1000 * config.critical_value), true, 0, false, 0));
+					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV",
+							   config.check_warn, (long)(1000 * config.warning_value),
+							   config.check_crit, (long)(1000 * config.critical_value), true, 0,
+							   false, 0));
 		} else {
 			xasprintf(&performance_data, "%s",
-					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false, 0, true, 0, false, 0));
+					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false,
+							   0, true, 0, false, 0));
 		}
 	}
 
@@ -220,11 +224,13 @@ int main(int argc, char **argv) {
 				result = max_state(result, STATE_WARNING);
 			}
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("battery", (long)ups_battery_percent, "%", config.check_warn, (long)(config.warning_value),
-							   config.check_crit, (long)(config.critical_value), true, 0, true, 100));
+					  perfdata("battery", (long)ups_battery_percent, "%", config.check_warn,
+							   (long)(config.warning_value), config.check_crit,
+							   (long)(config.critical_value), true, 0, true, 100));
 		} else {
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true, 0, true, 100));
+					  perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true,
+							   0, true, 100));
 		}
 	}
 
@@ -248,11 +254,13 @@ int main(int argc, char **argv) {
 				result = max_state(result, STATE_WARNING);
 			}
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("load", (long)ups_load_percent, "%", config.check_warn, (long)(config.warning_value), config.check_crit,
+					  perfdata("load", (long)ups_load_percent, "%", config.check_warn,
+							   (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, true, 100));
 		} else {
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0, true, 100));
+					  perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0,
+							   true, 100));
 		}
 	}
 
@@ -285,11 +293,13 @@ int main(int argc, char **argv) {
 				result = max_state(result, STATE_WARNING);
 			}
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("temp", (long)ups_temperature, tunits, config.check_warn, (long)(config.warning_value), config.check_crit,
+					  perfdata("temp", (long)ups_temperature, tunits, config.check_warn,
+							   (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, false, 0));
 		} else {
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0, false, 0));
+					  perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0,
+							   false, 0));
 		}
 	}
 
@@ -312,11 +322,13 @@ int main(int argc, char **argv) {
 				result = max_state(result, STATE_WARNING);
 			}
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("realpower", (long)ups_realpower, "W", config.check_warn, (long)(config.warning_value), config.check_crit,
+					  perfdata("realpower", (long)ups_realpower, "W", config.check_warn,
+							   (long)(config.warning_value), config.check_crit,
 							   (long)(config.critical_value), true, 0, false, 0));
 		} else {
 			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0, false, 0));
+					  perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0,
+							   false, 0));
 		}
 	}
 
@@ -401,7 +413,8 @@ int get_ups_variable(const char *varname, char *buf, const check_ups_config conf
 
 	/* create the command string to send to the UPS daemon */
 	/* Add LOGOUT to avoid read failure logs */
-	int res = snprintf(send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", config.ups_name, varname);
+	int res = snprintf(send_buffer, sizeof(send_buffer), "GET VAR %s %s\nLOGOUT\n", config.ups_name,
+					   varname);
 	if ((res > 0) && ((size_t)res >= sizeof(send_buffer))) {
 		printf("%s\n", _("UPS name to long for buffer"));
 		return ERROR;
@@ -410,7 +423,8 @@ int get_ups_variable(const char *varname, char *buf, const check_ups_config conf
 	char temp_buffer[MAX_INPUT_BUFFER];
 
 	/* send the command to the daemon and get a response back */
-	if (process_tcp_request(config.server_address, config.server_port, send_buffer, temp_buffer, sizeof(temp_buffer)) != STATE_OK) {
+	if (process_tcp_request(config.server_address, config.server_port, send_buffer, temp_buffer,
+							sizeof(temp_buffer)) != STATE_OK) {
 		printf("%s\n", _("Invalid response received from host"));
 		return ERROR;
 	}
@@ -630,7 +644,8 @@ void print_help(void) {
 	printf(" %s\n", "-T, --temperature");
 	printf("    %s\n", _("Output of temperatures in Celsius"));
 	printf(" %s\n", "-v, --variable=STRING");
-	printf("    %s %s\n", _("Valid values for STRING are"), "LINE, TEMP, BATTPCT, LOADPCT or REALPOWER");
+	printf("    %s %s\n", _("Valid values for STRING are"),
+		   "LINE, TEMP, BATTPCT, LOADPCT or REALPOWER");
 
 	printf(UT_WARN_CRIT);
 

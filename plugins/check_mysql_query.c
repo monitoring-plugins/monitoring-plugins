@@ -29,11 +29,11 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_mysql_query";
-const char *copyright = "1999-2024";
-const char *email = "devel@monitoring-plugins.org";
-
 #include "common.h"
+#include "output.h"
+#include "perfdata.h"
+#include "states.h"
+#include "thresholds.h"
 #include "utils.h"
 #include "utils_base.h"
 #include "netutils.h"
@@ -42,12 +42,17 @@ const char *email = "devel@monitoring-plugins.org";
 #include <mysql.h>
 #include <errmsg.h>
 
+const char *progname = "check_mysql_query";
+const char *copyright = "1999-2024";
+const char *email = "devel@monitoring-plugins.org";
+
 typedef struct {
 	int errorcode;
 	check_mysql_query_config config;
 } check_mysql_query_config_wrapper;
 static check_mysql_query_config_wrapper process_arguments(int /*argc*/, char ** /*argv*/);
-static check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper /*config_wrapper*/);
+static check_mysql_query_config_wrapper
+	validate_arguments(check_mysql_query_config_wrapper /*config_wrapper*/);
 static void print_help(void);
 void print_usage(void);
 
@@ -68,6 +73,10 @@ int main(int argc, char **argv) {
 
 	const check_mysql_query_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
@@ -82,26 +91,38 @@ int main(int argc, char **argv) {
 		mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "client");
 	}
 
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_connect = mp_subcheck_init();
+
 	/* establish a connection to the server and error checking */
-	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db, config.db_port, config.db_socket, 0)) {
+	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
+							config.db_port, config.db_socket, 0)) {
+		xasprintf(&sc_connect.output, "query failed: %s", mysql_error(&mysql));
+
 		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
-			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
 		} else if (mysql_errno(&mysql) == CR_VERSION_ERROR) {
-			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
 		} else if (mysql_errno(&mysql) == CR_OUT_OF_MEMORY) {
-			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
 		} else if (mysql_errno(&mysql) == CR_IPSOCK_ERROR) {
-			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
 		} else if (mysql_errno(&mysql) == CR_SOCKET_CREATE_ERROR) {
-			die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
 		} else {
-			die(STATE_CRITICAL, "QUERY %s: %s\n", _("CRITICAL"), mysql_error(&mysql));
+			sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);
 		}
+
+		mp_add_subcheck_to_check(&overall, sc_connect);
+		mp_exit(overall);
 	}
 
-	char *error = NULL;
+	sc_connect = mp_set_subcheck_state(sc_connect, STATE_OK);
+	xasprintf(&sc_connect.output, "query succeeded");
+	mp_add_subcheck_to_check(&overall, sc_connect);
+
 	if (mysql_query(&mysql, config.sql_query) != 0) {
-		error = strdup(mysql_error(&mysql));
+		char *error = strdup(mysql_error(&mysql));
 		mysql_close(&mysql);
 		die(STATE_CRITICAL, "QUERY %s: %s - %s\n", _("CRITICAL"), _("Error with query"), error);
 	}
@@ -109,7 +130,7 @@ int main(int argc, char **argv) {
 	MYSQL_RES *res;
 	/* store the result */
 	if ((res = mysql_store_result(&mysql)) == NULL) {
-		error = strdup(mysql_error(&mysql));
+		char *error = strdup(mysql_error(&mysql));
 		mysql_close(&mysql);
 		die(STATE_CRITICAL, "QUERY %s: Error with store_result - %s\n", _("CRITICAL"), error);
 	}
@@ -120,17 +141,24 @@ int main(int argc, char **argv) {
 		die(STATE_WARNING, "QUERY %s: %s\n", _("WARNING"), _("No rows returned"));
 	}
 
+	mp_subcheck sc_value = mp_subcheck_init();
 	MYSQL_ROW row;
 	/* fetch the first row */
 	if ((row = mysql_fetch_row(res)) == NULL) {
-		error = strdup(mysql_error(&mysql));
+		xasprintf(&sc_value.output, "fetch row error - %s", mysql_error(&mysql));
 		mysql_free_result(res);
 		mysql_close(&mysql);
-		die(STATE_CRITICAL, "QUERY %s: Fetch row error - %s\n", _("CRITICAL"), error);
+
+		sc_value = mp_set_subcheck_state(sc_value, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_value);
+		mp_exit(overall);
 	}
 
 	if (!is_numeric(row[0])) {
-		die(STATE_CRITICAL, "QUERY %s: %s - '%s'\n", _("CRITICAL"), _("Is not a numeric"), row[0]);
+		xasprintf(&sc_value.output, "query result is not numeric");
+		sc_value = mp_set_subcheck_state(sc_value, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_value);
+		mp_exit(overall);
 	}
 
 	double value = strtod(row[0], NULL);
@@ -145,31 +173,42 @@ int main(int argc, char **argv) {
 		printf("mysql result: %f\n", value);
 	}
 
-	int status = get_status(value, config.my_thresholds);
+	mp_perfdata pd_query_result = perfdata_init();
+	pd_query_result = mp_set_pd_value(pd_query_result, value);
+	pd_query_result = mp_pd_set_thresholds(pd_query_result, config.thresholds);
+	pd_query_result.label = "result";
+	mp_add_perfdata_to_subcheck(&sc_value, pd_query_result);
 
-	if (status == STATE_OK) {
-		printf("QUERY %s: ", _("OK"));
-	} else if (status == STATE_WARNING) {
-		printf("QUERY %s: ", _("WARNING"));
-	} else if (status == STATE_CRITICAL) {
-		printf("QUERY %s: ", _("CRITICAL"));
-	}
-	printf(_("'%s' returned %f | %s"), config.sql_query, value,
-		   fperfdata("result", value, "", config.my_thresholds->warning, config.my_thresholds->warning ? config.my_thresholds->warning->end : 0,
-					 config.my_thresholds->critical, config.my_thresholds->critical ? config.my_thresholds->critical->end : 0, false, 0, false, 0));
-	printf("\n");
+	sc_value = mp_set_subcheck_state(sc_value, mp_get_pd_status(pd_query_result));
+	xasprintf(&sc_value.output, "'%s' returned '%f'", config.sql_query, value);
 
-	return status;
+	mp_add_subcheck_to_check(&overall, sc_value);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"socket", required_argument, 0, 's'},   {"database", required_argument, 0, 'd'},
-		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'}, {"file", required_argument, 0, 'f'},
-		{"group", required_argument, 0, 'g'},    {"port", required_argument, 0, 'P'},     {"verbose", no_argument, 0, 'v'},
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {"query", required_argument, 0, 'q'},
-		{"warning", required_argument, 0, 'w'},  {"critical", required_argument, 0, 'c'}, {0, 0, 0, 0}};
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"socket", required_argument, 0, 's'},
+									   {"database", required_argument, 0, 'd'},
+									   {"username", required_argument, 0, 'u'},
+									   {"password", required_argument, 0, 'p'},
+									   {"file", required_argument, 0, 'f'},
+									   {"group", required_argument, 0, 'g'},
+									   {"port", required_argument, 0, 'P'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"query", required_argument, 0, 'q'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	check_mysql_query_config_wrapper result = {
 		.errorcode = OK,
@@ -180,9 +219,6 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 		result.errorcode = ERROR;
 		return result;
 	}
-
-	char *warning = NULL;
-	char *critical = NULL;
 
 	while (true) {
 		int option = 0;
@@ -239,23 +275,41 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 		case 'q':
 			xasprintf(&result.config.sql_query, "%s", optarg);
 			break;
-		case 'w':
-			warning = optarg;
-			break;
-		case 'c':
-			critical = optarg;
-			break;
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
+			}
+			result.config.thresholds = mp_thresholds_set_warn(result.config.thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical threshold");
+			}
+			result.config.thresholds = mp_thresholds_set_crit(result.config.thresholds, tmp.range);
+		} break;
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
-
-	set_thresholds(&result.config.my_thresholds, warning, critical);
 
 	return validate_arguments(result);
 }
 
-check_mysql_query_config_wrapper validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
+check_mysql_query_config_wrapper
+validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
 	if (config_wrapper.config.sql_query == NULL) {
 		usage("Must specify a SQL query to run");
 	}
@@ -309,6 +363,8 @@ void print_help(void) {
 	printf("    %s\n", _("Password to login with"));
 	printf("    ==> %s <==\n", _("IMPORTANT: THIS FORM OF AUTHENTICATION IS NOT SECURE!!!"));
 	printf("    %s\n", _("Your clear-text password could be visible as a process table entry"));
+
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf(" %s\n", _("A query is required. The result from the query should be numeric."));

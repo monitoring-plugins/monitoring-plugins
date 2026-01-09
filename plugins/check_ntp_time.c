@@ -34,18 +34,22 @@
  *
  *****************************************************************************/
 
-const char *progname = "check_ntp_time";
-const char *copyright = "2006-2024";
-const char *email = "devel@monitoring-plugins.org";
-
+#include "output.h"
 #include "common.h"
 #include "netutils.h"
+#include "perfdata.h"
 #include "utils.h"
 #include "states.h"
 #include "thresholds.h"
 #include "check_ntp_time.d/config.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 static int verbose = 0;
+
+const char *progname = "check_ntp_time";
+const char *copyright = "2006-2024";
+const char *email = "devel@monitoring-plugins.org";
 
 typedef struct {
 	int errorcode;
@@ -60,9 +64,6 @@ void print_usage(void);
 #ifndef AVG_NUM
 #	define AVG_NUM 4
 #endif
-
-/* max size of control message data */
-#define MAX_CM_SIZE 468
 
 /* this structure holds everything in an ntp request/response as per rfc1305 */
 typedef struct {
@@ -93,9 +94,9 @@ typedef struct {
 /* bits 1,2 are the leap indicator */
 #define LI_MASK 0xc0
 #define LI(x)   ((x & LI_MASK) >> 6)
-#define LI_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 6) & LI_MASK);                                                                                                         \
+#define LI_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 6) & LI_MASK);                                                                 \
 	} while (0)
 /* and these are the values of the leap indicator */
 #define LI_NOWARNING  0x00
@@ -105,17 +106,17 @@ typedef struct {
 /* bits 3,4,5 are the ntp version */
 #define VN_MASK 0x38
 #define VN(x)   ((x & VN_MASK) >> 3)
-#define VN_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= ((y << 3) & VN_MASK);                                                                                                         \
+#define VN_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= ((y << 3) & VN_MASK);                                                                 \
 	} while (0)
 #define VN_RESERVED 0x02
 /* bits 6,7,8 are the ntp mode */
 #define MODE_MASK 0x07
 #define MODE(x)   (x & MODE_MASK)
-#define MODE_SET(x, y)                                                                                                                     \
-	do {                                                                                                                                   \
-		x |= (y & MODE_MASK);                                                                                                              \
+#define MODE_SET(x, y)                                                                             \
+	do {                                                                                           \
+		x |= (y & MODE_MASK);                                                                      \
 	} while (0)
 /* here are some values */
 #define MODE_CLIENT     0x03
@@ -127,9 +128,9 @@ typedef struct {
 #define REM_MORE  0x20
 /* In control message, bits 11 - 15 are opcode */
 #define OP_MASK 0x1f
-#define OP_SET(x, y)                                                                                                                       \
-	do {                                                                                                                                   \
-		x |= (y & OP_MASK);                                                                                                                \
+#define OP_SET(x, y)                                                                               \
+	do {                                                                                           \
+		x |= (y & OP_MASK);                                                                        \
 	} while (0)
 #define OP_READSTAT 0x01
 #define OP_READVAR  0x02
@@ -163,32 +164,36 @@ typedef struct {
 #define NTP32asDOUBLE(x) (ntohs(L16(x)) + ((double)ntohs(R16(x)) / 65536.0))
 
 /* likewise for a 64-bit ntp fp number */
-#define NTP64asDOUBLE(n)                                                                                                                   \
-	(double)(((uint64_t)n) ? (ntohl(L32(n)) - EPOCHDIFF) + (.00000001 * (0.5 + (double)(ntohl(R32(n)) / 42.94967296))) : 0)
+#define NTP64asDOUBLE(n)                                                                           \
+	(double)(((uint64_t)n) ? (ntohl(L32(n)) - EPOCHDIFF) +                                         \
+								 (.00000001 * (0.5 + (double)(ntohl(R32(n)) / 42.94967296)))       \
+						   : 0)
 
 /* convert a struct timeval to a double */
-#define TVasDOUBLE(x) (double)(x.tv_sec + (0.000001 * x.tv_usec))
+static double TVasDOUBLE(struct timeval time) {
+	return ((double)time.tv_sec + (0.000001 * (double)time.tv_usec));
+}
 
 /* convert an ntp 64-bit fp number to a struct timeval */
-#define NTP64toTV(n, t)                                                                                                                    \
-	do {                                                                                                                                   \
-		if (!n)                                                                                                                            \
-			t.tv_sec = t.tv_usec = 0;                                                                                                      \
-		else {                                                                                                                             \
-			t.tv_sec = ntohl(L32(n)) - EPOCHDIFF;                                                                                          \
-			t.tv_usec = (int)(0.5 + (double)(ntohl(R32(n)) / 4294.967296));                                                                \
-		}                                                                                                                                  \
+#define NTP64toTV(n, t)                                                                            \
+	do {                                                                                           \
+		if (!n)                                                                                    \
+			t.tv_sec = t.tv_usec = 0;                                                              \
+		else {                                                                                     \
+			t.tv_sec = ntohl(L32(n)) - EPOCHDIFF;                                                  \
+			t.tv_usec = (int)(0.5 + (double)(ntohl(R32(n)) / 4294.967296));                        \
+		}                                                                                          \
 	} while (0)
 
 /* convert a struct timeval to an ntp 64-bit fp number */
-#define TVtoNTP64(t, n)                                                                                                                    \
-	do {                                                                                                                                   \
-		if (!t.tv_usec && !t.tv_sec)                                                                                                       \
-			n = 0x0UL;                                                                                                                     \
-		else {                                                                                                                             \
-			L32(n) = htonl(t.tv_sec + EPOCHDIFF);                                                                                          \
-			R32(n) = htonl((uint64_t)((4294.967296 * t.tv_usec) + .5));                                                                    \
-		}                                                                                                                                  \
+#define TVtoNTP64(t, n)                                                                            \
+	do {                                                                                           \
+		if (!t.tv_usec && !t.tv_sec)                                                               \
+			n = 0x0UL;                                                                             \
+		else {                                                                                     \
+			L32(n) = htonl(t.tv_sec + EPOCHDIFF);                                                  \
+			R32(n) = htonl((uint64_t)((4294.967296 * t.tv_usec) + .5));                            \
+		}                                                                                          \
 	} while (0)
 
 /* NTP control message header is 12 bytes, plus any data in the data
@@ -197,15 +202,15 @@ typedef struct {
 #define SIZEOF_NTPCM(m) (12 + ntohs(m.count) + ((m.count) ? 4 - (ntohs(m.count) % 4) : 0))
 
 /* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                                                             \
-	do {                                                                                                                                   \
-		if (verbose > 1) {                                                                                                                 \
-			x;                                                                                                                             \
-		}                                                                                                                                  \
+#define DBG(x)                                                                                     \
+	do {                                                                                           \
+		if (verbose > 1) {                                                                         \
+			x;                                                                                     \
+		}                                                                                          \
 	} while (0);
-#define PRINTSOCKADDR(x)                                                                                                                   \
-	do {                                                                                                                                   \
-		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);                                              \
+#define PRINTSOCKADDR(x)                                                                           \
+	do {                                                                                           \
+		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
 	} while (0);
 
 /* calculate the offset of the local clock */
@@ -260,8 +265,8 @@ void setup_request(ntp_message *message) {
 /* select the "best" server from a list of servers, and return its index.
  * this is done by filtering servers based on stratum, dispersion, and
  * finally round-trip delay. */
-int best_offset_server(const ntp_server_results *slist, int nservers) {
-	int best_server = -1;
+static int best_offset_server(const ntp_server_results *slist, int nservers) {
+	int best_server_index = -1;
 
 	/* for each server */
 	for (int cserver = 0; cserver < nservers; cserver++) {
@@ -284,33 +289,33 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
 		}
 
 		/* If we don't have a server yet, use the first one */
-		if (best_server == -1) {
-			best_server = cserver;
-			DBG(printf("using peer %d as our first candidate\n", best_server));
+		if (best_server_index == -1) {
+			best_server_index = cserver;
+			DBG(printf("using peer %d as our first candidate\n", best_server_index));
 			continue;
 		}
 
 		/* compare the server to the best one we've seen so far */
 		/* does it have an equal or better stratum? */
-		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server));
-		if (slist[cserver].stratum <= slist[best_server].stratum) {
-			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server));
+		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server_index));
+		if (slist[cserver].stratum <= slist[best_server_index].stratum) {
+			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server_index));
 			/* does it have an equal or better dispersion? */
-			if (slist[cserver].rtdisp <= slist[best_server].rtdisp) {
-				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server));
+			if (slist[cserver].rtdisp <= slist[best_server_index].rtdisp) {
+				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server_index));
 				/* does it have a better rtdelay? */
-				if (slist[cserver].rtdelay < slist[best_server].rtdelay) {
-					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server));
-					best_server = cserver;
-					DBG(printf("peer %d is now our best candidate\n", best_server));
+				if (slist[cserver].rtdelay < slist[best_server_index].rtdelay) {
+					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server_index));
+					best_server_index = cserver;
+					DBG(printf("peer %d is now our best candidate\n", best_server_index));
 				}
 			}
 		}
 	}
 
-	if (best_server >= 0) {
-		DBG(printf("best server selected: peer %d\n", best_server));
-		return best_server;
+	if (best_server_index >= 0) {
+		DBG(printf("best server selected: peer %d\n", best_server_index));
+		return best_server_index;
 	}
 	DBG(printf("no peers meeting synchronization criteria :(\n"));
 	return -1;
@@ -321,7 +326,11 @@ int best_offset_server(const ntp_server_results *slist, int nservers) {
  *   we don't waste time sitting around waiting for single packets.
  * - we also "manually" handle resolving host names and connecting, because
  *   we have to do it in a way that our lazy macros don't handle currently :( */
-double offset_request(const char *host, const char *port, mp_state_enum *status, int time_offset) {
+typedef struct {
+	mp_state_enum offset_result;
+	double offset;
+} offset_request_wrapper;
+static offset_request_wrapper offset_request(const char *host, const char *port, int time_offset) {
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -329,17 +338,25 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	/* fill in ai with the list of hosts resolved by the host name */
+	bool is_socket;
 	struct addrinfo *addresses = NULL;
-	int ga_result = getaddrinfo(host, port, &hints, &addresses);
-	if (ga_result != 0) {
-		die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
-	}
-
-	/* count the number of returned hosts, and allocate stuff accordingly */
 	size_t num_hosts = 0;
-	for (struct addrinfo *ai_tmp = addresses; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
-		num_hosts++;
+	if (host[0] == '/') {
+		num_hosts = 1;
+		is_socket = true;
+	} else {
+		is_socket = false;
+
+		/* fill in ai with the list of hosts resolved by the host name */
+		int ga_result = getaddrinfo(host, port, &hints, &addresses);
+		if (ga_result != 0) {
+			die(STATE_UNKNOWN, "error getting address for %s: %s\n", host, gai_strerror(ga_result));
+		}
+
+		/* count the number of returned hosts, and allocate stuff accordingly */
+		for (struct addrinfo *ai_tmp = addresses; ai_tmp != NULL; ai_tmp = ai_tmp->ai_next) {
+			num_hosts++;
+		}
 	}
 
 	ntp_message *req = (ntp_message *)malloc(sizeof(ntp_message) * num_hosts);
@@ -358,7 +375,8 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 		die(STATE_UNKNOWN, "can not allocate socket array");
 	}
 
-	ntp_server_results *servers = (ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
+	ntp_server_results *servers =
+		(ntp_server_results *)malloc(sizeof(ntp_server_results) * num_hosts);
 	if (servers == NULL) {
 		die(STATE_UNKNOWN, "can not allocate server array");
 	}
@@ -366,25 +384,51 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 	DBG(printf("Found %zu peers to check\n", num_hosts));
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
-	struct addrinfo *ai_tmp = addresses;
-	for (int i = 0; ai_tmp; i++) {
-		socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-		if (socklist[i] == -1) {
-			perror(NULL);
-			die(STATE_UNKNOWN, "can not create new socket");
+	if (is_socket) {
+		socklist[0] = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (socklist[0] == -1) {
+			DBG(printf("can't create socket: %s\n", strerror(errno)));
+			die(STATE_UNKNOWN, "can not create new socket\n");
 		}
-		if (connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)) {
+
+		struct sockaddr_un unix_socket = {
+			.sun_family = AF_UNIX,
+		};
+
+		strncpy(unix_socket.sun_path, host, strlen(host));
+
+		if (connect(socklist[0], &unix_socket, sizeof(unix_socket))) {
 			/* don't die here, because it is enough if there is one server
 			   answering in time. This also would break for dual ipv4/6 stacked
 			   ntp servers when the client only supports on of them.
 			 */
-			DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
+			DBG(printf("can't create socket connection on peer %i: %s\n", 0, strerror(errno)));
 		} else {
-			ufds[i].fd = socklist[i];
-			ufds[i].events = POLLIN;
-			ufds[i].revents = 0;
+			ufds[0].fd = socklist[0];
+			ufds[0].events = POLLIN;
+			ufds[0].revents = 0;
 		}
-		ai_tmp = ai_tmp->ai_next;
+	} else {
+		struct addrinfo *ai_tmp = addresses;
+		for (int i = 0; ai_tmp; i++) {
+			socklist[i] = socket(ai_tmp->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+			if (socklist[i] == -1) {
+				perror(NULL);
+				die(STATE_UNKNOWN, "can not create new socket");
+			}
+			if (connect(socklist[i], ai_tmp->ai_addr, ai_tmp->ai_addrlen)) {
+				/* don't die here, because it is enough if there is one server
+				   answering in time. This also would break for dual ipv4/6 stacked
+				   ntp servers when the client only supports on of them.
+				 */
+				DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
+			} else {
+				ufds[i].fd = socklist[i];
+				ufds[i].events = POLLIN;
+				ufds[i].revents = 0;
+			}
+			ai_tmp = ai_tmp->ai_next;
+		}
 	}
 
 	/* now do AVG_NUM checks to each host. We stop before timeout/2 seconds
@@ -459,12 +503,18 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 		die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 	}
 
+	offset_request_wrapper result = {
+		.offset = 0,
+		.offset_result = STATE_UNKNOWN,
+	};
+
 	/* now, pick the best server from the list */
 	double avg_offset = 0.;
 	int best_index = best_offset_server(servers, num_hosts);
 	if (best_index < 0) {
-		*status = STATE_UNKNOWN;
+		result.offset_result = STATE_UNKNOWN;
 	} else {
+		result.offset_result = STATE_OK;
 		/* finally, calculate the average offset */
 		for (int i = 0; i < servers[best_index].num_responses; i++) {
 			avg_offset += servers[best_index].offset[i];
@@ -485,22 +535,30 @@ double offset_request(const char *host, const char *port, mp_state_enum *status,
 	if (verbose) {
 		printf("overall average offset: %.10g\n", avg_offset);
 	}
-	return avg_offset;
+
+	result.offset = avg_offset;
+	return result;
 }
 
-check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
+static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
+
+	enum {
+		output_format_index = CHAR_MAX + 1,
+	};
+
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
 									   {"help", no_argument, 0, 'h'},
 									   {"verbose", no_argument, 0, 'v'},
 									   {"use-ipv4", no_argument, 0, '4'},
 									   {"use-ipv6", no_argument, 0, '6'},
 									   {"quiet", no_argument, 0, 'q'},
-									   {"time-offset", optional_argument, 0, 'o'},
+									   {"time-offset", required_argument, 0, 'o'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"timeout", required_argument, 0, 't'},
 									   {"hostname", required_argument, 0, 'H'},
 									   {"port", required_argument, 0, 'p'},
+									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -512,9 +570,6 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		.config = check_ntp_time_config_init(),
 	};
 
-	char *owarn = "60";
-	char *ocrit = "120";
-
 	while (true) {
 		int option = 0;
 		int option_char = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
@@ -523,6 +578,17 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		}
 
 		switch (option_char) {
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		case 'h':
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -537,14 +603,26 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		case 'q':
 			result.config.quiet = true;
 			break;
-		case 'w':
-			owarn = optarg;
-			break;
-		case 'c':
-			ocrit = optarg;
-			break;
+		case 'w': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_warn(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'c': {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse crit threshold");
+			}
+
+			result.config.offset_thresholds =
+				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+		} break;
 		case 'H':
-			if (!is_host(optarg)) {
+			if (!is_host(optarg) && (optarg[0] != '/')) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
@@ -579,14 +657,7 @@ check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		usage4(_("Hostname was not supplied"));
 	}
 
-	set_thresholds(&result.config.offset_thresholds, owarn, ocrit);
-
 	return result;
-}
-
-char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true, offset_thresholds->critical->end, false, 0, false,
-					 0);
 }
 
 int main(int argc, char *argv[]) {
@@ -605,51 +676,47 @@ int main(int argc, char *argv[]) {
 
 	const check_ntp_time_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
 
-	mp_state_enum offset_result = STATE_OK;
-	mp_state_enum result = STATE_OK;
-	double offset = offset_request(config.server_address, config.port, &offset_result, config.time_offset);
-	if (offset_result == STATE_UNKNOWN) {
-		result = ((!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
-	} else {
-		result = get_status(fabs(offset), config.offset_thresholds);
+	mp_check overall = mp_check_init();
+
+	mp_subcheck sc_offset = mp_subcheck_init();
+	offset_request_wrapper offset_result =
+		offset_request(config.server_address, config.port, config.time_offset);
+
+	if (offset_result.offset_result == STATE_UNKNOWN) {
+		sc_offset =
+			mp_set_subcheck_state(sc_offset, (!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
+		xasprintf(&sc_offset.output, "Offset unknown");
+		mp_add_subcheck_to_check(&overall, sc_offset);
+		mp_exit(overall);
 	}
 
-	char *result_line;
-	switch (result) {
-	case STATE_CRITICAL:
-		xasprintf(&result_line, _("NTP CRITICAL:"));
-		break;
-	case STATE_WARNING:
-		xasprintf(&result_line, _("NTP WARNING:"));
-		break;
-	case STATE_OK:
-		xasprintf(&result_line, _("NTP OK:"));
-		break;
-	default:
-		xasprintf(&result_line, _("NTP UNKNOWN:"));
-		break;
-	}
+	xasprintf(&sc_offset.output, "Offset: %.6fs", offset_result.offset);
 
-	char *perfdata_line;
-	if (offset_result == STATE_UNKNOWN) {
-		xasprintf(&result_line, "%s %s", result_line, _("Offset unknown"));
-		xasprintf(&perfdata_line, "");
-	} else {
-		xasprintf(&result_line, "%s %s %.10g secs", result_line, _("Offset"), offset);
-		xasprintf(&perfdata_line, "%s", perfd_offset(offset, config.offset_thresholds));
-	}
-	printf("%s|%s\n", result_line, perfdata_line);
+	mp_perfdata pd_offset = perfdata_init();
+	pd_offset = mp_set_pd_value(pd_offset, fabs(offset_result.offset));
+	pd_offset.label = "offset";
+	pd_offset.uom = "s";
+	pd_offset = mp_pd_set_thresholds(pd_offset, config.offset_thresholds);
+
+	sc_offset = mp_set_subcheck_state(sc_offset, mp_get_pd_status(pd_offset));
+
+	mp_add_perfdata_to_subcheck(&sc_offset, pd_offset);
+	mp_add_subcheck_to_check(&overall, sc_offset);
 
 	if (config.server_address != NULL) {
 		free(config.server_address);
 	}
-	exit(result);
+	mp_exit(overall);
 }
 
 void print_help(void) {
@@ -673,10 +740,11 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf(" %s\n", "-o, --time_offset=INTEGER");
+	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
+	printf(UT_OUTPUT_FORMAT);
 
 	printf("\n");
 	printf("%s\n", _("This plugin checks the clock offset between the local host and a"));
@@ -701,5 +769,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n", progname);
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n",
+		   progname);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
 #include "thresholds.h"
 #include <stddef.h>
 #include <mysql.h>
@@ -24,10 +25,10 @@ typedef struct {
 	bool check_replica;
 	bool ignore_auth;
 
-	double warning_time;
-	double critical_time;
-	thresholds *my_threshold;
+	mp_thresholds replica_thresholds;
 
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_mysql_config;
 
 check_mysql_config check_mysql_config_init() {
@@ -50,9 +51,9 @@ check_mysql_config check_mysql_config_init() {
 		.check_replica = false,
 		.ignore_auth = false,
 
-		.warning_time = 0,
-		.critical_time = 0,
-		.my_threshold = NULL,
+		.replica_thresholds = mp_thresholds_init(),
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }

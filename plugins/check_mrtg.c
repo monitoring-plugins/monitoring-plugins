@@ -29,13 +29,17 @@
  *
  *****************************************************************************/
 
+#include "common.h"
+#include "output.h"
+#include "perfdata.h"
+#include "states.h"
+#include "thresholds.h"
+#include "utils.h"
+#include "check_mrtg.d/config.h"
+
 const char *progname = "check_mrtg";
 const char *copyright = "1999-2024";
 const char *email = "devel@monitoring-plugins.org";
-
-#include "common.h"
-#include "utils.h"
-#include "check_mrtg.d/config.h"
 
 typedef struct {
 	int errorcode;
@@ -62,11 +66,24 @@ int main(int argc, char **argv) {
 
 	const check_mrtg_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
+	mp_check overall = mp_check_init();
+
 	/* open the MRTG log file for reading */
+	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 	FILE *mtrg_log_file = fopen(config.log_file, "r");
 	if (mtrg_log_file == NULL) {
-		printf(_("Unable to open MRTG log file\n"));
-		return STATE_UNKNOWN;
+		xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
+		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
+		mp_exit(overall);
+	} else {
+		xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
+		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 	}
 
 	time_t timestamp = 0;
@@ -120,17 +137,32 @@ int main(int argc, char **argv) {
 	fclose(mtrg_log_file);
 
 	/* if we couldn't read enough data, return an unknown error */
+	mp_subcheck sc_process_mrtg_log_file = mp_subcheck_init();
 	if (line <= 2) {
-		printf(_("Unable to process MRTG log file\n"));
-		return STATE_UNKNOWN;
+		xasprintf(&sc_process_mrtg_log_file.output, "unable to process MRTG log file");
+		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_UNKNOWN);
+		mp_exit(overall);
+	} else {
+		xasprintf(&sc_process_mrtg_log_file.output, "processed MRTG log file");
+		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_process_mrtg_log_file);
 	}
 
 	/* make sure the MRTG data isn't too old */
 	time_t current_time;
 	time(&current_time);
+	mp_subcheck sc_data_expired = mp_subcheck_init();
 	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		printf(_("MRTG data has expired (%d minutes old)\n"), (int)((current_time - timestamp) / 60));
-		return STATE_WARNING;
+		xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
+				  (int)((current_time - timestamp) / 60));
+		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_WARNING);
+		mp_add_subcheck_to_check(&overall, sc_data_expired);
+		mp_exit(overall);
+	} else {
+		xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
+				  (int)((current_time - timestamp) / 60));
+		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_data_expired);
 	}
 
 	unsigned long rate = 0L;
@@ -141,27 +173,40 @@ int main(int argc, char **argv) {
 		rate = maximum_value_rate;
 	}
 
-	int result = STATE_OK;
-	if (config.value_critical_threshold_set && rate > config.value_critical_threshold) {
-		result = STATE_CRITICAL;
-	} else if (config.value_warning_threshold_set && rate > config.value_warning_threshold) {
-		result = STATE_WARNING;
-	}
+	mp_subcheck sc_values = mp_subcheck_init();
+	mp_perfdata pd_value = perfdata_init();
+	pd_value = mp_set_pd_value(pd_value, rate);
+	pd_value.label = config.label;
+	pd_value = mp_pd_set_thresholds(pd_value, config.values_threshold);
 
-	printf("%s. %s = %lu %s|%s\n", (config.use_average) ? _("Avg") : _("Max"), config.label, rate, config.units,
-		   perfdata(config.label, (long)rate, config.units, config.value_warning_threshold_set, (long)config.value_warning_threshold,
-					config.value_critical_threshold_set, (long)config.value_critical_threshold, 0, 0, 0, 0));
+	sc_values = mp_set_subcheck_state(sc_values, mp_get_pd_status(pd_value));
+	xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
+			  config.label, rate, config.units);
 
-	return result;
+	mp_add_subcheck_to_check(&overall, sc_values);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"logfile", required_argument, 0, 'F'},  {"expires", required_argument, 0, 'e'},  {"aggregation", required_argument, 0, 'a'},
-		{"variable", required_argument, 0, 'v'}, {"critical", required_argument, 0, 'c'}, {"warning", required_argument, 0, 'w'},
-		{"label", required_argument, 0, 'l'},    {"units", required_argument, 0, 'u'},    {"variable", required_argument, 0, 'v'},
-		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	enum {
+		output_format_index,
+	};
+
+	static struct option longopts[] = {{"logfile", required_argument, 0, 'F'},
+									   {"expires", required_argument, 0, 'e'},
+									   {"aggregation", required_argument, 0, 'a'},
+									   {"variable", required_argument, 0, 'v'},
+									   {"critical", required_argument, 0, 'c'},
+									   {"warning", required_argument, 0, 'w'},
+									   {"label", required_argument, 0, 'l'},
+									   {"units", required_argument, 0, 'u'},
+									   {"variable", required_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	check_mrtg_config_wrapper result = {
 		.errorcode = OK,
@@ -208,14 +253,22 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 				usage4(_("Invalid variable number"));
 			}
 			break;
-		case 'w': /* critical time threshold */
-			result.config.value_warning_threshold_set = true;
-			result.config.value_warning_threshold = strtoul(optarg, NULL, 10);
-			break;
-		case 'c': /* warning time threshold */
-			result.config.value_critical_threshold_set = true;
-			result.config.value_critical_threshold = strtoul(optarg, NULL, 10);
-			break;
+		case 'w': /* critical time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse warning threshold");
+			}
+			result.config.values_threshold =
+				mp_thresholds_set_warn(result.config.values_threshold, tmp.range);
+		} break;
+		case 'c': /* warning time threshold */ {
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCES) {
+				die(STATE_UNKNOWN, "failed to parse critical threshold");
+			}
+			result.config.values_threshold =
+				mp_thresholds_set_crit(result.config.values_threshold, tmp.range);
+		} break;
 		case 'l': /* label */
 			result.config.label = optarg;
 			break;
@@ -230,6 +283,17 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
 			usage5();
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -242,7 +306,9 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		if (is_intpos(argv[option_char])) {
 			result.config.expire_minutes = atoi(argv[option_char++]);
 		} else {
-			die(STATE_UNKNOWN, _("%s is not a valid expiration time\nUse '%s -h' for additional help\n"), argv[option_char], progname);
+			die(STATE_UNKNOWN,
+				_("%s is not a valid expiration time\nUse '%s -h' for additional help\n"),
+				argv[option_char], progname);
 		}
 	}
 
@@ -262,14 +328,22 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (argc > option_char && !result.config.value_warning_threshold_set) {
-		result.config.value_warning_threshold_set = true;
-		result.config.value_warning_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && !result.config.values_threshold.warning_is_set) {
+		mp_range_parsed tmp = mp_parse_range_string(argv[option_char++]);
+		if (tmp.error != MP_PARSING_SUCCES) {
+			die(STATE_UNKNOWN, "failed to parse warning threshold");
+		}
+		result.config.values_threshold =
+			mp_thresholds_set_warn(result.config.values_threshold, tmp.range);
 	}
 
-	if (argc > option_char && !result.config.value_critical_threshold_set) {
-		result.config.value_critical_threshold_set = true;
-		result.config.value_critical_threshold = strtoul(argv[option_char++], NULL, 10);
+	if (argc > option_char && !result.config.values_threshold.critical_is_set) {
+		mp_range_parsed tmp = mp_parse_range_string(argv[option_char++]);
+		if (tmp.error != MP_PARSING_SUCCES) {
+			die(STATE_UNKNOWN, "failed to parse critical threshold");
+		}
+		result.config.values_threshold =
+			mp_thresholds_set_crit(result.config.values_threshold, tmp.range);
 	}
 
 	if (argc > option_char && strlen(result.config.label) == 0) {
@@ -333,26 +407,35 @@ void print_help(void) {
 	printf("   %s\n", _("Option units label for data (Example: Packets/Sec, Errors/Sec,"));
 	printf("   %s\n", _("\"Bytes Per Second\", \"%% Utilization\")"));
 
+	printf(UT_OUTPUT_FORMAT);
+
 	printf("\n");
-	printf(" %s\n", _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
+	printf(" %s\n",
+		   _("If the value exceeds the <vwl> threshold, a WARNING status is returned. If"));
 	printf(" %s\n", _("the value exceeds the <vcl> threshold, a CRITICAL status is returned.  If"));
 	printf(" %s\n", _("the data in the log file is older than <expire_minutes> old, a WARNING"));
 	printf(" %s\n", _("status is returned and a warning message is printed."));
 
 	printf("\n");
-	printf(" %s\n", _("This plugin is useful for monitoring MRTG data that does not correspond to"));
-	printf(" %s\n", _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
-	printf(" %s\n", _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
-	printf(" %s\n", _("packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"));
+	printf(" %s\n",
+		   _("This plugin is useful for monitoring MRTG data that does not correspond to"));
+	printf(" %s\n",
+		   _("bandwidth usage.  (Use the check_mrtgtraf plugin for monitoring bandwidth)."));
+	printf(" %s\n",
+		   _("It can be used to monitor any kind of data that MRTG is monitoring - errors,"));
+	printf(" %s\n",
+		   _("packets/sec, etc.  I use MRTG in conjunction with the Novell NLM that allows"));
 	printf(" %s\n", _("me to track processor utilization, user connections, drive space, etc and"));
 	printf(" %s\n\n", _("this plugin works well for monitoring that kind of data as well."));
 
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("- This plugin only monitors one of the two variables stored in the MRTG log"));
+	printf(" %s\n",
+		   _("- This plugin only monitors one of the two variables stored in the MRTG log"));
 	printf("   %s\n", _("file.  If you want to monitor both values you will have to define two"));
 	printf("   %s\n", _("commands with different values for the <variable> argument.  Of course,"));
 	printf("   %s\n", _("you can always hack the code to make this plugin work for you..."));
-	printf(" %s\n", _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
+	printf(" %s\n",
+		   _("- MRTG stands for the Multi Router Traffic Grapher.  It can be downloaded from"));
 	printf("   %s\n", "http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
 
 	printf(UT_SUPPORT);

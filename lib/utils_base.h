@@ -7,7 +7,7 @@
 
 #include "./perfdata.h"
 #include "./thresholds.h"
-
+#include "states.h"
 
 #ifndef USE_OPENSSL
 #	include "sha256.h"
@@ -26,25 +26,8 @@
 #define OUTSIDE 0
 #define INSIDE  1
 
-#define NP_STATE_FORMAT_VERSION 1
-
-typedef struct state_data_struct {
-	time_t time;
-	void *data;
-	int length; /* Of binary data */
-} state_data;
-
-typedef struct state_key_struct {
-	char *name;
-	char *plugin_name;
-	int data_version;
-	char *_filename;
-	state_data *state_data;
-} state_key;
-
 typedef struct np_struct {
 	char *plugin_name;
-	state_key *state;
 	int argc;
 	char **argv;
 } monitoring_plugin;
@@ -55,10 +38,10 @@ void set_thresholds(thresholds **, char *, char *);
 void print_thresholds(const char *, thresholds *);
 bool check_range(double, range *);
 bool mp_check_range(mp_perfdata_value, mp_range);
-int get_status(double, thresholds *);
+mp_state_enum get_status(double, thresholds *);
 
 /* Handle timeouts */
-extern int timeout_state;
+extern mp_state_enum timeout_state;
 extern unsigned int timeout_interval;
 
 /* All possible characters in a threshold range */
@@ -100,13 +83,9 @@ char *np_extract_value(const char *, const char *, char);
  */
 int mp_translate_state(char *);
 
-void np_enable_state(char *, int);
-state_data *np_state_read(void);
-void np_state_write_string(time_t, char *);
-
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
 void np_cleanup(void);
-const char *state_text(int);
+const char *state_text(mp_state_enum);
 
 #endif /* _UTILS_BASE_ */

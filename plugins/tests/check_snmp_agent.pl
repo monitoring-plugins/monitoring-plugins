@@ -4,9 +4,10 @@
 #
 
 #use strict; # Doesn't work
+use warnings;
 use NetSNMP::OID qw(:all);
 use NetSNMP::agent;
-use NetSNMP::ASN qw(ASN_OCTET_STR ASN_COUNTER ASN_COUNTER64 ASN_INTEGER ASN_INTEGER64 ASN_UNSIGNED ASN_UNSIGNED64);
+use NetSNMP::ASN qw(ASN_OCTET_STR ASN_COUNTER ASN_COUNTER64 ASN_INTEGER ASN_INTEGER64 ASN_UNSIGNED ASN_UNSIGNED64 ASN_FLOAT);
 #use Math::Int64 qw(uint64); # Skip that module while we don't need it
 sub uint64 { return $_ }
 
@@ -22,21 +23,82 @@ IOS (tm) Catalyst 4000 "L3" Switch Software (cat4000-I9K91S-M), Version
 Technical Support: http://www.cisco.com/techsupport
 Copyright (c) 1986-2004 by cisco Systems, Inc.
 ';
-my $multilin2 = "Kisco Outernetwork Oserating Gystem Totware
+my $multiline2 = "Kisco Outernetwork Oserating Gystem Totware
 Copyleft (c) 2400-2689 by kisco Systrems, Inc.";
-my $multilin3 = 'This should not confuse check_snmp "parser"
+my $multiline3 = 'This should not confuse check_snmp "parser"
 into thinking there is no 2nd line';
-my $multilin4 = 'It\'s getting even harder if the line
+my $multiline4 = 'It\'s getting even harder if the line
 ends with with this: C:\\';
-my $multilin5 = 'And now have fun with with this: "C:\\"
+my $multiline5 = 'And now have fun with with this: "C:\\"
 because we\'re not done yet!';
 
 # Next are arrays of indexes (Type, initial value and increments)
 # 0..19 <---- please update comment when adding/removing fields
-my @fields = (ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_UNSIGNED, ASN_UNSIGNED, ASN_COUNTER, ASN_COUNTER64, ASN_UNSIGNED, ASN_COUNTER, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_OCTET_STR, ASN_INTEGER, ASN_OCTET_STR, ASN_OCTET_STR, ASN_INTEGER );
-my @values = ($multiline, $multilin2, $multilin3, $multilin4, $multilin5, 4294965296, 1000, 4294965296, uint64("18446744073709351616"), int(rand(2**32)), 64000, "stringtests", "3.5", "87.4startswithnumberbutshouldbestring", '555"I said"', 'CUSTOM CHECK OK: foo is 12345', -2, '-4', '-6.6', 42 );
+my @fields = (ASN_OCTET_STR, # 0
+							ASN_OCTET_STR, # 1
+ 							ASN_OCTET_STR, # 2
+							ASN_OCTET_STR, # 3
+							ASN_OCTET_STR, # 4
+							ASN_UNSIGNED, #  5
+							ASN_UNSIGNED, #  6
+							ASN_COUNTER, #   7
+							ASN_COUNTER64, # 8
+							ASN_UNSIGNED, #  9
+							ASN_COUNTER, #  10
+							ASN_OCTET_STR, # 11
+							ASN_OCTET_STR, # 12
+							ASN_OCTET_STR, # 13
+							ASN_OCTET_STR, # 14
+							ASN_OCTET_STR, # 15
+							ASN_INTEGER, #   16
+							ASN_INTEGER, # 17
+							ASN_FLOAT, # 18
+							ASN_INTEGER #    19
+							);
+my @values = ($multiline,  # 0
+							$multiline2,  # 1
+							$multiline3,  # 2
+							$multiline4,  # 3
+							$multiline5,  # 4
+							4294965296,  # 5
+							1000,  #       6
+							4294965296,  # 7
+							uint64("18446744073709351616"),  # 8
+							int(rand(2**32)),  # 9
+							64000,  # 10
+							"stringtests",  # 11
+							"3.5",  # 12
+							"87.4startswithnumberbutshouldbestring",  # 13
+							'555"I said"',  # 14
+							'CUSTOM CHECK OK: foo is 12345',  # 15
+							'-2',  # 16
+							'-4',  # 17
+							'-6.6',  # 18
+							42  # 19
+						);
 # undef increments are randomized
-my @incrts = (undef, undef, undef, undef, undef, 1000, -500, 1000, 100000, undef, 666, undef, undef, undef, undef, undef, -1, undef, undef, 0 );
+my @incrts = (
+							undef, # 0
+							undef, # 1
+							undef, # 2
+							undef, # 3
+							undef, # 4
+							1000, # 5
+							-500, # 6
+							1000, # 7
+							100000, # 8
+							undef, # 9
+							666, # 10
+							undef, # 11
+							undef, # 12
+							undef, # 13
+							undef, # 14
+							undef, # 15
+							-1, #    16
+							0, # 17
+							undef, # 18
+							0 #      19
+					 );
 
 # Number of elements in our OID
 my $oidelts;

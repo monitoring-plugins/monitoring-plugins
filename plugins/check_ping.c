@@ -135,7 +135,8 @@ int main(int argc, char **argv) {
 			die(STATE_UNKNOWN, _("CRITICAL - Could not interpret output from ping command\n"));
 		}
 
-		if (pinged.packet_loss >= config.cpl || pinged.round_trip_average >= config.crta || pinged.round_trip_average < 0) {
+		if (pinged.packet_loss >= config.cpl || pinged.round_trip_average >= config.crta ||
+			pinged.round_trip_average < 0) {
 			pinged.state = STATE_CRITICAL;
 		} else if (pinged.packet_loss >= config.wpl || pinged.round_trip_average >= config.wrta) {
 			pinged.state = STATE_WARNING;
@@ -151,10 +152,11 @@ int main(int argc, char **argv) {
 			printf("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, config.addresses[i]);
 		}
 		if (pinged.packet_loss == 100) {
-			printf(_("PING %s - %sPacket loss = %d%%"), state_text(pinged.state), warn_text, pinged.packet_loss);
+			printf(_("PING %s - %sPacket loss = %d%%"), state_text(pinged.state), warn_text,
+				   pinged.packet_loss);
 		} else {
-			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(pinged.state), warn_text, pinged.packet_loss,
-				   pinged.round_trip_average);
+			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(pinged.state),
+				   warn_text, pinged.packet_loss, pinged.round_trip_average);
 		}
 		if (config.display_html) {
 			printf("</A>");
@@ -162,14 +164,16 @@ int main(int argc, char **argv) {
 
 		/* Print performance data */
 		if (pinged.packet_loss != 100) {
-			printf("|%s", fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0), config.wrta, (bool)(config.crta > 0),
-									config.crta, true, 0, false, 0));
+			printf("|%s",
+				   fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
+							 config.wrta, (bool)(config.crta > 0), config.crta, true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", config.wrta, config.crta);
 		}
 
-		printf(" %s\n", perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl, (bool)(config.cpl > 0),
-								 config.cpl, true, 0, false, 0));
+		printf(" %s\n",
+			   perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
+						(bool)(config.cpl > 0), config.cpl, true, 0, false, 0));
 
 		if (verbose >= 2) {
 			printf("%f:%d%% %f:%d%%\n", config.wrta, config.wpl, config.crta, config.cpl);
@@ -254,7 +258,8 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.n_addresses++;
 				if (result.config.n_addresses > max_addr) {
 					max_addr *= 2;
-					result.config.addresses = realloc(result.config.addresses, sizeof(char *) * max_addr);
+					result.config.addresses =
+						realloc(result.config.addresses, sizeof(char *) * max_addr);
 					if (result.config.addresses == NULL) {
 						die(STATE_UNKNOWN, _("Could not realloc() addresses\n"));
 					}
@@ -411,13 +416,15 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 	}
 
 	if (config_wrapper.config.wrta > config_wrapper.config.crta) {
-		printf(_("<wrta> (%f) cannot be larger than <crta> (%f)\n"), config_wrapper.config.wrta, config_wrapper.config.crta);
+		printf(_("<wrta> (%f) cannot be larger than <crta> (%f)\n"), config_wrapper.config.wrta,
+			   config_wrapper.config.crta);
 		config_wrapper.errorcode = ERROR;
 		return config_wrapper;
 	}
 
 	if (config_wrapper.config.wpl > config_wrapper.config.cpl) {
-		printf(_("<wpl> (%d) cannot be larger than <cpl> (%d)\n"), config_wrapper.config.wpl, config_wrapper.config.cpl);
+		printf(_("<wpl> (%d) cannot be larger than <cpl> (%d)\n"), config_wrapper.config.wpl,
+			   config_wrapper.config.cpl);
 		config_wrapper.errorcode = ERROR;
 		return config_wrapper;
 	}
@@ -426,7 +433,8 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 		config_wrapper.config.max_packets = DEFAULT_MAX_PACKETS;
 	}
 
-	double max_seconds = (config_wrapper.config.crta / 1000.0 * config_wrapper.config.max_packets) + config_wrapper.config.max_packets;
+	double max_seconds = (config_wrapper.config.crta / 1000.0 * config_wrapper.config.max_packets) +
+						 config_wrapper.config.max_packets;
 	if (max_seconds > timeout_interval) {
 		timeout_interval = (unsigned int)max_seconds;
 	}
@@ -470,37 +478,70 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 
 		/* get the percent loss statistics */
 		int match = 0;
-		if ((sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) ==
-				 1 &&
+		if ((sscanf(
+				 buf,
+				 "%*d packets transmitted, %*d packets received, +%*d errors, %d%% packet loss%n",
+				 &result.packet_loss, &match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet loss%n", &result.packet_loss,
-					&match) == 1 &&
+			(sscanf(buf,
+					"%*d packets transmitted, %*d packets received, +%*d duplicates, %d%% packet "
+					"loss%n",
+					&result.packet_loss, &match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
+			(sscanf(buf,
+					"%*d packets transmitted, %*d received, +%*d duplicates, %d%% packet loss%n",
+					&result.packet_loss, &match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n", &result.packet_loss, &match) == 1 && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n", &result.packet_loss, &match) == 1 && match) ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n", &result.packet_loss, &match) == 1 && match) ==
-				1 ||
-			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% packet loss%n",
+					&result.packet_loss, &match) == 1 &&
 			 match) ||
-			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n", &result.packet_loss, &match) == 1 &&
+			(sscanf(buf, "%*d packets transmitted, %*d packets received, %d%% loss, time%n",
+					&result.packet_loss, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% loss, time%n",
+					&result.packet_loss, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, %d%% packet loss, time%n",
+					&result.packet_loss, &match) == 1 &&
+			 match) == 1 ||
+			(sscanf(buf, "%*d packets transmitted, %*d received, +%*d errors, %d%% packet loss%n",
+					&result.packet_loss, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*d packets transmitted %*d received, +%*d errors, %d%% packet loss%n",
+					&result.packet_loss, &match) == 1 &&
 			 match) ||
 			(sscanf(buf, "%*[^(](%d%% %*[^)])%n", &result.packet_loss, &match) == 1 && match)) {
 			continue;
 		}
 
 		/* get the round trip average */
-		if ((sscanf(buf, "round-trip min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip min/avg/max/mdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip min/avg/max/sdev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip (ms) min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%lf/%*f/%*f%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "rtt min/avg/max/mdev = %*f/%lf/%*f/%*f ms%n", &result.round_trip_average, &match) == 1 && match) ||
-			(sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %lfms%n", &result.round_trip_average, &match) == 1 && match)) {
+		if ((sscanf(buf, "round-trip min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average,
+					&match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip min/avg/max/mdev = %*f/%lf/%*f/%*f%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip min/avg/max/sdev = %*f/%lf/%*f/%*f%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip min/avg/max/stddev = %*f/%lf/%*f/%*f%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip min/avg/max/std-dev = %*f/%lf/%*f/%*f%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max = %*f/%lf/%*f%n", &result.round_trip_average,
+					&match) == 1 &&
+			 match) ||
+			(sscanf(buf, "round-trip (ms) min/avg/max/stddev = %*f/%lf/%*f/%*f%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match) ||
+			(sscanf(buf, "rtt min/avg/max/mdev = %*f/%lf/%*f/%*f ms%n", &result.round_trip_average,
+					&match) == 1 &&
+			 match) ||
+			(sscanf(buf, "%*[^=] = %*fms, %*[^=] = %*fms, %*[^=] = %lfms%n",
+					&result.round_trip_average, &match) == 1 &&
+			 match)) {
 			continue;
 		}
 	}
@@ -513,7 +554,8 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 	/* check stderr, setting at least WARNING if there is output here */
 	/* Add warning into warn_text */
 	while (fgets(buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
-		if (!strstr(buf, "WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP") && !strstr(buf, "Warning: time of day goes back")
+		if (!strstr(buf, "WARNING - no SO_TIMESTAMP support, falling back to SIOCGSTAMP") &&
+			!strstr(buf, "Warning: time of day goes back")
 
 		) {
 			if (verbose >= 3) {
@@ -524,7 +566,8 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					xasprintf(&warn_text, "%s %s", warn_text, _("System call sent warnings to stderr "));
+					xasprintf(&warn_text, "%s %s", warn_text,
+							  _("System call sent warnings to stderr "));
 				}
 			}
 		}
@@ -542,7 +585,8 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 }
 
 mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
-	if (strstr(buf, "Network is unreachable") || strstr(buf, "Destination Net Unreachable") || strstr(buf, "No route")) {
+	if (strstr(buf, "Network is unreachable") || strstr(buf, "Destination Net Unreachable") ||
+		strstr(buf, "No route")) {
 		die(STATE_CRITICAL, _("CRITICAL - Network Unreachable (%s)\n"), addr);
 	} else if (strstr(buf, "Destination Host Unreachable") || strstr(buf, "Address unreachable")) {
 		die(STATE_CRITICAL, _("CRITICAL - Host Unreachable (%s)\n"), addr);
@@ -567,7 +611,8 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 	if (strstr(buf, "(DUP!)") || strstr(buf, "DUPLICATES FOUND")) {
 		if (warn_text == NULL) {
 			warn_text = strdup(_(WARN_DUPLICATES));
-		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) && xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
+		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) &&
+				   xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
 			die(STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		}
 		return STATE_WARNING;
@@ -613,8 +658,10 @@ void print_help(void) {
 	printf("%s\n", _("percentage of packet loss to trigger an alarm state."));
 
 	printf("\n");
-	printf("%s\n", _("This plugin uses the ping command to probe the specified host for packet loss"));
-	printf("%s\n", _("(percentage) and round trip average (milliseconds). It can produce HTML output."));
+	printf("%s\n",
+		   _("This plugin uses the ping command to probe the specified host for packet loss"));
+	printf("%s\n",
+		   _("(percentage) and round trip average (milliseconds). It can produce HTML output."));
 
 	printf(UT_SUPPORT);
 }

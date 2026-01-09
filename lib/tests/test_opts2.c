@@ -23,36 +23,39 @@
 
 void my_free(int *argc, char **newargv, char **argv) {
 	/* Free stuff (and print while we're at it) */
-	int i, freeflag = 1;
+	bool freeflag = true;
+
 	printf("    Arg(%i): ", *argc + 1);
 	printf("'%s' ", newargv[0]);
-	for (i = 1; i < *argc; i++) {
+	for (int i = 1; i < *argc; i++) {
 		printf("'%s' ", newargv[i]);
 		/* Stop freeing when we get to the start of the original array */
 		if (freeflag) {
-			if (newargv[i] == argv[1])
-				freeflag = 0;
-			else
+			if (newargv[i] == argv[1]) {
+				freeflag = false;
+			} else {
 				free(newargv[i]);
+			}
 		}
 	}
 	printf("\n");
 	/* Free only if it's a different array */
-	if (newargv != argv)
+	if (newargv != argv) {
 		free(newargv);
+	}
 	*argc = 0;
 }
 
 int array_diff(int i1, char **a1, int i2, char **a2) {
-	int i;
-
 	if (i1 != i2) {
 		printf("    Argument count doesn't match!\n");
 		return 0;
 	}
-	for (i = 0; i <= i1; i++) {
-		if (a1[i] == NULL && a2[i] == NULL)
+
+	for (int i = 0; i <= i1; i++) {
+		if (a1[i] == NULL && a2[i] == NULL) {
 			continue;
+		}
 		if (a1[i] == NULL || a2[i] == NULL) {
 			printf("    Argument # %i null in one array!\n", i);
 			return 0;
@@ -66,11 +69,10 @@ int array_diff(int i1, char **a1, int i2, char **a2) {
 }
 
 int main(int argc, char **argv) {
-	char **argv_new = NULL;
-	int i, argc_test;
-
 	plan_tests(5);
 
+	char **argv_new = NULL;
+	int argc_test;
 	{
 		char *argv_test[] = {"prog_name", "arg1", "--extra-opts", "--arg3", "val2", (char *)NULL};
 		argc_test = 5;
@@ -90,7 +92,8 @@ int main(int argc, char **argv) {
 	}
 
 	{
-		char *argv_test[] = {"prog_name", "arg1", "--extra-opts=section1", "--arg3", "val2", (char *)NULL};
+		char *argv_test[] = {"prog_name", "arg1", "--extra-opts=section1",
+							 "--arg3",    "val2", (char *)NULL};
 		argc_test = 5;
 		char *argv_known[] = {"prog_name", "--foobar=baz", "arg1", "--arg3", "val2", (char *)NULL};
 		argv_new = np_extra_opts(&argc_test, argv_test, "check_disk");
@@ -108,30 +111,39 @@ int main(int argc, char **argv) {
 	}
 
 	{
-		char *argv_test[] = {"check_tcp", "--extra-opts", "--extra-opts=tcp_long_lines", (char *)NULL};
+		char *argv_test[] = {"check_tcp", "--extra-opts", "--extra-opts=tcp_long_lines",
+							 (char *)NULL};
 		argc_test = 3;
-		char *argv_known[] = {
-			"check_tcp",
-			"--timeout=10",
-			"--escape",
-			"--send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-			"yadda Foo bar BAZ yadda "
-			"yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-			"yadda Foo bar BAZ "
-			"yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
-			"yadda yadda Foo bar "
-			"BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda",
-			"--expect=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-			"yadda Foo bar BAZ yadda "
-			"yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
-			"yadda Foo bar BAZ "
-			"yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
-			"yadda yadda Foo bar "
-			"BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
-			"yadda yadda yadda Foo "
-			"bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda",
-			"--jail",
-			(char *)NULL};
+		char *argv_known[] = {"check_tcp",
+							  "--timeout=10",
+							  "--escape",
+							  "--send=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda "
+							  "Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar "
+							  "BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo bar BAZ yadda yadda yadda",
+							  "--expect=Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda "
+							  "yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ yadda "
+							  "yadda yadda Foo bar "
+							  "BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo "
+							  "bar BAZ yadda yadda yadda Foo bar BAZ yadda yadda yadda Foo bar BAZ "
+							  "yadda yadda yadda Foo bar BAZ yadda yadda yadda",
+							  "--jail",
+							  (char *)NULL};
 		argv_new = np_extra_opts(&argc_test, argv_test, "check_tcp");
 		ok(array_diff(argc_test, argv_new, 6, argv_known), "Long lines test");
 		my_free(&argc_test, argv_new, argv_test);

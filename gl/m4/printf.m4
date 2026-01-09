@@ -1,9 +1,10 @@
 # printf.m4
-# serial 91
-dnl Copyright (C) 2003, 2007-2024 Free Software Foundation, Inc.
+# serial 96
+dnl Copyright (C) 2003, 2007-2025 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
+dnl This file is offered as-is, without any warranty.
 
 dnl Test whether the *printf family of functions supports the 'j', 'z', 't',
 dnl 'L' size specifiers. (ISO C99, POSIX:2001)
@@ -616,6 +617,7 @@ static double zero = 0.0;
 int main ()
 {
   int result = 0;
+  /* This fails on FreeBSD 5.2.1, Solaris 11.4.  */
   if (sprintf (buf, "%a %d", 3.1416015625, 33, 44, 55) < 0
       || (strcmp (buf, "0x1.922p+1 33") != 0
           && strcmp (buf, "0x3.244p+0 33") != 0
@@ -627,27 +629,29 @@ int main ()
           && strcmp (buf, "-0X3.244P+0 33") != 0
           && strcmp (buf, "-0X6.488P-1 33") != 0
           && strcmp (buf, "-0XC.91P-2 33") != 0))
-    result |= 2;
-  /* This catches a FreeBSD 13.0 bug: it doesn't round.  */
+    result |= 1;
+  /* This catches a Mac OS X 10.5, FreeBSD 6.4, NetBSD 10.0 bug:
+     it doesn't round.  */
   if (sprintf (buf, "%.2a %d", 1.51, 33, 44, 55) < 0
       || (strcmp (buf, "0x1.83p+0 33") != 0
           && strcmp (buf, "0x3.05p-1 33") != 0
           && strcmp (buf, "0x6.0ap-2 33") != 0
           && strcmp (buf, "0xc.14p-3 33") != 0))
-    result |= 4;
-  /* This catches a Mac OS X 10.12.4 (Darwin 16.5) bug: it doesn't round.  */
+    result |= 2;
+  /* This catches a macOS 14 (Darwin 23), FreeBSD 14.0, OpenBSD 7.5, AIX 7.3,
+     Solaris 11.4 bug: it doesn't round.  */
   if (sprintf (buf, "%.0a %d", 1.51, 33, 44, 55) < 0
       || (strcmp (buf, "0x2p+0 33") != 0
           && strcmp (buf, "0x3p-1 33") != 0
           && strcmp (buf, "0x6p-2 33") != 0
           && strcmp (buf, "0xcp-3 33") != 0))
     result |= 4;
-  /* This catches a FreeBSD 6.1 bug.  See
+  /* This catches a Mac OS X 10.5, FreeBSD 6.4 bug.  See
      <https://lists.gnu.org/r/bug-gnulib/2007-04/msg00107.html> */
   if (sprintf (buf, "%010a %d", 1.0 / zero, 33, 44, 55) < 0
       || buf[0] == '0')
     result |= 8;
-  /* This catches a Mac OS X 10.3.9 (Darwin 7.9) bug.  */
+  /* This catches a Mac OS X 10.3.9 (Darwin 7.9), FreeBSD 6.4 bug.  */
   if (sprintf (buf, "%.1a", 1.999) < 0
       || (strcmp (buf, "0x1.0p+1") != 0
           && strcmp (buf, "0x2.0p+0") != 0
@@ -655,7 +659,8 @@ int main ()
           && strcmp (buf, "0x8.0p-2") != 0))
     result |= 16;
   /* This catches the same Mac OS X 10.3.9 (Darwin 7.9) bug and also a
-     glibc 2.4 bug <https://sourceware.org/bugzilla/show_bug.cgi?id=2908>.  */
+     glibc 2.4 bug <https://sourceware.org/bugzilla/show_bug.cgi?id=2908>
+     and a FreeBSD 6.4, NetBSD 10.0 bug.  */
   if (sprintf (buf, "%.1La", 1.999L) < 0
       || (strcmp (buf, "0x1.0p+1") != 0
           && strcmp (buf, "0x2.0p+0") != 0
@@ -893,9 +898,14 @@ AC_DEFUN([gl_PRINTF_DIRECTIVE_N],
         [AC_LANG_SOURCE([[
 #include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#if defined _WIN32 && !defined __CYGWIN__
+# include <stdlib.h>
+#else
+# include <unistd.h>
+#endif
 #ifdef _MSC_VER
+#include <crtdbg.h>
 #include <inttypes.h>
 /* See page about "Parameter Validation" on msdn.microsoft.com.
    <https://docs.microsoft.com/en-us/cpp/c-runtime-library/parameter-validation>
@@ -922,6 +932,9 @@ int main ()
   int count = -1;
 #ifdef _MSC_VER
   _set_invalid_parameter_handler (invalid_parameter_handler);
+  /* Also avoid an Abort/Retry/Ignore dialog in debug builds.
+     <https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/crtsetreportmode>  */
+  _CrtSetReportMode (_CRT_ASSERT, 0);
 #endif
   signal (SIGABRT, abort_handler);
   /* Copy the format string.  Some systems (glibc with _FORTIFY_SOURCE=2)
@@ -1170,6 +1183,112 @@ changequote(,)dnl
          esac
 changequote([,])dnl
         ])
+    ])
+])
+
+dnl Test whether the *printf family of functions supports POSIX/XSI format
+dnl strings with the ' flag for grouping of decimal digits on integers,
+dnl together with a precision.
+dnl Result is gl_cv_func_printf_flag_grouping_int_precision.
+
+AC_DEFUN([gl_PRINTF_FLAG_GROUPING_INT_PRECISION],
+[
+  AC_REQUIRE([AC_PROG_CC])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_CACHE_CHECK([whether printf supports grouping on integers with a precision],
+    [gl_cv_func_printf_flag_grouping_int_precision],
+    [
+      dnl Prepare a guess, used when cross-compiling or when specific locales
+      dnl are not available.
+      case "$host_os" in
+        # Guess no on FreeBSD, NetBSD, Solaris, Cygwin, Haiku.
+        freebsd* | dragonfly* | netbsd* | solaris* | cygwin* | haiku*)
+          gl_cv_func_printf_flag_grouping_int_precision="guessing no";;
+        *)
+          gl_cv_func_printf_flag_grouping_int_precision="guessing yes";;
+      esac
+      AC_RUN_IFELSE(
+        [AC_LANG_SOURCE([[
+#include <locale.h>
+#include <stdio.h>
+#include <string.h>
+static char buf[100];
+int main ()
+{
+  if (setlocale (LC_ALL, "fr_FR.UTF-8") != NULL
+      || setlocale (LC_ALL, "fr_FR") != NULL
+      || setlocale (LC_ALL, "fr_FR.ISO-8859-1") != NULL
+      || setlocale (LC_ALL, "fr_FR.ISO8859-1") != NULL)
+    {
+      if (sprintf (buf, "%'.10d", 1000) < 0)
+        return 1;
+      if (strlen (buf) == 10 && strcmp (buf, "0000001000") != 0)
+        /* The sprintf implementation has produced fewer than 10 digits.  */
+        return 2;
+      else
+        return 0;
+    }
+  return 3;
+}]])],
+        [gl_cv_func_printf_flag_grouping_int_precision=yes],
+        [if test $? = 2; then
+           gl_cv_func_printf_flag_grouping_int_precision=no
+         fi
+        ],
+        [:])
+    ])
+])
+
+dnl Test whether the *printf family of functions supports POSIX/XSI format
+dnl strings with the ' flag for grouping of decimal digits, when the thousands
+dnl separator is a multibyte character (such as U+00A0 or U+202F in a UTF-8
+dnl locale).
+dnl Result is gl_cv_func_printf_flag_grouping_multibyte.
+
+AC_DEFUN([gl_PRINTF_FLAG_GROUPING_MULTIBYTE],
+[
+  AC_REQUIRE([AC_PROG_CC])
+  AC_REQUIRE([AC_CANONICAL_HOST])
+  AC_CACHE_CHECK([whether printf supports grouping with a multibyte separator],
+    [gl_cv_func_printf_flag_grouping_multibyte],
+    [
+      dnl Prepare a guess, used when cross-compiling or when specific locales
+      dnl are not available.
+      case "$host_os" in
+        # Guess no on NetBSD and Solaris 11 OpenIndiana.
+        netbsd* | solaris*)
+          gl_cv_func_printf_flag_grouping_multibyte="guessing no";;
+        *)
+          gl_cv_func_printf_flag_grouping_multibyte="guessing yes";;
+      esac
+      AC_RUN_IFELSE(
+        [AC_LANG_SOURCE([[
+#include <locale.h>
+#include <stdio.h>
+#include <string.h>
+static char buf[100];
+int main ()
+{
+  if (setlocale (LC_ALL, "fr_FR.UTF-8") == NULL)
+    return 0;
+  if (sprintf (buf, "%'.0f", 1000.0) < 0)
+    return 1;
+  if (strlen (localeconv ()->thousands_sep) > 1)
+    {
+      if (strlen (buf) <= 4 + 1)
+        return 2;
+      else
+        return 3;
+    }
+  return 0;
+}]])],
+        [:],
+        [case $? in
+           2) gl_cv_func_printf_flag_grouping_multibyte=no ;;
+           3) gl_cv_func_printf_flag_grouping_multibyte=yes ;;
+         esac
+        ],
+        [:])
     ])
 ])
 
@@ -1709,6 +1828,11 @@ AC_DEFUN([gl_SNPRINTF_DIRECTIVE_N],
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#if defined _WIN32 && !defined __CYGWIN__
+# include <stdlib.h>
+#else
+# include <unistd.h>
+#endif
 #if HAVE_SNPRINTF
 # define my_snprintf snprintf
 #else
@@ -2143,20 +2267,22 @@ dnl 11 = gl_PRINTF_DIRECTIVE_LS
 dnl 12 = gl_PRINTF_DIRECTIVE_LC
 dnl 13 = gl_PRINTF_POSITIONS
 dnl 14 = gl_PRINTF_FLAG_GROUPING
-dnl 15 = gl_PRINTF_FLAG_LEFTADJUST
-dnl 16 = gl_PRINTF_FLAG_ZERO
-dnl 17 = gl_PRINTF_FLAG_ALT_PRECISION_ZERO
-dnl 18 = gl_PRINTF_PRECISION
-dnl 19 = gl_PRINTF_ENOMEM
-dnl 20 = gl_SNPRINTF_PRESENCE
-dnl 21 = gl_SNPRINTF_TRUNCATION_C99
-dnl 22 = gl_SNPRINTF_RETVAL_C99
-dnl 23 = gl_SNPRINTF_DIRECTIVE_N
-dnl 24 = gl_SNPRINTF_SIZE1
-dnl 25 = gl_VSNPRINTF_ZEROSIZE_C99
-dnl 26 = gl_SWPRINTF_WORKS
-dnl 27 = gl_SWPRINTF_DIRECTIVE_LA
-dnl 28 = gl_SWPRINTF_DIRECTIVE_LC
+dnl 15 = gl_PRINTF_FLAG_GROUPING_INT_PRECISION
+dnl 16 = gl_PRINTF_FLAG_GROUPING_MULTIBYTE
+dnl 17 = gl_PRINTF_FLAG_LEFTADJUST
+dnl 18 = gl_PRINTF_FLAG_ZERO
+dnl 19 = gl_PRINTF_FLAG_ALT_PRECISION_ZERO
+dnl 20 = gl_PRINTF_PRECISION
+dnl 21 = gl_PRINTF_ENOMEM
+dnl 22 = gl_SNPRINTF_PRESENCE
+dnl 23 = gl_SNPRINTF_TRUNCATION_C99
+dnl 24 = gl_SNPRINTF_RETVAL_C99
+dnl 25 = gl_SNPRINTF_DIRECTIVE_N
+dnl 26 = gl_SNPRINTF_SIZE1
+dnl 27 = gl_VSNPRINTF_ZEROSIZE_C99
+dnl 28 = gl_SWPRINTF_WORKS
+dnl 29 = gl_SWPRINTF_DIRECTIVE_LA
+dnl 30 = gl_SWPRINTF_DIRECTIVE_LC
 dnl
 dnl 1 = checking whether printf supports size specifiers as in C99...
 dnl 2 = checking whether printf supports size specifiers as in C23...
@@ -2172,62 +2298,64 @@ dnl 11 = checking whether printf supports the 'ls' directive...
 dnl 12 = checking whether printf supports the 'lc' directive correctly...
 dnl 13 = checking whether printf supports POSIX/XSI format strings with positions...
 dnl 14 = checking whether printf supports the grouping flag...
-dnl 15 = checking whether printf supports the left-adjust flag correctly...
-dnl 16 = checking whether printf supports the zero flag correctly...
-dnl 17 = checking whether printf supports the alternative flag with a zero precision...
-dnl 18 = checking whether printf supports large precisions...
-dnl 19 = checking whether printf survives out-of-memory conditions...
-dnl 20 = checking for snprintf...
-dnl 21 = checking whether snprintf truncates the result as in C99...
-dnl 22 = checking whether snprintf returns a byte count as in C99...
-dnl 23 = checking whether snprintf fully supports the 'n' directive...
-dnl 24 = checking whether snprintf respects a size of 1...
-dnl 25 = checking whether vsnprintf respects a zero size as in C99...
-dnl 26 = checking whether swprintf works...
-dnl 27 = checking whether swprintf supports the 'La' and 'LA' directives...
-dnl 28 = checking whether swprintf supports the 'lc' directive...
+dnl 15 = checking whether printf supports grouping on integers with a precision...
+dnl 16 = checking whether printf supports grouping with a multibyte separator...
+dnl 17 = checking whether printf supports the left-adjust flag correctly...
+dnl 18 = checking whether printf supports the zero flag correctly...
+dnl 19 = checking whether printf supports the alternative flag with a zero precision...
+dnl 20 = checking whether printf supports large precisions...
+dnl 21 = checking whether printf survives out-of-memory conditions...
+dnl 22 = checking for snprintf...
+dnl 23 = checking whether snprintf truncates the result as in C99...
+dnl 24 = checking whether snprintf returns a byte count as in C99...
+dnl 25 = checking whether snprintf fully supports the 'n' directive...
+dnl 26 = checking whether snprintf respects a size of 1...
+dnl 27 = checking whether vsnprintf respects a zero size as in C99...
+dnl 28 = checking whether swprintf works...
+dnl 29 = checking whether swprintf supports the 'La' and 'LA' directives...
+dnl 30 = checking whether swprintf supports the 'lc' directive...
 dnl
 dnl . = yes, # = no.
 dnl
-dnl                                  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
-dnl   musl libc 1.2.3                .  #  .  .  .  .  #  #  .  .  .  #  .  .  .  .  ?  .  .  .  .  .  .  .  .  #  .  #
-dnl   glibc 2.35                     .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
-dnl   glibc 2.5                      .  #  .  .  .  .  #  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .
-dnl   glibc 2.3.6                    .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .
-dnl   FreeBSD 14.0                   .  .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
-dnl   FreeBSD 13.0                   .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
-dnl   FreeBSD 5.4, 6.1               .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
-dnl   Mac OS X 10.13.5               .  #  .  .  #  #  #  #  .  #  .  .  .  .  .  .  .  .  .  .  .  .  #  .  .  #  ?  ?
-dnl   Mac OS X 10.5.8                .  #  .  .  #  #  #  #  .  .  .  .  .  .  .  #  #  .  .  .  .  .  .  .  .  #  ?  ?
-dnl   Mac OS X 10.3.9                .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  #  #  .  #  .  .  .  .  .  .  #  ?  ?
-dnl   OpenBSD 6.0, 6.7               .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
-dnl   OpenBSD 3.9, 4.0               .  #  .  #  #  #  #  #  #  .  #  .  .  #  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
-dnl   Cygwin 1.7.0 (2009)            .  #  .  .  #  .  #  #  .  .  ?  ?  .  .  .  .  ?  .  ?  .  .  .  .  .  .  ?  ?  ?
-dnl   Cygwin 1.5.25 (2008)           .  #  .  .  #  #  #  #  .  .  #  ?  .  .  .  .  ?  .  #  .  .  .  .  .  .  ?  ?  ?
-dnl   Cygwin 1.5.19 (2006)           #  #  .  .  #  #  #  #  #  .  #  ?  .  #  .  #  ?  #  #  .  .  .  .  .  .  ?  ?  ?
-dnl   Solaris 11.4                   .  #  .  #  #  #  #  #  .  .  #  .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  #  .
-dnl   Solaris 11.3                   .  #  .  .  .  #  #  #  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .
-dnl   Solaris 11.0                   .  #  .  #  #  #  #  #  .  .  #  .  .  .  .  #  .  .  .  .  .  .  .  .  .  ?  ?  ?
-dnl   Solaris 10                     .  #  .  #  #  #  #  #  .  .  #  .  .  .  .  #  .  #  .  .  .  .  .  .  .  .  #  .
-dnl   Solaris 2.6 ... 9              #  #  .  #  #  #  #  #  #  .  #  .  .  .  .  #  ?  #  .  .  .  #  .  .  .  ?  ?  ?
-dnl   Solaris 2.5.1                  #  #  .  #  #  #  #  #  #  .  #  .  .  .  .  #  ?  .  .  #  #  #  #  #  #  ?  ?  ?
-dnl   AIX 7.1                        .  #  .  #  #  #  #  #  .  .  .  .  .  .  .  #  .  #  .  .  .  .  .  .  .  #  .  .
-dnl   AIX 5.2                        .  #  .  #  #  #  #  #  .  .  .  .  .  .  .  #  ?  .  .  .  .  .  .  .  .  #  ?  ?
-dnl   AIX 4.3.2, 5.1                 #  #  .  #  #  #  #  #  #  .  .  .  .  .  .  #  ?  .  .  .  .  #  .  .  .  #  ?  ?
-dnl   HP-UX 11.31                    .  #  .  .  .  #  #  #  .  .  .  ?  .  .  .  #  ?  .  .  .  .  #  #  .  .  ?  ?  ?
-dnl   HP-UX 11.{00,11,23}            #  #  .  .  .  #  #  #  #  .  .  ?  .  .  .  #  ?  .  .  .  .  #  #  .  #  ?  ?  ?
-dnl   HP-UX 10.20                    #  #  .  #  .  #  #  #  #  .  ?  ?  .  .  #  #  ?  .  .  .  .  #  #  ?  #  ?  ?  ?
-dnl   IRIX 6.5                       #  #  .  #  #  #  #  #  #  .  #  .  .  .  .  #  ?  .  .  .  .  #  .  .  .  #  ?  ?
-dnl   OSF/1 5.1                      #  #  .  #  #  #  #  #  #  .  .  ?  .  .  .  #  ?  .  .  .  .  #  .  .  #  ?  ?  ?
-dnl   OSF/1 4.0d                     #  #  .  #  #  #  #  #  #  .  .  ?  .  .  .  #  ?  .  .  #  #  #  #  #  #  ?  ?  ?
-dnl   NetBSD 9.0                     .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .  #
-dnl   NetBSD 5.0                     .  #  .  .  #  #  #  #  .  .  .  .  .  .  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
-dnl   NetBSD 4.0                     .  #  ?  ?  ?  ?  #  #  ?  .  ?  .  .  ?  ?  ?  ?  ?  ?  .  .  .  ?  ?  ?  #  ?  ?
-dnl   NetBSD 3.0                     .  #  .  .  .  #  #  #  #  .  ?  .  #  #  ?  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
-dnl   Haiku                          .  #  .  .  #  #  #  #  #  .  #  ?  .  .  .  .  ?  .  ?  .  .  ?  .  .  .  .  #  .
-dnl   BeOS                           #  #  #  .  #  #  #  #  #  .  ?  ?  #  .  ?  .  ?  #  ?  .  .  ?  .  .  .  ?  ?  ?
-dnl   Android 4.3                    .  #  .  #  #  #  #  #  #  #  #  ?  .  #  .  #  ?  .  #  .  .  .  #  .  .  ?  ?  ?
-dnl   old mingw / msvcrt             #  #  #  #  #  #  #  #  #  .  .  ?  #  #  .  #  ?  #  ?  .  #  #  #  .  .  #  ?  ?
-dnl   MSVC 9                         #  #  #  #  #  #  #  #  #  #  .  ?  #  #  .  #  ?  #  ?  #  #  #  #  .  .  #  ?  ?
-dnl   mingw 2009-2011                .  #  #  .  #  .  #  #  .  .  .  ?  #  #  .  .  ?  .  ?  .  .  .  .  .  .  #  ?  ?
-dnl   mingw-w64 2011                 #  #  #  #  #  #  #  #  #  .  .  ?  #  #  .  #  ?  #  ?  .  #  #  #  .  .  #  ?  ?
+dnl                                  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
+dnl   musl libc 1.2.3                .  #  .  .  .  .  #  #  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .  #
+dnl   glibc 2.35                     .  #  .  .  .  .  .  .  .  .  .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+dnl   glibc 2.5                      .  #  .  .  .  .  #  #  .  .  .  .  .  .  #  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .
+dnl   glibc 2.3.6                    .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  #  .
+dnl   FreeBSD 14.0                   .  .  .  .  .  #  .  .  .  .  .  .  .  .  #  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
+dnl   FreeBSD 13.0                   .  #  .  .  .  #  #  #  .  .  .  .  .  .  #  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
+dnl   FreeBSD 5.4, 6.1               .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
+dnl   Mac OS X 10.13.5               .  #  .  .  #  #  #  #  .  #  .  .  .  .  ?  ?  .  .  .  .  .  .  .  .  #  .  .  #  ?  ?
+dnl   Mac OS X 10.5.8                .  #  .  .  #  #  #  #  .  .  .  .  .  .  ?  ?  .  #  #  .  .  .  .  .  .  .  .  #  ?  ?
+dnl   Mac OS X 10.3.9                .  #  .  .  .  #  #  #  .  .  .  .  .  .  ?  ?  .  #  #  .  #  .  .  .  .  .  .  #  ?  ?
+dnl   OpenBSD 6.0, 6.7               .  #  .  .  .  #  #  #  .  .  .  .  .  .  .  .  .  .  .  .  #  .  .  .  .  .  .  #  .  #
+dnl   OpenBSD 3.9, 4.0               .  #  .  #  #  #  #  #  #  .  #  .  .  #  ?  ?  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
+dnl   Cygwin 1.7.0 (2009)            .  #  .  .  #  .  #  #  .  .  ?  ?  .  .  ?  ?  .  .  ?  .  ?  .  .  .  .  .  .  ?  ?  ?
+dnl   Cygwin 1.5.25 (2008)           .  #  .  .  #  #  #  #  .  .  #  ?  .  .  ?  ?  .  .  ?  .  #  .  .  .  .  .  .  ?  ?  ?
+dnl   Cygwin 1.5.19 (2006)           #  #  .  .  #  #  #  #  #  .  #  ?  .  #  ?  ?  .  #  ?  #  #  .  .  .  .  .  .  ?  ?  ?
+dnl   Solaris 11.4                   .  #  .  #  #  #  #  #  .  .  #  .  .  .  #  #  .  #  .  .  .  .  .  .  .  .  .  .  #  .
+dnl   Solaris 11.3                   .  #  .  .  .  #  #  #  .  .  #  .  .  .  ?  ?  .  .  .  .  .  .  .  .  .  .  .  .  #  .
+dnl   Solaris 11.0                   .  #  .  #  #  #  #  #  .  .  #  .  .  .  ?  ?  .  #  .  .  .  .  .  .  .  .  .  ?  ?  ?
+dnl   Solaris 10                     .  #  .  #  #  #  #  #  .  .  #  .  .  .  #  #  .  #  .  #  .  .  .  .  .  .  .  .  #  .
+dnl   Solaris 2.6 ... 9              #  #  .  #  #  #  #  #  #  .  #  .  .  .  ?  ?  .  #  ?  #  .  .  .  #  .  .  .  ?  ?  ?
+dnl   Solaris 2.5.1                  #  #  .  #  #  #  #  #  #  .  #  .  .  .  ?  ?  .  #  ?  .  .  #  #  #  #  #  #  ?  ?  ?
+dnl   AIX 7.1                        .  #  .  #  #  #  #  #  .  .  .  .  .  .  .  .  .  #  .  #  .  .  .  .  .  .  .  #  .  .
+dnl   AIX 5.2                        .  #  .  #  #  #  #  #  .  .  .  .  .  .  ?  ?  .  #  ?  .  .  .  .  .  .  .  .  #  ?  ?
+dnl   AIX 4.3.2, 5.1                 #  #  .  #  #  #  #  #  #  .  .  .  .  .  ?  ?  .  #  ?  .  .  .  .  #  .  .  .  #  ?  ?
+dnl   HP-UX 11.31                    .  #  .  .  .  #  #  #  .  .  .  ?  .  .  ?  ?  .  #  ?  .  .  .  .  #  #  .  .  ?  ?  ?
+dnl   HP-UX 11.{00,11,23}            #  #  .  .  .  #  #  #  #  .  .  ?  .  .  ?  ?  .  #  ?  .  .  .  .  #  #  .  #  ?  ?  ?
+dnl   HP-UX 10.20                    #  #  .  #  .  #  #  #  #  .  ?  ?  .  .  ?  ?  #  #  ?  .  .  .  .  #  #  ?  #  ?  ?  ?
+dnl   IRIX 6.5                       #  #  .  #  #  #  #  #  #  .  #  .  .  .  ?  ?  .  #  ?  .  .  .  .  #  .  .  .  #  ?  ?
+dnl   OSF/1 5.1                      #  #  .  #  #  #  #  #  #  .  .  ?  .  .  ?  ?  .  #  ?  .  .  .  .  #  .  .  #  ?  ?  ?
+dnl   OSF/1 4.0d                     #  #  .  #  #  #  #  #  #  .  .  ?  .  .  ?  ?  .  #  ?  .  .  #  #  #  #  #  #  ?  ?  ?
+dnl   NetBSD 9.0                     .  #  .  .  .  #  #  #  .  .  .  .  .  .  #  #  .  .  .  .  .  .  .  .  .  .  .  #  .  #
+dnl   NetBSD 5.0                     .  #  .  .  #  #  #  #  .  .  .  .  .  .  ?  ?  .  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
+dnl   NetBSD 4.0                     .  #  ?  ?  ?  ?  #  #  ?  .  ?  .  .  ?  ?  ?  ?  ?  ?  ?  ?  .  .  .  ?  ?  ?  #  ?  ?
+dnl   NetBSD 3.0                     .  #  .  .  .  #  #  #  #  .  ?  .  #  #  ?  ?  ?  #  ?  .  #  .  .  .  .  .  .  #  ?  ?
+dnl   Haiku                          .  #  .  .  #  #  #  #  #  .  #  ?  .  .  #  .  .  .  ?  .  ?  .  .  ?  .  .  .  .  #  .
+dnl   BeOS                           #  #  #  .  #  #  #  #  #  .  ?  ?  #  .  ?  ?  ?  .  ?  #  ?  .  .  ?  .  .  .  ?  ?  ?
+dnl   Android 4.3                    .  #  .  #  #  #  #  #  #  #  #  ?  .  #  ?  ?  .  #  ?  .  #  .  .  .  #  .  .  ?  ?  ?
+dnl   old mingw / msvcrt             #  #  #  #  #  #  #  #  #  .  .  ?  #  #  ?  ?  .  #  ?  #  ?  .  #  #  #  .  .  #  ?  ?
+dnl   MSVC 9                         #  #  #  #  #  #  #  #  #  #  .  ?  #  #  ?  ?  .  #  ?  #  ?  #  #  #  #  .  .  #  ?  ?
+dnl   mingw 2009-2011                .  #  #  .  #  .  #  #  .  .  .  ?  #  #  ?  ?  .  .  ?  .  ?  .  .  .  .  .  .  #  ?  ?
+dnl   mingw-w64 2011                 #  #  #  #  #  #  #  #  #  .  .  ?  #  #  ?  ?  .  #  ?  #  ?  .  #  #  #  .  .  #  ?  ?

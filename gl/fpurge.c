@@ -1,5 +1,5 @@
 /* Flushing buffers of a FILE stream.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -37,7 +37,7 @@ fpurge (FILE *fp)
   /* The __fpurge function does not have a return value.  */
   return 0;
 
-#elif HAVE_FPURGE                   /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin >= 1.7 */
+#elif HAVE_FPURGE                   /* FreeBSD, NetBSD, 2.0 <= OpenBSD <= 7.7, DragonFly, Mac OS X, Cygwin >= 1.7 */
 
   /* Call the system's fpurge function.  */
 # undef fpurge
@@ -46,7 +46,7 @@ fpurge (FILE *fp)
 # endif
   int result = fpurge (fp);
 # if defined __sferror || defined __DragonFly__ || defined __ANDROID__
-  /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin, Minix 3, Android */
+  /* FreeBSD, NetBSD, OpenBSD <= 7.7, DragonFly, Mac OS X, Cygwin, Minix 3, Android */
   if (result == 0)
     /* Correct the invariants that fpurge broke.
        <stdio.h> on BSD systems says:
@@ -76,7 +76,7 @@ fpurge (FILE *fp)
     }
   return 0;
 # elif defined __sferror || defined __DragonFly__ || defined __ANDROID__
-  /* FreeBSD, NetBSD, OpenBSD, DragonFly, Mac OS X, Cygwin, Minix 3, Android */
+  /* FreeBSD, NetBSD, OpenBSD < 2.0, DragonFly, Mac OS X, Cygwin, Minix 3, Android */
   fp_->_p = fp_->_bf._base;
   fp_->_r = 0;
   fp_->_w = ((fp_->_flags & (__SLBF | __SNBF | __SRD)) == 0 /* fully buffered and not currently reading? */

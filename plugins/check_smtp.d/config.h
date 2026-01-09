@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../config.h"
+#include "output.h"
+#include "thresholds.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -18,20 +20,18 @@ typedef struct {
 	char *server_expect;
 	bool ignore_send_quit_failure;
 
-	double warning_time;
-	bool check_warning_time;
-	double critical_time;
-	bool check_critical_time;
+	mp_thresholds connection_time;
+
 	bool use_ehlo;
 	bool use_lhlo;
 
 	char *from_arg;
 	bool send_mail_from;
 
-	int ncommands;
+	unsigned long ncommands;
 	char **commands;
 
-	int nresponses;
+	unsigned long nresponses;
 	char **responses;
 
 	char *authtype;
@@ -40,13 +40,17 @@ typedef struct {
 
 	bool use_proxy_prefix;
 #ifdef HAVE_SSL
-	bool check_cert;
 	int days_till_exp_warn;
 	int days_till_exp_crit;
 	bool use_ssl;
 	bool use_starttls;
 	bool use_sni;
+
+	bool ignore_certificate_expiration;
 #endif
+
+	bool output_format_is_set;
+	mp_output_format output_format;
 } check_smtp_config;
 
 check_smtp_config check_smtp_config_init() {
@@ -58,10 +62,7 @@ check_smtp_config check_smtp_config_init() {
 		.server_expect = SMTP_EXPECT,
 		.ignore_send_quit_failure = false,
 
-		.warning_time = 0,
-		.check_warning_time = false,
-		.critical_time = 0,
-		.check_critical_time = false,
+		.connection_time = mp_thresholds_init(),
 		.use_ehlo = false,
 		.use_lhlo = false,
 
@@ -80,13 +81,16 @@ check_smtp_config check_smtp_config_init() {
 
 		.use_proxy_prefix = false,
 #ifdef HAVE_SSL
-		.check_cert = false,
 		.days_till_exp_warn = 0,
 		.days_till_exp_crit = 0,
 		.use_ssl = false,
 		.use_starttls = false,
 		.use_sni = false,
+
+		.ignore_certificate_expiration = false,
 #endif
+
+		.output_format_is_set = false,
 	};
 	return tmp;
 }
