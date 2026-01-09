@@ -66,6 +66,6 @@ typedef struct state_key_struct {
 } state_key;
 
 state_data *np_state_read(state_key stateKey);
-state_key np_enable_state(char *keyname, int expected_data_version, char *plugin_name, int argc,
-						  char **argv);
+state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+						  int argc, char **argv);
 void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToStore);
