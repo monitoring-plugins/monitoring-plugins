@@ -28,6 +28,7 @@
  *
  *****************************************************************************/
 
+#include "output.h"
 const char *progname = "check_radius";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
@@ -158,49 +159,80 @@ int main(int argc, char **argv) {
 
 	check_radius_config config = tmp_config.config;
 
+	if (config.output_format_is_set) {
+		mp_set_format(config.output_format);
+	}
+
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
 	defined(HAVE_LIBRADCLI)
 	rc_handle *rch = NULL;
 #endif
 
+	mp_check overall = mp_check_init();
+	mp_subcheck sc_read_config = mp_subcheck_init();
+
 	char *str = strdup("dictionary");
 	if ((config.config_file && my_rc_read_config(config.config_file, &rch)) ||
 		my_rc_read_dictionary(my_rc_conf_str(str))) {
-		die(STATE_UNKNOWN, _("Config file error\n"));
+		sc_read_config = mp_set_subcheck_state(sc_read_config, STATE_UNKNOWN);
+		xasprintf(&sc_read_config.output, "failed to read config file");
+		mp_add_subcheck_to_check(&overall, sc_read_config);
+		mp_exit(overall);
 	}
+
+	sc_read_config = mp_set_subcheck_state(sc_read_config, STATE_OK);
+	xasprintf(&sc_read_config.output, "read config file successfully");
+	mp_add_subcheck_to_check(&overall, sc_read_config);
 
 	uint32_t service = PW_AUTHENTICATE_ONLY;
 
+	mp_subcheck sc_configuring = mp_subcheck_init();
 	SEND_DATA data;
 	memset(&data, 0, sizeof(data));
 	if (!(my_rc_avpair_add(&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, config.username, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_PASSWORD, config.password, 0))) {
-		die(STATE_UNKNOWN, _("Out of Memory?\n"));
+		xasprintf(&sc_configuring.output, "Failed to the radius options: Out of Memory?");
+		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_configuring);
+		mp_exit(overall);
 	}
 
 	if (config.nas_id != NULL) {
 		if (!(my_rc_avpair_add(&data.send_pairs, PW_NAS_IDENTIFIER, config.nas_id, 0))) {
-			die(STATE_UNKNOWN, _("Invalid NAS-Identifier\n"));
+			xasprintf(&sc_configuring.output,
+					  "Failed to the radius options: invalid NAS identifier?");
+			sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
+			mp_add_subcheck_to_check(&overall, sc_configuring);
+			mp_exit(overall);
 		}
 	}
 
 	char name[HOST_NAME_MAX];
 	if (config.nas_ip_address == NULL) {
 		if (gethostname(name, sizeof(name)) != 0) {
-			die(STATE_UNKNOWN, _("gethostname() failed!\n"));
+			xasprintf(&sc_configuring.output, "gethostname() failed");
+			sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
+			mp_add_subcheck_to_check(&overall, sc_configuring);
+			mp_exit(overall);
 		}
 		config.nas_ip_address = name;
 	}
 
 	struct sockaddr_storage radius_server_socket;
 	if (!dns_lookup(config.nas_ip_address, &radius_server_socket, AF_UNSPEC)) {
-		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
+		xasprintf(&sc_configuring.output, "invalid NAS IP address. Lookup failed");
+		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_configuring);
+		mp_exit(overall);
 	}
 
 	uint32_t client_id = ntohl(((struct sockaddr_in *)&radius_server_socket)->sin_addr.s_addr);
 	if (my_rc_avpair_add(&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL) {
-		die(STATE_UNKNOWN, _("Invalid NAS-IP-Address\n"));
+		xasprintf(&sc_configuring.output, "invalid NAS IP address. Setting option failed");
+		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_configuring);
+		mp_exit(overall);
 	}
 
 	my_rc_buildreq(&data, PW_ACCESS_REQUEST, config.server, config.port, (int)timeout_interval,
@@ -218,51 +250,78 @@ int main(int argc, char **argv) {
 		rc_avpair_free(data.receive_pairs);
 	}
 
+	mp_subcheck sc_eval = mp_subcheck_init();
+
 	if (result == TIMEOUT_RC) {
-		printf("Timeout\n");
-		exit(STATE_CRITICAL);
+		xasprintf(&sc_eval.output, "timeout");
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
 	if (result == ERROR_RC) {
-		printf(_("Auth Error\n"));
-		exit(STATE_CRITICAL);
+		xasprintf(&sc_eval.output, "auth error");
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_CRITICAL);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
 	if (result == REJECT_RC) {
-		printf(_("Auth Failed\n"));
-		exit(STATE_WARNING);
+		xasprintf(&sc_eval.output, "auth failed");
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
 	if (result == BADRESP_RC) {
-		printf(_("Bad Response\n"));
-		exit(STATE_WARNING);
+		xasprintf(&sc_eval.output, "bad response");
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
 	if (config.expect && !strstr(msg, config.expect)) {
-		printf("%s\n", msg);
-		exit(STATE_WARNING);
+		xasprintf(&sc_eval.output, "%s", msg);
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
 	if (result == OK_RC) {
-		printf(_("Auth OK\n"));
-		exit(STATE_OK);
+		xasprintf(&sc_eval.output, "auth OK");
+		sc_eval = mp_set_subcheck_state(sc_eval, STATE_OK);
+		mp_add_subcheck_to_check(&overall, sc_eval);
+		mp_exit(overall);
 	}
 
-	(void)snprintf(msg, sizeof(msg), _("Unexpected result code %d"), result);
-	printf("%s\n", msg);
-	exit(STATE_UNKNOWN);
+	xasprintf(&sc_eval.output, "unexpected result code: %d", result);
+	sc_eval = mp_set_subcheck_state(sc_eval, STATE_UNKNOWN);
+	mp_add_subcheck_to_check(&overall, sc_eval);
+
+	mp_exit(overall);
 }
 
 /* process command-line arguments */
 check_radius_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {
-		{"hostname", required_argument, 0, 'H'}, {"port", required_argument, 0, 'P'},
-		{"username", required_argument, 0, 'u'}, {"password", required_argument, 0, 'p'},
-		{"nas-id", required_argument, 0, 'n'},   {"nas-ip-address", required_argument, 0, 'N'},
-		{"filename", required_argument, 0, 'F'}, {"expect", required_argument, 0, 'e'},
-		{"retries", required_argument, 0, 'r'},  {"timeout", required_argument, 0, 't'},
-		{"verbose", no_argument, 0, 'v'},        {"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},           {0, 0, 0, 0}};
+	enum {
+		output_format_index
+	};
+
+	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
+									   {"port", required_argument, 0, 'P'},
+									   {"username", required_argument, 0, 'u'},
+									   {"password", required_argument, 0, 'p'},
+									   {"nas-id", required_argument, 0, 'n'},
+									   {"nas-ip-address", required_argument, 0, 'N'},
+									   {"filename", required_argument, 0, 'F'},
+									   {"expect", required_argument, 0, 'e'},
+									   {"retries", required_argument, 0, 'r'},
+									   {"timeout", required_argument, 0, 't'},
+									   {"verbose", no_argument, 0, 'v'},
+									   {"version", no_argument, 0, 'V'},
+									   {"help", no_argument, 0, 'h'},
+									   {"output-format", required_argument, 0, output_format_index},
+									   {0, 0, 0, 0}};
 
 	check_radius_config_wrapper result = {
 		.errorcode = OK,
@@ -340,6 +399,18 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			}
 			break;
+		case output_format_index: {
+			parsed_output_format parser = mp_parse_output_format(optarg);
+			if (!parser.parsing_success) {
+				// TODO List all available formats here, maybe add anothoer usage function
+				printf("Invalid output format: %s\n", optarg);
+				exit(STATE_UNKNOWN);
+			}
+
+			result.config.output_format_is_set = true;
+			result.config.output_format = parser.output_format;
+			break;
+		}
 		}
 	}
 
@@ -393,6 +464,7 @@ void print_help(void) {
 	printf("    %s\n", _("Response string to expect from the server"));
 	printf(" %s\n", "-r, --retries=INTEGER");
 	printf("    %s\n", _("Number of times to retry a failed connection"));
+	printf(UT_OUTPUT_FORMAT);
 
 	printf(UT_CONN_TIMEOUT, timeout_interval);
 
