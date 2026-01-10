@@ -488,7 +488,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			curl_easy_setopt(result.curl_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4),
 			"CURLOPT_IPRESOLVE(CURL_IPRESOLVE_V4)");
 	}
-#if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
+#if defined(LIBCURL_FEATURE_IPV6)
 	else if (config.sin_family == AF_INET6) {
 		handle_curl_option_return_code(
 			curl_easy_setopt(result.curl_state.curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
