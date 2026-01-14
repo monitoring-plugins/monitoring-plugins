@@ -1262,6 +1262,10 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 		double free_inode_percentage =
 			calculate_percent(measurement_unit.inodes_free, measurement_unit.inodes_total);
 
+		mp_perfdata inode_percentage_pd = perfdata_init();
+		inode_percentage_pd = mp_set_pd_value(inode_percentage_pd, free_inode_percentage);
+		inode_percentage_pd = mp_pd_set_thresholds(inode_percentage_pd, measurement_unit.freeinodes_percent_thresholds);
+
 		if (verbose > 0) {
 			printf("free inode percentage computed: %g\n", free_inode_percentage);
 		}
@@ -1293,7 +1297,7 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 		inodes_pd = mp_pd_set_thresholds(inodes_pd, absolut_inode_thresholds);
 
 		freeindodes_percent_sc =
-			mp_set_subcheck_state(freeindodes_percent_sc, mp_get_pd_status(inodes_pd));
+			mp_set_subcheck_state(freeindodes_percent_sc, mp_get_pd_status(inode_percentage_pd));
 		if (display_inodes_perfdata) {
 			mp_add_perfdata_to_subcheck(&freeindodes_percent_sc, inodes_pd);
 		}
