@@ -175,7 +175,7 @@ char *get_subcheck_summary(mp_check check) {
 	unsigned int critical = 0;
 	unsigned int unknown = 0;
 	while (subchecks != NULL) {
-		switch (subchecks->subcheck.state) {
+		switch (mp_compute_subcheck_state(subchecks->subcheck)) {
 		case STATE_OK:
 			ok++;
 			break;
