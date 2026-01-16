@@ -1470,6 +1470,9 @@ static recvfrom_wto_wrapper recvfrom_wto(const check_icmp_socket_set sockset, vo
 	};
 
 	ssize_t ret;
+
+	// Test explicitly whether sockets are in use
+	// this is necessary at least on OpenBSD where FD_ISSET will segfault otherwise
 	if ((sockset.socket4 != -1) && FD_ISSET(sockset.socket4, &read_fds)) {
 		ret = recvmsg(sockset.socket4, &hdr, 0);
 		result.recv_proto = AF_INET;
