@@ -80,13 +80,24 @@ if($free_percent_on_mp1 == $avg_free_percent || $free_percent_on_mp2 == $avg_fre
 	die "One mountpoints has average space free - cannot do rest of test";
 }
 
-my $free_inodes_on_mp1 = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}[2]->{'perfdata'}->[0]->{'value'}->{'value'};
+my $used_inodes_on_mp1 = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}[2]->{'perfdata'}->[0]->{'value'}->{'value'};
 my $total_inodes_on_mp1 = $result->{'mp_test_result'}->{'checks'}->[1]->{'checks'}[2]->{'perfdata'}->[0]->{'max'}->{'value'};
+
+my $free_inodes_on_mp1 = $total_inodes_on_mp1 - $used_inodes_on_mp1;
 my $free_inode_percentage_on_mp1 = $free_inodes_on_mp1 / ($total_inodes_on_mp1 / 100);
 
-my $free_inodes_on_mp2 = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[2]->{'perfdata'}->[0]->{'value'}->{'value'};
+# print("free inodes on mp1: " . $free_inodes_on_mp1 . "\n");
+# print("total inodes on mp1: " . $total_inodes_on_mp1 . "\n");
+# print("free inode percentage on mp1: " . $free_inode_percentage_on_mp1 . "\n");
+
+my $used_inodes_on_mp2 = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[2]->{'perfdata'}->[0]->{'value'}->{'value'};
 my $total_inodes_on_mp2 = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[2]->{'perfdata'}->[0]->{'max'}->{'value'};
+my $free_inodes_on_mp2 = $total_inodes_on_mp2 - $used_inodes_on_mp2;
 my $free_inode_percentage_on_mp2 = $free_inodes_on_mp2 / ($total_inodes_on_mp2 / 100);
+
+# print("free inodes on mp2: " . $free_inodes_on_mp2 . "\n");
+# print("total inodes on mp2: " . $total_inodes_on_mp2 . "\n");
+# print("free inode percentage on mp2: " . $free_inode_percentage_on_mp2 . "\n");
 
 my $avg_inode_free_percentage = ceil(($free_inode_percentage_on_mp1 + $free_inode_percentage_on_mp2)/2);
 my ($more_inode_free, $less_inode_free);
