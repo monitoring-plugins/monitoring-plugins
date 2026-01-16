@@ -263,8 +263,8 @@ int main(int argc, char **argv) {
 			*filesystem = get_path_stats(*filesystem, fsp, config.freespace_ignore_reserved);
 
 			if (verbose >= 3) {
-				printf("For %s, used_units=%lu free_units=%lu total_units=%lu "
-					   "fsp.fsu_blocksize=%lu\n",
+				printf("For %s, used_units=%llu free_units=%llu total_units=%llu "
+					   "fsp.fsu_blocksize=%ju\n",
 					   mount_entry->me_mountdir, filesystem->used_bytes, filesystem->free_bytes,
 					   filesystem->total_bytes, fsp.fsu_blocksize);
 			}
