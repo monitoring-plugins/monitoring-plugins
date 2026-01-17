@@ -277,15 +277,6 @@ typedef struct {
 	check_icmp_config config;
 } check_icmp_config_wrapper;
 check_icmp_config_wrapper process_arguments(int argc, char **argv) {
-	/* get calling name the old-fashioned way for portability instead
-	 * of relying on the glibc-ism __progname */
-	char *ptr = strrchr(argv[0], '/');
-	if (ptr) {
-		progname = &ptr[1];
-	} else {
-		progname = argv[0];
-	}
-
 	check_icmp_config_wrapper result = {
 		.errorcode = OK,
 		.config = check_icmp_config_init(),
@@ -827,6 +818,14 @@ int main(int argc, char **argv) {
 
 	/* POSIXLY_CORRECT might break things, so unset it (the portable way) */
 	environ = NULL;
+
+	/* determine program- and service-name quickly */
+	progname = strrchr(argv[0], '/');
+	if (progname != NULL) {
+		progname++;
+	} else {
+		progname = argv[0];
+	}
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
