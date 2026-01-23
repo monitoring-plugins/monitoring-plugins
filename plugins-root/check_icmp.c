@@ -812,6 +812,15 @@ void parse_address(const struct sockaddr_storage *addr, char *dst, socklen_t siz
 }
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - inet is required for sockets
+	 * - dns is required for name lookups (given up later)
+	 * - id is required for temporary privilege drops in configparsing and for
+	 *   permanent privilege dropping after opening the socket (given up later) */
+	pledge("stdio rpath inet dns id", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -835,6 +844,10 @@ int main(int argc, char **argv) {
 	if (tmp_config.errorcode != OK) {
 		crash("failed to parse config");
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio inet dns id", NULL);
+#endif // __OpenBSD__
 
 	const check_icmp_config config = tmp_config.config;
 
@@ -897,6 +910,10 @@ int main(int argc, char **argv) {
 		printf("ERROR: Failed to drop privileges\n");
 		return 1;
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio inet", NULL);
+#endif // __OpenBSD__
 
 	if (sockset.socket4) {
 		int result = setsockopt(sockset.socket4, SOL_IP, IP_TTL, &config.ttl, sizeof(config.ttl));
