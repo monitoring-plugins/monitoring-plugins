@@ -227,7 +227,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 	while (true) {
 		int option_index = getopt_long(argc, argv, "+hVvF:C:e:t:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 
