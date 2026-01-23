@@ -91,6 +91,8 @@ const char DEFAULT_OUTPUT_DELIMITER[] = " ";
 
 const int RANDOM_STATE_DATA_LENGTH_PREDICTION = 8192;
 
+char community[100];
+
 check_snmp_config check_snmp_config_init() {
 	check_snmp_config tmp = {
 		.snmp_params =
@@ -129,14 +131,17 @@ check_snmp_config check_snmp_config_init() {
 	tmp.snmp_params.snmp_session.retries = DEFAULT_RETRIES;
 	tmp.snmp_params.snmp_session.version = DEFAULT_SNMP_VERSION;
 	tmp.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
-	tmp.snmp_params.snmp_session.community = (unsigned char *)"public";
-	tmp.snmp_params.snmp_session.community_len = strlen("public");
+	strcpy(community, "public");
+	tmp.snmp_params.snmp_session.community = (unsigned char *)community;
+	tmp.snmp_params.snmp_session.community_len = strlen(community);
 	return tmp;
 }
 
 snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 	if (parameters.ignore_mib_parsing_errors) {
-		char *opt_toggle_res = snmp_mib_toggle_options("e");
+		char option_e[2];
+		option_e[0] = 'e'; option_e[1] = '\0';
+		char *opt_toggle_res = snmp_mib_toggle_options(option_e);
 		if (opt_toggle_res != NULL) {
 			die(STATE_UNKNOWN, "Unable to disable MIB parsing errors");
 		}
@@ -436,7 +441,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			}
 		} else {
 			// It's only a counter if we cont compute rate
-			pd_num_val.uom = "c";
+			pd_num_val.uom = strdup("c");
 			pd_result_val = mp_create_pd_value(response.value.uIntVal);
 		}
 		break;
@@ -476,7 +481,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			pd_result_val = mp_create_pd_value(treated_value);
 
 			if (response.type == ASN_COUNTER) {
-				pd_num_val.uom = "c";
+				pd_num_val.uom = strdup("c");
 			}
 		}
 
@@ -820,7 +825,7 @@ state_data *np_state_read(state_key stateKey) {
  *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
  *   statically compiled shared state directory
  */
-char *_np_state_calculate_location_prefix(void) {
+static const char *_np_state_calculate_location_prefix(void) {
 	char *env_dir;
 
 	/* Do not allow passing MP_STATE_PATH in setuid plugins
@@ -871,7 +876,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 		tmp_char++;
 	}
 	this_state->name = temp_keyname;
-	this_state->plugin_name = (char *)plugin_name;
+	this_state->plugin_name = strdup(plugin_name);
 	this_state->data_version = expected_data_version;
 	this_state->state_data = NULL;
 

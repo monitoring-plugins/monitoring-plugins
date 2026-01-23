@@ -256,7 +256,10 @@ int main(int argc, char **argv) {
 
 	timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-	np_init((char *)progname, argc, argv);
+	char progname_copy[256];
+	strncpy(progname_copy, progname, sizeof(progname_copy)-1);
+	progname_copy[255] = '\0';
+	np_init(progname_copy, argc, argv);
 
 	state_key stateKey = np_enable_state(NULL, 1, progname, argc, argv);
 
@@ -508,8 +511,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	unsigned char *privpasswd = NULL;
 	int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 	char *port = NULL;
-	char *miblist = NULL;
-	char *connection_prefix = NULL;
+	const char *miblist = NULL;
+	const char *connection_prefix = NULL;
 	bool snmp_version_set_explicitely = false;
 	// TODO error checking
 	while (true) {
