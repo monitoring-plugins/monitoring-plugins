@@ -13,6 +13,7 @@ in order to resist overflow attacks. In addition, a few functions are
 provided to standardize version and error reporting across the entire
 suite of plugins. */
 
+#undef USE_OPENSSL // net-snmp defines USE_OPENSSL as NETSNMP_USE_OPENSSL in net-snmp-config.h
 #include "../config.h"
 #include <stdbool.h>
 #include <stdint.h>
