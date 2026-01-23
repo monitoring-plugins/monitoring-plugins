@@ -332,7 +332,7 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_index = getopt_long(argc, argv, "+hVvH:P:F:u:p:n:N:t:r:e:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 

@@ -284,7 +284,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index =
 			getopt_long(argc, argv, "hVvt:l:H:w:c:T:p:a:A:E:X:46", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 

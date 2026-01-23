@@ -445,7 +445,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 
@@ -515,7 +515,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 

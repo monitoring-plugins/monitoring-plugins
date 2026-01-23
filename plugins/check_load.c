@@ -295,7 +295,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		int option = 0;
 		int option_index = getopt_long(argc, argv, "Vhrc:w:n:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 

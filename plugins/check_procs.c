@@ -432,7 +432,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index =
 			getopt_long(argc, argv, "Vvhkt:c:w:p:s:u:C:a:z:r:m:P:T:X:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 

@@ -362,7 +362,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index =
 			getopt_long(argc, argv, "hvV234TS6t:c:w:H:b:p:a:D:P:C:W:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 

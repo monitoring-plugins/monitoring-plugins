@@ -175,7 +175,7 @@ check_cluster_config_wrapper process_arguments(int argc, char **argv) {
 	while (true) {
 		int option_index = getopt_long(argc, argv, "hHsvVw:c:d:l:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 

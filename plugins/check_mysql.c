@@ -504,7 +504,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index =
 			getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 
