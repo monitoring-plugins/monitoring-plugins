@@ -216,16 +216,6 @@
 #define _GL_FUNCDECL_RPL_1(rpl_func,rettype,parameters,...) \
   _GL_EXTERN_C_FUNC __VA_ARGS__ rettype rpl_func parameters
 
-/* _GL_FUNCDECL_SYS_NAME (func) expands to plain func if C++, and to
-   parenthesized func otherwise.  Parenthesization is needed in C23 if
-   the function is like strchr and so is a qualifier-generic macro
-   that expands to something more complicated.  */
-#ifdef __cplusplus
-# define _GL_FUNCDECL_SYS_NAME(func) func
-#else
-# define _GL_FUNCDECL_SYS_NAME(func) (func)
-#endif
-
 /* _GL_FUNCDECL_SYS (func, rettype, parameters, [attributes]);
    declares the system function, named func, with the given prototype,
    consisting of return type, parameters, and attributes.
@@ -238,7 +228,7 @@
      _GL_FUNCDECL_SYS (posix_openpt, int, (int flags), _GL_ATTRIBUTE_NODISCARD);
  */
 #define _GL_FUNCDECL_SYS(func,rettype,parameters,...) \
-  _GL_EXTERN_C_FUNC __VA_ARGS__ rettype _GL_FUNCDECL_SYS_NAME (func) parameters
+  _GL_EXTERN_C_FUNC __VA_ARGS__ rettype func parameters
 
 /* _GL_CXXALIAS_RPL (func, rettype, parameters);
    declares a C++ alias called GNULIB_NAMESPACE::func
@@ -409,7 +399,7 @@
    _GL_CXXALIASWARN_1 (func, GNULIB_NAMESPACE)
 # define _GL_CXXALIASWARN_1(func,namespace) \
    _GL_CXXALIASWARN_2 (func, namespace)
-/* To work around GCC bug <https://gcc.gnu.org/PR43881>,
+/* To work around GCC bug <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43881>,
    we enable the warning only when not optimizing.  */
 # if !(defined __GNUC__ && !defined __clang__ && __OPTIMIZE__)
 #  define _GL_CXXALIASWARN_2(func,namespace) \
@@ -437,7 +427,7 @@
                         GNULIB_NAMESPACE)
 # define _GL_CXXALIASWARN1_1(func,rettype,parameters_and_attributes,namespace) \
    _GL_CXXALIASWARN1_2 (func, rettype, parameters_and_attributes, namespace)
-/* To work around GCC bug <https://gcc.gnu.org/PR43881>,
+/* To work around GCC bug <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43881>,
    we enable the warning only when not optimizing.  */
 # if !(defined __GNUC__ && !defined __clang__ && __OPTIMIZE__)
 #  define _GL_CXXALIASWARN1_2(func,rettype,parameters_and_attributes,namespace) \
@@ -1112,6 +1102,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_create, int,
 _GL_CXXALIASWARN (pthread_create);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_create
 # if HAVE_RAW_DECL_PTHREAD_CREATE
 _GL_WARN_ON_USE (pthread_create, "pthread_create is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1138,6 +1129,7 @@ _GL_CXXALIAS_SYS (pthread_attr_init, int, (pthread_attr_t *attr));
 _GL_CXXALIASWARN (pthread_attr_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_attr_init
 # if HAVE_RAW_DECL_PTHREAD_ATTR_INIT
 _GL_WARN_ON_USE (pthread_attr_init, "pthread_attr_init is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1168,6 +1160,7 @@ _GL_CXXALIAS_SYS (pthread_attr_getdetachstate, int,
 _GL_CXXALIASWARN (pthread_attr_getdetachstate);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_attr_getdetachstate
 # if HAVE_RAW_DECL_PTHREAD_ATTR_GETDETACHSTATE
 _GL_WARN_ON_USE (pthread_attr_getdetachstate, "pthread_attr_getdetachstate is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1198,6 +1191,7 @@ _GL_CXXALIAS_SYS (pthread_attr_setdetachstate, int,
 _GL_CXXALIASWARN (pthread_attr_setdetachstate);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_attr_setdetachstate
 # if HAVE_RAW_DECL_PTHREAD_ATTR_SETDETACHSTATE
 _GL_WARN_ON_USE (pthread_attr_setdetachstate, "pthread_attr_setdetachstate is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1224,6 +1218,7 @@ _GL_CXXALIAS_SYS (pthread_attr_destroy, int, (pthread_attr_t *attr));
 _GL_CXXALIASWARN (pthread_attr_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_attr_destroy
 # if HAVE_RAW_DECL_PTHREAD_ATTR_DESTROY
 _GL_WARN_ON_USE (pthread_attr_destroy, "pthread_attr_destroy is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1248,6 +1243,7 @@ _GL_CXXALIAS_SYS (pthread_self, pthread_t, (void));
 _GL_CXXALIASWARN (pthread_self);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_self
 # if HAVE_RAW_DECL_PTHREAD_SELF
 _GL_WARN_ON_USE (pthread_self, "pthread_self is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1272,6 +1268,7 @@ _GL_CXXALIAS_SYS (pthread_equal, int, (pthread_t thread1, pthread_t thread2));
 _GL_CXXALIASWARN (pthread_equal);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_equal
 # if HAVE_RAW_DECL_PTHREAD_EQUAL
 _GL_WARN_ON_USE (pthread_equal, "pthread_equal is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1296,6 +1293,7 @@ _GL_CXXALIAS_SYS (pthread_detach, int, (pthread_t thread));
 _GL_CXXALIASWARN (pthread_detach);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_detach
 # if HAVE_RAW_DECL_PTHREAD_DETACH
 _GL_WARN_ON_USE (pthread_detach, "pthread_detach is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1320,6 +1318,7 @@ _GL_CXXALIAS_SYS (pthread_join, int, (pthread_t thread, void **valuep));
 _GL_CXXALIASWARN (pthread_join);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_join
 # if HAVE_RAW_DECL_PTHREAD_JOIN
 _GL_WARN_ON_USE (pthread_join, "pthread_join is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1345,6 +1344,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_exit, void, (void *value));
 _GL_CXXALIASWARN (pthread_exit);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_exit
 # if HAVE_RAW_DECL_PTHREAD_EXIT
 _GL_WARN_ON_USE (pthread_exit, "pthread_exit is not portable - "
                  "use gnulib module pthread-thread for portability");
@@ -1378,6 +1378,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_once, int,
 _GL_CXXALIASWARN (pthread_once);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_once
 # if HAVE_RAW_DECL_PTHREAD_ONCE
 _GL_WARN_ON_USE (pthread_once, "pthread_once is not portable - "
                  "use gnulib module pthread-once for portability");
@@ -1414,6 +1415,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_init, int,
 _GL_CXXALIASWARN (pthread_mutex_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_init
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_INIT
 _GL_WARN_ON_USE (pthread_mutex_init, "pthread_mutex_init is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1440,6 +1442,7 @@ _GL_CXXALIAS_SYS (pthread_mutexattr_init, int, (pthread_mutexattr_t *attr));
 _GL_CXXALIASWARN (pthread_mutexattr_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_init
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_INIT
 _GL_WARN_ON_USE (pthread_mutexattr_init, "pthread_mutexattr_init is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1476,6 +1479,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_mutexattr_gettype, int,
 _GL_CXXALIASWARN (pthread_mutexattr_gettype);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_gettype
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_GETTYPE
 _GL_WARN_ON_USE (pthread_mutexattr_gettype, "pthread_mutexattr_gettype is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1504,6 +1508,7 @@ _GL_CXXALIAS_SYS (pthread_mutexattr_settype, int,
 _GL_CXXALIASWARN (pthread_mutexattr_settype);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_settype
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_SETTYPE
 _GL_WARN_ON_USE (pthread_mutexattr_settype, "pthread_mutexattr_settype is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1540,6 +1545,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_mutexattr_getrobust, int,
 _GL_CXXALIASWARN (pthread_mutexattr_getrobust);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_getrobust
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_GETROBUST
 _GL_WARN_ON_USE (pthread_mutexattr_getrobust, "pthread_mutexattr_getrobust is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1570,6 +1576,7 @@ _GL_CXXALIAS_SYS (pthread_mutexattr_setrobust, int,
 _GL_CXXALIASWARN (pthread_mutexattr_setrobust);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_setrobust
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_SETROBUST
 _GL_WARN_ON_USE (pthread_mutexattr_setrobust, "pthread_mutexattr_setrobust is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1596,6 +1603,7 @@ _GL_CXXALIAS_SYS (pthread_mutexattr_destroy, int, (pthread_mutexattr_t *attr));
 _GL_CXXALIASWARN (pthread_mutexattr_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutexattr_destroy
 # if HAVE_RAW_DECL_PTHREAD_MUTEXATTR_DESTROY
 _GL_WARN_ON_USE (pthread_mutexattr_destroy, "pthread_mutexattr_destroy is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1622,6 +1630,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_lock, int, (pthread_mutex_t *mutex));
 _GL_CXXALIASWARN (pthread_mutex_lock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_lock
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_LOCK
 _GL_WARN_ON_USE (pthread_mutex_lock, "pthread_mutex_lock is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1648,6 +1657,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_trylock, int, (pthread_mutex_t *mutex));
 _GL_CXXALIASWARN (pthread_mutex_trylock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_trylock
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_TRYLOCK
 _GL_WARN_ON_USE (pthread_mutex_trylock, "pthread_mutex_trylock is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1682,6 +1692,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_timedlock, int,
 _GL_CXXALIASWARN (pthread_mutex_timedlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_timedlock
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_TIMEDLOCK
 _GL_WARN_ON_USE (pthread_mutex_timedlock, "pthread_mutex_timedlock is not portable - "
                  "use gnulib module pthread_mutex_timedlock for portability");
@@ -1708,6 +1719,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_unlock, int, (pthread_mutex_t *mutex));
 _GL_CXXALIASWARN (pthread_mutex_unlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_unlock
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_UNLOCK
 _GL_WARN_ON_USE (pthread_mutex_unlock, "pthread_mutex_unlock is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1734,6 +1746,7 @@ _GL_CXXALIAS_SYS (pthread_mutex_destroy, int, (pthread_mutex_t *mutex));
 _GL_CXXALIASWARN (pthread_mutex_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_mutex_destroy
 # if HAVE_RAW_DECL_PTHREAD_MUTEX_DESTROY
 _GL_WARN_ON_USE (pthread_mutex_destroy, "pthread_mutex_destroy is not portable - "
                  "use gnulib module pthread-mutex for portability");
@@ -1770,6 +1783,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_init, int,
 _GL_CXXALIASWARN (pthread_rwlock_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_init
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_INIT
 _GL_WARN_ON_USE (pthread_rwlock_init, "pthread_rwlock_init is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1796,6 +1810,7 @@ _GL_CXXALIAS_SYS (pthread_rwlockattr_init, int, (pthread_rwlockattr_t *attr));
 _GL_CXXALIASWARN (pthread_rwlockattr_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlockattr_init
 # if HAVE_RAW_DECL_PTHREAD_RWLOCKATTR_INIT
 _GL_WARN_ON_USE (pthread_rwlockattr_init, "pthread_rwlockattr_init is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1824,6 +1839,7 @@ _GL_CXXALIAS_SYS (pthread_rwlockattr_destroy, int,
 _GL_CXXALIASWARN (pthread_rwlockattr_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlockattr_destroy
 # if HAVE_RAW_DECL_PTHREAD_RWLOCKATTR_DESTROY
 _GL_WARN_ON_USE (pthread_rwlockattr_destroy, "pthread_rwlockattr_destroy is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1850,6 +1866,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_rdlock, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_rdlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_rdlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_RDLOCK
 _GL_WARN_ON_USE (pthread_rwlock_rdlock, "pthread_rwlock_rdlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1876,6 +1893,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_wrlock, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_wrlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_wrlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_WRLOCK
 _GL_WARN_ON_USE (pthread_rwlock_wrlock, "pthread_rwlock_wrlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1902,6 +1920,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_tryrdlock, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_tryrdlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_tryrdlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_TRYRDLOCK
 _GL_WARN_ON_USE (pthread_rwlock_tryrdlock, "pthread_rwlock_tryrdlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1928,6 +1947,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_trywrlock, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_trywrlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_trywrlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_TRYWRLOCK
 _GL_WARN_ON_USE (pthread_rwlock_trywrlock, "pthread_rwlock_trywrlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1962,6 +1982,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_timedrdlock, int,
 _GL_CXXALIASWARN (pthread_rwlock_timedrdlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_timedrdlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_TIMEDRDLOCK
 _GL_WARN_ON_USE (pthread_rwlock_timedrdlock, "pthread_rwlock_timedrdlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -1996,6 +2017,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_timedwrlock, int,
 _GL_CXXALIASWARN (pthread_rwlock_timedwrlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_timedwrlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_TIMEDWRLOCK
 _GL_WARN_ON_USE (pthread_rwlock_timedwrlock, "pthread_rwlock_timedwrlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -2022,6 +2044,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_unlock, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_unlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_unlock
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_UNLOCK
 _GL_WARN_ON_USE (pthread_rwlock_unlock, "pthread_rwlock_unlock is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -2048,6 +2071,7 @@ _GL_CXXALIAS_SYS (pthread_rwlock_destroy, int, (pthread_rwlock_t *lock));
 _GL_CXXALIASWARN (pthread_rwlock_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_rwlock_destroy
 # if HAVE_RAW_DECL_PTHREAD_RWLOCK_DESTROY
 _GL_WARN_ON_USE (pthread_rwlock_destroy, "pthread_rwlock_destroy is not portable - "
                  "use gnulib module pthread-rwlock for portability");
@@ -2084,6 +2108,7 @@ _GL_CXXALIAS_SYS (pthread_cond_init, int,
 _GL_CXXALIASWARN (pthread_cond_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_init
 # if HAVE_RAW_DECL_PTHREAD_COND_INIT
 _GL_WARN_ON_USE (pthread_cond_init, "pthread_cond_init is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2110,6 +2135,7 @@ _GL_CXXALIAS_SYS (pthread_condattr_init, int, (pthread_condattr_t *attr));
 _GL_CXXALIASWARN (pthread_condattr_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_condattr_init
 # if HAVE_RAW_DECL_PTHREAD_CONDATTR_INIT
 _GL_WARN_ON_USE (pthread_condattr_init, "pthread_condattr_init is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2136,6 +2162,7 @@ _GL_CXXALIAS_SYS (pthread_condattr_destroy, int, (pthread_condattr_t *attr));
 _GL_CXXALIASWARN (pthread_condattr_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_condattr_destroy
 # if HAVE_RAW_DECL_PTHREAD_CONDATTR_DESTROY
 _GL_WARN_ON_USE (pthread_condattr_destroy, "pthread_condattr_destroy is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2170,6 +2197,7 @@ _GL_CXXALIAS_SYS (pthread_cond_wait, int,
 _GL_CXXALIASWARN (pthread_cond_wait);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_wait
 # if HAVE_RAW_DECL_PTHREAD_COND_WAIT
 _GL_WARN_ON_USE (pthread_cond_wait, "pthread_cond_wait is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2208,6 +2236,7 @@ _GL_CXXALIAS_SYS (pthread_cond_timedwait, int,
 _GL_CXXALIASWARN (pthread_cond_timedwait);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_timedwait
 # if HAVE_RAW_DECL_PTHREAD_COND_TIMEDWAIT
 _GL_WARN_ON_USE (pthread_cond_timedwait, "pthread_cond_timedwait is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2234,6 +2263,7 @@ _GL_CXXALIAS_SYS (pthread_cond_signal, int, (pthread_cond_t *cond));
 _GL_CXXALIASWARN (pthread_cond_signal);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_signal
 # if HAVE_RAW_DECL_PTHREAD_COND_SIGNAL
 _GL_WARN_ON_USE (pthread_cond_signal, "pthread_cond_signal is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2260,6 +2290,7 @@ _GL_CXXALIAS_SYS (pthread_cond_broadcast, int, (pthread_cond_t *cond));
 _GL_CXXALIASWARN (pthread_cond_broadcast);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_broadcast
 # if HAVE_RAW_DECL_PTHREAD_COND_BROADCAST
 _GL_WARN_ON_USE (pthread_cond_broadcast, "pthread_cond_broadcast is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2286,6 +2317,7 @@ _GL_CXXALIAS_SYS (pthread_cond_destroy, int, (pthread_cond_t *cond));
 _GL_CXXALIASWARN (pthread_cond_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_cond_destroy
 # if HAVE_RAW_DECL_PTHREAD_COND_DESTROY
 _GL_WARN_ON_USE (pthread_cond_destroy, "pthread_cond_destroy is not portable - "
                  "use gnulib module pthread-cond for portability");
@@ -2318,6 +2350,7 @@ _GL_CXXALIAS_SYS_CAST (pthread_key_create, int,
 _GL_CXXALIASWARN (pthread_key_create);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_key_create
 # if HAVE_RAW_DECL_PTHREAD_KEY_CREATE
 _GL_WARN_ON_USE (pthread_key_create, "pthread_key_create is not portable - "
                  "use gnulib module pthread-tss for portability");
@@ -2346,6 +2379,7 @@ _GL_CXXALIAS_SYS (pthread_setspecific, int,
 _GL_CXXALIASWARN (pthread_setspecific);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_setspecific
 # if HAVE_RAW_DECL_PTHREAD_SETSPECIFIC
 _GL_WARN_ON_USE (pthread_setspecific, "pthread_setspecific is not portable - "
                  "use gnulib module pthread-tss for portability");
@@ -2370,6 +2404,7 @@ _GL_CXXALIAS_SYS (pthread_getspecific, void *, (pthread_key_t key));
 _GL_CXXALIASWARN (pthread_getspecific);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_getspecific
 # if HAVE_RAW_DECL_PTHREAD_GETSPECIFIC
 _GL_WARN_ON_USE (pthread_getspecific, "pthread_getspecific is not portable - "
                  "use gnulib module pthread-tss for portability");
@@ -2394,6 +2429,7 @@ _GL_CXXALIAS_SYS (pthread_key_delete, int, (pthread_key_t key));
 _GL_CXXALIASWARN (pthread_key_delete);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_key_delete
 # if HAVE_RAW_DECL_PTHREAD_KEY_DELETE
 _GL_WARN_ON_USE (pthread_key_delete, "pthread_key_delete is not portable - "
                  "use gnulib module pthread-tss for portability");
@@ -2426,6 +2462,7 @@ _GL_CXXALIAS_SYS (pthread_spin_init, int,
 _GL_CXXALIASWARN (pthread_spin_init);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_spin_init
 # if HAVE_RAW_DECL_PTHREAD_SPIN_INIT
 _GL_WARN_ON_USE (pthread_spin_init, "pthread_spin_init is not portable - "
                  "use gnulib module pthread-spin for portability");
@@ -2452,6 +2489,7 @@ _GL_CXXALIAS_SYS (pthread_spin_lock, int, (pthread_spinlock_t *lock));
 _GL_CXXALIASWARN (pthread_spin_lock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_spin_lock
 # if HAVE_RAW_DECL_PTHREAD_SPIN_LOCK
 _GL_WARN_ON_USE (pthread_spin_lock, "pthread_spin_lock is not portable - "
                  "use gnulib module pthread-spin for portability");
@@ -2478,6 +2516,7 @@ _GL_CXXALIAS_SYS (pthread_spin_trylock, int, (pthread_spinlock_t *lock));
 _GL_CXXALIASWARN (pthread_spin_trylock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_spin_trylock
 # if HAVE_RAW_DECL_PTHREAD_SPIN_TRYLOCK
 _GL_WARN_ON_USE (pthread_spin_trylock, "pthread_spin_trylock is not portable - "
                  "use gnulib module pthread-spin for portability");
@@ -2504,6 +2543,7 @@ _GL_CXXALIAS_SYS (pthread_spin_unlock, int, (pthread_spinlock_t *lock));
 _GL_CXXALIASWARN (pthread_spin_unlock);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_spin_unlock
 # if HAVE_RAW_DECL_PTHREAD_SPIN_UNLOCK
 _GL_WARN_ON_USE (pthread_spin_unlock, "pthread_spin_unlock is not portable - "
                  "use gnulib module pthread-spin for portability");
@@ -2530,6 +2570,7 @@ _GL_CXXALIAS_SYS (pthread_spin_destroy, int, (pthread_spinlock_t *lock));
 _GL_CXXALIASWARN (pthread_spin_destroy);
 # endif
 #elif defined GNULIB_POSIXCHECK
+# undef pthread_spin_destroy
 # if HAVE_RAW_DECL_PTHREAD_SPIN_DESTROY
 _GL_WARN_ON_USE (pthread_spin_destroy, "pthread_spin_destroy is not portable - "
                  "use gnulib module pthread-spin for portability");

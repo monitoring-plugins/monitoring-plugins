@@ -213,7 +213,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 		int option = 0;
 		option_char = getopt_long(argc, argv, "hVH:w:c:W:C:p:t:u", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 

@@ -193,7 +193,7 @@ enum {
  */
 #include "../gl/gettext.h"
 #define _(String) gettext(String)
-#if !ENABLE_NLS
+#if !defined(ENABLE_NLS) || !ENABLE_NLS
 #	undef textdomain
 #	define textdomain(Domainname) /* empty */
 #	undef bindtextdomain
@@ -203,6 +203,13 @@ enum {
 /* For non-GNU compilers to ignore __attribute__ */
 #ifndef __GNUC__
 #	define __attribute__(x) /* do nothing */
+#endif
+
+/* for checking the result of getopt_long */
+#if EOF == -1
+#define CHECK_EOF(c) ((c) == EOF)
+#else
+#define CHECK_EOF(c) ((c) == -1 || (c) == EOF)
 #endif
 
 #endif /* _COMMON_H_ */

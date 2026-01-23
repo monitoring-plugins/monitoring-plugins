@@ -9,7 +9,7 @@ enum {
 	PORT = 554
 };
 
-const char *default_expect = "RTSP/1.";
+char *default_expect = "RTSP/1.";
 
 typedef struct {
 	char *server_address;

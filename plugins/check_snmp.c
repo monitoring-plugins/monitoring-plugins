@@ -116,6 +116,7 @@ gen_state_string_type gen_state_string(check_snmp_state_entry *entries, size_t n
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
@@ -217,6 +218,7 @@ recover_state_data_type recover_state_data(char *state_string, idx_t state_strin
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
@@ -254,7 +256,10 @@ int main(int argc, char **argv) {
 
 	timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-	np_init((char *)progname, argc, argv);
+	char progname_copy[256];
+	strncpy(progname_copy, progname, sizeof(progname_copy)-1);
+	progname_copy[255] = '\0';
+	np_init(progname_copy, argc, argv);
 
 	state_key stateKey = np_enable_state(NULL, 1, progname, argc, argv);
 
@@ -445,7 +450,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 
@@ -506,8 +511,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	unsigned char *privpasswd = NULL;
 	int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 	char *port = NULL;
-	char *miblist = NULL;
-	char *connection_prefix = NULL;
+	const char *miblist = NULL;
+	const char *connection_prefix = NULL;
 	bool snmp_version_set_explicitely = false;
 	// TODO error checking
 	while (true) {
@@ -515,7 +520,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 

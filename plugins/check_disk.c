@@ -448,7 +448,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index = getopt_long(
 			argc, argv, "+?VqhvefCt:c:w:K:W:u:p:x:X:N:mklLPg:R:r:i:I:MEAn", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 
