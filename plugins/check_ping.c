@@ -246,11 +246,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET;
 			break;
 		case '6': /* IPv6 only */
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage(_("IPv6 support not available\n"));
-#endif
 			break;
 		case 'H': /* hostname */ {
 			char *ptr = optarg;

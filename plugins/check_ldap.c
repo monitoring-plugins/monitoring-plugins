@@ -462,11 +462,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case '6':
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage(_("IPv6 support not available\n"));
-#endif
 			break;
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);

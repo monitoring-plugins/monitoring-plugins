@@ -583,11 +583,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			address_family = AF_INET;
 			break;
 		case '6': // Apparently unused TODO
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage4(_("IPv6 support not available"));
-#endif
 			break;
 		case 'H': /* hostname */
 			config.host_specified = true;

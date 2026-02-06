@@ -475,30 +475,6 @@ AC_ARG_WITH([ipv6],
 	[AS_HELP_STRING([--with-ipv6], [support IPv6 @<:@default=check@:>@])],
 	[], [with_ipv6=check])
 
-dnl Check for AF_INET6 support - unistd.h required for Darwin
-if test "$with_ipv6" != "no"; then
-	AC_CACHE_CHECK([for IPv6 support], np_cv_sys_ipv6, [
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_UNISTD_H
-			#include <unistd.h>
-			#endif
-			#include <netinet/in.h>
-			#include <sys/socket.h>]], [[struct sockaddr_in6 sin6;
-			void *p;
-
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_port = 587;
-			p = &sin6.sin6_addr;]])],[np_cv_sys_ipv6=yes],[np_cv_sys_ipv6=no])
-		])
-	if test "$np_cv_sys_ipv6" = "no" -a "$with_ipv6" != "check"; then
-		AC_MSG_FAILURE([--with-ipv6 was given, but test for IPv6 support failed])
-	fi
-	if test "$np_cv_sys_ipv6" = "yes"; then
-		AC_DEFINE(USE_IPV6,1,[Enable IPv6 support])
-	fi
-	with_ipv6="$np_cv_sys_ipv6"
-fi
-
-
 dnl Checks for Kerberos. Must come before openssl checks for Redhat EL 3
 AC_CHECK_HEADERS(krb5.h,FOUNDINCLUDE=yes,FOUNDINCLUDE=no)
 if test "$FOUNDINCLUDE" = "no"; then

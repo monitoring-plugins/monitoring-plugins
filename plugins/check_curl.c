@@ -1265,7 +1265,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.curl_config.sin_family = AF_INET;
 			break;
 		case '6':
-#if defined(USE_IPV6) && defined(LIBCURL_FEATURE_IPV6)
+#if defined(LIBCURL_FEATURE_IPV6)
 			result.config.curl_config.sin_family = AF_INET6;
 #else
 			usage4(_("IPv6 support not available"));
