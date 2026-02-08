@@ -70,6 +70,10 @@ struct mp_check {
 
 	// the evaluation_functions computes the state of check
 	mp_state_enum (*evaluation_function)(mp_check);
+
+	// override for the default output format
+	char *(*default_output_override)(void *);
+	void *default_output_override_content;
 };
 
 mp_check mp_check_init(void);
