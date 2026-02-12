@@ -1399,15 +1399,10 @@ char *fmt_url(check_curl_working_state workingState) {
 }
 
 
+/* function that will determine if the host or the proxy resolves the target hostname */
+/* 0 means the host will resolve the target hostname, 1 means proxy is going to resolve the hostname */
 int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
-
-	/* check if the host matches contained in curlopt_noproxy */
-	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
-	/* curlopt_noproxy is specified as a comma separated list of
-	direct IPv4 or IPv6 addresses e.g 130.133.8.40, 2001:4860:4802:32::a ,
-	IPv4 or IPv6 CIDR regions e.g 10.241.0.0/16 , abcd:ef01:2345::/48 ,
-	direct hostnames e.g example.com, google.de */
-
+	/* IPv4 or IPv6 version of the address */
 	char *server_address_clean = strdup(working_state.server_address);
 	/* the hostname that was passed might be a full ipv6 address encapsulated in square brackets */
 	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) && (working_state.server_address[0] == '[') && (working_state.server_address[strlen(working_state.server_address)-1] == ']') ) {
@@ -1416,17 +1411,25 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 
 	char *host_name_display = working_state.host_name ? working_state.host_name : "NULL";
 
+	/* check curlopt_noproxy option first */
+	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
+
+	/* curlopt_noproxy is specified as a comma separated list of
+	direct IPv4 or IPv6 addresses e.g 130.133.8.40, 2001:4860:4802:32::a ,
+	IPv4 or IPv6 CIDR regions e.g 10.241.0.0/16 , abcd:ef01:2345::/48 ,
+	direct hostnames e.g example.com, google.de */
+
 	if (working_state.curlopt_noproxy != NULL){
 		char* curlopt_noproxy_copy = strdup( working_state.curlopt_noproxy);
 		char* noproxy_item = strtok(curlopt_noproxy_copy, ",");
 		while(noproxy_item != NULL){
 
-			/* CURLOPT_NOPROXY documentation: */
+			/* According to the CURLOPT_NOPROXY documentation: */
+			/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
 			/* The only wildcard available is a single * character, which matches all hosts, and effectively disables the proxy. */
 			if ( strlen(noproxy_item) == 1 && noproxy_item[0] == '*'){
 				if (verbose >= 1){
-					printf("* noproxy includes '*' which disables proxy for all hosts including: %s or server_addresses including: %s\n", host_name_display , server_address_clean);
-
+					printf("* noproxy includes '*' which disables proxy for all host name incl. : %s / server address incl. : %s\n", host_name_display , server_address_clean);
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
@@ -1443,8 +1446,11 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 				return 0;
 			}
 
+			unsigned long host_name_len = strlen(working_state.host_name);
+			unsigned long noproxy_item_len = strlen(noproxy_item);
+
 			/* direct comparison with the host_name */
-			if( working_state.host_name != NULL && strlen(working_state.host_name) == strlen(noproxy_item) && strcmp(working_state.host_name, noproxy_item) == 0){
+			if( working_state.host_name != NULL && host_name_len == noproxy_item_len && strcmp(working_state.host_name, noproxy_item) == 0){
 				if (verbose >= 1){
 					printf("* host_name is in the no_proxy list: %s\n", noproxy_item);
 				}
@@ -1453,7 +1459,18 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 				return 0;
 			}
 
-			/* TODO: determine if the hostname is a subdomain of the item, e.g www.example.com when token is example.com*/
+			/* check if hostname is a subdomain of the item, e.g www.example.com when token is example.com */
+			/* check if noproxy_item is a suffix */
+			/* check if just before the suffix is a '.' */
+			unsigned long suffix_start_idx = host_name_len - noproxy_item_len;
+			if( working_state.host_name != NULL && host_name_len > noproxy_item_len && strcmp(working_state.host_name + suffix_start_idx, noproxy_item ) == 0 && working_state.host_name[suffix_start_idx-1] == '.' ){
+				if (verbose >= 1){
+					printf("* host_name: %s is a subdomain of the no_proxy list item: %s\n", working_state.host_name , noproxy_item);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
 
 			/* TODO: determine if its IPv4 or IPv6 CIDR notation, if a server_address is used check if its in the subnet specified by CIDR */
 
@@ -1466,7 +1483,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 
 	}
 
-	if (working_state.curlopt_noproxy != NULL){
+	if (working_state.curlopt_proxy != NULL){
 		if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
 			if (verbose >= 1){
 				printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
