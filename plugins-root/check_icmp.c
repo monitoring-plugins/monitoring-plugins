@@ -957,15 +957,15 @@ int main(int argc, char **argv) {
 
 	if (debug) {
 		if (max_completion_time > (timeout * 1000000)) {
-			printf("max_completion_time: %ld  timeout: %u\n", max_completion_time, timeout);
-			printf("Timeout must be at least %ld\n", (max_completion_time / 1000000) + 1);
+			printf("max_completion_time: %lld  timeout: %u\n", (long long)max_completion_time, timeout);
+			printf("Timeout must be at least %lld\n", (long long)(max_completion_time / 1000000) + 1);
 		}
 	}
 
 	if (debug) {
-		printf("crit = {%ld, %u%%}, warn = {%ld, %u%%}\n", config.crit.rta, config.crit.pl,
-			   config.warn.rta, config.warn.pl);
-		printf("target_interval: %ld\n", config.target_interval);
+		printf("crit = {%lld, %u%%}, warn = {%lld, %u%%}\n", (long long)config.crit.rta, config.crit.pl,
+			   (long long)config.warn.rta, config.warn.pl);
+		printf("target_interval: %lld\n", (long long)config.target_interval);
 		printf("icmp_pkt_size: %u  timeout: %u\n", config.icmp_data_size + ICMP_MINLEN, timeout);
 	}
 
@@ -1066,8 +1066,8 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *target_interval,
 		time_t final_wait = max_completion_time - time_passed;
 
 		if (debug) {
-			printf("time_passed: %ld  final_wait: %ld  max_completion_time: %ld\n", time_passed,
-				   final_wait, max_completion_time);
+			printf("time_passed: %lld  final_wait: %lld  max_completion_time: %lld\n",
+				   (long long)time_passed, (long long)final_wait, (long long)max_completion_time);
 		}
 		if (time_passed > max_completion_time) {
 			if (debug) {
@@ -1079,7 +1079,7 @@ static void run_checks(unsigned short icmp_pkt_size, time_t *target_interval,
 		/* catch the packets that might come in within the timeframe, but
 		 * haven't yet */
 		if (debug) {
-			printf("Waiting for %ld micro-seconds (%0.3f msecs)\n", final_wait,
+			printf("Waiting for %lld micro-seconds (%0.3f msecs)\n", (long long)final_wait,
 				   (float)final_wait / 1000);
 		}
 		if (targets_alive(number_of_targets, program_state->targets_down) ||
@@ -1142,7 +1142,7 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 						 &loop_time_interval, &packet_received_timestamp);
 		if (!recv_foo.received) {
 			if (debug > 1) {
-				printf("recvfrom_wto() timed out during a %ld usecs wait\n", per_pkt_wait);
+				printf("recvfrom_wto() timed out during a %lld usecs wait\n", (long long)per_pkt_wait);
 			}
 			continue; /* timeout for this one, so keep trying */
 		}
