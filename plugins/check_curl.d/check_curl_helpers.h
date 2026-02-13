@@ -129,3 +129,6 @@ char *fmt_url(check_curl_working_state workingState);
 
 /* returns 0 if requester resolves the hostname locally, 1 if proxy resolves the hostname*/
 int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config);
+
+/* returns 1 if the target_ip address is inside the given cidr notation. /0 or empty ranges perform an equality check. Supports both IPv4 and IPv6 */
+int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip);

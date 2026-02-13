@@ -3,8 +3,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include "../utils.h"
 #include "check_curl.d/config.h"
 #include "output.h"
@@ -1405,14 +1407,19 @@ char *fmt_url(check_curl_working_state workingState) {
 /* function that will determine if the host or the proxy resolves the target hostname */
 /* 0 means the host will resolve the target hostname, 1 means proxy is going to resolve the hostname */
 int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
+	char *host_name_display = "NULL";
+	unsigned long host_name_len = 0;
+	if( working_state.host_name){
+		host_name_len = strlen(working_state.host_name);
+		host_name_display = working_state.host_name;
+	}
+
 	/* IPv4 or IPv6 version of the address */
 	char *server_address_clean = strdup(working_state.server_address);
-	/* the hostname that was passed might be a full ipv6 address encapsulated in square brackets */
+	/* server address might be a full length ipv6 address encapsulated in square brackets */
 	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) && (working_state.server_address[0] == '[') && (working_state.server_address[strlen(working_state.server_address)-1] == ']') ) {
 		server_address_clean = strndup( working_state.server_address + 1, strlen(working_state.server_address) - 2);
 	}
-
-	char *host_name_display = working_state.host_name ? working_state.host_name : "NULL";
 
 	/* check curlopt_noproxy option first */
 	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
@@ -1426,6 +1433,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 		char* curlopt_noproxy_copy = strdup( working_state.curlopt_noproxy);
 		char* noproxy_item = strtok(curlopt_noproxy_copy, ",");
 		while(noproxy_item != NULL){
+			unsigned long noproxy_item_len = strlen(noproxy_item);
 
 			/* According to the CURLOPT_NOPROXY documentation: */
 			/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
@@ -1449,9 +1457,6 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 				return 0;
 			}
 
-			unsigned long host_name_len = strlen(working_state.host_name);
-			unsigned long noproxy_item_len = strlen(noproxy_item);
-
 			/* direct comparison with the host_name */
 			if( working_state.host_name != NULL && host_name_len == noproxy_item_len && strcmp(working_state.host_name, noproxy_item) == 0){
 				if (verbose >= 1){
@@ -1465,28 +1470,36 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 			/* check if hostname is a subdomain of the item, e.g www.example.com when token is example.com */
 			/* check if noproxy_item is a suffix */
 			/* check if just before the suffix is a '.' */
-			unsigned long suffix_start_idx = host_name_len - noproxy_item_len;
-			if( working_state.host_name != NULL && host_name_len > noproxy_item_len && strcmp(working_state.host_name + suffix_start_idx, noproxy_item ) == 0 && working_state.host_name[suffix_start_idx-1] == '.' ){
-				if (verbose >= 1){
-					printf("* host_name: %s is a subdomain of the no_proxy list item: %s\n", working_state.host_name , noproxy_item);
+			if( working_state.host_name != NULL && host_name_len > noproxy_item_len){
+				unsigned long suffix_start_idx = host_name_len - noproxy_item_len;
+				if (strcmp(working_state.host_name + suffix_start_idx, noproxy_item ) == 0 && working_state.host_name[suffix_start_idx-1] == '.' ){
+					if (verbose >= 1){
+						printf("* host_name: %s is a subdomain of the no_proxy list item: %s\n", working_state.host_name , noproxy_item);
+					}
+					free(curlopt_noproxy_copy);
+					free(server_address_clean);
+					return 0;
 				}
-				free(curlopt_noproxy_copy);
-				free(server_address_clean);
-				return 0;
 			}
 
-			/* TODO: determine if its IPv4 or IPv6 CIDR notation, if a server_address is used check if its in the subnet specified by CIDR */
-
-			if (verbose >= 1){
-				printf("* no_proxy list has item: %s , cannot determine if it should be applied for host: %s or server_address: %s\n", noproxy_item, host_name_display , server_address_clean);
+			// noproxy_item could be a CIDR IP range
+			if( server_address_clean != NULL && strlen(server_address_clean) && ip_addr_inside_cidr(noproxy_item, server_address_clean) == 1 ){
+				return 0;
 			}
 
 			noproxy_item = strtok(NULL, ",");
 		}
 
+		free(curlopt_noproxy_copy);
 	}
 
 	if (working_state.curlopt_proxy != NULL){
+		// Libcurl documentation
+		// Setting the proxy string to "" (an empty string) explicitly disables the use of a proxy, even if there is an environment variable set for it.
+		if ( strlen(working_state.curlopt_proxy) == 0){
+
+		}
+
 		if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
 			if (verbose >= 1){
 				printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
@@ -1534,6 +1547,13 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 			free(server_address_clean);
 			return 1;
 		}
+
+		// Libcurl documentation:
+		// Without a scheme prefix, CURLOPT_PROXYTYPE can be used to specify which kind of proxy the string identifies.
+		// We do not set this value
+		// Without a scheme, it is treated as an http proxy
+
+		return 1;
 	}
 
 	if (verbose >= 1){
@@ -1542,4 +1562,139 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 
 	free(server_address_clean);
 	return 0;
+}
+
+
+// This function checks if an IP is contained within a cidr_region or is directly the IP being searched
+// return code 1 means its inside
+// return code 0 means its out
+// return code < 0 means error
+int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip){
+	unsigned int slash_count = 0;
+	unsigned int last_slash_idx = 0;
+	for(int i=0; i < strlen(cidr_region_or_ip_addr); i++){
+		if(cidr_region_or_ip_addr[i] == '/'){
+			slash_count++;
+			last_slash_idx = i;
+		}
+	}
+
+	unsigned int subnet_length = 0;
+	switch(slash_count){
+		case 0:
+			subnet_length = 0;
+			break;
+		case 1:
+			errno = 0;
+			subnet_length = strtoul(cidr_region_or_ip_addr + last_slash_idx + 1, NULL, 10);
+			if(errno == ERANGE){
+				if( verbose >= 1){
+					printf("cidr_region_or_ip: %s , could not parse  subnet length: 0\n", cidr_region_or_ip_addr);
+				}
+				return -1;
+			}
+			break;
+		default:
+			printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid cidr_region or IP\n", cidr_region_or_ip_addr, slash_count);
+			return -1;
+	}
+
+	if( verbose >= 1){
+		printf("cidr_region_or_ip: %s , has subnet length: %d\n", cidr_region_or_ip_addr, subnet_length);
+	}
+
+	const char* cidr_ip_part = strndup(cidr_region_or_ip_addr, last_slash_idx);
+
+	int cidr_addr_family, target_addr_family;
+	if (strchr(cidr_ip_part,':')){
+		cidr_addr_family = AF_INET6;
+	}else{
+		cidr_addr_family = AF_INET;
+	}
+
+	if (strchr(target_ip,':')){
+		target_addr_family = AF_INET6;
+	}else{
+		target_addr_family = AF_INET;
+	}
+
+	if(cidr_addr_family != target_addr_family){
+		if( verbose >= 1){
+			printf("cidr address: %s and target ip address: %s have different address families\n", cidr_ip_part, target_ip);
+		}
+		return 0;
+	}
+
+	// save both IPv6/IPv4 types in an ipv6 struct
+	struct in6_addr cidr_ipv6 , target_ipv6;
+
+	errno = 0;
+	int inet_pton_rc = inet_pton(cidr_addr_family, cidr_ip_part, (void *)(&cidr_ipv6));
+	switch(inet_pton_rc){
+	case 1:
+		break;
+	case 0:
+		if( verbose >= 1){
+			printf("ip string: %s contains characters not valid for its address family\n", cidr_ip_part);
+		}
+		return -1;
+		break;
+	case -1:
+		if( verbose >= 1){
+			printf("is not a valid address family: %d\n", cidr_addr_family);
+		}
+		return -1;
+		break;
+	}
+
+	errno = 0;
+	inet_pton_rc = inet_pton(target_addr_family, target_ip, (void *)(&target_ipv6));
+	switch(inet_pton_rc){
+	case 1:
+		break;
+	case 0:
+		if( verbose >= 1){
+			printf("ip string: %s contains characters not valid for its address family\n", target_ip);
+		}
+		return -1;
+		break;
+	case -1:
+		if( verbose >= 1){
+			printf("is not a valid address family: %d", target_addr_family);
+		}
+	}
+
+	int prefix_length = (cidr_addr_family == AF_INET ? 32 : 128) - subnet_length;
+
+	if (prefix_length <=0 ){
+		if( verbose >= 1){
+			printf("the calculated prefix length: %d between the range and the target_ip is bellow 1\n", prefix_length);
+		}
+		return -1;
+	}
+
+	bool prefixes_match = true;
+	int prefix_bytes = prefix_length / 8;
+	int prefix_bits = prefix_length % 8;
+	// use int8_t and utilize twos complement
+	int8_t prefix_bits_bitmask = -((int8_t)(1) << (int8_t)(prefix_bits));
+
+	if(memcmp((void *)&cidr_ipv6, (void *)&target_ipv6, prefix_bytes) != 0){
+		if( verbose >= 1 ){
+			printf("the first %d bytes of the cidr_region_or_ip: %s and target_ip: %s are different\n", prefix_bytes, cidr_ip_part, target_ip);
+		}
+		prefixes_match = false;
+	}
+
+	uint8_t* cidr_ipv6_rest = (uint8_t *)&cidr_ipv6 + (size_t)prefix_bytes;
+	uint8_t* target_ip_rest = (uint8_t *)&target_ipv6 + (size_t)prefix_bytes;
+
+	if( ( (*cidr_ipv6_rest) & prefix_bits_bitmask ) != ( (*target_ip_rest) & prefix_bits_bitmask) ){
+		if( verbose >= 1 ){
+			printf("after %d bytes, cidr_region_or_ip(%s) byte is: %d and target_ip byte(%s) is: %d, they are different under bitmask: %X\n", prefix_bytes, cidr_ip_part , *cidr_ipv6_rest, target_ip, *target_ip_rest, (unsigned char)prefix_bits_bitmask);
+		}
+		prefixes_match = false;
+	}
+
+	return prefixes_match;
 }
