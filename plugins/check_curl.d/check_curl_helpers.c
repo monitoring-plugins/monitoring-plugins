@@ -158,13 +158,13 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	https_proxy_uppercase_env = getenv("HTTPS_PROXY");
 	if (working_state.use_ssl) {
 		if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
-			strcpy(working_state.curlopt_proxy, https_proxy_env);
+			working_state.curlopt_proxy = strdup(https_proxy_env);
 			if (https_proxy_uppercase_env != NULL && verbose >= 1) {
 				printf("* cURL ignoring environment variable 'HTTPS_PROXY' as 'https_proxy' is set\n");
 			}
 		}
 		else if (https_proxy_uppercase_env != NULL && strlen(https_proxy_uppercase_env) >= 0) {
-			strcpy(working_state.curlopt_proxy, https_proxy_uppercase_env);
+			working_state.curlopt_proxy = strdup(https_proxy_uppercase_env);
 		}
 	}
 #endif /* LIBCURL_FEATURE_SSL */
