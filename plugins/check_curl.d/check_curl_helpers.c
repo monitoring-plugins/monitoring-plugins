@@ -124,6 +124,9 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* lower case proxy environment variables are almost always accepted, while some programs also checking
 	uppercase ones. discover both, but take the lowercase one if both are present */
 
+	/* extra information: libcurl does not discover the uppercase version HTTP_PROXY due to security reasons */
+	/* https://github.com/curl/curl/blob/d445f2d930ae701039518d695481ee53b8490521/lib/url.c#L1987 */
+
 	/* first environment variable to read is all_proxy. it can be overridden by protocol specific environment variables */
 	char *all_proxy_env, *all_proxy_uppercase_env;
 	all_proxy_env = getenv("all_proxy");
