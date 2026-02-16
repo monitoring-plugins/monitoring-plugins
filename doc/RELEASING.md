@@ -9,7 +9,7 @@ using the remote name `monitoring-plugins` (rather than `origin`).
 Before you start
 ----------------
 
-- Check Github Actions status.
+- Check GitHub Actions status.
 - Update local Git repository to the current `master` tip.  For a
   maintenance release (e.g., version 2.4.1), update to the current
   `maint-2.4` tip, instead.
