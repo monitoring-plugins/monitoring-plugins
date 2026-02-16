@@ -39,7 +39,7 @@ char *pd_to_string(mp_perfdata pd) {
 	} else {
 		// we have an illegal single quote in the string
 		// replace it silently instead of complaining
-		for (char *ptr = pd.label; *ptr == '\0'; ptr++) {
+		for (char *ptr = pd.label; *ptr != '\0'; ptr++) {
 			if (*ptr == '\'') {
 				*ptr = '_';
 			}
