@@ -37,6 +37,7 @@ BuildRequires:  gettext-devel
 BuildRequires: gcc
 BuildRequires: make
 BuildRequires: automake
+BuildRequires:  pkgconf
 
 ### Check Plugin specific build requirements
 # check_by_ssh
