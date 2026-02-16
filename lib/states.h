@@ -45,7 +45,7 @@ static inline mp_state_enum max_state(mp_state_enum a, mp_state_enum b) {
  * STATE_OK < STATE_DEPENDENT < STATE_UNKNOWN < STATE_WARNING < STATE_CRITICAL
  *
  * The main difference between max_state_alt and max_state it that it doesn't
- * allow setting a default to UNKNOWN. It will instead prioritixe any valid
+ * allow setting a default to UNKNOWN. It will instead prioritize any valid
  * non-OK state.
  ****************************************************************************/
 

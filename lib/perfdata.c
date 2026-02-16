@@ -37,7 +37,7 @@ char *pd_to_string(mp_perfdata pd) {
 	if (strchr(pd.label, '\'') == NULL) {
 		asprintf(&result, "'%s'=", pd.label);
 	} else {
-		// we have a illegal single quote in the string
+		// we have an illegal single quote in the string
 		// replace it silently instead of complaining
 		for (char *ptr = pd.label; *ptr == '\0'; ptr++) {
 			if (*ptr == '\'') {

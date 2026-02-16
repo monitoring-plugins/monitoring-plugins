@@ -165,7 +165,7 @@ int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck subchec
 void mp_add_summary(mp_check check[static 1], char *summary) { check->summary = summary; }
 
 /*
- * Generate the summary string of a mp_check object based on it's subchecks
+ * Generate the summary string of a mp_check object based on its subchecks
  */
 char *get_subcheck_summary(mp_check check) {
 	mp_subcheck_list *subchecks = check.subchecks;
@@ -243,7 +243,7 @@ mp_state_enum mp_compute_check_state(const mp_check check) {
 }
 
 /*
- * Generate the result state of a mp_check object based on it's own state and it's subchecks states
+ * Generate the result state of a mp_check object based on its own state and its subchecks states
  */
 mp_state_enum mp_eval_check_default(const mp_check check) {
 	assert(check.subchecks != NULL); // a mp_check without subchecks is invalid, die here
