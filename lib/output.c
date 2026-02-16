@@ -61,6 +61,8 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
 mp_check mp_check_init(void) {
 	mp_check check = {
 		.evaluation_function = &mp_eval_check_default,
+		.default_output_override = NULL,
+		.default_output_override_content = NULL,
 	};
 	return check;
 }
@@ -268,6 +270,11 @@ char *mp_fmt_output(mp_check check) {
 
 	switch (output_format) {
 	case MP_FORMAT_MULTI_LINE: {
+		if (check.default_output_override != NULL) {
+			result = check.default_output_override(check.default_output_override_content);
+			break;
+		}
+
 		if (check.summary == NULL) {
 			check.summary = get_subcheck_summary(check);
 		}

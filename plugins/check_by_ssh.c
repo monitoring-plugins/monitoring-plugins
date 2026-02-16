@@ -41,6 +41,8 @@ const char *email = "devel@monitoring-plugins.org";
 #	define NP_MAXARGS 1024
 #endif
 
+char *check_by_ssh_output_override(void *remote_output) { return ((char *)remote_output); }
+
 typedef struct {
 	int errorcode;
 	check_by_ssh_config config;
@@ -155,10 +157,21 @@ int main(int argc, char **argv) {
 		xasprintf(&sc_active_check.output, "command stdout:");
 
 		if (child_result.out.lines > skip_stdout) {
+
+			char *remote_command_output = NULL;
 			for (size_t i = skip_stdout; i < child_result.out.lines; i++) {
-				xasprintf(&sc_active_check.output, "%s\n%s", sc_active_check.output,
-						  child_result.out.line[i]);
+				if (i == skip_stdout) {
+					// first iteration
+					xasprintf(&remote_command_output, "%s", child_result.out.line[i]);
+				} else {
+					xasprintf(&remote_command_output, "%s\n%s", remote_command_output,
+							  child_result.out.line[i]);
+				}
 			}
+
+			sc_active_check.output = remote_command_output;
+			overall.default_output_override_content = remote_command_output;
+			overall.default_output_override = check_by_ssh_output_override;
 		} else {
 			xasprintf(&sc_active_check.output, "remote command '%s' returned status %d",
 					  config.remotecmd, child_result.cmd_error_code);
