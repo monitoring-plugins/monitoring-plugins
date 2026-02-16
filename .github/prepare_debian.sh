@@ -67,10 +67,10 @@ apt-get -y install perl \
 	libjson-perl
 
 # remove ipv6 interface from hosts
-sed '/^::1/d' /etc/hosts > /tmp/hosts
-cp -f /tmp/hosts /etc/hosts
-ip addr show
-cat /etc/hosts
+# sed '/^::1/d' /etc/hosts > /tmp/hosts
+# cp -f /tmp/hosts /etc/hosts
+# ip addr show
+# cat /etc/hosts
 
 # apache
 a2enmod ssl
@@ -80,6 +80,36 @@ a2ensite default-ssl
 rm /etc/ssl/certs/ssl-cert-snakeoil.pem
 rm /etc/ssl/private/ssl-cert-snakeoil.key
 openssl req -nodes -newkey rsa:2048 -x509 -sha256 -days 365 -nodes -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=$(hostname)"
+# add a subdomain for testing
+cat >/etc/apache2/sites-available/subdomain1.conf <<EOL
+<VirtualHost *:80>
+    ServerName subdomain1.localhost.com
+    DocumentRoot /var/www/subdomain1
+    
+    ErrorLog \${APACHE_LOG_DIR}/subdomain1_error.log
+    CustomLog \${APACHE_LOG_DIR}/subdomain1_access.log combined
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName subdomain1.localhost.com
+    DocumentRoot /var/www/subdomain1
+    
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
+    SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+    
+    ErrorLog \${APACHE_LOG_DIR}/subdomain1_ssl_error.log
+    CustomLog \${APACHE_LOG_DIR}/subdomain1_ssl_access.log combined
+</VirtualHost>
+EOL
+mkdir -p /var/www/subdomain1
+cat >/var/www/subdomain1/index.php <<EOL
+Subdomain: subdomain1.localhost.com
+EOL
+echo '127.0.0.1 subdomain1.localhost' >> /etc/hosts
+echo '127.0.0.1 subdomain1.localhost.com' >> /etc/hosts
+apache2ctl configtest
+a2ensite subdomain1.conf
 service apache2 restart
 
 # squid
