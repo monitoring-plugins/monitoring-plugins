@@ -990,7 +990,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		case 'c': /* critical time threshold */
 		{
 			mp_range_parsed critical_range = mp_parse_range_string(optarg);
-			if (critical_range.error != MP_PARSING_SUCCES) {
+			if (critical_range.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical threshold: %s", optarg);
 			}
 			result.config.thlds = mp_thresholds_set_crit(result.config.thlds, critical_range.range);
@@ -999,7 +999,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{
 			mp_range_parsed warning_range = mp_parse_range_string(optarg);
 
-			if (warning_range.error != MP_PARSING_SUCCES) {
+			if (warning_range.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning threshold: %s", optarg);
 			}
 			result.config.thlds = mp_thresholds_set_warn(result.config.thlds, warning_range.range);
@@ -1275,7 +1275,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{
 			mp_range_parsed foo = mp_parse_range_string(optarg);
 
-			if (foo.error != MP_PARSING_SUCCES) {
+			if (foo.error != MP_PARSING_SUCCESS) {
 				die(STATE_CRITICAL, "failed to parse page size limits: %s", optarg);
 			}
 

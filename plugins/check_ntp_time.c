@@ -605,7 +605,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning threshold");
 			}
 
@@ -614,7 +614,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse crit threshold");
 			}
 

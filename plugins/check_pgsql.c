@@ -401,7 +401,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'c': /* critical time threshold */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical time threshold");
 			}
 			result.config.time_thresholds =
@@ -409,7 +409,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'w': /* warning time threshold */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning time threshold");
 			}
 			result.config.time_thresholds =
@@ -417,7 +417,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'C': /* critical query threshold */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical query threshold");
 			}
 
@@ -427,7 +427,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'W': /* warning query threshold */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning query threshold");
 			}
 			result.config.qthresholds =

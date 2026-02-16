@@ -393,7 +393,7 @@ mp_range_parsed mp_parse_range_string(const char *input) {
 
 	mp_range_parsed result = {
 		.range = mp_range_init(),
-		.error = MP_PARSING_SUCCES,
+		.error = MP_PARSING_SUCCESS,
 	};
 
 	if (input[0] == '@') {
@@ -436,7 +436,7 @@ mp_range_parsed mp_parse_range_string(const char *input) {
 			result.range.start_infinity = false;
 			perfdata_value_parser_wrapper parsed_pd = parse_pd_value(input);
 
-			if (parsed_pd.error != MP_PARSING_SUCCES) {
+			if (parsed_pd.error != MP_PARSING_SUCCESS) {
 				result.error = parsed_pd.error;
 				free(working_copy);
 				return result;
@@ -457,7 +457,7 @@ mp_range_parsed mp_parse_range_string(const char *input) {
 	} else {
 		perfdata_value_parser_wrapper parsed_pd = parse_pd_value(input);
 
-		if (parsed_pd.error != MP_PARSING_SUCCES) {
+		if (parsed_pd.error != MP_PARSING_SUCCESS) {
 			result.error = parsed_pd.error;
 			return result;
 		}
@@ -470,7 +470,7 @@ mp_range_parsed mp_parse_range_string(const char *input) {
 
 double_parser_wrapper parse_double(const char *input) {
 	double_parser_wrapper result = {
-		.error = MP_PARSING_SUCCES,
+		.error = MP_PARSING_SUCCESS,
 	};
 
 	if (input == NULL) {
@@ -501,7 +501,7 @@ double_parser_wrapper parse_double(const char *input) {
 
 integer_parser_wrapper parse_integer(const char *input) {
 	integer_parser_wrapper result = {
-		.error = MP_PARSING_SUCCES,
+		.error = MP_PARSING_SUCCESS,
 	};
 
 	if (input == NULL) {
@@ -548,7 +548,7 @@ perfdata_value_parser_wrapper parse_pd_value(const char *input) {
 	// try integer first
 	integer_parser_wrapper tmp_int = parse_integer(input);
 
-	if (tmp_int.error == MP_PARSING_SUCCES) {
+	if (tmp_int.error == MP_PARSING_SUCCESS) {
 		perfdata_value_parser_wrapper result = {
 			.error = tmp_int.error,
 			.value = tmp_int.value,
@@ -558,7 +558,7 @@ perfdata_value_parser_wrapper parse_pd_value(const char *input) {
 
 	double_parser_wrapper tmp_double = parse_double(input);
 	perfdata_value_parser_wrapper result = {};
-	if (tmp_double.error == MP_PARSING_SUCCES) {
+	if (tmp_double.error == MP_PARSING_SUCCESS) {
 		result.error = tmp_double.error;
 		result.value = tmp_double.value;
 	} else {
