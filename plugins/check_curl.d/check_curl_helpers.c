@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -1468,8 +1469,9 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 			}
 
 			/* check if hostname is a subdomain of the item, e.g www.example.com when token is example.com */
+			/* subdomain1.acme.com wont will use a proxy if you only specify 'acme' in the noproxy */
 			/* check if noproxy_item is a suffix */
-			/* check if just before the suffix is a '.' */
+			/* check if the character just before the suffix is '.' */
 			if( working_state.host_name != NULL && host_name_len > noproxy_item_len){
 				unsigned long suffix_start_idx = host_name_len - noproxy_item_len;
 				if (strcmp(working_state.host_name + suffix_start_idx, noproxy_item ) == 0 && working_state.host_name[suffix_start_idx-1] == '.' ){
@@ -1483,8 +1485,25 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 			}
 
 			// noproxy_item could be a CIDR IP range
-			if( server_address_clean != NULL && strlen(server_address_clean) && ip_addr_inside_cidr(noproxy_item, server_address_clean) == 1 ){
-				return 0;
+			if( server_address_clean != NULL && strlen(server_address_clean)){
+
+				int ip_addr_inside_cidr_ret = ip_addr_inside_cidr(noproxy_item, server_address_clean);
+
+				switch(ip_addr_inside_cidr_ret){
+				case 1:
+					return 0;
+					break;
+				case 0:
+					if(verbose >= 1){
+						printf("server address: %s is not inside IP cidr: %s\n", server_address_clean, noproxy_item);
+					}
+					break;
+				case -1:
+					if(verbose >= 1){
+						printf("could not fully determine if server address: %s is inside the IP cidr: %s\n", server_address_clean, noproxy_item);
+					}
+					break;
+				}
 			}
 
 			noproxy_item = strtok(NULL, ",");
@@ -1572,129 +1591,162 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip){
 	unsigned int slash_count = 0;
 	unsigned int last_slash_idx = 0;
-	for(int i=0; i < strlen(cidr_region_or_ip_addr); i++){
+	for(size_t i = 0; i < strlen(cidr_region_or_ip_addr); i++){
 		if(cidr_region_or_ip_addr[i] == '/'){
 			slash_count++;
-			last_slash_idx = i;
+			last_slash_idx = (unsigned int)i;
 		}
 	}
 
-	unsigned int subnet_length = 0;
-	switch(slash_count){
-		case 0:
-			subnet_length = 0;
-			break;
-		case 1:
-			errno = 0;
-			subnet_length = strtoul(cidr_region_or_ip_addr + last_slash_idx + 1, NULL, 10);
-			if(errno == ERANGE){
-				if( verbose >= 1){
-					printf("cidr_region_or_ip: %s , could not parse  subnet length: 0\n", cidr_region_or_ip_addr);
-				}
-				return -1;
+	char *cidr_ip_part = NULL;
+	int prefix_length = 0;
+
+	if (slash_count == 0) {
+		cidr_ip_part = strdup(cidr_region_or_ip_addr);
+		if (!cidr_ip_part) return -1;
+	} else if (slash_count == 1) {
+		cidr_ip_part = strndup(cidr_region_or_ip_addr, last_slash_idx);
+		if (!cidr_ip_part) return -1;
+
+		errno = 0;
+		long long tmp = strtoll(cidr_region_or_ip_addr + last_slash_idx + 1, NULL, 10);
+		if (errno == ERANGE) {
+			if (verbose >= 1) {
+				printf("cidr_region_or_ip: %s , could not parse subnet length\n", cidr_region_or_ip_addr);
 			}
-			break;
-		default:
-			printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid cidr_region or IP\n", cidr_region_or_ip_addr, slash_count);
+			free(cidr_ip_part);
 			return -1;
+		}
+		prefix_length = (int)tmp;
+	} else {
+		printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid cidr_region or IP\n", cidr_region_or_ip_addr, slash_count);
+		return -1;
 	}
-
-	if( verbose >= 1){
-		printf("cidr_region_or_ip: %s , has subnet length: %d\n", cidr_region_or_ip_addr, subnet_length);
-	}
-
-	const char* cidr_ip_part = strndup(cidr_region_or_ip_addr, last_slash_idx);
 
 	int cidr_addr_family, target_addr_family;
-	if (strchr(cidr_ip_part,':')){
+	if (strchr(cidr_ip_part, ':')){
 		cidr_addr_family = AF_INET6;
-	}else{
+	} else {
 		cidr_addr_family = AF_INET;
 	}
 
-	if (strchr(target_ip,':')){
+	if (strchr(target_ip, ':')){
 		target_addr_family = AF_INET6;
-	}else{
+	} else {
 		target_addr_family = AF_INET;
 	}
 
-	if(cidr_addr_family != target_addr_family){
-		if( verbose >= 1){
+	if (cidr_addr_family != target_addr_family){
+		if (verbose >= 1){
 			printf("cidr address: %s and target ip address: %s have different address families\n", cidr_ip_part, target_ip);
 		}
+		free(cidr_ip_part);
 		return 0;
 	}
 
-	// save both IPv6/IPv4 types in an ipv6 struct
-	struct in6_addr cidr_ipv6 , target_ipv6;
-
-	errno = 0;
-	int inet_pton_rc = inet_pton(cidr_addr_family, cidr_ip_part, (void *)(&cidr_ipv6));
-	switch(inet_pton_rc){
-	case 1:
-		break;
-	case 0:
-		if( verbose >= 1){
-			printf("ip string: %s contains characters not valid for its address family\n", cidr_ip_part);
-		}
-		return -1;
-		break;
-	case -1:
-		if( verbose >= 1){
-			printf("is not a valid address family: %d\n", cidr_addr_family);
-		}
-		return -1;
-		break;
+	// If no prefix is given, treat the cidr as a single address (full-length prefix)
+	if (slash_count == 0) {
+		prefix_length = (cidr_addr_family == AF_INET) ? 32 : 128;
 	}
 
-	errno = 0;
-	inet_pton_rc = inet_pton(target_addr_family, target_ip, (void *)(&target_ipv6));
-	switch(inet_pton_rc){
-	case 1:
-		break;
-	case 0:
-		if( verbose >= 1){
-			printf("ip string: %s contains characters not valid for its address family\n", target_ip);
+	int max_bits = (cidr_addr_family == AF_INET) ? 32u : 128u;
+	if (prefix_length < 0 || prefix_length > max_bits) {
+		if (verbose >= 1) {
+			printf("cidr_region_or_ip: %s has invalid prefix length: %u\n", cidr_region_or_ip_addr, prefix_length);
 		}
-		return -1;
-		break;
-	case -1:
-		if( verbose >= 1){
-			printf("is not a valid address family: %d", target_addr_family);
-		}
-	}
-
-	int prefix_length = (cidr_addr_family == AF_INET ? 32 : 128) - subnet_length;
-
-	if (prefix_length <=0 ){
-		if( verbose >= 1){
-			printf("the calculated prefix length: %d between the range and the target_ip is bellow 1\n", prefix_length);
-		}
+		free(cidr_ip_part);
 		return -1;
 	}
 
-	bool prefixes_match = true;
+	if (verbose >= 1){
+		printf("cidr_region_or_ip: %s , has prefix length: %u\n", cidr_region_or_ip_addr, prefix_length);
+	}
+
+	int inet_pton_rc;
+	uint8_t *cidr_bytes = NULL;
+	uint8_t *target_bytes = NULL;
+	uint8_t cidr_buf[16];
+	uint8_t target_buf[16];
+	size_t total_bytes = 0;
+
+	if (cidr_addr_family == AF_INET) {
+		struct in_addr cidr_ipv4;
+		struct in_addr target_ipv4;
+		inet_pton_rc = inet_pton(AF_INET, cidr_ip_part, &cidr_ipv4);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv4\n", cidr_ip_part);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		inet_pton_rc = inet_pton(AF_INET, target_ip, &target_ipv4);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv4\n", target_ip);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		// copy the addresses in network byte order to a buffer for comparison
+		memcpy(cidr_buf, &cidr_ipv4.s_addr, 4);
+		memcpy(target_buf, &target_ipv4.s_addr, 4);
+		cidr_bytes = cidr_buf;
+		target_bytes = target_buf;
+		total_bytes = 4;
+	} else {
+		struct in6_addr cidr_ipv6;
+		struct in6_addr target_ipv6;
+		inet_pton_rc = inet_pton(AF_INET6, cidr_ip_part, &cidr_ipv6);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv6\n", cidr_ip_part);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		inet_pton_rc = inet_pton(AF_INET6, target_ip, &target_ipv6);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv6\n", target_ip);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		memcpy(cidr_buf, &cidr_ipv6, 16);
+		memcpy(target_buf, &target_ipv6, 16);
+		cidr_bytes = cidr_buf;
+		target_bytes = target_buf;
+		total_bytes = 16;
+	}
+
 	int prefix_bytes = prefix_length / 8;
 	int prefix_bits = prefix_length % 8;
-	// use int8_t and utilize twos complement
-	int8_t prefix_bits_bitmask = -((int8_t)(1) << (int8_t)(prefix_bits));
 
-	if(memcmp((void *)&cidr_ipv6, (void *)&target_ipv6, prefix_bytes) != 0){
-		if( verbose >= 1 ){
-			printf("the first %d bytes of the cidr_region_or_ip: %s and target_ip: %s are different\n", prefix_bytes, cidr_ip_part, target_ip);
+	if (prefix_bytes > 0) {
+		if (memcmp(cidr_bytes, target_bytes, (size_t)prefix_bytes) != 0) {
+			if (verbose >= 1) {
+				printf("the first %d bytes of the cidr_region_or_ip: %s and target_ip: %s are different\n", prefix_bytes, cidr_ip_part, target_ip);
+			}
+			free(cidr_ip_part);
+			return 0;
 		}
-		prefixes_match = false;
 	}
 
-	uint8_t* cidr_ipv6_rest = (uint8_t *)&cidr_ipv6 + (size_t)prefix_bytes;
-	uint8_t* target_ip_rest = (uint8_t *)&target_ipv6 + (size_t)prefix_bytes;
-
-	if( ( (*cidr_ipv6_rest) & prefix_bits_bitmask ) != ( (*target_ip_rest) & prefix_bits_bitmask) ){
-		if( verbose >= 1 ){
-			printf("after %d bytes, cidr_region_or_ip(%s) byte is: %d and target_ip byte(%s) is: %d, they are different under bitmask: %X\n", prefix_bytes, cidr_ip_part , *cidr_ipv6_rest, target_ip, *target_ip_rest, (unsigned char)prefix_bits_bitmask);
+	if (prefix_bits != 0) {
+		uint8_t cidr_oct = cidr_bytes[prefix_bytes];
+		uint8_t target_oct = target_bytes[prefix_bytes];
+		// the mask has first prefix_bits bits 1, the rest as 0
+		uint8_t mask = (uint8_t)(0xFFu << (8 - prefix_bits));
+		if ((cidr_oct & mask) != (target_oct & mask)) {
+			if (verbose >= 1) {
+				printf("looking at the last %d bits of the prefix, cidr_region_or_ip(%s) byte is: %u and target_ip byte(%s) is: %u, applying bitmask: %02X returns different results\n", prefix_bits, cidr_ip_part, (unsigned)cidr_oct, target_ip, (unsigned)target_oct, mask);
+			}
+			free(cidr_ip_part);
+			return 0;
 		}
-		prefixes_match = false;
 	}
 
-	return prefixes_match;
+	free(cidr_ip_part);
+	return 1;
 }
