@@ -80,12 +80,13 @@ a2ensite default-ssl
 rm /etc/ssl/certs/ssl-cert-snakeoil.pem
 rm /etc/ssl/private/ssl-cert-snakeoil.key
 openssl req -nodes -newkey rsa:2048 -x509 -sha256 -days 365 -nodes -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=$(hostname)"
+
 # add a subdomain for testing
 cat >/etc/apache2/sites-available/subdomain1.conf <<EOL
 <VirtualHost *:80>
     ServerName subdomain1.localhost.com
     DocumentRoot /var/www/subdomain1
-    
+
     ErrorLog \${APACHE_LOG_DIR}/subdomain1_error.log
     CustomLog \${APACHE_LOG_DIR}/subdomain1_access.log combined
 </VirtualHost>
@@ -93,11 +94,11 @@ cat >/etc/apache2/sites-available/subdomain1.conf <<EOL
 <VirtualHost *:443>
     ServerName subdomain1.localhost.com
     DocumentRoot /var/www/subdomain1
-    
+
     SSLEngine on
     SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
     SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-    
+
     ErrorLog \${APACHE_LOG_DIR}/subdomain1_ssl_error.log
     CustomLog \${APACHE_LOG_DIR}/subdomain1_ssl_access.log combined
 </VirtualHost>
@@ -110,9 +111,15 @@ echo '127.0.0.1 subdomain1.localhost' >> /etc/hosts
 echo '127.0.0.1 subdomain1.localhost.com' >> /etc/hosts
 apache2ctl configtest
 a2ensite subdomain1.conf
+
+# Make it listen to both IPv4 on IPv6 on localhost
+sed -i 's/^Listen 80/Listen 0.0.0.0:80\nListen [::1]:80/' /etc/apache2/ports.conf
+sed -i 's/^[[:space:]]*Listen 443/Listen 0.0.0.0:443\nListen [::1]:443/' /etc/apache2/ports.conf
+
 service apache2 restart
 
 # squid
+openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/squid/squid.key -out /etc/squid/squid.pem -subj "/CN=localhost"
 cp tools/squid.conf /etc/squid/squid.conf
 service squid start
 
