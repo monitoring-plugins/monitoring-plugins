@@ -127,8 +127,11 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 										  int crit_days_till_exp);
 char *fmt_url(check_curl_working_state workingState);
 
-/* returns 0 if requester resolves the hostname locally, 1 if proxy resolves the hostname*/
+
+/* function that will determine if the host or the proxy resolves the target hostname
+returns 0 if requester resolves the hostname locally, 1 if proxy resolves the hostname */
 int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config);
 
-/* returns 1 if the target_ip address is inside the given cidr notation. /0 or empty ranges perform an equality check. Supports both IPv4 and IPv6 */
+/* Checks if an IP is inside given CIDR region. Using /protocol_size or not specifying the prefix length performs an equality check. Supports both IPv4 and IPv6
+returns 1 if the target_ip address is inside the given cidr_region_or_ip_addr, 0 if its out. return codes < 0 mean an error has occurred. */
 int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip);

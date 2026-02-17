@@ -1404,9 +1404,6 @@ char *fmt_url(check_curl_working_state workingState) {
 	return url;
 }
 
-
-/* function that will determine if the host or the proxy resolves the target hostname */
-/* 0 means the host will resolve the target hostname, 1 means proxy is going to resolve the hostname */
 int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
 	char *host_name_display = "NULL";
 	unsigned long host_name_len = 0;
@@ -1583,11 +1580,6 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 	return 0;
 }
 
-
-// This function checks if an IP is contained within a cidr_region or is directly the IP being searched
-// return code 1 means its inside
-// return code 0 means its out
-// return code < 0 means error
 int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip){
 	unsigned int slash_count = 0;
 	unsigned int last_slash_idx = 0;
