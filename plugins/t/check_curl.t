@@ -239,27 +239,27 @@ SKIP: {
     # Test if proxy works
     $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
 
     $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv4 works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv4 works" );
 
     $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv6 works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv6 works" );
 
     $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http2 works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http2 works" );
 
     $res = NPTest->testCmd( "./$plugin -H $host_tcp_http_subdomain --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_subdomain works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_subdomain works" );
 
     $res = NPTest->testCmd( "./$plugin -H $host_tls_http --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
     like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
-    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tls_http works" );
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tls_http works" );
 
     # Noproxy '*' should prevent using proxy in any setting, even if its specified
     $res = NPTest->testCmd( "./$plugin -H $host_tcp_http_subdomain --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy \"\*\" -v" );
@@ -331,7 +331,7 @@ SKIP: {
     # is( $res->return_code, 0, "Using proxy socks5:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
 
     $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy socks5h://$host_tcp_proxy:$port_tcp_proxy -v" );
-    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, has scheme socks5h");
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, and is using scheme socks5h");
     # Squid is not configured for socks5h
     # is( $res->return_code, 0, "Using proxy socks5h:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
 }
