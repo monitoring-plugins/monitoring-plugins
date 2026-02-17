@@ -119,7 +119,6 @@ sed -i 's/^[[:space:]]*Listen 443/Listen 0.0.0.0:443\nListen [::1]:443/' /etc/ap
 service apache2 restart
 
 # squid
-openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/squid/squid.key -out /etc/squid/squid.pem -subj "/CN=localhost"
 cp tools/squid.conf /etc/squid/squid.conf
 service squid start
 
