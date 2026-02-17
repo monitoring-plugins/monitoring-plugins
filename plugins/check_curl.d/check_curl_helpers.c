@@ -1513,7 +1513,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 		// Libcurl documentation
 		// Setting the proxy string to "" (an empty string) explicitly disables the use of a proxy, even if there is an environment variable set for it.
 		if ( strlen(working_state.curlopt_proxy) == 0){
-
+			return 0;
 		}
 
 		if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
