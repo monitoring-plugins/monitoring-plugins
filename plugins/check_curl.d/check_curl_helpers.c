@@ -1469,7 +1469,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state, co
 			}
 
 			/* check if hostname is a subdomain of the item, e.g www.example.com when token is example.com */
-			/* subdomain1.acme.com wont will use a proxy if you only specify 'acme' in the noproxy */
+			/* subdomain1.acme.com will not will use a proxy if you only specify 'acme' in the noproxy */
 			/* check if noproxy_item is a suffix */
 			/* check if the character just before the suffix is '.' */
 			if( working_state.host_name != NULL && host_name_len > noproxy_item_len){
