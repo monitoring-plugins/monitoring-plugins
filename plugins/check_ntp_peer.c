@@ -548,7 +548,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning offset threshold");
 			}
 
@@ -557,7 +557,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical offset threshold");
 			}
 
@@ -567,7 +567,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'W': {
 			result.config.do_stratum = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning stratum threshold");
 			}
 
@@ -577,7 +577,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'C': {
 			result.config.do_stratum = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical stratum threshold");
 			}
 
@@ -587,7 +587,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'j': {
 			result.config.do_jitter = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning jitter threshold");
 			}
 
@@ -597,7 +597,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'k': {
 			result.config.do_jitter = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical jitter threshold");
 			}
 
@@ -607,7 +607,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'm': {
 			result.config.do_truechimers = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning truechimer threshold");
 			}
 
@@ -617,7 +617,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		case 'n': {
 			result.config.do_truechimers = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical truechimer threshold");
 			}
 

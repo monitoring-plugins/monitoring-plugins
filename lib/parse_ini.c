@@ -173,7 +173,7 @@ static bool read_defaults(FILE *defaults_file, const char *stanza, np_arg_list *
 			continue;
 		}
 		switch (current_char) {
-			/* globble up comment lines */
+			/* gobble up comment lines */
 		case ';':
 		case '#':
 			GOBBLE_TO(defaults_file, current_char, '\n');

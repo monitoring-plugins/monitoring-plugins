@@ -23,9 +23,9 @@
 
 
 <preface id="preface"><title>Preface</title>
-    <para>The purpose of this guidelines is to provide a reference for
+    <para>The purpose of these guidelines is to provide a reference for
     the plugin developers and encourage the standardization of the
-    different kind of plugins: C, shell, perl, python, etc.</para>
+    different kinds of plugins: C, shell, perl, python, etc.</para>
 
         <para>Monitoring Plugins Development Guidelines Copyright (C) 2000-2024
         (Monitoring Plugins Team)</para>
@@ -68,7 +68,7 @@
 
 		<para>You should always print something to STDOUT that tells if the
 		service is working or why it is failing. Try to keep the output short -
-		probably less that 80 characters. Remember that you ideally would like
+		probably less than 80 characters. Remember that you ideally would like
 		the entire output to appear in a pager message, which will get chopped
 		off after a certain length.</para>
 
@@ -214,7 +214,7 @@
 		back a numerical value, or metric, which is then compared to the warning and
 		critical thresholds. Use the get_status(double, thresholds *) function to
 		compare the value against the thresholds.</para>
-		<para>This is the generalised format for ranges:</para>
+		<para>This is the generalized format for ranges:</para>
 
 		<literallayout>
 		[@]start:end
@@ -474,7 +474,7 @@
 			</listitem>
 
 			<listitem><para>If writing to a file (perhaps recording
-			performance data) explicitly close close it.  The plugin never
+			performance data) explicitly close it.  The plugin never
 			calls <emphasis role="strong">exit</emphasis>; that is caught by
 			p1.pl, so output streams are never closed.</para>
 			</listitem>

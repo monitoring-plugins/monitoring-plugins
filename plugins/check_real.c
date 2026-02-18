@@ -409,7 +409,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'w': /* warning time threshold */
 		{
 			mp_range_parsed critical_range = mp_parse_range_string(optarg);
-			if (critical_range.error != MP_PARSING_SUCCES) {
+			if (critical_range.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning threshold: %s", optarg);
 			}
 			result.config.time_thresholds =
@@ -418,7 +418,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'c': /* critical time threshold */
 		{
 			mp_range_parsed critical_range = mp_parse_range_string(optarg);
-			if (critical_range.error != MP_PARSING_SUCCES) {
+			if (critical_range.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical threshold: %s", optarg);
 			}
 			result.config.time_thresholds =

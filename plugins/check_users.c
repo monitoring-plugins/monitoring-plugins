@@ -222,7 +222,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 		exit(STATE_UNKNOWN);
 	}
 
-	if (tmp.error == MP_PARSING_SUCCES) {
+	if (tmp.error == MP_PARSING_SUCCESS) {
 		result.config.thresholds.warning = tmp.range;
 		result.config.thresholds.warning_is_set = true;
 	} else {
@@ -238,7 +238,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 		exit(STATE_UNKNOWN);
 	}
 
-	if (tmp.error == MP_PARSING_SUCCES) {
+	if (tmp.error == MP_PARSING_SUCCESS) {
 		result.config.thresholds.critical = tmp.range;
 		result.config.thresholds.critical_is_set = true;
 	} else {

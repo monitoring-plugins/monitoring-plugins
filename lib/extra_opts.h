@@ -8,7 +8,7 @@
 
 /* np_extra_opts: Process the --extra-opts arguments and create a new argument
  * array with ini-processed and argument-passed arguments together. The
- * ini-procesed arguments always come first (in the order of --extra-opts
+ * ini-processed arguments always come first (in the order of --extra-opts
  * arguments). If no --extra-opts arguments are provided or returned nothing
  * it returns **argv otherwise the new array is returned. --extra-opts are
  * always removed from **argv. The original pointers from **argv are kept in

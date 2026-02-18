@@ -52,7 +52,7 @@ int check_snmp_set_thresholds(const char *threshold_string, check_snmp_test_unit
 			}
 
 			mp_range_parsed tmp = mp_parse_range_string(ptr);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", ptr);
 			}
 
@@ -70,7 +70,7 @@ int check_snmp_set_thresholds(const char *threshold_string, check_snmp_test_unit
 		// Single value
 		// only valid for the first test unit
 		mp_range_parsed tmp = mp_parse_range_string(threshold_string);
-		if (tmp.error != MP_PARSING_SUCCES) {
+		if (tmp.error != MP_PARSING_SUCCESS) {
 			die(STATE_UNKNOWN, "Unable to parse critical threshold range: %s", threshold_string);
 		}
 
