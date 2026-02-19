@@ -67,10 +67,10 @@ apt-get -y install perl \
 	libjson-perl
 
 # remove ipv6 interface from hosts
-sed '/^::1/d' /etc/hosts > /tmp/hosts
-cp -f /tmp/hosts /etc/hosts
-ip addr show
-cat /etc/hosts
+# sed '/^::1/d' /etc/hosts > /tmp/hosts
+# cp -f /tmp/hosts /etc/hosts
+# ip addr show
+# cat /etc/hosts
 
 # apache
 a2enmod ssl
@@ -80,6 +80,19 @@ a2ensite default-ssl
 rm /etc/ssl/certs/ssl-cert-snakeoil.pem
 rm /etc/ssl/private/ssl-cert-snakeoil.key
 openssl req -nodes -newkey rsa:2048 -x509 -sha256 -days 365 -nodes -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem -subj "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=$(hostname)"
+# add a subdomain for testing
+cp tools/subdomain1/subdomain1.conf /etc/apache2/sites-available/
+mkdir -p /var/www/subdomain1
+cp tools/subdomain1/index.php /var/www/subdomain1/
+echo '127.0.0.1 subdomain1.localhost' >> /etc/hosts
+echo '127.0.0.1 subdomain1.localhost.com' >> /etc/hosts
+apache2ctl configtest
+a2ensite subdomain1.conf
+
+# Make it listen to both IPv4 on IPv6 on localhost
+sed -i 's/^Listen 80/Listen 0.0.0.0:80\nListen [::1]:80/' /etc/apache2/ports.conf
+sed -i 's/^[[:space:]]*Listen 443/Listen 0.0.0.0:443\nListen [::1]:443/' /etc/apache2/ports.conf
+
 service apache2 restart
 
 # squid

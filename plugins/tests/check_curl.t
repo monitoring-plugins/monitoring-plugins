@@ -27,8 +27,8 @@ use HTTP::Daemon::SSL;
 
 $ENV{'LC_TIME'} = "C";
 
-my $common_tests = 95;
-my $ssl_only_tests = 8;
+my $common_tests = 111;
+my $ssl_only_tests = 12;
 # Check that all dependent modules are available
 eval "use HTTP::Daemon 6.01;";
 plan skip_all => 'HTTP::Daemon >= 6.01 required' if $@;
@@ -41,7 +41,7 @@ my $plugin = 'check_http';
 $plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
 
 # look for libcurl version to see if some advanced checks are possible (>= 7.49.0)
-my $advanced_checks = 12;
+my $advanced_checks = 16;
 my $use_advanced_checks = 0;
 my $required_version = '7.49.0';
 my $virtual_host = 'www.somefunnyhost.com';
@@ -410,6 +410,41 @@ SKIP: {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct: ".$result->output );
+
+	# curlopt proxy/noproxy parsing tests, ssl disabled
+	{
+		# Make a scope and change environment variables here, to not mess them up for other tests using environment variables
+
+		local $ENV{"http_proxy"} = 'http://proxy.example.com:8080';
+		$cmd = "$command -u /statuscode/200 -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://proxy.example.com:8080 */', "Correctly took 'http_proxy' environment variable: ".$result->output );
+		delete($ENV{"http_proxy"});
+
+		local $ENV{"http_proxy"} = 'http://taken.proxy.example:8080';
+		local $ENV{"HTTP_PROXY"} = 'http://discarded.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.proxy.example:8080 */', "Correctly took 'http_proxy' environment variable over 'HTTP_PROXY': ".$result->output );
+		delete(local $ENV{"http_proxy"});
+		delete(local $ENV{"HTTP_PROXY"});
+
+		local $ENV{"http_proxy"} = 'http://discarded1.proxy.example:8080';
+		local $ENV{"HTTP_PROXY"} = 'http://discarded2.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 -x 'http://taken.proxy.example:8080' -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.proxy.example:8080 */', "Argument -x overwrote 'http_proxy' and 'HTTP_PROXY' environment variables: ".$result->output );
+		delete(local $ENV{"http_proxy"});
+		delete(local $ENV{"HTTP_PROXY"});
+
+		local $ENV{"http_proxy"} = 'http://discarded1.proxy.example:8080';
+		local $ENV{"HTTP_PROXY"} = 'http://discarded2.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 --proxy 'http://taken.example.com:8080' -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.example.com:8080 */', "Argument --proxy overwrote 'http_proxy' and 'HTTP_PROXY' environment variables: ".$result->output );
+		delete(local $ENV{"http_proxy"});
+		delete(local $ENV{"HTTP_PROXY"});
+	}
 }
 
 # and the same for SSL
@@ -432,6 +467,41 @@ SKIP: {
 	$result = NPTest->testCmd( $cmd );
 	is( $result->return_code, 0, $cmd);
 	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct: ".$result->output );
+
+	# curlopt proxy/noproxy parsing tests, ssl enabled
+	{
+		# Make a scope and change environment variables here, to not mess them up for other tests using environment variables
+
+		local $ENV{"https_proxy"} = 'http://proxy.example.com:8080';
+		$cmd = "$command -u /statuscode/200 --ssl -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://proxy.example.com:8080 */', "Correctly took 'https_proxy' environment variable: ".$result->output );
+		delete($ENV{"https_proxy"});
+
+		local $ENV{"https_proxy"} = 'http://taken.proxy.example:8080';
+		local $ENV{"HTTPS_PROXY"} = 'http://discarded.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 --ssl -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.proxy.example:8080 */', "Correctly took 'https_proxy' environment variable over 'HTTPS_PROXY': ".$result->output );
+		delete(local $ENV{"https_proxy"});
+		delete(local $ENV{"HTTPS_PROXY"});
+
+		local $ENV{"https_proxy"} = 'http://discarded1.proxy.example:8080';
+		local $ENV{"HTTPS_PROXY"} = 'http://discarded2.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 --ssl -x 'http://taken.example.com:8080' -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.example.com:8080 */', "Argument -x overwrote environment variables 'https_proxy' and 'HTTPS_PROXY': ".$result->output );
+		delete(local $ENV{"https_proxy"});
+		delete(local $ENV{"HTTPS_PROXY"});
+
+		local $ENV{"https_proxy"} = 'http://discarded1.proxy.example:8080';
+		local $ENV{"HTTPS_PROXY"} = 'http://discarded2.proxy.example:8080';
+		$cmd = "$command -u /statuscode/200 --ssl --proxy 'http://taken.example.com:8080' -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.*CURLOPT_PROXY: http://taken.example.com:8080 */', "Argument --proxy overwrote environment variables 'https_proxy' and 'HTTPS_PROXY': ".$result->output );
+		delete(local $ENV{"https_proxy"});
+		delete(local $ENV{"HTTPS_PROXY"});
+	}
 }
 
 
@@ -712,4 +782,63 @@ sub run_common_tests {
 		$result = NPTest->testCmd( $cmd, 5 );
 	};
 	is( $@, "", $cmd );
+
+	# curlopt proxy/noproxy parsing tests
+	{
+		# Make a scope and change environment variables here, to not mess them up for other tests using environment variables
+
+		local $ENV{"no_proxy"} = 'internal.acme.org';
+		$cmd = "$command -u /statuscode/200 -v";
+		$result = NPTest->testCmd( $cmd );
+		like( $result->output, '/.* curl CURLOPT_NOPROXY: internal.acme.org */', "Correctly took 'no_proxy' environment variable: ".$result->output );
+		delete($ENV{"no_proxy"});
+
+		local $ENV{"no_proxy"} = 'taken.acme.org';
+		local $ENV{"NO_PROXY"} = 'discarded.acme.org';
+		$cmd = "$command -u /statuscode/200 -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*CURLOPT_NOPROXY: taken.acme.org*/', "Correctly took 'no_proxy' environment variable over 'NO_PROXY': ".$result->output );
+		delete(local $ENV{"no_proxy"});
+		delete(local $ENV{"NO_PROXY"});
+
+		local $ENV{"no_proxy"} = 'taken.acme.org';
+		local $ENV{"NO_PROXY"} = 'discarded.acme.org';
+		$cmd = "$command -u /statuscode/200 --noproxy 'taken.acme.org' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*CURLOPT_NOPROXY: taken.acme.org*/', "Argument --noproxy overwrote environment variables 'no_proxy' and 'NO_PROXY': ".$result->output );
+		delete(local $ENV{"no_proxy"});
+		delete(local $ENV{"NO_PROXY"});
+
+		$cmd = "$command -u /statuscode/200 --noproxy 'internal1.acme.org,internal2.acme.org,internal3.acme.org' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*CURLOPT_NOPROXY: internal1.acme.org,internal2.acme.org,internal3.acme.org*/', "Argument --noproxy read multiple noproxy domains: ".$result->output );
+
+		$cmd = "$command -u /statuscode/200 --noproxy '10.11.12.13,256.256.256.256,0.0.0.0,192.156.0.0/22,10.0.0.0/4' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*CURLOPT_NOPROXY: 10.11.12.13,256.256.256.256,0.0.0.0,192.156.0.0/22,10.0.0.0/4*/', "Argument --noproxy took multiple noproxy domains: ".$result->output );
+
+		$cmd = "$command -u /statuscode/200 --noproxy '0123:4567:89AB:CDEF:0123:4567:89AB:CDEF,0123::CDEF,0123:4567/96,[::1],::1,[1234::5678:ABCD/4]' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*CURLOPT_NOPROXY: 0123:4567:89AB:CDEF:0123:4567:89AB:CDEF,0123::CDEF,0123:4567\/96,\[::1\],::1,\[1234::5678:ABCD\/4\].*/', "Argument --noproxy took multiple noproxy domains: ".$result->output );
+
+		$cmd = "$command -u /statuscode/200 --noproxy '300.400.500.600,1.2.3,XYZD:0123::,1:2:3:4:5:6:7,1::2::3,1.1.1.1/64,::/256' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+
+		$cmd = "$command -u /statuscode/200 --proxy http://proxy.example.com:8080 --noproxy '*' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*proxy_resolves_hostname: 0.*/', "Proxy will not be used due to '*' in noproxy: ".$result->output );
+
+		$cmd = "$command -u /statuscode/200 --proxy http://proxy.example.com:8080 --noproxy '127.0.0.1' -v";
+		$result = NPTest->testCmd( $cmd );
+		is( $result->return_code, 0, $cmd);
+		like( $result->output, '/.*proxy_resolves_hostname: 0.*/', "Proxy will not be used due to '127.0.0.1' in noproxy: ".$result->output );
+	}
+
 }

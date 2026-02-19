@@ -13,7 +13,7 @@ use vars qw($tests $has_ipv6);
 BEGIN {
     use NPTest;
     $has_ipv6 = NPTest::has_ipv6();
-    $tests = $has_ipv6 ? 55 : 53;
+    $tests = $has_ipv6 ? 57 : 92;
     plan tests => $tests;
 }
 
@@ -25,7 +25,13 @@ my $plugin = 'check_http';
 $plugin    = 'check_curl' if $0 =~ m/check_curl/mx;
 
 my $host_tcp_http      = getTestParameter("NP_HOST_TCP_HTTP", "A host providing the HTTP Service (a web server)", "localhost");
+my $host_tcp_http_subdomain = getTestParameter("NP_HOST_TCP_HTTP_SUBDOMAIN", "A host that is served under a subdomain name", "subdomain1.localhost.com");
+my $host_tcp_http_ipv4 = getTestParameter("NP_HOST_TCP_HTTP_IPV4", "An IPv6 address providing a HTTP Service (a web server)", "127.0.0.1");
+my $host_tcp_http_ipv4_cidr_1 = getTestParameter("NP_HOST_TCP_HTTP_IPV4_CIDR_1", "A CIDR that the provided IPv4 address is in.");
+my $host_tcp_http_ipv4_cidr_2 = getTestParameter("NP_HOST_TCP_HTTP_IPV4_CIDR_2", "A CIDR that the provided IPv4 address is in.");
 my $host_tcp_http_ipv6      = getTestParameter("NP_HOST_TCP_HTTP_IPV6", "An IPv6 address providing a HTTP Service (a web server)", "::1");
+my $host_tcp_http_ipv6_cidr_1 = getTestParameter("NP_HOST_TCP_HTTP_IPV6_CIDR_1", "A CIDR that the provided IPv6 address is in.");
+my $host_tcp_http_ipv6_cidr_2 = getTestParameter("NP_HOST_TCP_HTTP_IPV6_CIDR_2", "A CIDR that the provided IPv6 address is in.");
 my $host_tls_http      = getTestParameter("NP_HOST_TLS_HTTP", "A host providing the HTTPS Service (a tls web server)", "localhost");
 my $host_tls_cert      = getTestParameter("NP_HOST_TLS_CERT", "the common name of the certificate.", "localhost");
 my $host_nonresponsive = getTestParameter("NP_HOST_NONRESPONSIVE", "The hostname of system not responsive to network requests", "10.0.0.1");
@@ -221,4 +227,111 @@ SKIP: {
 
         $res = NPTest->testCmd( "./$plugin -H monitoring-plugins.org --extended-perfdata" );
         like  ( $res->output, '/\'time_connect\'=[\d\.]+/', 'Extended Performance Data Output OK' );
+}
+SKIP: {
+    skip "No internet access", 2 if $internet_access eq "no";
+
+    # Proxy tests
+    # These are the proxy tests that require a working proxy server
+    # The debian container in the github workflow runs a squid proxy server at port 3128
+    # Test that dont require one, like argument/environment variable parsing are in plugins/tests/check_curl.t
+
+    # Test if proxy works
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv4 works" );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_ipv6 works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http2 --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http2 works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http_subdomain --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http_subdomain works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tls_http --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used, there are no preventative measures ");
+    is( $res->return_code, 0, "Using proxy http://$host_tcp_proxy:$port_tcp_proxy to connect to $host_tls_http works" );
+
+    # Noproxy '*' should prevent using proxy in any setting, even if its specified
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http_subdomain --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy \"\*\" -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since noproxy has \"\*\" ");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_subdomain with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy \"\*\" -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since noproxy has \"\*\" ");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv4 with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy \"\*\" -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since noproxy has \"\*\" ");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv6 with or without proxy." );
+
+    # Noproxy domain should prevent using proxy for subdomains of that domain
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http_subdomain --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since subdomain: $host_tcp_http_subdomain  is under a noproxy domain: $host_tcp_http");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_subdomain with or without proxy." );
+
+    # Noproxy should prevent using IP matches if an IP is found directly
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv4 -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv4 is added into noproxy: $host_tcp_http_ipv4");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv4 with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv6 -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv6 is added into noproxy: $host_tcp_http_ipv6");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv6 with or without proxy." );
+
+    # Noproxy should prevent using IP matches if a CIDR region that contains that Ip is used directly.
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv4_cidr_1 -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv4 is inside CIDR range: $host_tcp_http_ipv4_cidr_1");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv4 with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv4 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv4_cidr_2 -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv4 is inside CIDR range: $host_tcp_http_ipv4_cidr_2");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv4 with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv6_cidr_1 -v " );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv6 is inside CIDR range: $host_tcp_http_ipv6_cidr_1");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv6 with or without proxy." );
+
+    $res = NPTest->testCmd( "./$plugin -I $host_tcp_http_ipv6 --proxy http://$host_tcp_proxy:$port_tcp_proxy --noproxy $host_tcp_http_ipv6_cidr_2 -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used since IP address: $host_tcp_http_ipv6 is inside CIDR range: $host_tcp_http_ipv6_cidr_2");
+    is( $res->return_code, 0, "Should reach $host_tcp_http_ipv6 with or without proxy." );
+
+    # Noproxy should discern over different types of proxy schemes
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy http://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, and is using scheme http ");
+    is( $res->return_code, 0, "Using proxy http:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy https://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, and is using scheme https");
+    # Squid is not configured for https
+    # is( $res->return_code, 0, "Using proxy https:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy socks4://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used for resolving hostname, and is using scheme socks4");
+    # Squid is not configured for socks4
+    # is( $res->return_code, 0, "Using proxy socks4:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy socks4a://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, and is using scheme socks4a");
+    # Squid is not configured for socks4a
+    # is( $res->return_code, 0, "Using proxy socks4a:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy socks5://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 0/m, "proxy is not used for resolving hostname, and is using scheme socks5");
+    # Squid is not configured for socks5
+    # is( $res->return_code, 0, "Using proxy socks5:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
+
+    $res = NPTest->testCmd( "./$plugin -H $host_tcp_http --proxy socks5h://$host_tcp_proxy:$port_tcp_proxy -v" );
+    like($res->output, qr/^\* proxy_resolves_hostname: 1/m, "proxy is used for resolving hostname, and is using scheme socks5h");
+    # Squid is not configured for socks5h
+    # is( $res->return_code, 0, "Using proxy socks5h:$host_tcp_proxy:$port_tcp_proxy to connect to $host_tcp_http works" );
 }
