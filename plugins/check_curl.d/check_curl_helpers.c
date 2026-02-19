@@ -666,7 +666,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 void handle_curl_option_return_code(CURLcode res, const char *option) {
 	if (res != CURLE_OK) {
-		die(STATE_CRITICAL, _("Error while setting cURL option '%s': cURL returned %d - %s"),
+		die(STATE_CRITICAL, _("Error while setting cURL option '%s': cURL returned %d - %s\n"),
 			option, res, curl_easy_strerror(res));
 	}
 }
