@@ -1160,7 +1160,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			enable_tls = true;
 			break;
 		case 'S': /* use SSL */
-			tls_option_optarg = strdup(optarg);
+			tls_option_optarg = optarg;
 			enable_tls = true;
 #ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
@@ -1382,35 +1382,35 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		 * parameters, like -S and -C combinations */
 		result.config.curl_config.ssl_version = CURL_SSLVERSION_DEFAULT;
 		if (tls_option_optarg != NULL) {
-			char *plus_ptr = strchr(tls_option_optarg, '+');
+			char *plus_ptr = strchr(optarg, '+');
 			if (plus_ptr) {
 				got_plus = true;
 				*plus_ptr = '\0';
 			}
 
-			if (tls_option_optarg[0] == '2') {
+			if (optarg[0] == '2') {
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_SSLv2;
-			} else if (tls_option_optarg[0] == '3') {
+			} else if (optarg[0] == '3') {
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_SSLv3;
-			} else if (!strcmp(tls_option_optarg, "1") || !strcmp(tls_option_optarg, "1.0")) {
+			} else if (!strcmp(optarg, "1") || !strcmp(optarg, "1.0")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_0;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-			} else if (!strcmp(tls_option_optarg, "1.1")) {
+			} else if (!strcmp(optarg, "1.1")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_1;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-			} else if (!strcmp(tls_option_optarg, "1.2")) {
+			} else if (!strcmp(optarg, "1.2")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0)
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_2;
 #else
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 34, 0) */
-			} else if (!strcmp(tls_option_optarg, "1.3")) {
+			} else if (!strcmp(optarg, "1.3")) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0)
 				result.config.curl_config.ssl_version = CURL_SSLVERSION_TLSv1_3;
 #else
