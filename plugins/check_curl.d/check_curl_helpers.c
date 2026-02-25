@@ -1181,14 +1181,6 @@ char *string_statuscode(int major, int minor) {
 	return buf;
 }
 
-/* check whether a file exists */
-void test_file(char *path) {
-	if (access(path, R_OK) == 0) {
-		return;
-	}
-	usage2(_("file does not exist or is not readable"), path);
-}
-
 mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										 int days_till_exp_crit);
 
