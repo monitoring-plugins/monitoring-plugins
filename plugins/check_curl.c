@@ -251,7 +251,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	 * curl_state is updated after curl_easy_perform, and a cert check can be done at this point
 	 * check_http tries to check certs as early as possible, and returns afterwards unless
 	 * continue_after_check_cert is enabled. there may be servers with valid certificates
-	 * that return erroneus responses, but check_http returns OK since it only concerned with
+	 * that return erroneous responses, but check_http returns OK since it only concerned with
 	 * certificates. Behave similarly here and check CURLcode after certificates.
 	 */
 #ifdef LIBCURL_FEATURE_SSL
