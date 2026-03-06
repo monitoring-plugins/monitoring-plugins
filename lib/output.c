@@ -259,6 +259,21 @@ mp_state_enum mp_eval_check_default(const mp_check check) {
 	return result;
 }
 
+// Remove troublesome symbols from plugin output
+char *sanitize_output_insitu(char *input) {
+	if (input == NULL) {
+		return input;
+	}
+
+	for (char *walker = input; *walker != '\0'; walker++) {
+		if (*walker == '|') {
+			*walker = ' ';
+		}
+	}
+
+	return input;
+}
+
 /*
  * Generate output string for a mp_check object
  * Non static to be available for testing functions
@@ -298,6 +313,8 @@ char *mp_fmt_output(mp_check check) {
 
 			subchecks = subchecks->next;
 		}
+
+		result = sanitize_output_insitu(result);
 
 		if (pd_string != NULL && strlen(pd_string) > 0) {
 			asprintf(&result, "%s|%s", result, pd_string);
