@@ -48,6 +48,11 @@ typedef struct {
 
 	bool use_ssl;
 	bool no_body;
+
+	/* curl CURLOPT_PROXY option will be set to this value if not NULL */
+	char *curlopt_proxy;
+	/* curl CURLOPT_NOPROXY option will be set to this value if not NULL */
+	char *curlopt_noproxy;
 } check_curl_working_state;
 
 check_curl_working_state check_curl_working_state_init();
@@ -65,6 +70,8 @@ typedef struct {
 	char *client_privkey;
 	char *ca_cert;
 	bool verify_peer_and_host;
+	char proxy[DEFAULT_BUFFER_SIZE];
+	char no_proxy[DEFAULT_BUFFER_SIZE];
 	char user_agent[DEFAULT_BUFFER_SIZE];
 	char proxy_auth[MAX_INPUT_BUFFER];
 	char user_auth[MAX_INPUT_BUFFER];

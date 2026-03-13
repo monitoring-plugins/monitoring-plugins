@@ -3,8 +3,11 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include "../utils.h"
 #include "check_curl.d/config.h"
 #include "output.h"
@@ -116,6 +119,107 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		curl_easy_setopt(result.curl_state.curl, CURLOPT_TIMEOUT, config.socket_timeout),
 		"CURLOPT_TIMEOUT");
 
+	/* set proxy */
+	/* http(s) proxy can either be given from the command line, or taken from environment variables */
+	/* socks4(a) / socks5(h) proxy should be given using the command line */
+
+	/* first source to check is the environment variables */
+	/* lower case proxy environment variables are almost always accepted, while some programs also checking
+	uppercase ones. discover both, but take the lowercase one if both are present */
+
+	/* extra information: libcurl does not discover the uppercase version HTTP_PROXY due to security reasons */
+	/* https://github.com/curl/curl/blob/d445f2d930ae701039518d695481ee53b8490521/lib/url.c#L1987 */
+
+	/* first environment variable to read is all_proxy. it can be overridden by protocol specific environment variables */
+	char *all_proxy_env, *all_proxy_uppercase_env;
+	all_proxy_env = getenv("all_proxy");
+	all_proxy_uppercase_env = getenv("ALL_PROXY");
+	if (all_proxy_env != NULL && strlen(all_proxy_env)){
+		working_state.curlopt_proxy = strdup(all_proxy_env);
+		if (all_proxy_uppercase_env != NULL && verbose >= 1) {
+			printf("* cURL ignoring environment variable 'ALL_PROXY' as 'all_proxy' is set\n");
+		}
+	} else if (all_proxy_uppercase_env != NULL && strlen(all_proxy_uppercase_env) > 0) {
+		working_state.curlopt_proxy = strdup(all_proxy_uppercase_env);
+	}
+
+	/* second environment variable to read is http_proxy. only set curlopt_proxy if ssl is not toggled */
+	char *http_proxy_env, *http_proxy_uppercase_env;
+	http_proxy_env = getenv("http_proxy");
+	http_proxy_uppercase_env = getenv("HTTP_PROXY");
+	if (!working_state.use_ssl){
+		if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
+			working_state.curlopt_proxy = strdup(http_proxy_env);
+			if (http_proxy_uppercase_env != NULL && verbose >= 1) {
+				printf("* cURL ignoring environment variable 'HTTP_PROXY' as 'http_proxy' is set\n");
+			}
+		} else if (http_proxy_uppercase_env != NULL && strlen(http_proxy_uppercase_env) > 0) {
+			working_state.curlopt_proxy = strdup(http_proxy_uppercase_env);
+		}
+	}
+#ifdef LIBCURL_FEATURE_SSL
+	/* optionally read https_proxy environment variable and set curlopt_proxy if ssl is toggled */
+	char *https_proxy_env, *https_proxy_uppercase_env;
+	https_proxy_env = getenv("https_proxy");
+	https_proxy_uppercase_env = getenv("HTTPS_PROXY");
+	if (working_state.use_ssl) {
+		if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
+			working_state.curlopt_proxy = strdup(https_proxy_env);
+			if (https_proxy_uppercase_env != NULL && verbose >= 1) {
+				printf("* cURL ignoring environment variable 'HTTPS_PROXY' as 'https_proxy' is set\n");
+			}
+		}
+		else if (https_proxy_uppercase_env != NULL && strlen(https_proxy_uppercase_env) >= 0) {
+			working_state.curlopt_proxy = strdup(https_proxy_uppercase_env);
+		}
+	}
+#endif /* LIBCURL_FEATURE_SSL */
+
+	/* second source to check for proxies is command line argument, overwriting the environment variables */
+	if (strlen(config.proxy) > 0) {
+		working_state.curlopt_proxy = strdup(config.proxy);
+	}
+
+	if (working_state.curlopt_proxy != NULL && strlen(working_state.curlopt_proxy)){
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_PROXY, working_state.curlopt_proxy), "CURLOPT_PROXY");
+		if (verbose >= 1) {
+			printf("* curl CURLOPT_PROXY: %s\n", working_state.curlopt_proxy);
+		}
+	}
+
+	/* set no_proxy */
+	/* first source to check is environment variables */
+	char *no_proxy_env, *no_proxy_uppercase_env;
+	no_proxy_env = getenv("no_proxy");
+	no_proxy_uppercase_env = getenv("NO_PROXY");
+	if (no_proxy_env != NULL && strlen(no_proxy_env)){
+		working_state.curlopt_noproxy = strdup(no_proxy_env);
+		if (no_proxy_uppercase_env != NULL && verbose >= 1){
+			printf("* cURL ignoring environment variable 'NO_PROXY' as 'no_proxy' is set\n");
+		}
+	}else if (no_proxy_uppercase_env != NULL && strlen(no_proxy_uppercase_env) > 0){
+		working_state.curlopt_noproxy = strdup(no_proxy_uppercase_env);
+	}
+
+	/* second source to check for no_proxy is command line argument, overwriting the environment variables */
+	if (strlen(config.no_proxy) > 0) {
+		working_state.curlopt_noproxy = strdup(config.no_proxy);
+	}
+
+	if ( working_state.curlopt_noproxy != NULL && strlen(working_state.curlopt_noproxy)){
+		handle_curl_option_return_code(
+			curl_easy_setopt(result.curl_state.curl, CURLOPT_NOPROXY, working_state.curlopt_noproxy), "CURLOPT_NOPROXY");
+		if (verbose >= 1) {
+			printf("* curl CURLOPT_NOPROXY: %s\n", working_state.curlopt_noproxy);
+		}
+	}
+
+	int proxy_resolves_hostname = determine_hostname_resolver(working_state, config);
+	if (verbose >= 1) {
+		printf("* proxy_resolves_hostname: %d\n", proxy_resolves_hostname);
+	}
+
 	/* enable haproxy protocol */
 	if (config.haproxy_protocol) {
 		handle_curl_option_return_code(
@@ -123,11 +227,11 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 			"CURLOPT_HAPROXYPROTOCOL");
 	}
 
-	// fill dns resolve cache to make curl connect to the given server_address instead of the
-	// host_name, only required for ssl, because we use the host_name later on to make SNI happy
+	/* fill dns resolve cache to make curl connect to the given server_address instead of the */
+	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL) {
+	if (working_state.use_ssl && working_state.host_name != NULL && !proxy_resolves_hostname ) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
@@ -562,7 +666,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 void handle_curl_option_return_code(CURLcode res, const char *option) {
 	if (res != CURLE_OK) {
-		die(STATE_CRITICAL, _("Error while setting cURL option '%s': cURL returned %d - %s"),
+		die(STATE_CRITICAL, _("Error while setting cURL option '%s': cURL returned %d - %s\n"),
 			option, res, curl_easy_strerror(res));
 	}
 }
@@ -589,6 +693,8 @@ check_curl_working_state check_curl_working_state_init() {
 		.serverPort = HTTP_PORT,
 		.use_ssl = false,
 		.no_body = false,
+		.curlopt_proxy = NULL,
+		.curlopt_noproxy = NULL,
 	};
 	return result;
 }
@@ -612,6 +718,8 @@ check_curl_config check_curl_config_init() {
 				.ca_cert = NULL,
 				.verify_peer_and_host = false,
 				.user_agent = {'\0'},
+				.proxy = "",
+				.no_proxy = "",
 				.proxy_auth = "",
 				.user_auth = "",
 				.http_content_type = NULL,
@@ -1294,4 +1402,343 @@ char *fmt_url(check_curl_working_state workingState) {
 			 workingState.serverPort, workingState.server_url);
 
 	return url;
+}
+
+int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
+	char *host_name_display = "NULL";
+	unsigned long host_name_len = 0;
+	if( working_state.host_name){
+		host_name_len = strlen(working_state.host_name);
+		host_name_display = working_state.host_name;
+	}
+
+	/* IPv4 or IPv6 version of the address */
+	char *server_address_clean = strdup(working_state.server_address);
+	/* server address might be a full length ipv6 address encapsulated in square brackets */
+	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) && (working_state.server_address[0] == '[') && (working_state.server_address[strlen(working_state.server_address)-1] == ']') ) {
+		server_address_clean = strndup( working_state.server_address + 1, strlen(working_state.server_address) - 2);
+	}
+
+	/* check curlopt_noproxy option first */
+	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
+
+	/* curlopt_noproxy is specified as a comma separated list of
+	direct IPv4 or IPv6 addresses e.g 130.133.8.40, 2001:4860:4802:32::a ,
+	IPv4 or IPv6 CIDR regions e.g 10.241.0.0/16 , abcd:ef01:2345::/48 ,
+	direct hostnames e.g example.com, google.de */
+
+	if (working_state.curlopt_noproxy != NULL){
+		char* curlopt_noproxy_copy = strdup( working_state.curlopt_noproxy);
+		char* noproxy_item = strtok(curlopt_noproxy_copy, ",");
+		while(noproxy_item != NULL){
+			unsigned long noproxy_item_len = strlen(noproxy_item);
+
+			/* According to the CURLOPT_NOPROXY documentation: */
+			/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
+			/* The only wildcard available is a single * character, which matches all hosts, and effectively disables the proxy. */
+			if ( strlen(noproxy_item) == 1 && noproxy_item[0] == '*'){
+				if (verbose >= 1){
+					printf("* noproxy includes '*' which disables proxy for all host name incl. : %s / server address incl. : %s\n", host_name_display , server_address_clean);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
+			/* direct comparison with the server_address */
+			if( server_address_clean != NULL && strlen(server_address_clean) == strlen(noproxy_item) && strcmp(server_address_clean, noproxy_item) == 0){
+				if (verbose >= 1){
+					printf("* server_address is in the no_proxy list: %s\n", noproxy_item);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
+			/* direct comparison with the host_name */
+			if( working_state.host_name != NULL && host_name_len == noproxy_item_len && strcmp(working_state.host_name, noproxy_item) == 0){
+				if (verbose >= 1){
+					printf("* host_name is in the no_proxy list: %s\n", noproxy_item);
+				}
+				free(curlopt_noproxy_copy);
+				free(server_address_clean);
+				return 0;
+			}
+
+			/* check if hostname is a subdomain of the item, e.g www.example.com when token is example.com */
+			/* subdomain1.acme.com will not will use a proxy if you only specify 'acme' in the noproxy */
+			/* check if noproxy_item is a suffix */
+			/* check if the character just before the suffix is '.' */
+			if( working_state.host_name != NULL && host_name_len > noproxy_item_len){
+				unsigned long suffix_start_idx = host_name_len - noproxy_item_len;
+				if (strcmp(working_state.host_name + suffix_start_idx, noproxy_item ) == 0 && working_state.host_name[suffix_start_idx-1] == '.' ){
+					if (verbose >= 1){
+						printf("* host_name: %s is a subdomain of the no_proxy list item: %s\n", working_state.host_name , noproxy_item);
+					}
+					free(curlopt_noproxy_copy);
+					free(server_address_clean);
+					return 0;
+				}
+			}
+
+			// noproxy_item could be a CIDR IP range
+			if( server_address_clean != NULL && strlen(server_address_clean)){
+
+				int ip_addr_inside_cidr_ret = ip_addr_inside_cidr(noproxy_item, server_address_clean);
+
+				switch(ip_addr_inside_cidr_ret){
+				case 1:
+					return 0;
+					break;
+				case 0:
+					if(verbose >= 1){
+						printf("server address: %s is not inside IP cidr: %s\n", server_address_clean, noproxy_item);
+					}
+					break;
+				case -1:
+					if(verbose >= 1){
+						printf("could not fully determine if server address: %s is inside the IP cidr: %s\n", server_address_clean, noproxy_item);
+					}
+					break;
+				}
+			}
+
+			noproxy_item = strtok(NULL, ",");
+		}
+
+		free(curlopt_noproxy_copy);
+	}
+
+	if (working_state.curlopt_proxy != NULL){
+		// Libcurl documentation
+		// Setting the proxy string to "" (an empty string) explicitly disables the use of a proxy, even if there is an environment variable set for it.
+		if ( strlen(working_state.curlopt_proxy) == 0){
+			return 0;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "http://", 7) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is http, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "https://", 8) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is https, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "socks4://", 9) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 0;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "socks4a://", 10) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks4a, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "socks5://", 9) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks5, proxy: %s does not resolve host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 0;
+		}
+
+		if ( strncmp( working_state.curlopt_proxy, "socks5h://", 10) == 0){
+			if (verbose >= 1){
+				printf("* proxy scheme is socks5h, proxy: %s resolves host: %s or server_address: %s\n", working_state.curlopt_proxy, host_name_display, server_address_clean);
+			}
+			free(server_address_clean);
+			return 1;
+		}
+
+		// Libcurl documentation:
+		// Without a scheme prefix, CURLOPT_PROXYTYPE can be used to specify which kind of proxy the string identifies.
+		// We do not set this value
+		// Without a scheme, it is treated as an http proxy
+
+		return 1;
+	}
+
+	if (verbose >= 1){
+		printf("* proxy scheme is unknown/unavailable, no proxy is assumed for host: %s or server_address: %s\n", host_name_display, server_address_clean);
+	}
+
+	free(server_address_clean);
+	return 0;
+}
+
+int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_ip){
+	unsigned int slash_count = 0;
+	unsigned int last_slash_idx = 0;
+	for(size_t i = 0; i < strlen(cidr_region_or_ip_addr); i++){
+		if(cidr_region_or_ip_addr[i] == '/'){
+			slash_count++;
+			last_slash_idx = (unsigned int)i;
+		}
+	}
+
+	char *cidr_ip_part = NULL;
+	int prefix_length = 0;
+
+	if (slash_count == 0) {
+		cidr_ip_part = strdup(cidr_region_or_ip_addr);
+		if (!cidr_ip_part) return -1;
+	} else if (slash_count == 1) {
+		cidr_ip_part = strndup(cidr_region_or_ip_addr, last_slash_idx);
+		if (!cidr_ip_part) return -1;
+
+		errno = 0;
+		long long tmp = strtoll(cidr_region_or_ip_addr + last_slash_idx + 1, NULL, 10);
+		if (errno == ERANGE) {
+			if (verbose >= 1) {
+				printf("cidr_region_or_ip: %s , could not parse subnet length\n", cidr_region_or_ip_addr);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		prefix_length = (int)tmp;
+	} else {
+		printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid cidr_region or IP\n", cidr_region_or_ip_addr, slash_count);
+		return -1;
+	}
+
+	int cidr_addr_family, target_addr_family;
+	if (strchr(cidr_ip_part, ':')){
+		cidr_addr_family = AF_INET6;
+	} else {
+		cidr_addr_family = AF_INET;
+	}
+
+	if (strchr(target_ip, ':')){
+		target_addr_family = AF_INET6;
+	} else {
+		target_addr_family = AF_INET;
+	}
+
+	if (cidr_addr_family != target_addr_family){
+		if (verbose >= 1){
+			printf("cidr address: %s and target ip address: %s have different address families\n", cidr_ip_part, target_ip);
+		}
+		free(cidr_ip_part);
+		return 0;
+	}
+
+	// If no prefix is given, treat the cidr as a single address (full-length prefix)
+	if (slash_count == 0) {
+		prefix_length = (cidr_addr_family == AF_INET) ? 32 : 128;
+	}
+
+	int max_bits = (cidr_addr_family == AF_INET) ? 32u : 128u;
+	if (prefix_length < 0 || prefix_length > max_bits) {
+		if (verbose >= 1) {
+			printf("cidr_region_or_ip: %s has invalid prefix length: %u\n", cidr_region_or_ip_addr, prefix_length);
+		}
+		free(cidr_ip_part);
+		return -1;
+	}
+
+	if (verbose >= 1){
+		printf("cidr_region_or_ip: %s , has prefix length: %u\n", cidr_region_or_ip_addr, prefix_length);
+	}
+
+	int inet_pton_rc;
+	uint8_t *cidr_bytes = NULL;
+	uint8_t *target_bytes = NULL;
+	uint8_t cidr_buf[16];
+	uint8_t target_buf[16];
+	size_t total_bytes = 0;
+
+	if (cidr_addr_family == AF_INET) {
+		struct in_addr cidr_ipv4;
+		struct in_addr target_ipv4;
+		inet_pton_rc = inet_pton(AF_INET, cidr_ip_part, &cidr_ipv4);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv4\n", cidr_ip_part);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		inet_pton_rc = inet_pton(AF_INET, target_ip, &target_ipv4);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv4\n", target_ip);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		// copy the addresses in network byte order to a buffer for comparison
+		memcpy(cidr_buf, &cidr_ipv4.s_addr, 4);
+		memcpy(target_buf, &target_ipv4.s_addr, 4);
+		cidr_bytes = cidr_buf;
+		target_bytes = target_buf;
+		total_bytes = 4;
+	} else {
+		struct in6_addr cidr_ipv6;
+		struct in6_addr target_ipv6;
+		inet_pton_rc = inet_pton(AF_INET6, cidr_ip_part, &cidr_ipv6);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv6\n", cidr_ip_part);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		inet_pton_rc = inet_pton(AF_INET6, target_ip, &target_ipv6);
+		if (inet_pton_rc != 1) {
+			if (verbose >= 1) {
+				printf("ip string: %s contains characters not valid for its address family: IPv6\n", target_ip);
+			}
+			free(cidr_ip_part);
+			return -1;
+		}
+		memcpy(cidr_buf, &cidr_ipv6, 16);
+		memcpy(target_buf, &target_ipv6, 16);
+		cidr_bytes = cidr_buf;
+		target_bytes = target_buf;
+		total_bytes = 16;
+	}
+
+	int prefix_bytes = prefix_length / 8;
+	int prefix_bits = prefix_length % 8;
+
+	if (prefix_bytes > 0) {
+		if (memcmp(cidr_bytes, target_bytes, (size_t)prefix_bytes) != 0) {
+			if (verbose >= 1) {
+				printf("the first %d bytes of the cidr_region_or_ip: %s and target_ip: %s are different\n", prefix_bytes, cidr_ip_part, target_ip);
+			}
+			free(cidr_ip_part);
+			return 0;
+		}
+	}
+
+	if (prefix_bits != 0) {
+		uint8_t cidr_oct = cidr_bytes[prefix_bytes];
+		uint8_t target_oct = target_bytes[prefix_bytes];
+		// the mask has first prefix_bits bits 1, the rest as 0
+		uint8_t mask = (uint8_t)(0xFFu << (8 - prefix_bits));
+		if ((cidr_oct & mask) != (target_oct & mask)) {
+			if (verbose >= 1) {
+				printf("looking at the last %d bits of the prefix, cidr_region_or_ip(%s) byte is: %u and target_ip byte(%s) is: %u, applying bitmask: %02X returns different results\n", prefix_bits, cidr_ip_part, (unsigned)cidr_oct, target_ip, (unsigned)target_oct, mask);
+			}
+			free(cidr_ip_part);
+			return 0;
+		}
+	}
+
+	free(cidr_ip_part);
+	return 1;
 }
