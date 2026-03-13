@@ -239,9 +239,34 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	// ==============
 	CURLcode res = curl_easy_perform(curl_state.curl);
 
+	if (verbose > 1) {
+		printf("* curl_easy_perform returned: %s\n", curl_easy_strerror(res));
+	}
+
 	if (verbose >= 2 && workingState.http_post_data) {
 		printf("**** REQUEST CONTENT ****\n%s\n", workingState.http_post_data);
 	}
+
+	 // curl_state is updated after curl_easy_perform, and with updated curl_state certificate checks can be done
+	 // Check_http tries to check certs as early as possible, and exits with certificate check result by default. Behave similarly.
+#ifdef LIBCURL_FEATURE_SSL
+	if (workingState.use_ssl && config.check_cert) {
+		if (verbose > 1) {
+			printf("* adding a subcheck for the certificate\n");
+		}
+		mp_subcheck sc_certificate = check_curl_certificate_checks(
+			curl_state.curl, cert, config.days_till_exp_warn, config.days_till_exp_crit);
+
+		mp_add_subcheck_to_subcheck(&sc_result, sc_certificate);
+		if (!config.continue_after_check_cert) {
+			if (verbose > 1) {
+				printf("* returning after adding the subcheck for certificate, continuing after "
+					   "checking the certificate is turned off\n");
+			}
+			return sc_result;
+		}
+	}
+#endif
 
 	mp_subcheck sc_curl = mp_subcheck_init();
 
@@ -282,18 +307,6 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	// ==========
 	// Evaluation
 	// ==========
-
-#ifdef LIBCURL_FEATURE_SSL
-	if (workingState.use_ssl && config.check_cert) {
-		mp_subcheck sc_certificate = check_curl_certificate_checks(
-			curl_state.curl, cert, config.days_till_exp_warn, config.days_till_exp_crit);
-
-		mp_add_subcheck_to_subcheck(&sc_result, sc_certificate);
-		if (!config.continue_after_check_cert) {
-			return sc_result;
-		}
-	}
-#endif
 
 	/* we got the data and we executed the request in a given time, so we can append
 	 * performance data to the answer always
