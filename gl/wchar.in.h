@@ -316,7 +316,7 @@ _GL_EXTERN_C int wcsncmp (const wchar_t *__s1, const wchar_t *__s2, size_t __n)
   _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3)
   _GL_ATTRIBUTE_NONNULL_IF_NONZERO (2, 3);
 # ifndef __cplusplus
-_GL_EXTERN_C wchar_t *wmemchr (const wchar_t *__s, wchar_t __wc, size_t __n)
+_GL_EXTERN_C wchar_t *(wmemchr) (const wchar_t *__s, wchar_t __wc, size_t __n)
   _GL_ATTRIBUTE_NONNULL_IF_NONZERO (1, 3);
 # endif
 _GL_EXTERN_C wchar_t *wmemset (wchar_t *__s, wchar_t __wc, size_t __n)
