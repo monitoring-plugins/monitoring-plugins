@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ([2.64])
+AC_PREREQ([2.72])
 AC_INIT([monitoring-plugins],[2.4git])
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
@@ -42,7 +42,6 @@ AC_SUBST(INSTALL)
 
 AC_PROG_CC
 gl_EARLY
-AC_PROG_GCC_TRADITIONAL
 LT_INIT
 
 AM_PROG_CC_C_O
