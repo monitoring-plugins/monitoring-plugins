@@ -16,7 +16,7 @@
  *
  *****************************************************************************/
 
-#include "tap.h"
+#include "../../tap/tap.h"
 #include "../../config.h"
 
 #include <unistd.h>
@@ -25,6 +25,10 @@
 
 #include "utils_base.c"
 #include "../check_snmp.d/check_snmp_helpers.h"
+
+int verbose = 0;
+void print_usage() {}
+const char *progname = "test_check_snmp";
 
 char *_np_state_generate_key(int argc, char **argv);
 char *_np_state_calculate_location_prefix(void);

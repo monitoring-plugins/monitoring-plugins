@@ -189,6 +189,8 @@ tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
 tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
+tests_test_check_snmp_LDFLAGS = $(AM_LDFLAGS) -lm `net-snmp-config --libs`
+tests_test_check_snmp_CFLAGS = $(AM_CFLAGS) `net-snmp-config --cflags`
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
 
