@@ -275,3 +275,8 @@ like($res->output, '/.*4.20.*| iso.3.6.1.4.1.8072.3.2.67.19=4.20/', "Test multip
 $res = NPTest->testCmd( "./check_snmp -H 127.0.0.1 -C public -p $port_snmp -o .1.3.6.1.4.1.8072.3.2.67.19 --multiplier=.1 -w 1");
 is($res->return_code, 1, "Test multiply RC + thresholds" );
 like($res->output, '/.*4.20.* | iso.3.6.1.4.1.8072.3.2.67.19=4.20+;1/', "Test multiply .1 output + thresholds" );
+
+if (! -e "./test_check_snmp") {
+	plan skip_all => "./test_check_snmp not compiled - please enable libtap library to test";
+}
+exec "./test_check_snmp";

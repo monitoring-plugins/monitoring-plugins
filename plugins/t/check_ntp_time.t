@@ -5,13 +5,13 @@
 #
 
 use strict;
+use warnings;
 use Test::More;
 use NPTest;
 
-my @PLUGINS1 = ('check_ntp_peer', 'check_ntp_time');
-my @PLUGINS2 = ('check_ntp_peer');
+my @PLUGINS1 = ('check_ntp_time');
 
-plan tests => (12 * scalar(@PLUGINS1)) + (6 * scalar(@PLUGINS2));
+plan tests => (12 * scalar(@PLUGINS1));
 
 my $res;
 
