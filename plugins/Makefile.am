@@ -53,13 +53,12 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 
 SUBDIRS = picohttpparser
 
-np_test_scripts = tests/test_check_swap.t \
-				  tests/test_check_snmp.t \
-				  tests/test_check_disk.t
+np_test_scripts = tests/check_swap.t \
+				  tests/check_snmp.t \
+				  tests/check_disk.t
 
 EXTRA_DIST = t \
 			 tests \
-			 $(np_test_scripts) \
 			 negate.d \
 			 check_swap.d \
 			 check_ldap.d \
