@@ -11,7 +11,7 @@
 
 extern int verbose;
 
-check_snmp_test_unit check_snmp_test_unit_init() {
+check_snmp_test_unit check_snmp_test_unit_init(void) {
 	check_snmp_test_unit tmp = {
 		.threshold = mp_thresholds_init(),
 	};
@@ -91,7 +91,7 @@ const char DEFAULT_OUTPUT_DELIMITER[] = " ";
 
 const int RANDOM_STATE_DATA_LENGTH_PREDICTION = 8192;
 
-check_snmp_config check_snmp_config_init() {
+check_snmp_config check_snmp_config_init(void) {
 	check_snmp_config tmp = {
 		.snmp_params =
 			{
