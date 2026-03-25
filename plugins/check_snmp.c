@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
 
 	np_init((char *)progname, argc, argv);
 
-	state_key stateKey = np_enable_state(NULL, 1, progname, argc, argv);
+	state_key stateKey = np_enable_state(NULL, 1, progname, argc, (const char **)argv);
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -311,15 +311,16 @@ int main(int argc, char **argv) {
 	bool have_previous_state = false;
 
 	if (config.evaluation_params.calculate_rate) {
-		state_data *previous_state = np_state_read(stateKey);
-		if (previous_state == NULL) {
+		np_state_read_wrapper recovered = np_state_read(stateKey);
+
+		if (recovered.errorcode != 0) {
 			// failed to recover state
 			// or no previous state
 			have_previous_state = false;
 		} else {
 			// sanity check
 			recover_state_data_type prev_state_wrapper =
-				recover_state_data(previous_state->data, (idx_t)previous_state->length);
+				recover_state_data(recovered.data.data, (idx_t)recovered.data.length);
 
 			if (prev_state_wrapper.errorcode == OK) {
 				have_previous_state = true;

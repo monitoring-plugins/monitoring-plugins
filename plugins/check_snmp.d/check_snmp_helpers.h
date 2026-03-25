@@ -3,9 +3,9 @@
 #include "./config.h"
 #include <net-snmp/library/asn1.h>
 
-check_snmp_test_unit check_snmp_test_unit_init();
+check_snmp_test_unit check_snmp_test_unit_init(void);
 int check_snmp_set_thresholds(const char *, check_snmp_test_unit[], size_t, bool);
-check_snmp_config check_snmp_config_init();
+check_snmp_config check_snmp_config_init(void);
 
 typedef struct {
 	oid oid[MAX_OID_LEN];
@@ -62,10 +62,14 @@ typedef struct state_key_struct {
 	char *plugin_name;
 	int data_version;
 	char *_filename;
-	state_data *state_data;
+	state_data state_data;
 } state_key;
 
-state_data *np_state_read(state_key stateKey);
+typedef struct {
+	int errorcode;
+	state_data data;
+} np_state_read_wrapper;
+np_state_read_wrapper np_state_read(state_key stateKey);
 state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
-						  int argc, char **argv);
-void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToStore);
+						  int argc, const char **argv);
+void np_state_write_string(state_key stateKey, time_t timestamp, const char *stringToStore);
