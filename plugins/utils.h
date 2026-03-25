@@ -21,7 +21,7 @@ suite of plugins. */
 
 #ifdef NP_EXTRA_OPTS
 /* Include extra-opts functions if compiled in */
-#	include "extra_opts.h"
+#	include "../lib/extra_opts.h"
 #else
 /* else, fake np_extra_opts */
 #	define np_extra_opts(acptr, av, pr) av
