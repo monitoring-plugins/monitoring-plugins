@@ -52,6 +52,7 @@ NP-VERSION-FILE
 
 # /gl/
 /gl/.deps
+/gl/*/.deps
 /gl/alloca.h
 /gl/arpa
 /gl/arpa_inet.h
