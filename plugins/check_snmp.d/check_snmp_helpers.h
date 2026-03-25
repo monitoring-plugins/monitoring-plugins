@@ -48,16 +48,16 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 										   check_snmp_state_entry prev_state,
 										   bool have_previous_state);
 
-#define NP_STATE_FORMAT_VERSION 1
+#define CHECK_SNMP_STATE_FORMAT_VERSION 1
 
-typedef struct state_data_struct {
+typedef struct {
 	time_t time;
 	void *data;
 	size_t length; /* Of binary data */
 	int errorcode;
 } state_data;
 
-typedef struct state_key_struct {
+typedef struct {
 	char *name;
 	char *plugin_name;
 	int data_version;
@@ -68,8 +68,8 @@ typedef struct state_key_struct {
 typedef struct {
 	int errorcode;
 	state_data data;
-} np_state_read_wrapper;
-np_state_read_wrapper np_state_read(state_key stateKey);
-state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
-						  int argc, const char **argv);
-void np_state_write_string(state_key stateKey, time_t timestamp, const char *stringToStore);
+} check_snmp_state_read_wrapper;
+check_snmp_state_read_wrapper check_snmp_state_read(state_key stateKey);
+state_key check_snmp_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+								  int argc, const char **argv);
+void check_snmp_state_write_string(state_key stateKey, time_t timestamp, const char *stringToStore);

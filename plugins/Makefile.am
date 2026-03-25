@@ -17,7 +17,7 @@ AM_CPPFLAGS = -I.. \
 			  -I$(top_srcdir)/lib \
 			  -I$(top_srcdir)/gl \
 			  -I$(top_srcdir)/intl \
-			  -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\" \
+			  -DCHECK_SNMP_STATE_DIR_PREFIX=\"$(localstatedir)\" \
 			  @LDAPINCLUDE@ \
 			  @PGINCLUDE@ \
 			  @SSLINCLUDE@

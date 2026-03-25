@@ -64,12 +64,12 @@ int verbose = 0;
 void print_usage(void) {}
 const char *progname = "test_check_snmp";
 
-char *_np_state_generate_key(int argc, char **argv);
-char *_np_state_calculate_location_prefix(void);
+char *check_snmp_state_generate_key(int argc, char **argv);
+char *check_snmp_state_calculate_location_prefix(void);
 //
 
 void test_key_generation(int argc, char **argv) {
-	char *temp_string = (char *)_np_state_generate_key(argc, argv);
+	char *temp_string = (char *)check_snmp_state_generate_key(argc, argv);
 	ok(!strcmp(temp_string, "8a5881f5f97e68878b738538d9b864e1c8e3e463"),
 	   "Got hash with exe and no parameters: %s", temp_string);
 
@@ -84,22 +84,23 @@ void test_key_generation(int argc, char **argv) {
 		"--and",
 		"now",
 	};
-	temp_string = (char *)_np_state_generate_key(fake_argc, fake_argv);
+	temp_string = (char *)check_snmp_state_generate_key(fake_argc, fake_argv);
 	ok(!strcmp(temp_string, "cf15afca3c3a45d60056384f64459880ce3dedc5"),
 	   "Got %s based on expected argv", temp_string);
 }
 
 void test_state_location_prefix(void) {
 	unsetenv("MP_STATE_PATH");
-	char *temp_string = (char *)_np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory");
+	char *temp_string = (char *)check_snmp_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, CHECK_SNMP_STATE_DIR_PREFIX), "Got default directory");
 
 	setenv("MP_STATE_PATH", "", 1);
-	temp_string = (char *)_np_state_calculate_location_prefix();
-	ok(!strcmp(temp_string, NP_STATE_DIR_PREFIX), "Got default directory even with empty string");
+	temp_string = (char *)check_snmp_state_calculate_location_prefix();
+	ok(!strcmp(temp_string, CHECK_SNMP_STATE_DIR_PREFIX),
+	   "Got default directory even with empty string");
 
 	setenv("MP_STATE_PATH", "/usr/local/nagios/var", 1);
-	temp_string = (char *)_np_state_calculate_location_prefix();
+	temp_string = (char *)check_snmp_state_calculate_location_prefix();
 	ok(!strcmp(temp_string, "/usr/local/nagios/var"), "Got default directory");
 
 	unsetenv("MP_STATE_PATH");
@@ -108,14 +109,15 @@ void test_state_location_prefix(void) {
 void test_enable_state(void) {
 	const int fake_argc = 1;
 	const char *fake_argv[1] = {"fake_argv"};
-	state_key temp_state_key1 = np_enable_state(NULL, 51, "check_test", fake_argc, fake_argv);
+	state_key temp_state_key1 =
+		check_snmp_enable_state(NULL, 51, "check_test", fake_argc, fake_argv);
 	ok(!strcmp(temp_state_key1.plugin_name, "check_test"), "Got plugin name");
 	ok(!strcmp(temp_state_key1.name, "8dd4ba3c1dcea40bd80fe2e2c73872b669e211ba"),
 	   "Got generated filename: %s", temp_state_key1.name);
 
 	const char *expected_plugin_name = "check_foobar";
-	state_key temp_state_key2 =
-		np_enable_state("allowedchars_in_keyname", 77, expected_plugin_name, fake_argc, fake_argv);
+	state_key temp_state_key2 = check_snmp_enable_state("allowedchars_in_keyname", 77,
+														expected_plugin_name, fake_argc, fake_argv);
 	ok(!strcmp(temp_state_key2.plugin_name, expected_plugin_name), "Got plugin name: %s",
 	   temp_state_key2.plugin_name);
 	ok(!strcmp(temp_state_key2.name, "allowedchars_in_keyname"),
@@ -124,7 +126,7 @@ void test_enable_state(void) {
 
 void test_read_state(state_key test_state, const char test_string[], const char *test_dir,
 					 const char *example_dir) {
-	np_state_read_wrapper recovered_state = np_state_read(test_state);
+	check_snmp_state_read_wrapper recovered_state = check_snmp_state_read(test_state);
 	ok(recovered_state.errorcode == 0, "Got state data now");
 
 	if (recovered_state.errorcode != 0) {
@@ -136,28 +138,28 @@ void test_read_state(state_key test_state, const char test_string[], const char 
 	ok(!strcmp((char *)recovered_state.data.data, test_string), "Data as expected");
 
 	test_state.data_version = 53;
-	recovered_state = np_state_read(test_state);
+	recovered_state = check_snmp_state_read(test_state);
 	ok(recovered_state.errorcode != 0, "Older data version gives error");
 	test_state.data_version = 54;
 
 	char *nonexistent_file_path = create_file_path(example_dir, "/nonexistent");
 	test_state._filename = nonexistent_file_path;
-	np_state_read_wrapper non_existent = np_state_read(test_state);
+	check_snmp_state_read_wrapper non_existent = check_snmp_state_read(test_state);
 	ok(non_existent.errorcode != 0, "Missing file gives error");
 
 	char *oldformat_file_path = create_file_path(example_dir, "/oldformat");
 	test_state._filename = oldformat_file_path;
-	np_state_read_wrapper old_format = np_state_read(test_state);
+	check_snmp_state_read_wrapper old_format = check_snmp_state_read(test_state);
 	ok(old_format.errorcode != 0, "Old file format gives error");
 
 	char *baddate_file_path = create_file_path(example_dir, "/baddate");
 	test_state._filename = baddate_file_path;
-	np_state_read_wrapper baddate = np_state_read(test_state);
+	check_snmp_state_read_wrapper baddate = check_snmp_state_read(test_state);
 	ok(baddate.errorcode != 0, "Bad date gives error");
 
 	char *missingdataline_file_path = create_file_path(example_dir, "/missingdataline");
 	test_state._filename = missingdataline_file_path;
-	np_state_read_wrapper missingdataline = np_state_read(test_state);
+	check_snmp_state_read_wrapper missingdataline = check_snmp_state_read(test_state);
 	ok(missingdataline.errorcode != 0, "Missing data line gives error");
 
 	// generate new file to test time proceeding
@@ -167,27 +169,28 @@ void test_read_state(state_key test_state, const char test_string[], const char 
 	char *example_statefile_file_path = create_file_path(example_dir, "/statefile");
 
 	time_t current_time = 1234567890;
-	np_state_write_string(test_state, current_time, test_string);
+	check_snmp_state_write_string(test_state, current_time, test_string);
 	char *cmp_execution_string = NULL;
-	(void) asprintf(&cmp_execution_string, "cmp %s %s", generated_file_path, example_statefile_file_path);
+	(void)!asprintf(&cmp_execution_string, "cmp %s %s", generated_file_path,
+					example_statefile_file_path);
 	ok(system(cmp_execution_string) == 0, "Generated file same as expected");
 
 	char *generated_dir_test_file_path =
 		create_file_path(test_dir, "/generated_directory/statefile");
 	test_state._filename = generated_dir_test_file_path;
 	current_time = 1234567890;
-	np_state_write_string(test_state, current_time, test_string);
-	(void) asprintf(&cmp_execution_string, "cmp %s %s", generated_dir_test_file_path,
-			 example_statefile_file_path);
+	check_snmp_state_write_string(test_state, current_time, test_string);
+	(void)!asprintf(&cmp_execution_string, "cmp %s %s", generated_dir_test_file_path,
+				   example_statefile_file_path);
 	ok(system(cmp_execution_string) == 0, "Have created directory");
 
 	test_state._filename = generated_dir_test_file_path;
-	np_state_write_string(test_state, 0, test_string);
-	np_state_read_wrapper recovered_state_1 = np_state_read(test_state);
-	ok(recovered_state_1.errorcode == 0, "recovered state succesfully");
+	check_snmp_state_write_string(test_state, 0, test_string);
+	check_snmp_state_read_wrapper recovered_state_1 = check_snmp_state_read(test_state);
+	ok(recovered_state_1.errorcode == 0, "recovered state successfully");
 	/* Check time is set to current_time */
-	(void) asprintf(&cmp_execution_string, "cmp %s %s > /dev/null", generated_dir_test_file_path,
-			 example_statefile_file_path);
+	(void)!asprintf(&cmp_execution_string, "cmp %s %s > /dev/null", generated_dir_test_file_path,
+				   example_statefile_file_path);
 	ok(system(cmp_execution_string) != 0, "Generated file should be different this time");
 
 	time(&current_time);
@@ -234,15 +237,15 @@ int main(int argc, char **argv) {
 	setenv("MP_STATE_PATH", test_state_path, 1);
 
 	state_key temp_state =
-		np_enable_state("funnykeyname", 54, expected_plugin_name, fake_argc, fake_argv);
+		check_snmp_enable_state("funnykeyname", 54, expected_plugin_name, fake_argc, fake_argv);
 	const char *test_string = "String to read";
-	np_state_write_string(temp_state, 1234567890, test_string);
+	check_snmp_state_write_string(temp_state, 1234567890, test_string);
 
 	ok(!strcmp(temp_state.plugin_name, expected_plugin_name), "Got plugin name: %s",
 	   temp_state.plugin_name);
 	ok(!strcmp(temp_state.name, "funnykeyname"), "Got key name");
 
-	np_state_read_wrapper recoverd_state_data = np_state_read(temp_state);
+	check_snmp_state_read_wrapper recoverd_state_data = check_snmp_state_read(temp_state);
 	ok(recoverd_state_data.errorcode == 0, "Retrieve state data from file '%s'",
 	   temp_state._filename);
 
@@ -253,5 +256,5 @@ int main(int argc, char **argv) {
 	np_cleanup();
 
 	// remove test directory after using it
-	// rmrf(test_dir_path);
+	rmrf(test_dir_path);
 }

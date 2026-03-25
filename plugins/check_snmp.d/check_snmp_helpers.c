@@ -599,7 +599,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	return result;
 }
 
-char *_np_state_generate_key(int argc, const char **argv);
+char *check_snmp_state_generate_key(int argc, const char **argv);
 
 /*
  * If time=NULL, use current time. Create state file, with state format
@@ -608,7 +608,8 @@ char *_np_state_generate_key(int argc, const char **argv);
  * two things writing to same key at same time.
  * Will die with UNKNOWN if errors
  */
-void np_state_write_string(state_key stateKey, time_t timestamp, const char *stringToStore) {
+void check_snmp_state_write_string(state_key stateKey, time_t timestamp,
+								   const char *stringToStore) {
 	if (stateKey._filename == NULL || strcmp(stateKey._filename, "") == 0) {
 		die(STATE_UNKNOWN, "%s: empty filename in state file\n", __FUNCTION__);
 	}
@@ -635,7 +636,6 @@ void np_state_write_string(state_key stateKey, time_t timestamp, const char *str
 				*p = '\0';
 				if ((access(directories, F_OK) != 0) && (mkdir(directories, S_IRWXU) != 0)) {
 					/* Can't free this! Otherwise error message is wrong! */
-					/* np_free(directories); */
 					die(STATE_UNKNOWN, _("Cannot create directory: %s"), directories);
 				}
 				*p = '/';
@@ -672,7 +672,7 @@ void np_state_write_string(state_key stateKey, time_t timestamp, const char *str
 	}
 
 	fprintf(temp_file_pointer, "# NP State file\n");
-	fprintf(temp_file_pointer, "%d\n", NP_STATE_FORMAT_VERSION);
+	fprintf(temp_file_pointer, "%d\n", CHECK_SNMP_STATE_FORMAT_VERSION);
 	fprintf(temp_file_pointer, "%d\n", stateKey.data_version);
 	fprintf(temp_file_pointer, "%lu\n", current_time);
 	fprintf(temp_file_pointer, "%s\n", stringToStore);
@@ -714,7 +714,7 @@ typedef struct {
 	int errorcode;
 	state_data data;
 } check_snmp_state_read_file_wrapper;
-check_snmp_state_read_file_wrapper _np_state_read_file(FILE *state_file, state_key input_state) {
+check_snmp_state_read_file_wrapper check_snmp_state_read_file(FILE *state_file, state_key input_state) {
 	time_t current_time;
 	time(&current_time);
 
@@ -738,7 +738,7 @@ check_snmp_state_read_file_wrapper _np_state_read_file(FILE *state_file, state_k
 	} expected = STATE_FILE_VERSION;
 
 	bool failure = false;
-	bool found_data = false; //if we reach the end but there is not data, we fail
+	bool found_data = false; // if we reach the end but there is not data, we fail
 	while (!failure && (fgets(line, 8192, state_file)) != NULL) {
 		size_t pos = strlen(line);
 		if (line[pos - 1] == '\n') {
@@ -752,7 +752,7 @@ check_snmp_state_read_file_wrapper _np_state_read_file(FILE *state_file, state_k
 		switch (expected) {
 		case STATE_FILE_VERSION: {
 			int i = atoi(line);
-			if (i != NP_STATE_FORMAT_VERSION) {
+			if (i != CHECK_SNMP_STATE_FORMAT_VERSION) {
 				failure = true;
 			} else {
 				expected = STATE_DATA_VERSION;
@@ -807,9 +807,9 @@ check_snmp_state_read_file_wrapper _np_state_read_file(FILE *state_file, state_k
  * If numerically lower, then return as no previous state. die with UNKNOWN
  * if exceptional error.
  */
-np_state_read_wrapper np_state_read(state_key stateKey) {
+check_snmp_state_read_wrapper check_snmp_state_read(state_key stateKey) {
 	/* Open file. If this fails, no previous state found */
-	np_state_read_wrapper result = {
+	check_snmp_state_read_wrapper result = {
 		.data = {},
 		.errorcode = 0,
 	};
@@ -821,7 +821,7 @@ np_state_read_wrapper np_state_read(state_key stateKey) {
 		return result;
 	}
 
-	check_snmp_state_read_file_wrapper recovered = _np_state_read_file(statefile, stateKey);
+	check_snmp_state_read_file_wrapper recovered = check_snmp_state_read_file(statefile, stateKey);
 	if (recovered.errorcode == 0) {
 		result.errorcode = OK;
 		result.data = recovered.data;
@@ -839,7 +839,7 @@ np_state_read_wrapper np_state_read(state_key stateKey) {
  *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
  *   statically compiled shared state directory
  */
-char *_np_state_calculate_location_prefix(void) {
+char *check_snmp_state_calculate_location_prefix(void) {
 	char *env_dir;
 
 	/* Do not allow passing MP_STATE_PATH in setuid plugins
@@ -856,7 +856,7 @@ char *_np_state_calculate_location_prefix(void) {
 		}
 	}
 
-	return NP_STATE_DIR_PREFIX;
+	return CHECK_SNMP_STATE_DIR_PREFIX;
 }
 
 /*
@@ -864,8 +864,8 @@ char *_np_state_calculate_location_prefix(void) {
  * Sets variables. Generates filename. Returns np_state_key. die with
  * UNKNOWN if exception
  */
-state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
-						  int argc, const char **argv) {
+state_key check_snmp_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+								  int argc, const char **argv) {
 	state_key *this_state = (state_key *)calloc(1, sizeof(state_key));
 	if (this_state == NULL) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
@@ -873,7 +873,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 
 	char *temp_keyname = NULL;
 	if (keyname == NULL) {
-		temp_keyname = _np_state_generate_key(argc, (const char **)argv);
+		temp_keyname = check_snmp_state_generate_key(argc, (const char **)argv);
 	} else {
 		temp_keyname = strdup(keyname);
 		if (temp_keyname == NULL) {
@@ -896,7 +896,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 
 	/* Calculate filename */
 	char *temp_filename = NULL;
-	int error = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(),
+	int error = asprintf(&temp_filename, "%s/%lu/%s/%s", check_snmp_state_calculate_location_prefix(),
 						 (unsigned long)geteuid(), plugin_name, this_state->name);
 	if (error < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
@@ -912,7 +912,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
  * hopefully a unique key per service/plugin invocation. Use the extra-opts
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
-char *_np_state_generate_key(int argc, const char **argv) {
+char *check_snmp_state_generate_key(int argc, const char **argv) {
 	unsigned char result[256];
 
 #ifdef USE_OPENSSL
