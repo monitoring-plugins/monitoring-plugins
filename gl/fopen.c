@@ -1,5 +1,5 @@
 /* Open a stream to a file.
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -33,13 +33,7 @@ orig_fopen (const char *filename, const char *mode)
 }
 
 /* Specification.  */
-#ifdef __osf__
-/* Write "stdio.h" here, not <stdio.h>, otherwise OSF/1 5.1 DTK cc eliminates
-   this include because of the preliminary #include <stdio.h> above.  */
-# include "stdio.h"
-#else
-# include <stdio.h>
-#endif
+#include <stdio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -51,24 +45,18 @@ orig_fopen (const char *filename, const char *mode)
 FILE *
 rpl_fopen (const char *filename, const char *mode)
 {
-  int open_direction;
-  int open_flags;
-#if GNULIB_FOPEN_GNU
-  bool open_flags_gnu;
-# define BUF_SIZE 80
-  char fdopen_mode_buf[BUF_SIZE + 1];
-#endif
-
 #if defined _WIN32 && ! defined __CYGWIN__
-  if (strcmp (filename, "/dev/null") == 0)
+  if (streq (filename, "/dev/null"))
     filename = "NUL";
 #endif
 
   /* Parse the mode.  */
-  open_direction = 0;
-  open_flags = 0;
+  int open_direction = 0;
+  int open_flags = 0;
 #if GNULIB_FOPEN_GNU
-  open_flags_gnu = false;
+  bool open_flags_gnu = false;
+# define BUF_SIZE 80
+  char fdopen_mode_buf[BUF_SIZE + 1];
 #endif
   {
     const char *p = mode;
@@ -169,21 +157,18 @@ rpl_fopen (const char *filename, const char *mode)
     size_t len = strlen (filename);
     if (len > 0 && filename[len - 1] == '/')
       {
-        int fd;
-        struct stat statbuf;
-        FILE *fp;
-
         if (open_direction != O_RDONLY)
           {
             errno = EISDIR;
             return NULL;
           }
 
-        fd = open (filename, open_direction | open_flags,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+        int fd = open (filename, open_direction | open_flags,
+                       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
         if (fd < 0)
           return NULL;
 
+        struct stat statbuf;
         if (fstat (fd, &statbuf) >= 0 && !S_ISDIR (statbuf.st_mode))
           {
             close (fd);
@@ -191,6 +176,7 @@ rpl_fopen (const char *filename, const char *mode)
             return NULL;
           }
 
+        FILE *fp;
 # if GNULIB_FOPEN_GNU
         fp = fdopen (fd, fdopen_mode_buf);
 # else
@@ -210,15 +196,12 @@ rpl_fopen (const char *filename, const char *mode)
 #if GNULIB_FOPEN_GNU
   if (open_flags_gnu)
     {
-      int fd;
-      FILE *fp;
-
-      fd = open (filename, open_direction | open_flags,
-                 S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+      int fd = open (filename, open_direction | open_flags,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
       if (fd < 0)
         return NULL;
 
-      fp = fdopen (fd, fdopen_mode_buf);
+      FILE *fp = fdopen (fd, fdopen_mode_buf);
       if (fp == NULL)
         {
           int saved_errno = errno;

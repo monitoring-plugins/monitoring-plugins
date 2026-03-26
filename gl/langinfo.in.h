@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <langinfo.h>.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -162,11 +162,6 @@ typedef int nl_item;
 #  define GNULIB_defined_CODESET 1
 # endif
 
-# if !@HAVE_LANGINFO_T_FMT_AMPM@
-#  define T_FMT_AMPM  10006
-#  define GNULIB_defined_T_FMT_AMPM 1
-# endif
-
 # if !@HAVE_LANGINFO_ALTMON@
 #  define ALTMON_1    10200
 #  define ALTMON_2    (ALTMON_1 + 1)
@@ -223,12 +218,6 @@ typedef int nl_item;
 #  define GNULIB_defined_ERA 1
 # endif
 
-# if !@HAVE_LANGINFO_YESEXPR@
-#  define YESEXPR     10053
-#  define NOEXPR      10054
-#  define GNULIB_defined_YESEXPR 1
-# endif
-
 #endif
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
@@ -260,7 +249,6 @@ _GL_CXXALIAS_SYS (nl_langinfo, char *, (nl_item item));
 _GL_CXXALIASWARN (nl_langinfo);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef nl_langinfo
 # if HAVE_RAW_DECL_NL_LANGINFO
 _GL_WARN_ON_USE (nl_langinfo, "nl_langinfo is not portable - "
                  "use gnulib module nl_langinfo for portability");

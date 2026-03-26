@@ -1,6 +1,6 @@
 # inet_pton.m4
-# serial 20
-dnl Copyright (C) 2006, 2008-2025 Free Software Foundation, Inc.
+# serial 21
+dnl Copyright (C) 2006, 2008-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -19,6 +19,7 @@ AC_DEFUN([gl_FUNC_INET_PTON],
   dnl Solaris 8..10 provide inet_pton in libnsl instead.
   dnl Solaris 2.6..7 provide inet_pton in libresolv instead.
   dnl Haiku provides it in -lnetwork.
+  dnl QNX provides it in -lsocket.
   dnl Native Windows provides it in -lws2_32 instead, with a declaration in
   dnl <ws2tcpip.h>, and it uses stdcall calling convention, not cdecl
   dnl (hence we cannot use AC_CHECK_FUNCS, AC_SEARCH_LIBS to find it).
@@ -39,7 +40,7 @@ AC_DEFUN([gl_FUNC_INET_PTON],
     fi
   else
     gl_saved_LIBS=$LIBS
-    AC_SEARCH_LIBS([inet_pton], [nsl resolv network], [],
+    AC_SEARCH_LIBS([inet_pton], [nsl resolv network socket], [],
       [AC_CHECK_FUNCS([inet_pton])
        if test $ac_cv_func_inet_pton = no; then
          HAVE_INET_PTON=0

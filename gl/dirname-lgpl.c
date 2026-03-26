@@ -1,6 +1,6 @@
 /* dirname.c -- return all but the last element in a file name
 
-   Copyright (C) 1990, 1998, 2000-2001, 2003-2006, 2009-2025 Free Software
+   Copyright (C) 1990, 1998, 2000-2001, 2003-2006, 2009-2026 Free Software
    Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
@@ -32,7 +32,6 @@ size_t
 dir_len (char const *file)
 {
   size_t prefix_length = FILE_SYSTEM_PREFIX_LEN (file);
-  size_t length;
 
   /* Advance prefix_length beyond important leading slashes.  */
   prefix_length += (prefix_length != 0
@@ -45,8 +44,10 @@ dir_len (char const *file)
                        : 0));
 
   /* Strip the basename and any redundant slashes before it.  */
+  size_t length;
   for (length = last_component (file) - file;
-       prefix_length < length; length--)
+       prefix_length < length;
+       length--)
     if (! ISSLASH (file[length - 1]))
       break;
   return length;

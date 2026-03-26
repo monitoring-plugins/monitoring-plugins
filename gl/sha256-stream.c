@@ -1,7 +1,7 @@
 /* sha256.c - Functions to compute SHA256 and SHA224 message digest of files or
    memory blocks according to the NIST specification FIPS-180-2.
 
-   Copyright (C) 2005-2006, 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -67,7 +67,6 @@ shaxxx_stream (FILE *stream, char const *alg, void *resblock,
       /* We read the file in blocks of BLOCKSIZE bytes.  One call of the
          computation function processes the whole buffer so that with the
          next round of the loop another block can be read.  */
-      size_t n;
       sum = 0;
 
       /* Read block.  Take care for partial reads.  */
@@ -77,11 +76,11 @@ shaxxx_stream (FILE *stream, char const *alg, void *resblock,
              or the fread() in afalg_stream may have gotten EOF.
              We need to avoid a subsequent fread() as EOF may
              not be sticky.  For details of such systems, see:
-             https://sourceware.org/bugzilla/show_bug.cgi?id=1190  */
+             https://sourceware.org/PR1190  */
           if (feof (stream))
             goto process_partial_block;
 
-          n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
+          size_t n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
           sum += n;
 

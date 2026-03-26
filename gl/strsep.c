@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2007, 2009-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2004, 2007, 2009-2026 Free Software Foundation, Inc.
 
    Written by Yoann Vandoorselaere <yoann@prelude-ids.org>.
 
@@ -26,7 +26,6 @@ char *
 strsep (char **stringp, const char *delim)
 {
   char *start = *stringp;
-  char *ptr;
 
   if (start == NULL)
     return NULL;
@@ -38,12 +37,14 @@ strsep (char **stringp, const char *delim)
       return start;
     }
 
+  char *ptr;
   /* Optimize the case of one delimiter.  */
   if (delim[1] == '\0')
     ptr = strchr (start, delim[0]);
   else
     /* The general case.  */
     ptr = strpbrk (start, delim);
+
   if (ptr == NULL)
     {
       *stringp = NULL;

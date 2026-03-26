@@ -1,6 +1,6 @@
 # setenv.m4
-# serial 35
-dnl Copyright (C) 2001-2004, 2006-2025 Free Software Foundation, Inc.
+# serial 36
+dnl Copyright (C) 2001-2004, 2006-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -85,8 +85,6 @@ AC_DEFUN([gl_FUNC_UNSETENV],
       [AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM(
             [[
-#undef _BSD
-#define _BSD 1 /* unhide unsetenv declaration in OSF/1 5.1 <stdlib.h> */
 #include <stdlib.h>
 extern
 #ifdef __cplusplus

@@ -1,6 +1,6 @@
 /* Wrap openssl crypto hash routines in gnulib interface.  -*- coding: utf-8 -*-
 
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -103,7 +103,7 @@ GL_OPENSSL_INLINE void *
 GL_CRYPTO_FN (_read_ctx) (const struct _gl_ctx *ctx, void *restrict res)
 {
   /* Assume any unprocessed bytes in ctx are not to be ignored.  */
-  _gl_CTX tmp_ctx = *(_gl_CTX *) ctx;
+  _gl_CTX tmp_ctx = *(_gl_CTX const *) ctx;
   OPENSSL_FN (_Final) ((unsigned char *) res, &tmp_ctx);
   return res;
 }

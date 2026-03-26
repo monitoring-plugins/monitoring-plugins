@@ -1,5 +1,5 @@
 /* Auxiliary definitions for <float.h>.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2011.
 
    This file is free software: you can redistribute it and/or modify
@@ -21,10 +21,7 @@
 #include <float.h>
 
 #if GNULIB_defined_long_double_union
-# if (defined _ARCH_PPC || defined _POWER) && (defined _AIX || defined __linux__) && (LDBL_MANT_DIG == 106) && defined __GNUC__
-const union gl_long_double_union gl_LDBL_MAX =
-  { { DBL_MAX, DBL_MAX / 0x1p53 } };
-# elif defined __i386__
+# ifdef __i386__
 const union gl_long_double_union gl_LDBL_MAX =
   { { 0xFFFFFFFF, 0xFFFFFFFF, 32766 } };
 # endif

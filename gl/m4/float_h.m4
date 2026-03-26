@@ -1,6 +1,6 @@
 # float_h.m4
-# serial 15
-dnl Copyright (C) 2007, 2009-2025 Free Software Foundation, Inc.
+# serial 17
+dnl Copyright (C) 2007, 2009-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -13,7 +13,7 @@ AC_DEFUN([gl_FLOAT_H],
   GL_GENERATE_FLOAT_H=false
   REPLACE_FLOAT_LDBL=0
   case "$host_os" in
-    aix* | beos* | openbsd* | mirbsd* | irix*)
+    aix* | beos* | openbsd* | mirbsd*)
       GL_GENERATE_FLOAT_H=true
       ;;
     freebsd* | dragonfly*)
@@ -63,6 +63,7 @@ changequote([,])dnl
        [AC_LANG_PROGRAM(
           [[#include <float.h>
             int x[] = { FLT_DECIMAL_DIG, DBL_DECIMAL_DIG, LDBL_DECIMAL_DIG };
+            int y[] = { FLT_IS_IEC_60559, DBL_IS_IEC_60559, LDBL_IS_IEC_60559 };
             float maxf = FLT_NORM_MAX;
             double maxd = DBL_NORM_MAX;
             long double maxl = LDBL_NORM_MAX;

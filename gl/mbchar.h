@@ -1,5 +1,5 @@
 /* Multibyte character data type.
-   Copyright (C) 2001, 2005-2007, 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2005-2007, 2009-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -217,12 +217,12 @@ typedef struct mbchar mbchar_t;
   ((mbc1).wc_valid && (mbc2).wc_valid                                   \
    ? (mbc1).wc == (mbc2).wc                                             \
    : (mbc1).bytes == (mbc2).bytes                                       \
-     && memcmp ((mbc1).ptr, (mbc2).ptr, (mbc1).bytes) == 0)
+     && memeq ((mbc1).ptr, (mbc2).ptr, (mbc1).bytes))
 #define mb_caseequal(mbc1, mbc2) \
   ((mbc1).wc_valid && (mbc2).wc_valid                                   \
    ? c32tolower ((mbc1).wc) == c32tolower ((mbc2).wc)                   \
    : (mbc1).bytes == (mbc2).bytes                                       \
-     && memcmp ((mbc1).ptr, (mbc2).ptr, (mbc1).bytes) == 0)
+     && memeq ((mbc1).ptr, (mbc2).ptr, (mbc1).bytes))
 
 /* <ctype.h>, <wctype.h> classification.  */
 #define mb_isascii(mbc) \
@@ -262,9 +262,14 @@ mb_width_aux (char32_t wc)
 
 #if defined GNULIB_MBFILE
 /* Assignment.  */
-# define mb_setascii(mbc, sc) \
-   ((mbc)->ptr = (mbc)->buf, (mbc)->bytes = 1, (mbc)->wc_valid = 1, \
-    (mbc)->wc = (mbc)->buf[0] = (sc))
+MBCHAR_INLINE void
+mb_setascii (mbchar_t *mbc, char sc)
+{
+  mbc->ptr = mbc->buf;
+  mbc->bytes = 1;
+  mbc->wc_valid = true;
+  mbc->wc = mbc->buf[0] = sc;
+}
 #endif
 
 /* Copying a character.  */

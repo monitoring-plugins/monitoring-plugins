@@ -1,6 +1,6 @@
 # malloc.m4
-# serial 43.1
-dnl Copyright (C) 2007, 2009-2025 Free Software Foundation, Inc.
+# serial 46
+dnl Copyright (C) 2007, 2009-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -187,40 +187,42 @@ AC_DEFUN([gl_CHECK_MALLOC_POSIX],
             [gl_cv_func_malloc_posix="guessing yes"],
             [gl_cv_func_malloc_posix="guessing no"])
           ;;
-        irix* | solaris*)
-          dnl On IRIX 6.5, the three functions return NULL with errno unset
-          dnl when the argument is larger than PTRDIFF_MAX.
-          dnl On Solaris 11.3, the three functions return NULL with errno set
+        solaris*)
+          dnl On Solaris 11.3, the three functions might fail with errno set
           dnl to EAGAIN, not ENOMEM, when the argument is larger than
-          dnl PTRDIFF_MAX.
+          dnl PTRDIFF_MAX.  See:
+          dnl https://lists.gnu.org/r/bug-gnulib/2021-05/msg00052.html
           dnl Here is a test program:
+
 m4_divert_push([KILL])
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
-#define ptrdiff_t long
-#ifndef PTRDIFF_MAX
-# define PTRDIFF_MAX ((ptrdiff_t) ((1UL << (8 * sizeof (ptrdiff_t) - 1)) - 1))
-#endif
 
-int main ()
+#define TEST_CALL(call) \
+  do { \
+    void *p = call; \
+    if (p) \
+      fprintf (stderr, "returned %p (incorrect success)\n", p); \
+    else if (errno == ENOMEM) \
+      perror ("correct failure"); \
+    else \
+      perror ("incorrect failure (wrong errno)"); \
+    free (p); \
+  } while (0)
+
+int
+main ()
 {
-  void *p;
-
-  fprintf (stderr, "PTRDIFF_MAX = %lu\n", (unsigned long) PTRDIFF_MAX);
-
-  errno = 0;
-  p = malloc ((unsigned long) PTRDIFF_MAX + 1);
-  fprintf (stderr, "p=%p errno=%d\n", p, errno);
-
-  errno = 0;
-  p = calloc (PTRDIFF_MAX / 2 + 1, 2);
-  fprintf (stderr, "p=%p errno=%d\n", p, errno);
-
-  errno = 0;
-  p = realloc (NULL, (unsigned long) PTRDIFF_MAX + 1);
-  fprintf (stderr, "p=%p errno=%d\n", p, errno);
-
+  size_t big = PTRDIFF_MAX;
+  TEST_CALL (malloc (big + 1));
+  TEST_CALL (calloc (big / 2 + 1, 2));
+  TEST_CALL (realloc (NULL, big + 1));
+  void *small = malloc (1);
+  TEST_CALL (realloc (small, big + 1));
+  free (small);
   return 0;
 }
 m4_divert_pop([KILL])
