@@ -1,5 +1,5 @@
 /* base64.c -- Encode binary data using printable characters.
-   Copyright (C) 1999-2001, 2004-2006, 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2001, 2004-2006, 2009-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -39,10 +39,10 @@
  *
  */
 
+#define BASE64_INLINE _GL_EXTERN_INLINE
 #include <config.h>
 
 /* Get prototype. */
-#define BASE64_INLINE _GL_EXTERN_INLINE
 #include "base64.h"
 
 /* Get imalloc. */
@@ -372,12 +372,13 @@ static bool
 decode_4 (char const *restrict in, idx_t inlen,
           char *restrict *outp, idx_t *outleft)
 {
-  char *out = *outp;
   if (inlen < 2)
     return false;
 
   if (!isbase64 (in[0]) || !isbase64 (in[1]))
     return false;
+
+  char *out = *outp;
 
   if (*outleft)
     {
@@ -466,7 +467,6 @@ base64_decode_ctx (struct base64_decode_context *ctx,
                    const char *restrict in, idx_t inlen,
                    char *restrict out, idx_t *outlen)
 {
-  idx_t outleft = *outlen;
   bool ignore_newlines = ctx != NULL;
   bool flush_ctx = false;
   unsigned int ctx_i = 0;
@@ -477,6 +477,7 @@ base64_decode_ctx (struct base64_decode_context *ctx,
       flush_ctx = inlen == 0;
     }
 
+  idx_t outleft = *outlen;
 
   while (true)
     {
@@ -505,35 +506,36 @@ base64_decode_ctx (struct base64_decode_context *ctx,
         {
           ++in;
           --inlen;
-          continue;
         }
+      else
+        {
+          /* Restore OUT and OUTLEFT.  */
+          out -= outleft_save - outleft;
+          outleft = outleft_save;
 
-      /* Restore OUT and OUTLEFT.  */
-      out -= outleft_save - outleft;
-      outleft = outleft_save;
-
-      {
-        char const *in_end = in + inlen;
-        char const *non_nl;
-
-        if (ignore_newlines)
-          non_nl = get_4 (ctx, &in, in_end, &inlen);
-        else
-          non_nl = in;  /* Might have nl in this case. */
-
-        /* If the input is empty or consists solely of newlines (0 non-newlines),
-           then we're done.  Likewise if there are fewer than 4 bytes when not
-           flushing context and not treating newlines as garbage.  */
-        if (inlen == 0 || (inlen < 4 && !flush_ctx && ignore_newlines))
           {
-            inlen = 0;
-            break;
-          }
-        if (!decode_4 (non_nl, inlen, &out, &outleft))
-          break;
+            char const *in_end = in + inlen;
 
-        inlen = in_end - in;
-      }
+            char const *non_nl;
+            if (ignore_newlines)
+              non_nl = get_4 (ctx, &in, in_end, &inlen);
+            else
+              non_nl = in;  /* Might have nl in this case. */
+
+            /* If the input is empty or consists solely of newlines (0 non-newlines),
+               then we're done.  Likewise if there are fewer than 4 bytes when not
+               flushing context and not treating newlines as garbage.  */
+            if (inlen == 0 || (inlen < 4 && !flush_ctx && ignore_newlines))
+              {
+                inlen = 0;
+                break;
+              }
+            if (!decode_4 (non_nl, inlen, &out, &outleft))
+              break;
+
+            inlen = in_end - in;
+          }
+        }
     }
 
   *outlen -= outleft;

@@ -1,6 +1,6 @@
 /* intprops-internal.h -- properties of integer types not visible to users
 
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published
@@ -29,10 +29,6 @@
    Do not evaluate E.  */
 #define _GL_INT_CONVERT(e, v) ((1 ? 0 : (e)) + (v))
 
-/* Act like _GL_INT_CONVERT (E, -V) but work around a bug in IRIX 6.5 cc; see
-   <https://lists.gnu.org/r/bug-gnulib/2011-05/msg00406.html>.  */
-#define _GL_INT_NEGATE_CONVERT(e, v) ((1 ? 0 : (e)) - (v))
-
 /* The extra casts in the following macros work around compiler bugs,
    e.g., in Cray C 5.0.3.0.  */
 
@@ -41,7 +37,7 @@
 
 /* Return 1 if the real expression E, after promotion, has a
    signed or floating type.  Do not evaluate E.  */
-#define _GL_EXPR_SIGNED(e) (_GL_INT_NEGATE_CONVERT (e, 1) < 0)
+#define _GL_EXPR_SIGNED(e) (_GL_INT_CONVERT (e, -1) < 0)
 
 
 /* Minimum and maximum values for integer types and expressions.  */
@@ -60,7 +56,7 @@
 #define _GL_INT_MAXIMUM(e)                                              \
   (_GL_EXPR_SIGNED (e)                                                  \
    ? _GL_SIGNED_INT_MAXIMUM (e)                                         \
-   : _GL_INT_NEGATE_CONVERT (e, 1))
+   : _GL_INT_CONVERT (e, -1))
 #define _GL_SIGNED_INT_MAXIMUM(e)                                       \
   (((_GL_INT_CONVERT (e, 1) << (_GL_TYPE_WIDTH (+ (e)) - 2)) - 1) * 2 + 1)
 
@@ -112,7 +108,7 @@
 #elif defined __has_builtin
 # define _GL_HAS_BUILTIN_ADD_OVERFLOW __has_builtin (__builtin_add_overflow)
 /* __builtin_{add,sub}_overflow exists but is not reliable in GCC 5.x and 6.x,
-   see <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=98269>.  */
+   see <https://gcc.gnu.org/PR98269>.  */
 #elif 7 <= __GNUC__
 # define _GL_HAS_BUILTIN_ADD_OVERFLOW 1
 #else
@@ -184,7 +180,7 @@
 #endif
 
 /* Nonzero if this compiler has GCC bug 68193 or Clang bug 25764.  See:
-   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68193
+   https://gcc.gnu.org/PR68193
    https://github.com/llvm/llvm-project/issues/25764
    For now, assume GCC < 14 and all Clang versions generate bogus
    warnings for _Generic.  This matters only for compilers that

@@ -1,5 +1,5 @@
 /* Formatted output to strings.
-   Copyright (C) 1999, 2002, 2006-2007, 2009-2025 Free Software Foundation,
+   Copyright (C) 1999, 2002, 2006-2007, 2009-2026 Free Software Foundation,
    Inc.
 
    This file is free software: you can redistribute it and/or modify
@@ -30,10 +30,8 @@ int
 asprintf (char **resultp, const char *format, ...)
 {
   va_list args;
-  int result;
-
   va_start (args, format);
-  result = vasprintf (resultp, format, args);
+  int result = vasprintf (resultp, format, args);
   va_end (args);
   return result;
 }

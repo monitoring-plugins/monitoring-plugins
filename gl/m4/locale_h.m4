@@ -1,6 +1,6 @@
 # locale_h.m4
-# serial 37
-dnl Copyright (C) 2007, 2009-2025 Free Software Foundation, Inc.
+# serial 39
+dnl Copyright (C) 2007, 2009-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -63,8 +63,8 @@ AC_DEFUN_ONCE([gl_LOCALE_H],
 
   dnl Check whether 'struct lconv' is complete.
   dnl Bionic libc's 'struct lconv' is just a dummy.
-  dnl On OpenBSD 4.9, HP-UX 11, IRIX 6.5, OSF/1 5.1, Solaris 9, Cygwin 1.5.x,
-  dnl mingw, MSVC 9, it lacks the int_p_* and int_n_* members.
+  dnl On OpenBSD 4.9, HP-UX 11, Solaris 9, Cygwin 1.5.x, mingw, MSVC 9,
+  dnl it lacks the int_p_* and int_n_* members.
   AC_CACHE_CHECK([whether struct lconv is properly defined],
     [gl_cv_sys_struct_lconv_ok],
     [AC_COMPILE_IFELSE(

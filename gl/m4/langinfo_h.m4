@@ -1,6 +1,6 @@
 # langinfo_h.m4
-# serial 13
-dnl Copyright (C) 2009-2025 Free Software Foundation, Inc.
+# serial 14
+dnl Copyright (C) 2009-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -18,18 +18,15 @@ AC_DEFUN_ONCE([gl_LANGINFO_H],
 
   dnl Determine whether <langinfo.h> exists. It is missing on mingw and BeOS.
   HAVE_LANGINFO_CODESET=0
-  HAVE_LANGINFO_T_FMT_AMPM=0
   HAVE_LANGINFO_ALTMON=0
   HAVE_LANGINFO_ABALTMON=0
   HAVE_LANGINFO_ERA=0
-  HAVE_LANGINFO_YESEXPR=0
   AC_CHECK_HEADERS_ONCE([langinfo.h])
   if test $ac_cv_header_langinfo_h = yes; then
     HAVE_LANGINFO_H=1
     dnl Determine what <langinfo.h> defines.
     dnl CODESET is missing on OpenBSD 3.8.
     dnl ERA etc. are missing on OpenBSD 6.7.
-    dnl T_FMT_AMPM and YESEXPR, NOEXPR are missing on IRIX 5.3.
     dnl ALTMON_* are missing on glibc 2.26 and many other systems.
     dnl ABALTMON_* are missing on glibc 2.41 and many other systems.
     AC_CACHE_CHECK([whether langinfo.h defines CODESET],
@@ -43,18 +40,6 @@ int a = CODESET;
       ])
     if test $gl_cv_header_langinfo_codeset = yes; then
       HAVE_LANGINFO_CODESET=1
-    fi
-    AC_CACHE_CHECK([whether langinfo.h defines T_FMT_AMPM],
-      [gl_cv_header_langinfo_t_fmt_ampm],
-      [AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[#include <langinfo.h>
-int a = T_FMT_AMPM;
-]])],
-         [gl_cv_header_langinfo_t_fmt_ampm=yes],
-         [gl_cv_header_langinfo_t_fmt_ampm=no])
-      ])
-    if test $gl_cv_header_langinfo_t_fmt_ampm = yes; then
-      HAVE_LANGINFO_T_FMT_AMPM=1
     fi
     AC_CACHE_CHECK([whether langinfo.h defines ALTMON_1],
       [gl_cv_header_langinfo_altmon],
@@ -92,28 +77,14 @@ int a = ERA;
     if test $gl_cv_header_langinfo_era = yes; then
       HAVE_LANGINFO_ERA=1
     fi
-    AC_CACHE_CHECK([whether langinfo.h defines YESEXPR],
-      [gl_cv_header_langinfo_yesexpr],
-      [AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[#include <langinfo.h>
-int a = YESEXPR;
-]])],
-         [gl_cv_header_langinfo_yesexpr=yes],
-         [gl_cv_header_langinfo_yesexpr=no])
-      ])
-    if test $gl_cv_header_langinfo_yesexpr = yes; then
-      HAVE_LANGINFO_YESEXPR=1
-    fi
   else
     HAVE_LANGINFO_H=0
   fi
   AC_SUBST([HAVE_LANGINFO_H])
   AC_SUBST([HAVE_LANGINFO_CODESET])
-  AC_SUBST([HAVE_LANGINFO_T_FMT_AMPM])
   AC_SUBST([HAVE_LANGINFO_ALTMON])
   AC_SUBST([HAVE_LANGINFO_ABALTMON])
   AC_SUBST([HAVE_LANGINFO_ERA])
-  AC_SUBST([HAVE_LANGINFO_YESEXPR])
 
   dnl Check for declarations of anything we want to poison if the
   dnl corresponding gnulib module is not in use.

@@ -1,6 +1,6 @@
 /* hard-locale.c -- Determine whether a locale is hard.
 
-   Copyright (C) 1997-1999, 2002-2004, 2006-2007, 2009-2025 Free Software
+   Copyright (C) 1997-1999, 2002-2004, 2006-2007, 2009-2026 Free Software
    Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ hard_locale (int category)
   if (setlocale_null_r (category, locale, sizeof (locale)))
     return false;
 
-  if (!(strcmp (locale, "C") == 0 || strcmp (locale, "POSIX") == 0))
+  if (!(streq (locale, "C") || streq (locale, "POSIX")))
     return true;
 
 #if defined __ANDROID__

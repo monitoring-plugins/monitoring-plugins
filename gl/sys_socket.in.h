@@ -1,6 +1,6 @@
 /* Provide a sys/socket header file for systems lacking it (read: MinGW)
    and for systems where it is incomplete.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This file is free software: you can redistribute it and/or modify
@@ -235,11 +235,10 @@ struct msghdr {
 _GL_SYS_SOCKET_INLINE int
 rpl_fd_isset (SOCKET fd, fd_set * set)
 {
-  u_int i;
   if (set == NULL)
     return 0;
 
-  for (i = 0; i < set->fd_count; i++)
+  for (u_int i = 0; i < set->fd_count; i++)
     if (set->fd_array[i] == fd)
       return 1;
 
@@ -304,7 +303,6 @@ _GL_CXXALIASWARN (socket);
 #  define socket socket_used_without_requesting_gnulib_module_socket
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef socket
 # if HAVE_RAW_DECL_SOCKET
 _GL_WARN_ON_USE (socket, "socket is not always POSIX compliant - "
                  "use gnulib module socket for portability");
@@ -336,7 +334,6 @@ _GL_CXXALIASWARN (connect);
 #  define connect connect_used_without_requesting_gnulib_module_connect
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef connect
 # if HAVE_RAW_DECL_CONNECT
 _GL_WARN_ON_USE (connect, "connect is not always POSIX compliant - "
                  "use gnulib module connect for portability");
@@ -374,7 +371,6 @@ _GL_CXXALIASWARN (accept);
 #  define accept accept_used_without_requesting_gnulib_module_accept
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef accept
 # if HAVE_RAW_DECL_ACCEPT
 _GL_WARN_ON_USE (accept, "accept is not always POSIX compliant - "
                  "use gnulib module accept for portability");
@@ -406,7 +402,6 @@ _GL_CXXALIASWARN (bind);
 #  define bind bind_used_without_requesting_gnulib_module_bind
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef bind
 # if HAVE_RAW_DECL_BIND
 _GL_WARN_ON_USE (bind, "bind is not always POSIX compliant - "
                  "use gnulib module bind for portability");
@@ -442,7 +437,6 @@ _GL_CXXALIASWARN (getpeername);
 #  define getpeername getpeername_used_without_requesting_gnulib_module_getpeername
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef getpeername
 # if HAVE_RAW_DECL_GETPEERNAME
 _GL_WARN_ON_USE (getpeername, "getpeername is not always POSIX compliant - "
                  "use gnulib module getpeername for portability");
@@ -478,7 +472,6 @@ _GL_CXXALIASWARN (getsockname);
 #  define getsockname getsockname_used_without_requesting_gnulib_module_getsockname
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef getsockname
 # if HAVE_RAW_DECL_GETSOCKNAME
 _GL_WARN_ON_USE (getsockname, "getsockname is not always POSIX compliant - "
                  "use gnulib module getsockname for portability");
@@ -512,7 +505,6 @@ _GL_CXXALIASWARN (getsockopt);
 #  define getsockopt getsockopt_used_without_requesting_gnulib_module_getsockopt
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef getsockopt
 # if HAVE_RAW_DECL_GETSOCKOPT
 _GL_WARN_ON_USE (getsockopt, "getsockopt is not always POSIX compliant - "
                  "use gnulib module getsockopt for portability");
@@ -537,7 +529,6 @@ _GL_CXXALIASWARN (listen);
 #  define listen listen_used_without_requesting_gnulib_module_listen
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef listen
 # if HAVE_RAW_DECL_LISTEN
 _GL_WARN_ON_USE (listen, "listen is not always POSIX compliant - "
                  "use gnulib module listen for portability");
@@ -566,7 +557,6 @@ _GL_CXXALIASWARN (recv);
 #  define recv recv_used_without_requesting_gnulib_module_recv
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef recv
 # if HAVE_RAW_DECL_RECV
 _GL_WARN_ON_USE (recv, "recv is not always POSIX compliant - "
                  "use gnulib module recv for portability");
@@ -598,7 +588,6 @@ _GL_CXXALIASWARN (send);
 #  define send send_used_without_requesting_gnulib_module_send
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef send
 # if HAVE_RAW_DECL_SEND
 _GL_WARN_ON_USE (send, "send is not always POSIX compliant - "
                  "use gnulib module send for portability");
@@ -637,7 +626,6 @@ _GL_CXXALIASWARN (recvfrom);
 #  define recvfrom recvfrom_used_without_requesting_gnulib_module_recvfrom
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef recvfrom
 # if HAVE_RAW_DECL_RECVFROM
 _GL_WARN_ON_USE (recvfrom, "recvfrom is not always POSIX compliant - "
                  "use gnulib module recvfrom for portability");
@@ -671,7 +659,6 @@ _GL_CXXALIASWARN (sendto);
 #  define sendto sendto_used_without_requesting_gnulib_module_sendto
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef sendto
 # if HAVE_RAW_DECL_SENDTO
 _GL_WARN_ON_USE (sendto, "sendto is not always POSIX compliant - "
                  "use gnulib module sendto for portability");
@@ -703,7 +690,6 @@ _GL_CXXALIASWARN (setsockopt);
 #  define setsockopt setsockopt_used_without_requesting_gnulib_module_setsockopt
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef setsockopt
 # if HAVE_RAW_DECL_SETSOCKOPT
 _GL_WARN_ON_USE (setsockopt, "setsockopt is not always POSIX compliant - "
                  "use gnulib module setsockopt for portability");
@@ -728,7 +714,6 @@ _GL_CXXALIASWARN (shutdown);
 #  define shutdown shutdown_used_without_requesting_gnulib_module_shutdown
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef shutdown
 # if HAVE_RAW_DECL_SHUTDOWN
 _GL_WARN_ON_USE (shutdown, "shutdown is not always POSIX compliant - "
                  "use gnulib module shutdown for portability");
@@ -761,7 +746,6 @@ _GL_CXXALIAS_SYS (accept4, int,
 # endif
 _GL_CXXALIASWARN (accept4);
 #elif defined GNULIB_POSIXCHECK
-# undef accept4
 # if HAVE_RAW_DECL_ACCEPT4
 _GL_WARN_ON_USE (accept4, "accept4 is unportable - "
                  "use gnulib module accept4 for portability");

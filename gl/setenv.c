@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995-2003, 2005-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 1995-2003, 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This file is free software: you can redistribute it and/or modify
@@ -126,8 +126,6 @@ int
 __add_to_environ (const char *name, const char *value, const char *combined,
                   int replace)
 {
-  char **ep;
-  size_t size;
   const size_t namelen = strlen (name);
   const size_t vallen = value != NULL ? strlen (value) + 1 : 0;
 
@@ -135,9 +133,9 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 
   /* We have to get the pointer now that we have the lock and not earlier
      since another thread might have created a new environment.  */
-  ep = __environ;
+  char **ep = __environ;
 
-  size = 0;
+  size_t size = 0;
   if (ep != NULL)
     {
       for (; *ep != NULL; ++ep)
@@ -149,13 +147,8 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 
   if (ep == NULL || *ep == NULL)
     {
-      char **new_environ;
-#ifdef USE_TSEARCH
-      char *new_value;
-#endif
-
       /* We allocated this space; we can extend it.  */
-      new_environ =
+      char **new_environ =
         (char **) (last_environ == NULL
                    ? malloc ((size + 2) * sizeof (char *))
                    : realloc (last_environ, (size + 2) * sizeof (char *)));
@@ -177,6 +170,7 @@ __add_to_environ (const char *name, const char *value, const char *combined,
         {
           /* See whether the value is already known.  */
 #ifdef USE_TSEARCH
+          char *new_value;
 # ifdef _LIBC
           new_value = (char *) alloca (namelen + 1 + vallen);
           __mempcpy (__mempcpy (__mempcpy (new_value, name, namelen), "=", 1),
@@ -448,7 +442,6 @@ extern int setenv (const char *, const char *, int);
 int
 rpl_setenv (const char *name, const char *value, int replace)
 {
-  int result;
   if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
       errno = EINVAL;
@@ -456,13 +449,12 @@ rpl_setenv (const char *name, const char *value, int replace)
     }
   /* Call the real setenv even if replace is 0, in case implementation
      has underlying data to update, such as when environ changes.  */
-  result = setenv (name, value, replace);
+  int result = setenv (name, value, replace);
   if (result == 0 && replace && *value == '=')
     {
       char *tmp = getenv (name);
       if (!STREQ (tmp, value))
         {
-          int saved_errno;
           size_t len = strlen (value);
           tmp = malloca (len + 2);
           if (tmp == NULL)
@@ -474,7 +466,7 @@ rpl_setenv (const char *name, const char *value, int replace)
           *tmp = '=';
           memcpy (tmp + 1, value, len + 1);
           result = setenv (name, tmp, replace);
-          saved_errno = errno;
+          int saved_errno = errno;
           freea (tmp);
           errno = saved_errno;
         }

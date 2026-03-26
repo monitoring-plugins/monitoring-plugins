@@ -1,5 +1,5 @@
 /* Unicode character classification and properties.
-   Copyright (C) 2002, 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2005-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -576,7 +576,8 @@ enum
   UC_JOINING_GROUP_HANIFI_ROHINGYA_KINNA_YA, /* Hanifi_Rohingya_Kinna_Ya */
   UC_JOINING_GROUP_THIN_YEH,                 /* Thin_Yeh */
   UC_JOINING_GROUP_VERTICAL_TAIL,            /* Vertical_Tail */
-  UC_JOINING_GROUP_KASHMIRI_YEH              /* Kashmiri_Yeh */
+  UC_JOINING_GROUP_KASHMIRI_YEH,             /* Kashmiri_Yeh */
+  UC_JOINING_GROUP_THIN_NOON                 /* Thin_Noon */
 };
 
 /* Return the name of a joining group.  */

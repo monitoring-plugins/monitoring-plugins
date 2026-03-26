@@ -1,5 +1,5 @@
 /* Declarations for error-reporting functions.
-   Copyright (C) 1995-1997, 2003, 2006, 2008-2025 Free Software Foundation,
+   Copyright (C) 1995-1997, 2003, 2006, 2008-2026 Free Software Foundation,
    Inc.
    This file is part of the GNU C Library.
 

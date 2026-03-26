@@ -1,6 +1,6 @@
 /* malloc with idx_t rather than size_t
 
-   Copyright 2021-2025 Free Software Foundation, Inc.
+   Copyright 2021-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#include <config.h>
-
 #define IALLOC_INLINE _GL_EXTERN_INLINE
+#include <config.h>
 #include "ialloc.h"

@@ -1,6 +1,6 @@
 /* strerror.c --- POSIX compatible system error routine
 
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -42,7 +42,6 @@ strerror (int n)
 #undef strerror
 {
   static char buf[STACKBUF_LEN];
-  size_t len;
 
   /* Cast away const, due to the historical signature of strerror;
      callers should not be modifying the string.  */
@@ -67,7 +66,7 @@ strerror (int n)
     }
 
   /* Fix STACKBUF_LEN if this ever aborts.  */
-  len = strlen (msg);
+  size_t len = strlen (msg);
   if (sizeof buf <= len)
     abort ();
 
