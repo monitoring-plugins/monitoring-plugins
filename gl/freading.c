@@ -1,5 +1,5 @@
 /* Retrieve information about a FILE stream.
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -22,7 +22,7 @@
 #include "stdio-impl.h"
 
 /* Don't use glibc's __freading function in glibc < 2.7, see
-   <https://sourceware.org/bugzilla/show_bug.cgi?id=4359>  */
+   <https://sourceware.org/PR4359>  */
 #if !(HAVE___FREADING && (!defined __GLIBC__ || defined __UCLIBC__ || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 7)))
 
 /* This code is not compiled on systems that have a working __freading function,
@@ -47,7 +47,7 @@ freading (FILE *fp)
   return (fp->_flags & _IOREAD) != 0;
 # elif defined __minix               /* Minix */
   return (fp->_flags & _IOREADING) != 0;
-# elif defined _IOERR                /* AIX, HP-UX, IRIX, OSF/1, Solaris, OpenServer, UnixWare, mingw, MSVC, NonStop Kernel, OpenVMS */
+# elif defined _IOERR                /* AIX, HP-UX, Solaris, OpenServer, UnixWare, mingw, MSVC, NonStop Kernel, OpenVMS */
 #  if defined __sun                  /* Solaris */
   return (fp_->_flag & _IOREAD) != 0 && (fp_->_flag & _IOWRT) == 0;
 #  else

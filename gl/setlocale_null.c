@@ -1,5 +1,5 @@
 /* Query the name of the current global locale.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -77,10 +77,9 @@ static int
 setlocale_null_r_with_lock (int category, char *buf, size_t bufsize)
 {
   CRITICAL_SECTION *lock = gl_get_setlocale_null_lock ();
-  int ret;
 
   EnterCriticalSection (lock);
-  ret = setlocale_null_r_unlocked (category, buf, bufsize);
+  int ret = setlocale_null_r_unlocked (category, buf, bufsize);
   LeaveCriticalSection (lock);
 
   return ret;
@@ -116,11 +115,10 @@ setlocale_null_r_with_lock (int category, char *buf, size_t bufsize)
   if (pthread_in_use())
     {
       pthread_mutex_t *lock = gl_get_setlocale_null_lock ();
-      int ret;
 
       if (pthread_mutex_lock (lock))
         abort ();
-      ret = setlocale_null_r_unlocked (category, buf, bufsize);
+      int ret = setlocale_null_r_unlocked (category, buf, bufsize);
       if (pthread_mutex_unlock (lock))
         abort ();
 
@@ -138,11 +136,10 @@ static int
 setlocale_null_r_with_lock (int category, char *buf, size_t bufsize)
 {
   mtx_t *lock = gl_get_setlocale_null_lock ();
-  int ret;
 
   if (mtx_lock (lock) != thrd_success)
     abort ();
-  ret = setlocale_null_r_unlocked (category, buf, bufsize);
+  int ret = setlocale_null_r_unlocked (category, buf, bufsize);
   if (mtx_unlock (lock) != thrd_success)
     abort ();
 
@@ -252,9 +249,7 @@ setlocale_null (int category)
         i;
       char buf[SETLOCALE_NULL_MAX];
       static char resultbuf[LC_INDICES_COUNT][SETLOCALE_NULL_MAX];
-      int err;
-
-      err = setlocale_null_r (category, buf, sizeof (buf));
+      int err = setlocale_null_r (category, buf, sizeof (buf));
       if (err == EINVAL)
         return NULL;
       if (err)

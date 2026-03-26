@@ -1,5 +1,5 @@
 /* Error handler for noninteractive utilities
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 
 #if !_LIBC && ENABLE_NLS
 # include "gettext.h"
-# define _(msgid) dgettext ("gnulib", msgid)
+# define _(msgid) dgettext (GNULIB_TEXT_DOMAIN, msgid)
 #endif
 
 #ifdef _LIBC

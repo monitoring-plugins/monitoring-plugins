@@ -1,6 +1,6 @@
 /* A substitute for ISO C99 <wctype.h>, for platforms that lack it.
 
-   Copyright (C) 2006-2025 Free Software Foundation, Inc.
+   Copyright (C) 2006-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -264,27 +264,7 @@ rpl_towupper (wint_t wc)
 
 #  else
 
-/* IRIX 5.3 has macros but no functions, its isw* macros refer to an
-   undefined variable _ctmp_ and to <ctype.h> macros like _P, and they
-   refer to system functions like _iswctype that are not in the
-   standard C library.  Rather than try to get ancient buggy
-   implementations like this to work, just disable them.  */
-#   undef iswalnum
-#   undef iswalpha
-#   undef iswblank
-#   undef iswcntrl
-#   undef iswdigit
-#   undef iswgraph
-#   undef iswlower
-#   undef iswprint
-#   undef iswpunct
-#   undef iswspace
-#   undef iswupper
-#   undef iswxdigit
-#   undef towlower
-#   undef towupper
-
-/* Linux libc5 has <wctype.h> and the functions but they are broken.  */
+/* On some old platforms the functions are broken.  */
 #   if @REPLACE_ISWCNTRL@
 #    if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #     define iswalnum rpl_iswalnum
@@ -673,7 +653,6 @@ _GL_CXXALIAS_SYS (wctype, wctype_t, (const char *name));
 _GL_CXXALIASWARN (wctype);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef wctype
 # if HAVE_RAW_DECL_WCTYPE
 _GL_WARN_ON_USE (wctype, "wctype is unportable - "
                  "use gnulib module wctype for portability");
@@ -701,7 +680,6 @@ _GL_CXXALIAS_SYS (iswctype, int, (wint_t wc, wctype_t desc));
 _GL_CXXALIASWARN (iswctype);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef iswctype
 # if HAVE_RAW_DECL_ISWCTYPE
 _GL_WARN_ON_USE (iswctype, "iswctype is unportable - "
                  "use gnulib module iswctype for portability");
@@ -755,7 +733,6 @@ _GL_CXXALIAS_SYS (wctrans, wctrans_t, (const char *name));
 _GL_CXXALIASWARN (wctrans);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef wctrans
 # if HAVE_RAW_DECL_WCTRANS
 _GL_WARN_ON_USE (wctrans, "wctrans is unportable - "
                  "use gnulib module wctrans for portability");
@@ -783,7 +760,6 @@ _GL_CXXALIAS_SYS (towctrans, wint_t, (wint_t wc, wctrans_t desc));
 _GL_CXXALIASWARN (towctrans);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef towctrans
 # if HAVE_RAW_DECL_TOWCTRANS
 _GL_WARN_ON_USE (towctrans, "towctrans is unportable - "
                  "use gnulib module towctrans for portability");

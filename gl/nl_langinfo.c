@@ -1,6 +1,6 @@
 /* nl_langinfo() replacement: query locale dependent information.
 
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -79,15 +79,13 @@ ctype_codeset (void)
   /* This function is only used on platforms which don't have uselocale().
      Therefore we don't need to look at the per-thread locale first, here.  */
   static char result[2 + 10 + 1];
-  char buf[2 + 10 + 1];
-  char locale[SETLOCALE_NULL_MAX];
-  char *codeset;
-  size_t codesetlen;
 
+  char locale[SETLOCALE_NULL_MAX];
   if (setlocale_null_r (LC_CTYPE, locale, sizeof (locale)))
     locale[0] = '\0';
 
-  codeset = buf;
+  char buf[2 + 10 + 1];
+  char *codeset = buf;
   codeset[0] = '\0';
 
   if (locale[0])
@@ -105,7 +103,7 @@ ctype_codeset (void)
             codeset = codeset_start;
           else
             {
-              codesetlen = modifier - codeset_start;
+              size_t codesetlen = modifier - codeset_start;
               if (codesetlen < sizeof buf)
                 {
                   codeset = memcpy (buf, codeset_start, codesetlen);
@@ -121,14 +119,14 @@ ctype_codeset (void)
      GetACP, which returns the locale's codepage as a number (although
      this doesn't change according to what the 'setlocale' call specified).
      Either way, prepend "CP" to make it a valid codeset name.  */
-  codesetlen = strlen (codeset);
+  size_t codesetlen = strlen (codeset);
   if (0 < codesetlen && codesetlen < sizeof buf - 2)
     memmove (buf + 2, codeset, codesetlen + 1);
   else
     sprintf (buf + 2, "%u", GetACP ());
   /* For a locale name such as "French_France.65001", in Windows 10,
      setlocale now returns "French_France.utf8" instead.  */
-  if (strcmp (buf + 2, "65001") == 0 || strcmp (buf + 2, "utf8") == 0)
+  if (streq (buf + 2, "65001") || streq (buf + 2, "utf8"))
     return (char *) "UTF-8";
   else
     {
@@ -209,10 +207,9 @@ static char *
 nl_langinfo_with_lock (nl_item item)
 {
   CRITICAL_SECTION *lock = gl_get_nl_langinfo_lock ();
-  char *ret;
 
   EnterCriticalSection (lock);
-  ret = nl_langinfo_unlocked (item);
+  char *ret = nl_langinfo_unlocked (item);
   LeaveCriticalSection (lock);
 
   return ret;
@@ -248,11 +245,10 @@ nl_langinfo_with_lock (nl_item item)
   if (pthread_in_use())
     {
       pthread_mutex_t *lock = gl_get_nl_langinfo_lock ();
-      char *ret;
 
       if (pthread_mutex_lock (lock))
         abort ();
-      ret = nl_langinfo_unlocked (item);
+      char *ret = nl_langinfo_unlocked (item);
       if (pthread_mutex_unlock (lock))
         abort ();
 
@@ -270,11 +266,10 @@ static char *
 nl_langinfo_with_lock (nl_item item)
 {
   mtx_t *lock = gl_get_nl_langinfo_lock ();
-  char *ret;
 
   if (mtx_lock (lock) != thrd_success)
     abort ();
-  ret = nl_langinfo_unlocked (item);
+  char *ret = nl_langinfo_unlocked (item);
   if (mtx_unlock (lock) != thrd_success)
     abort ();
 
@@ -298,10 +293,6 @@ rpl_nl_langinfo (nl_item item)
 # if GNULIB_defined_CODESET
     case CODESET:
       return ctype_codeset ();
-# endif
-# if GNULIB_defined_T_FMT_AMPM
-    case T_FMT_AMPM:
-      return (char *) "%I:%M:%S %p";
 # endif
 # if GNULIB_defined_ALTMON
     case ALTMON_1:
@@ -364,12 +355,6 @@ rpl_nl_langinfo (nl_item item)
       /* The format is not standardized.  In glibc it is a sequence of 10
          strings, appended in memory.  */
       return (char *) "\0\0\0\0\0\0\0\0\0\0";
-# endif
-# if GNULIB_defined_YESEXPR || !FUNC_NL_LANGINFO_YESEXPR_WORKS
-    case YESEXPR:
-      return (char *) "^[yY]";
-    case NOEXPR:
-      return (char *) "^[nN]";
 # endif
     default:
       break;

@@ -1,6 +1,6 @@
 /* Determine whether a locale is hard.
 
-   Copyright (C) 1999, 2003-2004, 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2003-2004, 2009-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as

@@ -52,6 +52,7 @@ NP-VERSION-FILE
 
 # /gl/
 /gl/.deps
+/gl/*/.deps
 /gl/alloca.h
 /gl/arpa
 /gl/arpa_inet.h
@@ -93,9 +94,17 @@ NP-VERSION-FILE
 /gl/wctype.h
 /gl/inttypes.h
 /gl/limits.h
+/gl/pthread.h
+/gl/sched.h
+/gl/uchar.h
+/gl/unicase.h
+/gl/unictype.h
+/gl/uninorm.h
+/gl/unitypes.h
+/gl/uniwidth.h
+/gl/stdckdint.h
 /gl/malloc/dynarray-skeleton.gl.h
 /gl/malloc/dynarray.gl.h
-/gl/stdckdint.h
 
 # /lib/
 /lib/.deps

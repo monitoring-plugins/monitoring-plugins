@@ -1,5 +1,5 @@
 /* Convert multibyte character to wide character.
-   Copyright (C) 1999-2002, 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2002, 2005-2026 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
    This file is free software: you can redistribute it and/or modify
@@ -81,10 +81,7 @@ mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 size_t
 rpl_mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
-  size_t ret;
-  wchar_t wc;
-
-# if MBRTOWC_NULL_ARG2_BUG || MBRTOWC_RETVAL_BUG || MBRTOWC_EMPTY_INPUT_BUG
+# if MBRTOWC_RETVAL_BUG || MBRTOWC_EMPTY_INPUT_BUG
   if (s == NULL)
     {
       pwc = NULL;
@@ -98,6 +95,7 @@ rpl_mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
     return (size_t) -2;
 # endif
 
+  wchar_t wc;
   if (! pwc)
     pwc = &wc;
 
@@ -116,7 +114,7 @@ rpl_mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
         size_t count = 0;
         for (; n > 0; s++, n--)
           {
-            ret = mbrtowc (&wc, s, 1, ps);
+            size_t ret = mbrtowc (&wc, s, 1, ps);
 
             if (ret == (size_t)(-1))
               return (size_t)(-1);
@@ -133,6 +131,7 @@ rpl_mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
   }
 # endif
 
+  size_t ret;
 # if MBRTOWC_STORES_INCOMPLETE_BUG
   ret = mbrtowc (&wc, s, n, ps);
   if (ret < (size_t) -2 && pwc != NULL)

@@ -1,6 +1,6 @@
 /* A GNU-like <arpa/inet.h>.
 
-   Copyright (C) 2005-2006, 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -159,7 +159,6 @@ _GL_CXXALIAS_SYS_CAST (inet_ntop, const char *,
 _GL_CXXALIASWARN (inet_ntop);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef inet_ntop
 # if HAVE_RAW_DECL_INET_NTOP
 _GL_WARN_ON_USE (inet_ntop, "inet_ntop is unportable - "
                  "use gnulib module inet_ntop for portability");
@@ -190,7 +189,6 @@ _GL_CXXALIAS_SYS (inet_pton, int,
 _GL_CXXALIASWARN (inet_pton);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef inet_pton
 # if HAVE_RAW_DECL_INET_PTON
 _GL_WARN_ON_USE (inet_pton, "inet_pton is unportable - "
                  "use gnulib module inet_pton for portability");

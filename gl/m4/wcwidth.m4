@@ -1,6 +1,6 @@
 # wcwidth.m4
-# serial 38
-dnl Copyright (C) 2006-2025 Free Software Foundation, Inc.
+# serial 39
+dnl Copyright (C) 2006-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -44,7 +44,7 @@ AC_DEFUN([gl_FUNC_WCWIDTH],
     dnl On Mac OS X 10.3, wcwidth(0x0301) (COMBINING ACUTE ACCENT) returns 1.
     dnl On macOS 12.5, NetBSD 9.3, OpenBSD 5.0, MidnightBSD 1.1,
     dnl wcwidth(0x05B0) (HEBREW POINT SHEVA) returns 1.
-    dnl On macOS 12.5, NetBSD 9.3, MidnightBSD 1.1, OSF/1 5.1,
+    dnl On macOS 12.5, NetBSD 9.3, MidnightBSD 1.1,
     dnl wcwidth(0x200B) (ZERO WIDTH SPACE) returns 1.
     dnl On OpenBSD 5.8, wcwidth(0xFF1A) (FULLWIDTH COLON) returns 0.
     dnl This leads to bugs in 'ls' (coreutils).

@@ -1,5 +1,5 @@
 /* Flushing buffers of a FILE stream.
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -101,7 +101,7 @@ fpurge (FILE *fp)
   if (fp->_ptr != NULL)
     fp->_count = 0;
   return 0;
-# elif defined _IOERR               /* AIX, HP-UX, IRIX, OSF/1, Solaris, OpenServer, UnixWare, mingw, MSVC, NonStop Kernel, OpenVMS */
+# elif defined _IOERR               /* AIX, HP-UX, Solaris, OpenServer, UnixWare, mingw, MSVC, NonStop Kernel, OpenVMS */
   fp_->_ptr = fp_->_base;
   if (fp_->_ptr != NULL)
     fp_->_cnt = 0;

@@ -1,5 +1,5 @@
 /* Formatted output to strings.
-   Copyright (C) 2004, 2006-2025 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2006-2026 Free Software Foundation, Inc.
    Written by Simon Josefsson and Yoann Vandoorselaere <yoann@prelude-ids.org>.
 
    This file is free software: you can redistribute it and/or modify
@@ -33,12 +33,9 @@
 ptrdiff_t
 vsnzprintf (char *str, size_t size, const char *format, va_list args)
 {
-  char *output;
-  size_t len;
   size_t lenbuf = size;
-
-  output = vasnprintf (str, &lenbuf, format, args);
-  len = lenbuf;
+  char *output = vasnprintf (str, &lenbuf, format, args);
+  size_t len = lenbuf;
 
   if (!output)
     return -1;
