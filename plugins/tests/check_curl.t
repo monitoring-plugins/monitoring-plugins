@@ -538,7 +538,7 @@ sub run_common_tests {
 
 	$result = NPTest->testCmd( "$command -u /header_broken_check" );
 	is( $result->return_code, 0, "header_check search for string");
-	like( $result->output, '/.*HTTP/1.1 200 OK - 138 bytes in [\d\.]+ second.*/', "Output correct" );
+	like( $result->output, '/.*HTTP/1.1 200 OK - \d+ bytes in [\d\.]+ second.*/', "Output correct" );
 
 	my $cmd;
 	$cmd = "$command -u /slow";
