@@ -1,5 +1,5 @@
 /* An ftello() function that works around platform bugs.
-   Copyright (C) 2007, 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -124,13 +124,11 @@ ftello (FILE *fp)
      gets confused by this.  */
   if (fp_->_flag & _IOWRT)
     {
-      off_t pos;
-
       /* Call ftello nevertheless, for the side effects that it does on fp.  */
       ftello (fp);
 
       /* Compute the file position ourselves.  */
-      pos = lseek (fileno (fp), (off_t) 0, SEEK_CUR);
+      off_t pos = lseek (fileno (fp), (off_t) 0, SEEK_CUR);
       if (pos >= 0)
         {
           if ((fp_->_flag & _IONBF) == 0 && fp_->_base != NULL)

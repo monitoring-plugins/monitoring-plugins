@@ -1,5 +1,5 @@
 /* msvcrt workarounds.
-   Copyright (C) 2025 Free Software Foundation, Inc.
+   Copyright (C) 2025-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -85,7 +85,7 @@ gl_consolesafe_fwrite (const void *ptr, size_t size, size_t nmemb, FILE *fp)
    specifiers as the mingw *printf functions.  */
 
 static int
-vasprintf (char **resultp, const char *format, va_list args)
+local_vasprintf (char **resultp, const char *format, va_list args)
 {
   /* First try: Use a stack-allocated buffer.  */
   char buf[2048];
@@ -123,6 +123,9 @@ vasprintf (char **resultp, const char *format, va_list args)
   return nbytes;
 }
 
+#  undef vasprintf
+#  define vasprintf local_vasprintf
+
 # endif
 
 /* Bypass the functions __mingw_[v][f]printf, that trigger a bug in msvcrt,
@@ -133,8 +136,8 @@ int
 gl_consolesafe_fprintf (FILE *restrict fp, const char *restrict format, ...)
 {
   va_list args;
-  char *tmpstring;
   va_start (args, format);
+  char *tmpstring;
   int result = vasprintf (&tmpstring, format, args);
   va_end (args);
   if (result >= 0)
@@ -151,8 +154,8 @@ int
 gl_consolesafe_printf (const char *restrict format, ...)
 {
   va_list args;
-  char *tmpstring;
   va_start (args, format);
+  char *tmpstring;
   int result = vasprintf (&tmpstring, format, args);
   va_end (args);
   if (result >= 0)

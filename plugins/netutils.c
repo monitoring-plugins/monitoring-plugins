@@ -38,11 +38,7 @@ mp_state_enum socket_timeout_state = STATE_CRITICAL;
 mp_state_enum econn_refuse_state = STATE_CRITICAL;
 bool was_refused = false;
 
-#if USE_IPV6
 int address_family = AF_UNSPEC;
-#else
-int address_family = AF_INET;
-#endif
 
 /* handles socket timeouts */
 void socket_timeout_alarm_handler(int sig) {
@@ -348,7 +344,6 @@ void host_or_die(const char *str) {
 }
 
 bool is_addr(const char *address) {
-#ifdef USE_IPV6
 	if (address_family == AF_INET && is_inet_addr(address)) {
 		return true;
 	}
@@ -356,11 +351,6 @@ bool is_addr(const char *address) {
 	if (address_family == AF_INET6 && is_inet6_addr(address)) {
 		return true;
 	}
-#else
-	if (is_inet_addr(address)) {
-		return true;
-	}
-#endif
 
 	return false;
 }

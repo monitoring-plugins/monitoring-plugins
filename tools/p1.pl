@@ -30,7 +30,7 @@ use IO::File;
 
 sub TIEHANDLE {
 	my ($class, $fn) = @_;
-	my $handle = new IO::File "> $fn" or die "Cannot open embedded work filei $!\n";
+	my $handle = new IO::File "> $fn" or die "Cannot open embedded work file $!\n";
 	bless { FH => $handle, Value => 0}, $class;
 }
 

@@ -62,6 +62,8 @@ void print_usage(void);
 #	define my_rc_conf_str(a) rc_conf_str(rch, a)
 #	if defined(HAVE_LIBRADCLI)
 #		define my_rc_send_server(a, b) rc_send_server(rch, a, b, AUTH)
+#	elif defined(HAVE_LIBFREERADIUS_CLIENT)
+#		define my_rc_send_server(a, b) rc_send_server(rch, a, b, 0)
 #	else
 #		define my_rc_send_server(a, b) rc_send_server(rch, a, b)
 #	endif

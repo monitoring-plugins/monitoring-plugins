@@ -838,7 +838,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		}
 		char *range = argv[index++];
 		mp_range_parsed tmp = mp_parse_range_string(range);
-		if (tmp.error != MP_PARSING_SUCCES) {
+		if (tmp.error != MP_PARSING_SUCCESS) {
 			die(STATE_UNKNOWN, "failed to parse warning threshold");
 		}
 
@@ -859,7 +859,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		}
 		char *range = argv[index++];
 		mp_range_parsed tmp = mp_parse_range_string(range);
-		if (tmp.error != MP_PARSING_SUCCES) {
+		if (tmp.error != MP_PARSING_SUCCESS) {
 			die(STATE_UNKNOWN, "failed to parse warning threshold");
 		}
 

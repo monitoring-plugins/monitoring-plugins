@@ -89,6 +89,14 @@ const int DEFAULT_NNTPS_PORT = 563;
 const int DEFAULT_CLAMD_PORT = 3310;
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - inet is required for sockets
+	 * - unix is required for Unix domain sockets
+	 * - dns is required for name lookups */
+	pledge("stdio rpath inet unix dns", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -215,6 +223,10 @@ int main(int argc, char **argv) {
 	if (paw.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio inet unix dns", NULL);
+#endif // __OpenBSD__
 
 	config = paw.config;
 
@@ -571,11 +583,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			address_family = AF_INET;
 			break;
 		case '6': // Apparently unused TODO
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage4(_("IPv6 support not available"));
-#endif
 			break;
 		case 'H': /* hostname */
 			config.host_specified = true;

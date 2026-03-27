@@ -1,5 +1,5 @@
 /* Core of implementation of fstat and stat for native Windows.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -112,11 +112,11 @@ initialize (void)
 struct timespec
 _gl_convert_FILETIME_to_timespec (const FILETIME *ft)
 {
-  struct timespec result;
   /* FILETIME: <https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime> */
   unsigned long long since_1601 =
     ((unsigned long long) ft->dwHighDateTime << 32)
     | (unsigned long long) ft->dwLowDateTime;
+  struct timespec result;
   if (since_1601 == 0)
     {
       result.tv_sec = 0;
@@ -289,8 +289,7 @@ _gl_fstat_by_handle (HANDLE h, const char *path, struct stat *buf)
                       && (path = fpath, 1)))
                 {
                   const char *last_dot = NULL;
-                  const char *p;
-                  for (p = path; *p != '\0'; p++)
+                  for (const char *p = path; *p != '\0'; p++)
                     if (*p == '.')
                       last_dot = p;
                   if (last_dot != NULL)

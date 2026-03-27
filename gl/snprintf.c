@@ -1,5 +1,5 @@
 /* Formatted output to strings.
-   Copyright (C) 2004, 2006-2025 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2006-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -28,10 +28,8 @@ int
 snprintf (char *str, size_t size, const char *format, ...)
 {
   va_list args;
-  ptrdiff_t ret;
-
   va_start (args, format);
-  ret = vsnzprintf (str, size, format, args);
+  ptrdiff_t ret = vsnzprintf (str, size, format, args);
   va_end (args);
 
 #if PTRDIFF_MAX > INT_MAX

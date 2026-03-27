@@ -1,5 +1,5 @@
 /* Provide a netdb.h header file for systems lacking it (read: MinGW).
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
    Written by Simon Josefsson.
 
    This file is free software: you can redistribute it and/or modify
@@ -41,8 +41,8 @@
  #error "Please include config.h first."
 #endif
 
-/* Get <netdb.h> definitions such as 'socklen_t' on IRIX 6.5 and OSF/1 4.0 and
-   'struct hostent' on MinGW.  */
+/* Get <netdb.h> definitions such as 'socklen_t' and 'struct hostent'
+   on MinGW.  */
 #include <sys/socket.h>
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */
@@ -277,25 +277,21 @@ _GL_CXXALIASWARN (getnameinfo);
 
 #elif defined GNULIB_POSIXCHECK
 
-# undef getaddrinfo
 # if HAVE_RAW_DECL_GETADDRINFO
 _GL_WARN_ON_USE (getaddrinfo, "getaddrinfo is unportable - "
                  "use gnulib module getaddrinfo for portability");
 # endif
 
-# undef freeaddrinfo
 # if HAVE_RAW_DECL_FREEADDRINFO
 _GL_WARN_ON_USE (freeaddrinfo, "freeaddrinfo is unportable - "
                  "use gnulib module getaddrinfo for portability");
 # endif
 
-# undef gai_strerror
 # if HAVE_RAW_DECL_GAI_STRERROR
 _GL_WARN_ON_USE (gai_strerror, "gai_strerror is unportable - "
                  "use gnulib module getaddrinfo for portability");
 # endif
 
-# undef getnameinfo
 # if HAVE_RAW_DECL_GETNAMEINFO
 _GL_WARN_ON_USE (getnameinfo, "getnameinfo is unportable - "
                  "use gnulib module getaddrinfo for portability");

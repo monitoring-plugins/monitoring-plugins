@@ -1,6 +1,6 @@
 /* A substitute <strings.h>.
 
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -76,7 +76,6 @@ _GL_FUNCDECL_SYS (ffs, int, (int i), );
 _GL_CXXALIAS_SYS (ffs, int, (int i));
 _GL_CXXALIASWARN (ffs);
 #elif defined GNULIB_POSIXCHECK
-# undef ffs
 # if HAVE_RAW_DECL_FFS
 _GL_WARN_ON_USE (ffs, "ffs is not portable - use the ffs module");
 # endif
@@ -109,7 +108,6 @@ _GL_CXXALIASWARN (strcasecmp);
 /* strcasecmp() does not work with multibyte strings:
    POSIX says that it operates on "strings", and "string" in POSIX is defined
    as a sequence of bytes, not of characters.   */
-# undef strcasecmp
 # if HAVE_RAW_DECL_STRCASECMP
 _GL_WARN_ON_USE (strcasecmp, "strcasecmp cannot work correctly on character "
                  "strings in multibyte locales and is unportable - "
@@ -147,7 +145,6 @@ _GL_CXXALIASWARN (strcasecmp_l);
 /* strcasecmp_l() does not work with multibyte strings:
    POSIX says that it operates on "strings", and "string" in POSIX is defined
    as a sequence of bytes, not of characters.   */
-# undef strcasecmp_l
 # if HAVE_RAW_DECL_STRCASECMP_L
 _GL_WARN_ON_USE (strcasecmp_l, "strcasecmp_l cannot work correctly on "
                  "character strings in multibyte locales and is unportable - "
@@ -182,7 +179,6 @@ _GL_CXXALIASWARN (strncasecmp);
 /* strncasecmp() does not work with multibyte strings:
    POSIX says that it operates on "strings", and "string" in POSIX is defined
    as a sequence of bytes, not of characters.  */
-# undef strncasecmp
 # if HAVE_RAW_DECL_STRNCASECMP
 _GL_WARN_ON_USE (strncasecmp, "strncasecmp cannot work correctly on character "
                  "strings in multibyte locales and is unportable - "
@@ -220,7 +216,6 @@ _GL_CXXALIASWARN (strncasecmp_l);
 /* strncasecmp_l() does not work with multibyte strings:
    POSIX says that it operates on "strings", and "string" in POSIX is defined
    as a sequence of bytes, not of characters.   */
-# undef strncasecmp_l
 # if HAVE_RAW_DECL_STRNCASECMP_L
 _GL_WARN_ON_USE (strncasecmp_l, "strncasecmp_l cannot work correctly on "
                  "character strings in multibyte locales and is unportable - "

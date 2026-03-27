@@ -1,5 +1,5 @@
 /* af_alg.c - Compute message digests from file streams and buffers.
-   Copyright (C) 2018-2025 Free Software Foundation, Inc.
+   Copyright (C) 2018-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -112,100 +112,102 @@ afalg_stream (FILE *stream, const char *alg,
      read-write loop work around an empty-input bug noted below.  */
   int fd = fileno (stream);
   int result;
-  struct stat st;
-  off_t off = ftello (stream);
-  if (0 <= off && fstat (fd, &st) == 0
-      && (S_ISREG (st.st_mode) || S_TYPEISSHM (&st) || S_TYPEISTMO (&st))
-      && off < st.st_size && st.st_size - off < SYS_BUFSIZE_MAX)
-    {
-      /* Make sure the offset of fileno (stream) reflects how many bytes
-         have been read from stream before this function got invoked.
-         Note: fflush on an input stream after ungetc does not work as expected
-         on some platforms.  Therefore this situation is not supported here.  */
-      if (fflush (stream))
-        result = -EIO;
-      else
-        {
-          off_t nbytes = st.st_size - off;
-          if (sendfile (ofd, fd, &off, nbytes) == nbytes)
-            {
-              if (read (ofd, resblock, hashlen) == hashlen)
-                {
-                  /* The input buffers of stream are no longer valid.  */
-                  if (lseek (fd, off, SEEK_SET) != (off_t)-1)
-                    result = 0;
-                  else
-                    /* The file position of fd has not changed.  */
-                    result = -EAFNOSUPPORT;
-                }
-              else
-                /* The file position of fd has not changed.  */
-                result = -EAFNOSUPPORT;
-            }
-          else
-            /* The file position of fd has not changed.  */
-            result = -EAFNOSUPPORT;
-       }
-    }
-  else
-    {
-      /* sendfile not possible, do a classic read-write loop.  */
-
-      /* Number of bytes to seek (backwards) in case of error.  */
-      off_t nseek = 0;
-
-      for (;;)
-        {
-          char buf[BLOCKSIZE];
-          /* When the stream is not seekable, start with a single-byte block,
-             so that we can use ungetc() in the case that send() fails.  */
-          size_t blocksize = (nseek == 0 && off < 0 ? 1 : BLOCKSIZE);
-          ssize_t size = fread (buf, 1, blocksize, stream);
-          if (size == 0)
-            {
-              /* On Linux < 4.9, the value for an empty stream is wrong (all 0).
-                 See <https://patchwork.kernel.org/patch/9308641/>.
-                 This was not fixed properly until November 2016,
-                 see <https://patchwork.kernel.org/patch/9434741/>.  */
-              result = ferror (stream) ? -EIO : nseek == 0 ? -EAFNOSUPPORT : 0;
-              break;
-            }
-          nseek -= size;
-          if (send (ofd, buf, size, MSG_MORE) != size)
-            {
-              if (nseek == -1)
-                {
-                  /* 1 byte of pushback buffer is guaranteed on stream, even
-                     if stream is not seekable.  */
-                  ungetc ((unsigned char) buf[0], stream);
+  {
+    struct stat st;
+    off_t off = ftello (stream);
+    if (0 <= off && fstat (fd, &st) == 0
+        && (S_ISREG (st.st_mode) || S_TYPEISSHM (&st) || S_TYPEISTMO (&st))
+        && off < st.st_size && st.st_size - off < SYS_BUFSIZE_MAX)
+      {
+        /* Make sure the offset of fileno (stream) reflects how many bytes
+           have been read from stream before this function got invoked.
+           Note: fflush on an input stream after ungetc does not work as expected
+           on some platforms.  Therefore this situation is not supported here.  */
+        if (fflush (stream))
+          result = -EIO;
+        else
+          {
+            off_t nbytes = st.st_size - off;
+            if (sendfile (ofd, fd, &off, nbytes) == nbytes)
+              {
+                if (read (ofd, resblock, hashlen) == hashlen)
+                  {
+                    /* The input buffers of stream are no longer valid.  */
+                    if (lseek (fd, off, SEEK_SET) != (off_t)-1)
+                      result = 0;
+                    else
+                      /* The file position of fd has not changed.  */
+                      result = -EAFNOSUPPORT;
+                  }
+                else
+                  /* The file position of fd has not changed.  */
                   result = -EAFNOSUPPORT;
-                }
-              else if (fseeko (stream, nseek, SEEK_CUR) == 0)
-                /* The position of stream has been restored.  */
-                result = -EAFNOSUPPORT;
-              else
-                result = -EIO;
-              break;
-            }
+              }
+            else
+              /* The file position of fd has not changed.  */
+              result = -EAFNOSUPPORT;
+         }
+      }
+    else
+      {
+        /* sendfile not possible, do a classic read-write loop.  */
 
-          /* Don't assume that EOF is sticky. See:
-             <https://sourceware.org/bugzilla/show_bug.cgi?id=19476>.  */
-          if (feof (stream))
-            {
-              result = 0;
-              break;
-            }
-        }
+        /* Number of bytes to seek (backwards) in case of error.  */
+        off_t nseek = 0;
 
-      if (result == 0 && read (ofd, resblock, hashlen) != hashlen)
-        {
-          if (nseek == 0 || fseeko (stream, nseek, SEEK_CUR) == 0)
-            /* The position of stream has been restored.  */
-            result = -EAFNOSUPPORT;
-          else
-            result = -EIO;
-        }
-    }
+        for (;;)
+          {
+            char buf[BLOCKSIZE];
+            /* When the stream is not seekable, start with a single-byte block,
+               so that we can use ungetc() in the case that send() fails.  */
+            size_t blocksize = (nseek == 0 && off < 0 ? 1 : BLOCKSIZE);
+            ssize_t size = fread (buf, 1, blocksize, stream);
+            if (size == 0)
+              {
+                /* On Linux < 4.9, the value for an empty stream is wrong (all 0).
+                   See <https://patchwork.kernel.org/patch/9308641/>.
+                   This was not fixed properly until November 2016,
+                   see <https://patchwork.kernel.org/patch/9434741/>.  */
+                result = ferror (stream) ? -EIO : nseek == 0 ? -EAFNOSUPPORT : 0;
+                break;
+              }
+            nseek -= size;
+            if (send (ofd, buf, size, MSG_MORE) != size)
+              {
+                if (nseek == -1)
+                  {
+                    /* 1 byte of pushback buffer is guaranteed on stream, even
+                       if stream is not seekable.  */
+                    ungetc ((unsigned char) buf[0], stream);
+                    result = -EAFNOSUPPORT;
+                  }
+                else if (fseeko (stream, nseek, SEEK_CUR) == 0)
+                  /* The position of stream has been restored.  */
+                  result = -EAFNOSUPPORT;
+                else
+                  result = -EIO;
+                break;
+              }
+
+            /* Don't assume that EOF is sticky. See:
+               <https://sourceware.org/PR19476>.  */
+            if (feof (stream))
+              {
+                result = 0;
+                break;
+              }
+          }
+
+        if (result == 0 && read (ofd, resblock, hashlen) != hashlen)
+          {
+            if (nseek == 0 || fseeko (stream, nseek, SEEK_CUR) == 0)
+              /* The position of stream has been restored.  */
+              result = -EAFNOSUPPORT;
+            else
+              result = -EIO;
+          }
+      }
+  }
   close (ofd);
   return result;
 }

@@ -1,5 +1,5 @@
 /* Normalization forms (composition and decomposition) of Unicode strings.
-   Copyright (C) 2001-2002, 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2002, 2009-2026 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2009.
 
    This file is free software: you can redistribute it and/or modify

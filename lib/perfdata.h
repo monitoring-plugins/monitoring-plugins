@@ -111,7 +111,8 @@ mp_range mp_range_set_end(mp_range, mp_perfdata_value);
  */
 
 typedef enum {
-	MP_PARSING_SUCCES = 0,
+	MP_PARSING_SUCCESS = 0,
+	MP_PARSING_SUCCES = MP_PARSING_SUCCESS,
 	MP_PARSING_FAILURE,
 	MP_RANGE_PARSING_FAILURE,
 	MP_RANGE_PARSING_UNDERFLOW,

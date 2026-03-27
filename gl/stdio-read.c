@@ -1,5 +1,5 @@
 /* POSIX compatible FILE stream read function.
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2011.
 
    This file is free software: you can redistribute it and/or modify
@@ -52,9 +52,8 @@
     return (EXPRESSION);                                                      \
   else                                                                        \
     {                                                                         \
-      RETTYPE ret;                                                            \
       SetLastError (0);                                                       \
-      ret = (EXPRESSION);                                                     \
+      RETTYPE ret = (EXPRESSION);                                             \
       if (FAILED)                                                             \
         {                                                                     \
           if (GetLastError () == ERROR_NO_DATA && ferror (stream))            \
@@ -86,11 +85,9 @@
 int
 scanf (const char *format, ...)
 {
-  int retval;
   va_list args;
-
   va_start (args, format);
-  retval = vfscanf (stdin, format, args);
+  int retval = vfscanf (stdin, format, args);
   va_end (args);
 
   return retval;
@@ -103,11 +100,9 @@ scanf (const char *format, ...)
 int
 fscanf (FILE *stream, const char *format, ...)
 {
-  int retval;
   va_list args;
-
   va_start (args, format);
-  retval = vfscanf (stream, format, args);
+  int retval = vfscanf (stream, format, args);
   va_end (args);
 
   return retval;

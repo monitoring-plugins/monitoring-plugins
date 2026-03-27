@@ -1,5 +1,5 @@
 /* A POSIX <locale.h>.
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -264,7 +264,6 @@ _GL_CXXALIASWARN (localeconv);
 #  define localeconv localeconv_used_without_requesting_gnulib_module_localeconv
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef localeconv
 # if HAVE_RAW_DECL_LOCALECONV
 _GL_WARN_ON_USE (localeconv,
                  "localeconv returns too few information on some platforms - "
@@ -288,7 +287,6 @@ _GL_CXXALIAS_SYS (setlocale, char *, (int category, const char *locale));
 _GL_CXXALIASWARN (setlocale);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef setlocale
 # if HAVE_RAW_DECL_SETLOCALE
 _GL_WARN_ON_USE (setlocale, "setlocale works differently on native Windows - "
                  "use gnulib module setlocale for portability");
@@ -325,7 +323,6 @@ _GL_CXXALIAS_SYS (newlocale, locale_t,
 _GL_CXXALIASWARN (newlocale);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef newlocale
 # if HAVE_RAW_DECL_NEWLOCALE
 _GL_WARN_ON_USE (newlocale, "newlocale is not portable");
 # endif
@@ -350,7 +347,6 @@ _GL_CXXALIAS_SYS (duplocale, locale_t, (locale_t locale));
 _GL_CXXALIASWARN (duplocale);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef duplocale
 # if HAVE_RAW_DECL_DUPLOCALE
 _GL_WARN_ON_USE (duplocale, "duplocale is unportable and buggy on some glibc systems - "
                  "use gnulib module duplocale for portability");
@@ -378,7 +374,6 @@ _GL_CXXALIAS_SYS_CAST (freelocale, void, (locale_t locale));
 _GL_CXXALIASWARN (freelocale);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef freelocale
 # if HAVE_RAW_DECL_FREELOCALE
 _GL_WARN_ON_USE (freelocale, "freelocale is not portable");
 # endif
@@ -408,7 +403,6 @@ _GL_CXXALIAS_SYS (getlocalename_l, const char *,
 _GL_CXXALIASWARN (getlocalename_l);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef getlocalename_l
 # if HAVE_RAW_DECL_GETLOCALENAME_L
 _GL_WARN_ON_USE (getlocalename_l, "getlocalename_l is not portable");
 # endif

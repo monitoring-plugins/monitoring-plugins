@@ -1,5 +1,5 @@
 /* <uchar.h> substitute - 16-bit and 32-bit wide character types.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -490,7 +490,6 @@ _GL_CXXALIAS_SYS (c32rtomb, size_t, (char *s, char32_t wc, mbstate_t *ps));
 _GL_CXXALIASWARN (c32rtomb);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef c32rtomb
 # if HAVE_RAW_DECL_C32RTOMB
 _GL_WARN_ON_USE (c32rtomb, "c32rtomb is not portable - "
                  "use gnulib module c32rtomb for portability");
@@ -647,7 +646,6 @@ _GL_CXXALIAS_SYS (mbrtoc32, size_t,
 _GL_CXXALIASWARN (mbrtoc32);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef mbrtoc32
 # if HAVE_RAW_DECL_MBRTOC32
 _GL_WARN_ON_USE (mbrtoc32, "mbrtoc32 is not portable - "
                  "use gnulib module mbrtoc32 for portability");
@@ -679,7 +677,6 @@ _GL_CXXALIAS_SYS (mbrtoc16, size_t,
 _GL_CXXALIASWARN (mbrtoc16);
 # endif
 #elif defined GNULIB_POSIXCHECK
-# undef mbrtoc16
 # if HAVE_RAW_DECL_MBRTOC16
 _GL_WARN_ON_USE (mbrtoc16, "mbrtoc16 is not portable - "
                  "use gnulib module mbrtoc16 for portability");

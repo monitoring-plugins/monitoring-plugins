@@ -120,7 +120,7 @@ char **np_extra_opts(int *argc, char **argv, const char *plugin_name) {
 			}
 			ea1 = ea_tmp = NULL;
 		}
-	} /* lather, rince, repeat */
+	} /* lather, rinse, repeat */
 
 	if (ea_num == (size_t)*argc && extra_args == NULL) {
 		/* No extra-opts */

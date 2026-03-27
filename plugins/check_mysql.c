@@ -572,7 +572,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning time threshold");
 			}
 			result.config.replica_thresholds =
@@ -580,7 +580,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical time threshold");
 			}
 			result.config.replica_thresholds =

@@ -470,7 +470,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 
 		case 'c': /* critical range */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical threshold");
 			}
 			result.config.thresholds = mp_thresholds_set_crit(result.config.thresholds, tmp.range);
@@ -478,7 +478,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'w': /* warning range */ {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning threshold");
 			}
 			result.config.thresholds = mp_thresholds_set_warn(result.config.thresholds, tmp.range);

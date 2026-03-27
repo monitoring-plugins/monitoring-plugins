@@ -16,7 +16,7 @@ m4_ifndef([_AC_C_C23_OPTIONS], [
 m4_version_prereq([2.70], [], [
 
 
-# Copyright (C) 2001-2025 Free Software Foundation, Inc.
+# Copyright (C) 2001-2026 Free Software Foundation, Inc.
 
 # This file is part of Autoconf.  This program is free
 # software; you can redistribute it and/or modify it under the
@@ -777,7 +777,7 @@ AC_DEFUN([_AC_CXX_CXX11_TEST_BODY],
 }
 {
   // Unicode literals
-  char const *utf8 = u8"UTF-8 string \u2500";
+  auto const *utf8 = u8"UTF-8 string \u2500"; // This is portable to C++20.
   char16_t const *utf16 = u"UTF-8 string \u2500";
   char32_t const *utf32 = U"UTF-32 string \u2500";
 }

@@ -61,6 +61,14 @@ static int ssh_connect(mp_check *overall, char *haddr, int hport, char *remote_v
 					   char *remote_protocol);
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - inet is required for sockets
+	 * - unix is required for Unix domain sockets
+	 * - dns is required for name lookups */
+	pledge("stdio rpath inet unix dns", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -73,6 +81,10 @@ int main(int argc, char **argv) {
 	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio inet unix dns", NULL);
+#endif // __OpenBSD__
 
 	check_ssh_config config = tmp_config.config;
 
@@ -161,11 +173,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET;
 			break;
 		case '6':
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage4(_("IPv6 support not available"));
-#endif
 			break;
 		case 'r': /* remote version */
 			result.config.remote_version = optarg;

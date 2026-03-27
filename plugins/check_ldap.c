@@ -400,7 +400,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning connection time threshold");
 			}
 			result.config.connection_time_threshold =
@@ -408,7 +408,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse critical connection time threshold");
 			}
 			result.config.connection_time_threshold =
@@ -416,7 +416,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'W': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse number of entries warning threshold");
 			}
 			result.config.entries_thresholds =
@@ -424,7 +424,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'C': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse number of entries critical threshold");
 			}
 			result.config.entries_thresholds =
@@ -462,11 +462,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case '6':
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage(_("IPv6 support not available\n"));
-#endif
 			break;
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);

@@ -10,7 +10,7 @@ Need to know:
 
 1. Add member to team mailing list (https://www.monitoring-plugins.org/list/listinfo/team/)
    and to the commits mailing list (https://www.monitoring-plugins.org/list/listinfo/commits/),
-   add sourceforge email address via Privacy Options->Sender filters)
+   add sourceforge email address via Privacy Options->Sender filters
 2. Add Sourceforge access:
   - Translator: CVS access, Shell access, Release Tech (no)
   - Developer: Project role: Developer, CVS access, Shell access, Release Tech (no), Task Manager (A&T),

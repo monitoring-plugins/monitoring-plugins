@@ -1,8 +1,8 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* ISO C <ctype.h> like properties of Unicode characters.  */
-/* Generated automatically by gen-uni-tables.c for Unicode 16.0.0.  */
+/* Generated automatically by gen-uni-tables.c for Unicode 17.0.0.  */
 
-/* Copyright (C) 2000-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -338,7 +338,7 @@ u_is_lower =
     0x00000000U, 0x00000000U, 0xAAAAAAAAU, 0x00002AAAU,
     0x0AAAAAAAU, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0xAAA8AAA8U, 0xAAAAAAAAU, 0x9400AAAAU,
-    0xAA9A10AAU, 0xAAA002AAU, 0x0A82250AU, 0x00400000U,
+    0xAA9A10AAU, 0xAAA002AAU, 0x0AAAA50AU, 0x00400000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00080000U, 0xFFFF0000U,
@@ -360,7 +360,7 @@ u_is_lower =
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0xFFFFFFFFU,
-    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0x00000000U, 0xF8000000U, 0x000FFFFFU, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
     0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,

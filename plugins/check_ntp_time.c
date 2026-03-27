@@ -605,7 +605,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse warning threshold");
 			}
 
@@ -614,7 +614,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'c': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
-			if (tmp.error != MP_PARSING_SUCCES) {
+			if (tmp.error != MP_PARSING_SUCCESS) {
 				die(STATE_UNKNOWN, "failed to parse crit threshold");
 			}
 
@@ -640,11 +640,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET;
 			break;
 		case '6':
-#ifdef USE_IPV6
 			address_family = AF_INET6;
-#else
-			usage4(_("IPv6 support not available"));
-#endif
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
@@ -661,6 +657,14 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef __OpenBSD__
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - inet is required for sockets
+	 * - unix is required for Unix domain sockets
+	 * - dns is required for name lookups */
+	pledge("stdio rpath inet unix dns", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -673,6 +677,10 @@ int main(int argc, char *argv[]) {
 	if (tmp_config.errorcode == ERROR) {
 		usage4(_("Could not parse arguments"));
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio inet unix dns", NULL);
+#endif // __OpenBSD__
 
 	const check_ntp_time_config config = tmp_config.config;
 

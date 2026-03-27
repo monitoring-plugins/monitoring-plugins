@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-1994, 1996-1998, 2000, 2004, 2007-2025 Free Software
+/* Copyright (C) 1991-1994, 1996-1998, 2000, 2004, 2007-2026 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -36,31 +36,33 @@
 char *
 strstr (const char *haystack_start, const char *needle_start)
 {
-  const char *haystack = haystack_start;
   const char *needle = needle_start;
-  size_t needle_len; /* Length of NEEDLE.  */
-  size_t haystack_len; /* Known minimum length of HAYSTACK.  */
-  bool ok = true; /* True if NEEDLE is prefix of HAYSTACK.  */
 
   /* Determine length of NEEDLE, and in the process, make sure
      HAYSTACK is at least as long (no point processing all of a long
      NEEDLE if HAYSTACK is too short).  */
-  while (*haystack && *needle)
-    ok &= *haystack++ == *needle++;
-  if (*needle)
-    return NULL;
-  if (ok)
-    return (char *) haystack_start;
+  {
+    const char *haystack = haystack_start;
+    bool ok = true; /* True if NEEDLE is prefix of HAYSTACK.  */
+    while (*haystack && *needle)
+      ok &= *haystack++ == *needle++;
+    if (*needle)
+      return NULL;
+    if (ok)
+      return (char *) haystack_start;
+  }
 
   /* Reduce the size of haystack using strchr, since it has a smaller
      linear coefficient than the Two-Way algorithm.  */
-  needle_len = needle - needle_start;
-  haystack = strchr (haystack_start + 1, *needle_start);
+  size_t needle_len = /* Length of NEEDLE.  */
+    needle - needle_start;
+  const char *haystack = strchr (haystack_start + 1, *needle_start);
   if (!haystack || __builtin_expect (needle_len == 1, 0))
     return (char *) haystack;
   needle -= needle_len;
-  haystack_len = (haystack > haystack_start + needle_len ? 1
-                  : needle_len + haystack_start - haystack);
+  size_t haystack_len = /* Known minimum length of HAYSTACK.  */
+    (haystack > haystack_start + needle_len ? 1
+     : needle_len + haystack_start - haystack);
 
   /* Perform the search.  Abstract memory is considered to be an array
      of 'unsigned char' values, not an array of 'char' values.  See
