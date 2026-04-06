@@ -1,6 +1,6 @@
 /* gethostname emulation for SysV and POSIX.1.
 
-   Copyright (C) 1992, 2003, 2006, 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992, 2003, 2006, 2008-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -89,12 +89,10 @@ gethostname (char *name, size_t len)
 int
 rpl_gethostname (char *name, size_t len)
 {
-  int r;
-
   if (len > INT_MAX)
     len = INT_MAX;
   gl_sockets_startup (SOCKETS_1_1);
-  r = gethostname (name, (int) len);
+  int r = gethostname (name, (int) len);
   if (r < 0)
     set_winsock_errno ();
 

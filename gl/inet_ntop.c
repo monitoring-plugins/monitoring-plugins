@@ -1,6 +1,6 @@
 /* inet_ntop.c -- convert IPv4 and IPv6 addresses from binary to text form
 
-   Copyright (C) 2005-2006, 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2006, 2008-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -125,9 +125,7 @@ static const char *
 inet_ntop4 (const unsigned char *src, char *dst, socklen_t size)
 {
   char tmp[sizeof "255.255.255.255"];
-  int len;
-
-  len = sprintf (tmp, "%u.%u.%u.%u", src[0], src[1], src[2], src[3]);
+  int len = sprintf (tmp, "%u.%u.%u.%u", src[0], src[1], src[2], src[3]);
   if (len < 0)
     return NULL;
 
@@ -152,33 +150,25 @@ static const char *
 inet_ntop6 (const unsigned char *src, char *dst, socklen_t size)
 {
   /*
-   * Note that int32_t and int16_t need only be "at least" large enough
-   * to contain a value of the specified size.  On some systems, like
-   * Crays, there is no such thing as an integer variable with 16 bits.
-   * Keep this in mind if you think this function should have been coded
-   * to use pointer overlays.  All the world's not a VAX.
-   */
-  char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
-  struct
-  {
-    int base, len;
-  } best, cur;
-  unsigned int words[NS_IN6ADDRSZ / NS_INT16SZ];
-  int i;
-
-  /*
    * Preprocess:
    *      Copy the input (bytewise) array into a wordwise array.
    *      Find the longest run of 0x00's in src[] for :: shorthanding.
    */
+  unsigned int words[NS_IN6ADDRSZ / NS_INT16SZ];
   memset (words, '\0', sizeof words);
-  for (i = 0; i < NS_IN6ADDRSZ; i += 2)
+  for (int i = 0; i < NS_IN6ADDRSZ; i += 2)
     words[i / 2] = (src[i] << 8) | src[i + 1];
+
+  struct
+  {
+    int base, len;
+  } best, cur;
   best.base = -1;
   cur.base = -1;
   IF_LINT(best.len = 0);
   IF_LINT(cur.len = 0);
-  for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
+
+  for (int i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
     {
       if (words[i] == 0)
         {
@@ -208,8 +198,16 @@ inet_ntop6 (const unsigned char *src, char *dst, socklen_t size)
   /*
    * Format the result.
    */
-  tp = tmp;
-  for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
+  /*
+   * Note that int32_t and int16_t need only be "at least" large enough
+   * to contain a value of the specified size.  On some systems, like
+   * Crays, there is no such thing as an integer variable with 16 bits.
+   * Keep this in mind if you think this function should have been coded
+   * to use pointer overlays.  All the world's not a VAX.
+   */
+  char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+  char *tp = tmp;
+  for (int i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++)
     {
       /* Are we inside the best run of 0x00's? */
       if (best.base != -1 && i >= best.base && i < (best.base + best.len))

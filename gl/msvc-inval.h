@@ -1,5 +1,5 @@
 /* Invalid parameter handler for MSVC runtime libraries.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -179,9 +179,9 @@ extern struct gl_msvc_inval_per_thread *gl_msvc_inval_current (void);
 #   define TRY_MSVC_INVAL \
       do                                                                       \
         {                                                                      \
-          struct gl_msvc_inval_per_thread *msvc_inval_current;                 \
           gl_msvc_inval_ensure_handler ();                                     \
-          msvc_inval_current = gl_msvc_inval_current ();                       \
+          struct gl_msvc_inval_per_thread *msvc_inval_current =                \
+            gl_msvc_inval_current ();                                          \
           /* First, initialize gl_msvc_inval_restart.  */                      \
           if (setjmp (msvc_inval_current->restart) == 0)                       \
             {                                                                  \

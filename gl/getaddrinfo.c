@@ -1,5 +1,5 @@
 /* Get address information (partial implementation).
-   Copyright (C) 1997, 2001-2002, 2004-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997, 2001-2002, 2004-2026 Free Software Foundation, Inc.
    Contributed by Simon Josefsson <simon@josefsson.org>.
 
    This file is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@
 #include <stdio.h>
 
 #include "gettext.h"
-#define _(msgid) dgettext ("gnulib", msgid)
+#define _(msgid) dgettext (GNULIB_TEXT_DOMAIN, msgid)
 #define N_(msgid) msgid
 
 /* BeOS has AF_INET, but not PF_INET.  */
@@ -52,9 +52,40 @@
 # define PF_UNSPEC 0
 #endif
 
+#if defined __sun || !HAVE_GETADDRINFO
+
+static bool
+is_numeric_host (const char *host, int family)
+{
+# if HAVE_IPV4
+  if (family == PF_INET || family == PF_UNSPEC)
+    {
+      /* glibc supports IPv4 addresses in numbers-and-dots notation, that is,
+         also hexadecimal and octal number formats and formats that don't
+         require all four bytes to be explicitly written, via inet_aton().
+         But POSIX doesn't require support for these legacy formats.  Therefore
+         we are free to use inet_pton() instead of inet_aton().  */
+      struct in_addr addr;
+      if (inet_pton (AF_INET, host, &addr))
+        return true;
+    }
+# endif
+# if HAVE_IPV6
+  if (family == PF_INET6 || family == PF_UNSPEC)
+    {
+      struct in6_addr addr;
+      if (inet_pton (AF_INET6, host, &addr))
+        return true;
+    }
+# endif
+  return false;
+}
+
+#endif
+
 #if HAVE_GETADDRINFO
 
-/* Override with cdecl calling convention and mingw fix.  */
+/* Override with cdecl calling convention and Windows and Solaris 10 fixes.  */
 
 int
 getaddrinfo (const char *restrict nodename,
@@ -63,9 +94,17 @@ getaddrinfo (const char *restrict nodename,
              struct addrinfo **restrict res)
 # undef getaddrinfo
 {
+  /* Workaround for native Windows.  */
   if (hints && (hints->ai_flags & AI_NUMERICSERV) != 0
       && servname && !(*servname >= '0' && *servname <= '9'))
     return EAI_NONAME;
+
+# ifdef __sun
+  /* Workaround for Solaris 10.  */
+  if (hints && (hints->ai_flags & AI_NUMERICHOST)
+      && nodename && !is_numeric_host (nodename, hints->ai_family))
+    return EAI_NONAME;
+# endif
 
   return getaddrinfo (nodename, servname, hints, res);
 }
@@ -114,14 +153,13 @@ static int
 use_win32_p (void)
 {
   static int done = 0;
-  HMODULE h;
 
   if (done)
     return getaddrinfo_ptr ? 1 : 0;
 
   done = 1;
 
-  h = GetModuleHandle ("ws2_32.dll");
+  HMODULE h = GetModuleHandle ("ws2_32.dll");
 
   if (h)
     {
@@ -185,33 +223,6 @@ validate_family (int family)
    return false;
 }
 
-static bool
-is_numeric_host (const char *host, int family)
-{
-# if HAVE_IPV4
-  if (family == PF_INET || family == PF_UNSPEC)
-    {
-      /* glibc supports IPv4 addresses in numbers-and-dots notation, that is,
-         also hexadecimal and octal number formats and formats that don't
-         require all four bytes to be explicitly written, via inet_aton().
-         But POSIX doesn't require support for these legacy formats.  Therefore
-         we are free to use inet_pton() instead of inet_aton().  */
-      struct in_addr addr;
-      if (inet_pton (AF_INET, host, &addr))
-        return true;
-    }
-# endif
-# if HAVE_IPV6
-  if (family == PF_INET6 || family == PF_UNSPEC)
-    {
-      struct in6_addr addr;
-      if (inet_pton (AF_INET6, host, &addr))
-        return true;
-    }
-# endif
-  return false;
-}
-
 /* Translate name of a service location and/or a service name to set of
    socket addresses. */
 int
@@ -221,11 +232,6 @@ getaddrinfo (const char *restrict nodename,
              struct addrinfo **restrict res)
 #undef getaddrinfo
 {
-  struct addrinfo *tmp;
-  int port = 0;
-  struct hostent *he;
-  void *storage;
-  size_t size;
 # if HAVE_IPV6
   struct v6_pair {
     struct addrinfo addrinfo;
@@ -281,6 +287,7 @@ getaddrinfo (const char *restrict nodename,
 # endif
     }
 
+  int port = 0;
   if (servname)
     {
       struct servent *se = NULL;
@@ -306,10 +313,11 @@ getaddrinfo (const char *restrict nodename,
     }
 
   /* FIXME: Use gethostbyname_r if available. */
-  he = gethostbyname (nodename);
+  struct hostent *he = gethostbyname (nodename);
   if (!he || he->h_addr_list[0] == NULL)
     return EAI_NONAME;
 
+  size_t size;
   switch (he->h_addrtype)
     {
 # if HAVE_IPV6
@@ -328,10 +336,11 @@ getaddrinfo (const char *restrict nodename,
       return EAI_NODATA;
     }
 
-  storage = calloc (1, size);
+  void *storage = calloc (1, size);
   if (!storage)
     return EAI_MEMORY;
 
+  struct addrinfo *tmp;
   switch (he->h_addrtype)
     {
 # if HAVE_IPV6
@@ -446,9 +455,7 @@ freeaddrinfo (struct addrinfo *ai)
 
   while (ai)
     {
-      struct addrinfo *cur;
-
-      cur = ai;
+      struct addrinfo *cur = ai;
       ai = ai->ai_next;
 
       free (cur->ai_canonname);

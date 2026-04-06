@@ -933,31 +933,43 @@ void set_all_thresholds(parameter_list_elem *path, char *warn_freespace_units,
 
 	if (warn_freespace_units) {
 		tmp = mp_parse_range_string(warn_freespace_units);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freespace_units = mp_thresholds_set_warn(path->freespace_units, tmp.range);
 	}
 
 	if (crit_freespace_units) {
 		tmp = mp_parse_range_string(crit_freespace_units);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freespace_units = mp_thresholds_set_crit(path->freespace_units, tmp.range);
 	}
 
 	if (warn_freespace_percent) {
 		tmp = mp_parse_range_string(warn_freespace_percent);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freespace_percent = mp_thresholds_set_warn(path->freespace_percent, tmp.range);
 	}
 
 	if (crit_freespace_percent) {
 		tmp = mp_parse_range_string(crit_freespace_percent);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freespace_percent = mp_thresholds_set_crit(path->freespace_percent, tmp.range);
 	}
 
 	if (warn_freeinodes_percent) {
 		tmp = mp_parse_range_string(warn_freeinodes_percent);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freeinodes_percent = mp_thresholds_set_warn(path->freeinodes_percent, tmp.range);
 	}
 
 	if (crit_freeinodes_percent) {
 		tmp = mp_parse_range_string(crit_freeinodes_percent);
+		tmp.range.start = mp_create_pd_value(0);
+		tmp.range.start_infinity = false;
 		path->freeinodes_percent = mp_thresholds_set_crit(path->freeinodes_percent, tmp.range);
 	}
 }
@@ -1182,14 +1194,22 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 				  humanize_byte_value((unsigned long long)measurement_unit.total_bytes, false));
 	}
 
-	mp_perfdata used_space = perfdata_init();
-	used_space.label = measurement_unit.name;
-	used_space.value = mp_create_pd_value(measurement_unit.free_bytes);
-	used_space = mp_set_pd_max_value(used_space, mp_create_pd_value(measurement_unit.total_bytes));
-	used_space = mp_set_pd_min_value(used_space, mp_create_pd_value(0));
-	used_space.uom = "B";
-	used_space = mp_pd_set_thresholds(used_space, measurement_unit.freespace_bytes_thresholds);
-	freespace_bytes_sc = mp_set_subcheck_state(freespace_bytes_sc, mp_get_pd_status(used_space));
+	// Free space just internally for computation
+	mp_perfdata free_space_pd = perfdata_init();
+	free_space_pd.label = measurement_unit.name;
+	free_space_pd.value = mp_create_pd_value(measurement_unit.free_bytes);
+	free_space_pd =
+		mp_pd_set_thresholds(free_space_pd, measurement_unit.freespace_bytes_thresholds);
+	freespace_bytes_sc = mp_set_subcheck_state(freespace_bytes_sc, mp_get_pd_status(free_space_pd));
+
+	// Used space for display
+	mp_perfdata used_space_pd = perfdata_init();
+	used_space_pd.label = measurement_unit.name;
+	used_space_pd.value = mp_create_pd_value(measurement_unit.used_bytes);
+	used_space_pd =
+		mp_set_pd_max_value(used_space_pd, mp_create_pd_value(measurement_unit.total_bytes));
+	used_space_pd = mp_set_pd_min_value(used_space_pd, mp_create_pd_value(0));
+	used_space_pd.uom = "B";
 
 	// special case for absolute space thresholds here:
 	// if absolute values are not set, compute the thresholds from percentage thresholds
@@ -1209,7 +1229,8 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 		}
 		measurement_unit.freespace_bytes_thresholds =
 			mp_thresholds_set_crit(measurement_unit.freespace_bytes_thresholds, tmp_range);
-		used_space = mp_pd_set_thresholds(used_space, measurement_unit.freespace_bytes_thresholds);
+		free_space_pd =
+			mp_pd_set_thresholds(free_space_pd, measurement_unit.freespace_bytes_thresholds);
 	}
 
 	if (!temp_thlds.warning_is_set &&
@@ -1225,10 +1246,22 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 		}
 		measurement_unit.freespace_bytes_thresholds =
 			mp_thresholds_set_warn(measurement_unit.freespace_bytes_thresholds, tmp_range);
-		used_space = mp_pd_set_thresholds(used_space, measurement_unit.freespace_bytes_thresholds);
+		free_space_pd =
+			mp_pd_set_thresholds(free_space_pd, measurement_unit.freespace_bytes_thresholds);
 	}
 
-	mp_add_perfdata_to_subcheck(&freespace_bytes_sc, used_space);
+	mp_thresholds thr_used_space = measurement_unit.freespace_bytes_thresholds;
+	if (thr_used_space.critical_is_set) {
+		thr_used_space.critical.alert_on_inside_range =
+			!thr_used_space.critical.alert_on_inside_range;
+	}
+	if (thr_used_space.warning_is_set) {
+		thr_used_space.warning.alert_on_inside_range =
+			!thr_used_space.warning.alert_on_inside_range;
+	}
+	used_space_pd = mp_pd_set_thresholds(used_space_pd, thr_used_space);
+
+	mp_add_perfdata_to_subcheck(&freespace_bytes_sc, used_space_pd);
 	mp_add_subcheck_to_subcheck(&result, freespace_bytes_sc);
 
 	// ==========================
@@ -1264,7 +1297,8 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 		mp_perfdata inode_percentage_pd = perfdata_init();
 		inode_percentage_pd = mp_set_pd_value(inode_percentage_pd, free_inode_percentage);
-		inode_percentage_pd = mp_pd_set_thresholds(inode_percentage_pd, measurement_unit.freeinodes_percent_thresholds);
+		inode_percentage_pd = mp_pd_set_thresholds(inode_percentage_pd,
+												   measurement_unit.freeinodes_percent_thresholds);
 
 		if (verbose > 0) {
 			printf("free inode percentage computed: %g\n", free_inode_percentage);

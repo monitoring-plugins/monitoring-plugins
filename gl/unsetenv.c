@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995-2002, 2005-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1992, 1995-2002, 2005-2026 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This file is free software: you can redistribute it and/or modify
@@ -56,15 +56,13 @@ __libc_lock_define_initialized (static, envlock)
 int
 unsetenv (const char *name)
 {
-  size_t len;
-
   if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
       __set_errno (EINVAL);
       return -1;
     }
 
-  len = strlen (name);
+  size_t len = strlen (name);
 
 #if HAVE_DECL__PUTENV /* native Windows */
   /* The Microsoft documentation
@@ -79,14 +77,13 @@ unsetenv (const char *name)
      of the form "NAME=".  (NB: This is a different convention than with glibc
      putenv, which expects a string of the form "NAME"!)  */
   {
-    int putenv_result;
     char *name_ = malloc (len + 2);
     if (name_ == NULL)
       return -1;
     memcpy (name_, name, len);
     name_[len] = '=';
     name_[len + 1] = 0;
-    putenv_result = _putenv (name_);
+    int putenv_result = _putenv (name_);
     /* In this particular case it is OK to free() the argument passed to
        _putenv.  */
     free (name_);
@@ -138,12 +135,12 @@ extern int unsetenv (const char *);
 int
 rpl_unsetenv (const char *name)
 {
-  int result = 0;
   if (!name || !*name || strchr (name, '='))
     {
       errno = EINVAL;
       return -1;
     }
+  int result = 0;
   while (getenv (name))
 # if !VOID_UNSETENV
     result =

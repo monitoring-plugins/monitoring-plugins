@@ -1,6 +1,6 @@
 # gl-openssl.m4
-# serial 7
-dnl Copyright (C) 2013-2025 Free Software Foundation, Inc.
+# serial 8
+dnl Copyright (C) 2013-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -58,12 +58,17 @@ AC_DEFUN([gl_CRYPTO_CHECK],
     fi
     if test "x$with_openssl" != xauto-gpl-compat ||
        test "x$gl_cv_openssl_gpl_compat" = xyes; then
-      AC_CHECK_LIB([crypto], [$1],
-        [AC_CHECK_HEADERS(
-           m4_if([$1], [MD5], [openssl/md5.h], [openssl/sha.h]),
+      m4_if([$1], [SHA3],
+        [AC_CHECK_LIB([crypto], [EVP_sha3_224],
            [LIB_CRYPTO=-lcrypto
             AC_DEFINE([HAVE_OPENSSL_$1], [1],
-              [Define to 1 if libcrypto is used for $1.])])])
+              [Define to 1 if libcrypto is used for $1.])])],
+        [AC_CHECK_LIB([crypto], [$1],
+           [AC_CHECK_HEADERS(
+              m4_if([$1], [MD5], [openssl/md5.h], [openssl/sha.h]),
+              [LIB_CRYPTO=-lcrypto
+               AC_DEFINE([HAVE_OPENSSL_$1], [1],
+                 [Define to 1 if libcrypto is used for $1.])])])])
     fi
     if test "x$LIB_CRYPTO" = x; then
       message='openssl development library not found for $1.

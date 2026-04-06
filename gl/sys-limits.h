@@ -1,6 +1,6 @@
 /* System call limits
 
-   Copyright 2018-2025 Free Software Foundation, Inc.
+   Copyright 2018-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -29,10 +29,6 @@
 
    Using this also works around a serious Linux bug before 2.6.16; see
    <https://bugzilla.redhat.com/show_bug.cgi?id=612839>.
-
-   Using this also works around a Tru64 5.1 bug, where attempting
-   to read INT_MAX bytes fails with errno == EINVAL.  See
-   <https://lists.gnu.org/r/bug-gnu-utils/2002-04/msg00010.html>.
 
    Using this is likely to work around similar bugs in other operating
    systems.  */

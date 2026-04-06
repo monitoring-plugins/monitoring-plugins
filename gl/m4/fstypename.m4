@@ -1,6 +1,6 @@
 # fstypename.m4
 # serial 6
-dnl Copyright (C) 1998-1999, 2001, 2004, 2006, 2009-2025 Free Software
+dnl Copyright (C) 1998-1999, 2001, 2004, 2006, 2009-2026 Free Software
 dnl Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,

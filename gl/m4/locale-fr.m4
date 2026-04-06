@@ -1,6 +1,6 @@
 # locale-fr.m4
-# serial 24
-dnl Copyright (C) 2003, 2005-2025 Free Software Foundation, Inc.
+# serial 25
+dnl Copyright (C) 2003, 2005-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -112,7 +112,7 @@ int main () {
             if (LC_ALL=fr_FR.ISO-8859-1 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
               gt_cv_locale_fr=fr_FR.ISO-8859-1
             else
-              # Test for the AIX, OSF/1, FreeBSD, NetBSD, OpenBSD locale name.
+              # Test for the AIX, FreeBSD, NetBSD, OpenBSD locale name.
               if (LC_ALL=fr_FR.ISO8859-1 LC_TIME= LC_CTYPE= ./conftest; exit) 2>/dev/null; then
                 gt_cv_locale_fr=fr_FR.ISO8859-1
               else
@@ -156,7 +156,7 @@ AC_DEFUN_ONCE([gt_LOCALE_FR_UTF8],
       *-musl* | midipix*)
         dnl On musl libc, all kinds of ll_CC.UTF-8 locales exist, even without
         dnl any locale file on disk. But they are effectively equivalent to the
-        dnl C.UTF-8 locale, except for locale categories (such as LC_MESSSAGES)
+        dnl C.UTF-8 locale, except for locale categories (such as LC_MESSAGES)
         dnl for which localizations (.mo files) have been installed.
         gt_cv_locale_fr_utf8=fr_FR.UTF-8
         ;;

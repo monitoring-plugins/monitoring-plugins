@@ -1,6 +1,6 @@
 /* xmalloc.c -- malloc with out of memory checking
 
-   Copyright (C) 1990-2000, 2002-2006, 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2000, 2002-2006, 2008-2026 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,10 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
-#include <config.h>
-
 #define XALLOC_INLINE _GL_EXTERN_INLINE
-
+#include <config.h>
 #include "xalloc.h"
 
 #include "ialloc.h"
@@ -29,7 +27,13 @@
 #include <stdint.h>
 #include <string.h>
 
-static void * _GL_ATTRIBUTE_PURE
+/* Pacify GCC up to at least 15.2, which otherwise would incorrectly
+   complain about check_nonnull.  */
+#if _GL_GNUC_PREREQ (4, 6)
+# pragma GCC diagnostic ignored "-Wsuggest-attribute=pure"
+#endif
+
+static void *
 check_nonnull (void *p)
 {
   if (!p)
@@ -224,12 +228,12 @@ x2nrealloc (void *p, size_t *pn, size_t s)
 void *
 xpalloc (void *pa, idx_t *pn, idx_t n_incr_min, ptrdiff_t n_max, idx_t s)
 {
-  idx_t n0 = *pn;
-
   /* The approximate size to use for initial small allocation
      requests.  This is the largest "small" request for the GNU C
      library malloc.  */
   enum { DEFAULT_MXFAST = 64 * sizeof (size_t) / 4 };
+
+  idx_t n0 = *pn;
 
   /* If the array is tiny, grow it to about (but no greater than)
      DEFAULT_MXFAST bytes.  Otherwise, grow it by about 50%.

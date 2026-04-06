@@ -1,5 +1,5 @@
 /* Locking in multithreaded situations.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as
@@ -239,7 +239,7 @@ typedef pthread_rwlock_t gl_rwlock_t;
 #    endif
 #    define glthread_rwlock_init(LOCK) \
        (pthread_in_use () ? pthread_rwlock_init (LOCK, NULL) : 0)
-#   else /* glibc with bug https://sourceware.org/bugzilla/show_bug.cgi?id=13701 */
+#   else /* glibc with bug https://sourceware.org/PR13701 */
 #    define gl_rwlock_initializer \
        PTHREAD_RWLOCK_WRITER_NONRECURSIVE_INITIALIZER_NP
 #    define glthread_rwlock_init(LOCK) \
