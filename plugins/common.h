@@ -193,7 +193,7 @@ enum {
  */
 #include "../gl/gettext.h"
 #define _(String) gettext(String)
-#if !ENABLE_NLS
+#if !defined(ENABLE_NLS) || !ENABLE_NLS
 #	undef textdomain
 #	define textdomain(Domainname) /* empty */
 #	undef bindtextdomain
