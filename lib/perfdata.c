@@ -251,7 +251,16 @@ char *mp_range_to_string(const mp_range input) {
 	if (input.start_infinity) {
 		asprintf(&result, "%s~:", result);
 	} else {
-		asprintf(&result, "%s%s:", result, pd_value_to_string(input.start));
+		// check for zeroes, so we can use the short form
+		if ((input.start.type == PD_TYPE_NONE) ||
+		     ((input.start.type == PD_TYPE_INT) && (input.start.pd_int == 0)) ||
+		     ((input.start.type == PD_TYPE_UINT) && (input.start.pd_uint == 0)) ||
+		     ((input.start.type == PD_TYPE_DOUBLE) && (input.start.pd_double == 0))){
+			// nothing to do here
+		} else {
+			// Start value is an actual value
+			asprintf(&result, "%s%s:", result, pd_value_to_string(input.start));
+		}
 	}
 
 	if (!input.end_infinity) {
