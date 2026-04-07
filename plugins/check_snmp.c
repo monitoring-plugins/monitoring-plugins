@@ -116,6 +116,7 @@ gen_state_string_type gen_state_string(check_snmp_state_entry *entries, size_t n
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
@@ -217,6 +218,7 @@ recover_state_data_type recover_state_data(char *state_string, idx_t state_strin
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
