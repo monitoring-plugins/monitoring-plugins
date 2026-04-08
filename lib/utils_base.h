@@ -9,7 +9,7 @@
 #include "./thresholds.h"
 #include "states.h"
 
-#ifndef USE_OPENSSL
+#ifndef MOPL_USE_OPENSSL
 #	include "sha256.h"
 #endif
 

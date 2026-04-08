@@ -62,7 +62,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 #	include <openssl/opensslv.h>
 #endif
 
@@ -81,9 +81,9 @@ extern char errbuf[MAX_INPUT_BUFFER];
 extern bool is_openssl_callback;
 extern bool add_sslctx_verify_fun;
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 static X509 *cert = NULL;
-#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
+#endif /* defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL) */
 
 typedef struct {
 	int errorcode;
@@ -114,10 +114,10 @@ static void print_curl_version(void);
 // check_curl_evaluation_wrapper check_curl_evaluate(check_curl_config config,
 // 												  mp_check overall[static 1]) {}
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit);
-#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
+#endif /* defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL) */
 
 int main(int argc, char **argv) {
 #ifdef __OpenBSD__
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
 }
 
 #ifdef HAVE_SSL
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 	(void)preverify_ok;
 	/* TODO: we get all certificates of the chain, so which ones
@@ -190,11 +190,11 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 	}
 	return 1;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* HAVE_SSL */
 
 #ifdef HAVE_SSL
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 	(void)curl; // ignore unused parameter
 	(void)parm; // ignore unused parameter
@@ -211,7 +211,7 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 
 	return CURLE_OK;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* HAVE_SSL */
 
 mp_subcheck check_http(const check_curl_config config, check_curl_working_state workingState,
@@ -1867,7 +1867,7 @@ void print_usage(void) {
 void print_curl_version(void) { printf("%s\n", curl_version()); }
 
 #ifdef LIBCURL_FEATURE_SSL
-#	ifndef USE_OPENSSL
+#	ifndef MOPL_USE_OPENSSL
 time_t parse_cert_date(const char *s) {
 	if (!s) {
 		return -1;
@@ -1884,11 +1884,11 @@ time_t parse_cert_date(const char *s) {
 
 	return date;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* LIBCURL_FEATURE_SSL */
 
 #ifdef LIBCURL_FEATURE_SSL
-#	ifndef USE_OPENSSL
+#	ifndef MOPL_USE_OPENSSL
 /* TODO: this needs cleanup in the sslutils.c, maybe we the #else case to
  * OpenSSL could be this function
  */
@@ -2025,5 +2025,5 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 	}
 	return status;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* LIBCURL_FEATURE_SSL */

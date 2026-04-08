@@ -350,7 +350,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	if (ssl_established) {
 		net_ssl_check_cert_result cert_check_result =
 			np_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
 
 		mp_add_subcheck_to_check(&overall, sc_cert_check);
 	}
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 
 #endif
 
@@ -764,7 +764,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'D': {
 			/* Check SSL cert validity */
-#ifdef USE_OPENSSL
+#ifdef MOPL_USE_OPENSSL
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
