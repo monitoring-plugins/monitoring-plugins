@@ -833,12 +833,12 @@ sub run_common_tests {
 		$cmd = "$command -u /statuscode/200 --proxy http://proxy.example.com:8080 --noproxy '*' -v";
 		$result = NPTest->testCmd( $cmd );
 		is( $result->return_code, 0, $cmd);
-		like( $result->output, '/.*proxy_resolves_hostname: 0.*/', "Proxy will not be used due to '*' in noproxy: ".$result->output );
+		like( $result->output, '/.*have local name resolution: true.*/', "Proxy will not be used due to '*' in noproxy: ".$result->output );
 
 		$cmd = "$command -u /statuscode/200 --proxy http://proxy.example.com:8080 --noproxy '127.0.0.1' -v";
 		$result = NPTest->testCmd( $cmd );
 		is( $result->return_code, 0, $cmd);
-		like( $result->output, '/.*proxy_resolves_hostname: 0.*/', "Proxy will not be used due to '127.0.0.1' in noproxy: ".$result->output );
+		like( $result->output, '/.*have local name resolution: true.*/', "Proxy will not be used due to '127.0.0.1' in noproxy: ".$result->output );
 	}
 
 }

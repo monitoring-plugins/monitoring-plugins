@@ -127,17 +127,25 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 										  int crit_days_till_exp);
 char *fmt_url(check_curl_working_state workingState);
 
-typedef enum {
-	RESOLVE_LOCALLY,
-	RESOLVE_REMOTELY,
-} resolver_location;
 /* determine_hostname_resolver determines if the host or the proxy resolves the target hostname
 returns RESOLVE_LOCALLY if requester resolves the hostname locally, RESOLVE_REMOTELY if proxy
 resolves the hostname */
-resolver_location determine_hostname_resolver(const check_curl_working_state working_state);
+bool hostname_gets_resolved_locally(const check_curl_working_state working_state);
 
 /* Checks if an IP is inside given CIDR region. Using /protocol_size or not specifying the prefix
 length performs an equality check. Supports both IPv4 and IPv6 returns 1 if the target_ip address is
 inside the given cidr_region_or_ip_addr, 0 if its out. return codes < 0 mean an error has occurred.
 */
-int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip);
+typedef enum {
+	NO_ERROR,
+	FAILED_STRDUP,
+	COULD_NOT_PARSE_SUBNET_LENGTH,
+	CIDR_REGION_INVALID,
+	CIDR_REGION_INVALID_PREFIX,
+	IP_CONTAINS_INVALID_CHARACTERS,
+} ip_addr_inside_error_code;
+typedef struct {
+	bool inside;
+	ip_addr_inside_error_code error;
+} ip_addr_inside;
+ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip);

@@ -134,9 +134,8 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 	/* first environment variable to read is all_proxy. it can be overridden by protocol specific
 	 * environment variables */
-	char *all_proxy_env, *all_proxy_uppercase_env;
-	all_proxy_env = getenv("all_proxy");
-	all_proxy_uppercase_env = getenv("ALL_PROXY");
+	char *all_proxy_env = getenv("all_proxy");
+	char *all_proxy_uppercase_env = getenv("ALL_PROXY");
 	if (all_proxy_env != NULL && strlen(all_proxy_env)) {
 		working_state.curlopt_proxy = strdup(all_proxy_env);
 		if (all_proxy_uppercase_env != NULL && verbose >= 1) {
@@ -148,9 +147,8 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 	/* second environment variable to read is http_proxy. only set curlopt_proxy if ssl is not
 	 * toggled */
-	char *http_proxy_env, *http_proxy_uppercase_env;
-	http_proxy_env = getenv("http_proxy");
-	http_proxy_uppercase_env = getenv("HTTP_PROXY");
+	char *http_proxy_env = getenv("http_proxy");
+	char *http_proxy_uppercase_env = getenv("HTTP_PROXY");
 	if (!working_state.use_ssl) {
 		if (http_proxy_env != NULL && strlen(http_proxy_env) > 0) {
 			working_state.curlopt_proxy = strdup(http_proxy_env);
@@ -164,9 +162,8 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	}
 #ifdef LIBCURL_FEATURE_SSL
 	/* optionally read https_proxy environment variable and set curlopt_proxy if ssl is toggled */
-	char *https_proxy_env, *https_proxy_uppercase_env;
-	https_proxy_env = getenv("https_proxy");
-	https_proxy_uppercase_env = getenv("HTTPS_PROXY");
+	char *https_proxy_env = getenv("https_proxy");
+	char *https_proxy_uppercase_env = getenv("HTTPS_PROXY");
 	if (working_state.use_ssl) {
 		if (https_proxy_env != NULL && strlen(https_proxy_env) > 0) {
 			working_state.curlopt_proxy = strdup(https_proxy_env);
@@ -174,7 +171,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 				printf(
 					"* cURL ignoring environment variable 'HTTPS_PROXY' as 'https_proxy' is set\n");
 			}
-		} else if (https_proxy_uppercase_env != NULL && strlen(https_proxy_uppercase_env) >= 0) {
+		} else if (https_proxy_uppercase_env != NULL) {
 			working_state.curlopt_proxy = strdup(https_proxy_uppercase_env);
 		}
 	}
@@ -197,9 +194,8 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 	/* set no_proxy */
 	/* first source to check is environment variables */
-	char *no_proxy_env, *no_proxy_uppercase_env;
-	no_proxy_env = getenv("no_proxy");
-	no_proxy_uppercase_env = getenv("NO_PROXY");
+	char *no_proxy_env = getenv("no_proxy");
+	char *no_proxy_uppercase_env = getenv("NO_PROXY");
 	if (no_proxy_env != NULL && strlen(no_proxy_env)) {
 		working_state.curlopt_noproxy = strdup(no_proxy_env);
 		if (no_proxy_uppercase_env != NULL && verbose >= 1) {
@@ -224,9 +220,9 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		}
 	}
 
-	int proxy_resolves_hostname = determine_hostname_resolver(working_state);
+	bool have_local_resolution = hostname_gets_resolved_locally(working_state);
 	if (verbose >= 1) {
-		printf("* proxy_resolves_hostname: %d\n", proxy_resolves_hostname);
+		printf("* have local name resolution: %s\n", (have_local_resolution ? "true": "false"));
 	}
 
 	/* enable haproxy protocol */
@@ -240,7 +236,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL && !proxy_resolves_hostname) {
+	if (working_state.use_ssl && working_state.host_name != NULL && !have_local_resolution) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
@@ -1413,7 +1409,7 @@ char *fmt_url(check_curl_working_state workingState) {
 	return url;
 }
 
-resolver_location determine_hostname_resolver(const check_curl_working_state working_state) {
+bool hostname_gets_resolved_locally(const check_curl_working_state working_state) {
 	char *host_name_display = "NULL";
 	unsigned long host_name_len = 0;
 	if (working_state.host_name) {
@@ -1457,7 +1453,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return RESOLVE_LOCALLY;
+				return true;
 			}
 
 			/* direct comparison with the server_address */
@@ -1469,7 +1465,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return RESOLVE_LOCALLY;
+				return true;
 			}
 
 			/* direct comparison with the host_name */
@@ -1480,7 +1476,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return RESOLVE_LOCALLY;
+				return true;
 			}
 
 			/* check if hostname is a subdomain of the item, e.g www.example.com when token is
@@ -1499,32 +1495,30 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					}
 					free(curlopt_noproxy_copy);
 					free(server_address_clean);
-					return RESOLVE_LOCALLY;
+					return true;
 				}
 			}
 
 			// noproxy_item could be a CIDR IP range
 			if (server_address_clean != NULL && strlen(server_address_clean)) {
-				int ip_addr_inside_cidr_ret =
+				ip_addr_inside ip_addr_inside_cidr_ret =
 					ip_addr_inside_cidr(noproxy_item, server_address_clean);
 
-				switch (ip_addr_inside_cidr_ret) {
-				case 1:
-					return RESOLVE_LOCALLY;
-					break;
-				case 0:
-					if (verbose >= 1) {
-						printf("server address: %s is not inside IP cidr: %s\n",
-							   server_address_clean, noproxy_item);
+				if (ip_addr_inside_cidr_ret.error == NO_ERROR) {
+					if (ip_addr_inside_cidr_ret.inside) {
+						return true;
+					} else {
+						if (verbose >= 1) {
+							printf("server address: %s is not inside IP cidr: %s\n",
+								   server_address_clean, noproxy_item);
+						}
 					}
-					break;
-				case -1:
+				} else {
 					if (verbose >= 1) {
 						printf("could not fully determine if server address: %s is inside the IP "
 							   "cidr: %s\n",
 							   server_address_clean, noproxy_item);
 					}
-					break;
 				}
 			}
 
@@ -1539,7 +1533,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 		// Setting the proxy string to "" (an empty string) explicitly disables the use of a proxy,
 		// even if there is an environment variable set for it.
 		if (strlen(working_state.curlopt_proxy) == 0) {
-			return RESOLVE_LOCALLY;
+			return true;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "http://", 7) == 0) {
@@ -1549,7 +1543,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_REMOTELY;
+			return false;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "https://", 8) == 0) {
@@ -1559,7 +1553,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_REMOTELY;
+			return false;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks4://", 9) == 0) {
@@ -1569,7 +1563,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_LOCALLY;
+			return true;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks4a://", 10) == 0) {
@@ -1579,7 +1573,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_REMOTELY;
+			return false;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks5://", 9) == 0) {
@@ -1589,7 +1583,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_LOCALLY;
+			return true;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks5h://", 10) == 0) {
@@ -1599,7 +1593,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return RESOLVE_REMOTELY;
+			return false;
 		}
 
 		// Libcurl documentation:
@@ -1607,7 +1601,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 		// string identifies. We do not set this value Without a scheme, it is treated as an http
 		// proxy
 
-		return RESOLVE_REMOTELY;
+		return false;
 	}
 
 	if (verbose >= 1) {
@@ -1620,7 +1614,7 @@ resolver_location determine_hostname_resolver(const check_curl_working_state wor
 	return 0;
 }
 
-int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip) {
+ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip) {
 	unsigned int slash_count = 0;
 	unsigned int last_slash_idx = 0;
 	for (size_t i = 0; i < strlen(cidr_region_or_ip_addr); i++) {
@@ -1632,16 +1626,22 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 
 	char *cidr_ip_part = NULL;
 	int prefix_length = 0;
+	ip_addr_inside result = {
+		.inside = false,
+		.error = NO_ERROR,
+	};
 
 	if (slash_count == 0) {
 		cidr_ip_part = strdup(cidr_region_or_ip_addr);
 		if (!cidr_ip_part) {
-			return -1;
+			result.error = FAILED_STRDUP;
+			return result;
 		}
 	} else if (slash_count == 1) {
 		cidr_ip_part = strndup(cidr_region_or_ip_addr, last_slash_idx);
 		if (!cidr_ip_part) {
-			return -1;
+			result.error = FAILED_STRDUP;
+			return result;
 		}
 
 		errno = 0;
@@ -1652,14 +1652,18 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   cidr_region_or_ip_addr);
 			}
 			free(cidr_ip_part);
-			return -1;
+			result.error = COULD_NOT_PARSE_SUBNET_LENGTH;
+			return result;
 		}
 		prefix_length = (int)tmp;
 	} else {
-		printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid "
-			   "cidr_region or IP\n",
-			   cidr_region_or_ip_addr, slash_count);
-		return -1;
+		if (verbose >= 1) {
+			printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid "
+				   "cidr_region or IP\n",
+				   cidr_region_or_ip_addr, slash_count);
+		}
+		result.error = CIDR_REGION_INVALID;
+		return result;
 	}
 
 	int cidr_addr_family, target_addr_family;
@@ -1681,7 +1685,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 				   cidr_ip_part, target_ip);
 		}
 		free(cidr_ip_part);
-		return 0;
+		result.inside = false;
+		return result;
 	}
 
 	// If no prefix is given, treat the cidr as a single address (full-length prefix)
@@ -1696,7 +1701,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 				   prefix_length);
 		}
 		free(cidr_ip_part);
-		return -1;
+		result.error = CIDR_REGION_INVALID_PREFIX;
+		return result;
 	}
 
 	if (verbose >= 1) {
@@ -1720,7 +1726,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   cidr_ip_part);
 			}
 			free(cidr_ip_part);
-			return -1;
+			result.error = IP_CONTAINS_INVALID_CHARACTERS;
+			return result;
 		}
 		inet_pton_rc = inet_pton(AF_INET, target_ip, &target_ipv4);
 		if (inet_pton_rc != 1) {
@@ -1729,7 +1736,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   target_ip);
 			}
 			free(cidr_ip_part);
-			return -1;
+			result.error = IP_CONTAINS_INVALID_CHARACTERS;
+			return result;
 		}
 		// copy the addresses in network byte order to a buffer for comparison
 		memcpy(cidr_buf, &cidr_ipv4.s_addr, 4);
@@ -1746,7 +1754,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   cidr_ip_part);
 			}
 			free(cidr_ip_part);
-			return -1;
+			result.error = IP_CONTAINS_INVALID_CHARACTERS;
+			return result;
 		}
 		inet_pton_rc = inet_pton(AF_INET6, target_ip, &target_ipv6);
 		if (inet_pton_rc != 1) {
@@ -1755,7 +1764,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   target_ip);
 			}
 			free(cidr_ip_part);
-			return -1;
+			result.error = IP_CONTAINS_INVALID_CHARACTERS;
+			return result;
 		}
 		memcpy(cidr_buf, &cidr_ipv6, 16);
 		memcpy(target_buf, &target_ipv6, 16);
@@ -1774,7 +1784,8 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   prefix_bytes, cidr_ip_part, target_ip);
 			}
 			free(cidr_ip_part);
-			return 0;
+			result.inside = false;
+			return result;
 		}
 	}
 
@@ -1792,10 +1803,12 @@ int ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_i
 					   (unsigned)target_oct, mask);
 			}
 			free(cidr_ip_part);
-			return 0;
+			result.inside = false;
+			return result;
 		}
 	}
 
 	free(cidr_ip_part);
-	return 1;
+	result.inside = true;
+	return result;
 }
