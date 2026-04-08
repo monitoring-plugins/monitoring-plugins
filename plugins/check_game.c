@@ -186,7 +186,7 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 	while (true) {
 		int option_index = getopt_long(argc, argv, "hVvt:H:P:G:g:p:m:", long_opts, &opt_index);
 
-		if (option_index == -1 || option_index == EOF) {
+		if (CHECK_EOF(option_index)) {
 			break;
 		}
 

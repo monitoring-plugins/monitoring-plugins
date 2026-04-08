@@ -169,7 +169,7 @@ static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 		int longindex = 0;
 		int option_index = getopt_long(argc, argv, "+d:iq10nhVv", longopts, &longindex);
 
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 
