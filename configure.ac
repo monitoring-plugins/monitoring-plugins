@@ -578,7 +578,7 @@ if test "$FOUNDOPENSSL" = "yes" || test "$FOUNDGNUTLS" = "yes"; then
 	AC_SUBST(SSLLIBS)
 	AC_DEFINE(HAVE_SSL,1,[Define if SSL libraries are found])
 	if test "$FOUNDOPENSSL" = "yes"; then
-		AC_DEFINE(USE_OPENSSL,1,[Define if using OpenSSL libraries])
+		AC_DEFINE(MOPL_USE_OPENSSL,1,[Define if using OpenSSL libraries])
 		with_openssl="yes"
 		with_gnutls="no"
 	else

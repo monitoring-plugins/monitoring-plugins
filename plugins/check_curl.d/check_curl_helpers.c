@@ -439,11 +439,11 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		case CURLHELP_SSL_LIBRARY_LIBRESSL:
 			/* set callback to extract certificate with OpenSSL context function (works with
 			 * OpenSSL-style libraries only!) */
-#		ifdef USE_OPENSSL
+#		ifdef MOPL_USE_OPENSSL
 			/* libcurl and monitoring plugins built with OpenSSL, good */
 			add_sslctx_verify_fun = true;
 			is_openssl_callback = true;
-#		endif /* USE_OPENSSL */
+#		endif /* MOPL_USE_OPENSSL */
 			/* libcurl is built with OpenSSL, monitoring plugins, so falling
 			 * back to manually extracting certificate information */
 			handle_curl_option_return_code(
@@ -1312,16 +1312,16 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 #ifdef LIBCURL_FEATURE_SSL
 	if (is_openssl_callback) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 		/* check certificate with OpenSSL functions, curl has been built against OpenSSL
 		 * and we actually have OpenSSL in the monitoring tools
 		 */
 		return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
-#	else  /* USE_OPENSSL */
+#	else  /* MOPL_USE_OPENSSL */
 		xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
 								  "callback used and not linked against OpenSSL\n");
 		mp_set_subcheck_state(result, STATE_CRITICAL);
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 	} else {
 		struct curl_slist *slist;
 
@@ -1329,7 +1329,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 		cert_ptr.to_info = NULL;
 		CURLcode res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &cert_ptr.to_certinfo);
 		if (!res && cert_ptr.to_info) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 			/* We have no OpenSSL in libcurl, but we can use OpenSSL for X509 cert
 			 * parsing We only check the first certificate and assume it's the one of
 			 * the server
@@ -1375,13 +1375,13 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 			BIO_free(cert_BIO);
 			return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
-#	else  /* USE_OPENSSL */
+#	else  /* MOPL_USE_OPENSSL */
 			/* We assume we don't have OpenSSL and np_net_ssl_check_certificate at our
 			 * disposal, so we use the libcurl CURLINFO data
 			 */
 			return net_noopenssl_check_certificate(&cert_ptr, days_till_exp_warn,
 												   days_till_exp_crit);
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 		} else {
 			xasprintf(&sc_cert_result.output,
 					  _("Cannot retrieve certificates - cURL returned %d - %s"), res,
