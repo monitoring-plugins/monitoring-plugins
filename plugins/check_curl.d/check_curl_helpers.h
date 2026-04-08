@@ -130,7 +130,7 @@ char *fmt_url(check_curl_working_state workingState);
 
 /* function that will determine if the host or the proxy resolves the target hostname
 returns 0 if requester resolves the hostname locally, 1 if proxy resolves the hostname */
-int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config);
+int determine_hostname_resolver(const check_curl_working_state working_state);
 
 /* Checks if an IP is inside given CIDR region. Using /protocol_size or not specifying the prefix length performs an equality check. Supports both IPv4 and IPv6
 returns 1 if the target_ip address is inside the given cidr_region_or_ip_addr, 0 if its out. return codes < 0 mean an error has occurred. */

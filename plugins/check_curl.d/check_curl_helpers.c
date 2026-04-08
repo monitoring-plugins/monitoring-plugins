@@ -215,7 +215,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 		}
 	}
 
-	int proxy_resolves_hostname = determine_hostname_resolver(working_state, config);
+	int proxy_resolves_hostname = determine_hostname_resolver(working_state);
 	if (verbose >= 1) {
 		printf("* proxy_resolves_hostname: %d\n", proxy_resolves_hostname);
 	}
@@ -1404,7 +1404,7 @@ char *fmt_url(check_curl_working_state workingState) {
 	return url;
 }
 
-int determine_hostname_resolver(const check_curl_working_state working_state, const check_curl_static_curl_config config){
+int determine_hostname_resolver(const check_curl_working_state working_state){
 	char *host_name_display = "NULL";
 	unsigned long host_name_len = 0;
 	if( working_state.host_name){
@@ -1659,7 +1659,6 @@ int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_i
 	uint8_t *target_bytes = NULL;
 	uint8_t cidr_buf[16];
 	uint8_t target_buf[16];
-	size_t total_bytes = 0;
 
 	if (cidr_addr_family == AF_INET) {
 		struct in_addr cidr_ipv4;
@@ -1685,7 +1684,6 @@ int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_i
 		memcpy(target_buf, &target_ipv4.s_addr, 4);
 		cidr_bytes = cidr_buf;
 		target_bytes = target_buf;
-		total_bytes = 4;
 	} else {
 		struct in6_addr cidr_ipv6;
 		struct in6_addr target_ipv6;
@@ -1709,7 +1707,6 @@ int ip_addr_inside_cidr(const char* cidr_region_or_ip_addr, const char* target_i
 		memcpy(target_buf, &target_ipv6, 16);
 		cidr_bytes = cidr_buf;
 		target_bytes = target_buf;
-		total_bytes = 16;
 	}
 
 	int prefix_bytes = prefix_length / 8;
