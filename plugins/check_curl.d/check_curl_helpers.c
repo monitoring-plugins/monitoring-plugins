@@ -1413,7 +1413,7 @@ char *fmt_url(check_curl_working_state workingState) {
 	return url;
 }
 
-int determine_hostname_resolver(const check_curl_working_state working_state) {
+resolver_location determine_hostname_resolver(const check_curl_working_state working_state) {
 	char *host_name_display = "NULL";
 	unsigned long host_name_len = 0;
 	if (working_state.host_name) {
@@ -1457,7 +1457,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return 0;
+				return RESOLVE_LOCALLY;
 			}
 
 			/* direct comparison with the server_address */
@@ -1469,7 +1469,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return 0;
+				return RESOLVE_LOCALLY;
 			}
 
 			/* direct comparison with the host_name */
@@ -1480,7 +1480,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
-				return 0;
+				return RESOLVE_LOCALLY;
 			}
 
 			/* check if hostname is a subdomain of the item, e.g www.example.com when token is
@@ -1499,19 +1499,18 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					}
 					free(curlopt_noproxy_copy);
 					free(server_address_clean);
-					return 0;
+					return RESOLVE_LOCALLY;
 				}
 			}
 
 			// noproxy_item could be a CIDR IP range
 			if (server_address_clean != NULL && strlen(server_address_clean)) {
-
 				int ip_addr_inside_cidr_ret =
 					ip_addr_inside_cidr(noproxy_item, server_address_clean);
 
 				switch (ip_addr_inside_cidr_ret) {
 				case 1:
-					return 0;
+					return RESOLVE_LOCALLY;
 					break;
 				case 0:
 					if (verbose >= 1) {
@@ -1540,7 +1539,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 		// Setting the proxy string to "" (an empty string) explicitly disables the use of a proxy,
 		// even if there is an environment variable set for it.
 		if (strlen(working_state.curlopt_proxy) == 0) {
-			return 0;
+			return RESOLVE_LOCALLY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "http://", 7) == 0) {
@@ -1550,7 +1549,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 1;
+			return RESOLVE_REMOTELY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "https://", 8) == 0) {
@@ -1560,7 +1559,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 1;
+			return RESOLVE_REMOTELY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks4://", 9) == 0) {
@@ -1570,7 +1569,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 0;
+			return RESOLVE_LOCALLY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks4a://", 10) == 0) {
@@ -1580,7 +1579,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 1;
+			return RESOLVE_REMOTELY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks5://", 9) == 0) {
@@ -1590,7 +1589,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 0;
+			return RESOLVE_LOCALLY;
 		}
 
 		if (strncmp(working_state.curlopt_proxy, "socks5h://", 10) == 0) {
@@ -1600,7 +1599,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 					   working_state.curlopt_proxy, host_name_display, server_address_clean);
 			}
 			free(server_address_clean);
-			return 1;
+			return RESOLVE_REMOTELY;
 		}
 
 		// Libcurl documentation:
@@ -1608,7 +1607,7 @@ int determine_hostname_resolver(const check_curl_working_state working_state) {
 		// string identifies. We do not set this value Without a scheme, it is treated as an http
 		// proxy
 
-		return 1;
+		return RESOLVE_REMOTELY;
 	}
 
 	if (verbose >= 1) {
