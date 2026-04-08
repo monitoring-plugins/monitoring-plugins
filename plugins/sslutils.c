@@ -127,7 +127,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 	}
 
 	if (cert && privkey) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 		if (!SSL_CTX_use_certificate_chain_file(ctx, cert)) {
 #	elif USE_GNUTLS
 		if (!SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM)) {
@@ -138,7 +138,7 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 			return STATE_CRITICAL;
 		}
 		SSL_CTX_use_PrivateKey_file(ctx, privkey, SSL_FILETYPE_PEM);
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 		if (!SSL_CTX_check_private_key(ctx)) {
 			printf("%s\n", _("CRITICAL - Private key does not seem to match certificate!\n"));
 			return STATE_CRITICAL;
@@ -161,9 +161,9 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 			return OK;
 		} else {
 			printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
-#	ifdef USE_OPENSSL /* XXX look into ERR_error_string */
+#	ifdef MOPL_USE_OPENSSL /* XXX look into ERR_error_string */
 			ERR_print_errors_fp(stdout);
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 		}
 	} else {
 		printf("%s\n", _("CRITICAL - Cannot initiate SSL handshake."));
@@ -192,7 +192,7 @@ int np_net_ssl_read(void *buf, int num) { return SSL_read(s, buf, num); }
 
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	if (!certificate) {
 		printf("%s\n", _("CRITICAL - No server certificate present to inspect."));
 		return STATE_CRITICAL;
@@ -306,14 +306,14 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 	}
 	X509_free(certificate);
 	return status;
-#	else  /* ifndef USE_OPENSSL */
+#	else  /* ifndef MOPL_USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 }
 
 retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	retrieve_expiration_time_result result = {
 		.errors = ALL_OK,
 		.remaining_seconds = 0,
@@ -404,14 +404,14 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 	X509_free(certificate);
 
 	return result;
-#	else  /* ifndef USE_OPENSSL */
+#	else  /* ifndef MOPL_USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 }
 
 net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int days_till_exp_crit) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(s);
 
@@ -438,27 +438,27 @@ net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int day
 
 	return result;
 
-#	else  /* ifndef USE_OPENSSL */
+#	else  /* ifndef MOPL_USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 }
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(s);
 	return (np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
-#	else  /* ifndef USE_OPENSSL */
+#	else  /* ifndef MOPL_USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 }
 
 mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										 int days_till_exp_crit) {
 	mp_subcheck sc_cert = mp_subcheck_init();
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 	if (!certificate) {
 		xasprintf(&sc_cert.output, _("No server certificate present to inspect"));
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
@@ -581,10 +581,10 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	}
 	X509_free(certificate);
 	return sc_cert;
-#	else  /* ifndef USE_OPENSSL */
+#	else  /* ifndef MOPL_USE_OPENSSL */
 	xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
 	sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 	return sc_cert;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 }
 #endif /* HAVE_SSL */
