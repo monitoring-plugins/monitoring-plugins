@@ -279,4 +279,5 @@ like($res->output, '/.*4.20.* | iso.3.6.1.4.1.8072.3.2.67.19=4.20+;1/', "Test mu
 if (! -e "./tests/test_check_snmp") {
 	plan skip_all => "./test_check_snmp not compiled - please enable libtap library to test";
 }
-exec "./tests/test_check_snmp";
+
+system("./tests/test_check_snmp");
