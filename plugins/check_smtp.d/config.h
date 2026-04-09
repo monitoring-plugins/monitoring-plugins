@@ -40,8 +40,8 @@ typedef struct {
 
 	bool use_proxy_prefix;
 #ifdef HAVE_SSL
-	int days_till_exp_warn;
-	int days_till_exp_crit;
+	unsigned int days_till_exp_warn;
+	unsigned int days_till_exp_crit;
 	bool use_ssl;
 	bool use_starttls;
 	bool use_sni;

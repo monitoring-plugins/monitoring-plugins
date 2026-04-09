@@ -128,7 +128,7 @@ typedef struct {
 	double remaining_seconds;
 	retrieve_expiration_date_errors errors;
 } net_ssl_check_cert_result;
-net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int days_till_exp_crit);
+net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn, unsigned int days_till_exp_crit);
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);

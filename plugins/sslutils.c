@@ -410,7 +410,7 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 #	endif /* MOPL_USE_OPENSSL */
 }
 
-net_ssl_check_cert_result np_net_ssl_check_cert2(int days_till_exp_warn, int days_till_exp_crit) {
+net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn, unsigned int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(s);
