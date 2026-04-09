@@ -62,7 +62,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 #	include <openssl/opensslv.h>
 #endif
 
@@ -81,9 +81,9 @@ extern char errbuf[MAX_INPUT_BUFFER];
 extern bool is_openssl_callback;
 extern bool add_sslctx_verify_fun;
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 static X509 *cert = NULL;
-#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
+#endif /* defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL) */
 
 typedef struct {
 	int errorcode;
@@ -114,10 +114,10 @@ static void print_curl_version(void);
 // check_curl_evaluation_wrapper check_curl_evaluate(check_curl_config config,
 // 												  mp_check overall[static 1]) {}
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit);
-#endif /* defined(HAVE_SSL) && defined(USE_OPENSSL) */
+#endif /* defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL) */
 
 int main(int argc, char **argv) {
 #ifdef __OpenBSD__
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
 }
 
 #ifdef HAVE_SSL
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 	(void)preverify_ok;
 	/* TODO: we get all certificates of the chain, so which ones
@@ -190,11 +190,11 @@ int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx) {
 	}
 	return 1;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* HAVE_SSL */
 
 #ifdef HAVE_SSL
-#	ifdef USE_OPENSSL
+#	ifdef MOPL_USE_OPENSSL
 CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 	(void)curl; // ignore unused parameter
 	(void)parm; // ignore unused parameter
@@ -211,7 +211,7 @@ CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm) {
 
 	return CURLE_OK;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* HAVE_SSL */
 
 mp_subcheck check_http(const check_curl_config config, check_curl_working_state workingState,
@@ -247,8 +247,9 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		printf("**** REQUEST CONTENT ****\n%s\n", workingState.http_post_data);
 	}
 
-	 // curl_state is updated after curl_easy_perform, and with updated curl_state certificate checks can be done
-	 // Check_http tries to check certs as early as possible, and exits with certificate check result by default. Behave similarly.
+	// curl_state is updated after curl_easy_perform, and with updated curl_state certificate checks
+	// can be done Check_http tries to check certs as early as possible, and exits with certificate
+	// check result by default. Behave similarly.
 #ifdef LIBCURL_FEATURE_SSL
 	if (workingState.use_ssl && config.check_cert) {
 		if (verbose > 1) {
@@ -979,7 +980,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		int option_index = getopt_long(
 			argc, argv, "Vvh46t:c:w:A:k:H:P:j:T:I:a:x:b:d:e:p:s:R:r:u:f:C:J:K:DnlLS::m:M:NEB",
 			longopts, &option);
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 
@@ -1546,8 +1547,8 @@ void print_help(void) {
 	printf(" %s\n", "-I, --IP-address=ADDRESS");
 	printf("    %s\n",
 		   "IP address or name (use numeric address if possible to bypass DNS lookup).");
-	printf("    %s\n",
-		     "This overwrites the network address of the target while leaving everything else (HTTP headers) as they are");
+	printf("    %s\n", "This overwrites the network address of the target while leaving everything "
+					   "else (HTTP headers) as they are");
 	printf(" %s\n", "-p, --port=INTEGER");
 	printf("    %s", _("Port number (default: "));
 	printf("%d)\n", HTTP_PORT);
@@ -1611,7 +1612,8 @@ void print_help(void) {
 	printf("    %s\n", _("String to expect in the content"));
 	printf(" %s\n", "-u, --url=PATH");
 	printf("    %s\n", _("URL to GET or POST (default: /)"));
-	printf("    %s\n", _("This is the part after the address in a URL, so for \"https://example.com/index.html\" it would be '-u /index.html'"));
+	printf("    %s\n", _("This is the part after the address in a URL, so for "
+						 "\"https://example.com/index.html\" it would be '-u /index.html'"));
 	printf(" %s\n", "-P, --post=STRING");
 	printf("    %s\n", _("URL decoded http POST data"));
 	printf(" %s\n",
@@ -1643,11 +1645,12 @@ void print_help(void) {
 	printf("    %s\n", _("If port is not specified, libcurl defaults to 1080"));
 	printf("    %s\n", _("This value will be set as CURLOPT_PROXY"));
 	printf(" %s\n", "--noproxy=COMMA_SEPARATED_LIST");
-	printf("    %s\n", _("Specify hostnames, addresses and subnets where proxy should not be used"));
+	printf("    %s\n",
+		   _("Specify hostnames, addresses and subnets where proxy should not be used"));
 	printf("    %s\n", _("Example usage: \"example.com,::1,1.1.1.1,localhost,192.168.0.0/16\""));
 	printf("    %s\n", _("Do not use brackets when specifying IPv6 addresses"));
 	printf("    %s\n", _("Special case when an item is '*' : matches all hosts/addresses "
-		"and effectively disables proxy."));
+						 "and effectively disables proxy."));
 	printf("    %s\n", _("This value will be set as CURLOPT_NOPROXY"));
 	printf(" %s\n", "-a, --authorization=AUTH_PAIR");
 	printf("    %s\n", _("Username:password on sites with basic authentication"));
@@ -1757,38 +1760,59 @@ void print_help(void) {
 #endif
 
 	printf("\n %s\n", "CHECK WEBSERVER CONTENT VIA PROXY:");
-	printf(" %s\n", _("Proxies are specified or disabled for certain hosts/addresses using environment variables"
-		" or -x/--proxy and --noproxy arguments:"));
-	printf(" %s\n", _("Checked environment variables: all_proxy, http_proxy, https_proxy, no_proxy"));
-	printf(" %s\n", _("Environment variables can also be given in uppercase, but the lowercase ones will "
-					  "take predence if both are defined."));
-	printf(" %s\n", _("The environment variables are overwritten by -x/--proxy and --noproxy arguments:"));
+	printf(" %s\n", _("Proxies are specified or disabled for certain hosts/addresses using "
+					  "environment variables"
+					  " or -x/--proxy and --noproxy arguments:"));
+	printf(" %s\n",
+		   _("Checked environment variables: all_proxy, http_proxy, https_proxy, no_proxy"));
+	printf(" %s\n",
+		   _("Environment variables can also be given in uppercase, but the lowercase ones will "
+			 "take predence if both are defined."));
+	printf(" %s\n",
+		   _("The environment variables are overwritten by -x/--proxy and --noproxy arguments:"));
 	printf(" %s\n", _("all_proxy/ALL_PROXY environment variables are read first, but protocol "
-					"specific environment variables override them."));
-	printf(" %s\n", _("If SSL is enabled and used, https_proxy/HTTPS_PROXY will be checked and overwrite "
-			"http_proxy/HTTPS_PROXY."));
-	printf(" %s\n", _("Curl accepts proxies using http, https, socks4, socks4a, socks5 and socks5h schemes."));
-	printf(" %s\n", _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
-	printf(" %s\n", _("http_proxy=http://used.proxy.com HTTP_PROXY=http://ignored.proxy.com ./check_curl -H www.monitoring-plugins.org"));
+					  "specific environment variables override them."));
+	printf(" %s\n",
+		   _("If SSL is enabled and used, https_proxy/HTTPS_PROXY will be checked and overwrite "
+			 "http_proxy/HTTPS_PROXY."));
+	printf(
+		" %s\n",
+		_("Curl accepts proxies using http, https, socks4, socks4a, socks5 and socks5h schemes."));
+	printf(" %s\n",
+		   _("http_proxy=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org"));
+	printf(" %s\n", _("http_proxy=http://used.proxy.com HTTP_PROXY=http://ignored.proxy.com "
+					  "./check_curl -H www.monitoring-plugins.org"));
 	printf(" %s\n", _("  Lowercase http_proxy takes predence over uppercase HTTP_PROXY"));
 	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://192.168.100.35:3128"));
-	printf(" %s\n", _("http_proxy=http://unused.proxy1.com HTTP_PROXY=http://unused.proxy2.com ./check_curl "
-			"-H www.monitoring-plugins.org --proxy http://used.proxy"));
-	printf(" %s\n", _("  Proxy specified by --proxy overrides any proxy specified by environment variable."));
+	printf(" %s\n",
+		   _("http_proxy=http://unused.proxy1.com HTTP_PROXY=http://unused.proxy2.com ./check_curl "
+			 "-H www.monitoring-plugins.org --proxy http://used.proxy"));
+	printf(
+		" %s\n",
+		_("  Proxy specified by --proxy overrides any proxy specified by environment variable."));
 	printf(" %s\n", _("  Curl uses port 1080 by default as port is not specified"));
-	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H www.monitoring-plugins.org --ssl"));
+	printf(" %s\n", _("HTTPS_PROXY=http://192.168.100.35:3128 ./check_curl -H "
+					  "www.monitoring-plugins.org --ssl"));
 	printf(" %s\n", _("  HTTPS_PROXY is read as --ssl is toggled"));
-	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org --proxy socks5h://192.168.122.21"));
-	printf(" %s\n", _("./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com --noproxy '*'"));
+	printf(" %s\n",
+		   _("./check_curl -H www.monitoring-plugins.org --proxy socks5h://192.168.122.21"));
+	printf(
+		" %s\n",
+		_("./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com --noproxy '*'"));
 	printf(" %s\n", _("  Disabled proxy for all hosts by using '*' in no_proxy ."));
-	printf(" %s\n", _("NO_PROXY=www.monitoring-plugins.org ./check_curl -H www.monitoring-plugins.org -x http://unused.proxy.com"));
+	printf(" %s\n", _("NO_PROXY=www.monitoring-plugins.org ./check_curl -H "
+					  "www.monitoring-plugins.org -x http://unused.proxy.com"));
 	printf(" %s\n", _("  Exact matches with the hostname/address work."));
-	printf(" %s\n", _("no_proxy=192.168.178.0/24 ./check_curl -I 192.168.178.10 -x http://proxy.acme.org"));
-	printf(" %s\n", _("no_proxy=acme.org ./check_curl -H nonpublic.internalwebapp.acme.org -x http://proxy.acme.org"));
-	printf(" %s\n", _("  Do not use proxy when accessing internal domains/addresses, but use a default proxy when accessing public web."));
-	printf(" %s\n", _("  IMPORTANT: Check_curl can not always determine whether itself or the proxy will "
-		"resolve a hostname before sending a request and getting an answer."
-		"This can lead to DNS resolvation issues if hostname is only resolvable over proxy."));
+	printf(" %s\n",
+		   _("no_proxy=192.168.178.0/24 ./check_curl -I 192.168.178.10 -x http://proxy.acme.org"));
+	printf(" %s\n", _("no_proxy=acme.org ./check_curl -H nonpublic.internalwebapp.acme.org -x "
+					  "http://proxy.acme.org"));
+	printf(" %s\n", _("  Do not use proxy when accessing internal domains/addresses, but use a "
+					  "default proxy when accessing public web."));
+	printf(" %s\n",
+		   _("  IMPORTANT: Check_curl can not always determine whether itself or the proxy will "
+			 "resolve a hostname before sending a request and getting an answer."
+			 "This can lead to DNS resolvation issues if hostname is only resolvable over proxy."));
 	printf(" %s\n", _("Legacy proxy requests in check_http style still work:"));
 	printf(" %s\n", _("check_curl -I 192.168.100.35 -p 3128 -u http://www.monitoring-plugins.org/ "
 					  "-H www.monitoring-plugins.org"));
@@ -1843,7 +1867,7 @@ void print_usage(void) {
 void print_curl_version(void) { printf("%s\n", curl_version()); }
 
 #ifdef LIBCURL_FEATURE_SSL
-#	ifndef USE_OPENSSL
+#	ifndef MOPL_USE_OPENSSL
 time_t parse_cert_date(const char *s) {
 	if (!s) {
 		return -1;
@@ -1860,11 +1884,11 @@ time_t parse_cert_date(const char *s) {
 
 	return date;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* LIBCURL_FEATURE_SSL */
 
 #ifdef LIBCURL_FEATURE_SSL
-#	ifndef USE_OPENSSL
+#	ifndef MOPL_USE_OPENSSL
 /* TODO: this needs cleanup in the sslutils.c, maybe we the #else case to
  * OpenSSL could be this function
  */
@@ -2001,5 +2025,5 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 	}
 	return status;
 }
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif     /* LIBCURL_FEATURE_SSL */

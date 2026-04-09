@@ -116,6 +116,7 @@ gen_state_string_type gen_state_string(check_snmp_state_entry *entries, size_t n
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
@@ -217,6 +218,7 @@ recover_state_data_type recover_state_data(char *state_string, idx_t state_strin
 				break;
 			case ASN_FLOAT:
 				printf("Type FLOAT\n");
+				break;
 			case ASN_DOUBLE:
 				printf("Type DOUBLE\n");
 				break;
@@ -446,7 +448,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 
@@ -516,7 +518,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			argc, argv,
 			"nhvVO46t:c:w:H:C:o:e:E:d:D:s:t:R:r:l:u:p:m:P:N:L:U:a:x:A:X:M:f:z:", longopts, &option);
 
-		if (option_char == -1 || option_char == EOF) {
+		if (CHECK_EOF(option_char)) {
 			break;
 		}
 

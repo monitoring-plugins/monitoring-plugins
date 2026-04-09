@@ -562,7 +562,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		int option_index =
 			getopt_long(argc, argv, "+hVv46EAH:s:e:q:m:c:w:t:p:C:W:d:Sr:jD:M:", longopts, &option);
 
-		if (option_index == -1 || option_index == EOF || option_index == 1) {
+		if (CHECK_EOF(option_index) || option_index == 1) {
 			break;
 		}
 
@@ -683,7 +683,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			break;
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
 #ifdef HAVE_SSL
-#	ifdef USE_OPENSSL /* XXX */
+#	ifdef MOPL_USE_OPENSSL /* XXX */
 		{
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
@@ -708,7 +708,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			config.check_cert = true;
 			config.use_tls = true;
 		} break;
-#	endif /* USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 #endif
 			/* fallthrough if we don't have ssl */
 		case 'S':
