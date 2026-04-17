@@ -176,18 +176,31 @@ char *get_subcheck_summary(mp_check check) {
 	unsigned int warning = 0;
 	unsigned int critical = 0;
 	unsigned int unknown = 0;
+	char *result = NULL;
 	while (subchecks != NULL) {
 		switch (mp_compute_subcheck_state(subchecks->subcheck)) {
 		case STATE_OK:
 			ok++;
 			break;
 		case STATE_WARNING:
+			if (critical == 0 && unknown == 0 && warning == 0) {
+				// set summary to first warning subcheck output
+				asprintf(&result, "%s", subchecks->subcheck.output);
+			}
 			warning++;
 			break;
 		case STATE_CRITICAL:
+			if (critical == 0) {
+				// set summary to first critical subcheck output
+				asprintf(&result, "%s", subchecks->subcheck.output);
+			}
 			critical++;
 			break;
 		case STATE_UNKNOWN:
+			if (critical == 0 && unknown == 0) {
+				// set summary to first unknown subcheck output
+				asprintf(&result, "%s", subchecks->subcheck.output);
+			}
 			unknown++;
 			break;
 		default:
@@ -195,8 +208,25 @@ char *get_subcheck_summary(mp_check check) {
 		}
 		subchecks = subchecks->next;
 	}
-	char *result = NULL;
-	asprintf(&result, "ok=%d, warning=%d, critical=%d, unknown=%d", ok, warning, critical, unknown);
+
+	if (result == NULL) {
+		if (ok > 0) {
+			asprintf(&result, "ok=%d", ok);
+		}
+
+		if (warning > 0) {
+			asprintf(&result, "%swarning=%d", (result == NULL ? "" : ", "), warning);
+		}
+
+		if (critical > 0) {
+			asprintf(&result, "%scritical=%d", (result == NULL ? "" : ", "), critical);
+		}
+
+		if (unknown > 0) {
+			asprintf(&result, "%sunknown=%d", (result == NULL ? "" : ", "), unknown);
+		}
+	}
+
 	return result;
 }
 
