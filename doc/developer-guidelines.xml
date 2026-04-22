@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY mp_le "&#8804;">
+<!ENTITY mp_ge "&#8805;">
+<!ENTITY mp_infin "&#8734;">
+]>
 <article>
   <title>Monitoring Plugins Development Guidelines</title>
   <articleinfo>
@@ -251,7 +255,7 @@
         <para>Notes:</para>
         <orderedlist inheritnum="ignore" continuation="restarts">
           <listitem>
-            <para>start [le    ] end</para>
+            <para>start &mp_le; end</para>
           </listitem>
           <listitem>
             <para>start and ":" is not required if start=0</para>
@@ -290,23 +294,23 @@
             <tbody>
               <row>
                 <entry>10</entry>
-                <entry>[lt    ] 0 or [gt    ] 10, (outside the range of {0 .. 10})</entry>
+                <entry>&lt; 0 or &gt; 10, (outside the range of {0 .. 10})</entry>
               </row>
               <row>
                 <entry>10:</entry>
-                <entry>[lt    ] 10, (outside {10 .. [infin ]})</entry>
+                <entry>&lt; 10, (outside {10 .. &mp_infin;})</entry>
               </row>
               <row>
                 <entry>~:10</entry>
-                <entry>[gt    ] 10, (outside the range of {-[infin ] .. 10})</entry>
+                <entry>&gt; 10, (outside the range of {-&mp_infin; .. 10})</entry>
               </row>
               <row>
                 <entry>10:20</entry>
-                <entry>[lt    ] 10 or [gt    ] 20, (outside the range of {10 .. 20})</entry>
+                <entry>&lt; 10 or &gt; 20, (outside the range of {10 .. 20})</entry>
               </row>
               <row>
                 <entry>@10:20</entry>
-                <entry>[ge    ] 10 and [le    ] 20, (inside the range of {10 .. 20})</entry>
+                <entry>&mp_ge; 10 and &mp_le; 20, (inside the range of {10 .. 20})</entry>
               </row>
             </tbody>
           </tgroup>
@@ -506,11 +510,11 @@
 			variable values will still be in effect.</para>
         </listitem>
         <listitem>
-          <para>Do not use [gt    ]DATA[lt    ] handles (these simply do not compile under ePN).</para>
+          <para>Do not use &lt;DATA&gt; handles (these simply do not compile under ePN).</para>
         </listitem>
         <listitem>
           <para>Do not use global variables in named subroutines. This is bad practise anyway, but with ePN the
-			compiler will report an error "[lt    ]global_var[gt    ] will not stay shared ..". Values used by
+			compiler will report an error "&lt;global_var&gt; will not stay shared ..". Values used by
 			subroutines should be passed in the argument list.</para>
         </listitem>
         <listitem>
