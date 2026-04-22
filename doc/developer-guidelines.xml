@@ -18,7 +18,7 @@
     </copyright>
   </articleinfo>
   <section id="preface">
-    <title>Preface</title>
+    <title><anchor id="PREFACE"/>Preface</title>
     <para>The purpose of these guidelines is to provide a reference for
     the plugin developers and encourage the standardization of the
     different kinds of plugins: C, shell, perl, python, etc.</para>
@@ -31,7 +31,7 @@
 	authors.</para>
   </section>
     <section id="devrequirements">
-      <title>Development platform requirements</title>
+      <title><anchor id="DEVREQUIREMENTS"/>Development platform requirements</title>
       <para>	Monitoring Plugins are developed to the GNU standard, so any OS which is supported by GNU
 	should run the plugins. While the requirements for compiling the Monitoring Plugins release
 	are very basic, developing from the Git repository requires additional software to be
@@ -53,7 +53,7 @@
 	</para>
     </section>
     <section id="plugoutput">
-      <title>Plugin Output for Nagios</title>
+      <title><anchor id="PLUGOUTPUT"/>Plugin Output for Nagios</title>
       <para>You should always print something to STDOUT that tells if the
 		service is working or why it is failing. Try to keep the output short -
 		probably less than 80 characters. Remember that you ideally would like
@@ -61,8 +61,8 @@
 		off after a certain length.</para>
       <para>As Nagios does not capture stderr output, you should only output to
 		STDOUT and not print to STDERR.</para>
-      <section>
-        <title>Print only one line of text</title>
+      <section id="printoneline">
+        <title><anchor id="AEN29"/>Print only one line of text</title>
         <para>Starting with version 3, Nagios will process plugins' multiline
 		output, which should be formatted as:</para>
         <literallayout format="linespecific" class="normal">		SERVICE STATUS: First line of output | First part of performance data
@@ -81,13 +81,13 @@
 		being an accurate reflection of the status of the service - the status should always
 		be determined by the return code.</para>
       </section>
-      <section>
-        <title>Verbose output</title>
+      <section id="verboseoutput">
+        <title><anchor id="AEN37"/>Verbose output</title>
         <para>Use the -v flag for verbose output. You should allow multiple
 		-v options for additional verbosity, up to a maximum of 3. The standard
 		type of output should be:</para>
         <table id="verboselevels">
-          <title>Verbose output levels</title>
+          <title><anchor id="VERBOSELEVELS"/>Verbose output levels</title>
           <tgroup cols="2">
             <thead>
               <row>
@@ -136,16 +136,16 @@
           </tgroup>
         </table>
       </section>
-      <section>
-        <title>Screen Output</title>
+      <section id="screenoutput">
+        <title><anchor id="AEN70"/>Screen Output</title>
         <para>The plugin should print the diagnostic and just the
 		usage part of the help message.  A well written plugin would
 		then have --help as a way to get the verbose help.</para>
         <para>Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
       </section>
-      <section>
-        <title>Plugin Return Codes</title>
+      <section id="pluginreturncodes">
+        <title><anchor id="AEN74"/>Plugin Return Codes</title>
         <para>The return codes below are based on the POSIX spec of returning
 		a positive value.  Netsaint prior to v0.0.7 supported non-POSIX
 		compliant return code of "-1" for unknown. Nagios supports POSIX return
@@ -157,7 +157,7 @@
 		default catch-all for system command output that returns an UNKNOWN
 		return code.</para>
         <table id="returncodes">
-          <title>Plugin Return Codes</title>
+          <title><anchor id="RETURNCODES"/>Plugin Return Codes</title>
           <tgroup cols="3">
             <thead>
               <row>
@@ -234,7 +234,7 @@
         </table>
       </section>
       <section id="thresholdformat">
-        <title>Threshold and ranges</title>
+        <title><anchor id="THRESHOLDFORMAT"/>Threshold and ranges</title>
         <para>A range is defined as a start and end point (inclusive) on a numeric scale (possibly
 		negative or positive infinity).
 		</para>
@@ -275,7 +275,7 @@
         <para>Note: Not all plugins are coded to expect ranges in this format yet.
 		There will be some work in providing multiple metrics.</para>
         <table id="exampleranges">
-          <title>Example ranges</title>
+          <title><anchor id="EXAMPLERANGES"/>Example ranges</title>
           <tgroup cols="2">
             <thead>
               <row>
@@ -312,7 +312,7 @@
           </tgroup>
         </table>
         <table id="commandlineexamples">
-          <title>Command line examples</title>
+          <title><anchor id="COMMANDLINEEXAMPLES"/>Command line examples</title>
           <tgroup cols="2">
             <thead>
               <row>
@@ -357,8 +357,8 @@
           </tgroup>
         </table>
       </section>
-      <section>
-        <title>Performance data</title>
+      <section id="performancedata">
+        <title><anchor id="AEN197"/>Performance data</title>
         <para>Nagios 3 and newer will concatenate the parts following a "|" in a) the first
 		line output by the plugin, and b) in the second to last line, into a string it
 		passes to whatever performance data processing it has configured. (Note that it
@@ -435,9 +435,9 @@
       </section>
     </section>
     <section id="syscmdauxfiles">
-      <title>System Commands and Auxiliary Files</title>
-      <section>
-        <title>Don't execute system commands without specifying their
+      <title><anchor id="SYSCMDAUXFILES"/>System Commands and Auxiliary Files</title>
+      <section id="execfullpath">
+        <title><anchor id="AEN238"/>Don't execute system commands without specifying their
 		full path</title>
         <para>Don't use exec(), popen(), etc. to execute external
 		commands without explicitly using the full path of the external
@@ -446,34 +446,34 @@
 		by a trojan horse earlier in the search path. See the main
 		plugin distribution for examples on how this is done.</para>
       </section>
-      <section>
-        <title>Use spopen() if external commands must be executed</title>
+      <section id="usespopen">
+        <title><anchor id="AEN242"/>Use spopen() if external commands must be executed</title>
         <para>If you have to execute external commands from within your
     	plugin and you're writing it in C, use the spopen() function
 		that Karl DeBisschop has written.</para>
         <para>The code for spopen() and spclose() is included with the
 		core plugin distribution.</para>
       </section>
-      <section>
-        <title>Don't make temp files unless absolutely required</title>
+      <section id="notempfiles">
+        <title><anchor id="AEN246"/>Don't make temp files unless absolutely required</title>
         <para>If temp files are needed, make sure that the plugin will
 		fail cleanly if the file can't be written (e.g., too few file
 		handles, out of disk space, incorrect permissions, etc.) and
 		delete the temp file when processing is complete.</para>
       </section>
-      <section>
-        <title>Don't be tricked into following symlinks</title>
+      <section id="nofollowingsymlinks">
+        <title><anchor id="AEN249"/>Don't be tricked into following symlinks</title>
         <para>If your plugin opens any files, take steps to ensure that
 		you are not following a symlink to another location on the
 		system.</para>
       </section>
-      <section>
-        <title>Validate all input</title>
+      <section id="validateallinput">
+        <title><anchor id="AEN252"/>Validate all input</title>
         <para>use routines in utils.c or utils.pm and write more as needed</para>
       </section>
     </section>
     <section id="perlplugin">
-      <title>Perl Plugins</title>
+      <title><anchor id="PERLPLUGIN"/>Perl Plugins</title>
       <para>Perl plugins are coded a little more defensively than other
 		plugins because of embedded Perl.  When configured as such, embedded
 		Perl Nagios (ePN) requires stricter use of the some of Perl's features.
@@ -537,7 +537,7 @@
       </orderedlist>
     </section>
     <section id="runtime">
-      <title>Runtime Timeouts</title>
+      <title><anchor id="RUNTIME"/>Runtime Timeouts</title>
       <para>Plugins have a very limited runtime - typically 10 sec.
 		As a result, it is very important for plugins to maintain internal
 		code to exit if runtime exceeds a threshold. </para>
@@ -547,12 +547,12 @@
 		df could lock up like that.  Plus, it should just be more error
 		resistant to be able to time out rather than consume
 		resources.</para>
-      <section>
-        <title>Use DEFAULT_SOCKET_TIMEOUT</title>
+      <section id="usedefaultsockettimeout">
+        <title><anchor id="AEN286"/>Use DEFAULT_SOCKET_TIMEOUT</title>
         <para>All network plugins should use DEFAULT_SOCKET_TIMEOUT to timeout</para>
       </section>
-      <section>
-        <title>Add alarms to network plugins</title>
+      <section id="addalarmstonetworkplugins">
+        <title><anchor id="AEN289"/>Add alarms to network plugins</title>
         <para>If you write a plugin which communicates with another
 		networked host, you should make sure to set an alarm() in your
 		code that prevents the plugin from hanging due to abnormal
@@ -562,12 +562,12 @@
       </section>
     </section>
     <section id="plugoptions">
-      <title>Plugin Options</title>
+      <title><anchor id="PLUGOPTIONS"/>Plugin Options</title>
       <para>A well written plugin should have --help as a way to get
 		verbose help. Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
-      <section>
-        <title>Option Processing</title>
+      <section id="optionprocessing">
+        <title><anchor id="AEN295"/>Option Processing</title>
         <para>For plugins written in C, we recommend the C standard
 		getopt library for short options. Getopt_long is always available.
 		</para>
@@ -613,8 +613,8 @@
         <para>The exit code for version information or help should be UNKNOWN
 		(3).</para>
       </section>
-      <section>
-        <title>Plugins with more than one type of threshold, or with
+      <section id="multipletypeofthresholds">
+        <title><anchor id="AEN311"/>Plugins with more than one type of threshold, or with
       threshold ranges</title>
         <para>Old style was to do things like -ct for critical time and
       -cv for critical value. That goes out the window with POSIX
@@ -659,13 +659,13 @@
       </section>
     </section>
     <section id="testcases">
-      <title>Test cases</title>
+      <title><anchor id="TESTCASES"/>Test cases</title>
       <para>Tests are the best way of knowing if the plugins work as expected. Please
 create and update test cases where possible.</para>
       <para>To run a test, from the top level directory, run "make test". This will run
 all the current tests and report an overall success rate.</para>
-      <section>
-        <title>Test cases for plugins</title>
+      <section id="testcasesforplugins">
+        <title><anchor id="AEN332"/>Test cases for plugins</title>
         <para>These use perl's Test::More. To do a one time test, run "cd plugins &amp;&amp; perl t/check_disk.t".</para>
         <para>There will sometimes be failures seen in this output which are known failures that
 need to be fixed. As long as the return code is 0, it will be reported as "test pass".
@@ -675,8 +675,8 @@ This runs the test in a summary format.</para>
         <para>For a good and amusing tutorial on using Test::More, see this
 <ulink url="http://search.cpan.org/dist/Test-Simple/lib/Test/Tutorial.pod">link</ulink></para>
       </section>
-      <section>
-        <title>Testing the C library functions</title>
+      <section id="testingclibraryfunctions">
+        <title><anchor id="AEN339"/>Testing the C library functions</title>
         <para>We use <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/wiki/LibTap">the libtap library</ulink>, which gives
 perl's TAP
 (Test Anything Protocol) output. This is used by the FreeBSD team for their regression testing.</para>
@@ -689,19 +689,19 @@ setup the tests. Run "make test" to run all the tests.</para>
       </section>
     </section>
     <section id="codingguidelines">
-      <title>Coding guidelines</title>
+      <title><anchor id="CODINGGUIDELINES"/>Coding guidelines</title>
       <para>See <ulink url="http://www.gnu.org/prep/standards_toc.html">GNU
 	Coding standards</ulink> for general guidelines.
 	Some parts of the guidelines (namely and explicitly the coding style)
 	are not seen as best practice by us.</para>
-      <section>
-        <title>C coding</title>
+      <section id="ccoding">
+        <title><anchor id="AEN350"/>C coding</title>
         <para>You should use the type "bool" and its values
 	"true" and "false" instead of the "int" type for booleans.
 	</para>
       </section>
-      <section>
-        <title>Crediting sources</title>
+      <section id="creditingsources">
+        <title><anchor id="AEN353"/>Crediting sources</title>
         <para>If you have copied a routine from another source, make sure the license
 	from your source allows this. Add a comment referencing the ACKNOWLEDGEMENTS
 	file, where you can put more detail about the source.</para>
@@ -709,8 +709,8 @@ setup the tests. Run "make test" to run all the tests.</para>
 	- contributors should be added into the THANKS.in file instead.
 	</para>
       </section>
-      <section>
-        <title>Commit Messages</title>
+      <section id="commitmessages">
+        <title><anchor id="AEN357"/>Commit Messages</title>
         <para>If the change is due to a contribution, please quote the contributor's name
 	and, if applicable, add the GitHub Issue Tracker number. Don't forget to
   update the THANKS.in file.</para>
@@ -721,9 +721,9 @@ setup the tests. Run "make test" to run all the tests.</para>
       </section>
     </section>
     <section id="submittingchanges">
-      <title>Submission of new plugins and patches</title>
+      <title><anchor id="SUBMITTINGCHANGES"/>Submission of new plugins and patches</title>
       <section id="patches">
-        <title>Patches</title>
+        <title><anchor id="PATCHES"/>Patches</title>
         <para>If you have a bug patch, please supply a unified or context diff against the
 	version you are using. For new features, please supply a diff against
 	the Git "master" branch.</para>
@@ -739,7 +739,7 @@ setup the tests. Run "make test" to run all the tests.</para>
 	Credit will always be given for any patches through a THANKS file in the distribution.</para>
       </section>
       <section id="contributedplugins">
-        <title>Contributed plugins</title>
+        <title><anchor id="CONTRIBUTEDPLUGINS"/>Contributed plugins</title>
         <para>Plugins that have been contributed to the project and
 	distributed with the Monitoring Plugins files are held in the contrib/ directory and are not installed
 	by default. These plugins are not officially supported by the team.
@@ -753,7 +753,7 @@ setup the tests. Run "make test" to run all the tests.</para>
 	</para>
       </section>
       <section id="newplugins">
-        <title>New plugins</title>
+        <title><anchor id="NEWPLUGINS"/>New plugins</title>
         <para>If you would like others to use your plugins, please add it to
 	the official 3rd party plugin repository,
 	<ulink url="https://exchange.icinga.com/">Icinga Exchange</ulink>.
