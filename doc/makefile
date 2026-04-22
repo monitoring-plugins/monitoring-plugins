@@ -1,11 +1,7 @@
 # Quick makefile to create developer-guidelines.html
 
-developer-guidelines.html: developer-guidelines.sgml
-	docbook2html -u developer-guidelines.sgml
-	if [ -e developer-guidelines/developer-guidelines.html ] ; then \
-		mv developer-guidelines/developer-guidelines.html . ;\
-		rm -rf developer-guidelines ;\
-	fi
+developer-guidelines.html: developer-guidelines.xml developer-guidelines.css
+	xsltproc --nonet --stringparam html.stylesheet developer-guidelines.css -o developer-guidelines.html /usr/share/sgml/docbook/xsl-stylesheets/html/docbook.xsl developer-guidelines.xml
 
 clean:
 	rm -f developer-guidelines.html developer-guidelines.html.last jade-out.fot
