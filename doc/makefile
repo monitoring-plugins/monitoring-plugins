@@ -11,6 +11,7 @@ endif
 developer-guidelines.html: developer-guidelines.xml developer-guidelines.css
 	xsltproc --nonet \
 		--stringparam html.stylesheet developer-guidelines.css \
+		--stringparam section.autolabel 1 \
 		-o developer-guidelines.html \
 		$(DOCBOOK_XSL) \
 		developer-guidelines.xml
