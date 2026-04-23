@@ -4,7 +4,7 @@
   --accent: #0984e3;
   --code-bg: #f5f6fa;
   --border: #dfe6e9;
-  --max-width: 800px;
+  --max-width: 50em;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,7 +16,7 @@
     --border: #353b48;
   }
 }
-p.literallayout, 
+p.literallayout,
 .literallayout {
   display: block;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -65,6 +65,14 @@ pre, code {
 }
 
 code { padding: 0.2rem 0.4rem; font-size: 0.9em; }
+
+code.literal {
+  color: var(--accent);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
 
 pre {
   padding: 1rem;

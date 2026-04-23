@@ -87,7 +87,7 @@
       </section>
       <section id="verboseoutput">
         <title><anchor id="AEN37"/>Verbose output</title>
-        <para>Use the -v flag for verbose output. You should allow multiple
+        <para>Use the <literal>-v</literal> flag for verbose output. You should allow multiple
 		-v options for additional verbosity, up to a maximum of 3. The standard
 		type of output should be:</para>
         <table id="verboselevels">
@@ -144,7 +144,7 @@
         <title><anchor id="AEN70"/>Screen Output</title>
         <para>The plugin should print the diagnostic and just the
 		usage part of the help message.  A well written plugin would
-		then have --help as a way to get the verbose help.</para>
+		then have <literal>--help</literal> as a way to get the verbose help.</para>
         <para>Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
       </section>
@@ -229,7 +229,7 @@
 						socket timeouts, etc) are outside of the control of plugins and should
 						generally NOT be reported as UNKNOWN states.
 						</para>
-                  <para>The --help or --version output should also result in Unknown state.
+                  <para>The <literal>--help</literal> or <literal>--version</literal> output should also result in Unknown state.
 						</para>
                 </entry>
               </row>
@@ -443,7 +443,7 @@
       <section id="execfullpath">
         <title><anchor id="AEN238"/>Don't execute system commands without specifying their
 		full path</title>
-        <para>Don't use exec(), popen(), etc. to execute external
+        <para>Don't use <literal>exec()</literal>, <literal>popen()</literal>, etc. to execute external
 		commands without explicitly using the full path of the external
 		program.</para>
         <para>Doing otherwise makes the plugin vulnerable to hijacking
@@ -451,11 +451,11 @@
 		plugin distribution for examples on how this is done.</para>
       </section>
       <section id="usespopen">
-        <title><anchor id="AEN242"/>Use spopen() if external commands must be executed</title>
+        <title><anchor id="AEN242"/>Use <literal>spopen()</literal> if external commands must be executed</title>
         <para>If you have to execute external commands from within your
-    	plugin and you're writing it in C, use the spopen() function
+    	plugin and you're writing it in C, use the <literal>spopen()</literal> function
 		that Karl DeBisschop has written.</para>
-        <para>The code for spopen() and spclose() is included with the
+        <para>The code for <literal>spopen()</literal> and <literal>spclose()</literal> is included with the
 		core plugin distribution.</para>
       </section>
       <section id="notempfiles">
@@ -473,7 +473,7 @@
       </section>
       <section id="validateallinput">
         <title><anchor id="AEN252"/>Validate all input</title>
-        <para>use routines in utils.c or utils.pm and write more as needed</para>
+        <para>use routines in <literal>utils.c</literal> or <literal>utils.pm</literal> and write more as needed</para>
       </section>
     </section>
     <section id="perlplugin">
@@ -485,12 +485,12 @@
 		effectively.</para>
       <orderedlist inheritnum="ignore" continuation="restarts">
         <listitem>
-          <para> Do not use BEGIN and END blocks since they will be called
+          <para> Do not use <literal>BEGIN</literal> and <literal>END</literal> blocks since they will be called
 			only once (when Nagios starts and shuts down) with Embedded Perl (ePN).  In
-			particular, do not use BEGIN blocks to initialize variables.</para>
+			particular, do not use <literal>BEGIN</literal> blocks to initialize variables.</para>
         </listitem>
         <listitem>
-          <para>To use utils.pm, you need to provide a full path to the
+          <para>To use <literal>utils.pm</literal>, you need to provide a full path to the
 			module in order for it to work.</para>
           <literallayout format="linespecific" class="normal">	  e.g.
 		use lib "/usr/local/nagios/libexec";
@@ -498,11 +498,11 @@
 	  </literallayout>
         </listitem>
         <listitem>
-          <para>Perl scripts should be called with "-w"</para>
+          <para>Perl scripts should be called with <literal>-w</literal></para>
         </listitem>
         <listitem>
-          <para>All Perl plugins must compile cleanly under "use strict" - i.e. at
-			least explicitly package names as in "$main::x" or predeclare every
+          <para>All Perl plugins must compile cleanly under <literal>use strict</literal> - i.e. at
+			least explicitly package names as in <literal>$main::x</literal> or predeclare every
 			variable. </para>
           <para>Explicitly initialize each variable in use.  Otherwise with
 			caching enabled, the plugin will not be recompiled each time, and
@@ -510,7 +510,7 @@
 			variable values will still be in effect.</para>
         </listitem>
         <listitem>
-          <para>Do not use &lt;DATA&gt; handles (these simply do not compile under ePN).</para>
+          <para>Do not use <literal>&lt;DATA&gt;</literal> handles (these simply do not compile under ePN).</para>
         </listitem>
         <listitem>
           <para>Do not use global variables in named subroutines. This is bad practise anyway, but with ePN the
@@ -520,22 +520,22 @@
         <listitem>
           <para>If writing to a file (perhaps recording
 			performance data) explicitly close it.  The plugin never
-			calls <emphasis role="strong">exit</emphasis>; that is caught by
-			p1.pl, so output streams are never closed.</para>
+			calls <literal>exit</literal>; that is caught by
+			<literal>p1.pl</literal>, so output streams are never closed.</para>
         </listitem>
         <listitem>
           <para>As in <xref linkend="runtime"/> all plugins need
 			to monitor their runtime, specially if they are using network
-			resources.  Use of the <emphasis>alarm</emphasis> is recommended
+			resources.  Use of the <literal>alarm</literal> is recommended
 			noting that some Perl modules (eg LWP) manage timers, so that an alarm
 			set by a plugin using such a module is overwritten by the module.
 			(workarounds are cunning (TM) or using the module timer)
-			Plugins may import a default time out ($TIMEOUT) from utils.pm.
+			Plugins may import a default time out (<literal>$TIMEOUT</literal>) from <literal>utils.pm</literal>.
 			</para>
         </listitem>
         <listitem>
-          <para>Perl plugins should import %ERRORS from utils.pm
-			and then "exit $ERRORS{'OK'}" rather than "exit 0"
+          <para>Perl plugins should import <literal>%ERRORS</literal> from <literal>utils.pm</literal>
+			and then <literal>exit $ERRORS{'OK'}</literal> rather than <literal>exit 0</literal>
 			</para>
         </listitem>
       </orderedlist>
@@ -552,8 +552,8 @@
 		resistant to be able to time out rather than consume
 		resources.</para>
       <section id="usedefaultsockettimeout">
-        <title><anchor id="AEN286"/>Use DEFAULT_SOCKET_TIMEOUT</title>
-        <para>All network plugins should use DEFAULT_SOCKET_TIMEOUT to timeout</para>
+        <title><anchor id="AEN286"/>Use <literal>DEFAULT_SOCKET_TIMEOUT</literal></title>
+        <para>All network plugins should use <literal>DEFAULT_SOCKET_TIMEOUT</literal> to timeout</para>
       </section>
       <section id="addalarmstonetworkplugins">
         <title><anchor id="AEN289"/>Add alarms to network plugins</title>
@@ -567,7 +567,7 @@
     </section>
     <section id="plugoptions">
       <title><anchor id="PLUGOPTIONS"/>Plugin Options</title>
-      <para>A well written plugin should have --help as a way to get
+      <para>A well written plugin should have <literal>--help</literal> as a way to get
 		verbose help. Code and output should try to respect the 80x25 size of a
 		crt (remember when fixing stuff in the server room!)</para>
       <section id="optionprocessing">
@@ -579,40 +579,40 @@
         <para>Positional arguments are strongly discouraged.</para>
         <para>There are a few reserved options that should not be used
 		for other purposes:</para>
-        <literallayout format="linespecific" class="normal">          -V version (--version)
-          -h help (--help)
-          -t timeout (--timeout)
-          -w warning threshold (--warning)
-          -c critical threshold (--critical)
-          -H hostname (--hostname)
-          -v verbose (--verbose)
+        <literallayout format="linespecific" class="normal">          -V version (<literal>--version</literal>)
+          -h help (<literal>--help</literal>)
+          -t timeout (<literal>--timeout</literal>)
+          -w warning threshold (<literal>--warning</literal>)
+          -c critical threshold (<literal>--critical</literal>)
+          -H hostname (<literal>--hostname</literal>)
+          -v verbose (<literal>--verbose</literal>)
 		</literallayout>
         <para>In addition to the reserved options above, some other standard options are:</para>
-        <literallayout format="linespecific" class="normal">          -C SNMP community (--community)
-          -a authentication password (--authentication)
-          -l login name (--logname)
-          -p port or password (--port or --passwd/--password)monitors operational
-          -u url or username (--url or --username)
+        <literallayout format="linespecific" class="normal">          -C SNMP community (<literal>--community</literal>)
+          -a authentication password (<literal>--authentication</literal>)
+          -l login name (<literal>--logname</literal>)
+          -p port or password (<literal>--port</literal> or <literal>--passwd</literal>/<literal>--password</literal>)monitors operational
+          -u url or username (<literal>--url</literal> or <literal>--username</literal>)
 		</literallayout>
-        <para>Look at check_pgsql and check_procs to see how I currently
+        <para>Look at <literal>check_pgsql</literal> and <literal>check_procs</literal> to see how I currently
 		think this can work.  Standard options are:</para>
-        <para>The option -V or --version should be present in all
-		plugins. For C plugins it should result in a call to print_revision, a
-		function in utils.c which takes two character arguments, the
+        <para>The option <literal>-V</literal> or <literal>--version</literal> should be present in all
+		plugins. For C plugins it should result in a call to <literal>print_revision</literal>, a
+		function in <literal>utils.c</literal> which takes two character arguments, the
 		command name and the plugin revision.</para>
-        <para>The -? option, or any other unparsable set of options,
+        <para>The <literal>-?</literal> option, or any other unparsable set of options,
 		should print out a short usage statement. Character width should
 		be 80 and less and no more that 23 lines should be printed (it
 		should display cleanly on a dumb terminal in a server
 		room).</para>
-        <para>The option -h or --help should be present in all plugins.
-		In C plugins, it should result in a call to print_help (or
-		equivalent).  The function print_help should call print_revision,
-		then print_usage, then should provide detailed
+        <para>The option <literal>-h</literal> or <literal>--help</literal> should be present in all plugins.
+		In C plugins, it should result in a call to <literal>print_help</literal> (or
+		equivalent).  The function <literal>print_help</literal> should call <literal>print_revision</literal>,
+		then <literal>print_usage</literal>, then should provide detailed
 		help. Help text should fit on an 80-character width display, but
 		may run as many lines as needed.</para>
-        <para>The option -v or --verbose should be present in all plugins.
-		The user should be allowed to specify -v multiple times to increase
+        <para>The option <literal>-v</literal> or <literal>--verbose</literal> should be present in all plugins.
+		The user should be allowed to specify <literal>-v</literal> multiple times to increase
 		the verbosity level, as described in <xref linkend="verboselevels"/>.</para>
         <para>The exit code for version information or help should be UNKNOWN
 		(3).</para>
@@ -637,18 +637,18 @@
 	  -w 10,6,4 -c 16,10,10`</para>
           </listitem>
           <listitem>
-            <para>ranges are expressed with colons as in `check_procs -C
+            <para>ranges are expressed with colons as in `<literal>check_procs</literal> -C
 	  httpd -w 1:20 -c 1:30` which will warn above 20 instances,
 	  and critical at 0 and above 30</para>
           </listitem>
           <listitem>
-            <para>lists are expressed with commas, so Jacob's check_nmap
+            <para>lists are expressed with commas, so Jacob's <literal>check_nmap</literal>
 	  uses constructs like '-p 1000,1010,1050:1060,2000'</para>
           </listitem>
           <listitem>
             <para>If possible when writing lists, use tokens to make the
 	  list easy to remember and non-order dependent - so
-	  check_disk uses '-c 10000,10%' so that it is clear which is
+	  <literal>check_disk</literal> uses '-c 10000,10%' so that it is clear which is
 	  the percentage and which is the KB values (note that due to
 	  my own lack of foresight, that used to be '-c 10000:10%' but
 	  such constructs should all be changed for consistency,
@@ -666,15 +666,15 @@
       <title><anchor id="TESTCASES"/>Test cases</title>
       <para>Tests are the best way of knowing if the plugins work as expected. Please
 create and update test cases where possible.</para>
-      <para>To run a test, from the top level directory, run "make test". This will run
+      <para>To run a test, from the top level directory, run "<literal>make test</literal>". This will run
 all the current tests and report an overall success rate.</para>
       <section id="testcasesforplugins">
         <title><anchor id="AEN332"/>Test cases for plugins</title>
-        <para>These use perl's Test::More. To do a one time test, run "cd plugins &amp;&amp; perl t/check_disk.t".</para>
+        <para>These use perl's Test::More. To do a one time test, run "cd plugins &amp;&amp; perl t/<literal>check_disk</literal>.t".</para>
         <para>There will sometimes be failures seen in this output which are known failures that
 need to be fixed. As long as the return code is 0, it will be reported as "test pass".
 (If you have a fix so that the specific test passes, that will be gratefully received!)</para>
-        <para>If you want a summary test, run: "cd plugins &amp;&amp; prove t/check_disk.t".
+        <para>If you want a summary test, run: "cd plugins &amp;&amp; prove t/<literal>check_disk</literal>.t".
 This runs the test in a summary format.</para>
         <para>For a good and amusing tutorial on using Test::More, see this
 <ulink url="http://search.cpan.org/dist/Test-Simple/lib/Test/Tutorial.pod">link</ulink></para>
@@ -689,7 +689,7 @@ There is a problem with tap-1.01 where
 <ulink url="http://jc.ngo.org.uk/trac-bin/trac.cgi/ticket/25">pthread support doesn't appear to work</ulink>
 properly on non-FreeBSD systems. Install with 'CPPFLAGS="-UHAVE_LIBPTHREAD" ./configure &amp;&amp; make &amp;&amp; make check &amp;&amp; make install'.</para>
         <para>When you run Monitoring Plugins' configure, it will look for the tap library and will automatically
-setup the tests. Run "make test" to run all the tests.</para>
+setup the tests. Run "<literal>make test</literal>" to run all the tests.</para>
       </section>
     </section>
     <section id="codingguidelines">
@@ -772,12 +772,12 @@ setup the tests. Run "make test" to run all the tests.</para>
 		granted to the Monitoring Plugins Development Team</para>
           </listitem>
           <listitem>
-            <para>The standard command options are supported (--help, --version,
-	  --timeout, --warning, --critical)</para>
+            <para>The standard command options are supported (<literal>--help</literal>, <literal>--version</literal>,
+	  <literal>--timeout</literal>, <literal>--warning</literal>, <literal>--critical</literal>)</para>
           </listitem>
           <listitem>
             <para>It is determined to be not redundant (for instance, we would not
-		add a new version of check_disk just because someone had provide
+		add a new version of <literal>check_disk</literal> just because someone had provide
 		a plugin that had perf checking - we would incorporate the features
 		into an existing plugin)</para>
           </listitem>
