@@ -68,7 +68,7 @@ code { padding: 0.2rem 0.4rem; font-size: 0.9em; }
 
 code.literal {
   color: var(--accent);
-  background: var(--code-bg);
+  background: transparent;
   border: 1px solid var(--border);
   padding: 0.1em 0.3em;
   border-radius: 4px;
