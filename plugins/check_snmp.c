@@ -1034,13 +1034,13 @@ void print_help(void) {
 	printf("    %s\n", _("SNMPv3 context"));
 	printf(" %s\n", "-L, --seclevel=[noAuthNoPriv|authNoPriv|authPriv]");
 	printf("    %s\n", _("SNMPv3 securityLevel"));
-	printf(" %s\n", "-a, --authproto=[MD5|SHA]");
+	printf(" %s\n", "-a, --authproto=[MD5|SHA|SHA224|SHA256|SHA384|SHA512]");
 	printf("    %s\n", _("SNMPv3 auth proto"));
 #ifdef HAVE_USM_DES_PRIV_PROTOCOL
-	printf(" %s\n", "-x, --privproto=[DES|AES]");
+	printf(" %s\n", "-x, --privproto=[DES|AES|AES192|AES256]");
 	printf("    %s\n", _("SNMPv3 priv proto (default DES)"));
 #else
-	printf(" %s\n", "-x, --privproto=[AES]");
+	printf(" %s\n", "-x, --privproto=[AES|AES192|AES256]");
 	printf("    %s\n", _("SNMPv3 priv proto (default AES)"));
 #endif
 
