@@ -87,7 +87,7 @@ int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck);
 
 void mp_add_perfdata_to_subcheck(mp_subcheck check[static 1], mp_perfdata);
 
-void mp_add_summary(mp_check check[static 1], char *summary);
+void mp_set_summary(mp_check check[static 1], char *summary);
 
 mp_state_enum mp_compute_check_state(mp_check);
 mp_state_enum mp_compute_subcheck_state(mp_subcheck);
