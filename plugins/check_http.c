@@ -205,7 +205,8 @@ bool process_arguments(int argc, char **argv) {
 		SNI_OPTION,
 		MAX_REDIRS_OPTION,
 		CONTINUE_AFTER_CHECK_CERT,
-		STATE_REGEX
+		STATE_REGEX,
+		TIMEOUT_CUSTOM_RESULT_STATE
 	};
 
 	int option = 0;
@@ -247,6 +248,7 @@ bool process_arguments(int argc, char **argv) {
 		{"extended-perfdata", no_argument, 0, 'E'},
 		{"show-body", no_argument, 0, 'B'},
 		{"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
+		{"timeout-custom-result-state", required_argument, 0, TIMEOUT_CUSTOM_RESULT_STATE},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -296,6 +298,19 @@ bool process_arguments(int argc, char **argv) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);
+			}
+			break;
+		case TIMEOUT_CUSTOM_RESULT_STATE:
+			if (!strcmp(optarg, "ok")) {
+				socket_timeout_state = STATE_OK;
+			} else if (!strcmp(optarg, "warning")) {
+				socket_timeout_state = STATE_WARNING;
+			} else if (!strcmp(optarg, "critical")) {
+				socket_timeout_state = STATE_CRITICAL;
+			} else if (!strcmp(optarg, "unknown")) {
+				socket_timeout_state = STATE_UNKNOWN;
+			} else {
+				usage2(_("Invalid custom timeout result state option"), optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
