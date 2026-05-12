@@ -273,7 +273,8 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	/* Custom handling for timeouts */
 	if (res == CURLE_OPERATION_TIMEDOUT) {
-		xasprintf(&sc_curl.output, _("cURL got a timeout error"));
+		xasprintf(&sc_curl.output, _("cURL returned %d - %s"),
+			res, errbuf[0] ? errbuf : curl_easy_strerror(res));
 		sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
 		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
 		return sc_result;
@@ -1024,7 +1025,9 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "3") || !strcmp(optarg, "unknown")) {
 				result.config.on_timeout_result_state = STATE_UNKNOWN;
 			} else {
-				usage2(_("Invalid timeout-result state option, give either a return code or state name in lowercase"), optarg);
+				usage2(_("Invalid timeout-result state option, give either a return code or state "
+						 "name in lowercase"),
+					   optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1725,8 +1728,8 @@ void print_help(void) {
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
 	printf(" %s\n", "--timeout-result=RESULT|INTEGER");
-	printf("    %s\n",_("Timeouts default to returning STATE_CRITICAL."));
-	printf("    %s\n",_("This argument changes the return state on timeouts."));
+	printf("    %s\n", _("Timeouts default to returning STATE_CRITICAL."));
+	printf("    %s\n", _("This argument changes the return state on timeouts."));
 
 	printf(UT_VERBOSE);
 
