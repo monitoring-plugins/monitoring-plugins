@@ -69,31 +69,31 @@ $res = NPTest->testCmd(
     );
 cmp_ok( $res->return_code, '==', 2, "Webserver $host_nonresponsive not responding" );
 # was CRITICAL only, but both check_curl and check_http print HTTP CRITICAL (puzzle?!)
-like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - (Connection|Operation) timed out after/", "Output OK");
 
 # timeout return results can be changed using --timeout-result option
 $res = NPTest->testCmd(
     "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3 --timeout-result ok"
     );
-like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - (Connection|Operation) timed out after/", "Output OK");
 cmp_ok( $res->return_code, "==", 0, "Return code is correct due argument: --timeout-result ok");
 
 $res = NPTest->testCmd(
     "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3 --timeout-result warning"
     );
-like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - (Connection|Operation) timed out after/", "Output OK");
 cmp_ok( $res->return_code, "==", 1, "Return code is correct due argument: --timeout-result warning");
 
 $res = NPTest->testCmd(
     "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3 --timeout-result 2"
     );
-like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - (Connection|Operation) timed out after/", "Output OK");
 cmp_ok( $res->return_code, "==", 2, "Return code is correct due argument: --timeout-result 2");
 
 $res = NPTest->testCmd(
     "./$plugin $host_nonresponsive -wt 1 -ct 2 -t 3 --timeout-result 3"
     );
-like( $res->output, "/cURL returned 28 - Connection timed out after/", "Output OK");
+like( $res->output, "/cURL returned 28 - (Connection|Operation) timed out after/", "Output OK");
 cmp_ok( $res->return_code, "==", 3, "Return code is correct due argument: --timeout-result 3");
 
 $res = NPTest->testCmd(
