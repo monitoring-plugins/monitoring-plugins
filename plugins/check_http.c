@@ -1900,7 +1900,7 @@ void print_help(void) {
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
-	printf(" %s\n", "--timeout-result=RESULT|INTEGER");
+	printf(" %s\n", "--timeout-result=ok|warning|critical|unknown|0|1|2|3");
 	printf("    %s\n", _("Timeouts default to returning STATE_CRITICAL."));
 	printf("    %s\n", _("This argument changes the return state on timeouts."));
 
