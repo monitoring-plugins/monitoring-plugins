@@ -206,7 +206,7 @@ bool process_arguments(int argc, char **argv) {
 		MAX_REDIRS_OPTION,
 		CONTINUE_AFTER_CHECK_CERT,
 		STATE_REGEX,
-		TIMEOUT_CUSTOM_RESULT_STATE
+		TIMEOUT_RESULT
 	};
 
 	int option = 0;
@@ -248,7 +248,7 @@ bool process_arguments(int argc, char **argv) {
 		{"extended-perfdata", no_argument, 0, 'E'},
 		{"show-body", no_argument, 0, 'B'},
 		{"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
-		{"timeout-custom-result-state", required_argument, 0, TIMEOUT_CUSTOM_RESULT_STATE},
+		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -300,17 +300,19 @@ bool process_arguments(int argc, char **argv) {
 				socket_timeout = atoi(optarg);
 			}
 			break;
-		case TIMEOUT_CUSTOM_RESULT_STATE:
-			if (!strcmp(optarg, "ok")) {
+		case TIMEOUT_RESULT:
+			if (!strcmp(optarg, "0") || !strcmp(optarg, "ok")) {
 				socket_timeout_state = STATE_OK;
-			} else if (!strcmp(optarg, "warning")) {
+			} else if (!strcmp(optarg, "1") || !strcmp(optarg, "warning")) {
 				socket_timeout_state = STATE_WARNING;
-			} else if (!strcmp(optarg, "critical")) {
+			} else if (!strcmp(optarg, "2") || !strcmp(optarg, "critical")) {
 				socket_timeout_state = STATE_CRITICAL;
-			} else if (!strcmp(optarg, "unknown")) {
+			} else if (!strcmp(optarg, "3") || !strcmp(optarg, "unknown")) {
 				socket_timeout_state = STATE_UNKNOWN;
 			} else {
-				usage2(_("Invalid custom timeout result state option"), optarg);
+				usage2(_("Invalid timeout-result state option, give either a return code or state "
+						 "name in lowercase"),
+					   optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1047,7 +1049,7 @@ int check_http(void) {
 			printf("SSL initialized\n");
 		}
 		if (result != STATE_OK) {
-			die(STATE_CRITICAL,  _("HTTP CRITICAL - SSL error\n"));
+			die(STATE_CRITICAL, _("HTTP CRITICAL - SSL error\n"));
 		}
 		microsec_ssl = deltime(tv_temp);
 		elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
@@ -1897,6 +1899,10 @@ void print_help(void) {
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf(" %s\n", "--timeout-result=RESULT|INTEGER");
+	printf("    %s\n", _("Timeouts default to returning STATE_CRITICAL."));
+	printf("    %s\n", _("This argument changes the return state on timeouts."));
 
 	printf(UT_VERBOSE);
 
