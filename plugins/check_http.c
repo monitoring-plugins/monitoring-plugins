@@ -301,13 +301,13 @@ bool process_arguments(int argc, char **argv) {
 			}
 			break;
 		case TIMEOUT_RESULT:
-			if (!strcmp(optarg, "0") || !strcmp(optarg, "ok")) {
+			if (!strcmp(optarg, "0") || !strcasecmp(optarg, "ok")) {
 				socket_timeout_state = STATE_OK;
-			} else if (!strcmp(optarg, "1") || !strcmp(optarg, "warning")) {
+			} else if (!strcmp(optarg, "1") || !strcasecmp(optarg, "warning")) {
 				socket_timeout_state = STATE_WARNING;
-			} else if (!strcmp(optarg, "2") || !strcmp(optarg, "critical")) {
+			} else if (!strcmp(optarg, "2") || !strcasecmp(optarg, "critical")) {
 				socket_timeout_state = STATE_CRITICAL;
-			} else if (!strcmp(optarg, "3") || !strcmp(optarg, "unknown")) {
+			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
 				socket_timeout_state = STATE_UNKNOWN;
 			} else {
 				usage2(_("Invalid timeout-result state option, give either a return code or state "
