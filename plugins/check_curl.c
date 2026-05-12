@@ -271,6 +271,15 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	mp_subcheck sc_curl = mp_subcheck_init();
 
+	/* Custom handling for timeouts */
+	if (res == CURLE_OPERATION_TIMEDOUT) {
+		xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
+				  errbuf[0] ? errbuf : curl_easy_strerror(res));
+		sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
+		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
+		return sc_result;
+	}
+
 	/* Curl errors, result in critical Nagios state */
 	if (res != CURLE_OK) {
 		xasprintf(&sc_curl.output, _("Error while performing connection: cURL returned %d - %s"),
@@ -890,6 +899,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		STATE_REGEX,
 		OUTPUT_FORMAT,
 		NO_PROXY,
+		TIMEOUT_RESULT,
 	};
 
 	static struct option longopts[] = {
@@ -939,6 +949,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"cookie-jar", required_argument, 0, COOKIE_JAR},
 		{"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
 		{"output-format", required_argument, 0, OUTPUT_FORMAT},
+		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
 		{0, 0, 0, 0}};
 
 	check_curl_config_wrapper result = {
@@ -1002,6 +1013,21 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				result.config.curl_config.socket_timeout = (int)strtol(optarg, NULL, 10);
+			}
+			break;
+		case TIMEOUT_RESULT:
+			if (!strcmp(optarg, "0") || !strcasecmp(optarg, "ok")) {
+				result.config.on_timeout_result_state = STATE_OK;
+			} else if (!strcmp(optarg, "1") || !strcasecmp(optarg, "warning")) {
+				result.config.on_timeout_result_state = STATE_WARNING;
+			} else if (!strcmp(optarg, "2") || !strcasecmp(optarg, "critical")) {
+				result.config.on_timeout_result_state = STATE_CRITICAL;
+			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
+				result.config.on_timeout_result_state = STATE_UNKNOWN;
+			} else {
+				usage2(_("Invalid timeout-result state option, give either a return code or state "
+						 "name in lowercase"),
+					   optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1700,6 +1726,10 @@ void print_help(void) {
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf(" %s\n", "--timeout-result=ok|warning|critical|unknown|0|1|2|3");
+	printf("    %s\n", _("Timeouts default to returning STATE_CRITICAL."));
+	printf("    %s\n", _("This argument changes the return state on timeouts."));
 
 	printf(UT_VERBOSE);
 
