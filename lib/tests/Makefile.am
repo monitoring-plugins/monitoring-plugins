@@ -5,8 +5,7 @@ noinst_PROGRAMS = @EXTRA_TEST@
 TESTS = @EXTRA_TEST@
 check_PROGRAMS = @EXTRA_TEST@
 
-AM_CPPFLAGS = -DNP_STATE_DIR_PREFIX=\"$(localstatedir)\" \
-	-I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
+AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_srcdir)/gl -I$(top_srcdir)/intl -I$(top_srcdir)/plugins
 
 EXTRA_PROGRAMS = test_utils test_tcp test_cmd test_base64 test_ini1 test_ini3 test_opts1 test_opts2 test_opts3 test_generic_output
 
