@@ -253,7 +253,8 @@ int main(int argc, char **argv) {
 				  config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
-			for (unsigned long i = 0; i < config.n_procs_to_show; i++) {
+			// +1 here since the string list contains the header line
+			for (unsigned long i = 0; i < config.n_procs_to_show +1; i++) {
 				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 						  top_proc.top_processes[i]);
 			}
