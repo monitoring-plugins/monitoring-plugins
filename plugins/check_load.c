@@ -65,7 +65,7 @@ typedef struct {
 	int errorcode;
 	char **top_processes;
 } top_processes_result;
-static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show);
+static top_processes_result get_top_consuming_processes(unsigned long n_procs_to_show);
 
 typedef struct {
 	mp_range load[3];
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
 	if (config.n_procs_to_show > 0) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
-		top_processes_result top_proc = print_top_consuming_processes(config.n_procs_to_show);
+		top_processes_result top_proc = get_top_consuming_processes(config.n_procs_to_show);
 		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
 				  config.n_procs_to_show);
 
@@ -448,7 +448,7 @@ int cmpstringp(const void *p1, const void *p2) {
 }
 #endif /* PS_USES_PROCPCPU */
 
-static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show) {
+static top_processes_result get_top_consuming_processes(unsigned long n_procs_to_show) {
 	top_processes_result result = {
 		.errorcode = OK,
 	};
