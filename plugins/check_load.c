@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 
 		mp_subcheck scaled_load_sc = mp_subcheck_init();
 		scaled_load_sc = mp_set_subcheck_default_state(scaled_load_sc, STATE_OK);
-		scaled_load_sc.output = "Scaled Load (divided by number of CPUs";
+		scaled_load_sc.output = "Scaled Load (divided by number of CPUs)";
 
 		mp_perfdata pd_scaled_load1 = perfdata_init();
 		pd_scaled_load1.label = "scaled_load1";
