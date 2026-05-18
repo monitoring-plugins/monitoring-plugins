@@ -287,11 +287,6 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		.config = check_load_config_init(),
 	};
 
-	if (argc < 2) {
-		result.errorcode = ERROR;
-		return result;
-	}
-
 	while (true) {
 		int option = 0;
 		int option_index = getopt_long(argc, argv, "Vhrc:w:n:", longopts, &option);
