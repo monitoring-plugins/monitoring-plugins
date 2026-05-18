@@ -420,7 +420,7 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 			// add the rest (if any)
 			if (have_residual_chars) {
 				char *tmp = check.output;
-				xasprintf(&check.output, "%s\n%s%s", intermediate_string,
+				xasprintf(&check.output, "%s%s%s", intermediate_string,
 						  generate_indentation_string(indentation + 1), tmp);
 			} else {
 				check.output = intermediate_string;
