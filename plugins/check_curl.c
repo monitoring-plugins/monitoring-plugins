@@ -271,20 +271,18 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	mp_subcheck sc_curl = mp_subcheck_init();
 
-	/* Custom handling for timeouts */
-	if (res == CURLE_OPERATION_TIMEDOUT) {
-		xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
-				  errbuf[0] ? errbuf : curl_easy_strerror(res));
-		sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
-		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
-		return sc_result;
-	}
-
 	/* Curl errors, result in critical Nagios state */
 	if (res != CURLE_OK) {
-		xasprintf(&sc_curl.output, _("Error while performing connection: cURL returned %d - %s"),
+		/* Custom handling for timeouts, state might be set to non CRITICAL */
+		if (res == CURLE_OPERATION_TIMEDOUT) {
+			xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
+				  errbuf[0] ? errbuf : curl_easy_strerror(res));
+			sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
+		} else {
+			xasprintf(&sc_curl.output, _("Error while performing connection: cURL returned %d - %s"),
 				  res, errbuf[0] ? errbuf : curl_easy_strerror(res));
-		sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
+			sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
+		}
 		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
 		return sc_result;
 	}
