@@ -65,7 +65,7 @@ typedef struct {
 	int errorcode;
 	char **top_processes;
 } top_processes_result;
-static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show);
+static top_processes_result get_top_consuming_processes(unsigned long n_procs_to_show);
 
 typedef struct {
 	mp_range load[3];
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 
 		mp_subcheck scaled_load_sc = mp_subcheck_init();
 		scaled_load_sc = mp_set_subcheck_default_state(scaled_load_sc, STATE_OK);
-		scaled_load_sc.output = "Scaled Load (divided by number of CPUs";
+		scaled_load_sc.output = "Scaled Load (divided by number of CPUs)";
 
 		mp_perfdata pd_scaled_load1 = perfdata_init();
 		pd_scaled_load1.label = "scaled_load1";
@@ -248,12 +248,13 @@ int main(int argc, char **argv) {
 	if (config.n_procs_to_show > 0) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
-		top_processes_result top_proc = print_top_consuming_processes(config.n_procs_to_show);
+		top_processes_result top_proc = get_top_consuming_processes(config.n_procs_to_show);
 		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
 				  config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
-			for (unsigned long i = 0; i < config.n_procs_to_show; i++) {
+			// +1 here since the string list contains the header line
+			for (unsigned long i = 0; i < config.n_procs_to_show +1; i++) {
 				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 						  top_proc.top_processes[i]);
 			}
@@ -285,11 +286,6 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 		.errorcode = OK,
 		.config = check_load_config_init(),
 	};
-
-	if (argc < 2) {
-		result.errorcode = ERROR;
-		return result;
-	}
 
 	while (true) {
 		int option = 0;
@@ -448,7 +444,7 @@ int cmpstringp(const void *p1, const void *p2) {
 }
 #endif /* PS_USES_PROCPCPU */
 
-static top_processes_result print_top_consuming_processes(unsigned long n_procs_to_show) {
+static top_processes_result get_top_consuming_processes(unsigned long n_procs_to_show) {
 	top_processes_result result = {
 		.errorcode = OK,
 	};
