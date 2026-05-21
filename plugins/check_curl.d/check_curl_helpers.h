@@ -112,7 +112,9 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf * /*header_buf*/,
 size_t get_content_length(const curlhelp_write_curlbuf *header_buf,
 						  const curlhelp_write_curlbuf *body_buf);
 int lookup_host(const char *host, char *buf, size_t buflen, sa_family_t addr_family);
+#if HAVE_SSL
 CURLcode sslctxfun(CURL *curl, SSL_CTX *sslctx, void *parm);
+#endif
 
 #define INET_ADDR_MAX_SIZE INET6_ADDRSTRLEN
 const char *strrstr2(const char *haystack, const char *needle);
@@ -123,8 +125,10 @@ bool expected_statuscode(const char *reply, const char *statuscodes);
 char *string_statuscode(int major, int minor);
 
 void test_file(char *path);
+#if HAVE_SSL
 mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
 										  int crit_days_till_exp);
+#endif
 char *fmt_url(check_curl_working_state workingState);
 
 /* determine_hostname_resolver determines if the host or the proxy resolves the target hostname

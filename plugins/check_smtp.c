@@ -70,7 +70,9 @@ int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor,
 	}
 	return (int)read(socket_descriptor, buf, (size_t)num);
 #else /* ifndef HAVE_SSL */
-	return read(socket_descriptor, buf, len)
+	(void)config;
+	(void)ssl_established;
+	return read(socket_descriptor, buf, num);
 #endif
 }
 
@@ -83,7 +85,9 @@ int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor,
 	}
 	return (int)send(socket_descriptor, buf, (size_t)num, 0);
 #else /* ifndef HAVE_SSL */
-	return send(socket_descriptor, buf, len, 0);
+	(void)config;
+	(void)ssl_established;
+	return send(socket_descriptor, buf, num, 0);
 #endif
 }
 
@@ -258,6 +262,7 @@ int main(int argc, char **argv) {
 		mp_exit(overall);
 	}
 
+#ifdef HAVE_SSL
 	bool supports_tls = false;
 	if (config.use_ehlo || config.use_lhlo) {
 		if (strstr(buffer, "250 STARTTLS") != NULL || strstr(buffer, "250-STARTTLS") != NULL) {
@@ -275,7 +280,6 @@ int main(int argc, char **argv) {
 		mp_exit(overall);
 	}
 
-#ifdef HAVE_SSL
 	if (config.use_starttls) {
 		/* send the STARTTLS command */
 		send(socket_descriptor, SMTP_STARTTLS, strlen(SMTP_STARTTLS), 0);
@@ -792,14 +796,18 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			implicit_tls = true;
 			// fallthrough
 		case 's':
-			/* ssl */
+			/* TLS/SSL */
+#ifdef HAVE_SSL
 			result.config.use_ssl = true;
 			result.config.server_port = SMTPS_PORT;
+#endif
 			break;
 		case 'S':
-			/* starttls */
+			/* STARTTLS */
+#ifdef HAVE_SSL
 			result.config.use_starttls = true;
 			result.config.use_ehlo = true;
+#endif
 			break;
 		}
 		case SNI_OPTION:
@@ -842,7 +850,9 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case ignore_certificate_expiration_index: {
+#ifdef HAVE_SSL
 			result.config.ignore_certificate_expiration = true;
+#endif
 		}
 		}
 	}
@@ -860,6 +870,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
+#ifdef HAVE_SSL
 	if (result.config.use_starttls && result.config.use_ssl) {
 		if (implicit_tls) {
 			result.config.use_ssl = false;
@@ -867,6 +878,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
 		}
 	}
+#endif
 
 	if (server_port_option != 0) {
 		result.config.server_port = server_port_option;
