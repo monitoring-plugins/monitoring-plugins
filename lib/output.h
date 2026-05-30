@@ -66,6 +66,7 @@ mp_output_detail_level mp_get_level_of_detail(void);
 typedef struct mp_check mp_check;
 struct mp_check {
 	char *summary; // Overall summary, if not set a summary will be automatically generated
+	char *ok_summary; // (optional) Summary if the overall state is OK
 	mp_subcheck_list *subchecks;
 
 	// the evaluation_functions computes the state of check
@@ -88,6 +89,7 @@ int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck);
 void mp_add_perfdata_to_subcheck(mp_subcheck check[static 1], mp_perfdata);
 
 void mp_set_summary(mp_check check[static 1], char *summary);
+void mp_set_ok_summary(mp_check check[static 1], char *ok_summary);
 
 mp_state_enum mp_compute_check_state(mp_check);
 mp_state_enum mp_compute_subcheck_state(mp_subcheck);
