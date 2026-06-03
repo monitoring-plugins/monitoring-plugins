@@ -696,6 +696,8 @@ int main(int argc, char *argv[]) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "NTP time synchronisation seems to be working");
+
 	mp_subcheck sc_offset = mp_subcheck_init();
 	offset_request_wrapper offset_result =
 		offset_request(config.server_address, config.port, config.time_offset);

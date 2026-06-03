@@ -708,6 +708,8 @@ int main(int argc, char *argv[]) {
 	const ntp_request_result ntp_res = ntp_request(config);
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "NTP Server seems to be OK");
+
 	mp_subcheck sc_offset = mp_subcheck_init();
 	xasprintf(&sc_offset.output, "offset");
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
