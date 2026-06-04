@@ -171,6 +171,9 @@ int main(int argc, char **argv) {
 #endif
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Radius check is OK");
+
 	mp_subcheck sc_read_config = mp_subcheck_init();
 
 	char *str = strdup("dictionary");
