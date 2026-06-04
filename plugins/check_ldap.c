@@ -428,7 +428,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse number of entries critical threshold");
 			}
 			result.config.entries_thresholds =
-				 mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
+				mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
 		} break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':
