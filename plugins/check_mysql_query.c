@@ -92,6 +92,9 @@ int main(int argc, char **argv) {
 	}
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "MySQL query is OK");
+
 	mp_subcheck sc_connect = mp_subcheck_init();
 
 	/* establish a connection to the server and error checking */
