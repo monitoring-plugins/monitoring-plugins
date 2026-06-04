@@ -83,6 +83,9 @@ int main(int argc, char **argv) {
 	time(&start_time);
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "REAL check is OK");
+
 	mp_subcheck sc_connect = mp_subcheck_init();
 
 	/* try to connect to the host at the given port number */
