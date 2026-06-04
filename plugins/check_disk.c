@@ -162,6 +162,9 @@ int main(int argc, char **argv) {
 	}
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Filesystem checks succeeded");
+
 	if (config.path_select_list.length == 0) {
 		mp_subcheck none_sc = mp_subcheck_init();
 		xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
