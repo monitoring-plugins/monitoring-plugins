@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "Postgres check is OK");
+
 	mp_subcheck sc_connection = mp_subcheck_init();
 
 	if (PQstatus(conn) == CONNECTION_BAD) {
