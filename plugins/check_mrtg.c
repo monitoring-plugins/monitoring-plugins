@@ -72,6 +72,8 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "Values in MRTG log are OK");
+
 	/* open the MRTG log file for reading */
 	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 	FILE *mtrg_log_file = fopen(config.log_file, "r");
