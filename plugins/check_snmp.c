@@ -295,6 +295,8 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "SNMP query is OK");
+
 	if (response.errorcode == OK) {
 		mp_subcheck sc_successfull_query = mp_subcheck_init();
 		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
