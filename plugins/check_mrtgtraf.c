@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
 	}
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Transfer rates in MRTG are OK");
+
 	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 
 	/* open the MRTG log file for reading */
