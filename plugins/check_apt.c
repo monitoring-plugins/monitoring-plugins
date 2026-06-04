@@ -204,6 +204,16 @@ int main(int argc, char **argv) {
 	mp_add_subcheck_to_check(&overall, sc_security_updates);
 	mp_add_subcheck_to_check(&overall, sc_other_updates);
 
+	char *ok_summary = NULL;
+
+	if (packages_available == 0) {
+		ok_summary = "No pending updates";
+	} else {
+		xasprintf(&ok_summary, "%zu pending updates", packages_available);
+	}
+	mp_set_ok_summary(&overall, ok_summary);
+	free(ok_summary);
+
 	mp_exit(overall);
 }
 
