@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
-	mp_set_ok_summary(&overall, "SSH check was succesful");
+	mp_set_ok_summary(&overall, "SSH check was successful");
 
 	/* initialize alarm signal handling */
 	signal(SIGALRM, socket_timeout_alarm_handler);
