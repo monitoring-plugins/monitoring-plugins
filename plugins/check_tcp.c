@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
-	mp_set_ok_summary(&overall, "Connection succeded");
+	mp_set_ok_summary(&overall, "Connection succeeded");
 
 	/* set up the timer */
 	signal(SIGALRM, socket_timeout_alarm_handler);
