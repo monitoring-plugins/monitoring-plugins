@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 	mp_check overall = mp_check_init();
 	mp_subcheck sc_test = check_http(config, working_state, 0);
 
-	mp_set_ok_summary(&overall, "Connection test succeded");
+	mp_set_ok_summary(&overall, "Connection test succeeded");
 
 	mp_add_subcheck_to_check(&overall, sc_test);
 
