@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
-	mp_set_ok_summary(&overall, "DBI check was succesful");
+	mp_set_ok_summary(&overall, "DBI check was successful");
 
 	mp_subcheck sc_connection_time = mp_subcheck_init();
 	sc_connection_time = mp_set_subcheck_default_state(sc_connection_time, STATE_OK);
