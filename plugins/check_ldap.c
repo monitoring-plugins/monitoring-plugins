@@ -98,6 +98,8 @@ int main(int argc, char *argv[]) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "LDAP check succeded");
+
 	LDAP *ldap_connection;
 	/* initialize ldap */
 	{
