@@ -212,7 +212,6 @@ int main(int argc, char **argv) {
 		xasprintf(&ok_summary, "%zu pending updates", packages_available);
 	}
 	mp_set_ok_summary(&overall, ok_summary);
-	free(ok_summary);
 
 	mp_exit(overall);
 }
