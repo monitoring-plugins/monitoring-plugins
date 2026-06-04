@@ -121,6 +121,8 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "Mariadb/MySQL seems to be ok");
+
 	mp_subcheck sc_connection = mp_subcheck_init();
 	/* establish a connection to the server and check for errors */
 	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
