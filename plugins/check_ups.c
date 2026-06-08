@@ -36,6 +36,9 @@ const char *progname = "check_ups";
 const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
+#include "output.h"
+#include "perfdata.h"
+#include "thresholds.h"
 #include "common.h"
 #include "netutils.h"
 #include "utils.h"
@@ -86,264 +89,273 @@ int main(int argc, char **argv) {
 	/* set socket timeout */
 	alarm(socket_timeout);
 
+	mp_check overall = mp_check_init();
+
+	mp_subcheck sc_retrieve_status = mp_subcheck_init();
+
 	/* get the ups status if possible */
 	determine_status_result query_result = determine_status(config);
 	if (query_result.errorcode != OK) {
-		return STATE_CRITICAL;
+		xasprintf(&sc_retrieve_status.output, "%s", "Failed to retrieve status from UPS tools");
+		mp_add_subcheck_to_check(&overall, sc_retrieve_status);
+		mp_exit(overall);
 	}
+
+	xasprintf(&sc_retrieve_status.output, "%s", "Retrieved status from UPS tools");
+	mp_add_subcheck_to_check(&overall, sc_retrieve_status);
 
 	int ups_status_flags = query_result.ups_status;
 	int supported_options = query_result.supported_options;
 
 	// Exit result
-	mp_state_enum result = STATE_UNKNOWN;
-	char *message = NULL;
+	mp_subcheck sc_ups_status = mp_subcheck_init();
 
 	if (supported_options & UPS_STATUS) {
-		char *ups_status = strdup("");
-		result = STATE_OK;
+		mp_state_enum ups_state_result = STATE_OK;
 
 		if (ups_status_flags & UPSSTATUS_OFF) {
-			xasprintf(&ups_status, "Off");
-			result = STATE_CRITICAL;
+			xasprintf(&sc_ups_status.output, "Off");
+			ups_state_result = STATE_CRITICAL;
 		} else if ((ups_status_flags & (UPSSTATUS_OB | UPSSTATUS_LB)) ==
 				   (UPSSTATUS_OB | UPSSTATUS_LB)) {
-			xasprintf(&ups_status, _("On Battery, Low Battery"));
-			result = STATE_CRITICAL;
+			xasprintf(&sc_ups_status.output, _("On Battery, Low Battery"));
+			ups_state_result = STATE_CRITICAL;
 		} else {
 			if (ups_status_flags & UPSSTATUS_OL) {
-				xasprintf(&ups_status, "%s%s", ups_status, _("Online"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _("Online"));
 			}
 			if (ups_status_flags & UPSSTATUS_OB) {
-				xasprintf(&ups_status, "%s%s", ups_status, _("On Battery"));
-				result = max_state(result, STATE_WARNING);
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _("On Battery"));
+				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_LB) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Low Battery"));
-				result = max_state(result, STATE_WARNING);
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Low Battery"));
+				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_CAL) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Calibrating"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Calibrating"));
 			}
 			if (ups_status_flags & UPSSTATUS_RB) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Replace Battery"));
-				result = max_state(result, STATE_WARNING);
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+						  _(", Replace Battery"));
+				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_BYPASS) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", On Bypass"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", On Bypass"));
 				// Bypassing the battery is likely a bad thing
-				result = STATE_CRITICAL;
+				ups_state_result = STATE_CRITICAL;
 			}
 			if (ups_status_flags & UPSSTATUS_OVER) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Overload"));
-				result = max_state(result, STATE_WARNING);
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Overload"));
+				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_TRIM) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Trimming"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Trimming"));
 			}
 			if (ups_status_flags & UPSSTATUS_BOOST) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Boosting"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Boosting"));
 			}
 			if (ups_status_flags & UPSSTATUS_CHRG) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Charging"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Charging"));
 			}
 			if (ups_status_flags & UPSSTATUS_DISCHRG) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Discharging"));
-				result = max_state(result, STATE_WARNING);
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Discharging"));
+				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_ALARM) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", ALARM"));
-				result = STATE_CRITICAL;
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", ALARM"));
+				ups_state_result = STATE_CRITICAL;
 			}
 			if (ups_status_flags & UPSSTATUS_UNKNOWN) {
-				xasprintf(&ups_status, "%s%s", ups_status, _(", Unknown"));
+				xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Unknown"));
 			}
 		}
-		xasprintf(&message, "%sStatus=%s ", message, ups_status);
+		xasprintf(&sc_ups_status.output, "Status: %s", sc_ups_status.output);
+		sc_ups_status = mp_set_subcheck_state(sc_ups_status, ups_state_result);
 	}
 
 	int res;
 	char temp_buffer[MAX_INPUT_BUFFER];
-	char *performance_data = strdup("");
 	/* get the ups utility voltage if possible */
+	mp_subcheck sc_voltage = mp_subcheck_init();
+	sc_voltage = mp_set_subcheck_default_state(sc_voltage, STATE_OK);
 	res = get_ups_variable("input.voltage", temp_buffer, config);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_UTILITY;
 	} else if (res != OK) {
-		return STATE_CRITICAL;
+		sc_voltage = mp_set_subcheck_state(sc_voltage, STATE_CRITICAL);
+		xasprintf(&sc_voltage.output, "%s", "Failed to detect voltage");
+		mp_add_subcheck_to_check(&overall, sc_voltage);
+		mp_exit(overall);
 	} else {
 		supported_options |= UPS_UTILITY;
 
 		double ups_utility_voltage = 0.0;
 		ups_utility_voltage = atof(temp_buffer);
-		xasprintf(&message, "%sUtility=%3.1fV ", message, ups_utility_voltage);
+		xasprintf(&sc_voltage.output, "Utility: %3.1fV", ups_utility_voltage);
 
 		double ups_utility_deviation = 0.0;
-
 		if (ups_utility_voltage > 120.0) {
 			ups_utility_deviation = 120.0 - ups_utility_voltage;
 		} else {
 			ups_utility_deviation = ups_utility_voltage - 120.0;
 		}
+		mp_perfdata pd_voltage_deviation = perfdata_init();
+		pd_voltage_deviation.label = "voltage_deviation";
+		pd_voltage_deviation.uom = "V";
+		pd_voltage_deviation.value = mp_create_pd_value(ups_utility_deviation);
 
-		if (config.check_variable == UPS_UTILITY) {
-			if (config.check_crit && ups_utility_deviation >= config.critical_value) {
-				result = STATE_CRITICAL;
-			} else if (config.check_warn && ups_utility_deviation >= config.warning_value) {
-				result = max_state(result, STATE_WARNING);
-			}
-			xasprintf(&performance_data, "%s",
-					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV",
-							   config.check_warn, (long)(1000 * config.warning_value),
-							   config.check_crit, (long)(1000 * config.critical_value), true, 0,
-							   false, 0));
-		} else {
-			xasprintf(&performance_data, "%s",
-					  perfdata("voltage", (long)(1000 * ups_utility_voltage), "mV", false, 0, false,
-							   0, true, 0, false, 0));
-		}
+		pd_voltage_deviation =
+			mp_pd_set_thresholds(pd_voltage_deviation, config.utility_thresholds);
+		sc_voltage = mp_set_subcheck_state(sc_voltage, mp_get_pd_status(pd_voltage_deviation));
+		mp_add_perfdata_to_subcheck(&sc_voltage, pd_voltage_deviation);
+
+		mp_perfdata pd_voltage = perfdata_init();
+		pd_voltage.label = "voltage";
+		pd_voltage.uom = "V";
+		pd_voltage.value = mp_create_pd_value(ups_utility_voltage);
+		mp_add_perfdata_to_subcheck(&sc_voltage, pd_voltage);
+
+		mp_add_subcheck_to_check(&overall, sc_voltage);
 	}
 
 	/* get the ups battery percent if possible */
+	mp_subcheck sc_battery_charge = mp_subcheck_init();
+	sc_battery_charge = mp_set_subcheck_default_state(sc_battery_charge, STATE_OK);
 	res = get_ups_variable("battery.charge", temp_buffer, config);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_BATTPCT;
 	} else if (res != OK) {
-		return STATE_CRITICAL;
+		sc_battery_charge = mp_set_subcheck_state(sc_battery_charge, STATE_CRITICAL);
+		xasprintf(&sc_battery_charge.output, "%s", "Failed to detect battery charge");
+		mp_add_subcheck_to_check(&overall, sc_battery_charge);
+		mp_exit(overall);
 	} else {
 		supported_options |= UPS_BATTPCT;
 
-		double ups_battery_percent = 0.0;
-		ups_battery_percent = atof(temp_buffer);
-		xasprintf(&message, "%sBatt=%3.1f%% ", message, ups_battery_percent);
+		double ups_battery_percent = atof(temp_buffer);
+		xasprintf(&sc_battery_charge.output, "Battery charge: %3.1f%%", ups_battery_percent);
 
-		if (config.check_variable == UPS_BATTPCT) {
-			if (config.check_crit && ups_battery_percent <= config.critical_value) {
-				result = STATE_CRITICAL;
-			} else if (config.check_warn && ups_battery_percent <= config.warning_value) {
-				result = max_state(result, STATE_WARNING);
-			}
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("battery", (long)ups_battery_percent, "%", config.check_warn,
-							   (long)(config.warning_value), config.check_crit,
-							   (long)(config.critical_value), true, 0, true, 100));
-		} else {
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("battery", (long)ups_battery_percent, "%", false, 0, false, 0, true,
-							   0, true, 100));
-		}
+		mp_perfdata pd_battery_charge = perfdata_init();
+		pd_battery_charge = mp_set_pd_value(pd_battery_charge, ups_battery_percent);
+		pd_battery_charge.label = "battery";
+		pd_battery_charge.uom = "%";
+		pd_battery_charge = mp_pd_set_thresholds(pd_battery_charge, config.battery_thresholds);
+		mp_add_perfdata_to_subcheck(&sc_battery_charge, pd_battery_charge);
+
+		sc_battery_charge =
+			mp_set_subcheck_state(sc_battery_charge, mp_get_pd_status(pd_battery_charge));
+
+		// if (config.check_crit && ups_battery_percent <= config.critical_value) {
+		// } else if (config.check_warn && ups_battery_percent <= config.warning_value) {
+		mp_add_subcheck_to_check(&overall, sc_battery_charge);
 	}
 
 	/* get the ups load percent if possible */
 	res = get_ups_variable("ups.load", temp_buffer, config);
+	mp_subcheck sc_load_percent = mp_subcheck_init();
+	mp_set_subcheck_default_state(sc_load_percent, STATE_OK);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_LOADPCT;
 	} else if (res != OK) {
-		return STATE_CRITICAL;
+		sc_load_percent = mp_set_subcheck_state(sc_load_percent, STATE_CRITICAL);
+		xasprintf(&sc_load_percent.output, "%s", "Failed to detect load");
+		mp_add_subcheck_to_check(&overall, sc_load_percent);
+		mp_exit(overall);
 	} else {
 		supported_options |= UPS_LOADPCT;
 
-		double ups_load_percent = 0.0;
-		ups_load_percent = atof(temp_buffer);
-		xasprintf(&message, "%sLoad=%3.1f%% ", message, ups_load_percent);
+		double ups_load_percent = atof(temp_buffer);
+		xasprintf(&sc_load_percent.output, "Load :%3.1f%% ", ups_load_percent);
 
-		if (config.check_variable == UPS_LOADPCT) {
-			if (config.check_crit && ups_load_percent >= config.critical_value) {
-				result = STATE_CRITICAL;
-			} else if (config.check_warn && ups_load_percent >= config.warning_value) {
-				result = max_state(result, STATE_WARNING);
-			}
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("load", (long)ups_load_percent, "%", config.check_warn,
-							   (long)(config.warning_value), config.check_crit,
-							   (long)(config.critical_value), true, 0, true, 100));
-		} else {
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("load", (long)ups_load_percent, "%", false, 0, false, 0, true, 0,
-							   true, 100));
-		}
+		mp_perfdata pd_load_percent = perfdata_init();
+		pd_load_percent.label = "load";
+		pd_load_percent.uom = "%";
+		pd_load_percent.value = mp_create_pd_value(ups_load_percent);
+		pd_load_percent = mp_pd_set_thresholds(pd_load_percent, config.load_thresholds);
+
+		sc_load_percent = mp_set_subcheck_state(sc_load_percent, mp_get_pd_status(pd_load_percent));
+
+		// if (config.check_crit && ups_load_percent >= config.critical_value) {
+		// } else if (config.check_warn && ups_load_percent >= config.warning_value) {
 	}
 
 	/* get the ups temperature if possible */
 	res = get_ups_variable("ups.temperature", temp_buffer, config);
+	mp_subcheck sc_temperature = mp_subcheck_init();
+	sc_temperature = mp_set_subcheck_default_state(sc_temperature, STATE_OK);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_TEMP;
 	} else if (res != OK) {
-		return STATE_CRITICAL;
+		sc_temperature = mp_set_subcheck_state(sc_temperature, STATE_CRITICAL);
+		xasprintf(&sc_temperature.output, "%s", "Failed to detect temperature");
+		mp_add_subcheck_to_check(&overall, sc_temperature);
+		mp_exit(overall);
 	} else {
 		supported_options |= UPS_TEMP;
 
-		double ups_temperature = 0.0;
-		char *tunits;
+		double ups_temperature = atof(temp_buffer);
+		mp_perfdata pd_temperature = perfdata_init();
+		pd_temperature.label = "temp";
 
 		if (config.temp_output_c) {
-			tunits = "degC";
-			ups_temperature = atof(temp_buffer);
-			xasprintf(&message, "%sTemp=%3.1fC", message, ups_temperature);
+			xasprintf(&sc_temperature.output, "Temperature: %3.1fC", ups_temperature);
+			pd_temperature.uom = "C";
 		} else {
-			tunits = "degF";
-			ups_temperature = (atof(temp_buffer) * 1.8) + 32;
-			xasprintf(&message, "%sTemp=%3.1fF", message, ups_temperature);
+			ups_temperature = (ups_temperature * 1.8) + 32;
+			xasprintf(&sc_temperature.output, "Temperature: %3.1fF", ups_temperature);
+			pd_temperature.uom = "F";
 		}
 
-		if (config.check_variable == UPS_TEMP) {
-			if (config.check_crit && ups_temperature >= config.critical_value) {
-				result = STATE_CRITICAL;
-			} else if (config.check_warn && ups_temperature >= config.warning_value) {
-				result = max_state(result, STATE_WARNING);
-			}
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("temp", (long)ups_temperature, tunits, config.check_warn,
-							   (long)(config.warning_value), config.check_crit,
-							   (long)(config.critical_value), true, 0, false, 0));
-		} else {
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("temp", (long)ups_temperature, tunits, false, 0, false, 0, true, 0,
-							   false, 0));
-		}
+		pd_temperature = mp_set_pd_value(pd_temperature, ups_temperature);
+		pd_temperature = mp_pd_set_thresholds(pd_temperature, config.temperature_thresholds);
+
+		sc_temperature = mp_set_subcheck_state(sc_temperature, mp_get_pd_status(pd_temperature));
+
+		// if (config.check_crit && ups_temperature >= config.critical_value) {
+		// } else if (config.check_warn && ups_temperature >= config.warning_value) {
 	}
 
 	/* get the ups real power if possible */
 	res = get_ups_variable("ups.realpower", temp_buffer, config);
+	mp_subcheck sc_real_power = mp_subcheck_init();
+	sc_real_power = mp_set_subcheck_default_state(sc_real_power, STATE_OK);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_REALPOWER;
 	} else if (res != OK) {
-		return STATE_CRITICAL;
+		sc_real_power = mp_set_subcheck_state(sc_real_power, STATE_CRITICAL);
+		xasprintf(&sc_real_power.output, "%s", "Failed to detect real power");
+		mp_add_subcheck_to_check(&overall, sc_real_power);
+		mp_exit(overall);
 	} else {
 		supported_options |= UPS_REALPOWER;
-		double ups_realpower = 0.0;
-		ups_realpower = atof(temp_buffer);
-		xasprintf(&message, "%sReal power=%3.1fW ", message, ups_realpower);
 
-		if (config.check_variable == UPS_REALPOWER) {
-			if (config.check_crit && ups_realpower >= config.critical_value) {
-				result = STATE_CRITICAL;
-			} else if (config.check_warn && ups_realpower >= config.warning_value) {
-				result = max_state(result, STATE_WARNING);
-			}
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("realpower", (long)ups_realpower, "W", config.check_warn,
-							   (long)(config.warning_value), config.check_crit,
-							   (long)(config.critical_value), true, 0, false, 0));
-		} else {
-			xasprintf(&performance_data, "%s %s", performance_data,
-					  perfdata("realpower", (long)ups_realpower, "W", false, 0, false, 0, true, 0,
-							   false, 0));
-		}
+		double ups_realpower = atof(temp_buffer);
+		xasprintf(&sc_temperature.output, "Real power: %3.1fW ", ups_realpower);
+
+		mp_perfdata pd_real_power = perfdata_init();
+		pd_real_power.label = "realpower";
+		pd_real_power = mp_set_pd_value(pd_real_power, ups_realpower);
+		pd_real_power.uom = "W";
+		pd_real_power = mp_pd_set_thresholds(pd_real_power, config.real_power_thresholds);
+
+		// if (config.check_crit && ups_realpower >= config.critical_value) {
+		// } else if (config.check_warn && ups_realpower >= config.warning_value) {
 	}
 
 	/* if the UPS does not support any options we are looking for, report an
 	 * error */
 	if (supported_options == UPS_NONE) {
-		result = STATE_CRITICAL;
-		xasprintf(&message, _("UPS does not support any available options\n"));
+		mp_subcheck sc_any_option = mp_subcheck_init();
+		sc_any_option = mp_set_subcheck_state(sc_any_option, STATE_CRITICAL);
+		xasprintf(&sc_any_option.output, _("UPS does not support any available options\n"));
+		mp_add_subcheck_to_check(&overall, sc_any_option);
 	}
 
 	/* reset timeout */
 	alarm(0);
 
-	printf("UPS %s - %s|%s\n", state_text(result), message, performance_data);
-	exit(result);
+	mp_exit(overall);
 }
 
 /* determines what options are supported by the UPS */
@@ -502,26 +514,27 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 		return result;
 	}
 
-	int c;
-	for (c = 1; c < argc; c++) {
-		if (strcmp("-to", argv[c]) == 0) {
-			strcpy(argv[c], "-t");
-		} else if (strcmp("-wt", argv[c]) == 0) {
-			strcpy(argv[c], "-w");
-		} else if (strcmp("-ct", argv[c]) == 0) {
-			strcpy(argv[c], "-c");
+	for (int i = 1; i < argc; i++) {
+		if (strcmp("-to", argv[i]) == 0) {
+			strcpy(argv[i], "-t");
+		} else if (strcmp("-wt", argv[i]) == 0) {
+			strcpy(argv[i], "-w");
+		} else if (strcmp("-ct", argv[i]) == 0) {
+			strcpy(argv[i], "-c");
 		}
 	}
 
 	int option = 0;
-	while (1) {
-		c = getopt_long(argc, argv, "hVTH:u:p:v:c:w:t:", longopts, &option);
+	ups_test_type test_selection = UPS_NONE;
+	mp_thresholds tmp_thr = mp_thresholds_init();
+	while (true) {
+		int counter = getopt_long(argc, argv, "hVTH:u:p:v:c:w:t:", longopts, &option);
 
-		if (c == -1 || c == EOF) {
+		if (counter == -1 || counter == EOF) {
 			break;
 		}
 
-		switch (c) {
+		switch (counter) {
 		case '?': /* help */
 			usage5();
 		case 'H': /* hostname */
@@ -545,33 +558,41 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 				usage2(_("Port must be a positive integer"), optarg);
 			}
 			break;
-		case 'c': /* critical time threshold */
+		case 'c': /* critical voltage threshold */
 			if (is_intnonneg(optarg)) {
-				result.config.critical_value = atoi(optarg);
-				result.config.check_crit = true;
+				mp_range_parsed tmp = mp_parse_range_string(optarg);
+				if (tmp.error != MP_PARSING_SUCCESS) {
+					usage2(_("Critical voltage must be a valid range expression"), optarg);
+				} else {
+					tmp_thr = mp_thresholds_set_crit(tmp_thr, tmp.range);
+				}
 			} else {
-				usage2(_("Critical time must be a positive integer"), optarg);
+				usage2(_("Critical voltage must be a positive integer"), optarg);
 			}
 			break;
-		case 'w': /* warning time threshold */
+		case 'w': /* warning voltage threshold */
 			if (is_intnonneg(optarg)) {
-				result.config.warning_value = atoi(optarg);
-				result.config.check_warn = true;
+				mp_range_parsed tmp = mp_parse_range_string(optarg);
+				if (tmp.error != MP_PARSING_SUCCESS) {
+					usage2(_("Warning voltage must be a valid range expression"), optarg);
+				} else {
+					tmp_thr = mp_thresholds_set_warn(tmp_thr, tmp.range);
+				}
 			} else {
-				usage2(_("Warning time must be a positive integer"), optarg);
+				usage2(_("Warning voltage must be a positive integer"), optarg);
 			}
 			break;
 		case 'v': /* variable */
 			if (!strcmp(optarg, "LINE")) {
-				result.config.check_variable = UPS_UTILITY;
+				test_selection = UPS_UTILITY;
 			} else if (!strcmp(optarg, "TEMP")) {
-				result.config.check_variable = UPS_TEMP;
+				test_selection = UPS_TEMP;
 			} else if (!strcmp(optarg, "BATTPCT")) {
-				result.config.check_variable = UPS_BATTPCT;
+				test_selection = UPS_BATTPCT;
 			} else if (!strcmp(optarg, "LOADPCT")) {
-				result.config.check_variable = UPS_LOADPCT;
+				test_selection = UPS_LOADPCT;
 			} else if (!strcmp(optarg, "REALPOWER")) {
-				result.config.check_variable = UPS_REALPOWER;
+				test_selection = UPS_REALPOWER;
 			} else {
 				usage2(_("Unrecognized UPS variable"), optarg);
 			}
@@ -602,6 +623,23 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (result.config.server_address == NULL) {
 		result.config.server_address = strdup("127.0.0.1");
+	}
+
+	switch (test_selection) {
+	case UPS_UTILITY:
+		result.config.utility_thresholds = tmp_thr;
+	case UPS_BATTPCT:
+		result.config.battery_thresholds = tmp_thr;
+	case UPS_LOADPCT:
+		result.config.load_thresholds = tmp_thr;
+	case UPS_REALPOWER:
+		result.config.real_power_thresholds = tmp_thr;
+	case UPS_TEMP:
+		result.config.temperature_thresholds = tmp_thr;
+	case UPS_NONE:
+	case UPS_STATUS:
+	default: {
+	}
 	}
 
 	return validate_arguments(result);
@@ -647,7 +685,10 @@ void print_help(void) {
 	printf("    %s %s\n", _("Valid values for STRING are"),
 		   "LINE, TEMP, BATTPCT, LOADPCT or REALPOWER");
 
-	printf(UT_WARN_CRIT);
+	printf(" %s\n", "-w, --warning");
+	printf("    %s\n", _("Set warning threshold on metric selected via --variable"));
+	printf(" %s\n", "-c, --critical");
+	printf("    %s\n", _("Set critical threshold on metric selected via --variable"));
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
