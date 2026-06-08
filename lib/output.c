@@ -105,6 +105,7 @@ static inline char *fmt_subcheck_perfdata(mp_subcheck check) {
  */
 mp_check mp_check_init(void) {
 	mp_check check = {
+		.ok_summary = NULL,
 		.evaluation_function = &mp_eval_check_default,
 		.default_output_override = NULL,
 		.default_output_override_content = NULL,
@@ -212,6 +213,14 @@ int mp_add_subcheck_to_subcheck(mp_subcheck check[static 1], mp_subcheck subchec
 void mp_set_summary(mp_check check[static 1], char *summary) { check->summary = strdup(summary); }
 
 /*
+ * set the summary for the OK state
+ * this allows to set the content in the first line of the plugin
+ * if the overall state is OK
+ */
+void mp_set_ok_summary(mp_check check[static 1], char *ok_summary) {
+	check->ok_summary = strdup(ok_summary);
+}
+/*
  * Generate the summary string of a mp_check object based on its subchecks
  */
 char *get_subcheck_summary(mp_check check) {
@@ -255,20 +264,11 @@ char *get_subcheck_summary(mp_check check) {
 	}
 
 	if (result == NULL) {
-		if (ok_count > 0) {
+		// Nothing in result yet, we must be in an OK state
+		if (check.ok_summary != NULL) {
+			asprintf(&result, "%s", check.ok_summary);
+		} else if (ok_count > 0) {
 			asprintf(&result, "ok=%d", ok_count);
-		}
-
-		if (warning_count > 0) {
-			asprintf(&result, "%swarning=%d", (result == NULL ? "" : ", "), warning_count);
-		}
-
-		if (critical_count > 0) {
-			asprintf(&result, "%scritical=%d", (result == NULL ? "" : ", "), critical_count);
-		}
-
-		if (unknown_count > 0) {
-			asprintf(&result, "%sunknown=%d", (result == NULL ? "" : ", "), unknown_count);
 		}
 	}
 

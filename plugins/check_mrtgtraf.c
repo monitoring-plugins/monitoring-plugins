@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
 	}
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Transfer rates in MRTG are OK");
+
 	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 
 	/* open the MRTG log file for reading */
@@ -440,7 +443,7 @@ void print_help(void) {
 	printf("\n");
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n", _("- MRTG stands for Multi Router Traffic Grapher. It can be downloaded from"));
-	printf(" %s\n", "  http://ee-staff.ethz.ch/~oetiker/webtools/mrtg/mrtg.html");
+	printf(" %s\n", "  https://oss.oetiker.ch/mrtg/");
 	printf(" %s\n", _("- While MRTG can monitor things other than traffic rates, this"));
 	printf(" %s\n", _("  plugin probably won't work with much else without modification."));
 	printf(" %s\n", _("- The calculated i/o rates are a little off from what MRTG actually"));

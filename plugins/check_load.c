@@ -145,6 +145,12 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
+	char *ok_summary = NULL;
+	xasprintf(&ok_summary, "Load: 1m: %f - 5m: %f - 15m: %f", load_values[0], load_values[1],
+			  load_values[2]);
+	mp_set_ok_summary(&overall, ok_summary);
+	free(ok_summary);
+
 	bool is_using_scaled_load_values = false;
 	long numcpus;
 	if (config.take_into_account_cpus && ((numcpus = GET_NUMBER_OF_CPUS()) > 0)) {
@@ -155,6 +161,11 @@ int main(int argc, char **argv) {
 			load_values[1] / numcpus,
 			load_values[2] / numcpus,
 		};
+
+		xasprintf(&ok_summary, "Scaled Load (%ld CPUs): 1m: %f - 5m: %f - 15m: %f", numcpus,
+				  load_values[0], load_values[1], load_values[2]);
+		mp_set_ok_summary(&overall, ok_summary);
+		free(ok_summary);
 
 		mp_subcheck scaled_load_sc = mp_subcheck_init();
 		scaled_load_sc = mp_set_subcheck_default_state(scaled_load_sc, STATE_OK);
@@ -254,7 +265,7 @@ int main(int argc, char **argv) {
 
 		if (top_proc.errorcode == OK) {
 			// +1 here since the string list contains the header line
-			for (unsigned long i = 0; i < config.n_procs_to_show +1; i++) {
+			for (unsigned long i = 0; i < config.n_procs_to_show + 1; i++) {
 				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 						  top_proc.top_processes[i]);
 			}

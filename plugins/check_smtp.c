@@ -187,6 +187,9 @@ int main(int argc, char **argv) {
 		my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "SMTP connection check is OK");
+
 	mp_subcheck sc_tcp_connect = mp_subcheck_init();
 	char buffer[MAX_INPUT_BUFFER];
 	bool ssl_established = false;

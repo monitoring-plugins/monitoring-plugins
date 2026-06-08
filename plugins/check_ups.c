@@ -91,6 +91,8 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "UPS check is OK");
+
 	mp_subcheck sc_retrieve_status = mp_subcheck_init();
 
 	/* get the ups status if possible */
