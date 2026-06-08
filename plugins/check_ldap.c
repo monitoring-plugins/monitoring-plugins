@@ -238,6 +238,22 @@ int main(int argc, char *argv[]) {
 	/* do a search of all objectclasses in the base dn */
 	{
 		mp_subcheck sc_ldap_search = mp_subcheck_init();
+		/* Validate LDAP filter to prevent injection via unbalanced parentheses */
+		if (config.ld_attr != NULL) {
+			int depth = 0;
+			for (const char *p = config.ld_attr; *p; p++) {
+				if (*p == '(') depth++;
+				else if (*p == ')') depth--;
+				if (depth < 0) break;
+			}
+			if (depth != 0) {
+				xasprintf(&sc_ldap_search.output, "invalid LDAP filter (unbalanced parentheses): %s",
+						  config.ld_attr);
+				sc_ldap_search = mp_set_subcheck_state(sc_ldap_search, STATE_CRITICAL);
+				mp_add_subcheck_to_check(&overall, sc_ldap_search);
+				mp_exit(overall);
+			}
+		}
 		int ldap_error = ldap_search_s(
 			ldap_connection, config.ld_base,
 			(config.entries_thresholds.warning_is_set || config.entries_thresholds.critical_is_set)
@@ -355,7 +371,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 
 	for (int index = 1; index < argc; index++) {
 		if (strcmp("-to", argv[index]) == 0) {
-			strcpy(argv[index], "-t");
+			argv[index][2] = '\0'; /* truncate "-to" to "-t" */
 		}
 	}
 
