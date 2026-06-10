@@ -40,7 +40,6 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-
 void usage(const char *msg) {
 	printf("%s\n", msg);
 	print_usage();

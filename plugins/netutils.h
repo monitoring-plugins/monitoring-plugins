@@ -78,8 +78,8 @@ bool dns_lookup(const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);
 #define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
 #define is_inet_addr(addr)                 resolve_host_or_addr(addr, AF_INET)
-#	define is_inet6_addr(addr) resolve_host_or_addr(addr, AF_INET6)
-#	define is_hostname(addr)   resolve_host_or_addr(addr, address_family)
+#define is_inet6_addr(addr)                resolve_host_or_addr(addr, AF_INET6)
+#define is_hostname(addr)                  resolve_host_or_addr(addr, address_family)
 
 extern unsigned int socket_timeout;
 extern mp_state_enum socket_timeout_state;
@@ -128,7 +128,8 @@ typedef struct {
 	double remaining_seconds;
 	retrieve_expiration_date_errors errors;
 } net_ssl_check_cert_result;
-net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn, unsigned int days_till_exp_crit);
+net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn,
+												 unsigned int days_till_exp_crit);
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);

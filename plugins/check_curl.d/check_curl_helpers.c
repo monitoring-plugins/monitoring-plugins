@@ -222,7 +222,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 
 	bool have_local_resolution = hostname_gets_resolved_locally(working_state);
 	if (verbose >= 1) {
-		printf("* have local name resolution: %s\n", (have_local_resolution ? "true": "false"));
+		printf("* have local name resolution: %s\n", (have_local_resolution ? "true" : "false"));
 	}
 
 	/* enable haproxy protocol */
