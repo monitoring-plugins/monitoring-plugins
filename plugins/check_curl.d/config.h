@@ -118,7 +118,6 @@ typedef struct {
 	bool show_extended_perfdata;
 	bool show_body;
 
-
 	bool output_format_is_set;
 	mp_output_format output_format;
 } check_curl_config;

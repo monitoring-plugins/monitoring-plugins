@@ -65,7 +65,7 @@ mp_output_detail_level mp_get_level_of_detail(void);
  */
 typedef struct mp_check mp_check;
 struct mp_check {
-	char *summary; // Overall summary, if not set a summary will be automatically generated
+	char *summary;    // Overall summary, if not set a summary will be automatically generated
 	char *ok_summary; // (optional) Summary if the overall state is OK
 	mp_subcheck_list *subchecks;
 

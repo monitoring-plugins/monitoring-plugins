@@ -207,9 +207,9 @@ enum {
 
 /* for checking the result of getopt_long */
 #if EOF == -1
-#define CHECK_EOF(c) ((c) == EOF)
+#	define CHECK_EOF(c) ((c) == EOF)
 #else
-#define CHECK_EOF(c) ((c) == -1 || (c) == EOF)
+#	define CHECK_EOF(c) ((c) == -1 || (c) == EOF)
 #endif
 
 #endif /* _COMMON_H_ */

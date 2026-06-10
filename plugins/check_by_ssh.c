@@ -100,8 +100,7 @@ int main(int argc, char **argv) {
 	if (child_result.cmd_error_code == 255 && config.unknown_timeout) {
 		mp_subcheck sc_ssh_execution = mp_subcheck_init();
 		xasprintf(&sc_ssh_execution.output, "SSH connection failed: %s",
-				  child_result.err.lines > 0 ? child_result.err.line[0]
-												: "(no error output)");
+				  child_result.err.lines > 0 ? child_result.err.line[0] : "(no error output)");
 
 		sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_ssh_execution);
