@@ -43,6 +43,7 @@
 #include "thresholds.h"
 #include "check_ntp_time.d/config.h"
 #include <netinet/in.h>
+#include <string.h>
 #include <sys/socket.h>
 
 static int verbose = 0;
@@ -395,7 +396,10 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 			.sun_family = AF_UNIX,
 		};
 
-		strncpy(unix_socket.sun_path, host, strlen(host));
+		if (strlen(host) > sizeof(unix_socket.sun_path)) {
+			die(STATE_UNKNOWN, "host argument is too long (%lu) for a socket path\n", strlen(host));
+		}
+		strncpy(unix_socket.sun_path, host, sizeof(unix_socket.sun_path));
 
 		if (connect(socklist[0], &unix_socket, sizeof(unix_socket))) {
 			/* don't die here, because it is enough if there is one server

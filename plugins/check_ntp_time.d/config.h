@@ -5,6 +5,9 @@
 #include "thresholds.h"
 #include <stddef.h>
 
+/* Time in microseconds to delay between polling to avoid a blocking response. */
+const long default_polling_delay = 500000L;
+
 typedef struct {
 	char *server_address;
 	char *port;
@@ -15,6 +18,7 @@ typedef struct {
 	mp_thresholds offset_thresholds;
 
 	bool output_format_is_set;
+	long poll_delay;
 	mp_output_format output_format;
 } check_ntp_time_config;
 
@@ -29,6 +33,7 @@ check_ntp_time_config check_ntp_time_config_init() {
 		.offset_thresholds = mp_thresholds_init(),
 
 		.output_format_is_set = false,
+		.poll_delay = default_polling_delay,
 	};
 
 	mp_range warning = mp_range_init();
