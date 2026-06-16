@@ -1,5 +1,86 @@
 This file documents the major additions and syntax changes between releases.
 
+3.0.0 16th Jun 2026
+    Codename: Johann Georg Elser
+
+	This release contains a lot of changes (at least at the C side of things),
+	both regarding the code, but also regarding the development itself.
+	There are some breaking changes included, including the deprecation or removal of Plugins.
+
+	Removals
+	* check_nt
+	* check_ntp
+	* check_nwstat
+	* check_overcr
+
+	Deprecations
+	Deprecated plugins are marked as dead but still there since they are
+	in common usage. They will not be developed any further, but patches may get
+	accepted if there is not much effort and a low risk of breaking something.
+	It is recommended to stop using them and they will be removed in a future release
+	* check_http, the replacement is check_curl
+
+	General changes
+	* check_curl is no longer experimental and can be considered stable
+	* check_snmp links directly against net-snmp instead of executing `snmpget` (or `snmpgetnext`)
+	* the vendored version of Gnulib was updated
+	* IPv6 is no longer optional
+	* All of the C plugins were heavily refactored to homongenize the code
+	  * Far less global variables to reduce complexity and side effects
+	  * A more or less common structure to reduce the mental overhead
+	* All of the C code is now formatted with clang-format
+
+	Fixes
+	* multiple plugins
+	  * improved error message for missing certificate
+	  * fixes for compiler warnings
+	  * Compilation on OpenBSD was fixed
+	  * added CHECK_EOF to work around warnings about EOF and -1 being the same
+	  * lots of Typos
+	* check_curl
+	  * fix relative redirects on non-standard port
+	  * raise SSL issue when --continue-after-certificate is used
+	  * Documentation for --certificate, --cookie-jar
+	  * fix help for regex state
+	  * fix OpenSSL SSL_read: error: ... unexpected eof while reading
+	  * update TLS notification notes
+	  * enable internal cookie handling
+	  * Fix sticky redir
+	  * try to be more helpful in check_curls help
+	  * abort redir if location is not found
+	  * old style follow on redirect did miss some parts
+	* check_fping
+	  * Improve handling of IPv4/IPv6 options
+	* check_ssh
+	  * Fix a buffer overflow situation
+	* check_by_ssh
+	  * Ignore output on stderr by default
+	* check_snmp
+	  * Put all privproto/authproto options into help
+	* check_mysql
+	  * Fix replica check on newer versions of MySQL
+
+	Enhancements
+	* multiple plugins
+	  * A new output infrastructure for the C part of the project
+	    * Removes some text formatting complexity from individual plugins
+		* Multi line output is the new default and should make the output better readable
+		* Centralised formatting allows for extenting the output format
+		* Most of the C plugins were migrated to the new system
+      * On OpenBSD some plugins restrict themselves to reduce security risks
+	* check_dig: add -E/--require-flags and -X/--forbid-flags
+	* check_ifstatus: Add -d switch
+	* check_fping
+	  * Add dontfrag / random flags
+	  * Add fwmark option
+	  * Add icmp-timestamp option
+	  * Add check-source option
+	* check_curl
+	  * Add proxy option (similar to `curl`)
+	  * Add selectable timeout return state
+	* check_http
+	  * Add selectable timeout return state
+
 2.4.0 25th Jul 2024
 	FIXES
 	* check_dbi: Compiler warning for uninitialized variable
