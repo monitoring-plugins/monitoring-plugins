@@ -127,9 +127,10 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 										  int crit_days_till_exp);
 char *fmt_url(check_curl_working_state workingState);
 
-/* determine_hostname_resolver determines if the host or the proxy resolves the target hostname
-returns RESOLVE_LOCALLY if requester resolves the hostname locally, RESOLVE_REMOTELY if proxy
-resolves the hostname */
+/* hostname_gets_resolved_locally determines if the host or the proxy resolves the target hostname.
+This depends on proxy schema, forced proxy and noproxy hostnames, wildcarded hostnames, IP addresses
+and IP CIDRs. Returns true if the host resolves the hostname locally, and false if proxy resolves
+the hostname */
 bool hostname_gets_resolved_locally(const check_curl_working_state working_state);
 
 /* Checks if an IP is inside given CIDR region. Using /protocol_size or not specifying the prefix

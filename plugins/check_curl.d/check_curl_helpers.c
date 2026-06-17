@@ -236,7 +236,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL && !have_local_resolution) {
+	if (working_state.use_ssl && working_state.host_name != NULL && have_local_resolution) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
@@ -1418,17 +1418,18 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 		host_name_display = working_state.host_name;
 	}
 
-	/* IPv4 or IPv6 version of the address */
+	/* IPv4 or IPv6 version of the address, this variable saves both */
 	char *server_address_clean = strdup(working_state.server_address);
 	/* server address might be a full length ipv6 address encapsulated in square brackets */
 	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) &&
 		(working_state.server_address[0] == '[') &&
 		(working_state.server_address[strlen(working_state.server_address) - 1] == ']')) {
+		free(server_address_clean);
 		server_address_clean =
 			strndup(working_state.server_address + 1, strlen(working_state.server_address) - 2);
 	}
 
-	/* check curlopt_noproxy option first */
+	/* check curlopt_noproxy option before tyring to understand this function */
 	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
 
 	/* curlopt_noproxy is specified as a comma separated list of
@@ -1448,9 +1449,10 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 			 * effectively disables the proxy. */
 			if (strlen(noproxy_item) == 1 && noproxy_item[0] == '*') {
 				if (verbose >= 1) {
-					printf("* noproxy includes '*' which disables proxy for all host name incl. : "
-						   "%s / server address incl. : %s\n",
-						   host_name_display, server_address_clean);
+					printf(
+						"* noproxy includes '*' which disables proxy for all host name including : "
+						"%s / server address including : %s\n",
+						host_name_display, server_address_clean);
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
@@ -1507,17 +1509,19 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 
 				if (ip_addr_inside_cidr_ret.error == NO_ERROR) {
 					if (ip_addr_inside_cidr_ret.inside) {
+						free(curlopt_noproxy_copy);
+						free(server_address_clean);
 						return true;
 					} else {
 						if (verbose >= 1) {
-							printf("server address: %s is not inside IP cidr: %s\n",
+							printf("server address: %s is not inside IP CIDR: %s\n",
 								   server_address_clean, noproxy_item);
 						}
 					}
 				} else {
 					if (verbose >= 1) {
 						printf("could not fully determine if server address: %s is inside the IP "
-							   "cidr: %s\n",
+							   "CIDR: %s\n",
 							   server_address_clean, noproxy_item);
 					}
 				}
@@ -1602,17 +1606,23 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 		// string identifies. We do not set this value Without a scheme, it is treated as an http
 		// proxy
 
+		if (verbose >= 1) {
+			printf("* proxy scheme is unspecified, and therefore taken as http, proxy: %s resolves "
+				   "host: %s or server_address: %s\n",
+				   working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+
 		return false;
 	}
 
 	if (verbose >= 1) {
-		printf("* proxy scheme is unknown/unavailable, no proxy is assumed for host: %s or "
+		printf("* proxy is unknown/unavailable, no proxy is assumed for host: %s or "
 			   "server_address: %s\n",
 			   host_name_display, server_address_clean);
 	}
 
 	free(server_address_clean);
-	return 0;
+	return true;
 }
 
 ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip) {
@@ -1659,7 +1669,7 @@ ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const cha
 		prefix_length = (int)tmp;
 	} else {
 		if (verbose >= 1) {
-			printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid "
+			printf("cidr_region_or_ip: %s , has %u number of '/' characters, is not a valid "
 				   "cidr_region or IP\n",
 				   cidr_region_or_ip_addr, slash_count);
 		}
