@@ -1429,7 +1429,7 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 			strndup(working_state.server_address + 1, strlen(working_state.server_address) - 2);
 	}
 
-	/* check curlopt_noproxy option before tyring to understand this function */
+	/* check curlopt_noproxy option before trying to understand this function */
 	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
 
 	/* curlopt_noproxy is specified as a comma separated list of
