@@ -89,7 +89,7 @@ Announce new release
     - <announce@monitoring-plugins.org>
     - <help@monitoring-plugins.org> (set `Reply-To:` to this one)
 
-- Ask the social media department to announce the release on Twitter :-)
+- Ask the social media department to announce the release :-)
 
 If you want to mention the number of contributors in the announcement:
 
