@@ -183,7 +183,11 @@ int main(int argc, char **argv) {
 	mp_add_perfdata_to_subcheck(&sc_value, pd_query_result);
 
 	sc_value = mp_set_subcheck_state(sc_value, mp_get_pd_status(pd_query_result));
-	xasprintf(&sc_value.output, "'%s' returned '%f'", config.sql_query, value);
+	if (config.queryname != NULL) {
+		xasprintf(&sc_value.output, "query '%s' returned '%f'", config.queryname, value);
+	} else {
+		xasprintf(&sc_value.output, "query '%s' returned '%f'", config.sql_query, value);
+	}
 
 	mp_add_subcheck_to_check(&overall, sc_value);
 
@@ -194,6 +198,7 @@ int main(int argc, char **argv) {
 check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
 		output_format_index = CHAR_MAX + 1,
+		queryname_index,
 	};
 
 	static struct option longopts[] = {{"hostname", required_argument, 0, 'H'},
@@ -211,6 +216,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
 									   {"output-format", required_argument, 0, output_format_index},
+									   {"queryname", required_argument, 0, queryname_index},
 									   {0, 0, 0, 0}};
 
 	check_mysql_query_config_wrapper result = {
@@ -305,6 +311,9 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.output_format = parser.output_format;
 			break;
 		}
+		case queryname_index: {
+			result.config.queryname = optarg;
+		}
 		}
 	}
 
@@ -350,6 +359,9 @@ void print_help(void) {
 	printf(UT_EXTRA_OPTS);
 	printf(" -q, --query=STRING\n");
 	printf("    %s\n", _("SQL query to run. Only first column in first row will be read"));
+	printf("     --queryname\n");
+	printf("    %s\n", _("A name for the query, this string is used instead of the query"));
+
 	printf(UT_WARN_CRIT_RANGE);
 	printf(UT_HOST_PORT, 'P', myport);
 	printf(" %s\n", "-s, --socket=STRING");
