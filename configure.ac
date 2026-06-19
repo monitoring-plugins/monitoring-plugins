@@ -1445,6 +1445,19 @@ else
 	AC_MSG_WARN([Get smbclient from Samba.org to monitor SMB shares])
 fi
 
+AC_PATH_PROG(PATH_TO_NETSNMPCONFIG,net-snmp-config)
+AC_ARG_WITH(netsnmpconfig_command,
+            ACX_HELP_STRING([--with-net-snmp-config-command=PATH],
+                            [sets path to net-snmp-config]),
+            PATH_TO_NETSNMPCONFIG=$withval)
+if test -n "$PATH_TO_NETSNMPCONFIG"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_NETSNMPCONFIG,"$PATH_TO_NETSNMPCONFIG",[path to net-snmp-config binary])
+	EXTRAS="$EXTRAS check_snmp"
+else
+	AC_MSG_WARN([Install net-snmp-config to build check_snmp])
+fi
+
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
 AC_ARG_WITH(snmpget_command,
             ACX_HELP_STRING([--with-snmpget-command=PATH],
