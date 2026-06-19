@@ -483,9 +483,9 @@ int main(int argc, char **argv) {
 	if (config.authtype != NULL) {
 		mp_subcheck sc_auth = mp_subcheck_init();
 
-		// set sucess values here, failure will be set below
+		// set success values here, failure will be set below
 		sc_auth = mp_set_subcheck_default_state(sc_auth, STATE_OK);
-		xasprintf(&sc_auth.output, "Login succeded");
+		xasprintf(&sc_auth.output, "Login succeeded");
 
 		if (strcmp(config.authtype, "LOGIN") == 0) {
 			char *abuf;
