@@ -474,6 +474,8 @@ int main(int argc, char **argv) {
 				xasprintf(&sc_expected_responses.output, "regexec execute error: %s", errbuf);
 				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_UNKNOWN);
 			}
+
+			mp_add_subcheck_to_check(&overall, sc_expected_responses);
 		}
 		counter++;
 	}
