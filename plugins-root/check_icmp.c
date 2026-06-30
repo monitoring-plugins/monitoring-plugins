@@ -411,7 +411,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 			switch (arg) {
 			case 'b': {
 				long size = strtol(optarg, NULL, 0);
-				if ((unsigned long)size >= (sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
+				if (size >= (long)(sizeof(struct icmp) + sizeof(struct icmp_ping_data)) &&
 					size < MAX_PING_DATA) {
 					result.config.icmp_data_size = (unsigned short)size;
 				} else {
