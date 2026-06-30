@@ -1926,18 +1926,21 @@ static get_threshold_wrapper get_threshold(char *str, check_icmp_threshold thres
 	}
 
 	/* pointer magic slims code by 10 lines. i is bof-stop on stupid libc's */
-	bool is_at_last_char = false;
-	char *tmp = &str[strlen(str) - 1];
-	while (tmp != &str[1]) {
-		if (*tmp == '%') {
-			*tmp = '\0';
-		} else if (*tmp == ',' && is_at_last_char) {
-			*tmp = '\0'; /* reset it so get_timevar(str) works nicely later */
-			result.threshold.pl = (unsigned char)strtoul(tmp + 1, NULL, 0);
-			break;
+	size_t len = strlen(str);
+	if (len >= 2) {
+		bool is_at_last_char = false;
+		char *tmp = &str[len - 1];
+		while (tmp != &str[1]) {
+			if (*tmp == '%') {
+				*tmp = '\0';
+			} else if (*tmp == ',' && is_at_last_char) {
+				*tmp = '\0'; /* reset it so get_timevar(str) works nicely later */
+				result.threshold.pl = (unsigned char)strtoul(tmp + 1, NULL, 0);
+				break;
+			}
+			is_at_last_char = true;
+			tmp--;
 		}
-		is_at_last_char = true;
-		tmp--;
 	}
 
 	get_timevar_wrapper parsed_time = get_timevar(str);
