@@ -630,14 +630,19 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 	switch (test_selection) {
 	case UPS_UTILITY:
 		result.config.utility_thresholds = tmp_thr;
+		break;
 	case UPS_BATTPCT:
 		result.config.battery_thresholds = tmp_thr;
+		break;
 	case UPS_LOADPCT:
 		result.config.load_thresholds = tmp_thr;
+		break;
 	case UPS_REALPOWER:
 		result.config.real_power_thresholds = tmp_thr;
+		break;
 	case UPS_TEMP:
 		result.config.temperature_thresholds = tmp_thr;
+		break;
 	case UPS_NONE:
 	case UPS_STATUS:
 	default: {
