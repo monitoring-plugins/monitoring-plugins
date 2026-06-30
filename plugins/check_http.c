@@ -42,6 +42,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "netutils.h"
 #include "utils.h"
 #include <ctype.h>
+#include "states.h"
 
 #define STICKY_NONE 0
 #define STICKY_HOST 1
@@ -113,6 +114,7 @@ static bool display_html = false;
 static char **http_opt_headers;
 static int http_opt_headers_count = 0;
 static int onredirect = STATE_OK;
+static bool onredirect_dependent = false;
 static int followsticky = STICKY_NONE;
 static bool use_ssl = false;
 static bool use_sni = false;
@@ -425,11 +427,14 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* onredirect */
 			if (!strcmp(optarg, "stickyport")) {
-				onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST | STICKY_PORT;
+				 followsticky = STICKY_HOST | STICKY_PORT;
+				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "sticky")) {
-				onredirect = STATE_DEPENDENT, followsticky = STICKY_HOST;
+				 followsticky = STICKY_HOST;
+				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "follow")) {
-				onredirect = STATE_DEPENDENT, followsticky = STICKY_NONE;
+				 followsticky = STICKY_NONE;
+				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "unknown")) {
 				onredirect = STATE_UNKNOWN;
 			} else if (!strcmp(optarg, "ok")) {
@@ -1298,7 +1303,7 @@ int check_http(void) {
 		/* check redirected page if specified */
 		else if (http_status >= 300) {
 
-			if (onredirect == STATE_DEPENDENT) {
+			if (onredirect_dependent) {
 				redir(header, status_line);
 			} else {
 				result = max_state_alt(onredirect, result);
