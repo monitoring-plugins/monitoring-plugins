@@ -361,6 +361,9 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				enforced_ai_family = AF_INET6;
 				break;
 			case 'H': {
+				if (result.config.number_of_hosts == USHRT_MAX) {
+					usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
+				}
 				result.config.number_of_hosts++;
 				break;
 			}
@@ -378,6 +381,9 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	char **tmp = &argv[optind];
 	while (*tmp) {
+		if (result.config.number_of_hosts == USHRT_MAX) {
+			usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
+		}
 		result.config.number_of_hosts++;
 		tmp++;
 	}
