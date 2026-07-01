@@ -8,12 +8,12 @@ ifeq ($(DOCBOOK_XSL),)
 $(error Could not find DocBook XSL stylesheet; install docbook-xsl)
 endif
 
-developer-guidelines.html: developer-guidelines.xml developer-guidelines.css
+developer-guidelines.html: developer-guidelines.xml developer-guidelines.css customization.xsl
 	xsltproc --nonet \
 		--stringparam html.stylesheet developer-guidelines.css \
 		--stringparam section.autolabel 1 \
 		-o developer-guidelines.html \
-		$(DOCBOOK_XSL) \
+		customization.xsl \
 		developer-guidelines.xml
 
 clean:
