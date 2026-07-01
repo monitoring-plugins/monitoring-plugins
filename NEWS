@@ -1,6 +1,11 @@
 This file documents the major additions and syntax changes between releases.
 
 3.0.1 1st July 2026
+	Codename: Mileva Marić
+
+	This release fixes a potential local privilege escalation vulnerability
+	in 'check_icmp' which was introduced in 3.0.0.
+
 	FIXES
 	* check_icmp
 	  * Reject more than 65535 target hosts to prevent a buffer overflow
@@ -9,6 +14,19 @@ This file documents the major additions and syntax changes between releases.
 	    threshold is given
 	  * Reject negative ICMP data length (-b) to prevent a buffer overflow
 	    when building the ICMP packet
+	* check_curl
+	  * Populate the DNS cache when resolving locally instead of remotely
+	  * other smaller improvements
+	* check_mysql_query
+	  * Add option '--queryname' to replace the actual query in output
+	* check_mysql:
+	  * Fix casing of the MariaDB string
+
+	* General
+	  * if the net-snmp library is not available at compile time 'check_snmp' will not be build
+	    but the build itself will not fail.
+		This reproduces the behaviour before 3.0.0, where the lack of 'snmpget' caused
+		'check_snmp' to be removed from build targets
 
 3.0.0 16th Jun 2026
     Codename: Johann Georg Elser
