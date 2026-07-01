@@ -47,8 +47,6 @@ monitoring_plugin *this_monitoring_plugin = NULL;
 mp_state_enum timeout_state = STATE_CRITICAL;
 unsigned int timeout_interval = DEFAULT_SOCKET_TIMEOUT;
 
-bool _np_state_read_file(FILE *state_file);
-
 void np_init(char *plugin_name, int argc, char **argv) {
 	if (this_monitoring_plugin == NULL) {
 		this_monitoring_plugin = calloc(1, sizeof(monitoring_plugin));
