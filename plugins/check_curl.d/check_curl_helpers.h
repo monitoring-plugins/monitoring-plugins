@@ -122,7 +122,6 @@ void cleanup(check_curl_global_state global_state);
 bool expected_statuscode(const char *reply, const char *statuscodes);
 char *string_statuscode(int major, int minor);
 
-void test_file(char *path);
 mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_till_exp,
 										  int crit_days_till_exp);
 char *fmt_url(check_curl_working_state workingState);
