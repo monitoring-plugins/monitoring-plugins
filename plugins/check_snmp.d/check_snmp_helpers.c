@@ -896,7 +896,10 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 char *_np_state_generate_key(int argc, char **argv) {
 	unsigned char result[256];
 
-#ifdef USE_OPENSSL
+#if HAVE_SSL
+	(void)argc;
+	(void)argv;
+#	ifdef USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
 	 * scenario). Alternatively, the gnulib implementation/
@@ -911,7 +914,7 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	EVP_DigestFinal(ctx, result, NULL);
-#else
+#	else
 
 	struct sha256_ctx ctx;
 
@@ -920,7 +923,8 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	sha256_finish_ctx(&ctx, result);
-#endif // FOUNDOPENSSL
+#	endif // USE_OPENSSL
+#endif     // HAVE_SSL
 
 	char keyname[41];
 	for (int i = 0; i < 20; ++i) {

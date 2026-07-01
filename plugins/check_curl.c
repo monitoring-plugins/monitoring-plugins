@@ -253,6 +253,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	// can be done Check_http tries to check certs as early as possible, and exits with certificate
 	// check result by default. Behave similarly.
 #ifdef LIBCURL_FEATURE_SSL
+#	ifdef HAVE_SSL
 	if (workingState.use_ssl && config.check_cert) {
 		if (verbose > 1) {
 			printf("* adding a subcheck for the certificate\n");
@@ -269,6 +270,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 			return sc_result;
 		}
 	}
+#	endif
 #endif
 
 	mp_subcheck sc_curl = mp_subcheck_init();
@@ -1919,7 +1921,8 @@ time_t parse_cert_date(const char *s) {
 #endif     /* LIBCURL_FEATURE_SSL */
 
 #ifdef LIBCURL_FEATURE_SSL
-#	ifndef MOPL_USE_OPENSSL
+#	if HAVE_SSL
+#		ifndef MOPL_USE_OPENSSL
 /* TODO: this needs cleanup in the sslutils.c, maybe we the #else case to
  * OpenSSL could be this function
  */
@@ -2056,5 +2059,6 @@ int net_noopenssl_check_certificate(cert_ptr_union *cert_ptr, int days_till_exp_
 	}
 	return status;
 }
-#	endif /* MOPL_USE_OPENSSL */
-#endif     /* LIBCURL_FEATURE_SSL */
+#		endif /* MOPL_USE_OPENSSL */
+#	endif     // HAVE_SSL
+#endif         /* LIBCURL_FEATURE_SSL */
