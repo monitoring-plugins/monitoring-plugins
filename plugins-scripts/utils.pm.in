@@ -27,7 +27,7 @@ $PATH_TO_SNMPGET = "@PATH_TO_SNMPGET@";
 
 ## common variables
 $TIMEOUT = 15;
-%ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
+%ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3);
 
 ## utility subroutines
 sub print_revision ($$) {

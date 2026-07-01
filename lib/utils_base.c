@@ -402,8 +402,6 @@ const char *state_text(mp_state_enum result) {
 		return "WARNING";
 	case STATE_CRITICAL:
 		return "CRITICAL";
-	case STATE_DEPENDENT:
-		return "DEPENDENT";
 	default:
 		return "UNKNOWN";
 	}
