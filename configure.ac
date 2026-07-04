@@ -598,7 +598,7 @@ dnl Checks for header files.
 dnl
 
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h syslog.h uio.h errno.h sys/time.h sys/socket.h sys/un.h sys/poll.h)
+AC_CHECK_HEADERS(signal.h syslog.h uio.h errno.h sys/time.h sys/socket.h sys/un.h poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h)
 AC_CHECK_HEADERS_ONCE([sys/time.h])
 
