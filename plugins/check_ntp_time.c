@@ -401,7 +401,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 		}
 		strncpy(unix_socket.sun_path, host, sizeof(unix_socket.sun_path));
 
-		if (connect(socklist[0], &unix_socket, sizeof(unix_socket))) {
+		if (connect(socklist[0], (struct sockaddr *)&unix_socket, sizeof(unix_socket))) {
 			/* don't die here, because it is enough if there is one server
 			   answering in time. This also would break for dual ipv4/6 stacked
 			   ntp servers when the client only supports on of them.
