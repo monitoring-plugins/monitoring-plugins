@@ -3,9 +3,9 @@
 #include "./config.h"
 #include <net-snmp/library/asn1.h>
 
-check_snmp_test_unit check_snmp_test_unit_init();
+check_snmp_test_unit check_snmp_test_unit_init(void);
 int check_snmp_set_thresholds(const char *, check_snmp_test_unit[], size_t, bool);
-check_snmp_config check_snmp_config_init();
+check_snmp_config check_snmp_config_init(void);
 
 typedef struct {
 	oid oid[MAX_OID_LEN];
@@ -48,24 +48,28 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 										   check_snmp_state_entry prev_state,
 										   bool have_previous_state);
 
-#define NP_STATE_FORMAT_VERSION 1
+#define CHECK_SNMP_STATE_FORMAT_VERSION 1
 
-typedef struct state_data_struct {
+typedef struct {
 	time_t time;
 	void *data;
 	size_t length; /* Of binary data */
 	int errorcode;
 } state_data;
 
-typedef struct state_key_struct {
+typedef struct {
 	char *name;
 	char *plugin_name;
 	int data_version;
 	char *_filename;
-	state_data *state_data;
+	state_data state_data;
 } state_key;
 
-state_data *np_state_read(state_key stateKey);
-state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
-						  int argc, char **argv);
-void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToStore);
+typedef struct {
+	int errorcode;
+	state_data data;
+} check_snmp_state_read_wrapper;
+check_snmp_state_read_wrapper check_snmp_state_read(state_key stateKey);
+state_key check_snmp_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+								  int argc, const char **argv);
+void check_snmp_state_write_string(state_key stateKey, time_t timestamp, const char *stringToStore);

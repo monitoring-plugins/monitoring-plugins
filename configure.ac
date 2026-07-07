@@ -184,7 +184,7 @@ if test "$enable_libtap" = "yes" ; then
 	EXTRA_TEST="test_utils test_tcp test_cmd test_base64"
 	AC_SUBST(EXTRA_TEST)
 
-	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk"
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk tests/test_check_snmp"
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
