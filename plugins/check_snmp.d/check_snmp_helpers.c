@@ -213,9 +213,9 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 
 	// We got the the query results, now process them
 	size_t loop_index = 0;
-	for (netsnmp_variable_list *vars = response->variables; vars;
+	for (netsnmp_variable_list *vars = response->variables;
+		 (vars && loop_index <= parameters.num_of_test_units);
 		 vars = vars->next_variable, loop_index++) {
-
 		for (size_t jdx = 0; jdx < vars->name_length; jdx++) {
 			result.response_values[loop_index].oid[jdx] = vars->name[jdx];
 		}
