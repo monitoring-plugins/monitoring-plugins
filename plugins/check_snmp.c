@@ -302,6 +302,14 @@ int main(int argc, char **argv) {
 		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
 		sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_successfull_query);
+	} else if (response.number_of_results != config.snmp_params.num_of_test_units) {
+		mp_subcheck sc_strange_query_result = mp_subcheck_init();
+		xasprintf(&sc_strange_query_result.output,
+				  "SNMP query returned %zu results, but %zu were requested",
+				  response.number_of_results, config.snmp_params.num_of_test_units);
+		sc_strange_query_result = mp_set_subcheck_state(sc_strange_query_result, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_strange_query_result);
+		mp_exit(overall);
 	} else {
 		// Error treatment here, either partial or whole
 		mp_subcheck sc_failed_query = mp_subcheck_init();

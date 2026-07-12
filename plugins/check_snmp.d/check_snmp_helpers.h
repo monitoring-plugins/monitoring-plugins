@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
 	int errorcode;
 	response_value *response_values;
+	size_t number_of_results;
 } snmp_responces;
 snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters);
 
