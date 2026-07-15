@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 	time_t end_time;
 	{
 		mp_subcheck sc_options_request = mp_subcheck_init();
-		mp_state_enum options_result = STATE_OK;
+
 		/* make sure we find the response we are looking for */
 		if (!strstr(recv_buffer, config.server_expect)) {
 			if (config.server_port == PORT) {
@@ -163,41 +163,45 @@ int main(int argc, char **argv) {
 						  "invalid REAL response received from host on port %d",
 						  config.server_port);
 			}
-		} else {
-			/* else we got the REAL string, so check the return code */
-			time(&end_time);
+			sc_options_request = mp_set_subcheck_state(sc_options_request, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_options_request);
+			// Exit early here, not much sense in continuing
+			mp_exit(overall);
+		}
 
+		/* we got the REAL string, so check the return code */
+		time(&end_time);
+
+		mp_state_enum options_result = STATE_OK;
+
+		char *status_line = strtok(recv_buffer, "\n");
+		xasprintf(&sc_options_request.output, "status line: %s", status_line);
+
+		if (strstr(status_line, "200")) {
 			options_result = STATE_OK;
-
-			char *status_line = strtok(recv_buffer, "\n");
-			xasprintf(&sc_options_request.output, "status line: %s", status_line);
-
-			if (strstr(status_line, "200")) {
-				options_result = STATE_OK;
-			}
-			/* client errors options_result in a warning state */
-			else if (strstr(status_line, "400")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "401")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "402")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "403")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "404")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "500")) {
-				/* server errors options_result in a critical state */
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "501")) {
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "502")) {
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "503")) {
-				options_result = STATE_CRITICAL;
-			} else {
-				options_result = STATE_UNKNOWN;
-			}
+		}
+		/* client errors options_result in a warning state */
+		else if (strstr(status_line, "400")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "401")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "402")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "403")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "404")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "500")) {
+			/* server errors options_result in a critical state */
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "501")) {
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "502")) {
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "503")) {
+			options_result = STATE_CRITICAL;
+		} else {
+			options_result = STATE_UNKNOWN;
 		}
 
 		sc_options_request = mp_set_subcheck_state(sc_options_request, options_result);
