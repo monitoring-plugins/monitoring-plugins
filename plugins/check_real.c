@@ -138,7 +138,8 @@ int main(int argc, char **argv) {
 	}
 
 	/* watch for the REAL connection string */
-	char recv_buffer[MAX_INPUT_BUFFER];
+	char recv_buffer[MAX_INPUT_BUFFER] = {};
+	recv_buffer[MAX_INPUT_BUFFER - 1] = '\0';
 	ssize_t received_bytes = recv(socket, recv_buffer, MAX_INPUT_BUFFER - 1, 0);
 
 	/* return a CRITICAL status if we couldn't read any data */
@@ -248,6 +249,8 @@ int main(int argc, char **argv) {
 			mp_exit(overall);
 		}
 
+		// clear receive buffer
+		memset(recv_buffer, '\0', MAX_INPUT_BUFFER);
 		/* watch for the REAL connection string */
 		ssize_t recv_bytes = recv(socket, recv_buffer, MAX_INPUT_BUFFER - 1, 0);
 		if (recv_bytes == -1) {
