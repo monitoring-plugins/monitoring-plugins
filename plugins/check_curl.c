@@ -683,14 +683,33 @@ int uri_strcmp(const UriTextRangeA range, const char *stringToCompare) {
 				   min((size_t)(range.afterLast - range.first), strlen(stringToCompare)));
 }
 
-char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
+typedef struct {
+	char *uri_string;
+	int errorcode;
+} uri_string_wrapper;
+uri_string_wrapper uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
+	uri_string_wrapper result = {
+		.uri_string = NULL,
+		.errorcode = 0,
+	};
+
 	if (!range.first) {
-		return "(null)";
+		result.errorcode = 1;
+		return result;
 	}
-	strncpy(buf, range.first, max(buflen - 1, (size_t)(range.afterLast - range.first)));
-	buf[max(buflen - 1, (size_t)(range.afterLast - range.first))] = '\0';
+
+	size_t copy_size = range.afterLast - range.first;
+	if (copy_size > buflen - 1) {
+		result.errorcode = 2;
+		return result;
+	}
+
+	strncpy(buf, range.first, copy_size);
+	buf[copy_size] = '\0';
 	buf[range.afterLast - range.first] = '\0';
-	return buf;
+	result.uri_string = buf;
+
+	return result;
 }
 
 redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config config,
@@ -738,9 +757,9 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	char ipstr[INET_ADDR_MAX_SIZE];
 	char buf[DEFAULT_BUFFER_SIZE];
 	if (verbose >= 2) {
-		printf(_("** scheme: %s\n"), uri_string(uri.scheme, buf, DEFAULT_BUFFER_SIZE));
-		printf(_("** host: %s\n"), uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE));
-		printf(_("** port: %s\n"), uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE));
+		printf(_("** scheme: %s\n"), uri_string(uri.scheme, buf, DEFAULT_BUFFER_SIZE).uri_string);
+		printf(_("** host: %s\n"), uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE).uri_string);
+		printf(_("** port: %s\n"), uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		if (uri.hostData.ip4) {
 			inet_ntop(AF_INET, uri.hostData.ip4->data, ipstr, sizeof(ipstr));
 			printf(_("** IPv4: %s\n"), ipstr);
@@ -753,15 +772,16 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			printf(_("** path: "));
 			for (UriPathSegmentA *path_segment = uri.pathHead; path_segment;
 				 path_segment = path_segment->next) {
-				printf("/%s", uri_string(path_segment->text, buf, DEFAULT_BUFFER_SIZE));
+				printf("/%s", uri_string(path_segment->text, buf, DEFAULT_BUFFER_SIZE).uri_string);
 			}
 			puts("");
 		}
 		if (uri.query.first) {
-			printf(_("** query: %s\n"), uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE));
+			printf(_("** query: %s\n"), uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		}
 		if (uri.fragment.first) {
-			printf(_("** fragment: %s\n"), uri_string(uri.fragment, buf, DEFAULT_BUFFER_SIZE));
+			printf(_("** fragment: %s\n"),
+				   uri_string(uri.fragment, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		}
 	}
 
@@ -774,7 +794,14 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	 */
 	int new_port;
 	if (uri.portText.first) {
-		new_port = atoi(uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE));
+		uri_string_wrapper port_copy = uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE);
+
+		if (port_copy.errorcode != 0) {
+			die(STATE_UNKNOWN,
+				_("HTTP UNKNOWN - Error while parsing the new port from redirection\n"));
+		}
+
+		new_port = atoi(port_copy.uri_string);
 	} else {
 		new_port = HTTP_PORT;
 		if (working_state.use_ssl) {
@@ -798,7 +825,11 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			uri_string(uri.scheme, "https", DEFAULT_BUFFER_SIZE);
 		}
 	} else {
-		new_host = strdup(uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE));
+		uri_string_wrapper new_host_parse = uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE);
+		if (new_host_parse.errorcode != 0) {
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing new host in redir\n"));
+		}
+		new_host = strdup(new_host_parse.uri_string);
 	}
 
 	/* compose new path */
@@ -808,8 +839,14 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		for (UriPathSegmentA *pathSegment = uri.pathHead; pathSegment;
 			 pathSegment = pathSegment->next) {
 			strncat(new_url, "/", DEFAULT_BUFFER_SIZE);
-			strncat(new_url, uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE),
-					DEFAULT_BUFFER_SIZE - 1);
+
+			uri_string_wrapper new_url_copy =
+				uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE);
+			if (new_url_copy.errorcode != 0) {
+				die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing new url in redir\n"));
+			}
+
+			strncat(new_url, new_url_copy.uri_string, DEFAULT_BUFFER_SIZE - 1);
 		}
 	}
 
@@ -822,7 +859,12 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		size_t current_len = strlen(new_url);
 		size_t remaining_space = DEFAULT_BUFFER_SIZE - current_len - 1;
 
-		const char *query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		uri_string_wrapper query_string_copy = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		if (query_string_copy.errorcode != 0) {
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing redir url stuff"));
+		}
+
+		const char *query_str = query_string_copy.uri_string;
 		size_t query_str_len = strlen(query_str);
 
 		if (remaining_space >= query_str_len + 1) {
