@@ -174,7 +174,7 @@ typedef struct dhcp_packet_struct {
 	unsigned char chaddr[MAX_DHCP_CHADDR_LENGTH]; /* hardware address of this machine */
 	char sname[MAX_DHCP_SNAME_LENGTH];            /* name of DHCP server */
 	char file[MAX_DHCP_FILE_LENGTH];              /* boot file name (used for diskless booting?) */
-	char options[MAX_DHCP_OPTIONS_LENGTH];        /* options */
+	uint8_t options[MAX_DHCP_OPTIONS_LENGTH];     /* options */
 } dhcp_packet;
 
 typedef struct dhcp_offer_struct {
@@ -914,17 +914,23 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 	dhcp_offer *new_offer;
 	struct in_addr serv_ident = {0};
 	/* process all DHCP options present in the packet */
-	for (int dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+	for (size_t dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+		/* get option type */
+		dhcp_options_type option_type = offer_packet->options[dchp_opt_idx++];
 
-		if ((int)offer_packet->options[dchp_opt_idx] == -1) {
+		// End parsing when we find the end option
+		if (option_type == DHCP_OPTION_END) {
 			break;
 		}
 
-		/* get option type */
-		unsigned option_type = offer_packet->options[dchp_opt_idx++];
+		// Padding octet
+		if (option_type == DHCP_OPTION_PADDING) {
+			dchp_opt_idx++;
+			continue;
+		}
 
-		/* get option length */
-		unsigned option_length = offer_packet->options[dchp_opt_idx++];
+		/* neither padding nor end, get option length */
+		uint8_t option_length = offer_packet->options[dchp_opt_idx++];
 
 		if (verbose) {
 			printf("Option: %d (0x%02X)\n", option_type, option_length);
@@ -950,14 +956,13 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 			memcpy(&serv_ident.s_addr, &offer_packet->options[dchp_opt_idx],
 				   sizeof(serv_ident.s_addr));
 			break;
+		default: {
+			// not handled
+		}
 		}
 
 		/* skip option data we're ignoring */
-		if (option_type == 0) { /* "pad" option, see RFC 2132 (3.1) */
-			dchp_opt_idx += 1;
-		} else {
-			dchp_opt_idx += option_length;
-		}
+		dchp_opt_idx += option_length;
 	}
 
 	if (verbose) {
