@@ -126,6 +126,39 @@ static long mac_addr_dlpi(const char *, int, u_char *);
 #define MAX_DHCP_FILE_LENGTH    128
 #define MAX_DHCP_OPTIONS_LENGTH 312
 
+// RFC 2131
+// 0                   1                   2                   3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+// +---------------+---------------+---------------+---------------+
+// |                            xid (4)                            |
+// +-------------------------------+-------------------------------+
+// |           secs (2)            |           flags (2)           |
+// +-------------------------------+-------------------------------+
+// |                          ciaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          yiaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          siaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          giaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          chaddr  (16)                         |
+// |                                                               |
+// |                                                               |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          sname   (64)                         |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          file    (128)                        |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          options (variable)                   |
+// +---------------------------------------------------------------+
+
 typedef struct dhcp_packet_struct {
 	uint8_t op;            /* packet type */
 	uint8_t htype;         /* type of hardware address for this machine (Ethernet, etc) */
@@ -154,26 +187,33 @@ typedef struct dhcp_offer_struct {
 	struct dhcp_offer_struct *next;
 } dhcp_offer;
 
-#define BOOTREQUEST 1
-#define BOOTREPLY   2
+typedef enum {
+	BOOTREQUEST = 1,
+	BOOTREPLY = 2,
+} dhcp_packet_op;
 
-#define DHCPDISCOVER 1
-#define DHCPOFFER    2
-#define DHCPREQUEST  3
-#define DHCPDECLINE  4
-#define DHCPACK      5
-#define DHCPNACK     6
-#define DHCPRELEASE  7
+typedef enum {
+	DHCPDISCOVER = 1,
+	DHCPOFFER = 2,
+	DHCPREQUEST = 3,
+	DHCPDECLINE = 4,
+	DHCPACK = 5,
+	DHCPNACK = 6,
+	DHCPRELEASE = 7,
+} dhcp_message_type;
 
-#define DHCP_OPTION_MESSAGE_TYPE      53
-#define DHCP_OPTION_HOST_NAME         12
-#define DHCP_OPTION_BROADCAST_ADDRESS 28
-#define DHCP_OPTION_REQUESTED_ADDRESS 50
-#define DHCP_OPTION_LEASE_TIME        51
-#define DHCP_OPTION_SERVER_IDENTIFIER 54
-#define DHCP_OPTION_RENEWAL_TIME      58
-#define DHCP_OPTION_REBINDING_TIME    59
-#define DHCP_OPTION_END               255
+typedef enum {
+	DHCP_OPTION_PADDING = 0,
+	DHCP_OPTION_MESSAGE_TYPE = 53,
+	DHCP_OPTION_HOST_NAME = 12,
+	DHCP_OPTION_BROADCAST_ADDRESS = 28,
+	DHCP_OPTION_REQUESTED_ADDRESS = 50,
+	DHCP_OPTION_LEASE_TIME = 51,
+	DHCP_OPTION_SERVER_IDENTIFIER = 54,
+	DHCP_OPTION_RENEWAL_TIME = 58,
+	DHCP_OPTION_REBINDING_TIME = 59,
+	DHCP_OPTION_END = 255,
+} dhcp_options_type;
 
 #define DHCP_INFINITE_TIME 0xFFFFFFFF
 
