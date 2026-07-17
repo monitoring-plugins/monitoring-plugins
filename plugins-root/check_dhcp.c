@@ -969,17 +969,17 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 		if (dhcp_lease_time == DHCP_INFINITE_TIME) {
 			printf(_("Lease Time: Infinite\n"));
 		} else {
-			printf(_("Lease Time: %lu seconds\n"), (unsigned long)dhcp_lease_time);
+			printf(_("Lease Time: %" PRIu32 " seconds\n"), dhcp_lease_time);
 		}
 		if (dhcp_renewal_time == DHCP_INFINITE_TIME) {
 			printf(_("Renewal Time: Infinite\n"));
 		} else {
-			printf(_("Renewal Time: %lu seconds\n"), (unsigned long)dhcp_renewal_time);
+			printf(_("Renewal Time: %" PRIu32 " seconds\n"), dhcp_renewal_time);
 		}
 		if (dhcp_rebinding_time == DHCP_INFINITE_TIME) {
 			printf(_("Rebinding Time: Infinite\n"));
 		}
-		printf(_("Rebinding Time: %lu seconds\n"), (unsigned long)dhcp_rebinding_time);
+		printf(_("Rebinding Time: %" PRIu32 " seconds\n"), dhcp_rebinding_time);
 	}
 
 	new_offer = (dhcp_offer *)malloc(sizeof(dhcp_offer));
