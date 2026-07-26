@@ -1,5 +1,18 @@
 This file documents the major additions and syntax changes between releases.
 
+3.0.2 26th July 2026
+	Codename: Sophie Germain
+
+	This release fixes four potential security issue where plugins
+	network functionality did not react well to malicious responses.
+	These plugins are:
+	  - check_real
+	  - check_dhcp
+	  - check_snmp
+	  - check_curl
+
+	Additionally there are some small fixes for some compiler warnings
+
 3.0.1 1st July 2026
 	Codename: Mileva Marić
 
