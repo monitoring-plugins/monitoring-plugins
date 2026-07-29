@@ -125,6 +125,7 @@ NP-VERSION-FILE
 /lib/tests/test_cmd
 /lib/tests/test_tcp
 /lib/tests/test_utils
+/lib/tests/test_generic_output
 /lib/tests/utils_base.Po
 /lib/tests/utils_cmd.Po
 /lib/tests/utils_disk.Po
