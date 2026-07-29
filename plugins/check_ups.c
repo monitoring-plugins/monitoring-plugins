@@ -653,7 +653,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 check_ups_config_wrapper validate_arguments(check_ups_config_wrapper config_wrapper) {
-	if (config_wrapper.config.ups_name) {
+	if (config_wrapper.config.ups_name == NULL) {
 		printf("%s\n", _("Error : no UPS indicated"));
 		config_wrapper.errorcode = ERROR;
 	}
