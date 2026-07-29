@@ -736,7 +736,7 @@ mp_state_enum mp_eval_unknown(mp_check overall) {
 
 static int mp_compare_state(mp_state_enum first, mp_state_enum second) {
 	switch (first) {
-	case STATE_OK:
+	case STATE_OK: {
 		switch (second) {
 		case STATE_OK:
 			return 0;
@@ -745,34 +745,45 @@ static int mp_compare_state(mp_state_enum first, mp_state_enum second) {
 		case STATE_CRITICAL:
 			return 1;
 		}
-	case STATE_WARNING:
-		switch (second) {
-		case STATE_OK:
-			return -1;
-		case STATE_WARNING:
-			return 0;
-		case STATE_UNKNOWN:
-		case STATE_CRITICAL:
-			return 1;
-		}
-	case STATE_UNKNOWN:
-		switch (second) {
-		case STATE_OK:
-		case STATE_WARNING:
-			return -1;
-		case STATE_UNKNOWN:
-			return 0;
-		case STATE_CRITICAL:
-			return 1;
-		}
-	case STATE_CRITICAL:
-		switch (second) {
-		case STATE_OK:
-		case STATE_WARNING:
-		case STATE_UNKNOWN:
-			return -1;
-		case STATE_CRITICAL:
-			return 0;
-		}
+		break;
 	}
+	case STATE_WARNING: {
+		switch (second) {
+		case STATE_OK:
+			return -1;
+		case STATE_WARNING:
+			return 0;
+		case STATE_UNKNOWN:
+		case STATE_CRITICAL:
+			return 1;
+		}
+		break;
+	}
+	case STATE_UNKNOWN: {
+		switch (second) {
+		case STATE_OK:
+		case STATE_WARNING:
+			return -1;
+		case STATE_UNKNOWN:
+			return 0;
+		case STATE_CRITICAL:
+			return 1;
+		}
+		break;
+	}
+	case STATE_CRITICAL: {
+		switch (second) {
+		case STATE_OK:
+		case STATE_WARNING:
+		case STATE_UNKNOWN:
+			return -1;
+		case STATE_CRITICAL:
+			return 0;
+		}
+		break;
+	}
+	}
+
+	// should not be reachable, but silences a compiler warning
+	return 0;
 }
