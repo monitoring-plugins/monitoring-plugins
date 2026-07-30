@@ -51,12 +51,10 @@ Installation Instructions
 2.  Run the configure script to initialize variables and create a Makefile,
     etc.
 
-    	./configure --prefix=BASEDIRECTORY --with-cgiurl=SOMEURL
+    	./configure --prefix=BASEDIRECTORY
 
     Replace `BASEDIRECTORY` with the path of the directory under which your
-    monitoring system is installed (default is `/usr/local`), and replace
-    `SOMEURL` with the path used to access the monitoring system CGIs with a
-    web browser (default is `/nagios/cgi-bin`).
+    monitoring system is installed (default is `/usr/local`).
 
 3.  Compile the plugins with the following command:
 

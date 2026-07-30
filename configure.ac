@@ -64,15 +64,6 @@ AC_SUBST(WARRANTY)
 SUPPORT="Send email to help@monitoring-plugins.org if you have questions regarding use\nof this software. To submit patches or suggest improvements, send email to\ndevel@monitoring-plugins.org. Please include version information with all\ncorrespondence (when possible, use output from the --version option of the\nplugin itself).\n"
 AC_SUBST(SUPPORT)
 
-dnl CGIURL has changed for Nagios with 1.0 beta
-AC_ARG_WITH(cgiurl,
-	ACX_HELP_STRING([--with-cgiurl=DIR],
-		[sets URL for cgi programs]),
-	with_cgiurl=$withval,
-	with_cgiurl=/nagios/cgi-bin)
-CGIURL="$with_cgiurl"
-AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
-
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
 		[sets trusted path for executables called by scripts]),
@@ -1965,7 +1956,6 @@ ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[extra-opts])
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([enable],[perl-modules])
-ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
 ACX_FEATURE([with],[libcurl])
