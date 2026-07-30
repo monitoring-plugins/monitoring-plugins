@@ -660,7 +660,6 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 
 	unsigned long command_size = 0;
 	unsigned long response_size = 0;
-	bool implicit_tls = false;
 	int server_port_option = 0;
 	while (true) {
 		int opt_index =
@@ -792,8 +791,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 #else
 			usage(_("SSL support not available - install OpenSSL and recompile"));
 #endif
-			implicit_tls = true;
-			// fallthrough
+			break;
 		case 's':
 			/* ssl */
 			result.config.use_ssl = true;
@@ -864,11 +862,12 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.use_starttls && result.config.use_ssl) {
-		if (implicit_tls) {
-			result.config.use_ssl = false;
-		} else {
-			usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
-		}
+		usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
+	}
+
+	if (!result.config.use_starttls && !result.config.use_ssl &&
+		(result.config.days_till_exp_crit != 0 || result.config.days_till_exp_warn != 0)) {
+		usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
 	}
 
 	if (server_port_option != 0) {

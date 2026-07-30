@@ -53,7 +53,7 @@ typedef struct {
 	mp_output_format output_format;
 } check_smtp_config;
 
-check_smtp_config check_smtp_config_init() {
+check_smtp_config check_smtp_config_init(void) {
 	check_smtp_config tmp = {
 		.server_port = SMTP_PORT,
 		.server_address = NULL,
