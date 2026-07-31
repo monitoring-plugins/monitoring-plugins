@@ -638,10 +638,11 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				config.snmp_params.snmp_session.securityAuthProto = usmAESPrivProtocol;
 				config.snmp_params.snmp_session.securityAuthProtoLen =
 					OID_LENGTH(usmAESPrivProtocol);
-				// } else if (strcasecmp("AES128", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
-				// / OID_LENGTH(oid);
+// } else if (strcasecmp("AES128", optarg)) {
+// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
+// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
+// / OID_LENGTH(oid);
+#ifdef HAVE_USM_AES_PRIV_PROTOCOL
 			} else if (strcasecmp("AES192", optarg) == 0) {
 				config.snmp_params.snmp_session.securityAuthProto = usmAES192PrivProtocol;
 				config.snmp_params.snmp_session.securityAuthProtoLen =
@@ -650,19 +651,20 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				config.snmp_params.snmp_session.securityAuthProto = usmAES256PrivProtocol;
 				config.snmp_params.snmp_session.securityAuthProtoLen =
 					OID_LENGTH(usmAES256PrivProtocol);
-				// } else if (strcasecmp("AES192Cisco", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES192CiscoPrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityAuthProto =
-				// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+// } else if (strcasecmp("AES192Cisco", optarg)) {
+// 	config.snmp_session.securityAuthProto = usmAES192CiscoPrivProtocol;
+// 	config.snmp_session.securityAuthProtoLen =
+// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityAuthProto =
+// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityAuthProtoLen =
+// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityAuthProto
+// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
+// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityAuthProto
+// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
+// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+#endif
 			} else {
 				die(STATE_UNKNOWN, "Unknown privacy protocol");
 			}

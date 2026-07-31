@@ -1495,6 +1495,16 @@ AC_COMPILE_IFELSE(
 	[]
 )
 
+dnl Check whether Blumentahl AES encryption is available (might not on Gentoo on probably others)
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <net-snmp/net-snmp-config.h>
+                #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmAES192PrivProtocol;]]
+	)],
+	[AC_DEFINE(HAVE_USM_AES_PRIV_PROTOCOL,1,Define whether we have AES Privacy Protocol)],
+	[]
+)
+
 AC_PATH_PROG(PATH_TO_QUAKESTAT,quakestat)
 AC_PATH_PROG(PATH_TO_QSTAT,qstat)
 AC_ARG_WITH(qstat_command,
