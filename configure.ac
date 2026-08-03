@@ -1658,7 +1658,7 @@ then
 
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %lu %*d %lu"]
+		ac_cv_swap_format=["%*s %lf %*d %lf"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
