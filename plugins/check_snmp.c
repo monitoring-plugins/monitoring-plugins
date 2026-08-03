@@ -514,8 +514,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	size_t eval_counter = 0;
 	size_t unitv_counter = 0;
 	size_t labels_counter = 0;
-	unsigned char *authpasswd = NULL;
-	unsigned char *privpasswd = NULL;
+	char *authpasswd = NULL;
+	char *privpasswd = NULL;
 	int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 	char *port = NULL;
 	char *miblist = NULL;
@@ -628,50 +628,52 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case 'x': /* priv protocol */
 			if (strcasecmp("DES", optarg) == 0) {
 #ifdef HAVE_USM_DES_PRIV_PROTOCOL
-				config.snmp_params.snmp_session.securityAuthProto = usmDESPrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmDESPrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmDESPrivProtocol);
 #else
 				die(STATE_UNKNOWN, "DES Privacy Protocol not available on this platform");
 #endif
 			} else if (strcasecmp("AES", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAESPrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAESPrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAESPrivProtocol);
-				// } else if (strcasecmp("AES128", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
-				// / OID_LENGTH(oid);
+// } else if (strcasecmp("AES128", optarg)) {
+// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
+// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
+// / OID_LENGTH(oid);
+#ifdef HAVE_USM_AES_PRIV_PROTOCOL
 			} else if (strcasecmp("AES192", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAES192PrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAES192PrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAES192PrivProtocol);
 			} else if (strcasecmp("AES256", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAES256PrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAES256PrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAES256PrivProtocol);
-				// } else if (strcasecmp("AES192Cisco", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES192CiscoPrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityAuthProto =
-				// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+// } else if (strcasecmp("AES192Cisco", optarg)) {
+// 	config.snmp_session.securityPrivProto = usmAES192CiscoPrivProtocol;
+// 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityPrivProto =
+// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityPrivProto
+// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityPrivProto
+// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+#endif
 			} else {
 				die(STATE_UNKNOWN, "Unknown privacy protocol");
 			}
 			break;
 		case 'A': /* auth passwd */
-			authpasswd = (unsigned char *)optarg;
+			authpasswd = optarg;
 			break;
 		case 'X': /* priv passwd */
-			privpasswd = (unsigned char *)optarg;
+			privpasswd = optarg;
 			break;
 		case 'e':
 		case 'E':
@@ -938,34 +940,42 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (config.snmp_params.snmp_session.securityLevel) {
 		case SNMP_SEC_LEVEL_AUTHPRIV: {
-			if (authpasswd == NULL) {
-				die(STATE_UNKNOWN,
-					"No authentication passphrase was given, but authorization was requested");
+			// privacy
+			if (privpasswd == NULL) {
+				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
 			}
-			// auth and priv
-			int priv_key_generated = generate_Ku(
-				config.snmp_params.snmp_session.securityPrivProto,
-				(unsigned int)config.snmp_params.snmp_session.securityPrivProtoLen, authpasswd,
-				strlen((const char *)authpasswd), config.snmp_params.snmp_session.securityPrivKey,
-				&config.snmp_params.snmp_session.securityPrivKeyLen);
+
+			config.snmp_params.snmp_session.securityPrivKeyLen = USM_PRIV_KU_LEN;
+			size_t tmp_strlen = strlen(privpasswd);
+
+			int priv_key_generated =
+				generate_Ku(config.snmp_params.snmp_session.securityAuthProto,
+							(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen,
+							(const unsigned char *)privpasswd, tmp_strlen,
+							config.snmp_params.snmp_session.securityPrivKey,
+							&config.snmp_params.snmp_session.securityPrivKeyLen);
 
 			if (priv_key_generated != SNMPERR_SUCCESS) {
-				die(STATE_UNKNOWN, "Failed to generate privacy key");
+				die(STATE_UNKNOWN, "Failed to generate privacy key\n");
 			}
 		}
 		// fall through
 		case SNMP_SEC_LEVEL_AUTHNOPRIV: {
-			if (privpasswd == NULL) {
-				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
+			// authentication
+			if (authpasswd == NULL) {
+				die(STATE_UNKNOWN,
+					"No authentication passphrase was given, but authentication was requested");
 			}
-			int auth_key_generated = generate_Ku(
-				config.snmp_params.snmp_session.securityAuthProto,
-				(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen, privpasswd,
-				strlen((const char *)privpasswd), config.snmp_params.snmp_session.securityAuthKey,
-				&config.snmp_params.snmp_session.securityAuthKeyLen);
+			config.snmp_params.snmp_session.securityAuthKeyLen = USM_AUTH_KU_LEN;
+			int auth_key_generated =
+				generate_Ku(config.snmp_params.snmp_session.securityAuthProto,
+							(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen,
+							(const unsigned char *)authpasswd, strlen(authpasswd),
+							config.snmp_params.snmp_session.securityAuthKey,
+							&config.snmp_params.snmp_session.securityAuthKeyLen);
 
 			if (auth_key_generated != SNMPERR_SUCCESS) {
-				die(STATE_UNKNOWN, "Failed to generate privacy key");
+				die(STATE_UNKNOWN, "Failed to generate authentication key\n");
 			}
 		} break;
 		case SNMP_SEC_LEVEL_NOAUTH:
