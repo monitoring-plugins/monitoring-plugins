@@ -1,0 +1,102 @@
+---
+name: Tests on other Unixes
+
+# Build and run the self-contained unit tests on the Unixes that
+# configure.ac has explicit support for but that GitHub does not offer as a
+# hosted runner. Each job boots a QEMU VM via the vmactions actions.
+#
+# These jobs deliberately do NOT run the top level "make test": that suite
+# needs a full service zoo (apache, squid, slapd, mariadb, postfix, snmpd,
+# sshd, ...) which .github/prepare_debian.sh sets up only for the Linux job.
+# What is exercised here is the autotools bootstrap, the C build of every
+# plugin, and the standalone libtap unit tests under lib/tests.
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+jobs:
+  freebsd:
+    name: Running build and unit tests on FreeBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v7
+      - name: Build and test in a FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            pkg install -y autoconf automake gmake
+          run: |
+            set -e
+            uname -a
+            tools/setup
+            ./configure --enable-libtap
+            gmake
+            cd lib && gmake test
+
+  openbsd:
+    name: Running build and unit tests on OpenBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v7
+      - name: Build and test in an OpenBSD VM
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          # OpenBSD carries about eighteen parallel autoconf packages and a
+          # dozen automake ones, so pkg_add needs an exact version and the
+          # metaauto wrappers then dispatch on AUTO*_VERSION. Both are
+          # resolved at run time -- the newest the mirror offers, and the
+          # version read back off the binary that pkg_add installed -- so
+          # nothing here needs revisiting when the next release lands.
+          prepare: |
+            set -e
+            newest() {
+              pkg_info -Q "$1" | grep -E "^$1-[0-9]" | sort -V | tail -1
+            }
+            pkg_add -I "$(newest autoconf)" "$(newest automake)" gmake
+          run: |
+            set -e
+            AUTOCONF_VERSION=$(ls /usr/local/bin/autoconf-* | sed 's:.*/autoconf-::' | sort -V | tail -1)
+            AUTOMAKE_VERSION=$(ls /usr/local/bin/automake-* | sed 's:.*/automake-::' | sort -V | tail -1)
+            export AUTOCONF_VERSION AUTOMAKE_VERSION
+            echo "autoconf $AUTOCONF_VERSION, automake $AUTOMAKE_VERSION"
+            uname -a
+            tools/setup
+            ./configure --enable-libtap
+            gmake
+            cd lib && gmake test
+
+  netbsd:
+    name: Running build and unit tests on NetBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v7
+      - name: Build and test in a NetBSD VM
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            /usr/sbin/pkg_add -u autoconf automake gmake perl
+          run: |
+            set -e
+            uname -a
+            tools/setup
+            ./configure --enable-libtap
+            gmake
+            cd lib && gmake test
