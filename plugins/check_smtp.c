@@ -474,6 +474,8 @@ int main(int argc, char **argv) {
 				xasprintf(&sc_expected_responses.output, "regexec execute error: %s", errbuf);
 				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_UNKNOWN);
 			}
+
+			mp_add_subcheck_to_check(&overall, sc_expected_responses);
 		}
 		counter++;
 	}
@@ -481,9 +483,12 @@ int main(int argc, char **argv) {
 	if (config.authtype != NULL) {
 		mp_subcheck sc_auth = mp_subcheck_init();
 
+		// set success values here, failure will be set below
+		sc_auth = mp_set_subcheck_default_state(sc_auth, STATE_OK);
+		xasprintf(&sc_auth.output, "Login succeeded");
+
 		if (strcmp(config.authtype, "LOGIN") == 0) {
 			char *abuf;
-			int ret;
 			do {
 				/* send AUTH LOGIN */
 				my_send(config, SMTP_AUTH_LOGIN, strlen(SMTP_AUTH_LOGIN), socket_descriptor,
@@ -493,8 +498,8 @@ int main(int argc, char **argv) {
 					printf(_("sent %s\n"), "AUTH LOGIN");
 				}
 
-				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-									 ssl_established)) <= 0) {
+				if ((recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+							   ssl_established)) <= 0) {
 					xasprintf(&sc_auth.output, _("recv() failed after AUTH LOGIN"));
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_WARNING);
 					break;
@@ -518,8 +523,8 @@ int main(int argc, char **argv) {
 					printf(_("sent %s\n"), abuf);
 				}
 
-				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-									 ssl_established)) <= 0) {
+				if ((recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+							   ssl_established)) <= 0) {
 					xasprintf(&sc_auth.output, "recv() failed after sending authuser");
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
 					break;
@@ -544,8 +549,8 @@ int main(int argc, char **argv) {
 					printf(_("sent %s\n"), abuf);
 				}
 
-				if ((ret = recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
-									 ssl_established)) <= 0) {
+				if ((recvlines(config, buffer, MAX_INPUT_BUFFER, socket_descriptor,
+							   ssl_established)) <= 0) {
 					xasprintf(&sc_auth.output, "recv() failed after sending authpass");
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
 					break;
