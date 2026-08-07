@@ -1,5 +1,39 @@
 This file documents the major additions and syntax changes between releases.
 
+3.0.3 7th August 2026
+	Codename: Gabriele Tergit
+
+	This release fixes another security problem which allowed a local
+	privilege escalation if an administrator modified the sudoers
+	rules to get check_mailq to work.
+	Since sudo is not strictly necessary (the MTAs allow access to mail
+	queue information via users/groups), the option to use sudo was
+	disabled in check_mailq.
+
+	FIXES:
+	* check_smtp:
+	  * Trying to use authentication resulted in an UNKNOWN state
+	    if the authentication succeeded. It returns OK again now.
+	  * The port logic in SMTP was a bit broken. When the order
+	    of cli parameters was wrong, the wrong port was used for
+		either direct TLS or STARTTLS when using the certificate
+		lifetime option (-D). The default port is now directly
+		taken from --ssl/--starttls and one of these has to be
+		selected explicitly.
+	* check_swap
+	  * On FreeBSD information about swap usage was not detected
+	    correctly (it was assumed that swap was disabled).
+		It should work now as expected again.
+	* check_snmp:
+	  * On Gentoo builds would fail to due a certain net-snmp
+	    configuration. This should be fixed and check_snmp
+		offers the options which net-snmp on that system has
+	  * SNMPv3 authentication and privacy was broken since 3.0.0
+	    This should be fixed now.
+	* check_ups
+	  * Since 3.0.0 there were some new bugs which reduced the utility
+	    significantly. Those were fixed.
+
 3.0.2 26th July 2026
 	Codename: Sophie Germain
 
