@@ -19,6 +19,10 @@ on:
         description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
         required: false
         default: false
+  push:
+    branches:
+      - '*'
+  pull_request:
 
 jobs:
   freebsd:
