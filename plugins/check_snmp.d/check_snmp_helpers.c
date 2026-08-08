@@ -127,7 +127,7 @@ check_snmp_config check_snmp_config_init() {
 	snmp_sess_init(&tmp.snmp_params.snmp_session);
 
 	tmp.snmp_params.snmp_session.retries = DEFAULT_RETRIES;
-	tmp.snmp_params.snmp_session.version = DEFAULT_SNMP_VERSION;
+	tmp.snmp_params.snmp_session.version = SNMP_VERSION_3;
 	tmp.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
 	tmp.snmp_params.snmp_session.community = (unsigned char *)"public";
 	tmp.snmp_params.snmp_session.community_len = strlen("public");
