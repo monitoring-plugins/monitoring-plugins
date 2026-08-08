@@ -45,6 +45,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <time.h>
 
 static int verbose = 0;
 
@@ -331,7 +332,8 @@ typedef struct {
 	mp_state_enum offset_result;
 	double offset;
 } offset_request_wrapper;
-static offset_request_wrapper offset_request(const char *host, const char *port, int time_offset) {
+static offset_request_wrapper offset_request(const char *host, const char *port, int time_offset,
+											 const struct timespec poll_delay) {
 	/* setup hints to only return results from getaddrinfo that we'd like */
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -458,6 +460,14 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 					printf("sending request to peer %zu\n", i);
 				}
 				setup_request(&req[i]);
+
+				// Delay sending a request to avoid triggering flooding mechanisms
+				struct timespec remainder = {};
+				int sleep_ret = nanosleep(&poll_delay, &remainder);
+				while (sleep_ret != 0) {
+					sleep_ret = nanosleep(&remainder, &remainder);
+				}
+
 				write(socklist[i], &req[i], sizeof(ntp_message));
 				servers[i].waiting = now_time;
 				break;
@@ -477,7 +487,6 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 				if (verbose) {
 					printf("response from peer %zu: ", i);
 				}
-
 				read(ufds[i].fd, &req[i], sizeof(ntp_message));
 
 				struct timeval recv_time;
@@ -488,6 +497,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 				if (verbose) {
 					printf("offset %.10g\n", servers[i].offset[respnum]);
 				}
+
 				servers[i].stratum = req[i].stratum;
 				servers[i].rtdisp = NTP32asDOUBLE(req[i].rtdisp);
 				servers[i].rtdelay = NTP32asDOUBLE(req[i].rtdelay);
@@ -548,6 +558,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 
 	enum {
 		output_format_index = CHAR_MAX + 1,
+		polling_delay_index,
 	};
 
 	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
@@ -562,6 +573,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {"timeout", required_argument, 0, 't'},
 									   {"hostname", required_argument, 0, 'H'},
 									   {"port", required_argument, 0, 'p'},
+									   {"poll-delay", required_argument, 0, polling_delay_index},
 									   {"output-format", required_argument, 0, output_format_index},
 									   {0, 0, 0, 0}};
 
@@ -640,6 +652,17 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		case 'o':
 			result.config.time_offset = atoi(optarg);
 			break;
+		case polling_delay_index:
+			long tmp_time = (long)(1.0e9 * atof(optarg));
+			if (tmp_time < 0 || tmp_time > MAX_POLL) {
+				usage2(_("Invalid time"), optarg);
+			} else {
+				DBG(printf("Polling delay: %lu\n", tmp_time));
+
+				result.config.poll_delay.tv_sec = (tmp_time / 1000'000'000);
+				result.config.poll_delay.tv_nsec = (tmp_time % 1000'000'000);
+			}
+			break;
 		case '4':
 			address_family = AF_INET;
 			break;
@@ -704,7 +727,7 @@ int main(int argc, char *argv[]) {
 
 	mp_subcheck sc_offset = mp_subcheck_init();
 	offset_request_wrapper offset_result =
-		offset_request(config.server_address, config.port, config.time_offset);
+		offset_request(config.server_address, config.port, config.time_offset, config.poll_delay);
 
 	if (offset_result.offset_result == STATE_UNKNOWN) {
 		sc_offset =
@@ -756,6 +779,8 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
 	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
+	printf(" %s\n", " --poll-delay=DELAY");
+	printf("    %s\n", _("Delay between polling to avoid KOD response (seconds, 0.0 to 5.0)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
 	printf(UT_OUTPUT_FORMAT);
