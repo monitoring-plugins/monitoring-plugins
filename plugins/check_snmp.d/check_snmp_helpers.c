@@ -127,7 +127,7 @@ check_snmp_config check_snmp_config_init() {
 	snmp_sess_init(&tmp.snmp_params.snmp_session);
 
 	tmp.snmp_params.snmp_session.retries = DEFAULT_RETRIES;
-	tmp.snmp_params.snmp_session.version = DEFAULT_SNMP_VERSION;
+	tmp.snmp_params.snmp_session.version = SNMP_VERSION_3;
 	tmp.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
 	tmp.snmp_params.snmp_session.community = (unsigned char *)"public";
 	tmp.snmp_params.snmp_session.community_len = strlen("public");
@@ -898,7 +898,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 char *_np_state_generate_key(int argc, char **argv) {
 	unsigned char result[256];
 
-#ifdef USE_OPENSSL
+#ifdef MOPL_USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
 	 * scenario). Alternatively, the gnulib implementation/
@@ -922,7 +922,7 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	sha256_finish_ctx(&ctx, result);
-#endif // FOUNDOPENSSL
+#endif // MOPL_USE_OPENSSL
 
 	char keyname[41];
 	for (int i = 0; i < 20; ++i) {
