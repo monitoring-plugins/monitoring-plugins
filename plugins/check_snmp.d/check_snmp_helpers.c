@@ -898,7 +898,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 char *_np_state_generate_key(int argc, char **argv) {
 	unsigned char result[256];
 
-#ifdef USE_OPENSSL
+#ifdef MOPL_USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
 	 * scenario). Alternatively, the gnulib implementation/
@@ -922,7 +922,7 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	sha256_finish_ctx(&ctx, result);
-#endif // FOUNDOPENSSL
+#endif // MOPL_USE_OPENSSL
 
 	char keyname[41];
 	for (int i = 0; i < 20; ++i) {
