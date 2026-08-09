@@ -42,12 +42,12 @@ VN=$(expr "$VN" : v*'\(.*\)')
 
 if test -r $NPVF
 then
-	VC=$(sed -e 's/^NP_VERSION = //' <$NPVF)
+	VC=$(sed -e 's/^MOPL_VERSION = //' <$NPVF)
 else
 	VC=unset
 fi
 test "$VN" = "$VC" || {
-	echo >&2 "NP_VERSION = $VN"
-	echo "NP_VERSION = $VN" >$NPVF
+	echo >&2 "MOPL_VERSION = $VN"
+	echo "MOPL_VERSION = $VN" >$NPVF
 }
 
