@@ -467,7 +467,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 
 		case 'c': /* critical range */ {
@@ -638,7 +638,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 

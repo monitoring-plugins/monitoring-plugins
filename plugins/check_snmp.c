@@ -481,7 +481,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 
 		default:
@@ -538,7 +538,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose */
 			verbose++;
@@ -1031,7 +1031,7 @@ char *get_next_argument(char *str) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 

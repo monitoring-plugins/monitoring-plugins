@@ -293,7 +293,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
 			host_or_die(optarg);
@@ -388,7 +388,7 @@ void print_help(void) {
 
 	xasprintf(&myport, "%d", DEFAULT_PORT);
 
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf(COPYRIGHT, copyright, email);

@@ -119,7 +119,7 @@ sub print_usage () {
 
 sub print_help ()
 {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME,'@MOPL_VERSION@');
 	print "Copyright (c) 2000 Richard Mayhew/Karl DeBisschop
 
 Perl Check IRCD plugin for monitoring
@@ -164,7 +164,7 @@ MAIN:
 		"H=s" => \$opt_H,  "hostname=s" => \$opt_H);
 
 	if ($opt_V) {
-		print_revision($PROGNAME,'@NP_VERSION@');
+		print_revision($PROGNAME,'@MOPL_VERSION@');
 		exit $ERRORS{'UNKNOWN'};
 	}
 

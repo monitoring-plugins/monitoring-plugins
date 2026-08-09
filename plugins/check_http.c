@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
-	xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", NP_VERSION,
+	xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", MOPL_VERSION,
 			  VERSION);
 
 	/* Parse extra opts if any */
@@ -292,7 +292,7 @@ bool process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 			break;
 		case 't': /* timeout period */
@@ -1764,7 +1764,7 @@ char *perfd_size(int page_len) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

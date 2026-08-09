@@ -258,7 +258,7 @@ check_apt_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V':
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v':
 			verbose++;
@@ -629,7 +629,7 @@ char *construct_cmdline(upgrade_type upgrade, const char *opts) {
 
 /* informative help message */
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 

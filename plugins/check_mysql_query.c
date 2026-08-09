@@ -276,7 +276,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -345,7 +345,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", MYSQL_PORT);
 
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 

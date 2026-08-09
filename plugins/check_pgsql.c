@@ -392,7 +392,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
 			if (!is_integer(optarg)) {
@@ -532,7 +532,7 @@ void print_help(void) {
 
 	xasprintf(&myport, "%d", 5432);
 
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 

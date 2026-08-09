@@ -810,7 +810,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			group = NULL;
 		} break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -978,7 +978,7 @@ void set_all_thresholds(parameter_list_elem *path, char *warn_freespace_units,
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

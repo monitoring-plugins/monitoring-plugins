@@ -828,7 +828,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			address_family = AF_INET6;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname, MOPL_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -999,7 +999,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", SMTP_PORT);
 
-	print_revision(progname, NP_VERSION);
+	print_revision(progname, MOPL_VERSION);
 
 	printf("Copyright (c) 1999-2001 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
