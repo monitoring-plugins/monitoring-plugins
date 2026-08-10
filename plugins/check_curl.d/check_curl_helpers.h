@@ -3,7 +3,7 @@
 #include "../picohttpparser/picohttpparser.h"
 #include "output.h"
 
-#if defined(HAVE_SSL) && defined(USE_OPENSSL)
+#if defined(HAVE_SSL) && defined(MOPL_USE_OPENSSL)
 #	include <openssl/opensslv.h>
 #endif
 
