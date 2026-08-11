@@ -41,6 +41,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "base64.h"
 #include "netutils.h"
 #include "utils.h"
+#include "utils_validate.h"
 #include <ctype.h>
 #include "states.h"
 
@@ -183,14 +184,6 @@ int main(int argc, char **argv) {
 
 	result = check_http();
 	return result;
-}
-
-/* check whether a file exists */
-void test_file(char *path) {
-	if (access(path, R_OK) == 0) {
-		return;
-	}
-	usage2(_("file does not exist or is not readable"), path);
 }
 
 /*
@@ -373,13 +366,13 @@ bool process_arguments(int argc, char **argv) {
 #endif
 		case 'J': /* use client certificate */
 #ifdef HAVE_SSL
-			test_file(optarg);
+			validate_file_exists(optarg);
 			client_cert = optarg;
 			goto enable_ssl;
 #endif
 		case 'K': /* use client private key */
 #ifdef HAVE_SSL
-			test_file(optarg);
+			validate_file_exists(optarg);
 			client_privkey = optarg;
 			goto enable_ssl;
 #endif
