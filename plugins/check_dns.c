@@ -495,7 +495,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'v': /* version */
 			verbose = true;
@@ -616,7 +616,7 @@ check_dns_config_wrapper validate_arguments(check_dns_config_wrapper config_wrap
 }
 
 void print_help(void) {
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

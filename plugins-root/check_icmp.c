@@ -494,7 +494,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.source_ip = optarg;
 				break;
 			case 'V': /* version */
-				print_revision(progname, MOPL_VERSION);
+				print_revision(progname);
 				exit(STATE_UNKNOWN);
 			case 'R': /* RTA mode */ {
 				get_threshold2_wrapper rta_th = get_threshold2(

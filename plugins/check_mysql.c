@@ -589,7 +589,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 				mp_thresholds_set_crit(result.config.replica_thresholds, tmp.range);
 		} break;
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -658,7 +658,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", MYSQL_PORT);
 
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf(_(COPYRIGHT), copyright, email);
 

@@ -375,7 +375,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbose = true;
@@ -522,7 +522,7 @@ int get_threshold(char *arg, char *rv[2]) {
 
 void print_help(void) {
 
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
 	printf(COPYRIGHT, copyright, email);

@@ -278,7 +278,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.units = optarg;
 			break;
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -376,7 +376,7 @@ check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper config_wr
 }
 
 void print_help(void) {
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

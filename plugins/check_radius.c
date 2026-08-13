@@ -348,7 +348,7 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbose = true;
@@ -439,7 +439,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", PW_AUTH_UDP_PORT);
 
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 1999 Robert August Vincent II\n");
 	printf(COPYRIGHT, copyright, email);

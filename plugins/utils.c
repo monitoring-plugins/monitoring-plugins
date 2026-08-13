@@ -79,8 +79,8 @@ void usage5(void) {
 	exit(STATE_UNKNOWN);
 }
 
-void print_revision(const char *command_name, const char *revision) {
-	printf("%s v%s (%s %s)\n", command_name, revision, PACKAGE, VERSION);
+void print_revision(const char *command_name) {
+	printf("%s (%s %s)\n", command_name, PACKAGE, VERSION);
 }
 
 bool is_numeric(char *number) {

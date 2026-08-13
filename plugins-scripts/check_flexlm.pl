@@ -57,7 +57,7 @@ GetOptions
 	 "t=i" => \$opt_t, "timeout=i"  => \$opt_t);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@MOPL_VERSION@');
+	print_revision($PROGNAME);
 	exit $ERRORS{'UNKNOWN'};
 }
 
@@ -217,7 +217,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@MOPL_VERSION@');
+	print_revision($PROGNAME);
 	print "Copyright (c) 2000 Ernst-Dieter Martin/Karl DeBisschop
 
 Check available flexlm license managers

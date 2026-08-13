@@ -344,7 +344,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case 'V': /* version */
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help(conf_wrapper.config);
@@ -367,7 +367,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(swap_config config) {
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf(_(COPYRIGHT), copyright, email);
 

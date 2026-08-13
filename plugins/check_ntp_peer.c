@@ -537,7 +537,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
-			print_revision(progname, MOPL_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
@@ -817,7 +817,7 @@ int main(int argc, char *argv[]) {
 }
 
 void print_help(void) {
-	print_revision(progname, MOPL_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 2006 Sean Finney\n");
 	printf(COPYRIGHT, copyright, email);

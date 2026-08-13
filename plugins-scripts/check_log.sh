@@ -65,7 +65,6 @@ PATH="@TRUSTED_PATH@"
 export PATH
 PROGNAME=$(basename "$0")
 PROGPATH=$(echo "$0" | sed -e 's,[\\/][^\\/][^\\/]*$,,')
-REVISION="@MOPL_VERSION@"
 
 . "$PROGPATH"/utils.sh
 
@@ -82,7 +81,7 @@ print_usage() {
 }
 
 print_help() {
-    print_revision "$PROGNAME" "$REVISION"
+    print_revision "$PROGNAME"
     echo ""
     print_usage
     echo ""
@@ -108,7 +107,7 @@ while test -n "$1"; do
             exit "$STATE_UNKNOWN"
             ;;
         -V | --version)
-            print_revision "$PROGNAME" "$REVISION"
+            print_revision "$PROGNAME"
             exit "$STATE_UNKNOWN"
             ;;
         -F | --filename)

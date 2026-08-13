@@ -11,7 +11,7 @@ require Exporter;
 
 #use strict;
 #use vars($TIMEOUT %ERRORS);
-sub print_revision ($$);
+sub print_revision ($);
 sub usage;
 sub support();
 sub is_hostname;
@@ -29,10 +29,9 @@ $TIMEOUT = 15;
 %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3);
 
 ## utility subroutines
-sub print_revision ($$) {
+sub print_revision ($) {
 	my $commandName = shift;
-	my $pluginRevision = shift;
-	print "$commandName v$pluginRevision (@PACKAGE@ @VERSION@)\n";
+	print "$commandName (@PACKAGE@ @VERSION@)\n";
 	print "@WARRANTY@";
 }
 

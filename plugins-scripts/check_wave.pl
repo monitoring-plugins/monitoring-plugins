@@ -31,7 +31,7 @@ GetOptions
 	 "H=s" => \$opt_H, "hostname=s" => \$opt_H);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@MOPL_VERSION@'); #'
+	print_revision($PROGNAME); #'
 	exit $ERRORS{'UNKNOWN'};
 }
 
@@ -113,7 +113,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@MOPL_VERSION@');
+	print_revision($PROGNAME);
 	print "Copyright (c) 2000 Jeffery Blank/Karl DeBisschop\n";
 	print "\n";
 	print_usage();
