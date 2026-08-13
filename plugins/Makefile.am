@@ -3,10 +3,10 @@
 if RELEASE_PRESENT
 MOPL_VERSION = @MOPL_RELEASE@
 else
-NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
+MOPL-VERSION-FILE: .FORCE-MOPL-VERSION-FILE
 	@$(SHELL_PATH) $(top_srcdir)/MOPL-VERSION-GEN
-.FORCE-NP-VERSION-FILE:
--include NP-VERSION-FILE
+.FORCE-MOPL-VERSION-FILE:
+-include MOPL-VERSION-FILE
 endif
 
 AM_CFLAGS = -DMOPL_VERSION='"$(MOPL_VERSION)"'
@@ -209,7 +209,7 @@ install-exec-hook:
 
 clean-local:
 	rm -f $(check_tcp_programs)
-	rm -f NP-VERSION-FILE
+	rm -f MOPL-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)

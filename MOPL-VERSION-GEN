@@ -1,10 +1,8 @@
 #!/bin/sh
 
-SRC_ROOT="$(dirname "$0")"
-
 MOPL_VERSION_FILE=MOPL-VERSION-FILE
 DEF_VER=3.0.2git
 
-echo >&2 "MOPL_VERSION = $VN"
+echo >&2 "MOPL_VERSION = $DEF_VER"
 echo "MOPL_VERSION = $DEF_VER" >$MOPL_VERSION_FILE
 
