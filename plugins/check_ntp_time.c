@@ -780,7 +780,7 @@ void print_help(void) {
 	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(" %s\n", " --poll-delay=DELAY");
-	printf("    %s\n", _("Delay between polling to avoid KOD response (seconds, 0.0 to 5.0)"));
+	printf("    %s\n", _("Delay between polling to avoid KOD response (seconds, 0.0 to 5.0, default 0.5 seconds)"));
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 	printf(UT_VERBOSE);
 	printf(UT_OUTPUT_FORMAT);
