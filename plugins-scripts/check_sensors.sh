@@ -4,7 +4,6 @@ PATH="@TRUSTED_PATH@"
 export PATH
 PROGNAME=$(basename "$0")
 PROGPATH=$(echo "$0" | sed -e 's,[\\/][^\\/][^\\/]*$,,')
-REVISION="@NP_VERSION@"
 
 . "$PROGPATH"/utils.sh
 
@@ -13,7 +12,7 @@ print_usage() {
 }
 
 print_help() {
-	print_revision "$PROGNAME" "$REVISION"
+	print_revision "$PROGNAME"
 	echo ""
 	print_usage
 	echo ""
@@ -32,11 +31,11 @@ case "$1" in
 		exit "$STATE_UNKNOWN"
 		;;
 	--version)
-		print_revision "$PROGNAME" "$REVISION"
+		print_revision "$PROGNAME"
 		exit "$STATE_UNKNOWN"
 		;;
 	-V)
-		print_revision "$PROGNAME" "$REVISION"
+		print_revision "$PROGNAME"
 		exit "$STATE_UNKNOWN"
 		;;
 	*)

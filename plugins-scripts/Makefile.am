@@ -1,12 +1,12 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = @NP_RELEASE@
+MOPL_VERSION = @MOPL_RELEASE@
 else
-NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
-	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
-.FORCE-NP-VERSION-FILE:
--include NP-VERSION-FILE
+MOPL-VERSION-FILE: .FORCE-MOPL-VERSION-FILE
+	@$(SHELL_PATH) $(top_srcdir)/MOPL-VERSION-GEN
+.FORCE-MOPL-VERSION-FILE:
+-include MOPL-VERSION-FILE
 endif
 
 SUFFIXES = .pl .sh
@@ -26,7 +26,7 @@ EXTRA_DIST=check_breeze.pl check_disk_smb.pl check_flexlm.pl check_ircd.pl \
 	utils.sh.in utils.pm.in t
 
 EDIT = sed \
-  -e 's|[@]NP_VERSION[@]|$(NP_VERSION)|g' \
+  -e 's|[@]MOPL_VERSION[@]|$(MOPL_VERSION)|g' \
   -e 's|[@]TRUSTED_PATH[@]|$(with_trusted_path)|g' \
   -e 's|[@]PERL[@]|$(PERL)|g' \
   -e 's|[@]libexecdir[@]|$(libexecdir)|g'
@@ -56,5 +56,5 @@ CLEANFILES=$(libexec_SCRIPTS)
 	chmod +x $@
 
 clean-local:
-	rm -f NP-VERSION-FILE
+	rm -f MOPL-VERSION-FILE
 

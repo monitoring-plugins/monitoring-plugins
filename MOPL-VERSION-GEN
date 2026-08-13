@@ -1,0 +1,15 @@
+#!/bin/sh
+
+MOPL_VERSION_FILE=MOPL-VERSION-FILE
+DEF_VER=3.0.2git
+
+if test -r $MOPL_VERSION_FILE
+then
+    VC=$(sed -e 's/^MOPL_VERSION = //' <$MOPL_VERSION_FILE)
+else
+    VC="unset"
+fi
+test "$DEF_VER" = "$VC" || {
+	echo >&2 "MOPL_VERSION = $DEF_VER"
+	echo "MOPL_VERSION = $DEF_VER" >$MOPL_VERSION_FILE
+}

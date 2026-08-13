@@ -6,7 +6,7 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 
 print_revision() {
-	echo "$1 v$2 (@PACKAGE@ @VERSION@)"
+	echo "$1 (@PACKAGE@ @VERSION@)"
 	printf '%b' "@WARRANTY@"
 }
 

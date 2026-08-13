@@ -161,8 +161,7 @@ int main(int argc, char **argv) {
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
-	xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", NP_VERSION,
-			  VERSION);
+	xasprintf(&user_agent, "User-Agent: check_http (monitoring-plugins %s)", MOPL_VERSION);
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -292,7 +291,7 @@ bool process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 			break;
 		case 't': /* timeout period */
@@ -427,13 +426,13 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* onredirect */
 			if (!strcmp(optarg, "stickyport")) {
-				 followsticky = STICKY_HOST | STICKY_PORT;
+				followsticky = STICKY_HOST | STICKY_PORT;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "sticky")) {
-				 followsticky = STICKY_HOST;
+				followsticky = STICKY_HOST;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "follow")) {
-				 followsticky = STICKY_NONE;
+				followsticky = STICKY_NONE;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "unknown")) {
 				onredirect = STATE_UNKNOWN;
@@ -1764,7 +1763,7 @@ char *perfd_size(int page_len) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

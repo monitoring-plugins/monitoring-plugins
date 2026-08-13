@@ -619,7 +619,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -673,7 +673,7 @@ check_ups_config_wrapper validate_arguments(check_ups_config_wrapper config_wrap
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 2000 Tom Shields\n");
 	printf("Copyright (c) 2004 Alain Richard <alain.richard@equation.fr>\n");

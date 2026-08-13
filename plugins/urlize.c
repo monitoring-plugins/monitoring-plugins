@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_SUCCESS);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname);
 			exit(EXIT_SUCCESS);
 			break;
 		case 'u':
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname);
 
 	printf("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf(COPYRIGHT, copyright, email);
