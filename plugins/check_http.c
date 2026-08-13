@@ -426,13 +426,13 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* onredirect */
 			if (!strcmp(optarg, "stickyport")) {
-				 followsticky = STICKY_HOST | STICKY_PORT;
+				followsticky = STICKY_HOST | STICKY_PORT;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "sticky")) {
-				 followsticky = STICKY_HOST;
+				followsticky = STICKY_HOST;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "follow")) {
-				 followsticky = STICKY_NONE;
+				followsticky = STICKY_NONE;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "unknown")) {
 				onredirect = STATE_UNKNOWN;
