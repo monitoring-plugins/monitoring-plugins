@@ -652,7 +652,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		case 'o':
 			result.config.time_offset = atoi(optarg);
 			break;
-		case polling_delay_index:
+		case polling_delay_index: {
 			long tmp_time = (long)(1.0e9 * atof(optarg));
 			if (tmp_time < 0 || tmp_time > MAX_POLL) {
 				usage2(_("Invalid time"), optarg);
@@ -662,7 +662,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.poll_delay.tv_sec = (tmp_time / 1000000000);
 				result.config.poll_delay.tv_nsec = (tmp_time % 1000000000);
 			}
-			break;
+		} break;
 		case '4':
 			address_family = AF_INET;
 			break;
