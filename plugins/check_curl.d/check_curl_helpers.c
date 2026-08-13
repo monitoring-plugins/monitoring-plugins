@@ -763,8 +763,8 @@ check_curl_config check_curl_config_init(void) {
 		.output_format_is_set = false,
 	};
 
-	snprintf(tmp.curl_config.user_agent, DEFAULT_BUFFER_SIZE, "%s/v%s (monitoring-plugins %s, %s)",
-			 "check_curl", MOPL_VERSION, VERSION, curl_version());
+	snprintf(tmp.curl_config.user_agent, DEFAULT_BUFFER_SIZE, "%s (monitoring-plugins %s, %s)",
+			 "check_curl", MOPL_VERSION, curl_version());
 
 	return tmp;
 }

@@ -161,8 +161,7 @@ int main(int argc, char **argv) {
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
-	xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", MOPL_VERSION,
-			  VERSION);
+	xasprintf(&user_agent, "User-Agent: check_http (monitoring-plugins %s)", MOPL_VERSION);
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
