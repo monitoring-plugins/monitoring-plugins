@@ -207,4 +207,23 @@ For more information about these matters, see the file named COPYING.\n")
  --output-format=OUTPUT_FORMAT\n\
     Select output format. Valid values: \"multi-line\", \"mp-test-json\"\n")
 
+/* finally, a little helper or two for debugging: */
+#define DBG(x)                                                                                     \
+	do {                                                                                           \
+		if (verbose > 1) {                                                                         \
+			x;                                                                                     \
+		}                                                                                          \
+	} while (0);
+
+#define DBG_PRINT(x, ...)                                                                          \
+	do {                                                                                           \
+		if (verbose > x) {                                                                         \
+			printf(0 __VA_OPT__(, ) __VA_ARGS__);                                                  \
+		}                                                                                          \
+	} while (0);
+
+#define DBG_PRINT_1(...) DBG_PRINT(1, 0 __VA_OPT__(, ) __VA_ARGS__);
+#define DBG_PRINT_2(...) DBG_PRINT(2, 0 __VA_OPT__(, ) __VA_ARGS__);
+#define DBG_PRINT_3(...) DBG_PRINT(3, 0 __VA_OPT__(, ) __VA_ARGS__);
+
 #endif /* NP_UTILS_H */
