@@ -1,0 +1,302 @@
+/*****************************************************************************
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *****************************************************************************/
+
+#include "common.h"
+#include "netutils.h"
+#include "../tap/tap.h"
+#include "../../lib/output.h"
+
+#ifdef HAVE_SSL
+#	include <openssl/x509.h>
+#	include <openssl/pem.h>
+#	include <openssl/err.h>
+
+/* prototypes for internal functions*/
+mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										   int days_till_exp_crit);
+retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate);
+mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
+										 int days_till_exp_crit);
+#endif
+
+const char *progname = "test_sslutils";
+void print_usage(void) {}
+
+#ifdef HAVE_SSL
+static X509 *create_test_cert(long seconds) {
+	X509 *cert = X509_new();
+	if (!cert) {
+		return NULL;
+	}
+
+	ASN1_INTEGER_set(X509_get_serialNumber(cert), 1);
+	X509_set_version(cert, 2);
+
+	X509_gmtime_adj(X509_get_notBefore(cert), 0);
+	X509_gmtime_adj(X509_get_notAfter(cert), seconds);
+
+	X509_NAME *name = X509_get_subject_name(cert);
+	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"test.example.com", -1,
+							   -1, 0);
+	X509_set_issuer_name(cert, name);
+
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (!kctx) {
+		X509_free(cert);
+		return NULL;
+	}
+	if (EVP_PKEY_keygen_init(kctx) <= 0 || EVP_PKEY_CTX_set_rsa_keygen_bits(kctx, 2048) <= 0 ||
+		EVP_PKEY_keygen(kctx, &pkey) <= 0) {
+		EVP_PKEY_CTX_free(kctx);
+		X509_free(cert);
+		return NULL;
+	}
+	EVP_PKEY_CTX_free(kctx);
+
+	X509_set_pubkey(cert, pkey);
+	X509_sign(cert, pkey, EVP_sha256());
+	EVP_PKEY_free(pkey);
+
+	return cert;
+}
+#endif
+
+int main(int argc, char **argv) {
+#ifdef HAVE_SSL
+	plan_tests(37);
+
+	X509 *cert;
+	retrieve_expiration_time_result expiration_time_result;
+	mp_state_enum mp_result;
+	mp_subcheck sc_result;
+#	define TIME_DELTA 5
+
+	/* Valid cert expiring in 30 days */
+	cert = create_test_cert(60 * 60 * 24 * 30);
+	ok(cert != NULL, "Created test cert expiring in 30 days");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_OK, "Cert expiring in 30 days returns STATE_OK (threshold 14/7)");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* Valid cert expiring in 10 days */
+	cert = create_test_cert(60 * 60 * 24 * 10);
+	ok(cert != NULL, "Created test cert expiring in 10 days");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_WARNING,
+		   "Cert expiring in 10 days returns STATE_WARNING (threshold 14/7)");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* Valid cert expiring in 5 days */
+	cert = create_test_cert(60 * 60 * 24 * 5);
+	ok(cert != NULL, "Created test cert expiring in 5 days");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_CRITICAL,
+		   "Cert expiring in 5 days returns STATE_CRITICAL (threshold 14/7)");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* Valid cert expiring in 1 hour */
+	cert = create_test_cert(60 * 60 * 1);
+	ok(cert != NULL, "Created test cert expiring in 1 hour");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_CRITICAL,
+		   "Cert expiring in 1 hour returns CRITICAL (threshold 14/7)");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* Cert expiring in 30 minutes */
+	cert = create_test_cert(60 * 30);
+	ok(cert != NULL, "Created test cert expiring in 30 minutes");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_CRITICAL,
+		   "Cert expiring in 30 minutes returns CRITICAL (threshold 14/7)");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* Expired cert - should be CRITICAL */
+	cert = create_test_cert(60 * 60 * 24 * -10);
+	ok(cert != NULL, "Created test cert that expired 10 days ago");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_CRITICAL, "Expired cert returns STATE_CRITICAL");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* np_net_ssl_get_cert_expiration - NULL certificate */
+	expiration_time_result = np_net_ssl_get_cert_expiration(NULL);
+	ok(expiration_time_result.errors == NO_SERVER_CERTIFICATE_PRESENT,
+	   "NULL certificate returns NO_SERVER_CERTIFICATE_PRESENT error");
+
+	/* np_net_ssl_get_cert_expiration - valid cert */
+	cert = create_test_cert(60 * 60 * 24 * 30);
+	if (cert) {
+		expiration_time_result = np_net_ssl_get_cert_expiration(cert);
+		ok(expiration_time_result.errors == ALL_OK, "Valid cert returns ALL_OK error code");
+		ok(expiration_time_result.remaining_seconds > (60 * 60 * 24 * 30) - TIME_DELTA &&
+			   expiration_time_result.remaining_seconds < (60 * 60 * 24 * 30) + TIME_DELTA,
+		   "remaining_seconds is 30 days +- %i", TIME_DELTA);
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* np_net_ssl_get_cert_expiration - expired cert */
+	cert = create_test_cert(60 * 60 * 24 * -10);
+	if (cert) {
+		expiration_time_result = np_net_ssl_get_cert_expiration(cert);
+		ok(expiration_time_result.errors == ALL_OK, "Expired cert returns ALL_OK error code");
+		ok(expiration_time_result.remaining_seconds < 0,
+		   "remaining_seconds is negative for expired cert");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	struct tm target_date = {0};
+	target_date.tm_year = 2051 - 1900;
+	target_date.tm_mon = 0;
+	target_date.tm_mday = 1;
+	target_date.tm_hour = 0;
+	target_date.tm_min = 0;
+	target_date.tm_sec = 0;
+	target_date.tm_isdst = -1;
+	time_t time_2051 = mktime(&target_date);
+	time_t time_now = time(NULL);
+	long seconds_remaining = time_2051 - time_now;
+	cert = create_test_cert(seconds_remaining);
+
+	/* GENERALIZEDTIME cert (year > 2049) */
+	ok(cert != NULL, "Created GENERALIZEDTIME cert (2051)");
+	if (cert) {
+		mp_result = np_net_ssl_check_certificate(cert, 14, 7);
+		ok(mp_result == STATE_OK, "GENERALIZEDTIME cert expiring in 2051 returns STATE_OK");
+	} else {
+		skip(1, "Cert creation failed");
+	}
+
+	/* np_net_ssl_get_cert_expiration - GENERALIZEDTIME cert */
+	cert = create_test_cert(seconds_remaining);
+	if (cert) {
+		expiration_time_result = np_net_ssl_get_cert_expiration(cert);
+		ok(expiration_time_result.errors == ALL_OK,
+		   "GENERALIZEDTIME cert returns ALL_OK error code");
+		ok(expiration_time_result.remaining_seconds > seconds_remaining - TIME_DELTA &&
+			   expiration_time_result.remaining_seconds < seconds_remaining + TIME_DELTA,
+		   "remaining_seconds is correct for Midnight on January 1st 2051 +- %i", TIME_DELTA);
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - NULL certificate */
+	sc_result = mp_net_ssl_check_certificate(NULL, 14, 7);
+	ok(sc_result.state == STATE_CRITICAL, "mp: NULL certificate returns STATE_CRITICAL");
+	ok(sc_result.output != NULL, "mp: NULL certificate sets output");
+
+	/* mp_net_ssl_check_certificate - valid cert expiring in 30 days */
+	cert = create_test_cert(60 * 60 * 24 * 30);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_OK,
+		   "mp: Cert expiring in 30 days returns STATE_OK (threshold 14/7)");
+		ok(sc_result.output != NULL, "mp: Cert expiring in 30 days sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - valid cert expiring in 10 days */
+	cert = create_test_cert(60 * 60 * 24 * 10);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_WARNING,
+		   "mp: Cert expiring in 10 days returns STATE_WARNING (threshold 14/7)");
+		ok(sc_result.output != NULL, "mp: Cert expiring in 10 days sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - valid cert expiring in 5 days */
+	cert = create_test_cert(60 * 60 * 24 * 5);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_CRITICAL,
+		   "mp: Cert expiring in 5 days returns STATE_CRITICAL (threshold 14/7)");
+		ok(sc_result.output != NULL, "mp: Cert expiring in 5 days sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - valid cert expiring in 1 hour */
+	cert = create_test_cert(60 * 60 * 1);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_CRITICAL,
+		   "mp: Cert expiring in 1 hour returns CRITICAL (threshold 14/7)");
+		ok(sc_result.output != NULL, "mp: Cert expiring in 1 hour sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - cert expiring in 30 minutes */
+	cert = create_test_cert(60 * 30);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_CRITICAL,
+		   "mp: Cert expiring in 30 minutes returns CRITICAL (threshold 14/7)");
+		ok(sc_result.output != NULL, "mp: Cert expiring in 30 minutes sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - expired cert */
+	cert = create_test_cert(60 * 60 * 24 * -10);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_CRITICAL, "mp: Expired cert returns STATE_CRITICAL");
+		ok(sc_result.output != NULL, "mp: Expired cert sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+
+	/* mp_net_ssl_check_certificate - GENERALIZEDTIME cert (year > 2049) */
+	cert = create_test_cert(seconds_remaining);
+	if (cert) {
+		sc_result = mp_net_ssl_check_certificate(cert, 14, 7);
+		ok(sc_result.state == STATE_OK,
+		   "mp: GENERALIZEDTIME cert expiring in 2051 returns STATE_OK");
+		ok(sc_result.output != NULL, "mp: GENERALIZEDTIME cert sets output");
+	} else {
+		skip(2, "Cert creation failed");
+	}
+#else
+	plan_skip_all("SSL support not compiled in");
+#endif
+
+	return exit_status();
+}
