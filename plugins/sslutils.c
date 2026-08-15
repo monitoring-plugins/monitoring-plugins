@@ -47,6 +47,33 @@ int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int versi
 	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, NULL, NULL);
 }
 
+#	ifdef MOPL_USE_OPENSSL 
+int np_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out) {
+	struct tm tm = {};
+	if (!ASN1_TIME_to_tm(asn1_time, &tm)) {
+		return 0;
+	}
+	*out = timegm(&tm);
+	if (*out == (time_t)-1) {
+		return 0;
+	}
+	return 1;
+}
+
+void np_net_format_timestamp(time_t t, char *buf, size_t buflen) {
+	char *tz = getenv("TZ");
+	setenv("TZ", "GMT", 1);
+	tzset();
+	strftime(buf, buflen, "%c %z", localtime(&t));
+	if (tz) {
+		setenv("TZ", tz, 1);
+	} else {
+		unsetenv("TZ");
+	}
+	tzset();
+}
+#endif /* MOPL_USE_OPENSSL */
+
 int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert,
 												   char *privkey) {
 	long options = 0;
