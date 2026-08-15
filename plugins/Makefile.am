@@ -49,13 +49,15 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 	\
 	tests/test_check_swap \
 	tests/test_check_snmp \
-	tests/test_check_disk
+	tests/test_check_disk \
+	tests/test_sslutils
 
 SUBDIRS = picohttpparser
 
 np_test_scripts = tests/test_check_swap.t \
 				  tests/test_check_snmp.t \
-				  tests/test_check_disk.t
+				  tests/test_check_disk.t \
+				  tests/test_sslutils.t
 
 EXTRA_DIST = t \
 			 tests \
@@ -192,6 +194,8 @@ tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
+tests_test_sslutils_LDADD = $(SSLOBJS) $(tap_ldflags) -ltap
+tests_test_sslutils_SOURCES = tests/test_sslutils.c
 
 ##############################################################################
 # secondary dependencies
