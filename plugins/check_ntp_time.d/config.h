@@ -4,9 +4,11 @@
 #include "output.h"
 #include "thresholds.h"
 #include <stddef.h>
+#include <time.h>
 
 /* Time in microseconds to delay between polling to avoid a blocking response. */
-const long default_polling_delay = 500000L;
+const struct timespec default_polling_delay = {.tv_nsec = 500000000L, .tv_sec = 0};
+const long MAX_POLL = 5000000000L; // nanoseconds, 5 seconds
 
 typedef struct {
 	char *server_address;
@@ -18,7 +20,7 @@ typedef struct {
 	mp_thresholds offset_thresholds;
 
 	bool output_format_is_set;
-	long poll_delay;
+	struct timespec poll_delay;
 	mp_output_format output_format;
 } check_ntp_time_config;
 
