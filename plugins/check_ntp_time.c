@@ -203,13 +203,6 @@ static double TVasDOUBLE(struct timeval time) {
  */
 #define SIZEOF_NTPCM(m) (12 + ntohs(m.count) + ((m.count) ? 4 - (ntohs(m.count) % 4) : 0))
 
-/* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                     \
-	do {                                                                                           \
-		if (verbose > 1) {                                                                         \
-			x;                                                                                     \
-		}                                                                                          \
-	} while (0);
 #define PRINTSOCKADDR(x)                                                                           \
 	do {                                                                                           \
 		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
@@ -277,49 +270,45 @@ static int best_offset_server(const ntp_server_results *slist, int nservers) {
 		 * stratum 0 is for reference clocks so no NTP server should ever report
 		 * a stratum 0 */
 		if (slist[cserver].stratum == 0) {
-			if (verbose) {
-				printf("discarding peer %d: stratum=%d\n", cserver, slist[cserver].stratum);
-			}
+			DBG_PRINT_1("discarding peer %d: stratum=%d\n", cserver, slist[cserver].stratum);
 			continue;
 		}
 		/* Sort out servers with error flags */
 		if (LI(slist[cserver].flags) == LI_ALARM) {
-			if (verbose) {
-				printf("discarding peer %d: flags=%d\n", cserver, LI(slist[cserver].flags));
-			}
+			DBG_PRINT_1("discarding peer %d: flags=%d\n", cserver, LI(slist[cserver].flags));
 			continue;
 		}
 
 		/* If we don't have a server yet, use the first one */
 		if (best_server_index == -1) {
 			best_server_index = cserver;
-			DBG(printf("using peer %d as our first candidate\n", best_server_index));
+			DBG_PRINT_1("using peer %d as our first candidate\n", best_server_index);
 			continue;
 		}
 
 		/* compare the server to the best one we've seen so far */
 		/* does it have an equal or better stratum? */
-		DBG(printf("comparing peer %d with peer %d\n", cserver, best_server_index));
+		DBG_PRINT_1("comparing peer %d with peer %d\n", cserver, best_server_index);
 		if (slist[cserver].stratum <= slist[best_server_index].stratum) {
-			DBG(printf("stratum for peer %d <= peer %d\n", cserver, best_server_index));
+			DBG_PRINT_1("stratum for peer %d <= peer %d\n", cserver, best_server_index);
 			/* does it have an equal or better dispersion? */
 			if (slist[cserver].rtdisp <= slist[best_server_index].rtdisp) {
-				DBG(printf("dispersion for peer %d <= peer %d\n", cserver, best_server_index));
+				DBG_PRINT_1("dispersion for peer %d <= peer %d\n", cserver, best_server_index);
 				/* does it have a better rtdelay? */
 				if (slist[cserver].rtdelay < slist[best_server_index].rtdelay) {
-					DBG(printf("rtdelay for peer %d < peer %d\n", cserver, best_server_index));
+					DBG_PRINT_1("rtdelay for peer %d < peer %d\n", cserver, best_server_index);
 					best_server_index = cserver;
-					DBG(printf("peer %d is now our best candidate\n", best_server_index));
+					DBG_PRINT_1("peer %d is now our best candidate\n", best_server_index);
 				}
 			}
 		}
 	}
 
 	if (best_server_index >= 0) {
-		DBG(printf("best server selected: peer %d\n", best_server_index));
+		DBG_PRINT_1("best server selected: peer %d\n", best_server_index);
 		return best_server_index;
 	}
-	DBG(printf("no peers meeting synchronization criteria :(\n"));
+	DBG_PRINT_1("no peers meeting synchronization criteria :(\n");
 	return -1;
 }
 
@@ -384,13 +373,13 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 		die(STATE_UNKNOWN, "can not allocate server array");
 	}
 	memset(servers, 0, sizeof(ntp_server_results) * num_hosts);
-	DBG(printf("Found %zu peers to check\n", num_hosts));
+	DBG_PRINT_1("Found %zu peers to check\n", num_hosts);
 
 	/* setup each socket for writing, and the corresponding struct pollfd */
 	if (is_socket) {
 		socklist[0] = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (socklist[0] == -1) {
-			DBG(printf("can't create socket: %s\n", strerror(errno)));
+			DBG_PRINT_1("can't create socket: %s\n", strerror(errno));
 			die(STATE_UNKNOWN, "can not create new socket\n");
 		}
 
@@ -408,7 +397,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 			   answering in time. This also would break for dual ipv4/6 stacked
 			   ntp servers when the client only supports on of them.
 			 */
-			DBG(printf("can't create socket connection on peer %i: %s\n", 0, strerror(errno)));
+			DBG_PRINT_1("can't create socket connection on peer %i: %s\n", 0, strerror(errno));
 		} else {
 			ufds[0].fd = socklist[0];
 			ufds[0].events = POLLIN;
@@ -427,7 +416,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 				   answering in time. This also would break for dual ipv4/6 stacked
 				   ntp servers when the client only supports on of them.
 				 */
-				DBG(printf("can't create socket connection on peer %i: %s\n", i, strerror(errno)));
+				DBG_PRINT_1("can't create socket connection on peer %i: %s\n", i, strerror(errno));
 			} else {
 				ufds[i].fd = socklist[i];
 				ufds[i].events = POLLIN;
@@ -453,12 +442,10 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 
 		for (size_t i = 0; i < num_hosts; i++) {
 			if (servers[i].waiting < now_time && servers[i].num_responses < AVG_NUM) {
-				if (verbose && servers[i].waiting != 0) {
-					printf("re-");
+				if (servers[i].waiting != 0) {
+					DBG_PRINT_1("re-");
 				}
-				if (verbose) {
-					printf("sending request to peer %zu\n", i);
-				}
+				DBG_PRINT_1("sending request to peer %zu\n", i);
 				setup_request(&req[i]);
 
 				// Delay sending a request to avoid triggering flooding mechanisms
@@ -484,9 +471,8 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 		/* read from any sockets with pending data */
 		for (size_t i = 0; servers_readable && i < num_hosts; i++) {
 			if (ufds[i].revents & POLLIN && servers[i].num_responses < AVG_NUM) {
-				if (verbose) {
-					printf("response from peer %zu: ", i);
-				}
+				DBG_PRINT_1("response from peer %zu: ", i);
+
 				read(ufds[i].fd, &req[i], sizeof(ntp_message));
 
 				struct timeval recv_time;
@@ -494,9 +480,8 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 				DBG(print_ntp_message(&req[i]));
 				int respnum = servers[i].num_responses++;
 				servers[i].offset[respnum] = calc_offset(&req[i], &recv_time) + time_offset;
-				if (verbose) {
-					printf("offset %.10g\n", servers[i].offset[respnum]);
-				}
+
+				DBG_PRINT_1("offset %.10g\n", servers[i].offset[respnum]);
 
 				servers[i].stratum = req[i].stratum;
 				servers[i].rtdisp = NTP32asDOUBLE(req[i].rtdisp);
@@ -546,9 +531,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 	free(req);
 	freeaddrinfo(addresses);
 
-	if (verbose) {
-		printf("overall average offset: %.10g\n", avg_offset);
-	}
+	DBG_PRINT_1("overall average offset: %.10g\n", avg_offset);
 
 	result.offset = avg_offset;
 	return result;
