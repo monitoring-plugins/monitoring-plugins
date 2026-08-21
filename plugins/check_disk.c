@@ -753,6 +753,16 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 						se =
 							mp_int_fs_list_append(&result.config.path_select_list, me->me_mountdir);
 					}
+
+					/* This path was selected directly from a specific mount entry, so
+					 * pin it to that entry. Otherwise set_best_match() may re-resolve an
+					 * inaccessible filesystem (e.g. a root-only docker overlay mount whose
+					 * statfs() returns EACCES) to a parent filesystem, which defeats the
+					 * -X/-x/-i exclusion checks and makes the plugin stat() and fail on a
+					 * path the user explicitly excluded.
+					 */
+					se->best_match = me;
+
 					se->group = group;
 					set_all_thresholds(se, warn_freespace_units, crit_freespace_units,
 									   warn_freespace_percent, crit_freespace_percent,
