@@ -741,7 +741,7 @@ sub print_help () {
     print "-W (--warning-domain)  = Min. number of messages for same domain in queue to generate warning\n";
     print "-C (--critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
     print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-    print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
+    print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer | opensmtp ] (default = autodetect)\n";
     print "-s (--sudo)      = DEPRECATED, ignored. Grant queue access via your MTA instead:\n";
     print "                   Postfix: authorized_mailq_users in main.cf (see postconf(5))\n";
     print "                   Exim: queue_list_requires_admin = false\n";
