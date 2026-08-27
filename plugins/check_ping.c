@@ -148,9 +148,6 @@ int main(int argc, char **argv) {
 			die(STATE_OK, "%s is alive\n", config.addresses[i]);
 		}
 
-		if (config.display_html) {
-			printf("<A HREF='%s/traceroute.cgi?%s'>", CGIURL, config.addresses[i]);
-		}
 		if (pinged.packet_loss == 100) {
 			printf(_("PING %s - %sPacket loss = %d%%"), state_text(pinged.state), warn_text,
 				   pinged.packet_loss);

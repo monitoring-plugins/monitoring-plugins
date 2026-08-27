@@ -22,13 +22,13 @@ int cmd_run_array(char *const *, output *, output *, int);
 int cmd_file_read(const char *, output *, int);
 
 typedef struct {
- int error_code;
- int cmd_error_code;
- output out;
- output err;
+	int error_code;
+	int cmd_error_code;
+	output out;
+	output err;
 } cmd_run_result;
 cmd_run_result cmd_run2(const char *cmd, int flags);
-cmd_run_result cmd_run_array2(char * const *cmd, int flags);
+cmd_run_result cmd_run_array2(char *const *cmd, int flags);
 
 /* only multi-threaded plugins need to bother with this */
 void cmd_init(void);

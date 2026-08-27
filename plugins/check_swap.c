@@ -100,6 +100,9 @@ int main(int argc, char **argv) {
 
 	double percent_used;
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Swap check is OK");
+
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
 	}

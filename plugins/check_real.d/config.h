@@ -17,7 +17,7 @@ typedef struct {
 	int server_port;
 	char *server_url;
 
-	char *server_expect;
+	const char *server_expect;
 
 	mp_thresholds time_thresholds;
 

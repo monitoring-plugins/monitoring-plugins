@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.64])
-AC_INIT([monitoring-plugins],[2.4git])
+AC_INIT([monitoring-plugins],[3.0.3git])
 AC_CONFIG_SRCDIR(NPTest.pm)
 AC_CONFIG_FILES([gl/Makefile])
 AC_CONFIG_AUX_DIR(build-aux)
@@ -63,15 +63,6 @@ AC_SUBST(WARRANTY)
 
 SUPPORT="Send email to help@monitoring-plugins.org if you have questions regarding use\nof this software. To submit patches or suggest improvements, send email to\ndevel@monitoring-plugins.org. Please include version information with all\ncorrespondence (when possible, use output from the --version option of the\nplugin itself).\n"
 AC_SUBST(SUPPORT)
-
-dnl CGIURL has changed for Nagios with 1.0 beta
-AC_ARG_WITH(cgiurl,
-	ACX_HELP_STRING([--with-cgiurl=DIR],
-		[sets URL for cgi programs]),
-	with_cgiurl=$withval,
-	with_cgiurl=/nagios/cgi-bin)
-CGIURL="$with_cgiurl"
-AC_DEFINE_UNQUOTED(CGIURL,"$CGIURL",[URL of CGI programs])
 
 AC_ARG_WITH(trusted_path,
 	ACX_HELP_STRING([--with-trusted-path=PATH],
@@ -181,7 +172,7 @@ fi
 
 # Finally, define tests if we use libtap
 if test "$enable_libtap" = "yes" ; then
-	EXTRA_TEST="test_utils test_tcp test_cmd test_base64"
+	EXTRA_TEST="test_utils test_tcp test_cmd test_base64 test_generic_output"
 	AC_SUBST(EXTRA_TEST)
 
 	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk tests/test_check_snmp"
@@ -598,7 +589,7 @@ dnl Checks for header files.
 dnl
 
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(signal.h syslog.h uio.h errno.h sys/time.h sys/socket.h sys/un.h sys/poll.h)
+AC_CHECK_HEADERS(signal.h syslog.h uio.h errno.h sys/time.h sys/socket.h sys/un.h poll.h)
 AC_CHECK_HEADERS(features.h stdarg.h sys/unistd.h ctype.h)
 AC_CHECK_HEADERS_ONCE([sys/time.h])
 
@@ -1445,6 +1436,19 @@ else
 	AC_MSG_WARN([Get smbclient from Samba.org to monitor SMB shares])
 fi
 
+AC_PATH_PROG(PATH_TO_NETSNMPCONFIG,net-snmp-config)
+AC_ARG_WITH(netsnmpconfig_command,
+            ACX_HELP_STRING([--with-net-snmp-config-command=PATH],
+                            [sets path to net-snmp-config]),
+            PATH_TO_NETSNMPCONFIG=$withval)
+if test -n "$PATH_TO_NETSNMPCONFIG"
+then
+	AC_DEFINE_UNQUOTED(PATH_TO_NETSNMPCONFIG,"$PATH_TO_NETSNMPCONFIG",[path to net-snmp-config binary])
+	EXTRAS="$EXTRAS check_snmp"
+else
+	AC_MSG_WARN([Install net-snmp-config to build check_snmp])
+fi
+
 AC_PATH_PROG(PATH_TO_SNMPGET,snmpget)
 AC_ARG_WITH(snmpget_command,
             ACX_HELP_STRING([--with-snmpget-command=PATH],
@@ -1479,6 +1483,16 @@ AC_COMPILE_IFELSE(
                 #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmDESPrivProtocol;]]
 	)],
 	[AC_DEFINE(HAVE_USM_DES_PRIV_PROTOCOL,1,Define whether we have DES Privacy Protocol)],
+	[]
+)
+
+dnl Check whether Blumentahl AES encryption is available (might not on Gentoo on probably others)
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <net-snmp/net-snmp-config.h>
+                #include <net-snmp/net-snmp-includes.h>]], [[oid *foo = usmAES192PrivProtocol;]]
+	)],
+	[AC_DEFINE(HAVE_USM_AES_PRIV_PROTOCOL,1,Define whether we have AES Privacy Protocol)],
 	[]
 )
 
@@ -1566,17 +1580,6 @@ else
 	AC_MSG_WARN([Get ssh in order to make check_by_ssh plugin])
 fi
 
-AC_PATH_PROG(PATH_TO_SUDO,sudo)
-AC_ARG_WITH(sudo_command,
-            ACX_HELP_STRING([--with-sudo-command=PATH],
-                            [sets path to sudo]), PATH_TO_SUDO=$withval)
-if test -n "$PATH_TO_SUDO"
-then
-	AC_DEFINE_UNQUOTED(PATH_TO_SUDO,"$PATH_TO_SUDO",[path to sudo])
-else
-	AC_MSG_WARN([Could not find sudo or equivalent])
-fi
-
 AC_PATH_PROG(PATH_TO_MAILQ,mailq)
 AC_ARG_WITH(mailq_command,
             ACX_HELP_STRING([--with-mailq-command=PATH],
@@ -1644,7 +1647,7 @@ then
 
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %lu %*d %lu"]
+		ac_cv_swap_format=["%*s %lf %*d %lf"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
@@ -1952,7 +1955,6 @@ ACX_FEATURE([with],[gnutls])
 ACX_FEATURE([enable],[extra-opts])
 ACX_FEATURE([with],[perl])
 ACX_FEATURE([enable],[perl-modules])
-ACX_FEATURE([with],[cgiurl])
 ACX_FEATURE([with],[trusted-path])
 ACX_FEATURE([enable],[libtap])
 ACX_FEATURE([with],[libcurl])

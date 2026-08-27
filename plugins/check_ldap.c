@@ -98,6 +98,8 @@ int main(int argc, char *argv[]) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "LDAP check succeeded");
+
 	LDAP *ldap_connection;
 	/* initialize ldap */
 	{
@@ -428,7 +430,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 				die(STATE_UNKNOWN, "failed to parse number of entries critical threshold");
 			}
 			result.config.entries_thresholds =
-				 mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
+				mp_thresholds_set_crit(result.config.entries_thresholds, tmp.range);
 		} break;
 #ifdef HAVE_LDAP_SET_OPTION
 		case '2':

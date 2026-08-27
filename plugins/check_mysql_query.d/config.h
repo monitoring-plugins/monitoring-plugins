@@ -16,6 +16,7 @@ typedef struct {
 	unsigned int db_port;
 
 	char *sql_query;
+	char *queryname;
 	mp_thresholds thresholds;
 
 	bool output_format_is_set;
@@ -28,12 +29,14 @@ check_mysql_query_config check_mysql_query_config_init() {
 		.db_socket = NULL,
 		.db = NULL,
 		.db_user = NULL,
+
 		.db_pass = NULL,
 		.opt_file = NULL,
 		.opt_group = NULL,
 		.db_port = MYSQL_PORT,
 
 		.sql_query = NULL,
+		.queryname = NULL,
 		.thresholds = mp_thresholds_init(),
 
 		.output_format_is_set = false,

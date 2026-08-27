@@ -126,6 +126,39 @@ static long mac_addr_dlpi(const char *, int, u_char *);
 #define MAX_DHCP_FILE_LENGTH    128
 #define MAX_DHCP_OPTIONS_LENGTH 312
 
+// RFC 2131
+// 0                   1                   2                   3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+// +---------------+---------------+---------------+---------------+
+// |                            xid (4)                            |
+// +-------------------------------+-------------------------------+
+// |           secs (2)            |           flags (2)           |
+// +-------------------------------+-------------------------------+
+// |                          ciaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          yiaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          siaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          giaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          chaddr  (16)                         |
+// |                                                               |
+// |                                                               |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          sname   (64)                         |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          file    (128)                        |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          options (variable)                   |
+// +---------------------------------------------------------------+
+
 typedef struct dhcp_packet_struct {
 	uint8_t op;            /* packet type */
 	uint8_t htype;         /* type of hardware address for this machine (Ethernet, etc) */
@@ -141,7 +174,7 @@ typedef struct dhcp_packet_struct {
 	unsigned char chaddr[MAX_DHCP_CHADDR_LENGTH]; /* hardware address of this machine */
 	char sname[MAX_DHCP_SNAME_LENGTH];            /* name of DHCP server */
 	char file[MAX_DHCP_FILE_LENGTH];              /* boot file name (used for diskless booting?) */
-	char options[MAX_DHCP_OPTIONS_LENGTH];        /* options */
+	uint8_t options[MAX_DHCP_OPTIONS_LENGTH];     /* options */
 } dhcp_packet;
 
 typedef struct dhcp_offer_struct {
@@ -154,26 +187,33 @@ typedef struct dhcp_offer_struct {
 	struct dhcp_offer_struct *next;
 } dhcp_offer;
 
-#define BOOTREQUEST 1
-#define BOOTREPLY   2
+typedef enum {
+	BOOTREQUEST = 1,
+	BOOTREPLY = 2,
+} dhcp_packet_op;
 
-#define DHCPDISCOVER 1
-#define DHCPOFFER    2
-#define DHCPREQUEST  3
-#define DHCPDECLINE  4
-#define DHCPACK      5
-#define DHCPNACK     6
-#define DHCPRELEASE  7
+typedef enum {
+	DHCPDISCOVER = 1,
+	DHCPOFFER = 2,
+	DHCPREQUEST = 3,
+	DHCPDECLINE = 4,
+	DHCPACK = 5,
+	DHCPNACK = 6,
+	DHCPRELEASE = 7,
+} dhcp_message_type;
 
-#define DHCP_OPTION_MESSAGE_TYPE      53
-#define DHCP_OPTION_HOST_NAME         12
-#define DHCP_OPTION_BROADCAST_ADDRESS 28
-#define DHCP_OPTION_REQUESTED_ADDRESS 50
-#define DHCP_OPTION_LEASE_TIME        51
-#define DHCP_OPTION_SERVER_IDENTIFIER 54
-#define DHCP_OPTION_RENEWAL_TIME      58
-#define DHCP_OPTION_REBINDING_TIME    59
-#define DHCP_OPTION_END               255
+typedef enum {
+	DHCP_OPTION_PADDING = 0,
+	DHCP_OPTION_MESSAGE_TYPE = 53,
+	DHCP_OPTION_HOST_NAME = 12,
+	DHCP_OPTION_BROADCAST_ADDRESS = 28,
+	DHCP_OPTION_REQUESTED_ADDRESS = 50,
+	DHCP_OPTION_LEASE_TIME = 51,
+	DHCP_OPTION_SERVER_IDENTIFIER = 54,
+	DHCP_OPTION_RENEWAL_TIME = 58,
+	DHCP_OPTION_REBINDING_TIME = 59,
+	DHCP_OPTION_END = 255,
+} dhcp_options_type;
 
 #define DHCP_INFINITE_TIME 0xFFFFFFFF
 
@@ -874,17 +914,23 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 	dhcp_offer *new_offer;
 	struct in_addr serv_ident = {0};
 	/* process all DHCP options present in the packet */
-	for (int dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+	for (size_t dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+		/* get option type */
+		dhcp_options_type option_type = offer_packet->options[dchp_opt_idx++];
 
-		if ((int)offer_packet->options[dchp_opt_idx] == -1) {
+		// End parsing when we find the end option
+		if (option_type == DHCP_OPTION_END) {
 			break;
 		}
 
-		/* get option type */
-		unsigned option_type = offer_packet->options[dchp_opt_idx++];
+		// Padding octet
+		if (option_type == DHCP_OPTION_PADDING) {
+			dchp_opt_idx++;
+			continue;
+		}
 
-		/* get option length */
-		unsigned option_length = offer_packet->options[dchp_opt_idx++];
+		/* neither padding nor end, get option length */
+		uint8_t option_length = offer_packet->options[dchp_opt_idx++];
 
 		if (verbose) {
 			printf("Option: %d (0x%02X)\n", option_type, option_length);
@@ -910,31 +956,30 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 			memcpy(&serv_ident.s_addr, &offer_packet->options[dchp_opt_idx],
 				   sizeof(serv_ident.s_addr));
 			break;
+		default: {
+			// not handled
+		}
 		}
 
 		/* skip option data we're ignoring */
-		if (option_type == 0) { /* "pad" option, see RFC 2132 (3.1) */
-			dchp_opt_idx += 1;
-		} else {
-			dchp_opt_idx += option_length;
-		}
+		dchp_opt_idx += option_length;
 	}
 
 	if (verbose) {
 		if (dhcp_lease_time == DHCP_INFINITE_TIME) {
 			printf(_("Lease Time: Infinite\n"));
 		} else {
-			printf(_("Lease Time: %lu seconds\n"), (unsigned long)dhcp_lease_time);
+			printf(_("Lease Time: %" PRIu32 " seconds\n"), dhcp_lease_time);
 		}
 		if (dhcp_renewal_time == DHCP_INFINITE_TIME) {
 			printf(_("Renewal Time: Infinite\n"));
 		} else {
-			printf(_("Renewal Time: %lu seconds\n"), (unsigned long)dhcp_renewal_time);
+			printf(_("Renewal Time: %" PRIu32 " seconds\n"), dhcp_renewal_time);
 		}
 		if (dhcp_rebinding_time == DHCP_INFINITE_TIME) {
 			printf(_("Rebinding Time: Infinite\n"));
 		}
-		printf(_("Rebinding Time: %lu seconds\n"), (unsigned long)dhcp_rebinding_time);
+		printf(_("Rebinding Time: %" PRIu32 " seconds\n"), dhcp_rebinding_time);
 	}
 
 	new_offer = (dhcp_offer *)malloc(sizeof(dhcp_offer));

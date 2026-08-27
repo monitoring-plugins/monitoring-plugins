@@ -113,6 +113,8 @@ typedef struct {
 	mp_state_enum on_redirect_result_state;
 	bool on_redirect_dependent;
 
+	mp_state_enum on_timeout_result_state;
+
 	bool show_extended_perfdata;
 	bool show_body;
 

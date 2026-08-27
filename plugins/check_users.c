@@ -111,8 +111,13 @@ int main(int argc, char **argv) {
 		mp_add_subcheck_to_check(&overall, sc_users);
 		mp_exit(overall);
 	}
-	/* check the user count against warning and critical thresholds */
 
+	char *ok_summary = NULL;
+	xasprintf(&ok_summary, "Users on the system: %d", user_wrapper.users);
+	mp_set_ok_summary(&overall, ok_summary);
+	free(ok_summary);
+
+	/* check the user count against warning and critical thresholds */
 	mp_perfdata users_pd = {
 		.label = "users",
 		.value = mp_create_pd_value(user_wrapper.users),

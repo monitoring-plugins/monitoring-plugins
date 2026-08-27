@@ -162,6 +162,9 @@ int main(int argc, char **argv) {
 	}
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "Filesystem checks succeeded");
+
 	if (config.path_select_list.length == 0) {
 		mp_subcheck none_sc = mp_subcheck_init();
 		xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
@@ -1252,10 +1255,14 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 	mp_thresholds thr_used_space = measurement_unit.freespace_bytes_thresholds;
 	if (thr_used_space.critical_is_set) {
+		thr_used_space.critical.end = mp_create_pd_value(
+			measurement_unit.total_bytes - mp_get_pd_value(thr_used_space.critical.end));
 		thr_used_space.critical.alert_on_inside_range =
 			!thr_used_space.critical.alert_on_inside_range;
 	}
 	if (thr_used_space.warning_is_set) {
+		thr_used_space.warning.end = mp_create_pd_value(
+			measurement_unit.total_bytes - mp_get_pd_value(thr_used_space.warning.end));
 		thr_used_space.warning.alert_on_inside_range =
 			!thr_used_space.warning.alert_on_inside_range;
 	}

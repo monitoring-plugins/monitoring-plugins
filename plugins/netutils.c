@@ -46,9 +46,9 @@ void socket_timeout_alarm_handler(int sig) {
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 
 	if (sig == SIGALRM) {
-		xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds\n"), socket_timeout);
+		xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds"), socket_timeout);
 	} else {
-		xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds\n"), socket_timeout);
+		xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds"), socket_timeout);
 	}
 
 	mp_check overall = mp_check_init();

@@ -118,7 +118,8 @@ typedef struct {
 static struct {
 	uint8_t value;
 	char *text;
-} offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"}, {0x05, "Aborted"}, {0x06, "Failed"}, {0, 0}};
+} offline_status_text[] = {{0x00, "NeverStarted"}, {0x02, "Completed"}, {0x04, "Suspended"},
+						   {0x05, "Aborted"},      {0x06, "Failed"},    {0, 0}};
 
 static struct {
 	uint8_t value;
@@ -141,7 +142,8 @@ static int smart_read_values(int /*fd*/, smart_values * /*values*/);
 static mp_state_enum compare_values_and_thresholds(smart_values * /*p*/, smart_thresholds * /*t*/);
 static void print_value(smart_value * /*p*/, smart_threshold * /*t*/);
 static void print_values(smart_values * /*p*/, smart_thresholds * /*t*/);
-static mp_state_enum smart_cmd_simple(int /*fd*/, enum SmartCommand /*command*/, uint8_t /*val0*/, bool /*show_error*/);
+static mp_state_enum smart_cmd_simple(int /*fd*/, enum SmartCommand /*command*/, uint8_t /*val0*/,
+									  bool /*show_error*/);
 static int smart_read_thresholds(int /*fd*/, smart_thresholds * /*thresholds*/);
 static int verbose = 0;
 
@@ -150,15 +152,16 @@ typedef struct {
 	check_ide_smart_config config;
 } check_ide_smart_config_wrapper;
 static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"device", required_argument, 0, 'd'},
-									   {"immediate", no_argument, 0, 'i'},
-									   {"quiet-check", no_argument, 0, 'q'},
-									   {"auto-on", no_argument, 0, '1'},
-									   {"auto-off", no_argument, 0, '0'},
-									   {"nagios", no_argument, 0, 'n'}, /* DEPRECATED, but we still accept it */
-									   {"help", no_argument, 0, 'h'},
-									   {"version", no_argument, 0, 'V'},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"device", required_argument, 0, 'd'},
+		{"immediate", no_argument, 0, 'i'},
+		{"quiet-check", no_argument, 0, 'q'},
+		{"auto-on", no_argument, 0, '1'},
+		{"auto-off", no_argument, 0, '0'},
+		{"nagios", no_argument, 0, 'n'}, /* DEPRECATED, but we still accept it */
+		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{0, 0, 0, 0}};
 
 	check_ide_smart_config_wrapper result = {
 		.errorcode = OK,
@@ -178,18 +181,21 @@ static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.device = optarg;
 			break;
 		case 'q':
-			fprintf(stderr, "%s\n", _("DEPRECATION WARNING: the -q switch (quiet output) is no longer \"quiet\"."));
+			fprintf(stderr, "%s\n",
+					_("DEPRECATION WARNING: the -q switch (quiet output) is no longer \"quiet\"."));
 			fprintf(stderr, "%s\n", _("Nagios-compatible output is now always returned."));
 			break;
 		case 'i':
 		case '1':
 		case '0':
-			printf("%s\n", _("SMART commands are broken and have been disabled (See Notes in --help)."));
+			printf("%s\n",
+				   _("SMART commands are broken and have been disabled (See Notes in --help)."));
 			result.errorcode = ERROR;
 			return result;
 			break;
 		case 'n':
-			fprintf(stderr, "%s\n", _("DEPRECATION WARNING: the -n switch (Nagios-compatible output) is now the"));
+			fprintf(stderr, "%s\n",
+					_("DEPRECATION WARNING: the -n switch (Nagios-compatible output) is now the"));
 			fprintf(stderr, "%s\n", _("default and will be removed from future releases."));
 			break;
 		case 'v': /* verbose */
@@ -348,12 +354,13 @@ mp_state_enum compare_values_and_thresholds(smart_values *values, smart_threshol
 
 	switch (status) {
 	case PREFAILURE:
-		printf(_("CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"), prefailure, prefailure > 1 ? 's' : ' ', failed,
-			   total);
+		printf(_("CRITICAL - %d Harddrive PreFailure%cDetected! %d/%d tests failed.\n"), prefailure,
+			   prefailure > 1 ? 's' : ' ', failed, total);
 		status = STATE_CRITICAL;
 		break;
 	case ADVISORY:
-		printf(_("WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"), advisory, advisory > 1 ? "ies" : "y", failed, total);
+		printf(_("WARNING - %d Harddrive Advisor%s Detected. %d/%d tests failed.\n"), advisory,
+			   advisory > 1 ? "ies" : "y", failed, total);
 		status = STATE_WARNING;
 		break;
 	case OPERATIONAL:
@@ -369,9 +376,11 @@ mp_state_enum compare_values_and_thresholds(smart_values *values, smart_threshol
 }
 
 void print_value(smart_value *value_pointer, smart_threshold *threshold_pointer) {
-	printf("Id=%3d, Status=%2d {%s , %s}, Value=%3d, Threshold=%3d, %s\n", value_pointer->id, value_pointer->status,
-		   value_pointer->status & 1 ? "PreFailure" : "Advisory   ", value_pointer->status & 2 ? "OnLine " : "OffLine",
-		   value_pointer->value, threshold_pointer->threshold, value_pointer->value >= threshold_pointer->threshold ? "Passed" : "Failed");
+	printf("Id=%3d, Status=%2d {%s , %s}, Value=%3d, Threshold=%3d, %s\n", value_pointer->id,
+		   value_pointer->status, value_pointer->status & 1 ? "PreFailure" : "Advisory   ",
+		   value_pointer->status & 2 ? "OnLine " : "OffLine", value_pointer->value,
+		   threshold_pointer->threshold,
+		   value_pointer->value >= threshold_pointer->threshold ? "Passed" : "Failed");
 }
 
 void print_values(smart_values *values, smart_thresholds *thresholds) {
@@ -382,15 +391,21 @@ void print_values(smart_values *values, smart_thresholds *thresholds) {
 			print_value(value++, threshold++);
 		}
 	}
-	printf(_("OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"), values->offline_status,
-		   get_offline_text(values->offline_status & 0x7f), (values->offline_status & 0x80 ? "Yes" : "No"), values->offline_timeout / 60);
-	printf(_("OffLineCapability=%d {%s %s %s}\n"), values->offline_capability, values->offline_capability & 1 ? "Immediate" : "",
-		   values->offline_capability & 2 ? "Auto" : "", values->offline_capability & 4 ? "AbortOnCmd" : "SuspendOnCmd");
-	printf(_("SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"), values->revision, values->checksum, values->smart_capability,
-		   values->smart_capability & 1 ? "SaveOnStandBy" : "", values->smart_capability & 2 ? "AutoSave" : "");
+	printf(_("OffLineStatus=%d {%s}, AutoOffLine=%s, OffLineTimeout=%d minutes\n"),
+		   values->offline_status, get_offline_text(values->offline_status & 0x7f),
+		   (values->offline_status & 0x80 ? "Yes" : "No"), values->offline_timeout / 60);
+	printf(_("OffLineCapability=%d {%s %s %s}\n"), values->offline_capability,
+		   values->offline_capability & 1 ? "Immediate" : "",
+		   values->offline_capability & 2 ? "Auto" : "",
+		   values->offline_capability & 4 ? "AbortOnCmd" : "SuspendOnCmd");
+	printf(_("SmartRevision=%d, CheckSum=%d, SmartCapability=%d {%s %s}\n"), values->revision,
+		   values->checksum, values->smart_capability,
+		   values->smart_capability & 1 ? "SaveOnStandBy" : "",
+		   values->smart_capability & 2 ? "AutoSave" : "");
 }
 
-mp_state_enum smart_cmd_simple(int file_descriptor, enum SmartCommand command, uint8_t val0, bool show_error) {
+mp_state_enum smart_cmd_simple(int file_descriptor, enum SmartCommand command, uint8_t val0,
+							   bool show_error) {
 	mp_state_enum result = STATE_UNKNOWN;
 #ifdef __linux__
 	uint8_t args[4] = {
@@ -517,15 +532,18 @@ void print_help(void) {
 
 	printf(" %s\n", "-d, --device=DEVICE");
 	printf("    %s\n", _("Select device DEVICE"));
-	printf("    %s\n", _("Note: if the device is specified without this option, any further option will"));
+	printf("    %s\n",
+		   _("Note: if the device is specified without this option, any further option will"));
 	printf("          %s\n", _("be ignored."));
 
 	printf(UT_VERBOSE);
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("The SMART command modes (-i/--immediate, -0/--auto-off and -1/--auto-on) were"));
-	printf(" %s\n", _("broken in an underhand manner and have been disabled. You can use smartctl"));
+	printf(" %s\n",
+		   _("The SMART command modes (-i/--immediate, -0/--auto-off and -1/--auto-on) were"));
+	printf(" %s\n",
+		   _("broken in an underhand manner and have been disabled. You can use smartctl"));
 	printf(" %s\n", _("instead:"));
 	printf("  %s\n", _("-0/--auto-off:  use \"smartctl --offlineauto=off\""));
 	printf("  %s\n", _("-1/--auto-on:   use \"smartctl --offlineauto=on\""));

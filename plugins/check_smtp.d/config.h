@@ -40,8 +40,8 @@ typedef struct {
 
 	bool use_proxy_prefix;
 #ifdef HAVE_SSL
-	int days_till_exp_warn;
-	int days_till_exp_crit;
+	unsigned int days_till_exp_warn;
+	unsigned int days_till_exp_crit;
 	bool use_ssl;
 	bool use_starttls;
 	bool use_sni;
@@ -53,7 +53,7 @@ typedef struct {
 	mp_output_format output_format;
 } check_smtp_config;
 
-check_smtp_config check_smtp_config_init() {
+check_smtp_config check_smtp_config_init(void) {
 	check_smtp_config tmp = {
 		.server_port = SMTP_PORT,
 		.server_address = NULL,

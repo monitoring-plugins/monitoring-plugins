@@ -161,6 +161,8 @@ int main(int argc, char **argv) {
 	mp_check overall = mp_check_init();
 	mp_subcheck sc_test = check_http(config, working_state, 0);
 
+	mp_set_ok_summary(&overall, "Connection test succeeded");
+
 	mp_add_subcheck_to_check(&overall, sc_test);
 
 	mp_exit(overall);
@@ -273,9 +275,17 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	/* Curl errors, result in critical Nagios state */
 	if (res != CURLE_OK) {
-		xasprintf(&sc_curl.output, _("Error while performing connection: cURL returned %d - %s"),
-				  res, errbuf[0] ? errbuf : curl_easy_strerror(res));
-		sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
+		/* Custom handling for timeouts, state might be set to non CRITICAL */
+		if (res == CURLE_OPERATION_TIMEDOUT) {
+			xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
+					  errbuf[0] ? errbuf : curl_easy_strerror(res));
+			sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
+		} else {
+			xasprintf(&sc_curl.output,
+					  _("Error while performing connection: cURL returned %d - %s"), res,
+					  errbuf[0] ? errbuf : curl_easy_strerror(res));
+			sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
+		}
 		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
 		return sc_result;
 	}
@@ -673,14 +683,33 @@ int uri_strcmp(const UriTextRangeA range, const char *stringToCompare) {
 				   min((size_t)(range.afterLast - range.first), strlen(stringToCompare)));
 }
 
-char *uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
+typedef struct {
+	char *uri_string;
+	int errorcode;
+} uri_string_wrapper;
+uri_string_wrapper uri_string(const UriTextRangeA range, char *buf, size_t buflen) {
+	uri_string_wrapper result = {
+		.uri_string = NULL,
+		.errorcode = 0,
+	};
+
 	if (!range.first) {
-		return "(null)";
+		result.errorcode = 1;
+		return result;
 	}
-	strncpy(buf, range.first, max(buflen - 1, (size_t)(range.afterLast - range.first)));
-	buf[max(buflen - 1, (size_t)(range.afterLast - range.first))] = '\0';
+
+	size_t copy_size = range.afterLast - range.first;
+	if (copy_size > buflen - 1) {
+		result.errorcode = 2;
+		return result;
+	}
+
+	strncpy(buf, range.first, copy_size);
+	buf[copy_size] = '\0';
 	buf[range.afterLast - range.first] = '\0';
-	return buf;
+	result.uri_string = buf;
+
+	return result;
 }
 
 redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config config,
@@ -728,9 +757,9 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	char ipstr[INET_ADDR_MAX_SIZE];
 	char buf[DEFAULT_BUFFER_SIZE];
 	if (verbose >= 2) {
-		printf(_("** scheme: %s\n"), uri_string(uri.scheme, buf, DEFAULT_BUFFER_SIZE));
-		printf(_("** host: %s\n"), uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE));
-		printf(_("** port: %s\n"), uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE));
+		printf(_("** scheme: %s\n"), uri_string(uri.scheme, buf, DEFAULT_BUFFER_SIZE).uri_string);
+		printf(_("** host: %s\n"), uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE).uri_string);
+		printf(_("** port: %s\n"), uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		if (uri.hostData.ip4) {
 			inet_ntop(AF_INET, uri.hostData.ip4->data, ipstr, sizeof(ipstr));
 			printf(_("** IPv4: %s\n"), ipstr);
@@ -743,15 +772,16 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			printf(_("** path: "));
 			for (UriPathSegmentA *path_segment = uri.pathHead; path_segment;
 				 path_segment = path_segment->next) {
-				printf("/%s", uri_string(path_segment->text, buf, DEFAULT_BUFFER_SIZE));
+				printf("/%s", uri_string(path_segment->text, buf, DEFAULT_BUFFER_SIZE).uri_string);
 			}
 			puts("");
 		}
 		if (uri.query.first) {
-			printf(_("** query: %s\n"), uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE));
+			printf(_("** query: %s\n"), uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		}
 		if (uri.fragment.first) {
-			printf(_("** fragment: %s\n"), uri_string(uri.fragment, buf, DEFAULT_BUFFER_SIZE));
+			printf(_("** fragment: %s\n"),
+				   uri_string(uri.fragment, buf, DEFAULT_BUFFER_SIZE).uri_string);
 		}
 	}
 
@@ -764,7 +794,14 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 	 */
 	int new_port;
 	if (uri.portText.first) {
-		new_port = atoi(uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE));
+		uri_string_wrapper port_copy = uri_string(uri.portText, buf, DEFAULT_BUFFER_SIZE);
+
+		if (port_copy.errorcode != 0) {
+			die(STATE_UNKNOWN,
+				_("HTTP UNKNOWN - Error while parsing the new port from redirection\n"));
+		}
+
+		new_port = atoi(port_copy.uri_string);
 	} else {
 		new_port = HTTP_PORT;
 		if (working_state.use_ssl) {
@@ -788,7 +825,11 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 			uri_string(uri.scheme, "https", DEFAULT_BUFFER_SIZE);
 		}
 	} else {
-		new_host = strdup(uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE));
+		uri_string_wrapper new_host_parse = uri_string(uri.hostText, buf, DEFAULT_BUFFER_SIZE);
+		if (new_host_parse.errorcode != 0) {
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing new host in redir\n"));
+		}
+		new_host = strdup(new_host_parse.uri_string);
 	}
 
 	/* compose new path */
@@ -798,8 +839,14 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		for (UriPathSegmentA *pathSegment = uri.pathHead; pathSegment;
 			 pathSegment = pathSegment->next) {
 			strncat(new_url, "/", DEFAULT_BUFFER_SIZE);
-			strncat(new_url, uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE),
-					DEFAULT_BUFFER_SIZE - 1);
+
+			uri_string_wrapper new_url_copy =
+				uri_string(pathSegment->text, buf, DEFAULT_BUFFER_SIZE);
+			if (new_url_copy.errorcode != 0) {
+				die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing new url in redir\n"));
+			}
+
+			strncat(new_url, new_url_copy.uri_string, DEFAULT_BUFFER_SIZE - 1);
 		}
 	}
 
@@ -812,7 +859,12 @@ redir_wrapper redir(curlhelp_write_curlbuf *header_buf, const check_curl_config 
 		size_t current_len = strlen(new_url);
 		size_t remaining_space = DEFAULT_BUFFER_SIZE - current_len - 1;
 
-		const char *query_str = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		uri_string_wrapper query_string_copy = uri_string(uri.query, buf, DEFAULT_BUFFER_SIZE);
+		if (query_string_copy.errorcode != 0) {
+			die(STATE_UNKNOWN, _("HTTP UNKNOWN - Error while parsing redir url stuff"));
+		}
+
+		const char *query_str = query_string_copy.uri_string;
 		size_t query_str_len = strlen(query_str);
 
 		if (remaining_space >= query_str_len + 1) {
@@ -890,6 +942,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		STATE_REGEX,
 		OUTPUT_FORMAT,
 		NO_PROXY,
+		TIMEOUT_RESULT,
 	};
 
 	static struct option longopts[] = {
@@ -939,6 +992,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"cookie-jar", required_argument, 0, COOKIE_JAR},
 		{"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
 		{"output-format", required_argument, 0, OUTPUT_FORMAT},
+		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
 		{0, 0, 0, 0}};
 
 	check_curl_config_wrapper result = {
@@ -1002,6 +1056,21 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				result.config.curl_config.socket_timeout = (int)strtol(optarg, NULL, 10);
+			}
+			break;
+		case TIMEOUT_RESULT:
+			if (!strcmp(optarg, "0") || !strcasecmp(optarg, "ok")) {
+				result.config.on_timeout_result_state = STATE_OK;
+			} else if (!strcmp(optarg, "1") || !strcasecmp(optarg, "warning")) {
+				result.config.on_timeout_result_state = STATE_WARNING;
+			} else if (!strcmp(optarg, "2") || !strcasecmp(optarg, "critical")) {
+				result.config.on_timeout_result_state = STATE_CRITICAL;
+			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
+				result.config.on_timeout_result_state = STATE_UNKNOWN;
+			} else {
+				usage2(_("Invalid timeout-result state option, give either a return code or state "
+						 "name in lowercase"),
+					   optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1700,6 +1769,10 @@ void print_help(void) {
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
+
+	printf(" %s\n", "--timeout-result=ok|warning|critical|unknown|0|1|2|3");
+	printf("    %s\n", _("Timeouts default to returning STATE_CRITICAL."));
+	printf("    %s\n", _("This argument changes the return state on timeouts."));
 
 	printf(UT_VERBOSE);
 

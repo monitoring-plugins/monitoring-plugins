@@ -130,7 +130,8 @@ np_arg_list *np_get_defaults(const char *locator, const char *default_section) {
 
 	np_arg_list *defaults = NULL;
 	if (!read_defaults(inifile, ini_info.stanza, &defaults)) {
-		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), ini_info.stanza, ini_info.file);
+		die(STATE_UNKNOWN, _("Invalid section '%s' in config file '%s'\n"), ini_info.stanza,
+			ini_info.file);
 	}
 
 	if (ini_info.file_string_on_heap) {
