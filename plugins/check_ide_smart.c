@@ -205,7 +205,7 @@ static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V':
-			print_revision(progname, NP_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 		default:
 			usage5();
@@ -514,7 +514,7 @@ int smart_read_thresholds(int file_descriptor, smart_thresholds *thresholds) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname);
 
 	printf("(C) 1999 Ragnar Hojland Espinosa <ragnar@lightside.dhis.org>\n");
 	printf("Plugin implementation - 1999 Robert Dale <rdale@digital-mission.com>\n");

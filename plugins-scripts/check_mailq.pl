@@ -648,7 +648,7 @@ sub process_arguments(){
          );
 
     if ($opt_V) {
-        print_revision($PROGNAME,'@NP_VERSION@');
+        print_revision($PROGNAME);
         exit $ERRORS{'UNKNOWN'};
     }
 
@@ -729,7 +729,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-    print_revision($PROGNAME,'@NP_VERSION@');
+    print_revision($PROGNAME);
     print "Copyright (c) 2002 Subhendu Ghosh/Carlos Canau/Benjamin Schmid\n";
     print "\n";
     print_usage();

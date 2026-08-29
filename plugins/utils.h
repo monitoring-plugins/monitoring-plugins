@@ -30,7 +30,7 @@ suite of plugins. */
 /* Standardize version information, termination */
 
 void support(void);
-void print_revision(const char *, const char *);
+void print_revision(const char *progname);
 
 /* Test input types */
 

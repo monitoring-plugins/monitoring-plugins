@@ -216,7 +216,7 @@ check_cluster_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			print_revision(progname);
 			exit(STATE_UNKNOWN);
 			break;
 		case 'H': /* help */
@@ -252,7 +252,7 @@ check_cluster_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	print_revision(progname);
 	printf("Copyright (c) 2000-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);
 

@@ -58,7 +58,7 @@ GetOptions
 	 "C=s" => \$opt_C, "configfile=s" => \$opt_C);
 
 if ($opt_V) {
-	print_revision($PROGNAME,'@NP_VERSION@'); #'
+	print_revision($PROGNAME); #'
 	exit $ERRORS{'UNKNOWN'};
 }
 
@@ -307,7 +307,7 @@ sub print_usage () {
 }
 
 sub print_help () {
-	print_revision($PROGNAME,'@NP_VERSION@');
+	print_revision($PROGNAME);
 	print "Copyright (c) 2000 Michael Anthon/Karl DeBisschop
 
 Perl Check SMB Disk plugin for monitoring

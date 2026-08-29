@@ -1,15 +1,15 @@
 ## Process this file with automake to produce Makefile.in
 
 if RELEASE_PRESENT
-NP_VERSION = @NP_RELEASE@
+MOPL_VERSION = @MOPL_RELEASE@
 else
-NP-VERSION-FILE: .FORCE-NP-VERSION-FILE
-	@$(SHELL_PATH) $(top_srcdir)/NP-VERSION-GEN
-.FORCE-NP-VERSION-FILE:
--include NP-VERSION-FILE
+MOPL-VERSION-FILE: .FORCE-MOPL-VERSION-FILE
+	@$(SHELL_PATH) $(top_srcdir)/MOPL-VERSION-GEN
+.FORCE-MOPL-VERSION-FILE:
+-include MOPL-VERSION-FILE
 endif
 
-AM_CFLAGS = -DNP_VERSION='"$(NP_VERSION)"'
+AM_CFLAGS = -DMOPL_VERSION='"$(MOPL_VERSION)"'
 
 VPATH = $(top_srcdir) $(top_srcdir)/lib $(top_srcdir)/plugins $(top_srcdir)/plugins/t
 
@@ -209,7 +209,7 @@ install-exec-hook:
 
 clean-local:
 	rm -f $(check_tcp_programs)
-	rm -f NP-VERSION-FILE
+	rm -f MOPL-VERSION-FILE
 
 uninstall-local:
 	cd $(DESTDIR)$(libexecdir) && rm -f $(check_tcp_programs)
