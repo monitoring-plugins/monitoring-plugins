@@ -107,6 +107,7 @@ check_snmp_config check_snmp_config_init() {
 		.evaluation_params =
 			{
 				.nulloid_result = STATE_UNKNOWN, // state to return if no result for query
+				.missing_oid_result = STATE_CRITICAL,
 
 				.invert_search = true,
 				.regex_cmp_value = {},
@@ -290,7 +291,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a unmatched result type: %hhu\n", vars->type);
 			}
-			// TODO: Error here?
+			result.response_values[result.number_of_results].type = vars->type;
 			break;
 		}
 	}
@@ -540,6 +541,19 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	case ASN_IPADDRESS:
 		// TODO
 		break;
+	default: {
+		// no known type
+		xasprintf(&sc_oid_test.output, "%s: no valid response", oid_string);
+		sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, eval_params.missing_oid_result);
+		check_snmp_evaluation result = {
+			.sc = sc_oid_test,
+			.state = result_state,
+		};
+
+		return result;
+
+		break;
+	}
 	}
 
 	if (got_a_numerical_value) {
