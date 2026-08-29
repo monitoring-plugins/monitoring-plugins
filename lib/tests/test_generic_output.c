@@ -62,8 +62,8 @@ void test_one_subcheck(void) {
 	// diag("Formatted output");
 	// diag(output);
 
-	char expected[] = "[WARNING] - ok=0, warning=1, critical=0, unknown=0\n"
-					  "\t\\_[WARNING] - foobar\n";
+	char expected[] = "[WARNING] - foobar\n"
+					  "\t\\_[WARNING] - foobar";
 
 	// diag("Expected output");
 	// diag(expected);
@@ -88,7 +88,7 @@ void test_perfdata_formatting2(void) {
 
 	char *result = pd_list_to_string(*tmp);
 
-	ok(strcmp(result, "foo=23;;; bar=1;;;") == 0, "Perfdata string formatting");
+	ok(strcmp(result, "'foo'=23;;; 'bar'=1;;;") == 0, "Perfdata string formatting, part two");
 }
 
 void test_perfdata_formatting(void) {
@@ -101,7 +101,7 @@ void test_perfdata_formatting(void) {
 
 	char *pd_string = pd_to_string(pd1);
 
-	ok(strcmp(pd_string, "foo=23s;;;") == 0, "Perfdata string formatting");
+	ok(strcmp(pd_string, "'foo'=23s;;;") == 0, "Perfdata string formatting");
 }
 
 void test_two_subchecks(void) {
@@ -145,15 +145,14 @@ void test_two_subchecks(void) {
 
 	ok(output != NULL, "Output should not be NULL");
 
-	char expected[] = "[WARNING] - ok=0, warning=1, critical=0, unknown=0\n"
+	char expected[] = "[WARNING] - foobar\n"
 					  "\t\\_[WARNING] - foobar\n"
-					  "\t\t\\_[OK] - baz\n"
-					  "|foo=23s;;; \n";
+					  "\t\t\\_[OK] - baz|'foo'=23s;;; ";
 
 	// diag("Expected output. Length: %u", strlen(expected));
 	// diag(expected);
 
-	ok(strcmp(output, expected) == 0, "Output is as expected");
+	ok(strcmp(output, expected) == 0, "More complex example with two subchecks");
 }
 
 void test_deep_check_hierarchy(void) {
@@ -203,12 +202,11 @@ void test_deep_check_hierarchy(void) {
 
 	ok(output != NULL, "Output should not be NULL");
 
-	char expected[] = "[WARNING] - ok=0, warning=1, critical=0, unknown=0\n"
+	char expected[] = "[WARNING] - foobar\n"
 					  "\t\\_[WARNING] - foobar\n"
 					  "\t\t\\_[OK] - baz\n"
 					  "\t\t\t\\_[OK] - level3\n"
-					  "\t\t\t\t\\_[OK] - level4\n"
-					  "|foo=23s;;; \n";
+					  "\t\t\t\t\\_[OK] - level4|'foo'=23s;;; ";
 
 	size_t expected_length = strlen(expected);
 
@@ -273,12 +271,11 @@ void test_deep_check_hierarchy2(void) {
 
 	ok(output != NULL, "Output should not be NULL");
 
-	char expected[] = "[WARNING] - ok=0, warning=1, critical=0, unknown=0\n"
+	char expected[] = "[WARNING] - foobar\n"
 					  "\t\\_[WARNING] - foobar\n"
 					  "\t\t\\_[OK] - baz\n"
 					  "\t\t\t\\_[OK] - level3\n"
-					  "\t\t\t\t\\_[OK] - level4\n"
-					  "|foo=23s;;; baz=1024B;;; floatMe=1024.102400;;; \n";
+					  "\t\t\t\t\\_[OK] - level4|'foo'=23s;;; 'baz'=1024B;;; 'floatMe'=1024.102400;;; ";
 
 	// diag("Expected output of length: %i", strlen(expected));
 	// diag(expected);

@@ -127,7 +127,7 @@ check_snmp_config check_snmp_config_init() {
 	snmp_sess_init(&tmp.snmp_params.snmp_session);
 
 	tmp.snmp_params.snmp_session.retries = DEFAULT_RETRIES;
-	tmp.snmp_params.snmp_session.version = DEFAULT_SNMP_VERSION;
+	tmp.snmp_params.snmp_session.version = SNMP_VERSION_3;
 	tmp.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
 	tmp.snmp_params.snmp_session.community = (unsigned char *)"public";
 	tmp.snmp_params.snmp_session.community_len = strlen("public");
@@ -204,6 +204,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 	snmp_responces result = {
 		.errorcode = OK,
 		.response_values = calloc(parameters.num_of_test_units, sizeof(response_value)),
+		.number_of_results = 0,
 	};
 
 	if (result.response_values == NULL) {
@@ -212,19 +213,19 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 	}
 
 	// We got the the query results, now process them
-	size_t loop_index = 0;
-	for (netsnmp_variable_list *vars = response->variables; vars;
-		 vars = vars->next_variable, loop_index++) {
-
+	for (netsnmp_variable_list *vars = response->variables;
+		 (vars && result.number_of_results <= parameters.num_of_test_units);
+		 vars = vars->next_variable, result.number_of_results++) {
 		for (size_t jdx = 0; jdx < vars->name_length; jdx++) {
-			result.response_values[loop_index].oid[jdx] = vars->name[jdx];
+			result.response_values[result.number_of_results].oid[jdx] = vars->name[jdx];
 		}
-		result.response_values[loop_index].oid_length = vars->name_length;
+		result.response_values[result.number_of_results].oid_length = vars->name_length;
 
 		switch (vars->type) {
 		case ASN_OCTET_STR: {
-			result.response_values[loop_index].string_response = strdup((char *)vars->val.string);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].string_response =
+				strdup((char *)vars->val.string);
+			result.response_values[result.number_of_results].type = vars->type;
 			if (verbose) {
 				printf("Debug: Got a string as response: %s\n", vars->val.string);
 			}
@@ -242,8 +243,8 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			}
 			struct counter64 tmp = *(vars->val.counter64);
 			uint64_t counter = (tmp.high << 32) + tmp.low;
-			result.response_values[loop_index].value.uIntVal = counter;
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.uIntVal = counter;
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_GAUGE: // same as ASN_UNSIGNED
 		case ASN_TIMETICKS:
@@ -252,35 +253,36 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a Integer like\n");
 			}
-			result.response_values[loop_index].value.uIntVal = (unsigned long)*(vars->val.integer);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.uIntVal =
+				(unsigned long)*(vars->val.integer);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_INTEGER: {
 			if (verbose) {
 				printf("Debug: Got a Integer\n");
 			}
-			result.response_values[loop_index].value.intVal = *(vars->val.integer);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.intVal = *(vars->val.integer);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_FLOAT: {
 			if (verbose) {
 				printf("Debug: Got a float\n");
 			}
-			result.response_values[loop_index].value.doubleVal = *(vars->val.floatVal);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.floatVal);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_DOUBLE: {
 			if (verbose) {
 				printf("Debug: Got a double\n");
 			}
-			result.response_values[loop_index].value.doubleVal = *(vars->val.doubleVal);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.doubleVal);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_IPADDRESS:
 			if (verbose) {
 				printf("Debug: Got an IP address\n");
 			}
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].type = vars->type;
 
 			// TODO: print address here, state always ok? or regex match?
 			break;
@@ -896,7 +898,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 char *_np_state_generate_key(int argc, char **argv) {
 	unsigned char result[256];
 
-#ifdef USE_OPENSSL
+#ifdef MOPL_USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
 	 * scenario). Alternatively, the gnulib implementation/
@@ -920,7 +922,7 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	sha256_finish_ctx(&ctx, result);
-#endif // FOUNDOPENSSL
+#endif // MOPL_USE_OPENSSL
 
 	char keyname[41];
 	for (int i = 0; i < 20; ++i) {

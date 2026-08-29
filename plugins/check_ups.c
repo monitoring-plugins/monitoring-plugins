@@ -94,10 +94,12 @@ int main(int argc, char **argv) {
 	mp_set_ok_summary(&overall, "UPS check is OK");
 
 	mp_subcheck sc_retrieve_status = mp_subcheck_init();
+	sc_retrieve_status = mp_set_subcheck_default_state(sc_retrieve_status, STATE_OK);
 
 	/* get the ups status if possible */
 	determine_status_result query_result = determine_status(config);
 	if (query_result.errorcode != OK) {
+		sc_retrieve_status = mp_set_subcheck_state(sc_retrieve_status, STATE_CRITICAL);
 		xasprintf(&sc_retrieve_status.output, "%s", "Failed to retrieve status from UPS tools");
 		mp_add_subcheck_to_check(&overall, sc_retrieve_status);
 		mp_exit(overall);
@@ -111,6 +113,7 @@ int main(int argc, char **argv) {
 
 	// Exit result
 	mp_subcheck sc_ups_status = mp_subcheck_init();
+	xasprintf(&sc_ups_status.output, "%s", "");
 
 	if (supported_options & UPS_STATUS) {
 		mp_state_enum ups_state_result = STATE_OK;
@@ -174,6 +177,7 @@ int main(int argc, char **argv) {
 		}
 		xasprintf(&sc_ups_status.output, "Status: %s", sc_ups_status.output);
 		sc_ups_status = mp_set_subcheck_state(sc_ups_status, ups_state_result);
+		mp_add_subcheck_to_check(&overall, sc_ups_status);
 	}
 
 	int res;
@@ -256,7 +260,7 @@ int main(int argc, char **argv) {
 	/* get the ups load percent if possible */
 	res = get_ups_variable("ups.load", temp_buffer, config);
 	mp_subcheck sc_load_percent = mp_subcheck_init();
-	mp_set_subcheck_default_state(sc_load_percent, STATE_OK);
+	sc_load_percent = mp_set_subcheck_default_state(sc_load_percent, STATE_OK);
 	if (res == NOSUCHVAR) {
 		supported_options &= ~UPS_LOADPCT;
 	} else if (res != OK) {
@@ -268,7 +272,7 @@ int main(int argc, char **argv) {
 		supported_options |= UPS_LOADPCT;
 
 		double ups_load_percent = atof(temp_buffer);
-		xasprintf(&sc_load_percent.output, "Load :%3.1f%% ", ups_load_percent);
+		xasprintf(&sc_load_percent.output, "Load: %3.1f%%", ups_load_percent);
 
 		mp_perfdata pd_load_percent = perfdata_init();
 		pd_load_percent.label = "load";
@@ -276,10 +280,12 @@ int main(int argc, char **argv) {
 		pd_load_percent.value = mp_create_pd_value(ups_load_percent);
 		pd_load_percent = mp_pd_set_thresholds(pd_load_percent, config.load_thresholds);
 
+		mp_add_perfdata_to_subcheck(&sc_load_percent, pd_load_percent);
 		sc_load_percent = mp_set_subcheck_state(sc_load_percent, mp_get_pd_status(pd_load_percent));
 
 		// if (config.check_crit && ups_load_percent >= config.critical_value) {
 		// } else if (config.check_warn && ups_load_percent >= config.warning_value) {
+		mp_add_subcheck_to_check(&overall, sc_load_percent);
 	}
 
 	/* get the ups temperature if possible */
@@ -312,10 +318,12 @@ int main(int argc, char **argv) {
 		pd_temperature = mp_set_pd_value(pd_temperature, ups_temperature);
 		pd_temperature = mp_pd_set_thresholds(pd_temperature, config.temperature_thresholds);
 
+		mp_add_perfdata_to_subcheck(&sc_temperature, pd_temperature);
 		sc_temperature = mp_set_subcheck_state(sc_temperature, mp_get_pd_status(pd_temperature));
 
 		// if (config.check_crit && ups_temperature >= config.critical_value) {
 		// } else if (config.check_warn && ups_temperature >= config.warning_value) {
+		mp_add_subcheck_to_check(&overall, sc_temperature);
 	}
 
 	/* get the ups real power if possible */
@@ -333,7 +341,7 @@ int main(int argc, char **argv) {
 		supported_options |= UPS_REALPOWER;
 
 		double ups_realpower = atof(temp_buffer);
-		xasprintf(&sc_temperature.output, "Real power: %3.1fW ", ups_realpower);
+		xasprintf(&sc_real_power.output, "Real power: %3.1fW", ups_realpower);
 
 		mp_perfdata pd_real_power = perfdata_init();
 		pd_real_power.label = "realpower";
@@ -341,8 +349,12 @@ int main(int argc, char **argv) {
 		pd_real_power.uom = "W";
 		pd_real_power = mp_pd_set_thresholds(pd_real_power, config.real_power_thresholds);
 
+		mp_add_perfdata_to_subcheck(&sc_real_power, pd_real_power);
+		sc_real_power = mp_set_subcheck_state(sc_real_power, mp_get_pd_status(pd_real_power));
+
 		// if (config.check_crit && ups_realpower >= config.critical_value) {
 		// } else if (config.check_warn && ups_realpower >= config.warning_value) {
+		mp_add_subcheck_to_check(&overall, sc_real_power);
 	}
 
 	/* if the UPS does not support any options we are looking for, report an
@@ -630,14 +642,19 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 	switch (test_selection) {
 	case UPS_UTILITY:
 		result.config.utility_thresholds = tmp_thr;
+		break;
 	case UPS_BATTPCT:
 		result.config.battery_thresholds = tmp_thr;
+		break;
 	case UPS_LOADPCT:
 		result.config.load_thresholds = tmp_thr;
+		break;
 	case UPS_REALPOWER:
 		result.config.real_power_thresholds = tmp_thr;
+		break;
 	case UPS_TEMP:
 		result.config.temperature_thresholds = tmp_thr;
+		break;
 	case UPS_NONE:
 	case UPS_STATUS:
 	default: {
@@ -648,7 +665,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 check_ups_config_wrapper validate_arguments(check_ups_config_wrapper config_wrapper) {
-	if (config_wrapper.config.ups_name) {
+	if (config_wrapper.config.ups_name == NULL) {
 		printf("%s\n", _("Error : no UPS indicated"));
 		config_wrapper.errorcode = ERROR;
 	}

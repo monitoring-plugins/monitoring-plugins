@@ -136,13 +136,6 @@ typedef struct {
 #define SIZEOF_NTPCM(m)                                                                            \
 	(12 + ntohs(m.count) + ((ntohs(m.count) % 4) ? 4 - (ntohs(m.count) % 4) : 0))
 
-/* finally, a little helper or two for debugging: */
-#define DBG(x)                                                                                     \
-	do {                                                                                           \
-		if (verbose > 1) {                                                                         \
-			x;                                                                                     \
-		}                                                                                          \
-	} while (0);
 #define PRINTSOCKADDR(x)                                                                           \
 	do {                                                                                           \
 		printf("%u.%u.%u.%u", (x >> 24) & 0xff, (x >> 16) & 0xff, (x >> 8) & 0xff, x & 0xff);      \
@@ -250,14 +243,14 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	size_t npeers = 0;
 	do {
 		setup_control_request(&req, OP_READSTAT, 1);
-		DBG(printf("sending READSTAT request"));
+		DBG_PRINT_1("sending READSTAT request");
 		write(conn, &req, SIZEOF_NTPCM(req));
 		DBG(print_ntp_control_message(&req));
 
 		do {
 			/* Attempt to read the largest size packet possible */
 			req.count = htons(MAX_CM_SIZE);
-			DBG(printf("receiving READSTAT response"))
+			DBG_PRINT_1("receiving READSTAT response")
 			if (read(conn, &req, SIZEOF_NTPCM(req)) == -1) {
 				die(STATE_CRITICAL, "NTP CRITICAL: No response from NTP server\n");
 			}
@@ -303,24 +296,18 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		}
 	}
 
-	if (verbose) {
-		printf("%d candidate peers available\n", num_candidates);
-		if (result.syncsource_found) {
-			printf("synchronization source found\n");
-		}
+	DBG_PRINT_1("%d candidate peers available\n", num_candidates);
+	if (result.syncsource_found) {
+		DBG_PRINT_1("synchronization source found\n");
 	}
 
 	if (!result.syncsource_found) {
 		result.state = STATE_WARNING;
-		if (verbose) {
-			printf("warning: no synchronization source found\n");
-		}
+		DBG_PRINT_1("warning: no synchronization source found\n");
 	}
 	if (result.li_alarm) {
 		result.state = STATE_WARNING;
-		if (verbose) {
-			printf("warning: LI_ALARM bit is set\n");
-		}
+		DBG_PRINT_1("warning: LI_ALARM bit is set\n");
 	}
 
 	const char *getvar = "stratum,offset,jitter";
@@ -329,9 +316,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		/* Only query this server if it is the current sync source */
 		/* If there's no sync.peer, query all candidates and use the best one */
 		if (PEER_SEL(peers[i].status) >= min_peer_sel) {
-			if (verbose) {
-				printf("Getting offset, jitter and stratum for peer %.2x\n", ntohs(peers[i].assoc));
-			}
+			DBG_PRINT_1("Getting offset, jitter and stratum for peer %.2x\n",
+						ntohs(peers[i].assoc));
 			data = strdup("");
 			do {
 				setup_control_request(&req, OP_READVAR, 2);
@@ -345,13 +331,13 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				 * error on the first pass we redo it with "dispersion" */
 				strncpy(req.data, getvar, MAX_CM_SIZE - 1);
 				req.count = htons(strlen(getvar));
-				DBG(printf("sending READVAR request...\n"));
+				DBG_PRINT_1("sending READVAR request...\n");
 				write(conn, &req, SIZEOF_NTPCM(req));
 				DBG(print_ntp_control_message(&req));
 
 				do {
 					req.count = htons(MAX_CM_SIZE);
-					DBG(printf("receiving READVAR response...\n"));
+					DBG_PRINT_1("receiving READVAR response...\n");
 					read(conn, &req, SIZEOF_NTPCM(req));
 					DBG(print_ntp_control_message(&req));
 				} while (!(req.op & OP_READVAR && ntohs(req.seq) == 2));
@@ -363,36 +349,30 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 			if (req.op & REM_ERROR) {
 				if (strstr(getvar, "jitter")) {
-					if (verbose) {
-						printf("The command failed. This is usually caused by servers refusing the "
-							   "'jitter'\nvariable. Restarting with "
-							   "'dispersion'...\n");
-					}
+					DBG_PRINT_1(
+						"The command failed. This is usually caused by servers refusing the "
+						"'jitter'\nvariable. Restarting with "
+						"'dispersion'...\n");
 					getvar = "stratum,offset,dispersion";
 					i--;
 					continue;
 				}
 				if (strlen(getvar)) {
-					if (verbose) {
-						printf("Server didn't like dispersion either; will retrieve everything\n");
-					}
+					DBG_PRINT_1("Server didn't like dispersion either; will retrieve everything\n");
 					getvar = "";
 					i--;
 					continue;
 				}
 			}
 
-			if (verbose > 1) {
-				printf("Server responded: >>>%s<<<\n", data);
-			}
+			DBG_PRINT_1("Server responded: >>>%s<<<\n", data);
 
 			double tmp_offset = 0;
 			char *value;
 			char *nptr;
 			/* get the offset */
-			if (verbose) {
-				printf("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
-			}
+
+			DBG_PRINT_1("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
 			value = np_extract_ntpvar(data, "offset");
 			nptr = NULL;
@@ -402,13 +382,9 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			}
 			/* If value is null or no conversion was performed */
 			if (value == NULL || value == nptr) {
-				if (verbose) {
-					printf("error: unable to read server offset response.\n");
-				}
+				DBG_PRINT_1("error: unable to read server offset response.\n");
 			} else {
-				if (verbose) {
-					printf("%.10g\n", tmp_offset);
-				}
+				DBG_PRINT_1("%.10g\n", tmp_offset);
 				if (result.offset_result == STATE_UNKNOWN ||
 					fabs(tmp_offset) < fabs(result.offset)) {
 					result.offset = tmp_offset;
@@ -421,11 +397,9 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 			if (config.do_jitter) {
 				/* get the jitter */
-				if (verbose) {
-					printf("parsing %s from peer %.2x: ",
-						   strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
-						   ntohs(peers[i].assoc));
-				}
+				DBG_PRINT_1("parsing %s from peer %.2x: ",
+							strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
+							ntohs(peers[i].assoc));
 				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion"
 																					 : "jitter");
 				nptr = NULL;
@@ -435,20 +409,16 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				}
 				/* If value is null or no conversion was performed */
 				if (value == NULL || value == nptr) {
-					if (verbose) {
-						printf("error: unable to read server jitter/dispersion response.\n");
-					}
+					DBG_PRINT_1("error: unable to read server jitter/dispersion response.\n");
 					result.jitter = -1;
-				} else if (verbose) {
-					printf("%.10g\n", result.jitter);
+				} else {
+					DBG_PRINT_1("%.10g\n", result.jitter);
 				}
 			}
 
 			if (config.do_stratum) {
 				/* get the stratum */
-				if (verbose) {
-					printf("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
-				}
+				DBG_PRINT_1("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
 				value = np_extract_ntpvar(data, "stratum");
 				nptr = NULL;
 				/* Convert the value if we have one */
@@ -456,14 +426,10 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 					result.stratum = strtol(value, &nptr, 10);
 				}
 				if (value == NULL || value == nptr) {
-					if (verbose) {
-						printf("error: unable to read server stratum response.\n");
-					}
+					DBG_PRINT_1("error: unable to read server stratum response.\n");
 					result.stratum = -1;
 				} else {
-					if (verbose) {
-						printf("%li\n", result.stratum);
-					}
+					DBG_PRINT_1("%li\n", result.stratum);
 				}
 			}
 		} /* if (PEER_SEL(peers[i].status) >= min_peer_sel) */

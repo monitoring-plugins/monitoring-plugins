@@ -1265,10 +1265,14 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 	mp_thresholds thr_used_space = measurement_unit.freespace_bytes_thresholds;
 	if (thr_used_space.critical_is_set) {
+		thr_used_space.critical.end = mp_create_pd_value(
+			measurement_unit.total_bytes - mp_get_pd_value(thr_used_space.critical.end));
 		thr_used_space.critical.alert_on_inside_range =
 			!thr_used_space.critical.alert_on_inside_range;
 	}
 	if (thr_used_space.warning_is_set) {
+		thr_used_space.warning.end = mp_create_pd_value(
+			measurement_unit.total_bytes - mp_get_pd_value(thr_used_space.warning.end));
 		thr_used_space.warning.alert_on_inside_range =
 			!thr_used_space.warning.alert_on_inside_range;
 	}

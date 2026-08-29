@@ -3,6 +3,7 @@
 #include "../../config.h"
 #include "../../lib/states.h"
 #include <stddef.h>
+#include <sys/time.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
