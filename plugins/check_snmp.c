@@ -1107,6 +1107,14 @@ void print_help(void) {
 	printf("    %s\n", _("1 = WARNING"));
 	printf("    %s\n", _("2 = CRITICAL"));
 	printf("    %s\n", _("3 = UNKNOWN"));
+	printf(" %s\n", "--missing-oid=#");
+	printf("    %s\n", _("If a query for an OID returns nothing (OID missing on the target)"));
+	printf("    %s\n", _("this option allows you to choose what status you want for this specific OID"));
+	printf("    %s\n", _("Excluding this option renders the default exit of 2 (CRITICAL)"));
+	printf("    %s\n", _("0 = OK"));
+	printf("    %s\n", _("1 = WARNING"));
+	printf("    %s\n", _("2 = CRITICAL"));
+	printf("    %s\n", _("3 = UNKNOWN"));
 
 	/* Tests Against Integers */
 	printf(" %s\n", "-w, --warning=THRESHOLD(s)");
