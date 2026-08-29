@@ -48,6 +48,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include <assert.h>
 #include "common.h"
 #include "utils.h"
+#include "utils_validate.h"
 #include "./check_curl.d/check_curl_helpers.h"
 
 #ifndef LIBCURL_PROTOCOL_HTTP
@@ -1215,7 +1216,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 #ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
 #endif
-			test_file(optarg);
+			validate_file_exists(optarg);
 			result.config.curl_config.client_cert = optarg;
 			enable_tls = true;
 			break;
@@ -1223,7 +1224,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 #ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
 #endif
-			test_file(optarg);
+			validate_file_exists(optarg);
 			result.config.curl_config.client_privkey = optarg;
 			enable_tls = true;
 			break;
@@ -1231,7 +1232,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 #ifndef LIBCURL_FEATURE_SSL
 			usage4(_("Invalid option - SSL is not available"));
 #endif
-			test_file(optarg);
+			validate_file_exists(optarg);
 			result.config.curl_config.ca_cert = optarg;
 			enable_tls = true;
 			break;

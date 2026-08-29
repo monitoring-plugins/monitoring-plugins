@@ -105,8 +105,9 @@ noinst_PROGRAMS = @EXTRA_PLUGIN_TESTS@
 # These two lines support "make check", but we use "make test"
 check_PROGRAMS = @EXTRA_PLUGIN_TESTS@
 
-libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
-	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
+libnpcommon_a_SOURCES = utils.c utils_validate.c netutils.c sslutils.c runcmd.c	\
+	popen.c utils.h utils_validate.h netutils.h popen.h \
+	common.h runcmd.c runcmd.h
 
 
 BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
