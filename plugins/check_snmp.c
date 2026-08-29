@@ -399,7 +399,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		connection_prefix_index,
 		output_format_index,
 		calculate_rate,
-		rate_multiplier
+		rate_multiplier,
+		missing_oid,
 	};
 
 	static struct option longopts[] = {
@@ -409,6 +410,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"object", required_argument, 0, 'o'},
 		{"delimiter", required_argument, 0, 'd'},
 		{"nulloid", required_argument, 0, 'z'},
+		{"missing-oid", required_argument, 0, missing_oid},
 		{"output-delimiter", required_argument, 0, 'D'},
 		{"string", required_argument, 0, 's'},
 		{"timeout", required_argument, 0, 't'},
@@ -717,7 +719,16 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (!is_integer(optarg)) {
 				usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
+				// TODO: do real parsing here
 				config.evaluation_params.nulloid_result = atoi(optarg);
+			}
+			break;
+		case missing_oid: // What to do when an OID is missing in response
+			if (!is_integer(optarg)) {
+				usage2(_("Exit status must be a positive integer"), optarg);
+			} else {
+				// TODO: do real parsing here
+				config.evaluation_params.missing_oid_result = atoi(optarg);
 			}
 			break;
 		case 's': /* string or substring */
@@ -1092,6 +1103,14 @@ void print_help(void) {
 	printf("    %s\n", _("If the check returns a 0 length string or NULL value"));
 	printf("    %s\n", _("This option allows you to choose what status you want it to exit"));
 	printf("    %s\n", _("Excluding this option renders the default exit of 3(STATE_UNKNOWN)"));
+	printf("    %s\n", _("0 = OK"));
+	printf("    %s\n", _("1 = WARNING"));
+	printf("    %s\n", _("2 = CRITICAL"));
+	printf("    %s\n", _("3 = UNKNOWN"));
+	printf(" %s\n", "--missing-oid=#");
+	printf("    %s\n", _("If a query for an OID returns nothing (OID missing on the target)"));
+	printf("    %s\n", _("this option allows you to choose what status you want for this specific OID"));
+	printf("    %s\n", _("Excluding this option renders the default exit of 2 (CRITICAL)"));
 	printf("    %s\n", _("0 = OK"));
 	printf("    %s\n", _("1 = WARNING"));
 	printf("    %s\n", _("2 = CRITICAL"));
