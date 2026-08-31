@@ -11,7 +11,7 @@
 
 extern int verbose;
 
-check_snmp_test_unit check_snmp_test_unit_init() {
+check_snmp_test_unit check_snmp_test_unit_init(void) {
 	check_snmp_test_unit tmp = {
 		.threshold = mp_thresholds_init(),
 	};
@@ -91,7 +91,7 @@ const char DEFAULT_OUTPUT_DELIMITER[] = " ";
 
 const int RANDOM_STATE_DATA_LENGTH_PREDICTION = 8192;
 
-check_snmp_config check_snmp_config_init() {
+check_snmp_config check_snmp_config_init(void) {
 	check_snmp_config tmp = {
 		.snmp_params =
 			{
@@ -615,7 +615,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	return result;
 }
 
-char *_np_state_generate_key(int argc, char **argv);
+char *check_snmp_state_generate_key(int argc, const char **argv);
 
 /*
  * If time=NULL, use current time. Create state file, with state format
@@ -624,7 +624,12 @@ char *_np_state_generate_key(int argc, char **argv);
  * two things writing to same key at same time.
  * Will die with UNKNOWN if errors
  */
-void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToStore) {
+void check_snmp_state_write_string(state_key stateKey, time_t timestamp,
+								   const char *stringToStore) {
+	if (stateKey._filename == NULL || strcmp(stateKey._filename, "") == 0) {
+		die(STATE_UNKNOWN, "%s: empty filename in state file\n", __FUNCTION__);
+	}
+
 	time_t current_time;
 	if (timestamp == 0) {
 		time(&current_time);
@@ -647,7 +652,6 @@ void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToS
 				*p = '\0';
 				if ((access(directories, F_OK) != 0) && (mkdir(directories, S_IRWXU) != 0)) {
 					/* Can't free this! Otherwise error message is wrong! */
-					/* np_free(directories); */
 					die(STATE_UNKNOWN, _("Cannot create directory: %s"), directories);
 				}
 				*p = '/';
@@ -684,7 +688,7 @@ void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToS
 	}
 
 	fprintf(temp_file_pointer, "# NP State file\n");
-	fprintf(temp_file_pointer, "%d\n", NP_STATE_FORMAT_VERSION);
+	fprintf(temp_file_pointer, "%d\n", CHECK_SNMP_STATE_FORMAT_VERSION);
 	fprintf(temp_file_pointer, "%d\n", stateKey.data_version);
 	fprintf(temp_file_pointer, "%lu\n", current_time);
 	fprintf(temp_file_pointer, "%s\n", stringToStore);
@@ -707,10 +711,11 @@ void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToS
 
 	if (rename(temp_file, stateKey._filename) != 0) {
 		unlink(temp_file);
+		printf("%s: %s to %s\n", _("Cannot rename state temp file"), temp_file, stateKey._filename);
 		if (temp_file) {
 			free(temp_file);
 		}
-		die(STATE_UNKNOWN, _("Cannot rename state temp file"));
+		die(STATE_UNKNOWN, NULL);
 	}
 
 	if (temp_file) {
@@ -721,9 +726,18 @@ void np_state_write_string(state_key stateKey, time_t timestamp, char *stringToS
 /*
  * Read the state file
  */
-bool _np_state_read_file(FILE *state_file, state_key stateKey) {
+typedef struct {
+	int errorcode;
+	state_data data;
+} check_snmp_state_read_file_wrapper;
+check_snmp_state_read_file_wrapper check_snmp_state_read_file(FILE *state_file, state_key input_state) {
 	time_t current_time;
 	time(&current_time);
+
+	check_snmp_state_read_file_wrapper result = {
+		.errorcode = 0,
+		.data = {},
+	};
 
 	/* Note: This introduces a limit of 8192 bytes in the string data */
 	char *line = (char *)calloc(1, 8192);
@@ -731,7 +745,6 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}
 
-	bool status = false;
 	enum {
 		STATE_FILE_VERSION,
 		STATE_DATA_VERSION,
@@ -740,7 +753,8 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
 		STATE_DATA_END
 	} expected = STATE_FILE_VERSION;
 
-	int failure = 0;
+	bool failure = false;
+	bool found_data = false; // if we reach the end but there is not data, we fail
 	while (!failure && (fgets(line, 8192, state_file)) != NULL) {
 		size_t pos = strlen(line);
 		if (line[pos - 1] == '\n') {
@@ -754,16 +768,16 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
 		switch (expected) {
 		case STATE_FILE_VERSION: {
 			int i = atoi(line);
-			if (i != NP_STATE_FORMAT_VERSION) {
-				failure++;
+			if (i != CHECK_SNMP_STATE_FORMAT_VERSION) {
+				failure = true;
 			} else {
 				expected = STATE_DATA_VERSION;
 			}
 		} break;
 		case STATE_DATA_VERSION: {
 			int i = atoi(line);
-			if (i != stateKey.data_version) {
-				failure++;
+			if (i != input_state.data_version) {
+				failure = true;
 			} else {
 				expected = STATE_DATA_TIME;
 			}
@@ -772,20 +786,21 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
 			/* If time > now, error */
 			time_t data_time = strtoul(line, NULL, 10);
 			if (data_time > current_time) {
-				failure++;
+				failure = true;
 			} else {
-				stateKey.state_data->time = data_time;
+				result.data.time = data_time;
 				expected = STATE_DATA_TEXT;
 			}
 		} break;
 		case STATE_DATA_TEXT:
-			stateKey.state_data->data = strdup(line);
-			if (stateKey.state_data->data == NULL) {
+			result.data.data = strdup(line);
+			if (result.data.data == NULL) {
 				die(STATE_UNKNOWN, _("Cannot execute strdup: %s"), strerror(errno));
 			}
-			stateKey.state_data->length = strlen(line);
+			result.data.length = strlen(line);
 			expected = STATE_DATA_END;
-			status = true;
+			result.errorcode = 0;
+			found_data = true;
 			break;
 		case STATE_DATA_END:;
 		}
@@ -794,7 +809,12 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
 	if (line) {
 		free(line);
 	}
-	return status;
+
+	if (failure || !found_data) {
+		result.errorcode = 1;
+	}
+
+	return result;
 }
 /*
  * Will return NULL if no data is available (first run). If key currently
@@ -803,32 +823,31 @@ bool _np_state_read_file(FILE *state_file, state_key stateKey) {
  * If numerically lower, then return as no previous state. die with UNKNOWN
  * if exceptional error.
  */
-state_data *np_state_read(state_key stateKey) {
+check_snmp_state_read_wrapper check_snmp_state_read(state_key stateKey) {
 	/* Open file. If this fails, no previous state found */
+	check_snmp_state_read_wrapper result = {
+		.data = {},
+		.errorcode = 0,
+	};
+
 	FILE *statefile = fopen(stateKey._filename, "r");
-	state_data *this_state_data = (state_data *)calloc(1, sizeof(state_data));
-	if (statefile != NULL) {
-
-		if (this_state_data == NULL) {
-			die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
-		}
-
-		this_state_data->data = NULL;
-		stateKey.state_data = this_state_data;
-
-		if (_np_state_read_file(statefile, stateKey)) {
-			this_state_data->errorcode = OK;
-		} else {
-			this_state_data->errorcode = ERROR;
-		}
-
-		fclose(statefile);
-	} else {
+	if (statefile == NULL) {
 		// Failed to open state file
-		this_state_data->errorcode = ERROR;
+		result.errorcode = 1;
+		return result;
 	}
 
-	return stateKey.state_data;
+	check_snmp_state_read_file_wrapper recovered = check_snmp_state_read_file(statefile, stateKey);
+	if (recovered.errorcode == 0) {
+		result.errorcode = OK;
+		result.data = recovered.data;
+	} else {
+		result.errorcode = ERROR;
+	}
+
+	fclose(statefile);
+
+	return result;
 }
 
 /*
@@ -836,7 +855,7 @@ state_data *np_state_read(state_key stateKey) {
  *   envvar NAGIOS_PLUGIN_STATE_DIRECTORY
  *   statically compiled shared state directory
  */
-char *_np_state_calculate_location_prefix(void) {
+char *check_snmp_state_calculate_location_prefix(void) {
 	char *env_dir;
 
 	/* Do not allow passing MP_STATE_PATH in setuid plugins
@@ -853,7 +872,7 @@ char *_np_state_calculate_location_prefix(void) {
 		}
 	}
 
-	return NP_STATE_DIR_PREFIX;
+	return CHECK_SNMP_STATE_DIR_PREFIX;
 }
 
 /*
@@ -861,8 +880,8 @@ char *_np_state_calculate_location_prefix(void) {
  * Sets variables. Generates filename. Returns np_state_key. die with
  * UNKNOWN if exception
  */
-state_key np_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
-						  int argc, char **argv) {
+state_key check_snmp_enable_state(char *keyname, int expected_data_version, const char *plugin_name,
+								  int argc, const char **argv) {
 	state_key *this_state = (state_key *)calloc(1, sizeof(state_key));
 	if (this_state == NULL) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
@@ -870,7 +889,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 
 	char *temp_keyname = NULL;
 	if (keyname == NULL) {
-		temp_keyname = _np_state_generate_key(argc, argv);
+		temp_keyname = check_snmp_state_generate_key(argc, (const char **)argv);
 	} else {
 		temp_keyname = strdup(keyname);
 		if (temp_keyname == NULL) {
@@ -889,11 +908,11 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 	this_state->name = temp_keyname;
 	this_state->plugin_name = (char *)plugin_name;
 	this_state->data_version = expected_data_version;
-	this_state->state_data = NULL;
+	this_state->state_data = (state_data){};
 
 	/* Calculate filename */
 	char *temp_filename = NULL;
-	int error = asprintf(&temp_filename, "%s/%lu/%s/%s", _np_state_calculate_location_prefix(),
+	int error = asprintf(&temp_filename, "%s/%lu/%s/%s", check_snmp_state_calculate_location_prefix(),
 						 (unsigned long)geteuid(), plugin_name, this_state->name);
 	if (error < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
@@ -905,18 +924,17 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 }
 
 /*
- * Returns a string to use as a keyname, based on an md5 hash of argv, thus
+ * Returns a string to use as a keyname, based on the sha256 hash of argv, thus
  * hopefully a unique key per service/plugin invocation. Use the extra-opts
  * parse of argv, so that uniqueness in parameters are reflected there.
  */
-char *_np_state_generate_key(int argc, char **argv) {
+char *check_snmp_state_generate_key(int argc, const char **argv) {
 	unsigned char result[256];
 
 #ifdef MOPL_USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
-	 * scenario). Alternatively, the gnulib implementation/
-	 *
+	 * scenario). Alternatively, the gnulib implementation is used
 	 */
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
