@@ -37,18 +37,18 @@
 static SSL_CTX *ctx = NULL;
 static SSL *SSL_context = NULL;
 
-int np_net_ssl_init(int socket) { return np_net_ssl_init_with_hostname(socket, NULL); }
+int mopl_net_tls_init(int socket) { return mopl_net_tls_init_with_hostname(socket, NULL); }
 
-int np_net_ssl_init_with_hostname(int socket, char *host_name) {
-	return np_net_ssl_init_with_hostname_and_version(socket, host_name, 0);
+int mopl_net_tls_init_with_hostname(int socket, char *host_name) {
+	return mopl_net_tls_init_with_hostname_and_version(socket, host_name, 0);
 }
 
-int np_net_ssl_init_with_hostname_and_version(int socket, char *host_name, int version) {
+int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version) {
 	return np_net_ssl_init_with_hostname_version_and_cert(socket, host_name, version, NULL, NULL);
 }
 
 #	ifdef MOPL_USE_OPENSSL
-int np_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out) {
+int mopl_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out) {
 	struct tm time_marker = {};
 	if (!ASN1_TIME_to_tm(asn1_time, &time_marker)) {
 		return 0;
@@ -60,7 +60,7 @@ int np_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out) {
 	return 1;
 }
 
-void np_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
+void mopl_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
 	char *time_zone_setting = getenv("TZ");
 	setenv("TZ", "GMT", 1);
 	tzset();
@@ -242,14 +242,14 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 	/* Retrieve timestamp of certificate */
 	const ASN1_TIME *asn1_not_after = X509_get_notAfter(certificate);
 	time_t expiry_time;
-	if (!np_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
+	if (!mopl_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
 		printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 		return STATE_CRITICAL;
 	}
 	double time_left = difftime(expiry_time, time(NULL));
 	int days_left = (int)(time_left / 86400);
 	char timestamp[50] = "";
-	np_net_format_timestamp(expiry_time, timestamp, sizeof(timestamp));
+	mopl_net_format_timestamp(expiry_time, timestamp, sizeof(timestamp));
 
 	int time_remaining;
 	mp_state_enum status = STATE_UNKNOWN;
@@ -328,7 +328,7 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 	/* Retrieve timestamp of certificate */
 	const ASN1_TIME *asn1_not_after = X509_get_notAfter(certificate);
 	time_t expiry_time;
-	if (!np_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
+	if (!mopl_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
 		result.errors = WRONG_TIME_FORMAT_IN_CERTIFICATE;
 		return result;
 	}
@@ -418,7 +418,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	/* Retrieve timestamp of certificate */
 	const ASN1_TIME *asn1_not_after = X509_get_notAfter(certificate);
 	time_t expiry_time;
-	if (!np_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
+	if (!mopl_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
 		xasprintf(&sc_cert.output, _("Wrong time format in certificate"));
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		return sc_cert;
@@ -426,7 +426,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	double time_left = difftime(expiry_time, time(NULL));
 	int days_left = (int)(time_left / 86400);
 	char timestamp[50] = "";
-	np_net_format_timestamp(expiry_time, timestamp, sizeof(timestamp));
+	mopl_net_format_timestamp(expiry_time, timestamp, sizeof(timestamp));
 
 	int time_remaining;
 	if (days_left > 0 && days_left <= days_till_exp_warn) {

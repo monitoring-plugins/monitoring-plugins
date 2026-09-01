@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_SSL
 	if (config.use_ssl) {
-		int tls_result = np_net_ssl_init_with_hostname(
+		int tls_result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.use_sni ? config.server_address : NULL));
 
 		mp_subcheck sc_tls_connection = mp_subcheck_init();
@@ -295,7 +295,7 @@ int main(int argc, char **argv) {
 			mp_exit(overall);
 		}
 
-		mp_state_enum starttls_result = np_net_ssl_init_with_hostname(
+		mp_state_enum starttls_result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.use_sni ? config.server_address : NULL));
 		if (starttls_result != STATE_OK) {
 			close(socket_descriptor);

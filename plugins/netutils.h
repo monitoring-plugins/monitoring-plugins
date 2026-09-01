@@ -102,9 +102,9 @@ void socket_timeout_alarm_handler(int) __attribute__((noreturn));
 #	define MP_TLSv1_1_OR_NEWER 9
 #	define MP_TLSv1_2_OR_NEWER 10
 /* maybe this could be merged with the above np_net_connect, via some flags */
-int np_net_ssl_init(int socket);
-int np_net_ssl_init_with_hostname(int socket, char *host_name);
-int np_net_ssl_init_with_hostname_and_version(int socket, char *host_name, int version);
+int mopl_net_tls_init(int socket);
+int mopl_net_tls_init_with_hostname(int socket, char *host_name);
+int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version);
 int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
 												   char *cert, char *privkey);
 void np_net_ssl_cleanup(void);

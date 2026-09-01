@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_SSL
 	if (config.use_tls) {
 		mp_subcheck tls_connection_result = mp_subcheck_init();
-		mp_state_enum result = np_net_ssl_init_with_hostname(
+		mp_state_enum result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.sni_specified ? config.sni : NULL));
 		tls_connection_result = mp_set_subcheck_default_state(tls_connection_result, result);
 
