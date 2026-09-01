@@ -44,7 +44,7 @@ int mopl_net_tls_init_with_hostname(int socket, char *host_name) {
 }
 
 int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version) {
-	return np_net_ssl_init_with_hostname_version_and_cert(socket, host_name, version, NULL, NULL);
+	return mopl_net_tls_init_with_hostname_version_and_cert(socket, host_name, version, NULL, NULL);
 }
 
 #	ifdef MOPL_USE_OPENSSL
@@ -74,7 +74,7 @@ void mopl_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
 }
 #	endif /* MOPL_USE_OPENSSL */
 
-int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
+int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
 												   char *cert, char *privkey) {
 	unsigned long options = 0;
 

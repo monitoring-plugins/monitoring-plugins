@@ -16,7 +16,6 @@
  *
  *****************************************************************************/
 
-#include "common.h"
 #include "netutils.h"
 #include "../tap/tap.h"
 #include "../../lib/output.h"
@@ -79,7 +78,7 @@ static X509 *create_test_cert(long seconds) {
 }
 #endif
 
-int main(int argc, char **argv) {
+int main(void) {
 #ifdef HAVE_SSL
 	plan_tests(44);
 #	define TIME_DELTA 5

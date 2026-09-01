@@ -1048,7 +1048,7 @@ int check_http(void) {
 	elapsed_time_connect = (double)microsec_connect / 1.0e6;
 	if (use_ssl) {
 		gettimeofday(&tv_temp, NULL);
-		result = np_net_ssl_init_with_hostname_version_and_cert(
+		result = mopl_net_tls_init_with_hostname_version_and_cert(
 			sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
 		if (verbose) {
 			printf("SSL initialized\n");

@@ -105,7 +105,7 @@ void socket_timeout_alarm_handler(int) __attribute__((noreturn));
 int mopl_net_tls_init(int socket);
 int mopl_net_tls_init_with_hostname(int socket, char *host_name);
 int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version);
-int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
+int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
 												   char *cert, char *privkey);
 void np_net_ssl_cleanup(void);
 int np_net_ssl_write(const void *buf, int num);
