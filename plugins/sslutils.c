@@ -35,48 +35,48 @@
 
 #ifdef HAVE_SSL
 static SSL_CTX *ctx = NULL;
-static SSL *s = NULL;
+static SSL *SSL_context = NULL;
 
-int np_net_ssl_init(int sd) { return np_net_ssl_init_with_hostname(sd, NULL); }
+int np_net_ssl_init(int socket) { return np_net_ssl_init_with_hostname(socket, NULL); }
 
-int np_net_ssl_init_with_hostname(int sd, char *host_name) {
-	return np_net_ssl_init_with_hostname_and_version(sd, host_name, 0);
+int np_net_ssl_init_with_hostname(int socket, char *host_name) {
+	return np_net_ssl_init_with_hostname_and_version(socket, host_name, 0);
 }
 
-int np_net_ssl_init_with_hostname_and_version(int sd, char *host_name, int version) {
-	return np_net_ssl_init_with_hostname_version_and_cert(sd, host_name, version, NULL, NULL);
+int np_net_ssl_init_with_hostname_and_version(int socket, char *host_name, int version) {
+	return np_net_ssl_init_with_hostname_version_and_cert(socket, host_name, version, NULL, NULL);
 }
 
 #	ifdef MOPL_USE_OPENSSL
 int np_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out) {
-	struct tm tm = {};
-	if (!ASN1_TIME_to_tm(asn1_time, &tm)) {
+	struct tm time_marker = {};
+	if (!ASN1_TIME_to_tm(asn1_time, &time_marker)) {
 		return 0;
 	}
-	*out = timegm(&tm);
+	*out = timegm(&time_marker);
 	if (*out == (time_t)-1) {
 		return 0;
 	}
 	return 1;
 }
 
-void np_net_format_timestamp(time_t t, char *buf, size_t buflen) {
-	char *tz = getenv("TZ");
+void np_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
+	char *time_zone_setting = getenv("TZ");
 	setenv("TZ", "GMT", 1);
 	tzset();
-	strftime(buf, buflen, "%c %z", localtime(&t));
-	if (tz) {
-		setenv("TZ", tz, 1);
+	strftime(buf, buflen, "%c %z", localtime(&timestamp));
+	if (time_zone_setting) {
+		setenv("TZ", time_zone_setting, 1);
 	} else {
 		unsetenv("TZ");
 	}
 	tzset();
 }
-#endif /* MOPL_USE_OPENSSL */
+#	endif /* MOPL_USE_OPENSSL */
 
-int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int version, char *cert,
-												   char *privkey) {
-	long options = 0;
+int np_net_ssl_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
+												   char *cert, char *privkey) {
+	unsigned long options = 0;
 
 	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL) {
 		printf("%s\n", _("CRITICAL - Cannot create SSL context."));
@@ -177,45 +177,45 @@ int np_net_ssl_init_with_hostname_version_and_cert(int sd, char *host_name, int 
 #	endif
 	SSL_CTX_set_options(ctx, options);
 	SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-	if ((s = SSL_new(ctx)) != NULL) {
+	if ((SSL_context = SSL_new(ctx)) != NULL) {
 #	ifdef SSL_set_tlsext_host_name
 		if (host_name != NULL) {
-			SSL_set_tlsext_host_name(s, host_name);
+			SSL_set_tlsext_host_name(SSL_context, host_name);
 		}
 #	endif
-		SSL_set_fd(s, sd);
-		if (SSL_connect(s) == 1) {
+		SSL_set_fd(SSL_context, socket);
+		if (SSL_connect(SSL_context) == 1) {
 			return OK;
-		} else {
-			printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
-#	ifdef MOPL_USE_OPENSSL /* XXX look into ERR_error_string */
-			ERR_print_errors_fp(stdout);
-#	endif /* MOPL_USE_OPENSSL */
 		}
+		printf("%s\n", _("CRITICAL - Cannot make SSL connection."));
+#	ifdef MOPL_USE_OPENSSL /* XXX look into ERR_error_string */
+		ERR_print_errors_fp(stdout);
+#	endif /* MOPL_USE_OPENSSL */
+
 	} else {
 		printf("%s\n", _("CRITICAL - Cannot initiate SSL handshake."));
 	}
 	return STATE_CRITICAL;
 }
 
-void np_net_ssl_cleanup() {
-	if (s) {
+void np_net_ssl_cleanup(void) {
+	if (SSL_context) {
 #	ifdef SSL_set_tlsext_host_name
-		SSL_set_tlsext_host_name(s, NULL);
+		SSL_set_tlsext_host_name(SSL_context, NULL);
 #	endif
-		SSL_shutdown(s);
-		SSL_free(s);
+		SSL_shutdown(SSL_context);
+		SSL_free(SSL_context);
 		if (ctx) {
 			SSL_CTX_free(ctx);
 			ctx = NULL;
 		}
-		s = NULL;
+		SSL_context = NULL;
 	}
 }
 
-int np_net_ssl_write(const void *buf, int num) { return SSL_write(s, buf, num); }
+int np_net_ssl_write(const void *buf, int num) { return SSL_write(SSL_context, buf, num); }
 
-int np_net_ssl_read(void *buf, int num) { return SSL_read(s, buf, num); }
+int np_net_ssl_read(void *buf, int num) { return SSL_read(SSL_context, buf, num); }
 
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit) {
@@ -233,10 +233,10 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 		return STATE_CRITICAL;
 	}
 
-	char cn[MAX_CN_LENGTH] = "";
-	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
+	char common_name[MAX_CN_LENGTH] = "";
+	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, common_name, sizeof(common_name));
 	if (cnlen == -1) {
-		strcpy(cn, _("Unknown CN"));
+		strcpy(common_name, _("Unknown CN"));
 	}
 
 	/* Retrieve timestamp of certificate */
@@ -246,8 +246,8 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 		printf("%s\n", _("CRITICAL - Wrong time format in certificate."));
 		return STATE_CRITICAL;
 	}
-	float time_left = difftime(expiry_time, time(NULL));
-	int days_left = time_left / 86400;
+	double time_left = difftime(expiry_time, time(NULL));
+	int days_left = (int)(time_left / 86400);
 	char timestamp[50] = "";
 	np_net_format_timestamp(expiry_time, timestamp, sizeof(timestamp));
 
@@ -255,7 +255,8 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 	mp_state_enum status = STATE_UNKNOWN;
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
 		printf(_("%s - Certificate '%s' expires in %d day(s) (%s).\n"),
-			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, days_left, timestamp);
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", common_name, days_left,
+			   timestamp);
 		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
 		} else {
@@ -263,13 +264,12 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 		}
 	} else if (days_left == 0 && time_left > 0) {
 		if (time_left >= 3600) {
-			time_remaining = (int)time_left / 3600;
+			time_remaining = (int)(time_left / 3600);
 		} else {
-			time_remaining = (int)time_left / 60;
+			time_remaining = (int)(time_left / 60);
 		}
 
-		printf(_("%s - Certificate '%s' expires in %u %s (%s)\n"),
-			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, time_remaining,
+		printf(_("Certificate '%s' expires in %u %s (%s)\n"), common_name, time_remaining,
 			   time_left >= 3600 ? "hours" : "minutes", timestamp);
 
 		if (days_left > days_till_exp_crit) {
@@ -278,24 +278,23 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 			status = STATE_CRITICAL;
 		}
 	} else if (time_left < 0) {
-		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), cn, timestamp);
+		printf(_("Certificate '%s' expired on %s.\n"), common_name, timestamp);
 		status = STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("%s - Certificate '%s' just expired (%s).\n"),
-			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", cn, timestamp);
+		printf(_("Certificate '%s' just expired (%s).\n"), common_name, timestamp);
 		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
 		} else {
 			status = STATE_CRITICAL;
 		}
 	} else {
-		printf(_("OK - Certificate '%s' will expire on %s.\n"), cn, timestamp);
+		printf(_("Certificate '%s' will expire on %s.\n"), common_name, timestamp);
 		status = STATE_OK;
 	}
 	X509_free(certificate);
 	return status;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	printf("%s\n", _("Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #	endif /* MOPL_USE_OPENSSL */
 }
@@ -308,7 +307,6 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 	};
 
 	if (!certificate) {
-		// printf("%s\n", _("CRITICAL - No server certificate present to inspect."));
 		result.errors = NO_SERVER_CERTIFICATE_PRESENT;
 		return result;
 	}
@@ -317,15 +315,14 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 	X509_NAME *subj = X509_get_subject_name(certificate);
 
 	if (!subj) {
-		// printf("%s\n", _("CRITICAL - Cannot retrieve certificate subject."));
 		result.errors = UNABLE_TO_RETRIEVE_CERTIFICATE_SUBJECT;
 		return result;
 	}
 
-	char cn[MAX_CN_LENGTH] = "";
-	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, cn, sizeof(cn));
+	char common_name[MAX_CN_LENGTH] = "";
+	int cnlen = X509_NAME_get_text_by_NID(subj, NID_commonName, common_name, sizeof(common_name));
 	if (cnlen == -1) {
-		strcpy(cn, _("Unknown CN"));
+		strcpy(common_name, _("Unknown CN"));
 	}
 
 	/* Retrieve timestamp of certificate */
@@ -342,7 +339,7 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 
 	return result;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
+	printf("%s\n", _("Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #	endif /* MOPL_USE_OPENSSL */
 }
@@ -351,7 +348,7 @@ net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn
 												 unsigned int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
-	certificate = SSL_get_peer_certificate(s);
+	certificate = SSL_get_peer_certificate(SSL_context);
 
 	retrieve_expiration_time_result expiration_date = np_net_ssl_get_cert_expiration(certificate);
 
@@ -385,7 +382,7 @@ net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
-	certificate = SSL_get_peer_certificate(s);
+	certificate = SSL_get_peer_certificate(SSL_context);
 	return (np_net_ssl_check_certificate(certificate, days_till_exp_warn, days_till_exp_crit));
 #	else  /* ifndef MOPL_USE_OPENSSL */
 	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
