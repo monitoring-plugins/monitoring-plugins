@@ -67,7 +67,7 @@ mp_state_enum process_tcp_request2(const char *server_address, const int server_
 	int socket;
 
 	mp_state_enum connect_result =
-		np_net_connect(server_address, server_port, &socket, IPPROTO_TCP);
+		mopl_net_connect(server_address, server_port, &socket, IPPROTO_TCP);
 	if (connect_result != STATE_OK) {
 		return STATE_CRITICAL;
 	}
@@ -140,7 +140,7 @@ mp_state_enum process_request(const char *server_address, const int server_port,
 
 	mp_state_enum result = STATE_OK;
 	int socket;
-	result = np_net_connect(server_address, server_port, &socket, proto);
+	result = mopl_net_connect(server_address, server_port, &socket, proto);
 	if (result != STATE_OK) {
 		return STATE_CRITICAL;
 	}
@@ -153,7 +153,7 @@ mp_state_enum process_request(const char *server_address, const int server_port,
 }
 
 /* opens a tcp or udp connection to a remote host or local socket */
-mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescriptor,
+mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor,
 							 const int proto) {
 	/* send back STATE_UNKOWN if there's an error
 	   send back STATE_OK if we connect

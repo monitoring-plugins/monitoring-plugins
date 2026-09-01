@@ -61,9 +61,9 @@ mp_state_enum process_request(const char *server_address, int server_port, int p
 							  const char *send_buffer, char *recv_buffer, int recv_size);
 
 /* my_connect and wrapper macros */
-#define my_tcp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_TCP)
-#define my_udp_connect(addr, port, s) np_net_connect(addr, port, s, IPPROTO_UDP)
-mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescriptor, int proto);
+#define my_tcp_connect(addr, port, s) mopl_net_connect(addr, port, s, IPPROTO_TCP)
+#define my_udp_connect(addr, port, s) mopl_net_connect(addr, port, s, IPPROTO_UDP)
+mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor, int proto);
 
 /* send_request and wrapper macros */
 #define send_tcp_request(s, sbuf, rbuf, rsize) send_request(s, IPPROTO_TCP, sbuf, rbuf, rsize)

@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 	mp_subcheck inital_connect_result = mp_subcheck_init();
 
 	// Try initial connection
-	if (np_net_connect(config.server_address, config.server_port, &socket_descriptor,
+	if (mopl_net_connect(config.server_address, config.server_port, &socket_descriptor,
 					   config.protocol) == STATE_CRITICAL) {
 		// Early exit here, we got connection refused
 		inital_connect_result =
