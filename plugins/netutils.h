@@ -52,9 +52,10 @@
 
 /* process_requests */
 mp_state_enum mopl_net_process_request(const char *server_address, int server_port, int proto,
-							  const char *send_buffer, char *recv_buffer, int recv_size);
+									   const char *send_buffer, char *recv_buffer, int recv_size);
 mp_state_enum mopl_net_process_tcp_request(const char *server_address, int server_port,
-								  const char *send_buffer, char *recv_buffer, int recv_size);
+										   const char *send_buffer, char *recv_buffer,
+										   int recv_size);
 
 /* net_connect and wrapper macros */
 mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor, int proto);
@@ -79,21 +80,24 @@ void socket_timeout_alarm_handler(int) __attribute__((noreturn));
 
 /* SSL-Related functionality */
 #ifdef HAVE_SSL
-#	define MP_SSLv2            1
-#	define MP_SSLv3            2
-#	define MP_TLSv1            3
-#	define MP_TLSv1_1          4
-#	define MP_TLSv1_2          5
-#	define MP_SSLv2_OR_NEWER   6
-#	define MP_SSLv3_OR_NEWER   7
-#	define MP_TLSv1_OR_NEWER   8
-#	define MP_TLSv1_1_OR_NEWER 9
-#	define MP_TLSv1_2_OR_NEWER 10
+typedef enum {
+	MOPL_NET_SSLv2,
+	MOPL_NET_SSLv3,
+	MOPL_NET_TLSv1,
+	MOPL_NET_TLSv1_1,
+	MOPL_NET_TLSv1_2,
+	MOPL_NET_SSLv2_OR_NEWER,
+	MOPL_NET_SSLv3_OR_NEWER,
+	MOPL_NET_TLSv1_OR_NEWER,
+	MOPL_NET_TLSv1_1_OR_NEWER,
+	MOPL_NET_TLSv1_2_OR_NEWER,
+	MOPL_NET_TLS_DEFAULT_VERSION,
+} mopl_tls_version;
 
 int mopl_net_tls_init(int socket);
 int mopl_net_tls_init_with_hostname(int socket, char *host_name);
-int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version);
-int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
+int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, mopl_tls_version version);
+int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, mopl_tls_version version,
 													 char *cert, char *privkey);
 void mopl_net_tls_cleanup(void);
 int mopl_net_ssl_write(const void *buf, int num);

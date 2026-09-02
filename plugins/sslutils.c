@@ -40,10 +40,11 @@ static SSL *SSL_context = NULL;
 int mopl_net_tls_init(int socket) { return mopl_net_tls_init_with_hostname(socket, NULL); }
 
 int mopl_net_tls_init_with_hostname(int socket, char *host_name) {
-	return mopl_net_tls_init_with_hostname_and_version(socket, host_name, 0);
+	return mopl_net_tls_init_with_hostname_and_version(socket, host_name, MOPL_NET_TLS_DEFAULT_VERSION);
 }
 
-int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version) {
+int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name,
+												mopl_tls_version version) {
 	return mopl_net_tls_init_with_hostname_version_and_cert(socket, host_name, version, NULL, NULL);
 }
 
@@ -74,8 +75,9 @@ void mopl_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
 }
 #	endif /* MOPL_USE_OPENSSL */
 
-int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
-													 char *cert, char *privkey) {
+int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name,
+													 mopl_tls_version version, char *cert,
+													 char *privkey) {
 	unsigned long options = 0;
 
 	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL) {
@@ -84,10 +86,10 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 	}
 
 	switch (version) {
-	case MP_SSLv2: /* SSLv2 protocol */
+	case MOPL_NET_SSLv2: /* SSLv2 protocol */
 		printf("%s\n", _("UNKNOWN - SSL protocol version 2 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
-	case MP_SSLv3: /* SSLv3 protocol */
+	case MOPL_NET_SSLv3: /* SSLv3 protocol */
 #	if defined(OPENSSL_NO_SSL3)
 		printf("%s\n", _("UNKNOWN - SSL protocol version 3 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
@@ -96,7 +98,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_max_proto_version(ctx, SSL3_VERSION);
 		break;
 #	endif
-	case MP_TLSv1: /* TLSv1 protocol */
+	case MOPL_NET_TLSv1: /* TLSv1 protocol */
 #	if defined(OPENSSL_NO_TLS1)
 		printf("%s\n", _("UNKNOWN - TLS protocol version 1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
@@ -105,7 +107,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_max_proto_version(ctx, TLS1_VERSION);
 		break;
 #	endif
-	case MP_TLSv1_1: /* TLSv1.1 protocol */
+	case MOPL_NET_TLSv1_1: /* TLSv1.1 protocol */
 #	if !defined(SSL_OP_NO_TLSv1_1)
 		printf("%s\n",
 			   _("UNKNOWN - TLS protocol version 1.1 is not supported by your SSL library."));
@@ -115,7 +117,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_max_proto_version(ctx, TLS1_1_VERSION);
 		break;
 #	endif
-	case MP_TLSv1_2: /* TLSv1.2 protocol */
+	case MOPL_NET_TLSv1_2: /* TLSv1.2 protocol */
 #	if !defined(SSL_OP_NO_TLSv1_2)
 		printf("%s\n",
 			   _("UNKNOWN - TLS protocol version 1.2 is not supported by your SSL library."));
@@ -125,7 +127,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION);
 		break;
 #	endif
-	case MP_TLSv1_2_OR_NEWER:
+	case MOPL_NET_TLSv1_2_OR_NEWER:
 #	if !defined(SSL_OP_NO_TLSv1_1)
 		printf("%s\n", _("UNKNOWN - Disabling TLSv1.1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
@@ -133,7 +135,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
 		break;
 #	endif
-	case MP_TLSv1_1_OR_NEWER:
+	case MOPL_NET_TLSv1_1_OR_NEWER:
 #	if !defined(SSL_OP_NO_TLSv1)
 		printf("%s\n", _("UNKNOWN - Disabling TLSv1 is not supported by your SSL library."));
 		return STATE_UNKNOWN;
@@ -141,16 +143,24 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		SSL_CTX_set_min_proto_version(ctx, TLS1_1_VERSION);
 		break;
 #	endif
-	case MP_TLSv1_OR_NEWER:
+	case MOPL_NET_TLSv1_OR_NEWER:
 #	if defined(SSL_OP_NO_SSLv3)
 		SSL_CTX_set_min_proto_version(ctx, TLS1_VERSION);
 		break;
 #	endif
-	case MP_SSLv3_OR_NEWER:
+	case MOPL_NET_SSLv2_OR_NEWER:
 #	if defined(SSL_OP_NO_SSLv2)
+		SSL_CTX_set_min_proto_version(ctx, SSL2_VERSION);
+		break;
+#	endif
+	case MOPL_NET_SSLv3_OR_NEWER:
+#	if defined(SSL_OP_NO_SSLv3)
 		SSL_CTX_set_min_proto_version(ctx, SSL3_VERSION);
 		break;
 #	endif
+	case MOPL_NET_TLS_DEFAULT_VERSION: {
+			// do nothing special here
+	}
 	}
 
 	if (cert && privkey) {
@@ -347,12 +357,13 @@ mopl_net_retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *ce
 }
 
 mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_exp_warn,
-												 unsigned int days_till_exp_crit) {
+														unsigned int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(SSL_context);
 
-	mopl_net_retrieve_expiration_time_result expiration_date = np_net_ssl_get_cert_expiration(certificate);
+	mopl_net_retrieve_expiration_time_result expiration_date =
+		np_net_ssl_get_cert_expiration(certificate);
 
 	mopl_net_ssl_check_cert_result result = {
 		.result_state = STATE_UNKNOWN,

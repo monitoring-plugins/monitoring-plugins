@@ -512,7 +512,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case 'H': /* hostname */
-			if (is_host(optarg)) {
+			if (mopl_net_is_host(optarg)) {
 				result.config.db_host = optarg;
 			} else if (*optarg == '/') {
 				result.config.db_socket = optarg;
@@ -617,7 +617,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (argc > index) {
 		if (result.config.db_host == NULL) {
-			if (is_host(argv[index])) {
+			if (mopl_net_is_host(argv[index])) {
 				result.config.db_host = argv[index++];
 			} else {
 				usage2(_("Invalid hostname/address"), argv[index]);

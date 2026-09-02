@@ -60,7 +60,7 @@ enum {
 #ifdef HAVE_SSL
 static bool check_cert = false;
 static bool continue_after_check_cert = false;
-static int ssl_version = 0;
+static int ssl_version = MOPL_NET_TLS_DEFAULT_VERSION;
 static int days_till_exp_warn, days_till_exp_crit;
 #	define my_recv(buf, len) ((use_ssl) ? mopl_net_ssl_read(buf, len) : read(sd, buf, len))
 #	define my_send(buf, len) ((use_ssl) ? mopl_net_ssl_write(buf, len) : send(sd, buf, len, 0))
@@ -393,15 +393,15 @@ bool process_arguments(int argc, char **argv) {
 				int got_plus = strchr(optarg, '+') != NULL;
 
 				if (!strncmp(optarg, "1.2", 3)) {
-					ssl_version = got_plus ? MP_TLSv1_2_OR_NEWER : MP_TLSv1_2;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_2_OR_NEWER : MOPL_NET_TLSv1_2;
 				} else if (!strncmp(optarg, "1.1", 3)) {
-					ssl_version = got_plus ? MP_TLSv1_1_OR_NEWER : MP_TLSv1_1;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_1_OR_NEWER : MOPL_NET_TLSv1_1;
 				} else if (optarg[0] == '1') {
-					ssl_version = got_plus ? MP_TLSv1_OR_NEWER : MP_TLSv1;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_OR_NEWER : MOPL_NET_TLSv1;
 				} else if (optarg[0] == '3') {
-					ssl_version = got_plus ? MP_SSLv3_OR_NEWER : MP_SSLv3;
+					ssl_version = got_plus ? MOPL_NET_SSLv3_OR_NEWER : MOPL_NET_SSLv3;
 				} else if (optarg[0] == '2') {
-					ssl_version = got_plus ? MP_SSLv2_OR_NEWER : MP_SSLv2;
+					ssl_version = got_plus ? MOPL_NET_SSLv2_OR_NEWER : MOPL_NET_SSLv2;
 				} else {
 					usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
 							 "optional '+' suffix)"));
