@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 	char *fping_prog = NULL;
 
 	/* First determine if the target is dualstack or ipv6 only. */
-	bool server_is_inet6_addr = is_inet6_addr(server);
+	bool server_is_inet6_addr = mopl_net_is_inet6_addr(server);
 
 	/*
 	 * If the user requested -6 OR the user made no assertion and the address is v6 or dualstack
@@ -381,13 +381,13 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 'H': /* hostname */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
 			break;
 		case 'S': /* sourceip */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.sourceip = optarg;

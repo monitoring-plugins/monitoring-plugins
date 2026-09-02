@@ -63,13 +63,11 @@ mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketD
 
 /* "is_*" wrapper macros and functions */
 bool mopl_net_is_host(const char *);
-bool is_addr(const char *);
-bool dns_lookup(const char *, struct sockaddr_storage *, int);
-void host_or_die(const char *str);
-#define resolve_host_or_addr(addr, family) dns_lookup(addr, NULL, family)
-#define is_inet_addr(addr)                 resolve_host_or_addr(addr, AF_INET)
-#define is_inet6_addr(addr)                resolve_host_or_addr(addr, AF_INET6)
-#define is_hostname(addr)                  resolve_host_or_addr(addr, address_family)
+bool mopl_net_dns_lookup(const char *, struct sockaddr_storage *, int);
+void mopl_net_host_or_die(const char *str);
+bool mopl_net_is_inet_addr(const char *addr);
+bool mopl_net_is_inet6_addr(const char *addr);
+bool mopl_net_is_hostname(const char *addr);
 
 extern unsigned int socket_timeout;
 extern mp_state_enum socket_timeout_state;

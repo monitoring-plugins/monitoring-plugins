@@ -436,7 +436,7 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 				mp_thresholds_set_warn(result.config.qthresholds, tmp.range);
 		} break;
 		case 'H': /* host */
-			if ((*optarg != '/') && (!is_host(optarg))) {
+			if ((*optarg != '/') && (!mopl_net_is_host(optarg))) {
 				usage2(_("Invalid hostname/address"), optarg);
 			} else {
 				result.config.pghost = optarg;

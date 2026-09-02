@@ -31,11 +31,13 @@
 #include "output.h"
 #include "states.h"
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include "netutils.h"
 
 mp_state_enum mopl_net_send_request(int socket, int proto, const char *send_buffer,
 									char *recv_buffer, int recv_size);
+bool mopl_net_is_addr(const char *);
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 mp_state_enum socket_timeout_state = STATE_CRITICAL;
@@ -63,8 +65,9 @@ void socket_timeout_alarm_handler(int sig) {
 
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-mp_state_enum mopl_net_process_request(const char *server_address, const int server_port, const int proto,
-							  const char *send_buffer, char *recv_buffer, const int recv_size) {
+mp_state_enum mopl_net_process_request(const char *server_address, const int server_port,
+									   const int proto, const char *send_buffer, char *recv_buffer,
+									   const int recv_size) {
 
 	mp_state_enum result = STATE_OK;
 	int socket;
@@ -258,32 +261,32 @@ mp_state_enum mopl_net_send_request(const int socket, const int proto, const cha
 }
 
 bool mopl_net_is_host(const char *address) {
-	if (is_addr(address) || is_hostname(address)) {
+	if (mopl_net_is_addr(address) || mopl_net_is_hostname(address)) {
 		return (true);
 	}
 
 	return (false);
 }
 
-void host_or_die(const char *str) {
-	if (!str || (!is_addr(str) && !is_hostname(str))) {
+void mopl_net_host_or_die(const char *str) {
+	if (!str || (!mopl_net_is_addr(str) && !mopl_net_is_hostname(str))) {
 		usage_va(_("Invalid hostname/address - %s"), str);
 	}
 }
 
-bool is_addr(const char *address) {
-	if (address_family == AF_INET && is_inet_addr(address)) {
+bool mopl_net_is_addr(const char *address) {
+	if (address_family == AF_INET && mopl_net_is_inet_addr(address)) {
 		return true;
 	}
 
-	if (address_family == AF_INET6 && is_inet6_addr(address)) {
+	if (address_family == AF_INET6 && mopl_net_is_inet6_addr(address)) {
 		return true;
 	}
 
 	return false;
 }
 
-bool dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int family) {
+bool mopl_net_dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int family) {
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
@@ -312,7 +315,15 @@ mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketD
 }
 
 mp_state_enum mopl_net_process_tcp_request(const char *server_address, int server_port,
-								  const char *send_buffer, char *recv_buffer, int recv_size) {
-	return mopl_net_process_request(server_address, server_port, IPPROTO_TCP, send_buffer, recv_buffer,
-						   recv_size);
+										   const char *send_buffer, char *recv_buffer,
+										   int recv_size) {
+	return mopl_net_process_request(server_address, server_port, IPPROTO_TCP, send_buffer,
+									recv_buffer, recv_size);
 }
+
+bool resolve_host_or_addr(const char *addr, int family) {
+	return mopl_net_dns_lookup(addr, NULL, family);
+}
+bool mopl_net_is_inet_addr(const char *addr) { return resolve_host_or_addr(addr, AF_INET); }
+bool mopl_net_is_inet6_addr(const char *addr) { return resolve_host_or_addr(addr, AF_INET6); }
+bool mopl_net_is_hostname(const char *addr) { return resolve_host_or_addr(addr, address_family); }

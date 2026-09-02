@@ -512,7 +512,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 		case 's': /* server name */
 			/* TODO: this host_or_die check is probably unnecessary.
 			 * Better to confirm nslookup response matches */
-			host_or_die(optarg);
+			mopl_net_host_or_die(optarg);
 			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
 			}
@@ -521,7 +521,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 		case 'r': /* reverse server name */
 			/* TODO: Is this host_or_die necessary? */
 			// TODO This does not do anything!!! 2025-03-08 rincewind
-			host_or_die(optarg);
+			mopl_net_host_or_die(optarg);
 			if (strlen(optarg) >= ADDRESS_LENGTH) {
 				die(STATE_UNKNOWN, _("Input buffer overflow\n"));
 			}
@@ -587,7 +587,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (strlen(result.config.dns_server) == 0 && index < argc) {
 		/* TODO: See -s option */
-		host_or_die(argv[index]);
+		mopl_net_host_or_die(argv[index]);
 		if (strlen(argv[index]) >= ADDRESS_LENGTH) {
 			die(STATE_UNKNOWN, _("Input buffer overflow\n"));
 		}

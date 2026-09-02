@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 	char *rawcmd = NULL;
 	for (size_t i = 0; i < config.n_addresses; i++) {
 #ifdef PING6_COMMAND
-		if (address_family != AF_INET && is_inet6_addr(config.addresses[i])) {
+		if (address_family != AF_INET && mopl_net_is_inet6_addr(config.addresses[i])) {
 			rawcmd = strdup(PING6_COMMAND);
 		} else {
 			rawcmd = strdup(PING_COMMAND);
