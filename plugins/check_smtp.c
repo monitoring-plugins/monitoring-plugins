@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	mp_state_enum tcp_result =
-		my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
+		mopl_net_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
 
 	mp_check overall = mp_check_init();
 

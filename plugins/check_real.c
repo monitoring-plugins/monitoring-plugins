@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	int socket;
-	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
+	if (mopl_net_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
 		xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
 				  config.server_address, config.server_port);
 		sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);

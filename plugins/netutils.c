@@ -30,8 +30,12 @@
 #include "common.h"
 #include "output.h"
 #include "states.h"
+#include <netinet/in.h>
 #include <sys/types.h>
 #include "netutils.h"
+
+mp_state_enum mopl_net_send_request(int socket, int proto, const char *send_buffer,
+									char *recv_buffer, int recv_size);
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 mp_state_enum socket_timeout_state = STATE_CRITICAL;
@@ -145,7 +149,7 @@ mp_state_enum process_request(const char *server_address, const int server_port,
 		return STATE_CRITICAL;
 	}
 
-	result = send_request(socket, proto, send_buffer, recv_buffer, recv_size);
+	result = mopl_net_send_request(socket, proto, send_buffer, recv_buffer, recv_size);
 
 	close(socket);
 
@@ -154,7 +158,7 @@ mp_state_enum process_request(const char *server_address, const int server_port,
 
 /* opens a tcp or udp connection to a remote host or local socket */
 mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor,
-							 const int proto) {
+							   const int proto) {
 	/* send back STATE_UNKOWN if there's an error
 	   send back STATE_OK if we connect
 	   send back STATE_CRITICAL if we can't connect.
@@ -284,8 +288,8 @@ mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescr
 	}
 }
 
-mp_state_enum send_request(const int socket, const int proto, const char *send_buffer,
-						   char *recv_buffer, const int recv_size) {
+mp_state_enum mopl_net_send_request(const int socket, const int proto, const char *send_buffer,
+									char *recv_buffer, const int recv_size) {
 	mp_state_enum result = STATE_OK;
 
 	ssize_t send_result = send(socket, send_buffer, strlen(send_buffer), 0);
@@ -373,4 +377,18 @@ bool dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int 
 	freeaddrinfo(res);
 
 	return true;
+}
+
+mp_state_enum mopl_net_udp_connect(const char *host_name, int port, int *socketDescriptor) {
+	return mopl_net_connect(host_name, port, socketDescriptor, IPPROTO_UDP);
+}
+
+mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketDescriptor) {
+	return mopl_net_connect(host_name, port, socketDescriptor, IPPROTO_TCP);
+}
+
+mp_state_enum process_tcp_request(const char *server_address, int server_port,
+								  const char *send_buffer, char *recv_buffer, int recv_size) {
+	return process_request(server_address, server_port, IPPROTO_TCP, send_buffer, recv_buffer,
+						   recv_size);
 }

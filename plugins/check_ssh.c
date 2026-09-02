@@ -247,7 +247,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	gettimeofday(&tv, NULL);
 
 	int socket;
-	int result = my_tcp_connect(haddr, hport, &socket);
+	int result = mopl_net_tcp_connect(haddr, hport, &socket);
 
 	mp_subcheck connection_sc = mp_subcheck_init();
 	if (result != STATE_OK) {

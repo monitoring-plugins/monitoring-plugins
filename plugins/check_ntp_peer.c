@@ -232,7 +232,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	 *    (it's ASCII)
 	 */
 	int conn = -1;
-	my_udp_connect(config.server_address, config.port, &conn);
+	mopl_net_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */

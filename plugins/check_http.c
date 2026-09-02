@@ -991,7 +991,7 @@ int check_http(void) {
 
 	/* try to connect to the host at the given port number */
 	gettimeofday(&tv_temp, NULL);
-	if (my_tcp_connect(server_address, server_port, &sd) != STATE_OK) {
+	if (mopl_net_tcp_connect(server_address, server_port, &sd) != STATE_OK) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 	}
 	microsec_connect = deltime(tv_temp);

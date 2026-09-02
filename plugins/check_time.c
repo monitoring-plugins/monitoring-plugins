@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 	/* try to connect to the host at the given port number */
 	if (config.use_udp) {
-		result = my_udp_connect(config.server_address, config.server_port, &socket);
+		result = mopl_net_udp_connect(config.server_address, config.server_port, &socket);
 	} else {
-		result = my_tcp_connect(config.server_address, config.server_port, &socket);
+		result = mopl_net_tcp_connect(config.server_address, config.server_port, &socket);
 	}
 
 	if (result != STATE_OK) {

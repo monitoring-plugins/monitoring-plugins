@@ -51,25 +51,17 @@
 #endif
 
 /* process_request and wrapper macros */
-#define process_tcp_request(addr, port, sbuf, rbuf, rsize)                                         \
-	process_request(addr, port, IPPROTO_TCP, sbuf, rbuf, rsize)
-#define process_udp_request(addr, port, sbuf, rbuf, rsize)                                         \
-	process_request(addr, port, IPPROTO_UDP, sbuf, rbuf, rsize)
 mp_state_enum process_tcp_request2(const char *server_address, int server_port,
 								   const char *send_buffer, char *recv_buffer, int recv_size);
 mp_state_enum process_request(const char *server_address, int server_port, int proto,
 							  const char *send_buffer, char *recv_buffer, int recv_size);
+mp_state_enum process_tcp_request(const char *server_address, int server_port,
+								  const char *send_buffer, char *recv_buffer, int recv_size);
 
-/* my_connect and wrapper macros */
-#define my_tcp_connect(addr, port, s) mopl_net_connect(addr, port, s, IPPROTO_TCP)
-#define my_udp_connect(addr, port, s) mopl_net_connect(addr, port, s, IPPROTO_UDP)
+/* net_connect and wrapper macros */
 mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor, int proto);
-
-/* send_request and wrapper macros */
-#define send_tcp_request(s, sbuf, rbuf, rsize) send_request(s, IPPROTO_TCP, sbuf, rbuf, rsize)
-#define send_udp_request(s, sbuf, rbuf, rsize) send_request(s, IPPROTO_UDP, sbuf, rbuf, rsize)
-mp_state_enum send_request(int socket, int proto, const char *send_buffer, char *recv_buffer,
-						   int recv_size);
+mp_state_enum mopl_net_udp_connect(const char *host_name, int port, int *socketDescriptor);
+mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketDescriptor);
 
 /* "is_*" wrapper macros and functions */
 bool is_host(const char *);
@@ -106,7 +98,7 @@ int mopl_net_tls_init(int socket);
 int mopl_net_tls_init_with_hostname(int socket, char *host_name);
 int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version);
 int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
-												   char *cert, char *privkey);
+													 char *cert, char *privkey);
 void mopl_net_tls_cleanup(void);
 int mopl_net_ssl_write(const void *buf, int num);
 int mopl_net_ssl_read(void *buf, int num);
@@ -129,7 +121,7 @@ typedef struct {
 	mopl_net_retrieve_expiration_date_errors errors;
 } mopl_net_ssl_check_cert_result;
 mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_exp_warn,
-												 unsigned int days_till_exp_crit);
+														unsigned int days_till_exp_crit);
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
