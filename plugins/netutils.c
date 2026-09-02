@@ -63,7 +63,7 @@ void socket_timeout_alarm_handler(int sig) {
 
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-mp_state_enum process_request(const char *server_address, const int server_port, const int proto,
+mp_state_enum mopl_net_process_request(const char *server_address, const int server_port, const int proto,
 							  const char *send_buffer, char *recv_buffer, const int recv_size) {
 
 	mp_state_enum result = STATE_OK;
@@ -257,7 +257,7 @@ mp_state_enum mopl_net_send_request(const int socket, const int proto, const cha
 	return result;
 }
 
-bool is_host(const char *address) {
+bool mopl_net_is_host(const char *address) {
 	if (is_addr(address) || is_hostname(address)) {
 		return (true);
 	}
@@ -311,8 +311,8 @@ mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketD
 	return mopl_net_connect(host_name, port, socketDescriptor, IPPROTO_TCP);
 }
 
-mp_state_enum process_tcp_request(const char *server_address, int server_port,
+mp_state_enum mopl_net_process_tcp_request(const char *server_address, int server_port,
 								  const char *send_buffer, char *recv_buffer, int recv_size) {
-	return process_request(server_address, server_port, IPPROTO_TCP, send_buffer, recv_buffer,
+	return mopl_net_process_request(server_address, server_port, IPPROTO_TCP, send_buffer, recv_buffer,
 						   recv_size);
 }

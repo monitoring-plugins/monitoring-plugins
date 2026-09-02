@@ -305,7 +305,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case 'H': /* hostname */
-			if (is_host(optarg)) {
+			if (mopl_net_is_host(optarg)) {
 				result.config.address = strscpy(result.config.address, optarg);
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -337,7 +337,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 
 	int c = optind;
 	if (result.config.address == NULL) {
-		if (is_host(argv[c])) {
+		if (mopl_net_is_host(argv[c])) {
 			result.config.address = argv[c++];
 		} else {
 			usage2(_("Invalid hostname/address"), argv[c]);

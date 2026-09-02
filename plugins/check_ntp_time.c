@@ -621,7 +621,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
 		} break;
 		case 'H':
-			if (!is_host(optarg) && (optarg[0] != '/')) {
+			if (!mopl_net_is_host(optarg) && (optarg[0] != '/')) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);

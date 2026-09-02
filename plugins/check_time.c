@@ -227,7 +227,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = optarg;
@@ -302,7 +302,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 	option_char = optind;
 	if (result.config.server_address == NULL) {
 		if (argc > option_char) {
-			if (!is_host(argv[option_char])) {
+			if (!mopl_net_is_host(argv[option_char])) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = argv[option_char];

@@ -184,7 +184,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			result.config.remote_protocol = optarg;
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
@@ -213,7 +213,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 	option_char = optind;
 	if (result.config.server_name == NULL && option_char < argc) {
-		if (is_host(argv[option_char])) {
+		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_name = argv[option_char++];
 		}
 	}

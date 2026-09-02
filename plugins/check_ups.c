@@ -449,7 +449,7 @@ int get_ups_variable(const char *varname, char *buf, const check_ups_config conf
 	char temp_buffer[MAX_INPUT_BUFFER];
 
 	/* send the command to the daemon and get a response back */
-	if (process_tcp_request(config.server_address, config.server_port, send_buffer, temp_buffer,
+	if (mopl_net_process_tcp_request(config.server_address, config.server_port, send_buffer, temp_buffer,
 							sizeof(temp_buffer)) != STATE_OK) {
 		printf("%s\n", _("Invalid response received from host"));
 		return ERROR;
@@ -552,7 +552,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 		case '?': /* help */
 			usage5();
 		case 'H': /* hostname */
-			if (is_host(optarg)) {
+			if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -628,7 +628,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.server_address == NULL && argc > optind) {
-		if (is_host(argv[optind])) {
+		if (mopl_net_is_host(argv[optind])) {
 			result.config.server_address = argv[optind++];
 		} else {
 			usage2(_("Invalid hostname/address"), optarg);

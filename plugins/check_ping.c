@@ -294,7 +294,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.addresses[0] == NULL) {
-		if (!is_host(argv[arg_counter])) {
+		if (!mopl_net_is_host(argv[arg_counter])) {
 			usage2(_("Invalid hostname/address"), argv[arg_counter]);
 		} else {
 			result.config.addresses[0] = argv[arg_counter++];
@@ -433,7 +433,7 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 	}
 
 	for (size_t i = 0; i < config_wrapper.config.n_addresses; i++) {
-		if (!is_host(config_wrapper.config.addresses[i])) {
+		if (!mopl_net_is_host(config_wrapper.config.addresses[i])) {
 			usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
 		}
 	}

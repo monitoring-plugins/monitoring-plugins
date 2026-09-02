@@ -484,7 +484,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	int index = optind;
-	if ((result.config.ld_host == NULL) && is_host(argv[index])) {
+	if ((result.config.ld_host == NULL) && mopl_net_is_host(argv[index])) {
 		result.config.ld_host = strdup(argv[index++]);
 	}
 

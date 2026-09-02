@@ -50,10 +50,10 @@
 #	define HOST_MAX_BYTES 255
 #endif
 
-/* process_request and wrapper macros */
-mp_state_enum process_request(const char *server_address, int server_port, int proto,
+/* process_requests */
+mp_state_enum mopl_net_process_request(const char *server_address, int server_port, int proto,
 							  const char *send_buffer, char *recv_buffer, int recv_size);
-mp_state_enum process_tcp_request(const char *server_address, int server_port,
+mp_state_enum mopl_net_process_tcp_request(const char *server_address, int server_port,
 								  const char *send_buffer, char *recv_buffer, int recv_size);
 
 /* net_connect and wrapper macros */
@@ -62,7 +62,7 @@ mp_state_enum mopl_net_udp_connect(const char *host_name, int port, int *socketD
 mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketDescriptor);
 
 /* "is_*" wrapper macros and functions */
-bool is_host(const char *);
+bool mopl_net_is_host(const char *);
 bool is_addr(const char *);
 bool dns_lookup(const char *, struct sockaddr_storage *, int);
 void host_or_die(const char *str);

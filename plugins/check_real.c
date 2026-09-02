@@ -398,7 +398,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'H': /* hostname */
 			if (result.config.server_address) {
 				break;
-			} else if (is_host(optarg)) {
+			} else if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -470,7 +470,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option_char = optind;
 	if (result.config.server_address == NULL && argc > option_char) {
-		if (is_host(argv[option_char])) {
+		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_address = argv[option_char++];
 		} else {
 			usage2(_("Invalid hostname/address"), argv[option_char]);

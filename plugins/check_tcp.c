@@ -754,7 +754,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 
 	if (config.server_address == NULL) {
 		usage4(_("You must provide a server address"));
-	} else if (config.server_address[0] != '/' && !is_host(config.server_address)) {
+	} else if (config.server_address[0] != '/' && !mopl_net_is_host(config.server_address)) {
 		die(STATE_CRITICAL, "%s %s - %s: %s\n", config.service, state_text(STATE_CRITICAL),
 			_("Invalid hostname, address or socket"), config.server_address);
 	}
