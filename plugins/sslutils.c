@@ -75,7 +75,7 @@ void mopl_net_format_timestamp(time_t timestamp, char *buf, size_t buflen) {
 #	endif /* MOPL_USE_OPENSSL */
 
 int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, int version,
-												   char *cert, char *privkey) {
+													 char *cert, char *privkey) {
 	unsigned long options = 0;
 
 	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL) {
@@ -269,8 +269,9 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 			time_remaining = (int)(time_left / 60);
 		}
 
-		printf(_("Certificate '%s' expires in %u %s (%s)\n"), common_name, time_remaining,
-			   time_left >= 3600 ? "hours" : "minutes", timestamp);
+		printf(_("%s - Certificate '%s' expires in %u %s (%s)\n"),
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", common_name,
+			   time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
 
 		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
@@ -281,7 +282,8 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), common_name, timestamp);
 		status = STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("WARNING - Certificate '%s' just expired (%s).\n"), common_name, timestamp);
+		printf(_("%s - Certificate '%s' just expired (%s).\n"),
+			   (days_left > days_till_exp_crit) ? "WARNING" : "CRITICAL", common_name, timestamp);
 		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
 		} else {
