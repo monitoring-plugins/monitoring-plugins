@@ -51,8 +51,6 @@
 #endif
 
 /* process_request and wrapper macros */
-mp_state_enum process_tcp_request2(const char *server_address, int server_port,
-								   const char *send_buffer, char *recv_buffer, int recv_size);
 mp_state_enum process_request(const char *server_address, int server_port, int proto,
 							  const char *send_buffer, char *recv_buffer, int recv_size);
 mp_state_enum process_tcp_request(const char *server_address, int server_port,
