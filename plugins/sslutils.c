@@ -278,23 +278,23 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 			status = STATE_CRITICAL;
 		}
 	} else if (time_left < 0) {
-		printf(_("Certificate '%s' expired on %s.\n"), common_name, timestamp);
+		printf(_("CRITICAL - Certificate '%s' expired on %s.\n"), common_name, timestamp);
 		status = STATE_CRITICAL;
 	} else if (days_left == 0) {
-		printf(_("Certificate '%s' just expired (%s).\n"), common_name, timestamp);
+		printf(_("WARNING - Certificate '%s' just expired (%s).\n"), common_name, timestamp);
 		if (days_left > days_till_exp_crit) {
 			status = STATE_WARNING;
 		} else {
 			status = STATE_CRITICAL;
 		}
 	} else {
-		printf(_("Certificate '%s' will expire on %s.\n"), common_name, timestamp);
+		printf(_("OK - Certificate '%s' will expire on %s.\n"), common_name, timestamp);
 		status = STATE_OK;
 	}
 	X509_free(certificate);
 	return status;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	printf("%s\n", _("Plugin does not support checking certificates."));
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #	endif /* MOPL_USE_OPENSSL */
 }
@@ -339,7 +339,7 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 
 	return result;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	printf("%s\n", _("Plugin does not support checking certificates."));
+	printf("%s\n", _("WARNING - Plugin does not support checking certificates."));
 	return STATE_WARNING;
 #	endif /* MOPL_USE_OPENSSL */
 }
