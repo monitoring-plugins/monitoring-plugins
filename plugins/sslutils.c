@@ -301,9 +301,9 @@ mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_
 #	endif /* MOPL_USE_OPENSSL */
 }
 
-retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate) {
+mopl_net_retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate) {
 #	ifdef MOPL_USE_OPENSSL
-	retrieve_expiration_time_result result = {
+	mopl_net_retrieve_expiration_time_result result = {
 		.errors = ALL_OK,
 		.remaining_seconds = 0,
 	};
@@ -346,15 +346,15 @@ retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate
 #	endif /* MOPL_USE_OPENSSL */
 }
 
-net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn,
+mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_exp_warn,
 												 unsigned int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(SSL_context);
 
-	retrieve_expiration_time_result expiration_date = np_net_ssl_get_cert_expiration(certificate);
+	mopl_net_retrieve_expiration_time_result expiration_date = np_net_ssl_get_cert_expiration(certificate);
 
-	net_ssl_check_cert_result result = {
+	mopl_net_ssl_check_cert_result result = {
 		.result_state = STATE_UNKNOWN,
 		.remaining_seconds = expiration_date.remaining_seconds,
 		.errors = expiration_date.errors,

@@ -30,7 +30,7 @@ int mopl_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out);
 void mopl_net_format_timestamp(time_t t, char *buf, size_t buflen);
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit);
-retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate);
+mopl_net_retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate);
 mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										 int days_till_exp_crit);
 #endif
@@ -149,7 +149,8 @@ int main(void) {
 	}
 
 	/* np_net_ssl_get_cert_expiration - NULL certificate */
-	retrieve_expiration_time_result expiration_time_result = np_net_ssl_get_cert_expiration(NULL);
+	mopl_net_retrieve_expiration_time_result expiration_time_result =
+		np_net_ssl_get_cert_expiration(NULL);
 	ok(expiration_time_result.errors == NO_SERVER_CERTIFICATE_PRESENT,
 	   "NULL certificate returns NO_SERVER_CERTIFICATE_PRESENT error");
 

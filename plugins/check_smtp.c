@@ -355,8 +355,8 @@ int main(int argc, char **argv) {
 
 #	ifdef MOPL_USE_OPENSSL
 	if (ssl_established) {
-		net_ssl_check_cert_result cert_check_result =
-			np_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
+		mopl_net_ssl_check_cert_result cert_check_result =
+			mopl_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
 
 		mp_subcheck sc_cert_check = mp_subcheck_init();
 

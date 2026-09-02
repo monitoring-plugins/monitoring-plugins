@@ -101,7 +101,7 @@ void socket_timeout_alarm_handler(int) __attribute__((noreturn));
 #	define MP_TLSv1_OR_NEWER   8
 #	define MP_TLSv1_1_OR_NEWER 9
 #	define MP_TLSv1_2_OR_NEWER 10
-/* maybe this could be merged with the above np_net_connect, via some flags */
+
 int mopl_net_tls_init(int socket);
 int mopl_net_tls_init_with_hostname(int socket, char *host_name);
 int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, int version);
@@ -116,19 +116,19 @@ typedef enum {
 	NO_SERVER_CERTIFICATE_PRESENT,
 	UNABLE_TO_RETRIEVE_CERTIFICATE_SUBJECT,
 	WRONG_TIME_FORMAT_IN_CERTIFICATE,
-} retrieve_expiration_date_errors;
+} mopl_net_retrieve_expiration_date_errors;
 
 typedef struct {
 	double remaining_seconds;
-	retrieve_expiration_date_errors errors;
-} retrieve_expiration_time_result;
+	mopl_net_retrieve_expiration_date_errors errors;
+} mopl_net_retrieve_expiration_time_result;
 
 typedef struct {
 	mp_state_enum result_state;
 	double remaining_seconds;
-	retrieve_expiration_date_errors errors;
-} net_ssl_check_cert_result;
-net_ssl_check_cert_result np_net_ssl_check_cert2(unsigned int days_till_exp_warn,
+	mopl_net_retrieve_expiration_date_errors errors;
+} mopl_net_ssl_check_cert_result;
+mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_exp_warn,
 												 unsigned int days_till_exp_crit);
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
