@@ -198,7 +198,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 	return STATE_CRITICAL;
 }
 
-void np_net_ssl_cleanup(void) {
+void mopl_net_tls_cleanup(void) {
 	if (SSL_context) {
 #	ifdef SSL_set_tlsext_host_name
 		SSL_set_tlsext_host_name(SSL_context, NULL);
@@ -213,9 +213,9 @@ void np_net_ssl_cleanup(void) {
 	}
 }
 
-int np_net_ssl_write(const void *buf, int num) { return SSL_write(SSL_context, buf, num); }
+int mopl_net_ssl_write(const void *buf, int num) { return SSL_write(SSL_context, buf, num); }
 
-int np_net_ssl_read(void *buf, int num) { return SSL_read(SSL_context, buf, num); }
+int mopl_net_ssl_read(void *buf, int num) { return SSL_read(SSL_context, buf, num); }
 
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit) {

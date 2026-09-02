@@ -62,8 +62,8 @@ static bool check_cert = false;
 static bool continue_after_check_cert = false;
 static int ssl_version = 0;
 static int days_till_exp_warn, days_till_exp_crit;
-#	define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
-#	define my_send(buf, len) ((use_ssl) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
+#	define my_recv(buf, len) ((use_ssl) ? mopl_net_ssl_read(buf, len) : read(sd, buf, len))
+#	define my_send(buf, len) ((use_ssl) ? mopl_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
 #	define my_recv(buf, len) read(sd, buf, len)
 #	define my_send(buf, len) send(sd, buf, len, 0)
@@ -1064,7 +1064,7 @@ int check_http(void) {
 				if (sd) {
 					close(sd);
 				}
-				np_net_ssl_cleanup();
+				mopl_net_tls_cleanup();
 				return result;
 			}
 		}
@@ -1207,7 +1207,7 @@ int check_http(void) {
 		close(sd);
 	}
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 
 	/* Save check time */

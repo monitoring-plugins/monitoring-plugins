@@ -66,7 +66,7 @@ int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor,
 			bool ssl_established) {
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
-		return np_net_ssl_read(buf, num);
+		return mopl_net_ssl_read(buf, num);
 	}
 	return (int)read(socket_descriptor, buf, (size_t)num);
 #else /* ifndef HAVE_SSL */
@@ -79,7 +79,7 @@ int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor,
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
 
-		return np_net_ssl_write(buf, num);
+		return mopl_net_ssl_write(buf, num);
 	}
 	return (int)send(socket_descriptor, buf, (size_t)num, 0);
 #else /* ifndef HAVE_SSL */
@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
 		if (tls_result != STATE_OK) {
 			close(socket_descriptor);
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			sc_tls_connection = mp_set_subcheck_state(sc_tls_connection, STATE_CRITICAL);
 			xasprintf(&sc_tls_connection.output, "cannot create TLS context");
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
 			socket_descriptor, (config.use_sni ? config.server_address : NULL));
 		if (starttls_result != STATE_OK) {
 			close(socket_descriptor);
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			sc_starttls_init = mp_set_subcheck_state(sc_starttls_init, STATE_CRITICAL);
 			xasprintf(&sc_starttls_init.output, "failed to create StartTLS context");
@@ -990,7 +990,7 @@ int my_close(int socket_descriptor) {
 	int result;
 	result = close(socket_descriptor);
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 	return result;
 }

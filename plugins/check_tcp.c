@@ -46,7 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
 	if (use_tls) {
-		return np_net_ssl_read(buf, (int)len);
+		return mopl_net_ssl_read(buf, (int)len);
 	}
 #endif
 	return read(socket_descriptor, buf, len);
@@ -55,7 +55,7 @@ ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 ssize_t my_send(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
 	if (use_tls) {
-		return np_net_ssl_write(buf, (int)len);
+		return mopl_net_ssl_write(buf, (int)len);
 	}
 #endif
 	return write(socket_descriptor, buf, len);
@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
 			if (socket_descriptor) {
 				close(socket_descriptor);
 			}
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			mp_exit(overall);
 		}
@@ -433,7 +433,7 @@ int main(int argc, char **argv) {
 		close(socket_descriptor);
 	}
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 
 	long microsec = deltime(start_time);
