@@ -124,6 +124,5 @@ mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_e
 														unsigned int days_till_exp_crit);
 
 mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
-mp_subcheck mp_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit);
 #endif /* HAVE_SSL */
 #endif /* _NETUTILS_H_ */
