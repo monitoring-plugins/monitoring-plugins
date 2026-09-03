@@ -16,7 +16,6 @@
  *
  *****************************************************************************/
 
-#include "common.h"
 #include "netutils.h"
 #include "../tap/tap.h"
 #include "../../lib/output.h"
@@ -27,11 +26,11 @@
 #	include <openssl/err.h>
 
 /* prototypes for internal functions*/
-int np_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out);
-void np_net_format_timestamp(time_t t, char *buf, size_t buflen);
+int mopl_net_asn1_time_to_time_t(const ASN1_TIME *asn1_time, time_t *out);
+void mopl_net_format_timestamp(time_t t, char *buf, size_t buflen);
 mp_state_enum np_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										   int days_till_exp_crit);
-retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate);
+mopl_net_retrieve_expiration_time_result np_net_ssl_get_cert_expiration(X509 *certificate);
 mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_warn,
 										 int days_till_exp_crit);
 #endif
@@ -79,7 +78,7 @@ static X509 *create_test_cert(long seconds) {
 }
 #endif
 
-int main(int argc, char **argv) {
+int main(void) {
 #ifdef HAVE_SSL
 	plan_tests(44);
 #	define TIME_DELTA 5
@@ -150,7 +149,8 @@ int main(int argc, char **argv) {
 	}
 
 	/* np_net_ssl_get_cert_expiration - NULL certificate */
-	retrieve_expiration_time_result expiration_time_result = np_net_ssl_get_cert_expiration(NULL);
+	mopl_net_retrieve_expiration_time_result expiration_time_result =
+		np_net_ssl_get_cert_expiration(NULL);
 	ok(expiration_time_result.errors == NO_SERVER_CERTIFICATE_PRESENT,
 	   "NULL certificate returns NO_SERVER_CERTIFICATE_PRESENT error");
 
@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 	ASN1_TIME *asn1_time = ASN1_TIME_new();
 	ASN1_TIME_set_string(asn1_time, "301128210211Z"); /* Nov 28, 2030 21:02:11 UTC */
 	time_t result;
-	ok(np_net_asn1_time_to_time_t(asn1_time, &result) == 1,
+	ok(mopl_net_asn1_time_to_time_t(asn1_time, &result) == 1,
 	   "np_net_asn1_time_to_time_t succeeds with valid UTCTIME");
 	struct tm *tm = gmtime(&result);
 	ok(tm->tm_year == 130 && tm->tm_mon == 10 && tm->tm_mday == 28 && tm->tm_hour == 21 &&
@@ -254,7 +254,7 @@ int main(int argc, char **argv) {
 	/* np_net_asn1_time_to_time_t with valid GENERALIZEDTIME */
 	asn1_time = ASN1_TIME_new();
 	ASN1_TIME_set_string(asn1_time, "20510701120000Z"); /* Jul 1, 2051 12:00:00 UTC */
-	ok(np_net_asn1_time_to_time_t(asn1_time, &result) == 1,
+	ok(mopl_net_asn1_time_to_time_t(asn1_time, &result) == 1,
 	   "np_net_asn1_time_to_time_t succeeds with valid GENERALIZEDTIME");
 	tm = gmtime(&result);
 	ok(tm->tm_year == 151 && tm->tm_mon == 6 && tm->tm_mday == 1 && tm->tm_hour == 12 &&
@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 
 	/* np_net_asn1_time_to_time_t fails with empty ASN1_TIME */
 	asn1_time = ASN1_TIME_new();
-	ok(np_net_asn1_time_to_time_t(asn1_time, &result) == 0,
+	ok(mopl_net_asn1_time_to_time_t(asn1_time, &result) == 0,
 	   "np_net_asn1_time_to_time_t fails with empty ASN1_TIME");
 	ASN1_TIME_free(asn1_time);
 
@@ -272,9 +272,9 @@ int main(int argc, char **argv) {
 	asn1_time = ASN1_TIME_new();
 	ASN1_TIME_set_string(asn1_time, "301128210211Z"); /* Nov 28, 2030 21:02:11 UTC */
 	time_t t;
-	np_net_asn1_time_to_time_t(asn1_time, &t);
+	mopl_net_asn1_time_to_time_t(asn1_time, &t);
 	char buf[100] = "";
-	np_net_format_timestamp(t, buf, sizeof(buf));
+	mopl_net_format_timestamp(t, buf, sizeof(buf));
 	ok(strlen(buf) > 0, "np_net_format_timestamp produces non-empty output");
 	ok(strstr(buf, "+0000") != NULL,
 	   "np_net_format_timestamp output contains +0000 for GMT timezone");

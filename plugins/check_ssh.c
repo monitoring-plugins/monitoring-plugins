@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 	mp_set_ok_summary(&overall, "SSH check was successful");
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */
@@ -184,7 +184,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			result.config.remote_protocol = optarg;
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
@@ -213,7 +213,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 	option_char = optind;
 	if (result.config.server_name == NULL && option_char < argc) {
-		if (is_host(argv[option_char])) {
+		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_name = argv[option_char++];
 		}
 	}
@@ -247,7 +247,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	gettimeofday(&tv, NULL);
 
 	int socket;
-	int result = my_tcp_connect(haddr, hport, &socket);
+	int result = mopl_net_tcp_connect(haddr, hport, &socket);
 
 	mp_subcheck connection_sc = mp_subcheck_init();
 	if (result != STATE_OK) {

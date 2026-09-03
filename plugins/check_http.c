@@ -60,10 +60,10 @@ enum {
 #ifdef HAVE_SSL
 static bool check_cert = false;
 static bool continue_after_check_cert = false;
-static int ssl_version = 0;
+static int ssl_version = MOPL_NET_TLS_DEFAULT_VERSION;
 static int days_till_exp_warn, days_till_exp_crit;
-#	define my_recv(buf, len) ((use_ssl) ? np_net_ssl_read(buf, len) : read(sd, buf, len))
-#	define my_send(buf, len) ((use_ssl) ? np_net_ssl_write(buf, len) : send(sd, buf, len, 0))
+#	define my_recv(buf, len) ((use_ssl) ? mopl_net_ssl_read(buf, len) : read(sd, buf, len))
+#	define my_send(buf, len) ((use_ssl) ? mopl_net_ssl_write(buf, len) : send(sd, buf, len, 0))
 #else /* ifndef HAVE_SSL */
 #	define my_recv(buf, len) read(sd, buf, len)
 #	define my_send(buf, len) send(sd, buf, len, 0)
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* initialize alarm signal handling, set socket timeout, start timer */
-	(void)signal(SIGALRM, socket_timeout_alarm_handler);
+	(void)signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	(void)alarm(socket_timeout);
 	gettimeofday(&tv, NULL);
 
@@ -393,15 +393,15 @@ bool process_arguments(int argc, char **argv) {
 				int got_plus = strchr(optarg, '+') != NULL;
 
 				if (!strncmp(optarg, "1.2", 3)) {
-					ssl_version = got_plus ? MP_TLSv1_2_OR_NEWER : MP_TLSv1_2;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_2_OR_NEWER : MOPL_NET_TLSv1_2;
 				} else if (!strncmp(optarg, "1.1", 3)) {
-					ssl_version = got_plus ? MP_TLSv1_1_OR_NEWER : MP_TLSv1_1;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_1_OR_NEWER : MOPL_NET_TLSv1_1;
 				} else if (optarg[0] == '1') {
-					ssl_version = got_plus ? MP_TLSv1_OR_NEWER : MP_TLSv1;
+					ssl_version = got_plus ? MOPL_NET_TLSv1_OR_NEWER : MOPL_NET_TLSv1;
 				} else if (optarg[0] == '3') {
-					ssl_version = got_plus ? MP_SSLv3_OR_NEWER : MP_SSLv3;
+					ssl_version = got_plus ? MOPL_NET_SSLv3_OR_NEWER : MOPL_NET_SSLv3;
 				} else if (optarg[0] == '2') {
-					ssl_version = got_plus ? MP_SSLv2_OR_NEWER : MP_SSLv2;
+					ssl_version = got_plus ? MOPL_NET_SSLv2_OR_NEWER : MOPL_NET_SSLv2;
 				} else {
 					usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
 							 "optional '+' suffix)"));
@@ -991,7 +991,7 @@ int check_http(void) {
 
 	/* try to connect to the host at the given port number */
 	gettimeofday(&tv_temp, NULL);
-	if (my_tcp_connect(server_address, server_port, &sd) != STATE_OK) {
+	if (mopl_net_tcp_connect(server_address, server_port, &sd) != STATE_OK) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 	}
 	microsec_connect = deltime(tv_temp);
@@ -1048,7 +1048,7 @@ int check_http(void) {
 	elapsed_time_connect = (double)microsec_connect / 1.0e6;
 	if (use_ssl) {
 		gettimeofday(&tv_temp, NULL);
-		result = np_net_ssl_init_with_hostname_version_and_cert(
+		result = mopl_net_tls_init_with_hostname_version_and_cert(
 			sd, (use_sni ? host_name : NULL), ssl_version, client_cert, client_privkey);
 		if (verbose) {
 			printf("SSL initialized\n");
@@ -1059,12 +1059,12 @@ int check_http(void) {
 		microsec_ssl = deltime(tv_temp);
 		elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
 		if (check_cert) {
-			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
+			result = mopl_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 			if (!continue_after_check_cert) {
 				if (sd) {
 					close(sd);
 				}
-				np_net_ssl_cleanup();
+				mopl_net_tls_cleanup();
 				return result;
 			}
 		}
@@ -1207,7 +1207,7 @@ int check_http(void) {
 		close(sd);
 	}
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 
 	/* Save check time */

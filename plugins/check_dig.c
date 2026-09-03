@@ -296,7 +296,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
-			host_or_die(optarg);
+			mopl_net_host_or_die(optarg);
 			result.config.dns_server = optarg;
 			break;
 		case 'p': /* server port */
@@ -362,7 +362,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 	int index = optind;
 	if (result.config.dns_server == NULL) {
 		if (index < argc) {
-			host_or_die(argv[index]);
+			mopl_net_host_or_die(argv[index]);
 			result.config.dns_server = argv[index];
 		} else {
 			if (strcmp(result.config.query_transport, "-6") == 0) {

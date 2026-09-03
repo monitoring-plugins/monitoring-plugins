@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 	}
 
 	struct sockaddr_storage radius_server_socket;
-	if (!dns_lookup(config.nas_ip_address, &radius_server_socket, AF_UNSPEC)) {
+	if (!mopl_net_dns_lookup(config.nas_ip_address, &radius_server_socket, AF_UNSPEC)) {
 		xasprintf(&sc_configuring.output, "invalid NAS IP address. Lookup failed");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
@@ -354,7 +354,7 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 'H': /* hostname */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server = optarg;

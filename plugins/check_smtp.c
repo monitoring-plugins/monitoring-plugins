@@ -66,7 +66,7 @@ int my_recv(check_smtp_config config, void *buf, int num, int socket_descriptor,
 			bool ssl_established) {
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
-		return np_net_ssl_read(buf, num);
+		return mopl_net_ssl_read(buf, num);
 	}
 	return (int)read(socket_descriptor, buf, (size_t)num);
 #else /* ifndef HAVE_SSL */
@@ -79,7 +79,7 @@ int my_send(check_smtp_config config, void *buf, int num, int socket_descriptor,
 #ifdef HAVE_SSL
 	if ((config.use_starttls || config.use_ssl) && ssl_established) {
 
-		return np_net_ssl_write(buf, num);
+		return mopl_net_ssl_write(buf, num);
 	}
 	return (int)send(socket_descriptor, buf, (size_t)num, 0);
 #else /* ifndef HAVE_SSL */
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 	(void)signal(SIGPIPE, SIG_IGN);
 
 	/* initialize alarm signal handling */
-	(void)signal(SIGALRM, socket_timeout_alarm_handler);
+	(void)signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	(void)alarm(socket_timeout);
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	mp_state_enum tcp_result =
-		my_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
+		mopl_net_tcp_connect(config.server_address, config.server_port, &socket_descriptor);
 
 	mp_check overall = mp_check_init();
 
@@ -213,14 +213,14 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_SSL
 	if (config.use_ssl) {
-		int tls_result = np_net_ssl_init_with_hostname(
+		int tls_result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.use_sni ? config.server_address : NULL));
 
 		mp_subcheck sc_tls_connection = mp_subcheck_init();
 
 		if (tls_result != STATE_OK) {
 			close(socket_descriptor);
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			sc_tls_connection = mp_set_subcheck_state(sc_tls_connection, STATE_CRITICAL);
 			xasprintf(&sc_tls_connection.output, "cannot create TLS context");
@@ -295,11 +295,11 @@ int main(int argc, char **argv) {
 			mp_exit(overall);
 		}
 
-		mp_state_enum starttls_result = np_net_ssl_init_with_hostname(
+		mp_state_enum starttls_result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.use_sni ? config.server_address : NULL));
 		if (starttls_result != STATE_OK) {
 			close(socket_descriptor);
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			sc_starttls_init = mp_set_subcheck_state(sc_starttls_init, STATE_CRITICAL);
 			xasprintf(&sc_starttls_init.output, "failed to create StartTLS context");
@@ -355,8 +355,8 @@ int main(int argc, char **argv) {
 
 #	ifdef MOPL_USE_OPENSSL
 	if (ssl_established) {
-		net_ssl_check_cert_result cert_check_result =
-			np_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
+		mopl_net_ssl_check_cert_result cert_check_result =
+			mopl_net_ssl_check_cert2(config.days_till_exp_warn, config.days_till_exp_crit);
 
 		mp_subcheck sc_cert_check = mp_subcheck_init();
 
@@ -676,7 +676,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (opt_index) {
 		case 'H': /* hostname */
-			if (is_host(optarg)) {
+			if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -856,7 +856,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	int c = optind;
 	if (result.config.server_address == NULL) {
 		if (argv[c]) {
-			if (is_host(argv[c])) {
+			if (mopl_net_is_host(argv[c])) {
 				result.config.server_address = argv[c];
 			} else {
 				usage2(_("Invalid hostname/address"), argv[c]);
@@ -990,7 +990,7 @@ int my_close(int socket_descriptor) {
 	int result;
 	result = close(socket_descriptor);
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 	return result;
 }

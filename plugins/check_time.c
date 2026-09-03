@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	const check_time_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 	/* try to connect to the host at the given port number */
 	if (config.use_udp) {
-		result = my_udp_connect(config.server_address, config.server_port, &socket);
+		result = mopl_net_udp_connect(config.server_address, config.server_port, &socket);
 	} else {
-		result = my_tcp_connect(config.server_address, config.server_port, &socket);
+		result = mopl_net_tcp_connect(config.server_address, config.server_port, &socket);
 	}
 
 	if (result != STATE_OK) {
@@ -227,7 +227,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = optarg;
@@ -302,7 +302,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 	option_char = optind;
 	if (result.config.server_address == NULL) {
 		if (argc > option_char) {
-			if (!is_host(argv[option_char])) {
+			if (!mopl_net_is_host(argv[option_char])) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = argv[option_char];

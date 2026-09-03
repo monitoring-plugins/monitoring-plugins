@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
 	/* try to connect to the host at the given port number */
 	int socket;
-	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
+	if (mopl_net_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
 		xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
 				  config.server_address, config.server_port);
 		sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);
@@ -398,7 +398,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'H': /* hostname */
 			if (result.config.server_address) {
 				break;
-			} else if (is_host(optarg)) {
+			} else if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
@@ -470,7 +470,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 
 	int option_char = optind;
 	if (result.config.server_address == NULL && argc > option_char) {
-		if (is_host(argv[option_char])) {
+		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_address = argv[option_char++];
 		} else {
 			usage2(_("Invalid hostname/address"), argv[option_char]);

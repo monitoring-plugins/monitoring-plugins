@@ -30,8 +30,14 @@
 #include "common.h"
 #include "output.h"
 #include "states.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include "netutils.h"
+
+mp_state_enum mopl_net_send_request(int socket, int proto, const char *send_buffer,
+									char *recv_buffer, int recv_size);
+bool mopl_net_is_addr(const char *);
 
 unsigned int socket_timeout = DEFAULT_SOCKET_TIMEOUT;
 mp_state_enum socket_timeout_state = STATE_CRITICAL;
@@ -41,7 +47,7 @@ bool was_refused = false;
 int address_family = AF_UNSPEC;
 
 /* handles socket timeouts */
-void socket_timeout_alarm_handler(int sig) {
+void mopl_net_socket_timeout_alarm_handler(int sig) {
 	mp_subcheck timeout_sc = mp_subcheck_init();
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 
@@ -57,95 +63,20 @@ void socket_timeout_alarm_handler(int sig) {
 	mp_exit(overall);
 }
 
-/* connects to a host on a specified tcp port, sends a string, and gets a
-	 response. loops on select-recv until timeout or eof to get all of a
-	 multi-packet answer */
-mp_state_enum process_tcp_request2(const char *server_address, const int server_port,
-								   const char *send_buffer, char *recv_buffer,
-								   const int recv_size) {
-
-	int socket;
-
-	mp_state_enum connect_result =
-		np_net_connect(server_address, server_port, &socket, IPPROTO_TCP);
-	if (connect_result != STATE_OK) {
-		return STATE_CRITICAL;
-	}
-
-	mp_state_enum result;
-	ssize_t send_result = send(socket, send_buffer, strlen(send_buffer), 0);
-	if (send_result < 0 || (size_t)send_result != strlen(send_buffer)) {
-		// printf("%s\n", _("Send failed"));
-		result = STATE_WARNING;
-	}
-
-	fd_set readfds;
-	ssize_t recv_length = 0;
-	while (true) {
-		/* wait up to the number of seconds for socket timeout
-		   minus one for data from the host */
-		struct timeval timeout = {
-			.tv_sec = socket_timeout - 1,
-			.tv_usec = 0,
-		};
-		FD_ZERO(&readfds);
-		FD_SET(socket, &readfds);
-		select(socket + 1, &readfds, NULL, NULL, &timeout);
-
-		/* make sure some data has arrived */
-		if (!FD_ISSET(socket, &readfds)) { /* it hasn't */
-			if (!recv_length) {
-				strcpy(recv_buffer, "");
-				// printf("%s\n", _("No data was received from host!"));
-				result = STATE_WARNING;
-			} else { /* this one failed, but previous ones worked */
-				recv_buffer[recv_length] = 0;
-			}
-			break;
-		} /* it has */
-
-		ssize_t recv_result =
-			recv(socket, recv_buffer + recv_length, (size_t)(recv_size - recv_length - 1), 0);
-		if (recv_result == -1) {
-			/* recv failed, bail out */
-			strcpy(recv_buffer + recv_length, "");
-			result = STATE_WARNING;
-			break;
-		}
-
-		if (recv_result == 0) {
-			/* end of file ? */
-			recv_buffer[recv_length] = 0;
-			break;
-		}
-
-		/* we got data! */
-		recv_length += recv_result;
-		if (recv_length >= recv_size - 1) {
-			/* buffer full, we're done */
-			recv_buffer[recv_size - 1] = 0;
-			break;
-		}
-		/* end if(!FD_ISSET(sd,&readfds)) */
-	}
-
-	close(socket);
-	return result;
-}
-
 /* connects to a host on a specified port, sends a string, and gets a
    response */
-mp_state_enum process_request(const char *server_address, const int server_port, const int proto,
-							  const char *send_buffer, char *recv_buffer, const int recv_size) {
+mp_state_enum mopl_net_process_request(const char *server_address, const int server_port,
+									   const int proto, const char *send_buffer, char *recv_buffer,
+									   const int recv_size) {
 
 	mp_state_enum result = STATE_OK;
 	int socket;
-	result = np_net_connect(server_address, server_port, &socket, proto);
+	result = mopl_net_connect(server_address, server_port, &socket, proto);
 	if (result != STATE_OK) {
 		return STATE_CRITICAL;
 	}
 
-	result = send_request(socket, proto, send_buffer, recv_buffer, recv_size);
+	result = mopl_net_send_request(socket, proto, send_buffer, recv_buffer, recv_size);
 
 	close(socket);
 
@@ -153,8 +84,8 @@ mp_state_enum process_request(const char *server_address, const int server_port,
 }
 
 /* opens a tcp or udp connection to a remote host or local socket */
-mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescriptor,
-							 const int proto) {
+mp_state_enum mopl_net_connect(const char *host_name, int port, int *socketDescriptor,
+							   const int proto) {
 	/* send back STATE_UNKOWN if there's an error
 	   send back STATE_OK if we connect
 	   send back STATE_CRITICAL if we can't connect.
@@ -284,8 +215,8 @@ mp_state_enum np_net_connect(const char *host_name, int port, int *socketDescrip
 	}
 }
 
-mp_state_enum send_request(const int socket, const int proto, const char *send_buffer,
-						   char *recv_buffer, const int recv_size) {
+mp_state_enum mopl_net_send_request(const int socket, const int proto, const char *send_buffer,
+									char *recv_buffer, const int recv_size) {
 	mp_state_enum result = STATE_OK;
 
 	ssize_t send_result = send(socket, send_buffer, strlen(send_buffer), 0);
@@ -329,33 +260,33 @@ mp_state_enum send_request(const int socket, const int proto, const char *send_b
 	return result;
 }
 
-bool is_host(const char *address) {
-	if (is_addr(address) || is_hostname(address)) {
+bool mopl_net_is_host(const char *address) {
+	if (mopl_net_is_addr(address) || mopl_net_is_hostname(address)) {
 		return (true);
 	}
 
 	return (false);
 }
 
-void host_or_die(const char *str) {
-	if (!str || (!is_addr(str) && !is_hostname(str))) {
+void mopl_net_host_or_die(const char *str) {
+	if (!str || (!mopl_net_is_addr(str) && !mopl_net_is_hostname(str))) {
 		usage_va(_("Invalid hostname/address - %s"), str);
 	}
 }
 
-bool is_addr(const char *address) {
-	if (address_family == AF_INET && is_inet_addr(address)) {
+bool mopl_net_is_addr(const char *address) {
+	if (address_family == AF_INET && mopl_net_is_inet_addr(address)) {
 		return true;
 	}
 
-	if (address_family == AF_INET6 && is_inet6_addr(address)) {
+	if (address_family == AF_INET6 && mopl_net_is_inet6_addr(address)) {
 		return true;
 	}
 
 	return false;
 }
 
-bool dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int family) {
+bool mopl_net_dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int family) {
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = family;
@@ -374,3 +305,25 @@ bool dns_lookup(const char *node_string, struct sockaddr_storage *ss, const int 
 
 	return true;
 }
+
+mp_state_enum mopl_net_udp_connect(const char *host_name, int port, int *socketDescriptor) {
+	return mopl_net_connect(host_name, port, socketDescriptor, IPPROTO_UDP);
+}
+
+mp_state_enum mopl_net_tcp_connect(const char *host_name, int port, int *socketDescriptor) {
+	return mopl_net_connect(host_name, port, socketDescriptor, IPPROTO_TCP);
+}
+
+mp_state_enum mopl_net_process_tcp_request(const char *server_address, int server_port,
+										   const char *send_buffer, char *recv_buffer,
+										   int recv_size) {
+	return mopl_net_process_request(server_address, server_port, IPPROTO_TCP, send_buffer,
+									recv_buffer, recv_size);
+}
+
+bool resolve_host_or_addr(const char *addr, int family) {
+	return mopl_net_dns_lookup(addr, NULL, family);
+}
+bool mopl_net_is_inet_addr(const char *addr) { return resolve_host_or_addr(addr, AF_INET); }
+bool mopl_net_is_inet6_addr(const char *addr) { return resolve_host_or_addr(addr, AF_INET6); }
+bool mopl_net_is_hostname(const char *addr) { return resolve_host_or_addr(addr, address_family); }

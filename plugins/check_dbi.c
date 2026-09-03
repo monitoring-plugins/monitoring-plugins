@@ -533,7 +533,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'H': /* host */
-			if (!is_host(optarg)) {
+			if (!mopl_net_is_host(optarg)) {
 				usage2(_("Invalid hostname/address"), optarg);
 			} else {
 				result.config.host = optarg;

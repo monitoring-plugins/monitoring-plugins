@@ -232,7 +232,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 	 *    (it's ASCII)
 	 */
 	int conn = -1;
-	my_udp_connect(config.server_address, config.port, &conn);
+	mopl_net_udp_connect(config.server_address, config.port, &conn);
 
 	/* keep sending requests until the server stops setting the
 	 * REM_MORE bit, though usually this is only 1 packet. */
@@ -591,7 +591,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 				mp_thresholds_set_crit(result.config.truechimer_thresholds, tmp.range);
 		} break;
 		case 'H':
-			if (!is_host(optarg) && (optarg[0] != '/')) {
+			if (!mopl_net_is_host(optarg) && (optarg[0] != '/')) {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
@@ -665,7 +665,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
