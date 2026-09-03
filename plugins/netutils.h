@@ -31,7 +31,6 @@
 #ifndef _NETUTILS_H_
 #define _NETUTILS_H_
 
-#include "output.h"
 #include "states.h"
 #include "utils.h"
 #include <netinet/in.h>
