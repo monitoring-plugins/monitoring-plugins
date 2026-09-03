@@ -392,7 +392,7 @@ mopl_net_ssl_check_cert_result mopl_net_ssl_check_cert2(unsigned int days_till_e
 #	endif /* MOPL_USE_OPENSSL */
 }
 
-mp_state_enum np_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
+mp_state_enum mopl_net_ssl_check_cert(int days_till_exp_warn, int days_till_exp_crit) {
 #	ifdef MOPL_USE_OPENSSL
 	X509 *certificate = NULL;
 	certificate = SSL_get_peer_certificate(SSL_context);

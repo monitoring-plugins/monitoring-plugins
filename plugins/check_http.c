@@ -1059,7 +1059,7 @@ int check_http(void) {
 		microsec_ssl = deltime(tv_temp);
 		elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
 		if (check_cert) {
-			result = np_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
+			result = mopl_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
 			if (!continue_after_check_cert) {
 				if (sd) {
 					close(sd);

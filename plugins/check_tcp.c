@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
 
 			if (config.check_cert) {
 				result =
-					np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
+					mopl_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
 
 				mp_subcheck tls_certificate_lifetime_result = mp_subcheck_init();
 				tls_certificate_lifetime_result =
