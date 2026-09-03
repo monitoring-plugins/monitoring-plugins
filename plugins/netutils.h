@@ -76,7 +76,7 @@ extern mp_state_enum econn_refuse_state;
 extern bool was_refused;
 extern int address_family;
 
-void socket_timeout_alarm_handler(int) __attribute__((noreturn));
+void mopl_net_socket_timeout_alarm_handler(int) __attribute__((noreturn));
 
 /* SSL-Related functionality */
 #ifdef HAVE_SSL

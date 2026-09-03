@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* initialize alarm signal handling, set socket timeout, start timer */
-	(void)signal(SIGALRM, socket_timeout_alarm_handler);
+	(void)signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	(void)alarm(socket_timeout);
 	gettimeofday(&tv, NULL);
 

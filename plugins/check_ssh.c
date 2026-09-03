@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 	mp_set_ok_summary(&overall, "SSH check was successful");
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	alarm(socket_timeout);
 
 	/* ssh_connect exits if error is found */

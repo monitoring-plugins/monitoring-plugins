@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 	(void)signal(SIGPIPE, SIG_IGN);
 
 	/* initialize alarm signal handling */
-	(void)signal(SIGALRM, socket_timeout_alarm_handler);
+	(void)signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	(void)alarm(socket_timeout);

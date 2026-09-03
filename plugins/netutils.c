@@ -47,7 +47,7 @@ bool was_refused = false;
 int address_family = AF_UNSPEC;
 
 /* handles socket timeouts */
-void socket_timeout_alarm_handler(int sig) {
+void mopl_net_socket_timeout_alarm_handler(int sig) {
 	mp_subcheck timeout_sc = mp_subcheck_init();
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 

@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
 	mp_set_ok_summary(&overall, "Connection succeeded");
 
 	/* set up the timer */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	alarm(socket_timeout);
 
 	/* try to connect to the host at the given port number */

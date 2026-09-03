@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	const check_time_config config = tmp_config.config;
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
