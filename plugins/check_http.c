@@ -60,7 +60,7 @@ enum {
 #ifdef HAVE_SSL
 static bool check_cert = false;
 static bool continue_after_check_cert = false;
-static int ssl_version = MOPL_NET_TLS_DEFAULT_VERSION;
+static mopl_tls_version ssl_version = MOPL_NET_TLS_DEFAULT_VERSION;
 static int days_till_exp_warn, days_till_exp_crit;
 #	define my_recv(buf, len) ((use_ssl) ? mopl_net_ssl_read(buf, len) : read(sd, buf, len))
 #	define my_send(buf, len) ((use_ssl) ? mopl_net_ssl_write(buf, len) : send(sd, buf, len, 0))
