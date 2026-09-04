@@ -310,14 +310,14 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.query_address = optarg;
 			break;
 		case 'w': /* warning */
-			if (is_nonnegative(optarg)) {
+			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.warning_interval = strtod(optarg, NULL);
 			} else {
 				usage_va(_("Warning interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'c': /* critical */
-			if (is_nonnegative(optarg)) {
+			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.critical_interval = strtod(optarg, NULL);
 			} else {
 				usage_va(_("Critical interval must be a positive integer - %s"), optarg);

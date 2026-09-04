@@ -104,7 +104,7 @@ bool mopl_utils_is_negative(char *number) {
 	}
 }
 
-bool is_nonnegative(char *number) {
+bool mopl_utils_is_nonnegative(char *number) {
 	if (mopl_utils_is_numeric(number) && atof(number) >= 0.0) {
 		return true;
 	} else {
