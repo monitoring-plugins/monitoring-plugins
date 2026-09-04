@@ -122,12 +122,12 @@ int main(int argc, char *argv[]) {
 			if (verbose) {
 				ldap_perror(ldap_connection, "ldap_open");
 			}
-		xasprintf(&sc_ldap_init.output, "Could not connect to the server at port %i"), config.ld_port);
+		mopl_utils_xasprintf(&sc_ldap_init.output, "Could not connect to the server at port %i"), config.ld_port);
 		sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_ldap_init);
 		mp_exit(overall);
 		} else {
-			xasprintf(&sc_ldap_init.output, "connected to the server at port %i", config.ld_port);
+			mopl_utils_xasprintf(&sc_ldap_init.output, "connected to the server at port %i", config.ld_port);
 			sc_ldap_init = mp_set_subcheck_state(sc_ldap_init, STATE_OK);
 			mp_add_subcheck_to_check(&overall, sc_ldap_init);
 		}

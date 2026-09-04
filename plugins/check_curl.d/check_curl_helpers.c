@@ -1319,7 +1319,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 		 */
 		return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
 #	else  /* MOPL_USE_OPENSSL */
-		xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
+		mopl_utils_xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
 								  "callback used and not linked against OpenSSL\n");
 		mp_set_subcheck_state(result, STATE_CRITICAL);
 #	endif /* MOPL_USE_OPENSSL */

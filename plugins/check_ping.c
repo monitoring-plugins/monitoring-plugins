@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
 #	ifdef PING_HAS_TIMEOUT
 		mopl_utils_xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
 #	else
-		xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
+		mopl_utils_xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
 #	endif
 #else
-		xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
+		mopl_utils_xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
 #endif
 
 		if (verbose >= 2) {

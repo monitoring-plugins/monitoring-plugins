@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
 			// TODO why stat here? remove unstatable fs?
 			if (!stat_path(path, config.ignore_missing)) {
 				// if (config.ignore_missing) {
-				// xasprintf(&ignored, "%s %s;", ignored, path->name);
+				// mopl_utils_xasprintf(&ignored, "%s %s;", ignored, path->name);
 				// }
 				// not accessible, remove from list
 				path = mp_int_fs_list_del(&config.path_select_list, path);

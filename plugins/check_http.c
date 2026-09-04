@@ -334,7 +334,6 @@ bool process_arguments(int argc, char **argv) {
 					realloc(http_opt_headers, sizeof(char *) * (++http_opt_headers_count));
 			}
 			http_opt_headers[http_opt_headers_count - 1] = optarg;
-			/* xasprintf (&http_opt_headers, "%s", optarg); */
 			break;
 		case 'L': /* show html link */
 			display_html = true;

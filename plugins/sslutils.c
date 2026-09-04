@@ -482,7 +482,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	X509_free(certificate);
 	return sc_cert;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
+	mopl_utils_xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
 	sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 	return sc_cert;
 #	endif /* MOPL_USE_OPENSSL */
