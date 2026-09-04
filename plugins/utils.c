@@ -209,7 +209,7 @@ bool mopl_utils_is_intpercent(char *number) {
 	}
 }
 
-bool is_option(char *str) {
+bool mopl_utils_is_option(char *str) {
 	if (!str) {
 		return false;
 	} else if (strspn(str, "-") == 1 || strspn(str, "-") == 2) {

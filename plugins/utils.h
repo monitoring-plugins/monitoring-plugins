@@ -44,7 +44,7 @@ bool mopl_utils_is_negative(char *);
 bool mopl_utils_is_nonnegative(char *);
 bool mopl_utils_is_percentage_expression(const char[]);
 
-bool is_option(char *);
+bool mopl_utils_is_option(char *);
 
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL

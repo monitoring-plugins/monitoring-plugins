@@ -550,7 +550,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		}
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		config.server_address = argv[1];
 		argv[1] = argv[0];
 		argv = &argv[1];

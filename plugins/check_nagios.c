@@ -218,7 +218,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 		return result;
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		result.config.status_log = argv[1];
 		if (mopl_utils_is_intnonneg(argv[2])) {
 			result.config.expire_minutes = atoi(argv[2]);
