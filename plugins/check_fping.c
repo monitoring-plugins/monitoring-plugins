@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 	const check_fping_config config = tmp_config.config;
 
 	char *server = NULL;
-	server = strscpy(server, config.server_name);
+	server = mopl_utils_strscpy(server, config.server_name);
 
 	char *option_string = "";
 	char *fping_prog = NULL;

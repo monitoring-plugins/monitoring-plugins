@@ -63,7 +63,7 @@ long mopl_utils_deltime(struct timeval tv);
 /* Handle strings safely */
 
 void mopl_utils_strip(char *);
-char *strscpy(char *, const char *);
+char *mopl_utils_strscpy(char *, const char *);
 char *strnl(char *);
 char *strpcpy(char *, const char *, const char *);
 char *strpcat(char *, const char *, const char *);

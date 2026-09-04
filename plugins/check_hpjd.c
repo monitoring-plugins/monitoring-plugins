@@ -306,13 +306,13 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 		switch (option_index) {
 		case 'H': /* hostname */
 			if (mopl_net_is_host(optarg)) {
-				result.config.address = strscpy(result.config.address, optarg);
+				result.config.address = mopl_utils_strscpy(result.config.address, optarg);
 			} else {
 				usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'C': /* community */
-			result.config.community = strscpy(result.config.community, optarg);
+			result.config.community = mopl_utils_strscpy(result.config.community, optarg);
 			break;
 		case 'p':
 			if (!mopl_utils_is_intpos(optarg)) {

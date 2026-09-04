@@ -259,7 +259,7 @@ void mopl_utils_strip(char *buffer) {
  *
  *****************************************************************************/
 
-char *strscpy(char *dest, const char *src) {
+char *mopl_utils_strscpy(char *dest, const char *src) {
 	if (src == NULL) {
 		return NULL;
 	}
