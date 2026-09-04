@@ -96,14 +96,6 @@ bool mopl_utils_is_numeric(char *number) {
 	}
 }
 
-bool is_positive(char *number) {
-	if (mopl_utils_is_numeric(number) && atof(number) > 0.0) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 bool is_negative(char *number) {
 	if (mopl_utils_is_numeric(number) && atof(number) < 0.0) {
 		return true;
