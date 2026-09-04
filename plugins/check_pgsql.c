@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 
 	check_pgsql_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_pgsql_config config = tmp_config.config;
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 	alarm(timeout_interval);
 
@@ -220,21 +220,21 @@ int main(int argc, char **argv) {
 
 	if (PQstatus(conn) == CONNECTION_BAD) {
 		sc_connection = mp_set_subcheck_state(sc_connection, STATE_CRITICAL);
-		xasprintf(&sc_connection.output, "no connection to '%s' (%s)", config.dbName,
+		mopl_utils_xasprintf(&sc_connection.output, "no connection to '%s' (%s)", config.dbName,
 				  PQerrorMessage(conn));
 		PQfinish(conn);
 		mp_add_subcheck_to_check(&overall, sc_connection);
 		mp_exit(overall);
 	} else {
 		sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
-		xasprintf(&sc_connection.output, "connected to '%s'", config.dbName);
+		mopl_utils_xasprintf(&sc_connection.output, "connected to '%s'", config.dbName);
 		mp_add_subcheck_to_check(&overall, sc_connection);
 	}
 
 	mp_subcheck sc_connection_time = mp_subcheck_init();
 	sc_connection_time = mp_set_subcheck_default_state(sc_connection_time, STATE_UNKNOWN);
 
-	xasprintf(&sc_connection_time.output, "connection time: %.10g", elapsed_time);
+	mopl_utils_xasprintf(&sc_connection_time.output, "connection time: %.10g", elapsed_time);
 
 	mp_perfdata pd_connection_time = perfdata_init();
 	pd_connection_time.label = "time";
@@ -263,9 +263,9 @@ int main(int argc, char **argv) {
 		mp_subcheck sc_query = mp_subcheck_init();
 		sc_query = mp_set_subcheck_default_state(sc_query, STATE_UNKNOWN);
 		if (config.pgqueryname) {
-			xasprintf(&sc_query.output, "query '%s'", config.pgqueryname);
+			mopl_utils_xasprintf(&sc_query.output, "query '%s'", config.pgqueryname);
 		} else {
-			xasprintf(&sc_query.output, "query '%s'", config.pgquery);
+			mopl_utils_xasprintf(&sc_query.output, "query '%s'", config.pgquery);
 		}
 
 		do_query_wrapper query_result = do_query(conn, config.pgquery);
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
 		case QUERY_OK: {
 			// Query was successful and there is a numerical result
 			sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
-			xasprintf(&sc_query.output, "%s succeeded", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s succeeded", sc_query.output);
 
 			mp_perfdata pd_query = perfdata_init();
 			pd_query = mp_set_pd_value(pd_query, query_result.numerical_result);
@@ -288,35 +288,35 @@ int main(int argc, char **argv) {
 			mp_add_perfdata_to_subcheck(&sc_query_compare, pd_query);
 
 			if (query_compare_state == STATE_OK) {
-				xasprintf(&sc_query_compare.output, "query result '%f' is within thresholds",
+				mopl_utils_xasprintf(&sc_query_compare.output, "query result '%f' is within thresholds",
 						  query_result.numerical_result);
 			} else {
-				xasprintf(&sc_query_compare.output, "query result '%f' is violating thresholds",
+				mopl_utils_xasprintf(&sc_query_compare.output, "query result '%f' is violating thresholds",
 						  query_result.numerical_result);
 			}
 			mp_add_subcheck_to_check(&overall, sc_query_compare);
 
 		} break;
 		case ERROR_WITH_QUERY:
-			xasprintf(&sc_query.output, "%s - Error with query: %s", sc_query.output,
+			mopl_utils_xasprintf(&sc_query.output, "%s - Error with query: %s", sc_query.output,
 					  PQerrorMessage(conn));
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 			break;
 		case NO_ROWS_RETURNED:
-			xasprintf(&sc_query.output, "%s - no rows were returned by the query", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - no rows were returned by the query", sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case NO_COLUMNS_RETURNED:
-			xasprintf(&sc_query.output, "%s - no columns were returned by the query",
+			mopl_utils_xasprintf(&sc_query.output, "%s - no columns were returned by the query",
 					  sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case NO_DATA_RETURNED:
-			xasprintf(&sc_query.output, "%s - no data was returned by the query", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - no data was returned by the query", sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case RESULT_IS_NOT_NUMERIC:
-			xasprintf(&sc_query.output, "%s - result of the query is not numeric", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - result of the query is not numeric", sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 			break;
 		};
@@ -387,16 +387,16 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
 			}
@@ -437,27 +437,27 @@ static check_pgsql_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'H': /* host */
 			if ((*optarg != '/') && (!mopl_net_is_host(optarg))) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			} else {
 				result.config.pghost = optarg;
 			}
 			break;
 		case 'P': /* port */
-			if (!is_integer(optarg)) {
-				usage2(_("Port must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Port must be a positive integer"), optarg);
 			} else {
 				result.config.pgport = optarg;
 			}
 			break;
 		case 'd': /* database name */
 			if (strlen(optarg) >= NAMEDATALEN) {
-				usage2(_("Database name exceeds the maximum length"), optarg);
+				mopl_utils_usage2(_("Database name exceeds the maximum length"), optarg);
 			}
 			snprintf(result.config.dbName, NAMEDATALEN, "%s", optarg);
 			break;
 		case 'l': /* login name */
 			if (!is_pg_logname(optarg)) {
-				usage2(_("User name is not valid"), optarg);
+				mopl_utils_usage2(_("User name is not valid"), optarg);
 			} else {
 				result.config.pguser = optarg;
 			}
@@ -530,9 +530,9 @@ static bool is_pg_logname(char *username) {
 void print_help(void) {
 	char *myport;
 
-	xasprintf(&myport, "%d", 5432);
+	mopl_utils_xasprintf(&myport, "%d", 5432);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 

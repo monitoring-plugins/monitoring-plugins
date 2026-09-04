@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 	check_game_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	check_game_config config = tmp.config;
@@ -77,11 +77,11 @@ int main(int argc, char **argv) {
 
 	/* create the command line to execute */
 	char *command_line = NULL;
-	xasprintf(&command_line, "%s -raw %s -%s %s", PATH_TO_QSTAT, QSTAT_DATA_DELIMITER,
+	mopl_utils_xasprintf(&command_line, "%s -raw %s -%s %s", PATH_TO_QSTAT, QSTAT_DATA_DELIMITER,
 			  config.game_type, config.server_ip);
 
 	if (config.port) {
-		xasprintf(&command_line, "%s:%-d", command_line, config.port);
+		mopl_utils_xasprintf(&command_line, "%s:%-d", command_line, config.port);
 	}
 
 	if (verbose) {
@@ -195,7 +195,7 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* version */
 			verbose = true;
@@ -262,7 +262,7 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		default: /* args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -281,7 +281,7 @@ check_game_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ian Cass, Knowledge Matters Limited\n");
 	printf(COPYRIGHT, copyright, email);
