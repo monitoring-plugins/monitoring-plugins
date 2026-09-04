@@ -330,7 +330,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wrta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<wrta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -342,7 +342,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.crta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<crta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
