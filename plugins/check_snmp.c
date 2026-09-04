@@ -679,14 +679,14 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'e':
 		case 'E':
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Retries interval must be a positive integer"), optarg);
 			} else {
 				config.snmp_params.snmp_session.retries = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = (unsigned int)atoi(optarg);
@@ -716,7 +716,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'z': /* Null OID Return Check */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
 				// TODO: do real parsing here
@@ -724,7 +724,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case missing_oid: // What to do when an OID is missing in response
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
 				// TODO: do real parsing here
@@ -852,7 +852,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			config.evaluation_params.calculate_rate = true;
 			break;
 		case rate_multiplier:
-			if (!is_integer(optarg) ||
+			if (!mopl_utils_is_integer(optarg) ||
 				((config.evaluation_params.rate_multiplier = (unsigned int)atoi(optarg)) <= 0)) {
 				usage2(_("Rate multiplier must be a positive integer"), optarg);
 			}

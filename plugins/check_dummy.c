@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 	} else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		print_help();
 		exit(STATE_UNKNOWN);
-	} else if (!is_integer(argv[1])) {
+	} else if (!mopl_utils_is_integer(argv[1])) {
 		usage4(_("Arguments to check_dummy must be an integer"));
 	} else {
 		result = atoi(argv[1]);

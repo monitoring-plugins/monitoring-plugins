@@ -323,7 +323,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage_va(_("Timeout interval must be a positive integer"));
 			} else {
 				timeout_interval = atoi(optarg);
@@ -336,7 +336,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.hostname = optarg;
 			break;
 		case 'p': /* port number */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage_va(_("Port must be a positive integer"));
 			}
 			result.config.cmd = comm_append(result.config.cmd, "-p");
@@ -408,7 +408,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 				if (verbose) {
 					printf("Setting the skip_stdout flag\n");
 				}
-			} else if (!is_integer(optarg)) {
+			} else if (!mopl_utils_is_integer(optarg)) {
 				usage_va(_("skip-stdout argument must be an integer"));
 			} else {
 				result.config.stdout_lines_to_ignore = atoi(optarg);
@@ -420,7 +420,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 				if (verbose) {
 					printf("Setting the skip_stderr flag\n");
 				}
-			} else if (!is_integer(optarg)) {
+			} else if (!mopl_utils_is_integer(optarg)) {
 				usage_va(_("skip-stderr argument must be an integer"));
 			} else {
 				result.config.sterr_lines_to_ignore = atoi(optarg);

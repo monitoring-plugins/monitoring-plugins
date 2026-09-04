@@ -156,7 +156,7 @@ bool is_percentage_expression(const char str[]) {
 	return result;
 }
 
-bool is_integer(char *number) {
+bool mopl_utils_is_integer(char *number) {
 	long int n;
 
 	if (!number || (strspn(number, "-0123456789 ") != strlen(number))) {
@@ -173,7 +173,7 @@ bool is_integer(char *number) {
 }
 
 bool is_intpos(char *number) {
-	if (is_integer(number) && atoi(number) > 0) {
+	if (mopl_utils_is_integer(number) && atoi(number) > 0) {
 		return true;
 	} else {
 		return false;
@@ -181,7 +181,7 @@ bool is_intpos(char *number) {
 }
 
 bool is_intneg(char *number) {
-	if (is_integer(number) && atoi(number) < 0) {
+	if (mopl_utils_is_integer(number) && atoi(number) < 0) {
 		return true;
 	} else {
 		return false;
@@ -189,7 +189,7 @@ bool is_intneg(char *number) {
 }
 
 bool is_intnonneg(char *number) {
-	if (is_integer(number) && atoi(number) >= 0) {
+	if (mopl_utils_is_integer(number) && atoi(number) >= 0) {
 		return true;
 	} else {
 		return false;
@@ -255,7 +255,7 @@ bool is_uint64(char *number, uint64_t *target) {
 
 bool is_intpercent(char *number) {
 	int i;
-	if (is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
+	if (mopl_utils_is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
 		return true;
 	} else {
 		return false;

@@ -153,7 +153,7 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);

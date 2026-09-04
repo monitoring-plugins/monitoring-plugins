@@ -446,7 +446,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
+			if (!mopl_utils_is_integer(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
@@ -482,7 +482,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'u': /* user or user id */ {
 			struct passwd *pw;
-			if (is_integer(optarg)) {
+			if (mopl_utils_is_integer(optarg)) {
 				result.config.uid = atoi(optarg);
 				pw = getpwuid(result.config.uid);
 				/*  check to be sure user exists */

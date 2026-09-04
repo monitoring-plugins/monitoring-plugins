@@ -457,7 +457,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case 't': /* timeout period */
-			if (is_integer(optarg)) {
+			if (mopl_utils_is_integer(optarg)) {
 				timeout_interval = atoi(optarg);
 				break;
 			} else {
