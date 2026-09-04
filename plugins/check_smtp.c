@@ -584,7 +584,7 @@ int main(int argc, char **argv) {
 	/* reset the alarm */
 	alarm(0);
 
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	mp_perfdata pd_elapsed_time = perfdata_init();

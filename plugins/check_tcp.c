@@ -436,7 +436,7 @@ int main(int argc, char **argv) {
 	mopl_net_tls_cleanup();
 #endif
 
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	mp_subcheck elapsed_time_result = mp_subcheck_init();

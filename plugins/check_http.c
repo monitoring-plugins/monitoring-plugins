@@ -994,7 +994,7 @@ int check_http(void) {
 	if (mopl_net_tcp_connect(server_address, server_port, &sd) != STATE_OK) {
 		die(STATE_CRITICAL, _("HTTP CRITICAL - Unable to open TCP socket\n"));
 	}
-	microsec_connect = deltime(tv_temp);
+	microsec_connect = mopl_utils_deltime(tv_temp);
 
 	/* if we are called with the -I option, the -j method is CONNECT and */
 	/* we received -S for SSL, then we tunnel the request through a proxy*/
@@ -1056,7 +1056,7 @@ int check_http(void) {
 		if (result != STATE_OK) {
 			die(STATE_CRITICAL, _("HTTP CRITICAL - SSL error\n"));
 		}
-		microsec_ssl = deltime(tv_temp);
+		microsec_ssl = mopl_utils_deltime(tv_temp);
 		elapsed_time_ssl = (double)microsec_ssl / 1.0e6;
 		if (check_cert) {
 			result = mopl_net_ssl_check_cert(days_till_exp_warn, days_till_exp_crit);
@@ -1158,7 +1158,7 @@ int check_http(void) {
 	}
 	gettimeofday(&tv_temp, NULL);
 	my_send(buf, strlen(buf));
-	microsec_headers = deltime(tv_temp);
+	microsec_headers = mopl_utils_deltime(tv_temp);
 	elapsed_time_headers = (double)microsec_headers / 1.0e6;
 
 	/* fetch the page */
@@ -1166,7 +1166,7 @@ int check_http(void) {
 	gettimeofday(&tv_temp, NULL);
 	while ((i = my_recv(buffer, MAX_INPUT_BUFFER - 1)) > 0) {
 		if ((i >= 1) && (elapsed_time_firstbyte <= 0.000001)) {
-			microsec_firstbyte = deltime(tv_temp);
+			microsec_firstbyte = mopl_utils_deltime(tv_temp);
 			elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
 		}
 		while ((pos = memchr(buffer, '\0', i))) {
@@ -1190,7 +1190,7 @@ int check_http(void) {
 			break;
 		}
 	}
-	microsec_transfer = deltime(tv_temp);
+	microsec_transfer = mopl_utils_deltime(tv_temp);
 	elapsed_time_transfer = (double)microsec_transfer / 1.0e6;
 
 	if (i < 0 && errno != ECONNRESET) {
@@ -1211,7 +1211,7 @@ int check_http(void) {
 #endif
 
 	/* Save check time */
-	microsec = deltime(tv);
+	microsec = mopl_utils_deltime(tv);
 	elapsed_time = (double)microsec / 1.0e6;
 
 	/* leave full_page untouched so we can free it later */

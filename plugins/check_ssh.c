@@ -394,7 +394,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 		return OK;
 	}
 
-	double elapsed_time = (double)deltime(tv) / 1.0e6;
+	double elapsed_time = (double)mopl_utils_deltime(tv) / 1.0e6;
 	mp_perfdata time_pd = perfdata_init();
 	time_pd.value = mp_create_pd_value(elapsed_time);
 	time_pd.label = "time";

@@ -58,7 +58,7 @@ struct timeval {
 int gettimeofday(struct timeval *, struct timezone *);
 #endif
 
-long deltime(struct timeval tv);
+long mopl_utils_deltime(struct timeval tv);
 
 /* Handle strings safely */
 

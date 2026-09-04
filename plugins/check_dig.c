@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	if (config.critical_interval > UNDEFINED && elapsed_time > config.critical_interval) {

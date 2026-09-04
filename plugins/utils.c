@@ -226,7 +226,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 #endif
 
-long deltime(struct timeval tv) {
+long mopl_utils_deltime(struct timeval tv) {
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	return (now.tv_sec - tv.tv_sec) * 1000000 + now.tv_usec - tv.tv_usec;

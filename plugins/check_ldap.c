@@ -273,7 +273,7 @@ int main(int argc, char *argv[]) {
 	alarm(0);
 
 	/* calculate the elapsed time and compare to thresholds */
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 	mp_perfdata pd_connection_time = perfdata_init();
 	pd_connection_time.label = "time";

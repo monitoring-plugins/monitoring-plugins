@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
 				  config.query_address);
 	}
 
-	long microsec = deltime(tv);
+	long microsec = mopl_utils_deltime(tv);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	if (result == STATE_OK) {
