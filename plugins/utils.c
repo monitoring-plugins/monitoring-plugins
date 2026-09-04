@@ -226,14 +226,6 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 #endif
 
-double delta_time(struct timeval tv) {
-	struct timeval now;
-
-	gettimeofday(&now, NULL);
-	return ((double)(now.tv_sec - tv.tv_sec) +
-			(double)(now.tv_usec - tv.tv_usec) / (double)1000000);
-}
-
 long deltime(struct timeval tv) {
 	struct timeval now;
 	gettimeofday(&now, NULL);
