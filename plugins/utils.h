@@ -84,10 +84,6 @@ char *perfdata(const char *, long int, const char *, bool, long int, bool, long 
 char *fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
 				double);
 
-char *sperfdata(const char *, double, const char *, char *, char *, bool, double, bool, double);
-
-char *sperfdata_int(const char *, int, const char *, char *, char *, bool, int, bool, int);
-
 /* The idea here is that, although not every plugin will use all of these,
    most will or should.  Therefore, for consistency, these very common
    options should have only these meanings throughout the overall suite */
