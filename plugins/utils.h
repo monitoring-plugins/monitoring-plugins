@@ -78,10 +78,10 @@ void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn)) __attri
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-char *perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
+char *mopl_utils_perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
 			   bool, long int);
 
-char *fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
+char *mopl_utils_fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
 				double);
 
 /* The idea here is that, although not every plugin will use all of these,

@@ -368,7 +368,7 @@ int mopl_utils_xasprintf(char **strp, const char *fmt, ...) {
  *
  ******************************************************************************/
 
-char *perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn,
+char *mopl_utils_perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn,
 			   bool critp, long int crit, bool minp, long int minv, bool maxp, long int maxv) {
 	char *data = NULL;
 
@@ -403,7 +403,7 @@ char *perfdata(const char *label, long int val, const char *uom, bool warnp, lon
 	return data;
 }
 
-char *fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp,
+char *mopl_utils_fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp,
 				double crit, bool minp, double minv, bool maxp, double maxv) {
 	char *data = NULL;
 

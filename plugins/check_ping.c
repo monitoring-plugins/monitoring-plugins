@@ -162,14 +162,14 @@ int main(int argc, char **argv) {
 		/* Print performance data */
 		if (pinged.packet_loss != 100) {
 			printf("|%s",
-				   fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
+				   mopl_utils_fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
 							 config.wrta, (bool)(config.crta > 0), config.crta, true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", config.wrta, config.crta);
 		}
 
 		printf(" %s\n",
-			   perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
+			   mopl_utils_perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
 						(bool)(config.cpl > 0), config.cpl, true, 0, false, 0));
 
 		if (verbose >= 2) {

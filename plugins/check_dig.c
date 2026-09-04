@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
-		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
+		   mopl_utils_fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
 					 config.warning_interval, (config.critical_interval > UNDEFINED),
 					 config.critical_interval, true, 0, false, 0));
 	exit(result);

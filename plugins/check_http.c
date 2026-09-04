@@ -1727,38 +1727,38 @@ int server_port_check(int ssl_flag) {
 }
 
 char *perfd_time(double elapsed_time) {
-	return fperfdata("time", elapsed_time, "s", thlds->warning,
+	return mopl_utils_fperfdata("time", elapsed_time, "s", thlds->warning,
 					 thlds->warning ? thlds->warning->end : 0, thlds->critical,
 					 thlds->critical ? thlds->critical->end : 0, true, 0, true, socket_timeout);
 }
 
 char *perfd_time_connect(double elapsed_time_connect) {
-	return fperfdata("time_connect", elapsed_time_connect, "s", false, 0, false, 0, false, 0, true,
+	return mopl_utils_fperfdata("time_connect", elapsed_time_connect, "s", false, 0, false, 0, false, 0, true,
 					 socket_timeout);
 }
 
 char *perfd_time_ssl(double elapsed_time_ssl) {
-	return fperfdata("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0, true,
+	return mopl_utils_fperfdata("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0, true,
 					 socket_timeout);
 }
 
 char *perfd_time_headers(double elapsed_time_headers) {
-	return fperfdata("time_headers", elapsed_time_headers, "s", false, 0, false, 0, false, 0, true,
+	return mopl_utils_fperfdata("time_headers", elapsed_time_headers, "s", false, 0, false, 0, false, 0, true,
 					 socket_timeout);
 }
 
 char *perfd_time_firstbyte(double elapsed_time_firstbyte) {
-	return fperfdata("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0, false, 0,
+	return mopl_utils_fperfdata("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0, false, 0,
 					 true, socket_timeout);
 }
 
 char *perfd_time_transfer(double elapsed_time_transfer) {
-	return fperfdata("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0, false, 0,
+	return mopl_utils_fperfdata("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0, false, 0,
 					 true, socket_timeout);
 }
 
 char *perfd_size(int page_len) {
-	return perfdata("size", page_len, "B", (min_page_len > 0), min_page_len, (min_page_len > 0), 0,
+	return mopl_utils_perfdata("size", page_len, "B", (min_page_len > 0), min_page_len, (min_page_len > 0), 0,
 					true, 0, false, 0);
 }
 

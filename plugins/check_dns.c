@@ -325,20 +325,20 @@ int main(int argc, char **argv) {
 		if ((config.time_thresholds->warning != NULL) &&
 			(config.time_thresholds->critical != NULL)) {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
 							 true, config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning == NULL) &&
 				   (config.time_thresholds->critical != NULL)) {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, true,
+			printf("|%s\n", mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, true,
 									  config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning != NULL) &&
 				   (config.time_thresholds->critical == NULL)) {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
 							 false, 0, true, 0, false, 0));
 		} else {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
+				   mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
 		}
 	} else if (result == STATE_WARNING) {
 		printf(_("DNS WARNING - %s\n"),

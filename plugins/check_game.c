@@ -134,9 +134,9 @@ int main(int argc, char **argv) {
 		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players],
 			   ret[config.qstat_game_players_max], ret[config.qstat_game_field],
 			   ret[config.qstat_map_field], ret[config.qstat_ping_field],
-			   perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0,
+			   mopl_utils_perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0,
 						true, 0, true, atol(ret[config.qstat_game_players_max])),
-			   fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0,
+			   mopl_utils_fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0,
 						 true, 0, false, 0));
 	}
 
