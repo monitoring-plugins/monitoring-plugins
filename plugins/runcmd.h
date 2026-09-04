@@ -25,13 +25,12 @@
 #include "utils_cmd.h" /* for the "output" type */
 
 /** prototypes **/
-int mopl_utils_runcmd(const char *, output *, output *, int);
+int mopl_utils_runcmd(const char *cmd, output *out, output *err, int flags);
 void runcmd_timeout_alarm_handler(int) __attribute__((__noreturn__));
 
 /* only multi-threaded plugins need to bother with this */
 void mopl_utils_runcmd_init(void);
-#define NP_RUNCMD_INIT mopl_utils_runcmd_init()
 
 /* possible flags for np_runcmd()'s fourth argument */
-#define RUNCMD_NO_ARRAYS 0x01 /* don't populate arrays at all */
-#define RUNCMD_NO_ASSOC  0x02 /* output.line won't point to buf */
+#define MOPL_RUNCMD_NO_ARRAYS 0x01 /* don't populate arrays at all */
+#define MOPL_RUNCMD_NO_ASSOC  0x02 /* output.line won't point to buf */

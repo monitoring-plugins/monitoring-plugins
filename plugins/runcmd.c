@@ -16,7 +16,7 @@
  * from "Advanced Programming for the Unix Environment" by W. Richard Stevens.
  *
  * Care has been taken to make sure the functions are async-safe. The one
- * function which isn't is np_runcmd_init() which it doesn't make sense to
+ * function which isn't is mopl_runcmd_init() which it doesn't make sense to
  * call twice anyway, so the api as a whole should be considered async-safe.
  *
  *
@@ -69,12 +69,12 @@
 
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
- * Multithreading apps and plugins can initialize it (via NP_RUNCMD_INIT)
+ * Multithreading apps and plugins can initialize it (via MOPL_RUNCMD_INIT)
  * in an async safe manner PRIOR to calling mopl_utils_runcmd() for the first time.
  *
  * The check for initialized values is atomic and can
  * occur in any number of threads simultaneously. */
-static pid_t *np_pids = NULL;
+static pid_t *mopl_pids = NULL;
 
 /** prototypes **/
 static int mopl_utils_runcmd_open(const char *, int *, int *) __attribute__((__nonnull__(1, 2, 3)));
@@ -91,8 +91,8 @@ extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(
  * through this api and thus achieve async-safeness throughout the api */
 void mopl_utils_runcmd_init(void) {
 	long maxfd = mp_open_max();
-	if (!np_pids) {
-		np_pids = calloc(maxfd, sizeof(pid_t));
+	if (!mopl_pids) {
+		mopl_pids = calloc(maxfd, sizeof(pid_t));
 	}
 }
 
@@ -111,8 +111,8 @@ static int mopl_utils_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) 
 
 	int i = 0;
 
-	if (!np_pids) {
-		NP_RUNCMD_INIT;
+	if (!mopl_pids) {
+		mopl_utils_runcmd_init();
 	}
 
 	env[0] = strdup("LC_ALL=C");
@@ -198,12 +198,12 @@ static int mopl_utils_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) 
 			close(pfderr[1]);
 		}
 
-		/* close all descriptors in np_pids[]
+		/* close all descriptors in mopl_pids[]
 		 * This is executed in a separate address space (pure child),
 		 * so we don't have to worry about async safety */
 		long maxfd = mp_open_max();
 		for (i = 0; i < maxfd; i++) {
-			if (np_pids[i] > 0) {
+			if (mopl_pids[i] > 0) {
 				close(i);
 			}
 		}
@@ -218,7 +218,7 @@ static int mopl_utils_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) 
 	close(pfderr[1]);
 
 	/* tag our file's entry in the pid-list and return it */
-	np_pids[pfd[0]] = pid;
+	mopl_pids[pfd[0]] = pid;
 
 	return pfd[0];
 }
@@ -229,11 +229,11 @@ static int mopl_utils_runcmd_close(int fd) {
 
 	/* make sure this fd was opened by popen() */
 	long maxfd = mp_open_max();
-	if (fd < 0 || fd > maxfd || !np_pids || (pid = np_pids[fd]) == 0) {
+	if (fd < 0 || fd > maxfd || !mopl_pids || (pid = mopl_pids[fd]) == 0) {
 		return -1;
 	}
 
-	np_pids[fd] = 0;
+	mopl_pids[fd] = 0;
 	if (close(fd) == -1) {
 		return -1;
 	}
@@ -256,10 +256,10 @@ void runcmd_timeout_alarm_handler(int signo) {
 	}
 
 	long maxfd = mp_open_max();
-	if (np_pids) {
+	if (mopl_pids) {
 		for (long int i = 0; i < maxfd; i++) {
-			if (np_pids[i] != 0) {
-				kill(np_pids[i], SIGKILL);
+			if (mopl_pids[i] != 0) {
+				kill(mopl_pids[i], SIGKILL);
 			}
 		}
 	}
@@ -291,12 +291,12 @@ static int mopl_utils_fetch_output(int fd, output *op, int flags) {
 
 	/* some plugins may want to keep output unbroken, and some commands
 	 * will yield no output, so return here for those */
-	if (flags & RUNCMD_NO_ARRAYS || !op->buf || !op->buflen) {
+	if (flags & MOPL_RUNCMD_NO_ARRAYS || !op->buf || !op->buflen) {
 		return op->buflen;
 	}
 
 	/* and some may want both */
-	if (flags & RUNCMD_NO_ASSOC) {
+	if (flags & MOPL_RUNCMD_NO_ASSOC) {
 		buf = malloc(op->buflen);
 		memcpy(buf, op->buf, op->buflen);
 	} else {
