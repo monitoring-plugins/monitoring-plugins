@@ -112,15 +112,6 @@ bool mopl_utils_is_nonnegative(char *number) {
 	}
 }
 
-bool is_percentage(char *number) {
-	int x;
-	if (mopl_utils_is_numeric(number) && (x = atof(number)) >= 0 && x <= 100) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 bool is_percentage_expression(const char str[]) {
 	if (!str) {
 		return false;
