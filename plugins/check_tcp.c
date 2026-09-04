@@ -603,14 +603,14 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			config.warning_time_set = true;
 			break;
 		case 't': /* timeout */
-			if (!is_intpos(optarg)) {
+			if (!mopl_utils_is_intpos(optarg)) {
 				usage4(_("Timeout interval must be a positive integer"));
 			} else {
 				socket_timeout = atoi(optarg);
 			}
 			break;
 		case 'p': /* port */
-			if (!is_intpos(optarg)) {
+			if (!mopl_utils_is_intpos(optarg)) {
 				usage4(_("Port must be a positive integer"));
 			} else {
 				config.server_port = atoi(optarg);
@@ -641,7 +641,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			config.server_expect[config.server_expect_count - 1] = optarg;
 			break;
 		case 'm':
-			if (!is_intpos(optarg)) {
+			if (!mopl_utils_is_intpos(optarg)) {
 				usage4(_("Maxbytes must be a positive integer"));
 			} else {
 				config.maxbytes = strtol(optarg, NULL, 0);
@@ -677,7 +677,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			}
 			break;
 		case 'd':
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				config.delay = atoi(optarg);
 			} else {
 				usage4(_("Delay must be a positive integer"));

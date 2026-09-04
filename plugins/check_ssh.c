@@ -165,7 +165,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_intpos(optarg)) {
+			if (!mopl_utils_is_intpos(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = (unsigned int)atoi(optarg);
@@ -190,7 +190,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			result.config.server_name = optarg;
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.port = atoi(optarg);
 			} else {
 				usage2(_("Port number must be a positive integer"), optarg);
@@ -219,7 +219,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.port == -1 && option_char < argc) {
-		if (is_intpos(argv[option_char])) {
+		if (mopl_utils_is_intpos(argv[option_char])) {
 			result.config.port = atoi(argv[option_char++]);
 		} else {
 			print_usage();

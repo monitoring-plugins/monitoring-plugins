@@ -305,7 +305,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.expire_minutes <= 0 && argc > option_char) {
-		if (is_intpos(argv[option_char])) {
+		if (mopl_utils_is_intpos(argv[option_char])) {
 			result.config.expire_minutes = atoi(argv[option_char++]);
 		} else {
 			die(STATE_UNKNOWN,

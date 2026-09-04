@@ -34,7 +34,7 @@ void print_revision(const char *, const char *);
 /* Test input types */
 
 bool mopl_utils_is_integer(char *);
-bool is_intpos(char *);
+bool mopl_utils_is_intpos(char *);
 bool is_intneg(char *);
 bool is_intnonneg(char *);
 bool is_intpercent(char *);

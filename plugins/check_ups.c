@@ -566,7 +566,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.ups_name = optarg;
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
 				usage2(_("Port must be a positive integer"), optarg);

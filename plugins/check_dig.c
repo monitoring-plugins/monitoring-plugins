@@ -300,7 +300,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.dns_server = optarg;
 			break;
 		case 'p': /* server port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
 				usage_va(_("Port must be a positive integer - %s"), optarg);

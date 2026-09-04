@@ -172,7 +172,7 @@ bool mopl_utils_is_integer(char *number) {
 	}
 }
 
-bool is_intpos(char *number) {
+bool mopl_utils_is_intpos(char *number) {
 	if (mopl_utils_is_integer(number) && atoi(number) > 0) {
 		return true;
 	} else {

@@ -683,7 +683,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				server_port_option = atoi(optarg);
 			} else {
 				usage4(_("Port must be a positive integer"));

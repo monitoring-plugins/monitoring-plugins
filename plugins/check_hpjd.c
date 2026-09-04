@@ -315,7 +315,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.community = strscpy(result.config.community, optarg);
 			break;
 		case 'p':
-			if (!is_intpos(optarg)) {
+			if (!mopl_utils_is_intpos(optarg)) {
 				usage2(_("Port must be a positive short integer"), optarg);
 			} else {
 				result.config.port = atoi(optarg);

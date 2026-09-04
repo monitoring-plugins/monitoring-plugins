@@ -428,28 +428,28 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'b': /* bytes per packet */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_size = atoi(optarg);
 			} else {
 				usage(_("Packet size must be a positive integer"));
 			}
 			break;
 		case 'n': /* number of packets */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_count = atoi(optarg);
 			} else {
 				usage(_("Packet count must be a positive integer"));
 			}
 			break;
 		case 'T': /* timeout in msec */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.target_timeout = atoi(optarg);
 			} else {
 				usage(_("Target timeout must be a positive integer"));
 			}
 			break;
 		case 'i': /* interval in msec */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_interval = atoi(optarg);
 			} else {
 				usage(_("Interval must be a positive integer"));
@@ -462,7 +462,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.dontfrag = true;
 			break;
 		case FWMARK_OPT:
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.fwmark = (unsigned int)atol(optarg);
 				result.config.fwmark_set = true;
 			} else {

@@ -411,7 +411,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.server_url = optarg;
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
 				usage4(_("Port must be a positive integer"));
