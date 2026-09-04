@@ -296,7 +296,7 @@ char *mopl_utils_strscpy(char *dest, const char *src) {
  * ptr = str;
  * while (ptr) {
  *   printf("%d %s",i++,firstword(ptr));
- *   ptr = strnl(ptr);
+ *   ptr = mopl_utils_strnl(ptr);
  * }
  *
  * Produces the following:
@@ -319,7 +319,7 @@ char *mopl_utils_strscpy(char *dest, const char *src) {
  *
  *****************************************************************************/
 
-char *strnl(char *str) {
+char *mopl_utils_strnl(char *str) {
 	size_t len;
 	if (str == NULL) {
 		return NULL;
