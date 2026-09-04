@@ -78,14 +78,14 @@ int main(int argc, char **argv) {
 
 	check_ping_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_ping_config config = tmp_config.config;
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	/* If ./configure finds ping has timeout values, set plugin alarm slightly
@@ -224,7 +224,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -270,7 +270,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.max_packets = atoi(optarg);
 			} else {
-				usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
+				mopl_utils_usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			}
 			break;
 		case 'n': /* no HTML */
@@ -295,7 +295,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (result.config.addresses[0] == NULL) {
 		if (!mopl_net_is_host(argv[arg_counter])) {
-			usage2(_("Invalid hostname/address"), argv[arg_counter]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[arg_counter]);
 		} else {
 			result.config.addresses[0] = argv[arg_counter++];
 			result.config.n_addresses++;
@@ -379,7 +379,7 @@ int get_threshold(char *arg, double *trta, int *tpl) {
 		return OK;
 	}
 
-	usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
+	mopl_utils_usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
 	return STATE_UNKNOWN;
 }
 
@@ -434,12 +434,12 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 
 	for (size_t i = 0; i < config_wrapper.config.n_addresses; i++) {
 		if (!mopl_net_is_host(config_wrapper.config.addresses[i])) {
-			usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
+			mopl_utils_usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
 		}
 	}
 
 	if (config_wrapper.config.n_addresses == 0) {
-		usage(_("You must specify a server address or host name"));
+		mopl_utils_usage(_("You must specify a server address or host name"));
 	}
 
 	return config_wrapper;

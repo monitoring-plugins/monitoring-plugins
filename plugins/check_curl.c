@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 	/* parse arguments */
 	check_curl_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_curl_config config = tmp_config.config;
@@ -1053,7 +1053,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 't': /* timeout period */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				result.config.curl_config.socket_timeout = (int)strtol(optarg, NULL, 10);
 			}
@@ -1068,7 +1068,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
 				result.config.on_timeout_result_state = STATE_UNKNOWN;
 			} else {
-				usage2(_("Invalid timeout-result state option, give either a return code or state "
+				mopl_utils_usage2(_("Invalid timeout-result state option, give either a return code or state "
 						 "name in lowercase"),
 					   optarg);
 			}
@@ -1122,10 +1122,10 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* Server port */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Invalid port number, expecting a non-negative number"), optarg);
+				mopl_utils_usage2(_("Invalid port number, expecting a non-negative number"), optarg);
 			} else {
 				if (strtol(optarg, NULL, 10) > MAX_PORT) {
-					usage2(_("Invalid port number, supplied port number is too big"), optarg);
+					mopl_utils_usage2(_("Invalid port number, supplied port number is too big"), optarg);
 				}
 				result.config.initial_config.serverPort = (unsigned short)strtol(optarg, NULL, 10);
 				specify_port = true;
@@ -1186,19 +1186,19 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				if ((temp = strchr(optarg, ',')) != NULL) {
 					*temp = '\0';
 					if (!mopl_utils_is_intnonneg(optarg)) {
-						usage2(_("Invalid certificate expiration period"), optarg);
+						mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 					}
 					result.config.days_till_exp_warn = atoi(optarg);
 					*temp = ',';
 					temp++;
 					if (!mopl_utils_is_intnonneg(temp)) {
-						usage2(_("Invalid certificate expiration period"), temp);
+						mopl_utils_usage2(_("Invalid certificate expiration period"), temp);
 					}
 					result.config.days_till_exp_crit = atoi(temp);
 				} else {
 					result.config.days_till_exp_crit = 0;
 					if (!mopl_utils_is_intnonneg(optarg)) {
-						usage2(_("Invalid certificate expiration period"), optarg);
+						mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 					}
 					result.config.days_till_exp_warn = atoi(optarg);
 				}
@@ -1256,7 +1256,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case MAX_REDIRS_OPTION:
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Invalid max_redirs count"), optarg);
+				mopl_utils_usage2(_("Invalid max_redirs count"), optarg);
 			} else {
 				result.config.max_depth = atoi(optarg);
 			}
@@ -1292,7 +1292,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.on_redirect_dependent = true;
 				result.config.followmethod = FOLLOW_LIBCURL;
 			} else {
-				usage2(_("Invalid onredirect option"), optarg);
+				mopl_utils_usage2(_("Invalid onredirect option"), optarg);
 			}
 			if (verbose >= 2) {
 				if (result.config.on_redirect_dependent) {
@@ -1348,7 +1348,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcasecmp(optarg, "warning")) {
 				result.config.state_regex = STATE_WARNING;
 			} else {
-				usage2(_("Invalid state-regex option"), optarg);
+				mopl_utils_usage2(_("Invalid state-regex option"), optarg);
 			}
 			break;
 		case '4':
@@ -1440,7 +1440,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 			break;
 		case OUTPUT_FORMAT: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
@@ -1500,7 +1500,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
 			} else {
-				usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
+				mopl_utils_usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
 						 "(with optional '+' suffix)"));
 			}
 		}
@@ -1553,7 +1553,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (result.config.initial_config.server_address == NULL) {
 		if (result.config.initial_config.host_name == NULL) {
-			usage4(_("You must specify a server address or host name"));
+			mopl_utils_usage4(_("You must specify a server address or host name"));
 		} else {
 			result.config.initial_config.server_address =
 				strdup(result.config.initial_config.host_name);
@@ -1565,7 +1565,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.curl_config.client_cert && !result.config.curl_config.client_privkey) {
-		usage4(_("If you use a client certificate you must also specify a private key file"));
+		mopl_utils_usage4(_("If you use a client certificate you must also specify a private key file"));
 	}
 
 	if (result.config.initial_config.virtualPort == 0) {

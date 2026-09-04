@@ -270,7 +270,7 @@ bool mopl_net_is_host(const char *address) {
 
 void mopl_net_host_or_die(const char *str) {
 	if (!str || (!mopl_net_is_addr(str) && !mopl_net_is_hostname(str))) {
-		usage_va(_("Invalid hostname/address - %s"), str);
+		mopl_utils_usage_va(_("Invalid hostname/address - %s"), str);
 	}
 }
 

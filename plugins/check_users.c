@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 	check_users_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_users_config config = tmp_config.config;
@@ -160,7 +160,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage(progname);
+		mopl_utils_usage(progname);
 	}
 
 	char *warning_range = NULL;
@@ -179,7 +179,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (counter) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);

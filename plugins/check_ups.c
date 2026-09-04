@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 	check_ups_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 	// Config from commandline
 	check_ups_config config = tmp_config.config;
@@ -550,12 +550,12 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (counter) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case 'H': /* hostname */
 			if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'T': /* FIXME: to be improved (ie "-T C" for Celsius or "-T F" for
@@ -569,31 +569,31 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
-				usage2(_("Port must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Port must be a positive integer"), optarg);
 			}
 			break;
 		case 'c': /* critical voltage threshold */
 			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
-					usage2(_("Critical voltage must be a valid range expression"), optarg);
+					mopl_utils_usage2(_("Critical voltage must be a valid range expression"), optarg);
 				} else {
 					tmp_thr = mp_thresholds_set_crit(tmp_thr, tmp.range);
 				}
 			} else {
-				usage2(_("Critical voltage must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Critical voltage must be a positive integer"), optarg);
 			}
 			break;
 		case 'w': /* warning voltage threshold */
 			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
-					usage2(_("Warning voltage must be a valid range expression"), optarg);
+					mopl_utils_usage2(_("Warning voltage must be a valid range expression"), optarg);
 				} else {
 					tmp_thr = mp_thresholds_set_warn(tmp_thr, tmp.range);
 				}
 			} else {
-				usage2(_("Warning voltage must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Warning voltage must be a positive integer"), optarg);
 			}
 			break;
 		case 'v': /* variable */
@@ -608,14 +608,14 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "REALPOWER")) {
 				test_selection = UPS_REALPOWER;
 			} else {
-				usage2(_("Unrecognized UPS variable"), optarg);
+				mopl_utils_usage2(_("Unrecognized UPS variable"), optarg);
 			}
 			break;
 		case 't': /* timeout */
 			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
-				usage4(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'V': /* version */
@@ -631,7 +631,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 		if (mopl_net_is_host(argv[optind])) {
 			result.config.server_address = argv[optind++];
 		} else {
-			usage2(_("Invalid hostname/address"), optarg);
+			mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 		}
 	}
 

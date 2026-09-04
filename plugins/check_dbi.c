@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 	check_dbi_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_dbi_config config = tmp.config;
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 	alarm(timeout_interval);
 
@@ -462,7 +462,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -522,19 +522,19 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcasecmp(optarg, "QUERY_TIME")) {
 				result.config.metric = METRIC_QUERY_TIME;
 			} else {
-				usage2(_("Invalid metric"), optarg);
+				mopl_utils_usage2(_("Invalid metric"), optarg);
 			}
 			break;
 		case 't': /* timeout */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
 			}
 			break;
 		case 'H': /* host */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			} else {
 				result.config.host = optarg;
 			}
@@ -552,7 +552,7 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 			char *value = strchr(key, '=');
 
 			if (!value) {
-				usage2(_("Option must be '<key>=<value>'"), optarg);
+				mopl_utils_usage2(_("Option must be '<key>=<value>'"), optarg);
 			}
 
 			*value = '\0';
@@ -594,40 +594,40 @@ check_dbi_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (!result.config.dbi_driver) {
-		usage("Must specify a DBI driver");
+		mopl_utils_usage("Must specify a DBI driver");
 	}
 
 	if (((result.config.metric == METRIC_QUERY_RESULT) ||
 		 (result.config.metric == METRIC_QUERY_TIME)) &&
 		(!result.config.query)) {
-		usage("Must specify a query to execute (metric == QUERY_RESULT)");
+		mopl_utils_usage("Must specify a query to execute (metric == QUERY_RESULT)");
 	}
 
 	if ((result.config.metric != METRIC_CONN_TIME) &&
 		(result.config.metric != METRIC_SERVER_VERSION) &&
 		(result.config.metric != METRIC_QUERY_RESULT) &&
 		(result.config.metric != METRIC_QUERY_TIME)) {
-		usage("Invalid metric specified");
+		mopl_utils_usage("Invalid metric specified");
 	}
 
 	if (result.config.expect &&
 		(result.config.thresholds.warning_is_set || result.config.thresholds.critical_is_set ||
 		 result.config.expect_re_str)) {
-		usage("Do not mix -e and -w/-c/-r/-R");
+		mopl_utils_usage("Do not mix -e and -w/-c/-r/-R");
 	}
 
 	if (result.config.expect_re_str &&
 		(result.config.thresholds.warning_is_set || result.config.thresholds.critical_is_set ||
 		 result.config.expect)) {
-		usage("Do not mix -r/-R and -w/-c/-e");
+		mopl_utils_usage("Do not mix -r/-R and -w/-c/-e");
 	}
 
 	if (result.config.expect && (result.config.metric != METRIC_QUERY_RESULT)) {
-		usage("Option -e requires metric QUERY_RESULT");
+		mopl_utils_usage("Option -e requires metric QUERY_RESULT");
 	}
 
 	if (result.config.expect_re_str && (result.config.metric != METRIC_QUERY_RESULT)) {
-		usage("Options -r/-R require metric QUERY_RESULT");
+		mopl_utils_usage("Options -r/-R require metric QUERY_RESULT");
 	}
 
 	if (result.config.type == TYPE_STRING) {

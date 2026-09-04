@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 	argv = np_extra_opts(&argc, argv, progname);
 
 	if (!process_arguments(argc, argv)) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	if (display_html) {
@@ -190,7 +190,7 @@ void test_file(char *path) {
 	if (access(path, R_OK) == 0) {
 		return;
 	}
-	usage2(_("file does not exist or is not readable"), path);
+	mopl_utils_usage2(_("file does not exist or is not readable"), path);
 }
 
 /*
@@ -285,7 +285,7 @@ bool process_arguments(int argc, char **argv) {
 
 		switch (c) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 			break;
 		case 'h': /* help */
 			print_help();
@@ -297,7 +297,7 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 't': /* timeout period */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);
 			}
@@ -312,7 +312,7 @@ bool process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
 				socket_timeout_state = STATE_UNKNOWN;
 			} else {
-				usage2(_("Invalid timeout-result state option, give either a return code or state "
+				mopl_utils_usage2(_("Invalid timeout-result state option, give either a return code or state "
 						 "name in lowercase"),
 					   optarg);
 			}
@@ -347,19 +347,19 @@ bool process_arguments(int argc, char **argv) {
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
 				if (!mopl_utils_is_intnonneg(temp)) {
-					usage2(_("Invalid certificate expiration period"), temp);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), temp);
 				}
 				days_till_exp_crit = atoi(temp);
 			} else {
 				days_till_exp_crit = 0;
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				days_till_exp_warn = atoi(optarg);
 			}
@@ -403,7 +403,7 @@ bool process_arguments(int argc, char **argv) {
 				} else if (optarg[0] == '2') {
 					ssl_version = got_plus ? MOPL_NET_SSLv2_OR_NEWER : MOPL_NET_SSLv2;
 				} else {
-					usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
+					mopl_utils_usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
 							 "optional '+' suffix)"));
 				}
 			}
@@ -420,7 +420,7 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case MAX_REDIRS_OPTION:
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Invalid max_redirs count"), optarg);
+				mopl_utils_usage2(_("Invalid max_redirs count"), optarg);
 			} else {
 				max_depth = atoi(optarg);
 			}
@@ -444,7 +444,7 @@ bool process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "critical")) {
 				onredirect = STATE_CRITICAL;
 			} else {
-				usage2(_("Invalid onredirect option"), optarg);
+				mopl_utils_usage2(_("Invalid onredirect option"), optarg);
 			}
 			if (verbose) {
 				printf(_("option f:%d \n"), onredirect);
@@ -485,7 +485,7 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* Server port */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Invalid port number"), optarg);
+				mopl_utils_usage2(_("Invalid port number"), optarg);
 			} else {
 				server_port = atoi(optarg);
 				specify_port = true;
@@ -559,7 +559,7 @@ bool process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "warning")) {
 				state_regex = STATE_WARNING;
 			} else {
-				usage2(_("Invalid state-regex option"), optarg);
+				mopl_utils_usage2(_("Invalid state-regex option"), optarg);
 			}
 			break;
 		case '4':
@@ -636,7 +636,7 @@ bool process_arguments(int argc, char **argv) {
 
 	if (server_address == NULL) {
 		if (host_name == NULL) {
-			usage4(_("You must specify a server address or host name"));
+			mopl_utils_usage4(_("You must specify a server address or host name"));
 		} else {
 			server_address = strdup(host_name);
 		}
@@ -657,7 +657,7 @@ bool process_arguments(int argc, char **argv) {
 	}
 
 	if (client_cert && !client_privkey) {
-		usage4(_("If you use a client certificate you must also specify a private key file"));
+		mopl_utils_usage4(_("If you use a client certificate you must also specify a private key file"));
 	}
 
 	if (virtual_port == 0) {

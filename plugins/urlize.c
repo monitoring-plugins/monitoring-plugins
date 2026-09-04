@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 			break;
 		case '?':
 		default:
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

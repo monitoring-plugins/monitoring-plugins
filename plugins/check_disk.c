@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 
 	check_disk_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_disk_config config = tmp_config.config;
@@ -461,7 +461,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 				timeout_interval = atoi(optarg);
 				break;
 			} else {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			}
 
 		/* See comments for 'c' */
@@ -826,7 +826,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage(_("Unknown argument"));
+			mopl_utils_usage(_("Unknown argument"));
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {

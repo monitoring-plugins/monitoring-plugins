@@ -362,7 +362,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			case 'H': {
 				if (result.config.number_of_hosts == USHRT_MAX) {
-					usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
+					mopl_utils_usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
 				}
 				result.config.number_of_hosts++;
 				break;
@@ -382,7 +382,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 	char **tmp = &argv[optind];
 	while (*tmp) {
 		if (result.config.number_of_hosts == USHRT_MAX) {
-			usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
+			mopl_utils_usage_va("Number of specified hosts exceeds %u", USHRT_MAX);
 		}
 		result.config.number_of_hosts++;
 		tmp++;
@@ -390,7 +390,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	// Sanity check: if hostmode is selected,only a single host is allowed
 	if (result.config.mode == MODE_HOSTCHECK && result.config.number_of_hosts > 1) {
-		usage("check_host only allows a single host");
+		mopl_utils_usage("check_host only allows a single host");
 	}
 
 	// Allocate hosts
@@ -415,7 +415,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 					size < MAX_PING_DATA) {
 					result.config.icmp_data_size = (unsigned short)size;
 				} else {
-					usage_va("ICMP data length must be between: %lu and %lu",
+					mopl_utils_usage_va("ICMP data length must be between: %lu and %lu",
 							 sizeof(struct icmp) + sizeof(struct icmp_ping_data),
 							 MAX_PING_DATA - 1);
 				}

@@ -103,7 +103,7 @@ static parsed_thresholds get_threshold(char *arg) {
 
 	/* empty argument or non-floatish, so warn about it and die */
 	if (!index && !valid) {
-		usage(_("Warning threshold must be float or float triplet!\n"));
+		mopl_utils_usage(_("Warning threshold must be float or float triplet!\n"));
 	}
 
 	if (index != 2) {
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
 	check_load_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_load_config config = tmp_config.config;
@@ -353,7 +353,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.n_procs_to_show = (unsigned long)atol(optarg);
 			break;
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

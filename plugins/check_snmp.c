@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
 	process_arguments_wrapper paw_tmp = process_arguments(argc, argv);
 	if (paw_tmp.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_snmp_config config = paw_tmp.config;
@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	time_t current_time;
@@ -477,7 +477,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 			// fallthrough
 		case 'h': /* help */
 			print_help();
@@ -535,7 +535,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -680,14 +680,14 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case 'e':
 		case 'E':
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Retries interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Retries interval must be a positive integer"), optarg);
 			} else {
 				config.snmp_params.snmp_session.retries = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout period */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = (unsigned int)atoi(optarg);
 			}
@@ -717,7 +717,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'z': /* Null OID Return Check */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Exit status must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
 				// TODO: do real parsing here
 				config.evaluation_params.nulloid_result = atoi(optarg);
@@ -725,7 +725,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case missing_oid: // What to do when an OID is missing in response
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Exit status must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
 				// TODO: do real parsing here
 				config.evaluation_params.missing_oid_result = atoi(optarg);
@@ -854,7 +854,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case rate_multiplier:
 			if (!mopl_utils_is_integer(optarg) ||
 				((config.evaluation_params.rate_multiplier = (unsigned int)atoi(optarg)) <= 0)) {
-				usage2(_("Rate multiplier must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Rate multiplier must be a positive integer"), optarg);
 			}
 			break;
 		default:

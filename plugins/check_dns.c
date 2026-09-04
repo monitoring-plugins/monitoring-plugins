@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* Parse extra opts if any */
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 	check_dns_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_dns_config config = tmp.config;
@@ -573,7 +573,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 			critical = optarg;
 			break;
 		default: /* args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

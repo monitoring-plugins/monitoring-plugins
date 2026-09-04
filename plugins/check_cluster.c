@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
 	check_cluster_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage(_("Could not parse arguments"));
+		mopl_utils_usage(_("Could not parse arguments"));
 	}
 
 	const check_cluster_config config = tmp_config.config;

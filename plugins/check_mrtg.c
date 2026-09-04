@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 
 	check_mrtg_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments\n"));
+		mopl_utils_usage4(_("Could not parse arguments\n"));
 	}
 
 	const check_mrtg_config config = tmp_config.config;
@@ -252,7 +252,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		case 'v':
 			result.config.variable_number = atoi(optarg);
 			if (result.config.variable_number < 1 || result.config.variable_number > 2) {
-				usage4(_("Invalid variable number"));
+				mopl_utils_usage4(_("Invalid variable number"));
 			}
 			break;
 		case 'w': /* critical time threshold */ {
@@ -284,7 +284,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
@@ -326,7 +326,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		result.config.variable_number = atoi(argv[option_char++]);
 		if (result.config.variable_number < 1 || result.config.variable_number > 2) {
 			printf("%s :", argv[option_char]);
-			usage(_("Invalid variable number\n"));
+			mopl_utils_usage(_("Invalid variable number\n"));
 		}
 	}
 
@@ -361,7 +361,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 
 check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper config_wrapper) {
 	if (config_wrapper.config.variable_number == -1) {
-		usage4(_("You must supply the variable number"));
+		mopl_utils_usage4(_("You must supply the variable number"));
 	}
 
 	if (config_wrapper.config.label == NULL) {

@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
 	check_fping_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_fping_config config = tmp_config.config;
@@ -367,7 +367,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'a': /* host alive mode */
 			result.config.alive_p = true;
 			break;
@@ -382,13 +382,13 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'H': /* hostname */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
 			break;
 		case 'S': /* sourceip */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.sourceip = optarg;
 			break;
@@ -431,28 +431,28 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_size = atoi(optarg);
 			} else {
-				usage(_("Packet size must be a positive integer"));
+				mopl_utils_usage(_("Packet size must be a positive integer"));
 			}
 			break;
 		case 'n': /* number of packets */
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_count = atoi(optarg);
 			} else {
-				usage(_("Packet count must be a positive integer"));
+				mopl_utils_usage(_("Packet count must be a positive integer"));
 			}
 			break;
 		case 'T': /* timeout in msec */
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.target_timeout = atoi(optarg);
 			} else {
-				usage(_("Target timeout must be a positive integer"));
+				mopl_utils_usage(_("Target timeout must be a positive integer"));
 			}
 			break;
 		case 'i': /* interval in msec */
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_interval = atoi(optarg);
 			} else {
-				usage(_("Interval must be a positive integer"));
+				mopl_utils_usage(_("Interval must be a positive integer"));
 			}
 			break;
 		case 'R':
@@ -466,7 +466,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.fwmark = (unsigned int)atol(optarg);
 				result.config.fwmark_set = true;
 			} else {
-				usage(_("fwmark must be a positive integer"));
+				mopl_utils_usage(_("fwmark must be a positive integer"));
 			}
 			break;
 		case ICMP_TIMESTAMP_OPT:
@@ -479,7 +479,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.server_name == NULL) {
-		usage4(_("Hostname was not supplied"));
+		mopl_utils_usage4(_("Hostname was not supplied"));
 	}
 
 	return result;

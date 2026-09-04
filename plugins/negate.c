@@ -143,7 +143,7 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 			break;
 		case 'h': /* help */
 			print_help();
@@ -154,20 +154,20 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
 			}
 			break;
 		case 'T': /* Result to return on timeouts */
 			if ((timeout_state = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, "
+				mopl_utils_usage4(_("Timeout result must be a valid state name (OK, WARNING, CRITICAL, "
 						 "UNKNOWN) or integer (0-3)."));
 			}
 			break;
 		case 'o': /* replacement for OK */
 			if ((result.config.state[STATE_OK] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+				mopl_utils_usage4(_("Ok must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 						 "integer (0-3)."));
 			}
 			permute = false;
@@ -175,21 +175,21 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 
 		case 'w': /* replacement for WARNING */
 			if ((result.config.state[STATE_WARNING] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+				mopl_utils_usage4(_("Warning must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'c': /* replacement for CRITICAL */
 			if ((result.config.state[STATE_CRITICAL] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+				mopl_utils_usage4(_("Critical must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 						 "integer (0-3)."));
 			}
 			permute = false;
 			break;
 		case 'u': /* replacement for UNKNOWN */
 			if ((result.config.state[STATE_UNKNOWN] = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
+				mopl_utils_usage4(_("Unknown must be a valid state name (OK, WARNING, CRITICAL, UNKNOWN) or "
 						 "integer (0-3)."));
 			}
 			permute = false;
@@ -212,12 +212,12 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 
 negate_config_wrapper validate_arguments(negate_config_wrapper config_wrapper) {
 	if (config_wrapper.config.command_line[0] == NULL) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	if (strncmp(config_wrapper.config.command_line[0], "/", 1) != 0 &&
 		strncmp(config_wrapper.config.command_line[0], "./", 2) != 0) {
-		usage4(_("Require path to command"));
+		mopl_utils_usage4(_("Require path to command"));
 	}
 
 	return config_wrapper;

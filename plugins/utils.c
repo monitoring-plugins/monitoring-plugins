@@ -40,13 +40,13 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-void usage(const char *msg) {
+void mopl_utils_usage(const char *msg) {
 	printf("%s\n", msg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage_va(const char *fmt, ...) {
+void mopl_utils_usage_va(const char *fmt, ...) {
 	va_list ap;
 	printf("%s: ", progname);
 	va_start(ap, fmt);
@@ -56,25 +56,25 @@ void usage_va(const char *fmt, ...) {
 	exit(STATE_UNKNOWN);
 }
 
-void usage2(const char *msg, const char *arg) {
+void mopl_utils_usage2(const char *msg, const char *arg) {
 	printf("%s: %s - %s\n", progname, msg, arg ? arg : "(null)");
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage3(const char *msg, int arg) {
+void mopl_utils_usage3(const char *msg, int arg) {
 	printf("%s: %s - %c\n", progname, msg, arg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage4(const char *msg) {
+void mopl_utils_usage4(const char *msg) {
 	printf("%s: %s\n", progname, msg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage5(void) {
+void mopl_utils_usage5(void) {
 	print_usage();
 	exit(STATE_UNKNOWN);
 }

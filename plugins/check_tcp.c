@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 	}
 	/* fallthrough check, so it's supposed to use reverse matching */
 	else if (strcmp(config.service, "TCP")) {
-		usage(_("CRITICAL - Generic check_tcp called with unknown service\n"));
+		mopl_utils_usage(_("CRITICAL - Generic check_tcp called with unknown service\n"));
 	}
 
 	/* Parse extra opts if any */
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
 
 	check_tcp_config_wrapper paw = process_arguments(argc, argv, config);
 	if (paw.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.protocol == IPPROTO_UDP && !(config.server_expect_count && config.send)) {
-		usage(_("With UDP checks, a send/expect string must be specified."));
+		mopl_utils_usage(_("With UDP checks, a send/expect string must be specified."));
 	}
 
 	// Initialize check stuff before setting timers
@@ -536,7 +536,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage4(_("No arguments found"));
+		mopl_utils_usage4(_("No arguments found"));
 	}
 
 	/* backwards compatibility */
@@ -570,7 +570,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 
 		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help(config.service);
 			exit(STATE_UNKNOWN);
@@ -604,14 +604,14 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			break;
 		case 't': /* timeout */
 			if (!mopl_utils_is_intpos(optarg)) {
-				usage4(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			} else {
 				socket_timeout = atoi(optarg);
 			}
 			break;
 		case 'p': /* port */
 			if (!mopl_utils_is_intpos(optarg)) {
-				usage4(_("Port must be a positive integer"));
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			} else {
 				config.server_port = atoi(optarg);
 			}
@@ -642,7 +642,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			break;
 		case 'm':
 			if (!mopl_utils_is_intpos(optarg)) {
-				usage4(_("Maxbytes must be a positive integer"));
+				mopl_utils_usage4(_("Maxbytes must be a positive integer"));
 			} else {
 				config.maxbytes = strtol(optarg, NULL, 0);
 			}
@@ -662,7 +662,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			} else if (!strncmp(optarg, "crit", 4)) {
 				config.econn_refuse_state = STATE_CRITICAL;
 			} else {
-				usage4(_("Refuse must be one of ok, warn, crit"));
+				mopl_utils_usage4(_("Refuse must be one of ok, warn, crit"));
 			}
 			break;
 		case 'M':
@@ -673,14 +673,14 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			} else if (!strncmp(optarg, "crit", 4)) {
 				config.expect_mismatch_state = STATE_CRITICAL;
 			} else {
-				usage4(_("Mismatch must be one of ok, warn, crit"));
+				mopl_utils_usage4(_("Mismatch must be one of ok, warn, crit"));
 			}
 			break;
 		case 'd':
 			if (mopl_utils_is_intpos(optarg)) {
 				config.delay = atoi(optarg);
 			} else {
-				usage4(_("Delay must be a positive integer"));
+				mopl_utils_usage4(_("Delay must be a positive integer"));
 			}
 			break;
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
@@ -691,19 +691,19 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
 				if (!mopl_utils_is_intnonneg(temp)) {
-					usage2(_("Invalid certificate expiration period"), temp);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), temp);
 				}
 				config.days_till_exp_crit = atoi(temp);
 			} else {
 				config.days_till_exp_crit = 0;
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);
 			}
@@ -753,7 +753,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 	}
 
 	if (config.server_address == NULL) {
-		usage4(_("You must provide a server address"));
+		mopl_utils_usage4(_("You must provide a server address"));
 	} else if (config.server_address[0] != '/' && !mopl_net_is_host(config.server_address)) {
 		die(STATE_CRITICAL, "%s %s - %s: %s\n", config.service, state_text(STATE_CRITICAL),
 			_("Invalid hostname, address or socket"), config.server_address);

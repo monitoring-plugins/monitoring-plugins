@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
 	check_real_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_real_config config = tmp_config.config;
@@ -401,7 +401,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'e': /* string to expect in response header */
@@ -414,7 +414,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
-				usage4(_("Port must be a positive integer"));
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'w': /* warning time threshold */
@@ -442,7 +442,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
-				usage4(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'V': /* version */
@@ -464,7 +464,7 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -473,12 +473,12 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_address = argv[option_char++];
 		} else {
-			usage2(_("Invalid hostname/address"), argv[option_char]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[option_char]);
 		}
 	}
 
 	if (result.config.server_address == NULL) {
-		usage4(_("You must provide a server to check"));
+		mopl_utils_usage4(_("You must provide a server to check"));
 	}
 
 	if (result.config.host_name == NULL) {

@@ -208,7 +208,7 @@ static check_ide_smart_config_wrapper process_arguments(int argc, char **argv) {
 			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		default:
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

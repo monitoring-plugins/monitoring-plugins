@@ -561,7 +561,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage("\n");
+		mopl_utils_usage("\n");
 	}
 
 	check_ntp_time_config_wrapper result = {
@@ -622,7 +622,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'H':
 			if (!mopl_net_is_host(optarg) && (optarg[0] != '/')) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
 			break;
@@ -638,7 +638,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 		case polling_delay_index: {
 			long tmp_time = (long)(1.0e9 * atof(optarg));
 			if (tmp_time < 0 || tmp_time > MAX_POLL) {
-				usage2(_("Invalid time"), optarg);
+				mopl_utils_usage2(_("Invalid time"), optarg);
 			} else {
 				DBG(printf("Polling delay: %lu\n", tmp_time));
 
@@ -654,13 +654,13 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 			break;
 		}
 	}
 
 	if (result.config.server_address == NULL) {
-		usage4(_("Hostname was not supplied"));
+		mopl_utils_usage4(_("Hostname was not supplied"));
 	}
 
 	return result;
@@ -685,7 +685,7 @@ int main(int argc, char *argv[]) {
 	check_ntp_time_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__

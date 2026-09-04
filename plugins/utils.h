@@ -68,12 +68,12 @@ char *mopl_utils_strnl(char *);
 int mopl_utils_xvasprintf(char **strp, const char *fmt, va_list ap);
 int mopl_utils_xasprintf(char **strp, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
-void usage(const char *) __attribute__((noreturn));
-void usage2(const char *, const char *) __attribute__((noreturn));
-void usage3(const char *, int) __attribute__((noreturn));
-void usage4(const char *) __attribute__((noreturn));
-void usage5(void) __attribute__((noreturn));
-void usage_va(const char *fmt, ...) __attribute__((noreturn));
+void mopl_utils_usage(const char *) __attribute__((noreturn));
+void mopl_utils_usage2(const char *, const char *) __attribute__((noreturn));
+void mopl_utils_usage3(const char *, int) __attribute__((noreturn));
+void mopl_utils_usage4(const char *) __attribute__((noreturn));
+void mopl_utils_usage5(void) __attribute__((noreturn));
+void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn)) __attribute__((format(printf, 1, 2)));
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))

@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 
 	/* process arguments */
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_by_ssh_config config = tmp_config.config;
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 	alarm(timeout_interval);
 
@@ -324,7 +324,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 't': /* timeout period */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage_va(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage_va(_("Timeout interval must be a positive integer"));
 			} else {
 				timeout_interval = atoi(optarg);
 			}
@@ -337,7 +337,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* port number */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage_va(_("Port must be a positive integer"));
+				mopl_utils_usage_va(_("Port must be a positive integer"));
 			}
 			result.config.cmd = comm_append(result.config.cmd, "-p");
 			result.config.cmd = comm_append(result.config.cmd, optarg);
@@ -409,7 +409,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 					printf("Setting the skip_stdout flag\n");
 				}
 			} else if (!mopl_utils_is_integer(optarg)) {
-				usage_va(_("skip-stdout argument must be an integer"));
+				mopl_utils_usage_va(_("skip-stdout argument must be an integer"));
 			} else {
 				result.config.stdout_lines_to_ignore = atoi(optarg);
 			}
@@ -421,7 +421,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 					printf("Setting the skip_stderr flag\n");
 				}
 			} else if (!mopl_utils_is_integer(optarg)) {
-				usage_va(_("skip-stderr argument must be an integer"));
+				mopl_utils_usage_va(_("skip-stderr argument must be an integer"));
 			} else {
 				result.config.sterr_lines_to_ignore = atoi(optarg);
 			}
@@ -456,7 +456,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		default: /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -483,7 +483,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.remotecmd == NULL || strlen(result.config.remotecmd) <= 1) {
-		usage_va(_("No remotecmd"));
+		mopl_utils_usage_va(_("No remotecmd"));
 	}
 
 	result.config.cmd = comm_append(result.config.cmd, result.config.hostname);

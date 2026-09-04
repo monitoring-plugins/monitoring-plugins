@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
 	check_procs_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_procs_config config = tmp_config.config;
@@ -438,7 +438,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
@@ -447,7 +447,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
 			if (!mopl_utils_is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
 			}
@@ -467,7 +467,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.options |= PPID;
 				break;
 			}
-			usage4(_("Parent Process ID must be an integer!"));
+			mopl_utils_usage4(_("Parent Process ID must be an integer!"));
 		}
 		case 's': /* status */
 			if (result.config.statopts) {
@@ -487,13 +487,13 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				pw = getpwuid(result.config.uid);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					usage2(_("UID was not found"), optarg);
+					mopl_utils_usage2(_("UID was not found"), optarg);
 				}
 			} else {
 				pw = getpwnam(optarg);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					usage2(_("User name was not found"), optarg);
+					mopl_utils_usage2(_("User name was not found"), optarg);
 				}
 				/*  then get uid */
 				result.config.uid = pw->pw_uid;
@@ -583,7 +583,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.options |= RSS;
 				break;
 			}
-			usage4(_("RSS must be an integer!"));
+			mopl_utils_usage4(_("RSS must be an integer!"));
 		}
 		case 'z': { /* VSZ */
 			static char tmp[MAX_INPUT_BUFFER];
@@ -594,7 +594,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.options |= VSZ;
 				break;
 			}
-			usage4(_("VSZ must be an integer!"));
+			mopl_utils_usage4(_("VSZ must be an integer!"));
 		}
 		case 'P': { /* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
@@ -606,7 +606,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.options |= PCPU;
 				break;
 			}
-			usage4(_("PCPU must be a float!"));
+			mopl_utils_usage4(_("PCPU must be a float!"));
 		}
 		case 'm':
 			mopl_utils_xasprintf(&result.config.metric_name, "%s", optarg);
@@ -631,7 +631,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			}
 
-			usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
+			mopl_utils_usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k': /* linux kernel thread filter */
 			result.config.kthread_filter = true;
 			break;

@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
 	check_ldap_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_ldap_config config = tmp_config.config;
@@ -377,7 +377,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);
 			}
@@ -450,7 +450,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			if (!result.config.ssl_on_connect) {
 				result.config.starttls = true;
 			} else {
-				usage_va(_("%s cannot be combined with %s"), "-T/--starttls", "-S/--ssl");
+				mopl_utils_usage_va(_("%s cannot be combined with %s"), "-T/--starttls", "-S/--ssl");
 			}
 			break;
 		case 'S':
@@ -460,7 +460,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.ld_port = LDAPS_PORT;
 				}
 			} else {
-				usage_va(_("%s cannot be combined with %s"), "-S/--ssl", "-T/--starttls");
+				mopl_utils_usage_va(_("%s cannot be combined with %s"), "-S/--ssl", "-T/--starttls");
 			}
 			break;
 		case '6':
@@ -479,7 +479,7 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		default:
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -506,11 +506,11 @@ check_ldap_config_wrapper process_arguments(int argc, char **argv) {
 
 check_ldap_config_wrapper validate_arguments(check_ldap_config_wrapper config_wrapper) {
 	if (config_wrapper.config.ld_host == NULL || strlen(config_wrapper.config.ld_host) == 0) {
-		usage4(_("Please specify the host name\n"));
+		mopl_utils_usage4(_("Please specify the host name\n"));
 	}
 
 	if (config_wrapper.config.ld_base == NULL) {
-		usage4(_("Please specify the LDAP base\n"));
+		mopl_utils_usage4(_("Please specify the LDAP base\n"));
 	}
 
 	if (config_wrapper.config.ld_passwd == NULL) {

@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
 	check_mrtgtraf_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_mrtgtraf_config config = tmp_config.config;
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 
 	/* if we couldn't read enough data, return an unknown error */
 	if (line <= 2) {
-		usage4(_("Unable to process MRTG log file"));
+		mopl_utils_usage4(_("Unable to process MRTG log file"));
 	}
 
 	/* make sure the MRTG data isn't too old */
@@ -316,7 +316,7 @@ check_mrtgtraf_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {

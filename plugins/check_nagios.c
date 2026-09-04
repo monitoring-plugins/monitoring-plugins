@@ -63,14 +63,14 @@ int main(int argc, char **argv) {
 	check_nagios_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_nagios_config config = tmp_config.config;
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully... */
@@ -268,7 +268,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		default: /* print short usage_va statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

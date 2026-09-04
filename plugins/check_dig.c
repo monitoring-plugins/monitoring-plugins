@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* Parse extra opts if any */
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
 	check_dig_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_dig_config config = tmp_config.config;
@@ -303,7 +303,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
-				usage_va(_("Port must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Port must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'l': /* address to lookup */
@@ -313,21 +313,21 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.warning_interval = strtod(optarg, NULL);
 			} else {
-				usage_va(_("Warning interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Warning interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'c': /* critical */
 			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.critical_interval = strtod(optarg, NULL);
 			} else {
-				usage_va(_("Critical interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Critical interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 't': /* timeout */
 			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
-				usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'A': /* dig arguments */
@@ -355,7 +355,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.query_transport = "-6";
 			break;
 		default: /* usage5 */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 

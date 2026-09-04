@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 	process_arguments_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__
@@ -154,7 +154,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case 'V': /* version */
 			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
@@ -166,7 +166,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 't': /* timeout period */
 			if (!mopl_utils_is_intpos(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = (unsigned int)atoi(optarg);
 			}
@@ -185,7 +185,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'H': /* host */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
 			break;
@@ -193,7 +193,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intpos(optarg)) {
 				result.config.port = atoi(optarg);
 			} else {
-				usage2(_("Port number must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Port number must be a positive integer"), optarg);
 			}
 			break;
 		case output_format_index: {

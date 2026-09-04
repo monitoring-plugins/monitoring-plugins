@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 	check_smtp_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__
@@ -679,14 +679,14 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'p': /* port */
 			if (mopl_utils_is_intpos(optarg)) {
 				server_port_option = atoi(optarg);
 			} else {
-				usage4(_("Port must be a positive integer"));
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'F':
@@ -766,7 +766,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
-				usage4(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'D': {
@@ -776,19 +776,19 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2("Invalid certificate expiration period", optarg);
+					mopl_utils_usage2("Invalid certificate expiration period", optarg);
 				}
 				result.config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
 				if (!mopl_utils_is_intnonneg(temp)) {
-					usage2(_("Invalid certificate expiration period"), temp);
+					mopl_utils_usage2(_("Invalid certificate expiration period"), temp);
 				}
 				result.config.days_till_exp_crit = atoi(temp);
 			} else {
 				result.config.days_till_exp_crit = 0;
 				if (!mopl_utils_is_intnonneg(optarg)) {
-					usage2("Invalid certificate expiration period", optarg);
+					mopl_utils_usage2("Invalid certificate expiration period", optarg);
 				}
 				result.config.days_till_exp_warn = atoi(optarg);
 			}
@@ -834,7 +834,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
@@ -859,7 +859,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_net_is_host(argv[c])) {
 				result.config.server_address = argv[c];
 			} else {
-				usage2(_("Invalid hostname/address"), argv[c]);
+				mopl_utils_usage2(_("Invalid hostname/address"), argv[c]);
 			}
 		} else {
 			result.config.server_address = strdup("localhost");
@@ -867,12 +867,12 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.use_starttls && result.config.use_ssl) {
-		usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
+		mopl_utils_usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
 	}
 
 	if (!result.config.use_starttls && !result.config.use_ssl &&
 		(result.config.days_till_exp_crit != 0 || result.config.days_till_exp_warn != 0)) {
-		usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
+		mopl_utils_usage4(_("Set either -s/--ssl/--tls or -S/--starttls"));
 	}
 
 	if (server_port_option != 0) {
@@ -882,13 +882,13 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 	if (result.config.authtype) {
 		if (strcmp(result.config.authtype, "LOGIN") == 0) {
 			if (result.config.authuser == NULL) {
-				usage4("no authuser specified");
+				mopl_utils_usage4("no authuser specified");
 			}
 			if (result.config.authpass == NULL) {
-				usage4("no authpass specified");
+				mopl_utils_usage4("no authpass specified");
 			}
 		} else {
-			usage4("only authtype LOGIN is supported");
+			mopl_utils_usage4("only authtype LOGIN is supported");
 		}
 	}
 

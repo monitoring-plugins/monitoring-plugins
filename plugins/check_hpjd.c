@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 	check_hpjd_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_hpjd_config config = tmp_config.config;
@@ -308,7 +308,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_net_is_host(optarg)) {
 				result.config.address = mopl_utils_strscpy(result.config.address, optarg);
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'C': /* community */
@@ -316,7 +316,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p':
 			if (!mopl_utils_is_intpos(optarg)) {
-				usage2(_("Port must be a positive short integer"), optarg);
+				mopl_utils_usage2(_("Port must be a positive short integer"), optarg);
 			} else {
 				result.config.port = atoi(optarg);
 			}
@@ -331,7 +331,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -340,7 +340,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 		if (mopl_net_is_host(argv[c])) {
 			result.config.address = argv[c++];
 		} else {
-			usage2(_("Invalid hostname/address"), argv[c]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[c]);
 		}
 	}
 

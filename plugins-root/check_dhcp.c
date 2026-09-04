@@ -298,7 +298,7 @@ int main(int argc, char **argv) {
 	process_arguments_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.error != OK) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_dhcp_config config = tmp.config;
@@ -1286,7 +1286,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		case 'm': /* MAC address */
 			if ((config.user_specified_mac = mac_aton(optarg)) == NULL) {
-				usage("Cannot parse MAC address.\n");
+				mopl_utils_usage("Cannot parse MAC address.\n");
 			}
 			if (verbose) {
 				print_hardware_address(config.user_specified_mac);
@@ -1331,7 +1331,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 			break;
 
 		default:
@@ -1340,7 +1340,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (argc - optind > 0) {
-		usage(_("Got unexpected non-option argument"));
+		mopl_utils_usage(_("Got unexpected non-option argument"));
 	}
 
 	process_arguments_wrapper result = {
@@ -1496,7 +1496,7 @@ void resolve_host(const char *name, struct in_addr *out) {
 	struct addrinfo *addr_info;
 
 	if (getaddrinfo(name, NULL, &hints, &addr_info) != 0) {
-		usage_va(_("Invalid hostname/address - %s"), optarg);
+		mopl_utils_usage_va(_("Invalid hostname/address - %s"), optarg);
 	}
 
 	memcpy(out, &((struct sockaddr_in *)addr_info->ai_addr)->sin_addr, sizeof(*out));
