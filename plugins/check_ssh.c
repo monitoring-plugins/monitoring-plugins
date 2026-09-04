@@ -156,7 +156,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case '?': /* help */
 			usage5();
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -424,7 +424,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", default_ssh_port);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
 	printf(COPYRIGHT, copyright, email);

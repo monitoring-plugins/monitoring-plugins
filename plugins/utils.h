@@ -29,7 +29,7 @@ suite of plugins. */
 
 /* Standardize version information, termination */
 
-void print_revision(const char *, const char *);
+void mopl_utils_print_revision(const char *, const char *);
 
 /* Test input types */
 

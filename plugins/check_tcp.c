@@ -575,7 +575,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			print_help(config.service);
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbosity++;
@@ -767,7 +767,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 }
 
 void print_help(const char *service) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

@@ -150,7 +150,7 @@ static negate_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
 			if (!mopl_utils_is_integer(optarg)) {
@@ -224,7 +224,7 @@ negate_config_wrapper validate_arguments(negate_config_wrapper config_wrapper) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 

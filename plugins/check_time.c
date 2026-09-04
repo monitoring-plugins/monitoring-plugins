@@ -224,7 +224,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
 			if (!mopl_net_is_host(optarg)) {
@@ -318,7 +318,7 @@ void print_help(void) {
 	char *myport;
 	xasprintf(&myport, "%d", TIME_PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad\n");
 	printf(COPYRIGHT, copyright, email);
