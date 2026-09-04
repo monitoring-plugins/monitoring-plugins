@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 
 	/* process arguments */
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_by_ssh_config config = tmp_config.config;
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 	alarm(timeout_interval);
 
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 	// we can sadly not detect other SSH errors
 	if (child_result.cmd_error_code == 255 && config.unknown_timeout) {
 		mp_subcheck sc_ssh_execution = mp_subcheck_init();
-		xasprintf(&sc_ssh_execution.output, "SSH connection failed: %s",
+		mopl_utils_xasprintf(&sc_ssh_execution.output, "SSH connection failed: %s",
 				  child_result.err.lines > 0 ? child_result.err.line[0] : "(no error output)");
 
 		sc_ssh_execution = mp_set_subcheck_state(sc_ssh_execution, STATE_UNKNOWN);
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 	if (child_result.err.lines > skip_stderr &&
 		(config.unknown_on_stderr || config.warn_on_stderr)) {
 		mp_subcheck sc_stderr = mp_subcheck_init();
-		xasprintf(&sc_stderr.output, "remote command execution failed: %s",
+		mopl_utils_xasprintf(&sc_stderr.output, "remote command execution failed: %s",
 				  child_result.err.line[skip_stderr]);
 
 		if (config.unknown_on_stderr) {
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 	 * Wrap up quickly and keep the tricks below */
 	if (!config.passive) {
 		mp_subcheck sc_active_check = mp_subcheck_init();
-		xasprintf(&sc_active_check.output, "command stdout:");
+		mopl_utils_xasprintf(&sc_active_check.output, "command stdout:");
 
 		if (child_result.out.lines > skip_stdout) {
 
@@ -161,9 +161,9 @@ int main(int argc, char **argv) {
 			for (size_t i = skip_stdout; i < child_result.out.lines; i++) {
 				if (i == skip_stdout) {
 					// first iteration
-					xasprintf(&remote_command_output, "%s", child_result.out.line[i]);
+					mopl_utils_xasprintf(&remote_command_output, "%s", child_result.out.line[i]);
 				} else {
-					xasprintf(&remote_command_output, "%s\n%s", remote_command_output,
+					mopl_utils_xasprintf(&remote_command_output, "%s\n%s", remote_command_output,
 							  child_result.out.line[i]);
 				}
 			}
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 			overall.default_output_override_content = remote_command_output;
 			overall.default_output_override = check_by_ssh_output_override;
 		} else {
-			xasprintf(&sc_active_check.output, "remote command '%s' returned status %d",
+			mopl_utils_xasprintf(&sc_active_check.output, "remote command '%s' returned status %d",
 					  config.remotecmd, child_result.cmd_error_code);
 		}
 
@@ -205,14 +205,14 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_passive_file = mp_subcheck_init();
 	FILE *output_file = NULL;
 	if (!(output_file = fopen(config.outputfile, "a"))) {
-		xasprintf(&sc_passive_file.output, "could not open %s", config.outputfile);
+		mopl_utils_xasprintf(&sc_passive_file.output, "could not open %s", config.outputfile);
 		sc_passive_file = mp_set_subcheck_state(sc_passive_file, STATE_UNKNOWN);
 
 		mp_add_subcheck_to_check(&overall, sc_passive_file);
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_passive_file.output, "opened output file %s", config.outputfile);
+	mopl_utils_xasprintf(&sc_passive_file.output, "opened output file %s", config.outputfile);
 	sc_passive_file = mp_set_subcheck_state(sc_passive_file, STATE_OK);
 	mp_add_subcheck_to_check(&overall, sc_passive_file);
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
 			strstr(child_result.out.line[i], "STATUS CODE: ") == NULL) {
 
 			sc_parse_passive = mp_set_subcheck_state(sc_parse_passive, STATE_UNKNOWN);
-			xasprintf(&sc_parse_passive.output, "failed to parse output");
+			mopl_utils_xasprintf(&sc_parse_passive.output, "failed to parse output");
 			mp_add_subcheck_to_check(&overall, sc_parse_passive);
 			mp_exit(overall);
 		}
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 	}
 
 	sc_parse_passive = mp_set_subcheck_state(sc_parse_passive, STATE_OK);
-	xasprintf(&sc_parse_passive.output, "parsed and wrote output");
+	mopl_utils_xasprintf(&sc_parse_passive.output, "parsed and wrote output");
 	mp_add_subcheck_to_check(&overall, sc_parse_passive);
 
 	/* Multiple commands and passive checking should always return OK */
@@ -314,7 +314,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (opt_index) {
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -323,8 +323,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
-				usage_va(_("Timeout interval must be a positive integer"));
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage_va(_("Timeout interval must be a positive integer"));
 			} else {
 				timeout_interval = atoi(optarg);
 			}
@@ -336,8 +336,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.hostname = optarg;
 			break;
 		case 'p': /* port number */
-			if (!is_integer(optarg)) {
-				usage_va(_("Port must be a positive integer"));
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage_va(_("Port must be a positive integer"));
 			}
 			result.config.cmd = comm_append(result.config.cmd, "-p");
 			result.config.cmd = comm_append(result.config.cmd, optarg);
@@ -396,10 +396,10 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 		case 'C': /* Command for remote machine */
 			result.config.commands++;
 			if (result.config.commands > 1) {
-				xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;",
+				mopl_utils_xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;",
 						  result.config.remotecmd);
 			}
-			xasprintf(&result.config.remotecmd, "%s%s", result.config.remotecmd, optarg);
+			mopl_utils_xasprintf(&result.config.remotecmd, "%s%s", result.config.remotecmd, optarg);
 			break;
 		case 'S': /* skip n (or all) lines on stdout */
 			if (optarg == NULL) {
@@ -408,8 +408,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 				if (verbose) {
 					printf("Setting the skip_stdout flag\n");
 				}
-			} else if (!is_integer(optarg)) {
-				usage_va(_("skip-stdout argument must be an integer"));
+			} else if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage_va(_("skip-stdout argument must be an integer"));
 			} else {
 				result.config.stdout_lines_to_ignore = atoi(optarg);
 			}
@@ -420,8 +420,8 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 				if (verbose) {
 					printf("Setting the skip_stderr flag\n");
 				}
-			} else if (!is_integer(optarg)) {
-				usage_va(_("skip-stderr argument must be an integer"));
+			} else if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage_va(_("skip-stderr argument must be an integer"));
 			} else {
 				result.config.sterr_lines_to_ignore = atoi(optarg);
 			}
@@ -456,7 +456,7 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		default: /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -471,19 +471,19 @@ check_by_ssh_config_wrapper process_arguments(int argc, char **argv) {
 	if (strlen(result.config.remotecmd) == 0) {
 		for (; c < argc; c++) {
 			if (strlen(result.config.remotecmd) > 0) {
-				xasprintf(&result.config.remotecmd, "%s %s", result.config.remotecmd, argv[c]);
+				mopl_utils_xasprintf(&result.config.remotecmd, "%s %s", result.config.remotecmd, argv[c]);
 			} else {
-				xasprintf(&result.config.remotecmd, "%s", argv[c]);
+				mopl_utils_xasprintf(&result.config.remotecmd, "%s", argv[c]);
 			}
 		}
 	}
 
 	if (result.config.commands > 1 || result.config.passive) {
-		xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;", result.config.remotecmd);
+		mopl_utils_xasprintf(&result.config.remotecmd, "%s;echo STATUS CODE: $?;", result.config.remotecmd);
 	}
 
 	if (result.config.remotecmd == NULL || strlen(result.config.remotecmd) <= 1) {
-		usage_va(_("No remotecmd"));
+		mopl_utils_usage_va(_("No remotecmd"));
 	}
 
 	result.config.cmd = comm_append(result.config.cmd, result.config.hostname);
@@ -541,7 +541,7 @@ check_by_ssh_config_wrapper validate_arguments(check_by_ssh_config_wrapper confi
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf(COPYRIGHT, copyright, email);

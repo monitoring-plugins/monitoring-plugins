@@ -343,7 +343,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				} while (!(req.op & OP_READVAR && ntohs(req.seq) == 2));
 
 				if (!(req.op & REM_ERROR)) {
-					xasprintf(&data, "%s%s", data, req.data);
+					mopl_utils_xasprintf(&data, "%s%s", data, req.data);
 				}
 			} while (req.op & REM_MORE);
 
@@ -470,7 +470,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage("\n");
+		mopl_utils_usage("\n");
 	}
 
 	check_ntp_peer_config_wrapper result = {
@@ -503,7 +503,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V':
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 			break;
 		case 'v':
@@ -592,7 +592,7 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 		} break;
 		case 'H':
 			if (!mopl_net_is_host(optarg) && (optarg[0] != '/')) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = strdup(optarg);
 			break;
@@ -610,36 +610,36 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case '?':
 			/* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 			break;
 		}
 	}
 
 	if (result.config.server_address == NULL) {
-		usage4(_("Hostname was not supplied"));
+		mopl_utils_usage4(_("Hostname was not supplied"));
 	}
 
 	return result;
 }
 
 char *perfd_offset(double offset, thresholds *offset_thresholds) {
-	return fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
+	return mopl_utils_fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
 					 offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 char *perfd_jitter(double jitter, bool do_jitter, thresholds *jitter_thresholds) {
-	return fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter,
+	return mopl_utils_fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter,
 					 jitter_thresholds->critical->end, true, 0, false, 0);
 }
 
 char *perfd_stratum(int stratum, bool do_stratum, thresholds *stratum_thresholds) {
-	return perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end,
+	return mopl_utils_perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end,
 					do_stratum, (int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
 char *perfd_truechimers(int num_truechimers, const bool do_truechimers,
 						thresholds *truechimer_thresholds) {
-	return perfdata("truechimers", num_truechimers, "", do_truechimers,
+	return mopl_utils_perfdata("truechimers", num_truechimers, "", do_truechimers,
 					(int)truechimer_thresholds->warning->end, do_truechimers,
 					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
@@ -655,7 +655,7 @@ int main(int argc, char *argv[]) {
 	check_ntp_peer_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_ntp_peer_config config = tmp_config.config;
@@ -677,12 +677,12 @@ int main(int argc, char *argv[]) {
 	mp_set_ok_summary(&overall, "NTP Server seems to be OK");
 
 	mp_subcheck sc_offset = mp_subcheck_init();
-	xasprintf(&sc_offset.output, "offset");
+	mopl_utils_xasprintf(&sc_offset.output, "offset");
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
 		sc_offset =
 			mp_set_subcheck_state(sc_offset, (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL));
-		xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
+		mopl_utils_xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
 	} else {
 		/* Be quiet if there's no candidates either */
 		mp_state_enum tmp = STATE_OK;
@@ -690,7 +690,7 @@ int main(int argc, char *argv[]) {
 			tmp = STATE_UNKNOWN;
 		}
 
-		xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
+		mopl_utils_xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
 
 		mp_perfdata pd_offset = perfdata_init();
 		pd_offset.value = mp_create_pd_value(fabs(ntp_res.offset));
@@ -708,7 +708,7 @@ int main(int argc, char *argv[]) {
 	// truechimers
 	if (config.do_truechimers) {
 		mp_subcheck sc_truechimers = mp_subcheck_init();
-		xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
+		mopl_utils_xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
 
 		mp_perfdata pd_truechimers = perfdata_init();
 		pd_truechimers.value = mp_create_pd_value(ntp_res.num_truechimers);
@@ -724,7 +724,7 @@ int main(int argc, char *argv[]) {
 
 	if (config.do_stratum) {
 		mp_subcheck sc_stratum = mp_subcheck_init();
-		xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
+		mopl_utils_xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
 
 		mp_perfdata pd_stratum = perfdata_init();
 		pd_stratum.value = mp_create_pd_value(ntp_res.stratum);
@@ -740,7 +740,7 @@ int main(int argc, char *argv[]) {
 
 	if (config.do_jitter) {
 		mp_subcheck sc_jitter = mp_subcheck_init();
-		xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
+		mopl_utils_xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
 
 		mp_perfdata pd_jitter = perfdata_init();
 		pd_jitter.value = mp_create_pd_value(ntp_res.jitter);
@@ -756,17 +756,17 @@ int main(int argc, char *argv[]) {
 	mp_subcheck sc_other_info = mp_subcheck_init();
 	sc_other_info = mp_set_subcheck_default_state(sc_other_info, STATE_OK);
 	if (!ntp_res.syncsource_found) {
-		xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
+		mopl_utils_xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
 		mp_add_subcheck_to_check(&overall, sc_other_info);
 	} else if (ntp_res.li_alarm) {
-		xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
+		mopl_utils_xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
 		mp_add_subcheck_to_check(&overall, sc_other_info);
 	}
 
 	{
 		mp_subcheck sc_offset = mp_subcheck_init();
 		sc_offset = mp_set_subcheck_default_state(sc_offset, STATE_OK);
-		xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
+		mopl_utils_xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
 
 		mp_perfdata pd_offset = perfdata_init();
 		pd_offset.value = mp_create_pd_value(ntp_res.offset);
@@ -783,7 +783,7 @@ int main(int argc, char *argv[]) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 2006 Sean Finney\n");
 	printf(COPYRIGHT, copyright, email);

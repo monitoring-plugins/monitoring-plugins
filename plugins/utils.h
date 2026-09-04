@@ -1,12 +1,12 @@
-#ifndef NP_UTILS_H
-#define NP_UTILS_H
+#pragma once
 /* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
 
 /* The purpose of this package is to provide safer alternatives to C
-functions that might otherwise be vulnerable to hacking. This
-currently includes a standard suite of validation routines to be sure
+functions that might otherwise be vulnerable to hacking and general
+useful snippets.
+This currently includes a standard suite of validation routines to be sure
 that an string argument actually converts to its intended type and a
 suite of string handling routine that do their own memory management
 in order to resist overflow attacks. In addition, a few functions are
@@ -29,27 +29,22 @@ suite of plugins. */
 
 /* Standardize version information, termination */
 
-void support(void);
-void print_revision(const char *, const char *);
+void mopl_utils_print_revision(const char *, const char *);
 
 /* Test input types */
 
-bool is_integer(char *);
-bool is_intpos(char *);
-bool is_intneg(char *);
-bool is_intnonneg(char *);
-bool is_intpercent(char *);
-bool is_uint64(char *number, uint64_t *target);
-bool is_int64(char *number, int64_t *target);
+bool mopl_utils_is_integer(char *);
+bool mopl_utils_is_intpos(char *);
+bool mopl_utils_is_intnonneg(char *);
+bool mopl_utils_is_intpercent(char *);
+bool mopl_utils_is_uint64(char *number, uint64_t *target);
 
-bool is_numeric(char *);
-bool is_positive(char *);
-bool is_negative(char *);
-bool is_nonnegative(char *);
-bool is_percentage(char *);
-bool is_percentage_expression(const char[]);
+bool mopl_utils_is_numeric(char *);
+bool mopl_utils_is_negative(char *);
+bool mopl_utils_is_nonnegative(char *);
+bool mopl_utils_is_percentage_expression(const char[]);
 
-bool is_option(char *);
+bool mopl_utils_is_option(char *);
 
 /* Generalized timer that will do milliseconds if available */
 #ifndef HAVE_STRUCT_TIMEVAL
@@ -63,44 +58,31 @@ struct timeval {
 int gettimeofday(struct timeval *, struct timezone *);
 #endif
 
-double delta_time(struct timeval tv);
-long deltime(struct timeval tv);
+long mopl_utils_deltime(struct timeval tv);
 
 /* Handle strings safely */
 
-void strip(char *);
-char *strscpy(char *, const char *);
-char *strnl(char *);
-char *strpcpy(char *, const char *, const char *);
-char *strpcat(char *, const char *, const char *);
-int xvasprintf(char **strp, const char *fmt, va_list ap);
-int xasprintf(char **strp, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+void mopl_utils_strip(char *);
+char *mopl_utils_strscpy(char *, const char *);
+char *mopl_utils_strnl(char *);
+int mopl_utils_xvasprintf(char **strp, const char *fmt, va_list ap);
+int mopl_utils_xasprintf(char **strp, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
-void usage(const char *) __attribute__((noreturn));
-void usage2(const char *, const char *) __attribute__((noreturn));
-void usage3(const char *, int) __attribute__((noreturn));
-void usage4(const char *) __attribute__((noreturn));
-void usage5(void) __attribute__((noreturn));
-void usage_va(const char *fmt, ...) __attribute__((noreturn));
+void mopl_utils_usage(const char *) __attribute__((noreturn));
+void mopl_utils_usage2(const char *, const char *) __attribute__((noreturn));
+void mopl_utils_usage3(const char *, int) __attribute__((noreturn));
+void mopl_utils_usage4(const char *) __attribute__((noreturn));
+void mopl_utils_usage5(void) __attribute__((noreturn));
+void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn)) __attribute__((format(printf, 1, 2)));
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-char *perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
+char *mopl_utils_perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
 			   bool, long int);
 
-char *perfdata_uint64(const char *, uint64_t, const char *, bool, uint64_t, bool, uint64_t, bool,
-					  uint64_t, bool, uint64_t);
-
-char *perfdata_int64(const char *, int64_t, const char *, bool, int64_t, bool, int64_t, bool,
-					 int64_t, bool, int64_t);
-
-char *fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
+char *mopl_utils_fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
 				double);
-
-char *sperfdata(const char *, double, const char *, char *, char *, bool, double, bool, double);
-
-char *sperfdata_int(const char *, int, const char *, char *, char *, bool, int, bool, int);
 
 /* The idea here is that, although not every plugin will use all of these,
    most will or should.  Therefore, for consistency, these very common
@@ -225,5 +207,3 @@ For more information about these matters, see the file named COPYING.\n")
 #define DBG_PRINT_1(...) DBG_PRINT(1, 0 __VA_OPT__(, ) __VA_ARGS__);
 #define DBG_PRINT_2(...) DBG_PRINT(2, 0 __VA_OPT__(, ) __VA_ARGS__);
 #define DBG_PRINT_3(...) DBG_PRINT(3, 0 __VA_OPT__(, ) __VA_ARGS__);
-
-#endif /* NP_UTILS_H */

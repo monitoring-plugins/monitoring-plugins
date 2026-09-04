@@ -52,9 +52,9 @@ void mopl_net_socket_timeout_alarm_handler(int sig) {
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 
 	if (sig == SIGALRM) {
-		xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds"), socket_timeout);
+		mopl_utils_xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds"), socket_timeout);
 	} else {
-		xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds"), socket_timeout);
+		mopl_utils_xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds"), socket_timeout);
 	}
 
 	mp_check overall = mp_check_init();
@@ -270,7 +270,7 @@ bool mopl_net_is_host(const char *address) {
 
 void mopl_net_host_or_die(const char *str) {
 	if (!str || (!mopl_net_is_addr(str) && !mopl_net_is_hostname(str))) {
-		usage_va(_("Invalid hostname/address - %s"), str);
+		mopl_utils_usage_va(_("Invalid hostname/address - %s"), str);
 	}
 }
 

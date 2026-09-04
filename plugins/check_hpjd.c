@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 	check_hpjd_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_hpjd_config config = tmp_config.config;
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 			config.address, config.port, query_string);
 
 	/* run the command */
-	child_process = spopen(command_line);
+	child_process = mopl_popen_spopen(command_line);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process)) {
+	if (mopl_popen_spclose(child_process)) {
 		result = max_state(result, STATE_WARNING);
 	}
 
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 	if (line == 0) {
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN;
-		xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, config.address);
+		mopl_utils_xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, config.address);
 	}
 
 	/* if we had no read errors, check the printer status results... */
@@ -306,17 +306,17 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 		switch (option_index) {
 		case 'H': /* hostname */
 			if (mopl_net_is_host(optarg)) {
-				result.config.address = strscpy(result.config.address, optarg);
+				result.config.address = mopl_utils_strscpy(result.config.address, optarg);
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'C': /* community */
-			result.config.community = strscpy(result.config.community, optarg);
+			result.config.community = mopl_utils_strscpy(result.config.community, optarg);
 			break;
 		case 'p':
-			if (!is_intpos(optarg)) {
-				usage2(_("Port must be a positive short integer"), optarg);
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage2(_("Port must be a positive short integer"), optarg);
 			} else {
 				result.config.port = atoi(optarg);
 			}
@@ -325,13 +325,13 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.check_paper_out = false;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -340,7 +340,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 		if (mopl_net_is_host(argv[c])) {
 			result.config.address = argv[c++];
 		} else {
-			usage2(_("Invalid hostname/address"), argv[c]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[c]);
 		}
 	}
 
@@ -356,7 +356,7 @@ check_hpjd_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

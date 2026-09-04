@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
 	check_mysql_query_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_mysql_query_config config = tmp_config.config;
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 	/* establish a connection to the server and error checking */
 	if (!mysql_real_connect(&mysql, config.db_host, config.db_user, config.db_pass, config.db,
 							config.db_port, config.db_socket, 0)) {
-		xasprintf(&sc_connect.output, "query failed: %s", mysql_error(&mysql));
+		mopl_utils_xasprintf(&sc_connect.output, "query failed: %s", mysql_error(&mysql));
 
 		if (mysql_errno(&mysql) == CR_UNKNOWN_HOST) {
 			sc_connect = mp_set_subcheck_state(sc_connect, STATE_WARNING);
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 	}
 
 	sc_connect = mp_set_subcheck_state(sc_connect, STATE_OK);
-	xasprintf(&sc_connect.output, "query succeeded");
+	mopl_utils_xasprintf(&sc_connect.output, "query succeeded");
 	mp_add_subcheck_to_check(&overall, sc_connect);
 
 	if (mysql_query(&mysql, config.sql_query) != 0) {
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 	MYSQL_ROW row;
 	/* fetch the first row */
 	if ((row = mysql_fetch_row(res)) == NULL) {
-		xasprintf(&sc_value.output, "fetch row error - %s", mysql_error(&mysql));
+		mopl_utils_xasprintf(&sc_value.output, "fetch row error - %s", mysql_error(&mysql));
 		mysql_free_result(res);
 		mysql_close(&mysql);
 
@@ -157,8 +157,8 @@ int main(int argc, char **argv) {
 		mp_exit(overall);
 	}
 
-	if (!is_numeric(row[0])) {
-		xasprintf(&sc_value.output, "query result is not numeric");
+	if (!mopl_utils_is_numeric(row[0])) {
+		mopl_utils_xasprintf(&sc_value.output, "query result is not numeric");
 		sc_value = mp_set_subcheck_state(sc_value, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_value);
 		mp_exit(overall);
@@ -184,9 +184,9 @@ int main(int argc, char **argv) {
 
 	sc_value = mp_set_subcheck_state(sc_value, mp_get_pd_status(pd_query_result));
 	if (config.queryname != NULL) {
-		xasprintf(&sc_value.output, "query '%s' returned '%f'", config.queryname, value);
+		mopl_utils_xasprintf(&sc_value.output, "query '%s' returned '%f'", config.queryname, value);
 	} else {
-		xasprintf(&sc_value.output, "query '%s' returned '%f'", config.sql_query, value);
+		mopl_utils_xasprintf(&sc_value.output, "query '%s' returned '%f'", config.sql_query, value);
 	}
 
 	mp_add_subcheck_to_check(&overall, sc_value);
@@ -242,7 +242,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_net_is_host(optarg)) {
 				result.config.db_host = optarg;
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 's': /* socket */
@@ -276,13 +276,13 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'q':
-			xasprintf(&result.config.sql_query, "%s", optarg);
+			mopl_utils_xasprintf(&result.config.sql_query, "%s", optarg);
 			break;
 		case 'w': {
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
@@ -299,7 +299,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.thresholds = mp_thresholds_set_crit(result.config.thresholds, tmp.range);
 		} break;
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
@@ -323,7 +323,7 @@ check_mysql_query_config_wrapper process_arguments(int argc, char **argv) {
 check_mysql_query_config_wrapper
 validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
 	if (config_wrapper.config.sql_query == NULL) {
-		usage("Must specify a SQL query to run");
+		mopl_utils_usage("Must specify a SQL query to run");
 	}
 
 	if (config_wrapper.config.db_user == NULL) {
@@ -343,9 +343,9 @@ validate_arguments(check_mysql_query_config_wrapper config_wrapper) {
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", MYSQL_PORT);
+	mopl_utils_xasprintf(&myport, "%d", MYSQL_PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 

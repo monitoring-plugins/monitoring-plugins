@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_SUCCESS);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(EXIT_SUCCESS);
 			break;
 		case 'u':
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 			break;
 		case '?':
 		default:
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -99,10 +99,10 @@ int main(int argc, char **argv) {
 
 	cmd = strdup(argv[optind++]);
 	for (c = optind; c < argc; c++) {
-		xasprintf(&cmd, "%s %s", cmd, argv[c]);
+		mopl_utils_xasprintf(&cmd, "%s %s", cmd, argv[c]);
 	}
 
-	child_process = spopen(cmd);
+	child_process = mopl_popen_spopen(cmd);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), cmd);
 		exit(STATE_UNKNOWN);
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* close the pipe */
-	result = spclose(child_process);
+	result = mopl_popen_spclose(child_process);
 
 	/* WARNING if output found on stderr */
 	if (fgets(buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf(COPYRIGHT, copyright, email);

@@ -408,7 +408,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	mp_subcheck sc_cert = mp_subcheck_init();
 #	ifdef MOPL_USE_OPENSSL
 	if (!certificate) {
-		xasprintf(&sc_cert.output, _("No server certificate present to inspect"));
+		mopl_utils_xasprintf(&sc_cert.output, _("No server certificate present to inspect"));
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		return sc_cert;
 	}
@@ -417,7 +417,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	X509_NAME *subj = X509_get_subject_name(certificate);
 
 	if (!subj) {
-		xasprintf(&sc_cert.output, _("Cannot retrieve certificate subject"));
+		mopl_utils_xasprintf(&sc_cert.output, _("Cannot retrieve certificate subject"));
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		return sc_cert;
 	}
@@ -432,7 +432,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 	const ASN1_TIME *asn1_not_after = X509_get_notAfter(certificate);
 	time_t expiry_time;
 	if (!mopl_net_asn1_time_to_time_t(asn1_not_after, &expiry_time)) {
-		xasprintf(&sc_cert.output, _("Wrong time format in certificate"));
+		mopl_utils_xasprintf(&sc_cert.output, _("Wrong time format in certificate"));
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		return sc_cert;
 	}
@@ -443,7 +443,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 
 	int time_remaining;
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
-		xasprintf(&sc_cert.output, _("Certificate '%s' expires in %d day(s) (%s)"), commonName,
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %d day(s) (%s)"), commonName,
 				  days_left, timestamp);
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
@@ -457,7 +457,7 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 			time_remaining = (int)time_left / 60;
 		}
 
-		xasprintf(&sc_cert.output, _("Certificate '%s' expires in %u %s (%s)"), commonName,
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %u %s (%s)"), commonName,
 				  time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
 
 		if (days_left > days_till_exp_crit) {
@@ -466,23 +466,23 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		}
 	} else if (time_left < 0) {
-		xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName, timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 	} else if (days_left == 0) {
-		xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName, timestamp);
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 		} else {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		}
 	} else {
-		xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName, timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_OK);
 	}
 	X509_free(certificate);
 	return sc_cert;
 #	else  /* ifndef MOPL_USE_OPENSSL */
-	xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
+	mopl_utils_xasprintf(&sc_cert.output, _("Plugin does not support checking certificates"));
 	sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 	return sc_cert;
 #	endif /* MOPL_USE_OPENSSL */

@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 	check_radius_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_radius_config config = tmp_config.config;
@@ -180,13 +180,13 @@ int main(int argc, char **argv) {
 	if ((config.config_file && my_rc_read_config(config.config_file, &rch)) ||
 		my_rc_read_dictionary(my_rc_conf_str(str))) {
 		sc_read_config = mp_set_subcheck_state(sc_read_config, STATE_UNKNOWN);
-		xasprintf(&sc_read_config.output, "failed to read config file");
+		mopl_utils_xasprintf(&sc_read_config.output, "failed to read config file");
 		mp_add_subcheck_to_check(&overall, sc_read_config);
 		mp_exit(overall);
 	}
 
 	sc_read_config = mp_set_subcheck_state(sc_read_config, STATE_OK);
-	xasprintf(&sc_read_config.output, "read config file successfully");
+	mopl_utils_xasprintf(&sc_read_config.output, "read config file successfully");
 	mp_add_subcheck_to_check(&overall, sc_read_config);
 
 	uint32_t service = PW_AUTHENTICATE_ONLY;
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 	if (!(my_rc_avpair_add(&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, config.username, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_PASSWORD, config.password, 0))) {
-		xasprintf(&sc_configuring.output, "Failed to the radius options: Out of Memory?");
+		mopl_utils_xasprintf(&sc_configuring.output, "Failed to the radius options: Out of Memory?");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
 		mp_exit(overall);
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
 	if (config.nas_id != NULL) {
 		if (!(my_rc_avpair_add(&data.send_pairs, PW_NAS_IDENTIFIER, config.nas_id, 0))) {
-			xasprintf(&sc_configuring.output,
+			mopl_utils_xasprintf(&sc_configuring.output,
 					  "Failed to the radius options: invalid NAS identifier?");
 			sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 			mp_add_subcheck_to_check(&overall, sc_configuring);
@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
 	char name[HOST_NAME_MAX];
 	if (config.nas_ip_address == NULL) {
 		if (gethostname(name, sizeof(name)) != 0) {
-			xasprintf(&sc_configuring.output, "gethostname() failed");
+			mopl_utils_xasprintf(&sc_configuring.output, "gethostname() failed");
 			sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 			mp_add_subcheck_to_check(&overall, sc_configuring);
 			mp_exit(overall);
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
 
 	struct sockaddr_storage radius_server_socket;
 	if (!mopl_net_dns_lookup(config.nas_ip_address, &radius_server_socket, AF_UNSPEC)) {
-		xasprintf(&sc_configuring.output, "invalid NAS IP address. Lookup failed");
+		mopl_utils_xasprintf(&sc_configuring.output, "invalid NAS IP address. Lookup failed");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
 		mp_exit(overall);
@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
 
 	uint32_t client_id = ntohl(((struct sockaddr_in *)&radius_server_socket)->sin_addr.s_addr);
 	if (my_rc_avpair_add(&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL) {
-		xasprintf(&sc_configuring.output, "invalid NAS IP address. Setting option failed");
+		mopl_utils_xasprintf(&sc_configuring.output, "invalid NAS IP address. Setting option failed");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
 		mp_exit(overall);
@@ -258,48 +258,48 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_eval = mp_subcheck_init();
 
 	if (result == TIMEOUT_RC) {
-		xasprintf(&sc_eval.output, "timeout");
+		mopl_utils_xasprintf(&sc_eval.output, "timeout");
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
 	if (result == ERROR_RC) {
-		xasprintf(&sc_eval.output, "auth error");
+		mopl_utils_xasprintf(&sc_eval.output, "auth error");
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
 	if (result == REJECT_RC) {
-		xasprintf(&sc_eval.output, "auth failed");
+		mopl_utils_xasprintf(&sc_eval.output, "auth failed");
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
 	if (result == BADRESP_RC) {
-		xasprintf(&sc_eval.output, "bad response");
+		mopl_utils_xasprintf(&sc_eval.output, "bad response");
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
 	if (config.expect && !strstr(msg, config.expect)) {
-		xasprintf(&sc_eval.output, "%s", msg);
+		mopl_utils_xasprintf(&sc_eval.output, "%s", msg);
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
 	if (result == OK_RC) {
-		xasprintf(&sc_eval.output, "auth OK");
+		mopl_utils_xasprintf(&sc_eval.output, "auth OK");
 		sc_eval = mp_set_subcheck_state(sc_eval, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_eval);
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_eval.output, "unexpected result code: %d", result);
+	mopl_utils_xasprintf(&sc_eval.output, "unexpected result code: %d", result);
 	sc_eval = mp_set_subcheck_state(sc_eval, STATE_UNKNOWN);
 	mp_add_subcheck_to_check(&overall, sc_eval);
 
@@ -343,27 +343,27 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbose = true;
 			break;
 		case 'H': /* hostname */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server = optarg;
 			break;
 		case 'P': /* port */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.port = (unsigned short)atoi(optarg);
 			} else {
-				usage4(_("Port must be a positive integer"));
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'u': /* username */
@@ -391,17 +391,17 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.expect = optarg;
 			break;
 		case 'r': /* retries */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.retries = atoi(optarg);
 			} else {
-				usage4(_("Number of retries must be a positive integer"));
+				mopl_utils_usage4(_("Number of retries must be a positive integer"));
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				timeout_interval = (unsigned)atoi(optarg);
 			} else {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			}
 			break;
 		case output_format_index: {
@@ -420,16 +420,16 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.server == NULL) {
-		usage4(_("Hostname was not supplied"));
+		mopl_utils_usage4(_("Hostname was not supplied"));
 	}
 	if (result.config.username == NULL) {
-		usage4(_("User not specified"));
+		mopl_utils_usage4(_("User not specified"));
 	}
 	if (result.config.password == NULL) {
-		usage4(_("Password not specified"));
+		mopl_utils_usage4(_("Password not specified"));
 	}
 	if (result.config.config_file == NULL) {
-		usage4(_("Configuration file not specified"));
+		mopl_utils_usage4(_("Configuration file not specified"));
 	}
 
 	return result;
@@ -437,9 +437,9 @@ check_radius_config_wrapper process_arguments(int argc, char **argv) {
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", PW_AUTH_UDP_PORT);
+	mopl_utils_xasprintf(&myport, "%d", PW_AUTH_UDP_PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Robert August Vincent II\n");
 	printf(COPYRIGHT, copyright, email);

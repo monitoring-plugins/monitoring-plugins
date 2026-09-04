@@ -85,7 +85,7 @@ static int verbose = 0;
 
 static int stat_exe(const pid_t pid, struct stat *buf) {
 	char *path;
-	xasprintf(&path, "/proc/%d/exe", pid);
+	mopl_utils_xasprintf(&path, "/proc/%d/exe", pid);
 	int ret = stat(path, buf);
 	free(path);
 	return ret;
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
 	check_procs_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_procs_config config = tmp_config.config;
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 
 		strcpy(procprog, "");
 		char *procargs;
-		xasprintf(&procargs, "%s", "");
+		mopl_utils_xasprintf(&procargs, "%s", "");
 
 		/* number of columns in ps output */
 		int cols = sscanf(input_line, PS_FORMAT, PS_VARLIST);
@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
 		}
 		if (cols >= expected_cols) {
 			resultsum = 0;
-			xasprintf(&procargs, "%s", input_line + pos);
-			strip(procargs);
+			mopl_utils_xasprintf(&procargs, "%s", input_line + pos);
+			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */
 			strcpy(procprog, base_name(procprog));
@@ -325,13 +325,13 @@ int main(int argc, char **argv) {
 			if (config.metric != METRIC_PROCS) {
 				if (temporary_result == STATE_WARNING) {
 					warn++;
-					xasprintf(&config.fails, "%s%s%s", config.fails,
+					mopl_utils_xasprintf(&config.fails, "%s%s%s", config.fails,
 							  (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
 				if (temporary_result == STATE_CRITICAL) {
 					crit++;
-					xasprintf(&config.fails, "%s%s%s", config.fails,
+					mopl_utils_xasprintf(&config.fails, "%s%s%s", config.fails,
 							  (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
@@ -438,16 +438,16 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = atoi(optarg);
 			}
@@ -461,13 +461,13 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		case 'p': { /* process id */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.ppid, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sPPID = %d",
+				mopl_utils_xasprintf(&result.config.fmt, "%s%sPPID = %d",
 						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.ppid);
 				result.config.options |= PPID;
 				break;
 			}
-			usage4(_("Parent Process ID must be an integer!"));
+			mopl_utils_usage4(_("Parent Process ID must be an integer!"));
 		}
 		case 's': /* status */
 			if (result.config.statopts) {
@@ -475,32 +475,32 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.statopts = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
+			mopl_utils_xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.statopts);
 			result.config.options |= STAT;
 			break;
 		case 'u': /* user or user id */ {
 			struct passwd *pw;
-			if (is_integer(optarg)) {
+			if (mopl_utils_is_integer(optarg)) {
 				result.config.uid = atoi(optarg);
 				pw = getpwuid(result.config.uid);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					usage2(_("UID was not found"), optarg);
+					mopl_utils_usage2(_("UID was not found"), optarg);
 				}
 			} else {
 				pw = getpwnam(optarg);
 				/*  check to be sure user exists */
 				if (pw == NULL) {
-					usage2(_("User name was not found"), optarg);
+					mopl_utils_usage2(_("User name was not found"), optarg);
 				}
 				/*  then get uid */
 				result.config.uid = pw->pw_uid;
 			}
 
 			char *user = pw->pw_name;
-			xasprintf(&result.config.fmt, "%s%sUID = %d (%s)",
+			mopl_utils_xasprintf(&result.config.fmt, "%s%sUID = %d (%s)",
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.uid, user);
 			result.config.options |= USER;
@@ -512,7 +512,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.prog = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%scommand name '%s'"),
+			mopl_utils_xasprintf(&result.config.fmt, _("%s%scommand name '%s'"),
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.prog);
 			result.config.options |= PROG;
@@ -523,7 +523,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.exclude_progs = optarg;
 			}
-			xasprintf(&result.config.fmt, _("%s%sexclude progs '%s'"),
+			mopl_utils_xasprintf(&result.config.fmt, _("%s%sexclude progs '%s'"),
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.exclude_progs);
 			char *tmp_pointer = strtok(result.config.exclude_progs, ",");
@@ -546,7 +546,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			} else {
 				result.config.args = optarg;
 			}
-			xasprintf(&result.config.fmt, "%s%sargs '%s'",
+			mopl_utils_xasprintf(&result.config.fmt, "%s%sargs '%s'",
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), result.config.args);
 			result.config.options |= ARGS;
@@ -569,7 +569,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				}
 				index++;
 			}
-			xasprintf(&result.config.fmt, "%s%sregex args '%s'",
+			mopl_utils_xasprintf(&result.config.fmt, "%s%sregex args '%s'",
 					  (result.config.fmt ? result.config.fmt : ""),
 					  (result.config.options ? ", " : ""), temp_string);
 			result.config.options |= EREG_ARGS;
@@ -577,39 +577,39 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		case 'r': { /* RSS */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.rss, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sRSS >= %d",
+				mopl_utils_xasprintf(&result.config.fmt, "%s%sRSS >= %d",
 						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.rss);
 				result.config.options |= RSS;
 				break;
 			}
-			usage4(_("RSS must be an integer!"));
+			mopl_utils_usage4(_("RSS must be an integer!"));
 		}
 		case 'z': { /* VSZ */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.vsz, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sVSZ >= %d",
+				mopl_utils_xasprintf(&result.config.fmt, "%s%sVSZ >= %d",
 						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.vsz);
 				result.config.options |= VSZ;
 				break;
 			}
-			usage4(_("VSZ must be an integer!"));
+			mopl_utils_usage4(_("VSZ must be an integer!"));
 		}
 		case 'P': { /* PCPU */
 			/* TODO: -P 1.5.5 is accepted */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%f%[^0-9.]", &result.config.pcpu, tmp) == 1) {
-				xasprintf(&result.config.fmt, "%s%sPCPU >= %.2f",
+				mopl_utils_xasprintf(&result.config.fmt, "%s%sPCPU >= %.2f",
 						  (result.config.fmt ? result.config.fmt : ""),
 						  (result.config.options ? ", " : ""), result.config.pcpu);
 				result.config.options |= PCPU;
 				break;
 			}
-			usage4(_("PCPU must be a float!"));
+			mopl_utils_usage4(_("PCPU must be a float!"));
 		}
 		case 'm':
-			xasprintf(&result.config.metric_name, "%s", optarg);
+			mopl_utils_xasprintf(&result.config.metric_name, "%s", optarg);
 			if (strcmp(optarg, "PROCS") == 0) {
 				result.config.metric = METRIC_PROCS;
 				break;
@@ -631,7 +631,7 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			}
 
-			usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
+			mopl_utils_usage4(_("Metric must be one of PROCS, VSZ, RSS, CPU, ELAPSED!"));
 		case 'k': /* linux kernel thread filter */
 			result.config.kthread_filter = true;
 			break;
@@ -655,8 +655,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 		result.config.critical_range = argv[index++];
 	}
 	if (result.config.statopts == NULL && argv[index]) {
-		xasprintf(&result.config.statopts, "%s", argv[index++]);
-		xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
+		mopl_utils_xasprintf(&result.config.statopts, "%s", argv[index++]);
+		mopl_utils_xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
 				  (result.config.fmt ? result.config.fmt : ""), (result.config.options ? ", " : ""),
 				  result.config.statopts);
 		result.config.options |= STAT;
@@ -742,7 +742,7 @@ int convert_to_seconds(char *etime, enum metric metric) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

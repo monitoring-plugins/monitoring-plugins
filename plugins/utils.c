@@ -40,13 +40,13 @@ extern const char *progname;
 #define STRLEN 64
 #define TXTBLK 128
 
-void usage(const char *msg) {
+void mopl_utils_usage(const char *msg) {
 	printf("%s\n", msg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage_va(const char *fmt, ...) {
+void mopl_utils_usage_va(const char *fmt, ...) {
 	va_list ap;
 	printf("%s: ", progname);
 	va_start(ap, fmt);
@@ -56,34 +56,34 @@ void usage_va(const char *fmt, ...) {
 	exit(STATE_UNKNOWN);
 }
 
-void usage2(const char *msg, const char *arg) {
+void mopl_utils_usage2(const char *msg, const char *arg) {
 	printf("%s: %s - %s\n", progname, msg, arg ? arg : "(null)");
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage3(const char *msg, int arg) {
+void mopl_utils_usage3(const char *msg, int arg) {
 	printf("%s: %s - %c\n", progname, msg, arg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage4(const char *msg) {
+void mopl_utils_usage4(const char *msg) {
 	printf("%s: %s\n", progname, msg);
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void usage5(void) {
+void mopl_utils_usage5(void) {
 	print_usage();
 	exit(STATE_UNKNOWN);
 }
 
-void print_revision(const char *command_name, const char *revision) {
+void mopl_utils_print_revision(const char *command_name, const char *revision) {
 	printf("%s v%s (%s %s)\n", command_name, revision, PACKAGE, VERSION);
 }
 
-bool is_numeric(char *number) {
+bool mopl_utils_is_numeric(char *number) {
 	char tmp[1];
 	float x;
 
@@ -96,40 +96,23 @@ bool is_numeric(char *number) {
 	}
 }
 
-bool is_positive(char *number) {
-	if (is_numeric(number) && atof(number) > 0.0) {
+bool mopl_utils_is_negative(char *number) {
+	if (mopl_utils_is_numeric(number) && atof(number) < 0.0) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool is_negative(char *number) {
-	if (is_numeric(number) && atof(number) < 0.0) {
+bool mopl_utils_is_nonnegative(char *number) {
+	if (mopl_utils_is_numeric(number) && atof(number) >= 0.0) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool is_nonnegative(char *number) {
-	if (is_numeric(number) && atof(number) >= 0.0) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-bool is_percentage(char *number) {
-	int x;
-	if (is_numeric(number) && (x = atof(number)) >= 0 && x <= 100) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-bool is_percentage_expression(const char str[]) {
+bool mopl_utils_is_percentage_expression(const char str[]) {
 	if (!str) {
 		return false;
 	}
@@ -149,14 +132,14 @@ bool is_percentage_expression(const char str[]) {
 	strcpy(foo, str);
 	foo[len - 1] = '\0';
 
-	bool result = is_numeric(foo);
+	bool result = mopl_utils_is_numeric(foo);
 
 	free(foo);
 
 	return result;
 }
 
-bool is_integer(char *number) {
+bool mopl_utils_is_integer(char *number) {
 	long int n;
 
 	if (!number || (strspn(number, "-0123456789 ") != strlen(number))) {
@@ -172,56 +155,20 @@ bool is_integer(char *number) {
 	}
 }
 
-bool is_intpos(char *number) {
-	if (is_integer(number) && atoi(number) > 0) {
+bool mopl_utils_is_intpos(char *number) {
+	if (mopl_utils_is_integer(number) && atoi(number) > 0) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool is_intneg(char *number) {
-	if (is_integer(number) && atoi(number) < 0) {
+bool mopl_utils_is_intnonneg(char *number) {
+	if (mopl_utils_is_integer(number) && atoi(number) >= 0) {
 		return true;
 	} else {
 		return false;
 	}
-}
-
-bool is_intnonneg(char *number) {
-	if (is_integer(number) && atoi(number) >= 0) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-/*
- * Checks whether the number in the string _number_ can be put inside a int64_t
- * On success the number will be written to the _target_ address, if _target_ is not set
- * to NULL.
- */
-bool is_int64(char *number, int64_t *target) {
-	errno = 0;
-	char *endptr = {0};
-
-	int64_t tmp = strtoll(number, &endptr, 10);
-	if (errno != 0) {
-		return false;
-	}
-
-	if (*endptr == '\0') {
-		return 0;
-	}
-
-	if (tmp < INT64_MIN || tmp > INT64_MAX) {
-		return false;
-	}
-
-	if (target != NULL) {
-		*target = tmp;
-	}
-	return true;
 }
 
 /*
@@ -229,7 +176,7 @@ bool is_int64(char *number, int64_t *target) {
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-bool is_uint64(char *number, uint64_t *target) {
+bool mopl_utils_is_uint64(char *number, uint64_t *target) {
 	errno = 0;
 	char *endptr = {0};
 	unsigned long long tmp = strtoull(number, &endptr, 10);
@@ -253,16 +200,16 @@ bool is_uint64(char *number, uint64_t *target) {
 	return true;
 }
 
-bool is_intpercent(char *number) {
+bool mopl_utils_is_intpercent(char *number) {
 	int i;
-	if (is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
+	if (mopl_utils_is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool is_option(char *str) {
+bool mopl_utils_is_option(char *str) {
 	if (!str) {
 		return false;
 	} else if (strspn(str, "-") == 1 || strspn(str, "-") == 2) {
@@ -279,21 +226,13 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 #endif
 
-double delta_time(struct timeval tv) {
-	struct timeval now;
-
-	gettimeofday(&now, NULL);
-	return ((double)(now.tv_sec - tv.tv_sec) +
-			(double)(now.tv_usec - tv.tv_usec) / (double)1000000);
-}
-
-long deltime(struct timeval tv) {
+long mopl_utils_deltime(struct timeval tv) {
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	return (now.tv_sec - tv.tv_sec) * 1000000 + now.tv_usec - tv.tv_usec;
 }
 
-void strip(char *buffer) {
+void mopl_utils_strip(char *buffer) {
 	size_t x;
 	int i;
 
@@ -320,12 +259,12 @@ void strip(char *buffer) {
  *
  *****************************************************************************/
 
-char *strscpy(char *dest, const char *src) {
+char *mopl_utils_strscpy(char *dest, const char *src) {
 	if (src == NULL) {
 		return NULL;
 	}
 
-	xasprintf(&dest, "%s", src);
+	mopl_utils_xasprintf(&dest, "%s", src);
 
 	return dest;
 }
@@ -357,7 +296,7 @@ char *strscpy(char *dest, const char *src) {
  * ptr = str;
  * while (ptr) {
  *   printf("%d %s",i++,firstword(ptr));
- *   ptr = strnl(ptr);
+ *   ptr = mopl_utils_strnl(ptr);
  * }
  *
  * Produces the following:
@@ -380,7 +319,7 @@ char *strscpy(char *dest, const char *src) {
  *
  *****************************************************************************/
 
-char *strnl(char *str) {
+char *mopl_utils_strnl(char *str) {
 	size_t len;
 	if (str == NULL) {
 		return NULL;
@@ -402,88 +341,11 @@ char *strnl(char *str) {
 
 /******************************************************************************
  *
- * Like strscpy, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * Example:
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- * Produces:
- *
- *This is a line of te
- *
- *****************************************************************************/
-
-char *strpcpy(char *dest, const char *src, const char *str) {
-	size_t len;
-
-	if (src) {
-		len = strcspn(src, str);
-	} else {
-		return NULL;
-	}
-
-	if (dest == NULL || strlen(dest) < len) {
-		dest = realloc(dest, len + 1);
-	}
-	if (dest == NULL) {
-		die(STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
-	}
-
-	strncpy(dest, src, len);
-	dest[len] = '\0';
-
-	return dest;
-}
-
-/******************************************************************************
- *
- * Like strscat, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * str = strpcat(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- *This is a line of texThis is a line of tex
- *
- *****************************************************************************/
-
-char *strpcat(char *dest, const char *src, const char *str) {
-	size_t len, l2;
-
-	if (dest) {
-		len = strlen(dest);
-	} else {
-		len = 0;
-	}
-
-	if (src) {
-		l2 = strcspn(src, str);
-	} else {
-		return dest;
-	}
-
-	dest = realloc(dest, len + l2 + 1);
-	if (dest == NULL) {
-		die(STATE_UNKNOWN, _("failed malloc in strscat\n"));
-	}
-
-	strncpy(dest + len, src, l2);
-	dest[len + l2] = '\0';
-
-	return dest;
-}
-
-/******************************************************************************
- *
  * asprintf, but die on failure
  *
  ******************************************************************************/
 
-int xvasprintf(char **strp, const char *fmt, va_list ap) {
+int mopl_utils_xvasprintf(char **strp, const char *fmt, va_list ap) {
 	int result = vasprintf(strp, fmt, ap);
 	if (result == -1 || *strp == NULL) {
 		die(STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
@@ -491,11 +353,11 @@ int xvasprintf(char **strp, const char *fmt, va_list ap) {
 	return result;
 }
 
-int xasprintf(char **strp, const char *fmt, ...) {
+int mopl_utils_xasprintf(char **strp, const char *fmt, ...) {
 	va_list ap;
 	int result;
 	va_start(ap, fmt);
-	result = xvasprintf(strp, fmt, ap);
+	result = mopl_utils_xvasprintf(strp, fmt, ap);
 	va_end(ap);
 	return result;
 }
@@ -506,223 +368,73 @@ int xasprintf(char **strp, const char *fmt, ...) {
  *
  ******************************************************************************/
 
-char *perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn,
+char *mopl_utils_perfdata(const char *label, long int val, const char *uom, bool warnp, long int warn,
 			   bool critp, long int crit, bool minp, long int minv, bool maxp, long int maxv) {
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%ld%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "'%s'=%ld%s;", label, val, uom);
 	} else {
-		xasprintf(&data, "%s=%ld%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "%s=%ld%s;", label, val, uom);
 	}
 
 	if (warnp) {
-		xasprintf(&data, "%s%ld;", data, warn);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, warn);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (critp) {
-		xasprintf(&data, "%s%ld;", data, crit);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, crit);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (minp) {
-		xasprintf(&data, "%s%ld;", data, minv);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, minv);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s%ld", data, maxv);
+		mopl_utils_xasprintf(&data, "%s%ld", data, maxv);
 	}
 
 	return data;
 }
 
-char *perfdata_uint64(const char *label, uint64_t val, const char *uom,
-					  bool warnp,                /* Warning present */
-					  uint64_t warn, bool critp, /* Critical present */
-					  uint64_t crit, bool minp,  /* Minimum present */
-					  uint64_t minv, bool maxp,  /* Maximum present */
-					  uint64_t maxv) {
-	char *data = NULL;
-
-	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
-	} else {
-		xasprintf(&data, "%s=%" PRIu64 "%s;", label, val, uom);
-	}
-
-	if (warnp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, warn);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (critp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, crit);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (minp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, minv);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (maxp) {
-		xasprintf(&data, "%s%" PRIu64, data, maxv);
-	}
-
-	return data;
-}
-
-char *perfdata_int64(const char *label, int64_t val, const char *uom,
-					 bool warnp,               /* Warning present */
-					 int64_t warn, bool critp, /* Critical present */
-					 int64_t crit, bool minp,  /* Minimum present */
-					 int64_t minv, bool maxp,  /* Maximum present */
-					 int64_t maxv) {
-	char *data = NULL;
-
-	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%" PRId64 "%s;", label, val, uom);
-	} else {
-		xasprintf(&data, "%s=%" PRId64 "%s;", label, val, uom);
-	}
-
-	if (warnp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, warn);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (critp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, crit);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (minp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, minv);
-	} else {
-		xasprintf(&data, "%s;", data);
-	}
-
-	if (maxp) {
-		xasprintf(&data, "%s%" PRId64, data, maxv);
-	}
-
-	return data;
-}
-
-char *fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp,
+char *mopl_utils_fperfdata(const char *label, double val, const char *uom, bool warnp, double warn, bool critp,
 				double crit, bool minp, double minv, bool maxp, double maxv) {
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
+		mopl_utils_xasprintf(&data, "'%s'=", label);
 	} else {
-		xasprintf(&data, "%s=", label);
+		mopl_utils_xasprintf(&data, "%s=", label);
 	}
 
-	xasprintf(&data, "%s%f", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
+	mopl_utils_xasprintf(&data, "%s%f", data, val);
+	mopl_utils_xasprintf(&data, "%s%s;", data, uom);
 
 	if (warnp) {
-		xasprintf(&data, "%s%f", data, warn);
+		mopl_utils_xasprintf(&data, "%s%f", data, warn);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (critp) {
-		xasprintf(&data, "%s%f", data, crit);
+		mopl_utils_xasprintf(&data, "%s%f", data, crit);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (minp) {
-		xasprintf(&data, "%s%f", data, minv);
+		mopl_utils_xasprintf(&data, "%s%f", data, minv);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%f", data, maxv);
-	}
-
-	return data;
-}
-
-char *sperfdata(const char *label, double val, const char *uom, char *warn, char *crit, bool minp,
-				double minv, bool maxp, double maxv) {
-	char *data = NULL;
-	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
-	} else {
-		xasprintf(&data, "%s=", label);
-	}
-
-	xasprintf(&data, "%s%f", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
-
-	if (warn != NULL) {
-		xasprintf(&data, "%s%s", data, warn);
-	}
-
-	xasprintf(&data, "%s;", data);
-
-	if (crit != NULL) {
-		xasprintf(&data, "%s%s", data, crit);
-	}
-
-	xasprintf(&data, "%s;", data);
-
-	if (minp) {
-		xasprintf(&data, "%s%f", data, minv);
-	}
-
-	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%f", data, maxv);
-	}
-
-	return data;
-}
-
-char *sperfdata_int(const char *label, int val, const char *uom, char *warn, char *crit, bool minp,
-					int minv, bool maxp, int maxv) {
-	char *data = NULL;
-	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
-	} else {
-		xasprintf(&data, "%s=", label);
-	}
-
-	xasprintf(&data, "%s%d", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
-
-	if (warn != NULL) {
-		xasprintf(&data, "%s%s", data, warn);
-	}
-
-	xasprintf(&data, "%s;", data);
-
-	if (crit != NULL) {
-		xasprintf(&data, "%s%s", data, crit);
-	}
-
-	xasprintf(&data, "%s;", data);
-
-	if (minp) {
-		xasprintf(&data, "%s%d", data, minv);
-	}
-
-	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%d", data, maxv);
+		mopl_utils_xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s%f", data, maxv);
 	}
 
 	return data;

@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* Parse extra opts if any */
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
 	check_dig_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_dig_config config = tmp_config.config;
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
 	char *command_line;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG,
+	mopl_utils_xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG,
 			  config.dig_args, config.query_transport, config.server_port, config.dns_server,
 			  config.query_address, config.record_type, config.number_tries, timeout_interval_dig);
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 
 	/* run the command */
-	if (np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
+	if (mopl_utils_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
 		result = STATE_WARNING;
 		msg = (char *)_("dig returned an error status");
 	}
@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	if (config.critical_interval > UNDEFINED && elapsed_time > config.critical_interval) {
@@ -210,11 +210,11 @@ int main(int argc, char **argv) {
 				if (!flag_list_contains(&dig_flags, config.require_flags.items[r])) {
 					result = STATE_CRITICAL;
 					if (!msg) {
-						xasprintf(&msg, _("Missing required DNS flag: %s"),
+						mopl_utils_xasprintf(&msg, _("Missing required DNS flag: %s"),
 								  config.require_flags.items[r]);
 					} else {
 						char *newmsg = NULL;
-						xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
+						mopl_utils_xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
 								  config.require_flags.items[r]);
 						msg = newmsg;
 					}
@@ -225,11 +225,11 @@ int main(int argc, char **argv) {
 				if (flag_list_contains(&dig_flags, config.forbid_flags.items[r])) {
 					result = STATE_CRITICAL;
 					if (!msg) {
-						xasprintf(&msg, _("Forbidden DNS flag present: %s"),
+						mopl_utils_xasprintf(&msg, _("Forbidden DNS flag present: %s"),
 								  config.forbid_flags.items[r]);
 					} else {
 						char *newmsg = NULL;
-						xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
+						mopl_utils_xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
 								  config.forbid_flags.items[r]);
 						msg = newmsg;
 					}
@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 
 	printf("DNS %s - %.3f seconds response time (%s)|%s\n", state_text(result), elapsed_time,
 		   msg ? msg : _("Probably a non-existent host/domain"),
-		   fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
+		   mopl_utils_fperfdata("time", elapsed_time, "s", (config.warning_interval > UNDEFINED),
 					 config.warning_interval, (config.critical_interval > UNDEFINED),
 					 config.critical_interval, true, 0, false, 0));
 	exit(result);
@@ -293,41 +293,41 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
 			mopl_net_host_or_die(optarg);
 			result.config.dns_server = optarg;
 			break;
 		case 'p': /* server port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
-				usage_va(_("Port must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Port must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'l': /* address to lookup */
 			result.config.query_address = optarg;
 			break;
 		case 'w': /* warning */
-			if (is_nonnegative(optarg)) {
+			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.warning_interval = strtod(optarg, NULL);
 			} else {
-				usage_va(_("Warning interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Warning interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'c': /* critical */
-			if (is_nonnegative(optarg)) {
+			if (mopl_utils_is_nonnegative(optarg)) {
 				result.config.critical_interval = strtod(optarg, NULL);
 			} else {
-				usage_va(_("Critical interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Critical interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
-				usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
+				mopl_utils_usage_va(_("Timeout interval must be a positive integer - %s"), optarg);
 			}
 			break;
 		case 'A': /* dig arguments */
@@ -355,7 +355,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.query_transport = "-6";
 			break;
 		default: /* usage5 */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -386,9 +386,9 @@ check_dig_config_wrapper validate_arguments(check_dig_config_wrapper config_wrap
 void print_help(void) {
 	char *myport;
 
-	xasprintf(&myport, "%d", DEFAULT_PORT);
+	mopl_utils_xasprintf(&myport, "%d", DEFAULT_PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 2000 Karl DeBisschop <kdebisschop@users.sourceforge.net>\n");
 	printf(COPYRIGHT, copyright, email);

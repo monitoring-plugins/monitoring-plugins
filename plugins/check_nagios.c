@@ -63,14 +63,14 @@ int main(int argc, char **argv) {
 	check_nagios_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_nagios_config config = tmp_config.config;
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully... */
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 	output chld_out;
 	output chld_err;
-	if ((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
+	if ((result = mopl_utils_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
 		result = STATE_WARNING;
 	}
 
@@ -143,8 +143,8 @@ int main(int argc, char **argv) {
 			chld_out.line[i][pos + 1] = 0x0;
 		}
 		if (cols >= expected_cols) {
-			xasprintf(&procargs, "%s", chld_out.line[i] + pos);
-			strip(procargs);
+			mopl_utils_xasprintf(&procargs, "%s", chld_out.line[i] + pos);
+			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */
 			char *temp_string = strtok((char *)procprog, "/");
@@ -218,9 +218,9 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 		return result;
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		result.config.status_log = argv[1];
-		if (is_intnonneg(argv[2])) {
+		if (mopl_utils_is_intnonneg(argv[2])) {
 			result.config.expire_minutes = atoi(argv[2]);
 		} else {
 			die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
@@ -242,7 +242,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'F': /* status log */
 			result.config.status_log = optarg;
@@ -251,14 +251,14 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.process_string = optarg;
 			break;
 		case 'e': /* expiry time */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.expire_minutes = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Timeout must be an integer (seconds)\n"));
@@ -268,7 +268,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		default: /* print short usage_va statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -284,7 +284,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 

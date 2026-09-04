@@ -164,7 +164,7 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 		printf(_("Format: %s\n"), swap_format);
 	}
 
-	child_process = spopen(swap_command);
+	child_process = mopl_popen_spopen(swap_command);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), swap_command);
 		swap_result tmp = {
@@ -256,7 +256,7 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process)) {
+	if (mopl_popen_spclose(child_process)) {
 		result.statusCode = max_state(result.statusCode, STATE_WARNING);
 		// TODO set error here
 	}

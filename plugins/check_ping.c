@@ -78,14 +78,14 @@ int main(int argc, char **argv) {
 
 	check_ping_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_ping_config config = tmp_config.config;
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+	if (signal(SIGALRM, mopl_popen_popen_timeout_alarm_handler) == SIG_ERR) {
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	/* If ./configure finds ping has timeout values, set plugin alarm slightly
@@ -114,12 +114,12 @@ int main(int argc, char **argv) {
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 #	ifdef PING_HAS_TIMEOUT
-		xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
+		mopl_utils_xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
 #	else
-		xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
+		mopl_utils_xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
 #	endif
 #else
-		xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
+		mopl_utils_xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
 #endif
 
 		if (verbose >= 2) {
@@ -162,14 +162,14 @@ int main(int argc, char **argv) {
 		/* Print performance data */
 		if (pinged.packet_loss != 100) {
 			printf("|%s",
-				   fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
+				   mopl_utils_fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
 							 config.wrta, (bool)(config.crta > 0), config.crta, true, 0, false, 0));
 		} else {
 			printf("| rta=U;%f;%f;;", config.wrta, config.crta);
 		}
 
 		printf(" %s\n",
-			   perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
+			   mopl_utils_perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
 						(bool)(config.cpl > 0), config.cpl, true, 0, false, 0));
 
 		if (verbose >= 2) {
@@ -224,13 +224,13 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 			break;
 		case 't': /* timeout period */
@@ -267,10 +267,10 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 			}
 		} break;
 		case 'p': /* number of packets to send */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.max_packets = atoi(optarg);
 			} else {
-				usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
+				mopl_utils_usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			}
 			break;
 		case 'n': /* no HTML */
@@ -295,7 +295,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (result.config.addresses[0] == NULL) {
 		if (!mopl_net_is_host(argv[arg_counter])) {
-			usage2(_("Invalid hostname/address"), argv[arg_counter]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[arg_counter]);
 		} else {
 			result.config.addresses[0] = argv[arg_counter++];
 			result.config.n_addresses++;
@@ -306,7 +306,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<wpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -318,7 +318,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.cpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<cpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -330,7 +330,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wrta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<wrta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -342,7 +342,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.crta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<crta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -354,7 +354,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.max_packets == -1) {
-		if (is_intnonneg(argv[arg_counter])) {
+		if (mopl_utils_is_intnonneg(argv[arg_counter])) {
 			result.config.max_packets = atoi(argv[arg_counter++]);
 		} else {
 			printf(_("<max_packets> (%s) must be a non-negative number\n"), argv[arg_counter]);
@@ -367,7 +367,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 int get_threshold(char *arg, double *trta, int *tpl) {
-	if (is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
+	if (mopl_utils_is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
 		return OK;
 	}
 
@@ -379,7 +379,7 @@ int get_threshold(char *arg, double *trta, int *tpl) {
 		return OK;
 	}
 
-	usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
+	mopl_utils_usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
 	return STATE_UNKNOWN;
 }
 
@@ -434,19 +434,19 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 
 	for (size_t i = 0; i < config_wrapper.config.n_addresses; i++) {
 		if (!mopl_net_is_host(config_wrapper.config.addresses[i])) {
-			usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
+			mopl_utils_usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
 		}
 	}
 
 	if (config_wrapper.config.n_addresses == 0) {
-		usage(_("You must specify a server address or host name"));
+		mopl_utils_usage(_("You must specify a server address or host name"));
 	}
 
 	return config_wrapper;
 }
 
 ping_result run_ping(const char *cmd, const char *addr, double crta) {
-	if ((child_process = spopen(cmd)) == NULL) {
+	if ((child_process = mopl_popen_spopen(cmd)) == NULL) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 	}
 
@@ -559,7 +559,7 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					xasprintf(&warn_text, "%s %s", warn_text,
+					mopl_utils_xasprintf(&warn_text, "%s %s", warn_text,
 							  _("System call sent warnings to stderr "));
 				}
 			}
@@ -568,7 +568,7 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 
 	(void)fclose(child_stderr);
 
-	spclose(child_process);
+	mopl_popen_spclose(child_process);
 
 	if (warn_text == NULL) {
 		warn_text = strdup("");
@@ -605,7 +605,7 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 		if (warn_text == NULL) {
 			warn_text = strdup(_(WARN_DUPLICATES));
 		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) &&
-				   xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
+				   mopl_utils_xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
 			die(STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		}
 		return STATE_WARNING;
@@ -615,7 +615,7 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

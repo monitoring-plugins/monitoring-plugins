@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 	process_arguments_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__
@@ -154,9 +154,9 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -165,8 +165,8 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout period */
-			if (!is_intpos(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = (unsigned int)atoi(optarg);
 			}
@@ -185,15 +185,15 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'H': /* host */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.port = atoi(optarg);
 			} else {
-				usage2(_("Port number must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Port number must be a positive integer"), optarg);
 			}
 			break;
 		case output_format_index: {
@@ -219,7 +219,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.port == -1 && option_char < argc) {
-		if (is_intpos(argv[option_char])) {
+		if (mopl_utils_is_intpos(argv[option_char])) {
 			result.config.port = atoi(argv[option_char++]);
 		} else {
 			print_usage();
@@ -252,7 +252,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	mp_subcheck connection_sc = mp_subcheck_init();
 	if (result != STATE_OK) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output,
+		mopl_utils_xasprintf(&connection_sc.output,
 				  "Failed to establish TCP connection to Host %s and Port %d", haddr, hport);
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return result;
@@ -305,20 +305,20 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	if (recv_ret < 0) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output, "%s - %s", "SSH CRITICAL - ", strerror(errno));
+		mopl_utils_xasprintf(&connection_sc.output, "%s - %s", "SSH CRITICAL - ", strerror(errno));
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return OK;
 	}
 
 	if (version_control_string == NULL) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - No version control string received");
+		mopl_utils_xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - No version control string received");
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return OK;
 	}
 
 	connection_sc = mp_set_subcheck_state(connection_sc, STATE_OK);
-	xasprintf(&connection_sc.output, "%s", "Initial connection succeeded");
+	mopl_utils_xasprintf(&connection_sc.output, "%s", "Initial connection succeeded");
 	mp_add_subcheck_to_check(overall, connection_sc);
 
 	/*
@@ -328,7 +328,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	 * SSH-protoversion-softwareversion SP comments CR LF"
 	 *		- RFC 4253:4.2
 	 */
-	strip(version_control_string);
+	mopl_utils_strip(version_control_string);
 	if (verbose) {
 		printf("%s\n", version_control_string);
 	}
@@ -364,21 +364,21 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	mp_subcheck protocol_validity_sc = mp_subcheck_init();
 	if (strlen(ssh_proto) == 0 || strlen(ssh_server) == 0) {
 		protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_CRITICAL);
-		xasprintf(&protocol_validity_sc.output, "Invalid protocol version control string %s",
+		mopl_utils_xasprintf(&protocol_validity_sc.output, "Invalid protocol version control string %s",
 				  version_control_string);
 		mp_add_subcheck_to_check(overall, protocol_validity_sc);
 		return OK;
 	}
 
 	protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_OK);
-	xasprintf(&protocol_validity_sc.output, "Valid protocol version control string %s",
+	mopl_utils_xasprintf(&protocol_validity_sc.output, "Valid protocol version control string %s",
 			  version_control_string);
 	mp_add_subcheck_to_check(overall, protocol_validity_sc);
 
 	ssh_proto[strspn(ssh_proto, "0123456789. ")] = 0;
 
 	static char *rev_no = VERSION;
-	xasprintf(&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
+	mopl_utils_xasprintf(&buffer, "SSH-%s-check_ssh_%s\r\n", ssh_proto, rev_no);
 	send(socket, buffer, strlen(buffer), MSG_DONTWAIT);
 	if (verbose) {
 		printf("%s\n", buffer);
@@ -387,14 +387,14 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	if (desired_remote_version && strcmp(desired_remote_version, ssh_server)) {
 		mp_subcheck remote_version_sc = mp_subcheck_init();
 		remote_version_sc = mp_set_subcheck_state(remote_version_sc, STATE_CRITICAL);
-		xasprintf(&remote_version_sc.output, _("%s (protocol %s) version mismatch, expected '%s'"),
+		mopl_utils_xasprintf(&remote_version_sc.output, _("%s (protocol %s) version mismatch, expected '%s'"),
 				  ssh_server, ssh_proto, desired_remote_version);
 		close(socket);
 		mp_add_subcheck_to_check(overall, remote_version_sc);
 		return OK;
 	}
 
-	double elapsed_time = (double)deltime(tv) / 1.0e6;
+	double elapsed_time = (double)mopl_utils_deltime(tv) / 1.0e6;
 	mp_perfdata time_pd = perfdata_init();
 	time_pd.value = mp_create_pd_value(elapsed_time);
 	time_pd.label = "time";
@@ -406,12 +406,12 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	if (desired_remote_protocol && strcmp(desired_remote_protocol, ssh_proto)) {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_CRITICAL);
-		xasprintf(&protocol_version_sc.output,
+		mopl_utils_xasprintf(&protocol_version_sc.output,
 				  _("%s (protocol %s) protocol version mismatch, expected '%s'"), ssh_server,
 				  ssh_proto, desired_remote_protocol);
 	} else {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_OK);
-		xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)",
+		mopl_utils_xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)",
 				  ssh_server, ssh_proto);
 	}
 
@@ -422,9 +422,9 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", default_ssh_port);
+	mopl_utils_xasprintf(&myport, "%d", default_ssh_port);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Remi Paulmier <remi@sinfomic.fr>\n");
 	printf(COPYRIGHT, copyright, email);

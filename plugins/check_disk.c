@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 
 	check_disk_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_disk_config config = tmp_config.config;
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
 
 	if (config.path_select_list.length == 0) {
 		mp_subcheck none_sc = mp_subcheck_init();
-		xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
+		mopl_utils_xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
 		if (config.ignore_missing) {
 			none_sc = mp_set_subcheck_state(none_sc, STATE_OK);
 		} else {
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
 			// TODO why stat here? remove unstatable fs?
 			if (!stat_path(path, config.ignore_missing)) {
 				// if (config.ignore_missing) {
-				// xasprintf(&ignored, "%s %s;", ignored, path->name);
+				// mopl_utils_xasprintf(&ignored, "%s %s;", ignored, path->name);
 				// }
 				// not accessible, remove from list
 				path = mp_int_fs_list_del(&config.path_select_list, path);
@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
 	} else {
 		// Apparently no machting fs found
 		mp_subcheck none_sc = mp_subcheck_init();
-		xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
+		mopl_utils_xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
 
 		if (config.ignore_missing) {
 			none_sc = mp_set_subcheck_state(none_sc, STATE_OK);
@@ -457,16 +457,16 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case 't': /* timeout period */
-			if (is_integer(optarg)) {
+			if (mopl_utils_is_integer(optarg)) {
 				timeout_interval = atoi(optarg);
 				break;
 			} else {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			}
 
 		/* See comments for 'c' */
 		case 'w': /* warning threshold */
-			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+			if (!mopl_utils_is_percentage_expression(optarg) && !mopl_utils_is_numeric(optarg)) {
 				die(STATE_UNKNOWN, "Argument for --warning invalid or missing: %s\n", optarg);
 			}
 
@@ -474,13 +474,13 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 				if (*optarg == '@') {
 					warn_freespace_percent = optarg;
 				} else {
-					xasprintf(&warn_freespace_percent, "@%s", optarg);
+					mopl_utils_xasprintf(&warn_freespace_percent, "@%s", optarg);
 				}
 			} else {
 				if (*optarg == '@') {
 					warn_freespace_units = optarg;
 				} else {
-					xasprintf(&warn_freespace_units, "@%s", optarg);
+					mopl_utils_xasprintf(&warn_freespace_units, "@%s", optarg);
 				}
 			}
 			break;
@@ -491,7 +491,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		 * force @ at the beginning of the range, so that it is backwards compatible
 		 */
 		case 'c': /* critical threshold */
-			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+			if (!mopl_utils_is_percentage_expression(optarg) && !mopl_utils_is_numeric(optarg)) {
 				die(STATE_UNKNOWN, "Argument for --critical invalid or missing: %s\n", optarg);
 			}
 
@@ -499,13 +499,13 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 				if (*optarg == '@') {
 					crit_freespace_percent = optarg;
 				} else {
-					xasprintf(&crit_freespace_percent, "@%s", optarg);
+					mopl_utils_xasprintf(&crit_freespace_percent, "@%s", optarg);
 				}
 			} else {
 				if (*optarg == '@') {
 					crit_freespace_units = optarg;
 				} else {
-					xasprintf(&crit_freespace_units, "@%s", optarg);
+					mopl_utils_xasprintf(&crit_freespace_units, "@%s", optarg);
 				}
 			}
 			break;
@@ -514,14 +514,14 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			if (*optarg == '@') {
 				warn_freeinodes_percent = optarg;
 			} else {
-				xasprintf(&warn_freeinodes_percent, "@%s", optarg);
+				mopl_utils_xasprintf(&warn_freeinodes_percent, "@%s", optarg);
 			}
 			break;
 		case 'K': /* critical inode threshold */
 			if (*optarg == '@') {
 				crit_freeinodes_percent = optarg;
 			} else {
-				xasprintf(&crit_freeinodes_percent, "@%s", optarg);
+				mopl_utils_xasprintf(&crit_freeinodes_percent, "@%s", optarg);
 			}
 			break;
 		case 'u':
@@ -820,13 +820,13 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 			group = NULL;
 		} break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage(_("Unknown argument"));
+			mopl_utils_usage(_("Unknown argument"));
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
@@ -845,7 +845,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 	/* Support for "check_disk warn crit [fs]" with thresholds at used% level */
 	int index = optind;
 
-	if (argc > index && is_intnonneg(argv[index])) {
+	if (argc > index && mopl_utils_is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional warn threshold: %s\n", argv[index]);
 		}
@@ -866,7 +866,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (argc > index && is_intnonneg(argv[index])) {
+	if (argc > index && mopl_utils_is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional crit threshold: %s\n", argv[index]);
 		}
@@ -988,7 +988,7 @@ void set_all_thresholds(parameter_list_elem *path, char *warn_freespace_units,
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
@@ -1184,10 +1184,10 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 								byte_unit unit) {
 	mp_subcheck result = mp_subcheck_init();
 	result = mp_set_subcheck_default_state(result, STATE_UNKNOWN);
-	xasprintf(&result.output, "%s", measurement_unit.name);
+	mopl_utils_xasprintf(&result.output, "%s", measurement_unit.name);
 
 	if (!measurement_unit.is_group && measurement_unit.filesystem_type) {
-		xasprintf(&result.output, "%s (%s)", result.output, measurement_unit.filesystem_type);
+		mopl_utils_xasprintf(&result.output, "%s (%s)", result.output, measurement_unit.filesystem_type);
 	}
 
 	/* Threshold comparisons */
@@ -1198,11 +1198,11 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 	freespace_bytes_sc = mp_set_subcheck_default_state(freespace_bytes_sc, STATE_OK);
 
 	if (unit != Humanized) {
-		xasprintf(&freespace_bytes_sc.output, "Free space absolute: %ju%s (of %ju%s)",
+		mopl_utils_xasprintf(&freespace_bytes_sc.output, "Free space absolute: %ju%s (of %ju%s)",
 				  (uintmax_t)(measurement_unit.free_bytes / unit), get_unit_string(unit),
 				  (uintmax_t)(measurement_unit.total_bytes / unit), get_unit_string(unit));
 	} else {
-		xasprintf(&freespace_bytes_sc.output, "Free space absolute: %s (of %s)",
+		mopl_utils_xasprintf(&freespace_bytes_sc.output, "Free space absolute: %s (of %s)",
 				  humanize_byte_value(measurement_unit.free_bytes, false),
 				  humanize_byte_value((unsigned long long)measurement_unit.total_bytes, false));
 	}
@@ -1288,7 +1288,7 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 	double free_percentage =
 		calculate_percent(measurement_unit.free_bytes, measurement_unit.total_bytes);
-	xasprintf(&freespace_percent_sc.output, "Free space percentage: %g%%", free_percentage);
+	mopl_utils_xasprintf(&freespace_percent_sc.output, "Free space percentage: %g%%", free_percentage);
 
 	// Using perfdata here just to get to the test result
 	mp_perfdata free_space_percent_pd = perfdata_init();
@@ -1321,12 +1321,12 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 			printf("free inode percentage computed: %g\n", free_inode_percentage);
 		}
 
-		xasprintf(&freeindodes_percent_sc.output, "Inodes free: %g%% (%ju of %ju)",
+		mopl_utils_xasprintf(&freeindodes_percent_sc.output, "Inodes free: %g%% (%ju of %ju)",
 				  free_inode_percentage, measurement_unit.inodes_free,
 				  measurement_unit.inodes_total);
 
 		mp_perfdata inodes_pd = perfdata_init();
-		xasprintf(&inodes_pd.label, "%s (inodes)", measurement_unit.name);
+		mopl_utils_xasprintf(&inodes_pd.label, "%s (inodes)", measurement_unit.name);
 		inodes_pd = mp_set_pd_value(inodes_pd, measurement_unit.inodes_used);
 		inodes_pd =
 			mp_set_pd_max_value(inodes_pd, mp_create_pd_value(measurement_unit.inodes_total));

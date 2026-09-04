@@ -46,15 +46,15 @@ int main(int argc, char **argv) {
 	textdomain(PACKAGE);
 
 	if (argc < 2) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	} else if (strcmp(argv[1], "-V") == 0 || strcmp(argv[1], "--version") == 0) {
-		print_revision(progname, NP_VERSION);
+		mopl_utils_print_revision(progname, NP_VERSION);
 		exit(STATE_UNKNOWN);
 	} else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
 		print_help();
 		exit(STATE_UNKNOWN);
-	} else if (!is_integer(argv[1])) {
-		usage4(_("Arguments to check_dummy must be an integer"));
+	} else if (!mopl_utils_is_integer(argv[1])) {
+		mopl_utils_usage4(_("Arguments to check_dummy must be an integer"));
 	} else {
 		result = atoi(argv[1]);
 	}
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

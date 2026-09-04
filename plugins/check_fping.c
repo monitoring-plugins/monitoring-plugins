@@ -71,13 +71,13 @@ int main(int argc, char **argv) {
 
 	check_fping_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_fping_config config = tmp_config.config;
 
 	char *server = NULL;
-	server = strscpy(server, config.server_name);
+	server = mopl_utils_strscpy(server, config.server_name);
 
 	char *option_string = "";
 	char *fping_prog = NULL;
@@ -92,52 +92,52 @@ int main(int argc, char **argv) {
 	 *   -> we use ipv4
 	 */
 	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
-		xasprintf(&option_string, "%s-6 ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-6 ", option_string);
 	} else {
-		xasprintf(&option_string, "%s-4 ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-4 ", option_string);
 	}
 	fping_prog = strdup(PATH_TO_FPING);
 
 	/* compose the command */
 	if (config.target_timeout) {
-		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
+		mopl_utils_xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
 	}
 	if (config.packet_interval) {
-		xasprintf(&option_string, "%s-p %d ", option_string, config.packet_interval);
+		mopl_utils_xasprintf(&option_string, "%s-p %d ", option_string, config.packet_interval);
 	}
 	if (config.sourceip) {
-		xasprintf(&option_string, "%s-S %s ", option_string, config.sourceip);
+		mopl_utils_xasprintf(&option_string, "%s-S %s ", option_string, config.sourceip);
 	}
 	if (config.sourceif) {
-		xasprintf(&option_string, "%s-I %s ", option_string, config.sourceif);
+		mopl_utils_xasprintf(&option_string, "%s-I %s ", option_string, config.sourceif);
 	}
 	if (config.dontfrag) {
-		xasprintf(&option_string, "%s-M ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-M ", option_string);
 	}
 	if (config.randomize_packet_data) {
-		xasprintf(&option_string, "%s-R ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-R ", option_string);
 	}
 
 	if (config.fwmark_set) {
-		xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
+		mopl_utils_xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
 	}
 
 	if (config.icmp_timestamp) {
-		xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
 	}
 
 	if (config.check_source) {
-		xasprintf(&option_string, "%s--check-source ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s--check-source ", option_string);
 	}
 
 	char *command_line = NULL;
 
 	if (config.icmp_timestamp) {
 		// no packet size settable for ICMP timestamp
-		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
+		mopl_utils_xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
 				  server);
 	} else {
-		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
+		mopl_utils_xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
 				  config.packet_size, config.packet_count, server);
 	}
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* run the command */
-	child_process = spopen(command_line);
+	child_process = mopl_popen_spopen(command_line);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	int result = spclose(child_process);
+	int result = mopl_popen_spclose(child_process);
 	if (result) {
 		/* need to use max_state not max */
 		status = max_state(status, STATE_WARNING);
@@ -219,7 +219,7 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		die(STATE_OK, _("FPING %s - %s (rta=%f ms)|%s\n"), state_text(STATE_OK), server_name, rta,
 			/* No loss since we only waited for the first reply
 			perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100), */
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
 					  false, 0));
 	}
 
@@ -263,8 +263,8 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		}
 		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status),
 			server_name, loss, rta,
-			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0),
-			fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
+			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0),
+			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
 					  false, 0));
 
 	} else if (strstr(buf, "xmt/rcv/%loss")) {
@@ -290,7 +290,7 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		}
 		/* loss=%.0f%%;%d;%d;0;100 */
 		die(status, _("FPING %s - %s (loss=%.0f%% )|%s\n"), state_text(status), server_name, loss,
-			perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0));
+			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0));
 
 	} else {
 		status = max_state(status, STATE_WARNING);
@@ -350,7 +350,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 		return result;
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		result.config.server_name = argv[1];
 		argv[1] = argv[0];
 		argv = &argv[1];
@@ -367,7 +367,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'a': /* host alive mode */
 			result.config.alive_p = true;
 			break;
@@ -375,20 +375,20 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbose = true;
 			break;
 		case 'H': /* hostname */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_name = optarg;
 			break;
 		case 'S': /* sourceip */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.sourceip = optarg;
 			break;
@@ -428,31 +428,31 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'b': /* bytes per packet */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_size = atoi(optarg);
 			} else {
-				usage(_("Packet size must be a positive integer"));
+				mopl_utils_usage(_("Packet size must be a positive integer"));
 			}
 			break;
 		case 'n': /* number of packets */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_count = atoi(optarg);
 			} else {
-				usage(_("Packet count must be a positive integer"));
+				mopl_utils_usage(_("Packet count must be a positive integer"));
 			}
 			break;
 		case 'T': /* timeout in msec */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.target_timeout = atoi(optarg);
 			} else {
-				usage(_("Target timeout must be a positive integer"));
+				mopl_utils_usage(_("Target timeout must be a positive integer"));
 			}
 			break;
 		case 'i': /* interval in msec */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.packet_interval = atoi(optarg);
 			} else {
-				usage(_("Interval must be a positive integer"));
+				mopl_utils_usage(_("Interval must be a positive integer"));
 			}
 			break;
 		case 'R':
@@ -462,11 +462,11 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.dontfrag = true;
 			break;
 		case FWMARK_OPT:
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.fwmark = (unsigned int)atol(optarg);
 				result.config.fwmark_set = true;
 			} else {
-				usage(_("fwmark must be a positive integer"));
+				mopl_utils_usage(_("fwmark must be a positive integer"));
 			}
 			break;
 		case ICMP_TIMESTAMP_OPT:
@@ -479,7 +479,7 @@ check_fping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.server_name == NULL) {
-		usage4(_("Hostname was not supplied"));
+		mopl_utils_usage4(_("Hostname was not supplied"));
 	}
 
 	return result;
@@ -522,7 +522,7 @@ int get_threshold(char *arg, char *rv[2]) {
 
 void print_help(void) {
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Didi Rieder <adrieder@sbox.tu-graz.ac.at>\n");
 	printf(COPYRIGHT, copyright, email);

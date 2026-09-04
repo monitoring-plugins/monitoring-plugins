@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* Parse extra opts if any */
@@ -80,14 +80,14 @@ int main(int argc, char **argv) {
 	check_dns_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_dns_config config = tmp.config;
 
 	char *command_line = NULL;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address, config.dns_server);
+	mopl_utils_xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address, config.dns_server);
 
 	struct timeval tv;
 	alarm(timeout_interval);
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 	char *msg = NULL;
 	mp_state_enum result = STATE_UNKNOWN;
 	/* run the command */
-	if ((np_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
+	if ((mopl_utils_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
 		msg = (char *)_("nslookup returned an error status");
 		result = STATE_WARNING;
 	}
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 				/* NOOP */;
 			}
 
-			strip(temp_buffer);
+			mopl_utils_strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty server string\n"),
 					NSLOOKUP_COMMAND);
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 				temp_buffer++;
 			}
 
-			strip(temp_buffer);
+			mopl_utils_strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"),
 					NSLOOKUP_COMMAND);
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
 			}
 
 			/* prepare an error string */
-			xasprintf(&temp_buffer, "%s%s; ", temp_buffer, config.expected_address[i]);
+			mopl_utils_xasprintf(&temp_buffer, "%s%s; ", temp_buffer, config.expected_address[i]);
 		}
 		/* check if expected_address must cover all in addresses and none may be missing */
 		if (config.all_match && (expect_match != 0 || addr_match != 0)) {
@@ -283,14 +283,14 @@ int main(int argc, char **argv) {
 		if (result == STATE_CRITICAL) {
 			/* Strip off last semicolon... */
 			temp_buffer[strlen(temp_buffer) - 2] = '\0';
-			xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+			mopl_utils_xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
 		}
 	}
 
 	if (config.expect_nxdomain) {
 		if (!is_nxdomain) {
 			result = STATE_CRITICAL;
-			xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
+			mopl_utils_xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
 					  address);
 		} else {
 			if (address != NULL) {
@@ -303,11 +303,11 @@ int main(int argc, char **argv) {
 	/* check if authoritative */
 	if (result == STATE_OK && config.expect_authority && non_authoritative) {
 		result = STATE_CRITICAL;
-		xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
+		mopl_utils_xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
 				  config.query_address);
 	}
 
-	long microsec = deltime(tv);
+	long microsec = mopl_utils_deltime(tv);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	if (result == STATE_OK) {
@@ -325,20 +325,20 @@ int main(int argc, char **argv) {
 		if ((config.time_thresholds->warning != NULL) &&
 			(config.time_thresholds->critical != NULL)) {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
 							 true, config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning == NULL) &&
 				   (config.time_thresholds->critical != NULL)) {
-			printf("|%s\n", fperfdata("time", elapsed_time, "s", false, 0, true,
+			printf("|%s\n", mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, true,
 									  config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning != NULL) &&
 				   (config.time_thresholds->critical == NULL)) {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
+				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
 							 false, 0, true, 0, false, 0));
 		} else {
 			printf("|%s\n",
-				   fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
+				   mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
 		}
 	} else if (result == STATE_WARNING) {
 		printf(_("DNS WARNING - %s\n"),
@@ -495,7 +495,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* version */
 			verbose = true;
@@ -573,7 +573,7 @@ check_dns_config_wrapper process_arguments(int argc, char **argv) {
 			critical = optarg;
 			break;
 		default: /* args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -616,7 +616,7 @@ check_dns_config_wrapper validate_arguments(check_dns_config_wrapper config_wrap
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

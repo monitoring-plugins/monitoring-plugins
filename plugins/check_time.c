@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
 	check_time_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_time_config config = tmp_config.config;
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
 	if (result != STATE_OK) {
 		die(result, _("TIME %s - %d second response time|%s\n"), state_text(result), (int)conntime,
-			perfdata("time", (long)conntime, "s", config.check_warning_time,
+			mopl_utils_perfdata("time", (long)conntime, "s", config.check_warning_time,
 					 (long)config.warning_time, config.check_critical_time,
 					 (long)config.critical_time, true, 0, false, 0));
 	}
@@ -163,10 +163,10 @@ int main(int argc, char **argv) {
 	}
 
 	printf(_("TIME %s - %lu second time difference|%s %s\n"), state_text(result), diff_time,
-		   perfdata("time", (long)conntime, "s", config.check_warning_time,
+		   mopl_utils_perfdata("time", (long)conntime, "s", config.check_warning_time,
 					(long)config.warning_time, config.check_critical_time,
 					(long)config.critical_time, true, 0, false, 0),
-		   perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff,
+		   mopl_utils_perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff,
 					config.check_critical_diff, config.critical_diff, true, 0, false, 0));
 	return result;
 }
@@ -186,7 +186,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage("\n");
+		mopl_utils_usage("\n");
 	}
 
 	for (int i = 1; i < argc; i++) {
@@ -219,21 +219,21 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'H': /* hostname */
 			if (!mopl_net_is_host(optarg)) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = optarg;
 			break;
 		case 'w': /* warning-variance */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.warning_diff = strtoul(optarg, NULL, 10);
 				result.config.check_warning_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
@@ -242,14 +242,14 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.check_warning_diff = true;
 					result.config.check_warning_time = true;
 				} else {
-					usage4(_("Warning thresholds must be a positive integer"));
+					mopl_utils_usage4(_("Warning thresholds must be a positive integer"));
 				}
 			} else {
-				usage4(_("Warning threshold must be a positive integer"));
+				mopl_utils_usage4(_("Warning threshold must be a positive integer"));
 			}
 			break;
 		case 'c': /* critical-variance */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.critical_diff = strtoul(optarg, NULL, 10);
 				result.config.check_critical_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
@@ -258,38 +258,38 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.check_critical_diff = true;
 					result.config.check_critical_time = true;
 				} else {
-					usage4(_("Critical thresholds must be a positive integer"));
+					mopl_utils_usage4(_("Critical thresholds must be a positive integer"));
 				}
 			} else {
-				usage4(_("Critical threshold must be a positive integer"));
+				mopl_utils_usage4(_("Critical threshold must be a positive integer"));
 			}
 			break;
 		case 'W': /* warning-connect */
-			if (!is_intnonneg(optarg)) {
-				usage4(_("Warning threshold must be a positive integer"));
+			if (!mopl_utils_is_intnonneg(optarg)) {
+				mopl_utils_usage4(_("Warning threshold must be a positive integer"));
 			} else {
 				result.config.warning_time = atoi(optarg);
 			}
 			result.config.check_warning_time = true;
 			break;
 		case 'C': /* critical-connect */
-			if (!is_intnonneg(optarg)) {
-				usage4(_("Critical threshold must be a positive integer"));
+			if (!mopl_utils_is_intnonneg(optarg)) {
+				mopl_utils_usage4(_("Critical threshold must be a positive integer"));
 			} else {
 				result.config.critical_time = atoi(optarg);
 			}
 			result.config.check_critical_time = true;
 			break;
 		case 'p': /* port */
-			if (!is_intnonneg(optarg)) {
-				usage4(_("Port must be a positive integer"));
+			if (!mopl_utils_is_intnonneg(optarg)) {
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			} else {
 				result.config.server_port = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout */
-			if (!is_intnonneg(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_intnonneg(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);
 			}
@@ -303,11 +303,11 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 	if (result.config.server_address == NULL) {
 		if (argc > option_char) {
 			if (!mopl_net_is_host(argv[option_char])) {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			result.config.server_address = argv[option_char];
 		} else {
-			usage4(_("Hostname was not supplied"));
+			mopl_utils_usage4(_("Hostname was not supplied"));
 		}
 	}
 
@@ -316,9 +316,9 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", TIME_PORT);
+	mopl_utils_xasprintf(&myport, "%d", TIME_PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad\n");
 	printf(COPYRIGHT, copyright, email);
