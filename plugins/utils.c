@@ -112,7 +112,7 @@ bool mopl_utils_is_nonnegative(char *number) {
 	}
 }
 
-bool is_percentage_expression(const char str[]) {
+bool mopl_utils_is_percentage_expression(const char str[]) {
 	if (!str) {
 		return false;
 	}

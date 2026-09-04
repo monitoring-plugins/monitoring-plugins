@@ -42,7 +42,7 @@ bool mopl_utils_is_uint64(char *number, uint64_t *target);
 bool mopl_utils_is_numeric(char *);
 bool mopl_utils_is_negative(char *);
 bool mopl_utils_is_nonnegative(char *);
-bool is_percentage_expression(const char[]);
+bool mopl_utils_is_percentage_expression(const char[]);
 
 bool is_option(char *);
 
