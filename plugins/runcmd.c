@@ -45,6 +45,10 @@
 #	include <sys/wait.h>
 #endif
 
+#include "./common.h"
+#include <stdlib.h>
+#include <string.h>
+
 #include "./utils.h"
 
 /** macros **/
@@ -66,18 +70,18 @@
 /* This variable must be global, since there's no way the caller
  * can forcibly slay a dead or ungainly running program otherwise.
  * Multithreading apps and plugins can initialize it (via NP_RUNCMD_INIT)
- * in an async safe manner PRIOR to calling np_runcmd() for the first time.
+ * in an async safe manner PRIOR to calling mopl_utils_runcmd() for the first time.
  *
  * The check for initialized values is atomic and can
  * occur in any number of threads simultaneously. */
 static pid_t *np_pids = NULL;
 
 /** prototypes **/
-static int np_runcmd_open(const char *, int *, int *) __attribute__((__nonnull__(1, 2, 3)));
+static int mopl_utils_runcmd_open(const char *, int *, int *) __attribute__((__nonnull__(1, 2, 3)));
 
-static int np_fetch_output(int, output *, int) __attribute__((__nonnull__(2)));
+static int mopl_utils_fetch_output(int, output *, int) __attribute__((__nonnull__(2)));
 
-static int np_runcmd_close(int);
+static int mopl_utils_runcmd_close(int);
 
 /* prototype imported from utils.h */
 extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
@@ -85,7 +89,7 @@ extern void die(int, const char *, ...) __attribute__((__noreturn__, __format__(
 /* this function is NOT async-safe. It is exported so multithreaded
  * plugins (or other apps) can call it prior to running any commands
  * through this api and thus achieve async-safeness throughout the api */
-void np_runcmd_init(void) {
+void mopl_utils_runcmd_init(void) {
 	long maxfd = mp_open_max();
 	if (!np_pids) {
 		np_pids = calloc(maxfd, sizeof(pid_t));
@@ -93,7 +97,7 @@ void np_runcmd_init(void) {
 }
 
 /* Start running a command */
-static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
+static int mopl_utils_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 	char *env[2];
 	char *cmd = NULL;
 	char **argv = NULL;
@@ -219,7 +223,7 @@ static int np_runcmd_open(const char *cmdstring, int *pfd, int *pfderr) {
 	return pfd[0];
 }
 
-static int np_runcmd_close(int fd) {
+static int mopl_utils_runcmd_close(int fd) {
 	int status;
 	pid_t pid;
 
@@ -263,7 +267,7 @@ void runcmd_timeout_alarm_handler(int signo) {
 	exit(STATE_CRITICAL);
 }
 
-static int np_fetch_output(int fd, output *op, int flags) {
+static int mopl_utils_fetch_output(int fd, output *op, int flags) {
 	size_t len = 0, i = 0, lineno = 0;
 	size_t rsf = 6, ary_size = 0; /* rsf = right shift factor, dec'ed uncond once */
 	char *buf = NULL;
@@ -328,7 +332,7 @@ static int np_fetch_output(int fd, output *op, int flags) {
 	return lineno;
 }
 
-int np_runcmd(const char *cmd, output *out, output *err, int flags) {
+int mopl_utils_runcmd(const char *cmd, output *out, output *err, int flags) {
 	int fd, pfd_out[2], pfd_err[2];
 
 	/* initialize the structs */
@@ -339,16 +343,16 @@ int np_runcmd(const char *cmd, output *out, output *err, int flags) {
 		memset(err, 0, sizeof(output));
 	}
 
-	if ((fd = np_runcmd_open(cmd, pfd_out, pfd_err)) == -1) {
+	if ((fd = mopl_utils_runcmd_open(cmd, pfd_out, pfd_err)) == -1) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 	}
 
 	if (out) {
-		out->lines = np_fetch_output(pfd_out[0], out, flags);
+		out->lines = mopl_utils_fetch_output(pfd_out[0], out, flags);
 	}
 	if (err) {
-		err->lines = np_fetch_output(pfd_err[0], err, flags);
+		err->lines = mopl_utils_fetch_output(pfd_err[0], err, flags);
 	}
 
-	return np_runcmd_close(fd);
+	return mopl_utils_runcmd_close(fd);
 }

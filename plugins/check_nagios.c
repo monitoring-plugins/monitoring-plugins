@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 	output chld_out;
 	output chld_err;
-	if ((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
+	if ((result = mopl_utils_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
 		result = STATE_WARNING;
 	}
 

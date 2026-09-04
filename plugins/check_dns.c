@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 	char *msg = NULL;
 	mp_state_enum result = STATE_UNKNOWN;
 	/* run the command */
-	if ((np_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
+	if ((mopl_utils_runcmd(command_line, &chld_out, &chld_err, 0)) != 0) {
 		msg = (char *)_("nslookup returned an error status");
 		result = STATE_WARNING;
 	}

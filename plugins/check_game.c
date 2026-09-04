@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 	/* run the command. historically, this plugin ignores output on stderr,
 	 * as well as return status of the qstat program */
 	output chld_out = {};
-	(void)np_runcmd(command_line, &chld_out, NULL, 0);
+	(void)mopl_utils_runcmd(command_line, &chld_out, NULL, 0);
 
 	/* sanity check */
 	/* was thinking about running qstat without any options, capturing the

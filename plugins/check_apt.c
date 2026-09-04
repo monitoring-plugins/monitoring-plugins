@@ -392,7 +392,7 @@ run_upgrade_result run_upgrade(const upgrade_type upgrade, const char *do_includ
 		result.errorcode = cmd_file_read(input_filename, &chld_out, 0);
 	} else {
 		/* run the upgrade */
-		result.errorcode = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+		result.errorcode = mopl_utils_runcmd(cmdline, &chld_out, &chld_err, 0);
 	}
 
 	// apt-get upgrade only changes exit status if there is an
@@ -503,7 +503,7 @@ run_update_result run_update(char *update_opts) {
 
 	output chld_out;
 	output chld_err;
-	int cmd_error = np_runcmd(cmdline, &chld_out, &chld_err, 0);
+	int cmd_error = mopl_utils_runcmd(cmdline, &chld_out, &chld_err, 0);
 	/* apt-get update changes exit status if it can't fetch packages.
 	 * since we were explicitly asked to do so, this is treated as
 	 * a critical error. */

@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 
 	/* run the command */
-	if (np_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
+	if (mopl_utils_runcmd(command_line, &chld_out, &chld_err, 0) != 0) {
 		result = STATE_WARNING;
 		msg = (char *)_("dig returned an error status");
 	}
