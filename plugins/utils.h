@@ -4,8 +4,9 @@
 /* This file should be included in all plugins */
 
 /* The purpose of this package is to provide safer alternatives to C
-functions that might otherwise be vulnerable to hacking. This
-currently includes a standard suite of validation routines to be sure
+functions that might otherwise be vulnerable to hacking and general
+useful snippets.
+This currently includes a standard suite of validation routines to be sure
 that an string argument actually converts to its intended type and a
 suite of string handling routine that do their own memory management
 in order to resist overflow attacks. In addition, a few functions are
