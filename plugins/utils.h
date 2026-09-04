@@ -1,5 +1,4 @@
-#ifndef NP_UTILS_H
-#define NP_UTILS_H
+#pragma once
 /* Header file for Monitoring Plugins utils.c */
 
 /* This file should be included in all plugins */
@@ -225,5 +224,3 @@ For more information about these matters, see the file named COPYING.\n")
 #define DBG_PRINT_1(...) DBG_PRINT(1, 0 __VA_OPT__(, ) __VA_ARGS__);
 #define DBG_PRINT_2(...) DBG_PRINT(2, 0 __VA_OPT__(, ) __VA_ARGS__);
 #define DBG_PRINT_3(...) DBG_PRINT(3, 0 __VA_OPT__(, ) __VA_ARGS__);
-
-#endif /* NP_UTILS_H */
