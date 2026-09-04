@@ -65,7 +65,6 @@ long mopl_utils_deltime(struct timeval tv);
 void mopl_utils_strip(char *);
 char *mopl_utils_strscpy(char *, const char *);
 char *mopl_utils_strnl(char *);
-char *strpcat(char *, const char *, const char *);
 int xvasprintf(char **strp, const char *fmt, va_list ap);
 int xasprintf(char **strp, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 

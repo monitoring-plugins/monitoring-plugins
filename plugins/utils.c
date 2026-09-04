@@ -341,45 +341,6 @@ char *mopl_utils_strnl(char *str) {
 
 /******************************************************************************
  *
- * Like strscat, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * str = strpcat(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- *This is a line of texThis is a line of tex
- *
- *****************************************************************************/
-
-char *strpcat(char *dest, const char *src, const char *str) {
-	size_t len, l2;
-
-	if (dest) {
-		len = strlen(dest);
-	} else {
-		len = 0;
-	}
-
-	if (src) {
-		l2 = strcspn(src, str);
-	} else {
-		return dest;
-	}
-
-	dest = realloc(dest, len + l2 + 1);
-	if (dest == NULL) {
-		die(STATE_UNKNOWN, _("failed malloc in strscat\n"));
-	}
-
-	strncpy(dest + len, src, l2);
-	dest[len + l2] = '\0';
-
-	return dest;
-}
-
-/******************************************************************************
- *
  * asprintf, but die on failure
  *
  ******************************************************************************/
