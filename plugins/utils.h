@@ -39,7 +39,7 @@ bool mopl_utils_is_intnonneg(char *);
 bool mopl_utils_is_intpercent(char *);
 bool mopl_utils_is_uint64(char *number, uint64_t *target);
 
-bool is_numeric(char *);
+bool mopl_utils_is_numeric(char *);
 bool is_positive(char *);
 bool is_negative(char *);
 bool is_nonnegative(char *);

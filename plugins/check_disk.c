@@ -466,7 +466,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 
 		/* See comments for 'c' */
 		case 'w': /* warning threshold */
-			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+			if (!is_percentage_expression(optarg) && !mopl_utils_is_numeric(optarg)) {
 				die(STATE_UNKNOWN, "Argument for --warning invalid or missing: %s\n", optarg);
 			}
 
@@ -491,7 +491,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		 * force @ at the beginning of the range, so that it is backwards compatible
 		 */
 		case 'c': /* critical threshold */
-			if (!is_percentage_expression(optarg) && !is_numeric(optarg)) {
+			if (!is_percentage_expression(optarg) && !mopl_utils_is_numeric(optarg)) {
 				die(STATE_UNKNOWN, "Argument for --critical invalid or missing: %s\n", optarg);
 			}
 

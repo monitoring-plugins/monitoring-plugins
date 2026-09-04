@@ -83,7 +83,7 @@ void print_revision(const char *command_name, const char *revision) {
 	printf("%s v%s (%s %s)\n", command_name, revision, PACKAGE, VERSION);
 }
 
-bool is_numeric(char *number) {
+bool mopl_utils_is_numeric(char *number) {
 	char tmp[1];
 	float x;
 
@@ -97,7 +97,7 @@ bool is_numeric(char *number) {
 }
 
 bool is_positive(char *number) {
-	if (is_numeric(number) && atof(number) > 0.0) {
+	if (mopl_utils_is_numeric(number) && atof(number) > 0.0) {
 		return true;
 	} else {
 		return false;
@@ -105,7 +105,7 @@ bool is_positive(char *number) {
 }
 
 bool is_negative(char *number) {
-	if (is_numeric(number) && atof(number) < 0.0) {
+	if (mopl_utils_is_numeric(number) && atof(number) < 0.0) {
 		return true;
 	} else {
 		return false;
@@ -113,7 +113,7 @@ bool is_negative(char *number) {
 }
 
 bool is_nonnegative(char *number) {
-	if (is_numeric(number) && atof(number) >= 0.0) {
+	if (mopl_utils_is_numeric(number) && atof(number) >= 0.0) {
 		return true;
 	} else {
 		return false;
@@ -122,7 +122,7 @@ bool is_nonnegative(char *number) {
 
 bool is_percentage(char *number) {
 	int x;
-	if (is_numeric(number) && (x = atof(number)) >= 0 && x <= 100) {
+	if (mopl_utils_is_numeric(number) && (x = atof(number)) >= 0 && x <= 100) {
 		return true;
 	} else {
 		return false;
@@ -149,7 +149,7 @@ bool is_percentage_expression(const char str[]) {
 	strcpy(foo, str);
 	foo[len - 1] = '\0';
 
-	bool result = is_numeric(foo);
+	bool result = mopl_utils_is_numeric(foo);
 
 	free(foo);
 
