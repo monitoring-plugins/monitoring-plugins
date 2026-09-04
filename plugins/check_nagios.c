@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
 		}
 		if (cols >= expected_cols) {
 			xasprintf(&procargs, "%s", chld_out.line[i] + pos);
-			strip(procargs);
+			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */
 			char *temp_string = strtok((char *)procprog, "/");

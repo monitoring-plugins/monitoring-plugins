@@ -403,7 +403,7 @@ int main(int argc, char **argv) {
 	/* save buffer for later use */
 	xasprintf(&server_response, "%s%s", server_response, buffer);
 	/* strip the buffer of carriage returns */
-	strip(server_response);
+	mopl_utils_strip(server_response);
 
 	/* make sure we find the droids we are looking for */
 	mp_subcheck sc_expect_response = mp_subcheck_init();
@@ -444,7 +444,7 @@ int main(int argc, char **argv) {
 			printf("%s", buffer);
 		}
 
-		strip(buffer);
+		mopl_utils_strip(buffer);
 
 		if (counter < config.nresponses) {
 			int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;

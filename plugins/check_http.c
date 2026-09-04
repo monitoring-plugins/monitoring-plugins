@@ -1228,7 +1228,7 @@ int check_http(void) {
 	pos = page;
 	page += (size_t)strspn(page, "\r\n");
 	status_line[strcspn(status_line, "\r\n")] = 0;
-	strip(status_line);
+	mopl_utils_strip(status_line);
 	if (verbose) {
 		printf("STATUS: %s\n", status_line);
 	}

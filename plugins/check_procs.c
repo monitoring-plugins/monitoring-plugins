@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 		if (cols >= expected_cols) {
 			resultsum = 0;
 			xasprintf(&procargs, "%s", input_line + pos);
-			strip(procargs);
+			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */
 			strcpy(procprog, base_name(procprog));

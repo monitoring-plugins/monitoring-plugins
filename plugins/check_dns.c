@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 				/* NOOP */;
 			}
 
-			strip(temp_buffer);
+			mopl_utils_strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty server string\n"),
 					NSLOOKUP_COMMAND);
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 				temp_buffer++;
 			}
 
-			strip(temp_buffer);
+			mopl_utils_strip(temp_buffer);
 			if (strlen(temp_buffer) == 0) {
 				die(STATE_CRITICAL, _("DNS CRITICAL - '%s' returned empty host name string\n"),
 					NSLOOKUP_COMMAND);

@@ -232,7 +232,7 @@ long mopl_utils_deltime(struct timeval tv) {
 	return (now.tv_sec - tv.tv_sec) * 1000000 + now.tv_usec - tv.tv_usec;
 }
 
-void strip(char *buffer) {
+void mopl_utils_strip(char *buffer) {
 	size_t x;
 	int i;
 

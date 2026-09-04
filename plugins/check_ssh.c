@@ -328,7 +328,7 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	 * SSH-protoversion-softwareversion SP comments CR LF"
 	 *		- RFC 4253:4.2
 	 */
-	strip(version_control_string);
+	mopl_utils_strip(version_control_string);
 	if (verbose) {
 		printf("%s\n", version_control_string);
 	}
