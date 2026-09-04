@@ -341,44 +341,6 @@ char *mopl_utils_strnl(char *str) {
 
 /******************************************************************************
  *
- * Like strscpy, except only the portion of the source string up to
- * the provided delimiter is copied.
- *
- * Example:
- *
- * str = strpcpy(str,"This is a line of text with no trailing newline","x");
- * printf("%s\n",str);
- *
- * Produces:
- *
- *This is a line of te
- *
- *****************************************************************************/
-
-char *strpcpy(char *dest, const char *src, const char *str) {
-	size_t len;
-
-	if (src) {
-		len = strcspn(src, str);
-	} else {
-		return NULL;
-	}
-
-	if (dest == NULL || strlen(dest) < len) {
-		dest = realloc(dest, len + 1);
-	}
-	if (dest == NULL) {
-		die(STATE_UNKNOWN, _("failed realloc in strpcpy\n"));
-	}
-
-	strncpy(dest, src, len);
-	dest[len] = '\0';
-
-	return dest;
-}
-
-/******************************************************************************
- *
  * Like strscat, except only the portion of the source string up to
  * the provided delimiter is copied.
  *
