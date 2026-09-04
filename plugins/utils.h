@@ -81,12 +81,6 @@ void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn)) __attri
 char *perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
 			   bool, long int);
 
-char *perfdata_uint64(const char *, uint64_t, const char *, bool, uint64_t, bool, uint64_t, bool,
-					  uint64_t, bool, uint64_t);
-
-char *perfdata_int64(const char *, int64_t, const char *, bool, int64_t, bool, int64_t, bool,
-					 int64_t, bool, int64_t);
-
 char *fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
 				double);
 
