@@ -275,7 +275,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				/* It's percentage */
 				conf_wrapper.config.warn.is_percentage = true;
 				optarg[length - 1] = '\0';
-				if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
+				if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.warn.value)) {
 					if (conf_wrapper.config.warn.value > HUNDRED_PERCENT) {
 						usage4(_("Warning threshold percentage must be <= 100!"));
 					}
@@ -283,7 +283,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			} /* It's Bytes */
 			conf_wrapper.config.warn.is_percentage = false;
-			if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
+			if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.warn.value)) {
 				break;
 			}
 			usage4(_("Warning threshold be positive integer or "
@@ -305,7 +305,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				/* It's percentage */
 				conf_wrapper.config.crit.is_percentage = true;
 				optarg[length - 1] = '\0';
-				if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
+				if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.crit.value)) {
 					if (conf_wrapper.config.crit.value > HUNDRED_PERCENT) {
 						usage4(_("Critical threshold percentage must be <= 100!"));
 					}
@@ -313,7 +313,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			} /* It's Bytes */
 			conf_wrapper.config.crit.is_percentage = false;
-			if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
+			if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.crit.value)) {
 				break;
 			}
 			usage4(_("Critical threshold be positive integer or "

@@ -189,39 +189,11 @@ bool mopl_utils_is_intnonneg(char *number) {
 }
 
 /*
- * Checks whether the number in the string _number_ can be put inside a int64_t
- * On success the number will be written to the _target_ address, if _target_ is not set
- * to NULL.
- */
-bool is_int64(char *number, int64_t *target) {
-	errno = 0;
-	char *endptr = {0};
-
-	int64_t tmp = strtoll(number, &endptr, 10);
-	if (errno != 0) {
-		return false;
-	}
-
-	if (*endptr == '\0') {
-		return 0;
-	}
-
-	if (tmp < INT64_MIN || tmp > INT64_MAX) {
-		return false;
-	}
-
-	if (target != NULL) {
-		*target = tmp;
-	}
-	return true;
-}
-
-/*
  * Checks whether the number in the string _number_ can be put inside a uint64_t
  * On success the number will be written to the _target_ address, if _target_ is not set
  * to NULL.
  */
-bool is_uint64(char *number, uint64_t *target) {
+bool mopl_utils_is_uint64(char *number, uint64_t *target) {
 	errno = 0;
 	char *endptr = {0};
 	unsigned long long tmp = strtoull(number, &endptr, 10);
