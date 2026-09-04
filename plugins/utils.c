@@ -180,7 +180,7 @@ bool mopl_utils_is_intpos(char *number) {
 	}
 }
 
-bool is_intnonneg(char *number) {
+bool mopl_utils_is_intnonneg(char *number) {
 	if (mopl_utils_is_integer(number) && atoi(number) >= 0) {
 		return true;
 	} else {

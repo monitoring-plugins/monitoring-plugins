@@ -296,7 +296,7 @@ bool process_arguments(int argc, char **argv) {
 			exit(STATE_UNKNOWN);
 			break;
 		case 't': /* timeout period */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);
@@ -346,19 +346,19 @@ bool process_arguments(int argc, char **argv) {
 #ifdef HAVE_SSL
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp)) {
+				if (!mopl_utils_is_intnonneg(temp)) {
 					usage2(_("Invalid certificate expiration period"), temp);
 				}
 				days_till_exp_crit = atoi(temp);
 			} else {
 				days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				days_till_exp_warn = atoi(optarg);
@@ -419,7 +419,7 @@ bool process_arguments(int argc, char **argv) {
 			use_sni = true;
 			break;
 		case MAX_REDIRS_OPTION:
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Invalid max_redirs count"), optarg);
 			} else {
 				max_depth = atoi(optarg);
@@ -484,7 +484,7 @@ bool process_arguments(int argc, char **argv) {
 			server_url_length = strlen(server_url);
 			break;
 		case 'p': /* Server port */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Invalid port number"), optarg);
 			} else {
 				server_port = atoi(optarg);

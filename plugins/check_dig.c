@@ -324,7 +324,7 @@ check_dig_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
 				usage_va(_("Timeout interval must be a positive integer - %s"), optarg);

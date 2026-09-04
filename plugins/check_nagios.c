@@ -220,7 +220,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 
 	if (!is_option(argv[1])) {
 		result.config.status_log = argv[1];
-		if (is_intnonneg(argv[2])) {
+		if (mopl_utils_is_intnonneg(argv[2])) {
 			result.config.expire_minutes = atoi(argv[2]);
 		} else {
 			die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
@@ -251,14 +251,14 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.process_string = optarg;
 			break;
 		case 'e': /* expiry time */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.expire_minutes = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Timeout must be an integer (seconds)\n"));

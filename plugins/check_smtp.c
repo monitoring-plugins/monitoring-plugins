@@ -763,7 +763,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.ignore_send_quit_failure = true; /* ignore problem sending QUIT */
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
 				usage4(_("Timeout interval must be a positive integer"));
@@ -775,19 +775,19 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2("Invalid certificate expiration period", optarg);
 				}
 				result.config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp)) {
+				if (!mopl_utils_is_intnonneg(temp)) {
 					usage2(_("Invalid certificate expiration period"), temp);
 				}
 				result.config.days_till_exp_crit = atoi(temp);
 			} else {
 				result.config.days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2("Invalid certificate expiration period", optarg);
 				}
 				result.config.days_till_exp_warn = atoi(optarg);

@@ -267,7 +267,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 			}
 		} break;
 		case 'p': /* number of packets to send */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.max_packets = atoi(optarg);
 			} else {
 				usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
@@ -354,7 +354,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.max_packets == -1) {
-		if (is_intnonneg(argv[arg_counter])) {
+		if (mopl_utils_is_intnonneg(argv[arg_counter])) {
 			result.config.max_packets = atoi(argv[arg_counter++]);
 		} else {
 			printf(_("<max_packets> (%s) must be a non-negative number\n"), argv[arg_counter]);
@@ -367,7 +367,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 int get_threshold(char *arg, double *trta, int *tpl) {
-	if (is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
+	if (mopl_utils_is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
 		return OK;
 	}
 

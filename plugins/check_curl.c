@@ -1052,7 +1052,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		case 't': /* timeout period */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				result.config.curl_config.socket_timeout = (int)strtol(optarg, NULL, 10);
@@ -1121,7 +1121,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.initial_config.server_url = strdup(optarg);
 			break;
 		case 'p': /* Server port */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Invalid port number, expecting a non-negative number"), optarg);
 			} else {
 				if (strtol(optarg, NULL, 10) > MAX_PORT) {
@@ -1185,19 +1185,19 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				char *temp;
 				if ((temp = strchr(optarg, ',')) != NULL) {
 					*temp = '\0';
-					if (!is_intnonneg(optarg)) {
+					if (!mopl_utils_is_intnonneg(optarg)) {
 						usage2(_("Invalid certificate expiration period"), optarg);
 					}
 					result.config.days_till_exp_warn = atoi(optarg);
 					*temp = ',';
 					temp++;
-					if (!is_intnonneg(temp)) {
+					if (!mopl_utils_is_intnonneg(temp)) {
 						usage2(_("Invalid certificate expiration period"), temp);
 					}
 					result.config.days_till_exp_crit = atoi(temp);
 				} else {
 					result.config.days_till_exp_crit = 0;
-					if (!is_intnonneg(optarg)) {
+					if (!mopl_utils_is_intnonneg(optarg)) {
 						usage2(_("Invalid certificate expiration period"), optarg);
 					}
 					result.config.days_till_exp_warn = atoi(optarg);
@@ -1255,7 +1255,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 #endif /* LIBCURL_FEATURE_SSL */
 			break;
 		case MAX_REDIRS_OPTION:
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Invalid max_redirs count"), optarg);
 			} else {
 				result.config.max_depth = atoi(optarg);

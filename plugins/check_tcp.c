@@ -690,19 +690,19 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp)) {
+				if (!mopl_utils_is_intnonneg(temp)) {
 					usage2(_("Invalid certificate expiration period"), temp);
 				}
 				config.days_till_exp_crit = atoi(temp);
 			} else {
 				config.days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg)) {
+				if (!mopl_utils_is_intnonneg(optarg)) {
 					usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);

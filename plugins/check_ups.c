@@ -573,7 +573,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'c': /* critical voltage threshold */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
 					usage2(_("Critical voltage must be a valid range expression"), optarg);
@@ -585,7 +585,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'w': /* warning voltage threshold */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
 					usage2(_("Warning voltage must be a valid range expression"), optarg);
@@ -612,7 +612,7 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
 				usage4(_("Timeout interval must be a positive integer"));

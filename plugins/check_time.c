@@ -233,7 +233,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.server_address = optarg;
 			break;
 		case 'w': /* warning-variance */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.warning_diff = strtoul(optarg, NULL, 10);
 				result.config.check_warning_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
@@ -249,7 +249,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'c': /* critical-variance */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.critical_diff = strtoul(optarg, NULL, 10);
 				result.config.check_critical_diff = true;
 			} else if (strspn(optarg, "0123456789:,") > 0) {
@@ -265,7 +265,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'W': /* warning-connect */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage4(_("Warning threshold must be a positive integer"));
 			} else {
 				result.config.warning_time = atoi(optarg);
@@ -273,7 +273,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.check_warning_time = true;
 			break;
 		case 'C': /* critical-connect */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage4(_("Critical threshold must be a positive integer"));
 			} else {
 				result.config.critical_time = atoi(optarg);
@@ -281,14 +281,14 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.check_critical_time = true;
 			break;
 		case 'p': /* port */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage4(_("Port must be a positive integer"));
 			} else {
 				result.config.server_port = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout */
-			if (!is_intnonneg(optarg)) {
+			if (!mopl_utils_is_intnonneg(optarg)) {
 				usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				socket_timeout = atoi(optarg);

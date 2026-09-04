@@ -845,7 +845,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 	/* Support for "check_disk warn crit [fs]" with thresholds at used% level */
 	int index = optind;
 
-	if (argc > index && is_intnonneg(argv[index])) {
+	if (argc > index && mopl_utils_is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional warn threshold: %s\n", argv[index]);
 		}
@@ -866,7 +866,7 @@ check_disk_config_wrapper process_arguments(int argc, char **argv) {
 		}
 	}
 
-	if (argc > index && is_intnonneg(argv[index])) {
+	if (argc > index && mopl_utils_is_intnonneg(argv[index])) {
 		if (verbose > 0) {
 			printf("Got an positional crit threshold: %s\n", argv[index]);
 		}
