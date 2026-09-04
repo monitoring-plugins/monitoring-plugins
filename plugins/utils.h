@@ -35,7 +35,6 @@ void print_revision(const char *, const char *);
 
 bool mopl_utils_is_integer(char *);
 bool mopl_utils_is_intpos(char *);
-bool is_intneg(char *);
 bool is_intnonneg(char *);
 bool is_intpercent(char *);
 bool is_uint64(char *number, uint64_t *target);
