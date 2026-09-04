@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* run the command */
-	child_process = spopen(command_line);
+	child_process = mopl_popen_spopen(command_line);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	int result = spclose(child_process);
+	int result = mopl_popen_spclose(child_process);
 	if (result) {
 		/* need to use max_state not max */
 		status = max_state(status, STATE_WARNING);

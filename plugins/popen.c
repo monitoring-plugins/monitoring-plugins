@@ -46,12 +46,12 @@ extern pid_t *childpid;
 extern int *child_stderr_array;
 extern FILE *child_process;
 
-FILE *spopen(const char * /*cmdstring*/);
-int spclose(FILE * /*fp*/);
+FILE *mopl_popen_spopen(const char * /*cmdstring*/);
+int mopl_popen_spclose(FILE * /*fp*/);
 #ifdef REDHAT_SPOPEN_ERROR
 void popen_sigchld_handler(int);
 #endif
-void popen_timeout_alarm_handler(int /*signo*/);
+void mopl_popen_popen_timeout_alarm_handler(int /*signo*/);
 
 #include <stdarg.h> /* ANSI C header file */
 #include <fcntl.h>
@@ -82,7 +82,7 @@ char *pname = NULL; /* caller can set this from argv[0] */
 static volatile int childtermd = 0;
 #endif
 
-FILE *spopen(const char *cmdstring) {
+FILE *mopl_popen_spopen(const char *cmdstring) {
 #ifdef RLIMIT_CORE
 	/* do not leave core files */
 	struct rlimit limit;
@@ -243,7 +243,7 @@ FILE *spopen(const char *cmdstring) {
 	return (child_process);
 }
 
-int spclose(FILE *fp) {
+int mopl_popen_spclose(FILE *fp) {
 	if (childpid == NULL) {
 		return (1); /* popen() has never been called */
 	}
@@ -286,7 +286,7 @@ void popen_sigchld_handler(int signo) {
 }
 #endif
 
-void popen_timeout_alarm_handler(int signo) {
+void mopl_popen_popen_timeout_alarm_handler(int signo) {
 	if (signo == SIGALRM) {
 		if (child_process != NULL) {
 			int fh = fileno(child_process);

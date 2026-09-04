@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 			config.address, config.port, query_string);
 
 	/* run the command */
-	child_process = spopen(command_line);
+	child_process = mopl_popen_spopen(command_line);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), command_line);
 		return STATE_UNKNOWN;
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	if (spclose(child_process)) {
+	if (mopl_popen_spclose(child_process)) {
 		result = max_state(result, STATE_WARNING);
 	}
 

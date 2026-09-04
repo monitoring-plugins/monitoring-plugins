@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 	const check_ping_config config = tmp_config.config;
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
+	if (signal(SIGALRM, mopl_popen_popen_timeout_alarm_handler) == SIG_ERR) {
 		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
@@ -446,7 +446,7 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 }
 
 ping_result run_ping(const char *cmd, const char *addr, double crta) {
-	if ((child_process = spopen(cmd)) == NULL) {
+	if ((child_process = mopl_popen_spopen(cmd)) == NULL) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 	}
 
@@ -568,7 +568,7 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 
 	(void)fclose(child_stderr);
 
-	spclose(child_process);
+	mopl_popen_spclose(child_process);
 
 	if (warn_text == NULL) {
 		warn_text = strdup("");

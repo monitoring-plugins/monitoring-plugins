@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 		mopl_utils_xasprintf(&cmd, "%s %s", cmd, argv[c]);
 	}
 
-	child_process = spopen(cmd);
+	child_process = mopl_popen_spopen(cmd);
 	if (child_process == NULL) {
 		printf(_("Could not open pipe: %s\n"), cmd);
 		exit(STATE_UNKNOWN);
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* close the pipe */
-	result = spclose(child_process);
+	result = mopl_popen_spclose(child_process);
 
 	/* WARNING if output found on stderr */
 	if (fgets(buf, MAX_INPUT_BUFFER - 1, child_stderr)) {
