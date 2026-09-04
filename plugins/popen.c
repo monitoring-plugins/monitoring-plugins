@@ -9,10 +9,6 @@
  *
  * A safe alternative to popen
  *
- * Provides spopen and spclose
- *
- * FILE * spopen(const char *);
- * int spclose(FILE *);
  *
  * Code taken with little modification from "Advanced Programming for the Unix
  * Environment" by W. Richard Stevens

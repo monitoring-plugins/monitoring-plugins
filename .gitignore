@@ -214,7 +214,7 @@ plugins/check_disk.d/.dirstamp
 /plugins/.libs
 /plugins/Makefile
 /plugins/Makefile.in
-/plugins/libnpcommon.a
+/plugins/libmoplcommon.a
 /plugins/negate
 /plugins/stamp-h*
 /plugins/urlize

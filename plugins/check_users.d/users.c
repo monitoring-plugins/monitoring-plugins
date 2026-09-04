@@ -119,7 +119,7 @@ get_num_of_users_wrapper get_num_of_users_utmp() {
 
 get_num_of_users_wrapper get_num_of_users_who_command() {
 	/* run the command */
-	child_process = spopen(WHO_COMMAND);
+	child_process = mopl_popen_spopen(WHO_COMMAND);
 	if (child_process == NULL) {
 		// printf(_("Could not open pipe: %s\n"), WHO_COMMAND);
 		get_num_of_users_wrapper result = {
@@ -158,7 +158,7 @@ get_num_of_users_wrapper get_num_of_users_who_command() {
 	(void)fclose(child_stderr);
 
 	/* close the pipe */
-	spclose(child_process);
+	mopl_popen_spclose(child_process);
 
 	return result;
 }
