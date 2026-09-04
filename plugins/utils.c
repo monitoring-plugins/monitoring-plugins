@@ -245,7 +245,7 @@ bool is_uint64(char *number, uint64_t *target) {
 	return true;
 }
 
-bool is_intpercent(char *number) {
+bool mopl_utils_is_intpercent(char *number) {
 	int i;
 	if (mopl_utils_is_integer(number) && (i = atoi(number)) >= 0 && i <= 100) {
 		return true;

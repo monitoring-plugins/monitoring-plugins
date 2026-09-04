@@ -306,7 +306,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<wpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -318,7 +318,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.cpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<cpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
