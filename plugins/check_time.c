@@ -316,7 +316,7 @@ check_time_config_wrapper process_arguments(int argc, char **argv) {
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", TIME_PORT);
+	mopl_utils_xasprintf(&myport, "%d", TIME_PORT);
 
 	mopl_utils_print_revision(progname, NP_VERSION);
 

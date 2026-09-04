@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 	if (upgrad_res.errorcode == OK) {
 		sc_run_upgrade = mp_set_subcheck_state(sc_run_upgrade, STATE_OK);
 	}
-	xasprintf(&sc_run_upgrade.output, "Executed apt upgrade (dry run)");
+	mopl_utils_xasprintf(&sc_run_upgrade.output, "Executed apt upgrade (dry run)");
 
 	mp_add_subcheck_to_check(&overall, sc_run_upgrade);
 
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 	pd_security_updates.label = "critical_updates";
 
 	mp_subcheck sc_security_updates = mp_subcheck_init();
-	xasprintf(&sc_security_updates.output, "Security updates available: %zu",
+	mopl_utils_xasprintf(&sc_security_updates.output, "Security updates available: %zu",
 			  number_of_security_updates);
 	mp_add_perfdata_to_subcheck(&sc_security_updates, pd_security_updates);
 
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
 
 	mp_subcheck sc_other_updates = mp_subcheck_init();
 
-	xasprintf(&sc_other_updates.output, "Updates available: %zu", packages_available);
+	mopl_utils_xasprintf(&sc_other_updates.output, "Updates available: %zu", packages_available);
 	sc_other_updates = mp_set_subcheck_default_state(sc_other_updates, STATE_OK);
 	mp_add_perfdata_to_subcheck(&sc_other_updates, pd_other_updates);
 
@@ -190,13 +190,13 @@ int main(int argc, char **argv) {
 			  cmpstringp);
 
 		for (size_t i = 0; i < number_of_security_updates; i++) {
-			xasprintf(&sc_security_updates.output, "%s\n%s (security)", sc_security_updates.output,
+			mopl_utils_xasprintf(&sc_security_updates.output, "%s\n%s (security)", sc_security_updates.output,
 					  secpackages_list[i]);
 		}
 
 		if (!config.only_critical) {
 			for (size_t i = 0; i < packages_available - number_of_security_updates; i++) {
-				xasprintf(&sc_other_updates.output, "%s\n%s", sc_other_updates.output,
+				mopl_utils_xasprintf(&sc_other_updates.output, "%s\n%s", sc_other_updates.output,
 						  packages_list[i]);
 			}
 		}
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
 	if (packages_available == 0) {
 		ok_summary = "No pending updates";
 	} else {
-		xasprintf(&ok_summary, "%zu pending updates", packages_available);
+		mopl_utils_xasprintf(&ok_summary, "%zu pending updates", packages_available);
 	}
 	mp_set_ok_summary(&overall, ok_summary);
 
@@ -499,7 +499,7 @@ run_update_result run_update(char *update_opts) {
 	};
 
 	result.sc = mp_set_subcheck_default_state(result.sc, STATE_OK);
-	xasprintf(&result.sc.output, "executing '%s' first", cmdline);
+	mopl_utils_xasprintf(&result.sc.output, "executing '%s' first", cmdline);
 
 	output chld_out;
 	output chld_err;
@@ -510,7 +510,7 @@ run_update_result run_update(char *update_opts) {
 	if (cmd_error != 0) {
 		exec_warning = true;
 		result.sc = mp_set_subcheck_state(result.sc, STATE_CRITICAL);
-		xasprintf(&result.sc.output, _("'%s' exited with non-zero status.\n"), cmdline);
+		mopl_utils_xasprintf(&result.sc.output, _("'%s' exited with non-zero status.\n"), cmdline);
 	}
 
 	if (verbose) {

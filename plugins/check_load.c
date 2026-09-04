@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 	}
 
 	char *ok_summary = NULL;
-	xasprintf(&ok_summary, "Load: 1m: %f - 5m: %f - 15m: %f", load_values[0], load_values[1],
+	mopl_utils_xasprintf(&ok_summary, "Load: 1m: %f - 5m: %f - 15m: %f", load_values[0], load_values[1],
 			  load_values[2]);
 	mp_set_ok_summary(&overall, ok_summary);
 	free(ok_summary);
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
 			load_values[2] / numcpus,
 		};
 
-		xasprintf(&ok_summary, "Scaled Load (%ld CPUs): 1m: %f - 5m: %f - 15m: %f", numcpus,
+		mopl_utils_xasprintf(&ok_summary, "Scaled Load (%ld CPUs): 1m: %f - 5m: %f - 15m: %f", numcpus,
 				  load_values[0], load_values[1], load_values[2]);
 		mp_set_ok_summary(&overall, ok_summary);
 		free(ok_summary);
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc1 = mp_subcheck_init();
 		scaled_load_sc1 = mp_set_subcheck_state(scaled_load_sc1, mp_get_pd_status(pd_scaled_load1));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc1, pd_scaled_load1);
-		xasprintf(&scaled_load_sc1.output, "1 Minute: %s",
+		mopl_utils_xasprintf(&scaled_load_sc1.output, "1 Minute: %s",
 				  pd_value_to_string(pd_scaled_load1.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc1);
 
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc5 = mp_subcheck_init();
 		scaled_load_sc5 = mp_set_subcheck_state(scaled_load_sc5, mp_get_pd_status(pd_scaled_load5));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc5, pd_scaled_load5);
-		xasprintf(&scaled_load_sc5.output, "5 Minutes: %s",
+		mopl_utils_xasprintf(&scaled_load_sc5.output, "5 Minutes: %s",
 				  pd_value_to_string(pd_scaled_load5.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc5);
 
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
 		scaled_load_sc15 =
 			mp_set_subcheck_state(scaled_load_sc15, mp_get_pd_status(pd_scaled_load15));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc15, pd_scaled_load15);
-		xasprintf(&scaled_load_sc15.output, "15 Minutes: %s",
+		mopl_utils_xasprintf(&scaled_load_sc15.output, "15 Minutes: %s",
 				  pd_value_to_string(pd_scaled_load15.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc15);
 
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc1 = mp_subcheck_init();
 	load_sc1 = mp_set_subcheck_state(load_sc1, mp_get_pd_status(pd_load1));
 	mp_add_perfdata_to_subcheck(&load_sc1, pd_load1);
-	xasprintf(&load_sc1.output, "1 Minute: %s", pd_value_to_string(pd_load1.value));
+	mopl_utils_xasprintf(&load_sc1.output, "1 Minute: %s", pd_value_to_string(pd_load1.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc1);
 
 	mp_perfdata pd_load5 = perfdata_init();
@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc5 = mp_subcheck_init();
 	load_sc5 = mp_set_subcheck_state(load_sc5, mp_get_pd_status(pd_load5));
 	mp_add_perfdata_to_subcheck(&load_sc5, pd_load5);
-	xasprintf(&load_sc5.output, "5 Minutes: %s", pd_value_to_string(pd_load5.value));
+	mopl_utils_xasprintf(&load_sc5.output, "5 Minutes: %s", pd_value_to_string(pd_load5.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc5);
 
 	mp_perfdata pd_load15 = perfdata_init();
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc15 = mp_subcheck_init();
 	load_sc15 = mp_set_subcheck_state(load_sc15, mp_get_pd_status(pd_load15));
 	mp_add_perfdata_to_subcheck(&load_sc15, pd_load15);
-	xasprintf(&load_sc15.output, "15 Minutes: %s", pd_value_to_string(pd_load15.value));
+	mopl_utils_xasprintf(&load_sc15.output, "15 Minutes: %s", pd_value_to_string(pd_load15.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc15);
 
 	mp_add_subcheck_to_check(&overall, load_sc);
@@ -260,13 +260,13 @@ int main(int argc, char **argv) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
 		top_processes_result top_proc = get_top_consuming_processes(config.n_procs_to_show);
-		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
+		mopl_utils_xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
 				  config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
 			// +1 here since the string list contains the header line
 			for (unsigned long i = 0; i < config.n_procs_to_show + 1; i++) {
-				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
+				mopl_utils_xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 						  top_proc.top_processes[i]);
 			}
 		}
@@ -487,7 +487,7 @@ static top_processes_result get_top_consuming_processes(unsigned long n_procs_to
 	}
 
 	for (unsigned long i = 0; i < lines_to_show; i += 1) {
-		xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
+		mopl_utils_xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
 	}
 
 	return result;

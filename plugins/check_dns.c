@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 
 	char *command_line = NULL;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address, config.dns_server);
+	mopl_utils_xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address, config.dns_server);
 
 	struct timeval tv;
 	alarm(timeout_interval);
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
 			}
 
 			/* prepare an error string */
-			xasprintf(&temp_buffer, "%s%s; ", temp_buffer, config.expected_address[i]);
+			mopl_utils_xasprintf(&temp_buffer, "%s%s; ", temp_buffer, config.expected_address[i]);
 		}
 		/* check if expected_address must cover all in addresses and none may be missing */
 		if (config.all_match && (expect_match != 0 || addr_match != 0)) {
@@ -283,14 +283,14 @@ int main(int argc, char **argv) {
 		if (result == STATE_CRITICAL) {
 			/* Strip off last semicolon... */
 			temp_buffer[strlen(temp_buffer) - 2] = '\0';
-			xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
+			mopl_utils_xasprintf(&msg, _("expected '%s' but got '%s'"), temp_buffer, address);
 		}
 	}
 
 	if (config.expect_nxdomain) {
 		if (!is_nxdomain) {
 			result = STATE_CRITICAL;
-			xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
+			mopl_utils_xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
 					  address);
 		} else {
 			if (address != NULL) {
@@ -303,7 +303,7 @@ int main(int argc, char **argv) {
 	/* check if authoritative */
 	if (result == STATE_OK && config.expect_authority && non_authoritative) {
 		result = STATE_CRITICAL;
-		xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
+		mopl_utils_xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
 				  config.query_address);
 	}
 

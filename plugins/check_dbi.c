@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
 
 	mp_subcheck sc_connection_time = mp_subcheck_init();
 	sc_connection_time = mp_set_subcheck_default_state(sc_connection_time, STATE_OK);
-	xasprintf(&sc_connection_time.output, "Connection time: %f", conn_time);
+	mopl_utils_xasprintf(&sc_connection_time.output, "Connection time: %f", conn_time);
 
 	mp_perfdata pd_conn_duration = perfdata_init();
 	pd_conn_duration.label = "conntime";
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
 		mp_state_enum status = mp_get_pd_status(pd_conn_duration);
 		sc_connection_time = mp_set_subcheck_state(sc_connection_time, status);
 		if (status != STATE_OK) {
-			xasprintf(&sc_connection_time.output, "%s violates thresholds",
+			mopl_utils_xasprintf(&sc_connection_time.output, "%s violates thresholds",
 					  sc_connection_time.output);
 		}
 	}
@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
 
 	mp_subcheck sc_server_version = mp_subcheck_init();
 	sc_server_version = mp_set_subcheck_default_state(sc_server_version, STATE_OK);
-	xasprintf(&sc_server_version.output, "Connected to server version %u", server_version);
+	mopl_utils_xasprintf(&sc_server_version.output, "Connected to server version %u", server_version);
 
 	if (config.metric == METRIC_SERVER_VERSION) {
 		mp_perfdata pd_server_version = perfdata_init();
@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
 		sc_server_version = mp_set_subcheck_state(sc_server_version, status);
 
 		if (status != STATE_OK) {
-			xasprintf(&sc_server_version.output, "%s violates thresholds",
+			mopl_utils_xasprintf(&sc_server_version.output, "%s violates thresholds",
 					  sc_server_version.output);
 		}
 	};
@@ -294,18 +294,18 @@ int main(int argc, char **argv) {
 		do_query_result query_res = do_query(conn, config.metric, config.type, config.query);
 
 		if (query_res.error_code != 0) {
-			xasprintf(&sc_query.output, "Query failed: %s", query_res.error_string);
+			mopl_utils_xasprintf(&sc_query.output, "Query failed: %s", query_res.error_string);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 		} else if (query_res.query_processing_status != STATE_OK) {
 			if (query_res.error_string) {
-				xasprintf(&sc_query.output, "Failed to process query: %s", query_res.error_string);
+				mopl_utils_xasprintf(&sc_query.output, "Failed to process query: %s", query_res.error_string);
 			} else {
-				xasprintf(&sc_query.output, "Failed to process query");
+				mopl_utils_xasprintf(&sc_query.output, "Failed to process query");
 			}
 			sc_query = mp_set_subcheck_state(sc_query, query_res.query_processing_status);
 		} else {
 			// query succeeded in general
-			xasprintf(&sc_query.output, "Query '%s' succeeded", config.query);
+			mopl_utils_xasprintf(&sc_query.output, "Query '%s' succeeded", config.query);
 
 			// that's a OK by default now
 			sc_query = mp_set_subcheck_default_state(sc_query, STATE_OK);
@@ -324,11 +324,11 @@ int main(int argc, char **argv) {
 				if (config.expect) {
 					if ((!query_res.result_string) ||
 						strcmp(query_res.result_string, config.expect)) {
-						xasprintf(&sc_query.output, "Found string '%s' in query result",
+						mopl_utils_xasprintf(&sc_query.output, "Found string '%s' in query result",
 								  config.expect);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 					} else {
-						xasprintf(&sc_query.output, "Did not find string '%s' in query result",
+						mopl_utils_xasprintf(&sc_query.output, "Did not find string '%s' in query result",
 								  config.expect);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
 					}
@@ -347,17 +347,17 @@ int main(int argc, char **argv) {
 						regexec(&expect_re, query_res.result_string, 0, NULL, /* flags = */ 0);
 					if (!err) {
 						sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
-						xasprintf(&sc_query.output, "Found regular expression '%s' in query result",
+						mopl_utils_xasprintf(&sc_query.output, "Found regular expression '%s' in query result",
 								  config.expect_re_str);
 					} else if (err == REG_NOMATCH) {
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
-						xasprintf(&sc_query.output,
+						mopl_utils_xasprintf(&sc_query.output,
 								  "Did not find regular expression '%s' in query result",
 								  config.expect_re_str);
 					} else {
 						char errmsg[1024];
 						regerror(err, &expect_re, errmsg, sizeof(errmsg));
-						xasprintf(&sc_query.output,
+						mopl_utils_xasprintf(&sc_query.output,
 								  "ERROR - failed to execute regular expression: %s\n", errmsg);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 					}
@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
 						// The query result is not a number, but no string checking was configured
 						// so we expected a number
 						// this is a CRITICAL
-						xasprintf(&sc_query.output, "Query '%s' result is not numeric",
+						mopl_utils_xasprintf(&sc_query.output, "Query '%s' result is not numeric",
 								  config.query);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 
@@ -389,11 +389,11 @@ int main(int argc, char **argv) {
 						// }
 
 						if (query_numerical_result == STATE_OK) {
-							xasprintf(&sc_query.output,
+							mopl_utils_xasprintf(&sc_query.output,
 									  "Query result '%f' is within given thresholds",
 									  query_res.result_number);
 						} else {
-							xasprintf(&sc_query.output,
+							mopl_utils_xasprintf(&sc_query.output,
 									  "Query result '%f' violates the given thresholds",
 									  query_res.result_number);
 						}
@@ -404,10 +404,10 @@ int main(int argc, char **argv) {
 				mp_set_subcheck_state(sc_query, query_time_status);
 
 				if (query_time_status == STATE_OK) {
-					xasprintf(&sc_query.output, "Query duration '%f' is within given thresholds",
+					mopl_utils_xasprintf(&sc_query.output, "Query duration '%f' is within given thresholds",
 							  query_res.query_duration);
 				} else {
-					xasprintf(&sc_query.output, "Query duration '%f' violates the given thresholds",
+					mopl_utils_xasprintf(&sc_query.output, "Query duration '%f' violates the given thresholds",
 							  query_res.query_duration);
 				}
 			} else {

@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
 	cmd = strdup(argv[optind++]);
 	for (c = optind; c < argc; c++) {
-		xasprintf(&cmd, "%s %s", cmd, argv[c]);
+		mopl_utils_xasprintf(&cmd, "%s %s", cmd, argv[c]);
 	}
 
 	child_process = spopen(cmd);

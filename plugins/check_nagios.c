@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 			chld_out.line[i][pos + 1] = 0x0;
 		}
 		if (cols >= expected_cols) {
-			xasprintf(&procargs, "%s", chld_out.line[i] + pos);
+			mopl_utils_xasprintf(&procargs, "%s", chld_out.line[i] + pos);
 			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */

@@ -92,52 +92,52 @@ int main(int argc, char **argv) {
 	 *   -> we use ipv4
 	 */
 	if (address_family == AF_INET6 || (address_family == AF_UNSPEC && server_is_inet6_addr)) {
-		xasprintf(&option_string, "%s-6 ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-6 ", option_string);
 	} else {
-		xasprintf(&option_string, "%s-4 ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-4 ", option_string);
 	}
 	fping_prog = strdup(PATH_TO_FPING);
 
 	/* compose the command */
 	if (config.target_timeout) {
-		xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
+		mopl_utils_xasprintf(&option_string, "%s-t %d ", option_string, config.target_timeout);
 	}
 	if (config.packet_interval) {
-		xasprintf(&option_string, "%s-p %d ", option_string, config.packet_interval);
+		mopl_utils_xasprintf(&option_string, "%s-p %d ", option_string, config.packet_interval);
 	}
 	if (config.sourceip) {
-		xasprintf(&option_string, "%s-S %s ", option_string, config.sourceip);
+		mopl_utils_xasprintf(&option_string, "%s-S %s ", option_string, config.sourceip);
 	}
 	if (config.sourceif) {
-		xasprintf(&option_string, "%s-I %s ", option_string, config.sourceif);
+		mopl_utils_xasprintf(&option_string, "%s-I %s ", option_string, config.sourceif);
 	}
 	if (config.dontfrag) {
-		xasprintf(&option_string, "%s-M ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-M ", option_string);
 	}
 	if (config.randomize_packet_data) {
-		xasprintf(&option_string, "%s-R ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s-R ", option_string);
 	}
 
 	if (config.fwmark_set) {
-		xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
+		mopl_utils_xasprintf(&option_string, "%s--fwmark %u ", option_string, config.fwmark);
 	}
 
 	if (config.icmp_timestamp) {
-		xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s--icmp-timestamp ", option_string);
 	}
 
 	if (config.check_source) {
-		xasprintf(&option_string, "%s--check-source ", option_string);
+		mopl_utils_xasprintf(&option_string, "%s--check-source ", option_string);
 	}
 
 	char *command_line = NULL;
 
 	if (config.icmp_timestamp) {
 		// no packet size settable for ICMP timestamp
-		xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
+		mopl_utils_xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
 				  server);
 	} else {
-		xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
+		mopl_utils_xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
 				  config.packet_size, config.packet_count, server);
 	}
 

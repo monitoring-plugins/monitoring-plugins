@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 	if (line == 0) {
 		/* might not be the problem, but most likely is. */
 		result = STATE_UNKNOWN;
-		xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, config.address);
+		mopl_utils_xasprintf(&errmsg, "%s : Timeout from host %s\n", errmsg, config.address);
 	}
 
 	/* if we had no read errors, check the printer status results... */

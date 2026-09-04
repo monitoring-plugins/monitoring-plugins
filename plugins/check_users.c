@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 	}
 
 	char *ok_summary = NULL;
-	xasprintf(&ok_summary, "Users on the system: %d", user_wrapper.users);
+	mopl_utils_xasprintf(&ok_summary, "Users on the system: %d", user_wrapper.users);
 	mp_set_ok_summary(&overall, ok_summary);
 	free(ok_summary);
 
@@ -131,17 +131,17 @@ int main(int argc, char **argv) {
 
 	switch (tmp_status) {
 	case STATE_WARNING:
-		xasprintf(&sc_users.output,
+		mopl_utils_xasprintf(&sc_users.output,
 				  "%d users currently logged in. This violates the warning threshold",
 				  user_wrapper.users);
 		break;
 	case STATE_CRITICAL:
-		xasprintf(&sc_users.output,
+		mopl_utils_xasprintf(&sc_users.output,
 				  "%d users currently logged in. This violates the critical threshold",
 				  user_wrapper.users);
 		break;
 	default:
-		xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
+		mopl_utils_xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
 	}
 
 	mp_add_subcheck_to_check(&overall, sc_users);

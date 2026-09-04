@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 		/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 #	ifdef PING_HAS_TIMEOUT
-		xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
+		mopl_utils_xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
 #	else
 		xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
 #	endif
@@ -559,7 +559,7 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					xasprintf(&warn_text, "%s %s", warn_text,
+					mopl_utils_xasprintf(&warn_text, "%s %s", warn_text,
 							  _("System call sent warnings to stderr "));
 				}
 			}
@@ -605,7 +605,7 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 		if (warn_text == NULL) {
 			warn_text = strdup(_(WARN_DUPLICATES));
 		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) &&
-				   xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
+				   mopl_utils_xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
 			die(STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		}
 		return STATE_WARNING;

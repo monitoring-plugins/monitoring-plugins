@@ -299,12 +299,12 @@ int main(int argc, char **argv) {
 
 	if (response.errorcode == OK) {
 		mp_subcheck sc_successfull_query = mp_subcheck_init();
-		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
+		mopl_utils_xasprintf(&sc_successfull_query.output, "SNMP query was successful");
 		sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_successfull_query);
 	} else if (response.number_of_results != config.snmp_params.num_of_test_units) {
 		mp_subcheck sc_strange_query_result = mp_subcheck_init();
-		xasprintf(&sc_strange_query_result.output,
+		mopl_utils_xasprintf(&sc_strange_query_result.output,
 				  "SNMP query returned %zu results, but %zu were requested",
 				  response.number_of_results, config.snmp_params.num_of_test_units);
 		sc_strange_query_result = mp_set_subcheck_state(sc_strange_query_result, STATE_UNKNOWN);
@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
 	} else {
 		// Error treatment here, either partial or whole
 		mp_subcheck sc_failed_query = mp_subcheck_init();
-		xasprintf(&sc_failed_query.output, "SNMP query failed");
+		mopl_utils_xasprintf(&sc_failed_query.output, "SNMP query failed");
 		sc_failed_query = mp_set_subcheck_state(sc_failed_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_failed_query);
 		mp_exit(overall);
@@ -873,7 +873,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			// The default, do nothing
 		} else if (strcasecmp(connection_prefix, "tcp") == 0) {
 			// use tcp/ipv4
-			xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcasecmp(connection_prefix, "tcp6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpv6") == 0 ||
@@ -883,22 +883,22 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				   strcasecmp(connection_prefix, "udpv6") == 0) {
 			// Man page (or net-snmp) code says IPv6 addresses should be wrapped in [], but it
 			// works anyway therefore do nothing here
-			xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "tls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "dtls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "unix") == 0) {
 			// TODO: Check whether this is a valid path?
-			xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "ipx") == 0) {
-			xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else {
 			// Don't know that prefix, die here
@@ -912,7 +912,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (port != NULL) {
-		xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
+		mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
 				  config.snmp_params.snmp_session.peername, port);
 	}
 

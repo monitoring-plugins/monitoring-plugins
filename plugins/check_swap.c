@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
+	mopl_utils_xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
 			  data.metrics.free >> 20, data.metrics.total >> 20);
 
 	overall.summary = "Swap";

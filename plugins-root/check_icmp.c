@@ -1563,19 +1563,19 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 
 		if (targets_ok >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
-			xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u", targets_ok,
+			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u", targets_ok,
 					  min_hosts_alive);
 
 			// Overwrite main state here
 			overall->evaluation_function = &mp_eval_ok;
 		} else if ((targets_ok + targets_warn) >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
-			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
+			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
 					  targets_ok + targets_warn, min_hosts_alive);
 			overall->evaluation_function = &mp_eval_warning;
 		} else {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_CRITICAL);
-			xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
+			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
 					  targets_ok + targets_warn, min_hosts_alive);
 			overall->evaluation_function = &mp_eval_critical;
 		}
@@ -2225,7 +2225,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	memset(address, 0, INET6_ADDRSTRLEN);
 	parse_address(&target.address, address, sizeof(address));
 
-	xasprintf(&result.output, "%s", address);
+	mopl_utils_xasprintf(&result.output, "%s", address);
 
 	double packet_loss;
 	time_t rta;
@@ -2238,10 +2238,10 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		/* up the down counter if not already counted */
 
 		if (target.flags & FLAG_LOST_CAUSE) {
-			xasprintf(&result.output, "%s: %s @ %s", result.output,
+			mopl_utils_xasprintf(&result.output, "%s: %s @ %s", result.output,
 					  get_icmp_error_msg(target.icmp_type, target.icmp_code), address);
 		} else { /* not marked as lost cause, so we have no flags for it */
-			xasprintf(&result.output, "%s", result.output);
+			mopl_utils_xasprintf(&result.output, "%s", result.output);
 		}
 	} else {
 		packet_loss =
@@ -2307,19 +2307,19 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.rta_mode) {
 		mp_subcheck sc_rta = mp_subcheck_init();
 		sc_rta = mp_set_subcheck_default_state(sc_rta, STATE_OK);
-		xasprintf(&sc_rta.output, "rta %0.3fms", (double)rta / 1000);
+		mopl_utils_xasprintf(&sc_rta.output, "rta %0.3fms", (double)rta / 1000);
 
 		if (rta >= crit.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
-			xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)crit.rta / 1000);
+			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)crit.rta / 1000);
 		} else if (rta >= warn.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
-			xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)warn.rta / 1000);
+			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)warn.rta / 1000);
 		}
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_rta = perfdata_init();
-			xasprintf(&pd_rta.label, "%srta", address);
+			mopl_utils_xasprintf(&pd_rta.label, "%srta", address);
 			pd_rta.uom = strdup("ms");
 			pd_rta.value = mp_create_pd_value(rta / 1000);
 			pd_rta.min = mp_create_pd_value(0);
@@ -2329,13 +2329,13 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rta);
 
 			mp_perfdata pd_rt_min = perfdata_init();
-			xasprintf(&pd_rt_min.label, "%srtmin", address);
+			mopl_utils_xasprintf(&pd_rt_min.label, "%srtmin", address);
 			pd_rt_min.value = mp_create_pd_value(target.rtmin / 1000);
 			pd_rt_min.uom = strdup("ms");
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_min);
 
 			mp_perfdata pd_rt_max = perfdata_init();
-			xasprintf(&pd_rt_max.label, "%srtmax", address);
+			mopl_utils_xasprintf(&pd_rt_max.label, "%srtmax", address);
 			pd_rt_max.value = mp_create_pd_value(target.rtmax / 1000);
 			pd_rt_max.uom = strdup("ms");
 			mp_add_perfdata_to_subcheck(&sc_rta, pd_rt_max);
@@ -2347,18 +2347,18 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.pl_mode) {
 		mp_subcheck sc_pl = mp_subcheck_init();
 		sc_pl = mp_set_subcheck_default_state(sc_pl, STATE_OK);
-		xasprintf(&sc_pl.output, "packet loss %.1f%%", packet_loss);
+		mopl_utils_xasprintf(&sc_pl.output, "packet loss %.1f%%", packet_loss);
 
 		if (packet_loss >= crit.pl) {
 			sc_pl = mp_set_subcheck_state(sc_pl, STATE_CRITICAL);
-			xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, crit.pl);
+			mopl_utils_xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, crit.pl);
 		} else if (packet_loss >= warn.pl) {
 			sc_pl = mp_set_subcheck_state(sc_pl, STATE_WARNING);
-			xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, warn.pl);
+			mopl_utils_xasprintf(&sc_pl.output, "%s >= %u%%", sc_pl.output, warn.pl);
 		}
 
 		mp_perfdata pd_pl = perfdata_init();
-		xasprintf(&pd_pl.label, "%spl", address);
+		mopl_utils_xasprintf(&pd_pl.label, "%spl", address);
 		pd_pl.uom = strdup("%");
 
 		pd_pl.warn = mp_range_set_end(pd_pl.warn, mp_create_pd_value(warn.pl));
@@ -2373,20 +2373,20 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.jitter_mode) {
 		mp_subcheck sc_jitter = mp_subcheck_init();
 		sc_jitter = mp_set_subcheck_default_state(sc_jitter, STATE_OK);
-		xasprintf(&sc_jitter.output, "jitter %0.3fms", target.jitter);
+		mopl_utils_xasprintf(&sc_jitter.output, "jitter %0.3fms", target.jitter);
 
 		if (target.jitter >= crit.jitter) {
 			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_CRITICAL);
-			xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, crit.jitter);
+			mopl_utils_xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, crit.jitter);
 		} else if (target.jitter >= warn.jitter) {
 			sc_jitter = mp_set_subcheck_state(sc_jitter, STATE_WARNING);
-			xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, warn.jitter);
+			mopl_utils_xasprintf(&sc_jitter.output, "%s >= %0.3fms", sc_jitter.output, warn.jitter);
 		}
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_jitter = perfdata_init();
 			pd_jitter.uom = strdup("ms");
-			xasprintf(&pd_jitter.label, "%sjitter_avg", address);
+			mopl_utils_xasprintf(&pd_jitter.label, "%sjitter_avg", address);
 			pd_jitter.value = mp_create_pd_value(target.jitter);
 			pd_jitter.warn = mp_range_set_end(pd_jitter.warn, mp_create_pd_value(warn.jitter));
 			pd_jitter.crit = mp_range_set_end(pd_jitter.crit, mp_create_pd_value(crit.jitter));
@@ -2394,13 +2394,13 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 			mp_perfdata pd_jitter_min = perfdata_init();
 			pd_jitter_min.uom = strdup("ms");
-			xasprintf(&pd_jitter_min.label, "%sjitter_min", address);
+			mopl_utils_xasprintf(&pd_jitter_min.label, "%sjitter_min", address);
 			pd_jitter_min.value = mp_create_pd_value(target.jitter_min);
 			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_min);
 
 			mp_perfdata pd_jitter_max = perfdata_init();
 			pd_jitter_max.uom = strdup("ms");
-			xasprintf(&pd_jitter_max.label, "%sjitter_max", address);
+			mopl_utils_xasprintf(&pd_jitter_max.label, "%sjitter_max", address);
 			pd_jitter_max.value = mp_create_pd_value(target.jitter_max);
 			mp_add_perfdata_to_subcheck(&sc_jitter, pd_jitter_max);
 		}
@@ -2410,19 +2410,19 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 	if (modes.mos_mode) {
 		mp_subcheck sc_mos = mp_subcheck_init();
 		sc_mos = mp_set_subcheck_default_state(sc_mos, STATE_OK);
-		xasprintf(&sc_mos.output, "MOS %0.1f", mos);
+		mopl_utils_xasprintf(&sc_mos.output, "MOS %0.1f", mos);
 
 		if (mos <= crit.mos) {
 			sc_mos = mp_set_subcheck_state(sc_mos, STATE_CRITICAL);
-			xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, crit.mos);
+			mopl_utils_xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, crit.mos);
 		} else if (mos <= warn.mos) {
 			sc_mos = mp_set_subcheck_state(sc_mos, STATE_WARNING);
-			xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, warn.mos);
+			mopl_utils_xasprintf(&sc_mos.output, "%s <= %0.1f", sc_mos.output, warn.mos);
 		}
 
 		if (packet_loss < 100) {
 			mp_perfdata pd_mos = perfdata_init();
-			xasprintf(&pd_mos.label, "%smos", address);
+			mopl_utils_xasprintf(&pd_mos.label, "%smos", address);
 			pd_mos.value = mp_create_pd_value(mos);
 			pd_mos.warn = mp_range_set_end(pd_mos.warn, mp_create_pd_value(warn.mos));
 			pd_mos.crit = mp_range_set_end(pd_mos.crit, mp_create_pd_value(crit.mos));
@@ -2438,19 +2438,19 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 		sc_score = mp_set_subcheck_default_state(sc_score, STATE_OK);
 
 		if (target.icmp_recv > 1) {
-			xasprintf(&sc_score.output, "Score %f", score);
+			mopl_utils_xasprintf(&sc_score.output, "Score %f", score);
 
 			if (score <= crit.score) {
 				sc_score = mp_set_subcheck_state(sc_score, STATE_CRITICAL);
-				xasprintf(&sc_score.output, "%s <= %f", sc_score.output, crit.score);
+				mopl_utils_xasprintf(&sc_score.output, "%s <= %f", sc_score.output, crit.score);
 			} else if (score <= warn.score) {
 				sc_score = mp_set_subcheck_state(sc_score, STATE_WARNING);
-				xasprintf(&sc_score.output, "%s <= %f", sc_score.output, warn.score);
+				mopl_utils_xasprintf(&sc_score.output, "%s <= %f", sc_score.output, warn.score);
 			}
 
 			if (packet_loss < 100) {
 				mp_perfdata pd_score = perfdata_init();
-				xasprintf(&pd_score.label, "%sscore", address);
+				mopl_utils_xasprintf(&pd_score.label, "%sscore", address);
 				pd_score.value = mp_create_pd_value(score);
 				pd_score.warn = mp_range_set_end(pd_score.warn, mp_create_pd_value(warn.score));
 				pd_score.crit = mp_range_set_end(pd_score.crit, mp_create_pd_value(crit.score));
@@ -2461,7 +2461,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		} else {
 			// score mode disabled due to not enough received packages
-			xasprintf(&sc_score.output, "Score mode disabled, not enough packets received");
+			mopl_utils_xasprintf(&sc_score.output, "Score mode disabled, not enough packets received");
 		}
 
 		mp_add_subcheck_to_subcheck(&result, sc_score);
@@ -2473,9 +2473,9 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (target.found_out_of_order_packets) {
 			mp_set_subcheck_state(sc_order, STATE_CRITICAL);
-			xasprintf(&sc_order.output, "Packets out of order");
+			mopl_utils_xasprintf(&sc_order.output, "Packets out of order");
 		} else {
-			xasprintf(&sc_order.output, "Packets in order");
+			mopl_utils_xasprintf(&sc_order.output, "Packets in order");
 		}
 
 		mp_add_subcheck_to_subcheck(&result, sc_order);

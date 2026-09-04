@@ -264,7 +264,7 @@ char *mopl_utils_strscpy(char *dest, const char *src) {
 		return NULL;
 	}
 
-	xasprintf(&dest, "%s", src);
+	mopl_utils_xasprintf(&dest, "%s", src);
 
 	return dest;
 }
@@ -345,7 +345,7 @@ char *mopl_utils_strnl(char *str) {
  *
  ******************************************************************************/
 
-int xvasprintf(char **strp, const char *fmt, va_list ap) {
+int mopl_utils_xvasprintf(char **strp, const char *fmt, va_list ap) {
 	int result = vasprintf(strp, fmt, ap);
 	if (result == -1 || *strp == NULL) {
 		die(STATE_UNKNOWN, _("failed malloc in xvasprintf\n"));
@@ -353,11 +353,11 @@ int xvasprintf(char **strp, const char *fmt, va_list ap) {
 	return result;
 }
 
-int xasprintf(char **strp, const char *fmt, ...) {
+int mopl_utils_xasprintf(char **strp, const char *fmt, ...) {
 	va_list ap;
 	int result;
 	va_start(ap, fmt);
-	result = xvasprintf(strp, fmt, ap);
+	result = mopl_utils_xvasprintf(strp, fmt, ap);
 	va_end(ap);
 	return result;
 }
@@ -373,31 +373,31 @@ char *perfdata(const char *label, long int val, const char *uom, bool warnp, lon
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%ld%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "'%s'=%ld%s;", label, val, uom);
 	} else {
-		xasprintf(&data, "%s=%ld%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "%s=%ld%s;", label, val, uom);
 	}
 
 	if (warnp) {
-		xasprintf(&data, "%s%ld;", data, warn);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, warn);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (critp) {
-		xasprintf(&data, "%s%ld;", data, crit);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, crit);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (minp) {
-		xasprintf(&data, "%s%ld;", data, minv);
+		mopl_utils_xasprintf(&data, "%s%ld;", data, minv);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s%ld", data, maxv);
+		mopl_utils_xasprintf(&data, "%s%ld", data, maxv);
 	}
 
 	return data;
@@ -412,31 +412,31 @@ char *perfdata_uint64(const char *label, uint64_t val, const char *uom,
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "'%s'=%" PRIu64 "%s;", label, val, uom);
 	} else {
-		xasprintf(&data, "%s=%" PRIu64 "%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "%s=%" PRIu64 "%s;", label, val, uom);
 	}
 
 	if (warnp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, warn);
+		mopl_utils_xasprintf(&data, "%s%" PRIu64 ";", data, warn);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (critp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, crit);
+		mopl_utils_xasprintf(&data, "%s%" PRIu64 ";", data, crit);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (minp) {
-		xasprintf(&data, "%s%" PRIu64 ";", data, minv);
+		mopl_utils_xasprintf(&data, "%s%" PRIu64 ";", data, minv);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s%" PRIu64, data, maxv);
+		mopl_utils_xasprintf(&data, "%s%" PRIu64, data, maxv);
 	}
 
 	return data;
@@ -451,31 +451,31 @@ char *perfdata_int64(const char *label, int64_t val, const char *uom,
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=%" PRId64 "%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "'%s'=%" PRId64 "%s;", label, val, uom);
 	} else {
-		xasprintf(&data, "%s=%" PRId64 "%s;", label, val, uom);
+		mopl_utils_xasprintf(&data, "%s=%" PRId64 "%s;", label, val, uom);
 	}
 
 	if (warnp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, warn);
+		mopl_utils_xasprintf(&data, "%s%" PRId64 ";", data, warn);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (critp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, crit);
+		mopl_utils_xasprintf(&data, "%s%" PRId64 ";", data, crit);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (minp) {
-		xasprintf(&data, "%s%" PRId64 ";", data, minv);
+		mopl_utils_xasprintf(&data, "%s%" PRId64 ";", data, minv);
 	} else {
-		xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s;", data);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s%" PRId64, data, maxv);
+		mopl_utils_xasprintf(&data, "%s%" PRId64, data, maxv);
 	}
 
 	return data;
@@ -486,33 +486,33 @@ char *fperfdata(const char *label, double val, const char *uom, bool warnp, doub
 	char *data = NULL;
 
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
+		mopl_utils_xasprintf(&data, "'%s'=", label);
 	} else {
-		xasprintf(&data, "%s=", label);
+		mopl_utils_xasprintf(&data, "%s=", label);
 	}
 
-	xasprintf(&data, "%s%f", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
+	mopl_utils_xasprintf(&data, "%s%f", data, val);
+	mopl_utils_xasprintf(&data, "%s%s;", data, uom);
 
 	if (warnp) {
-		xasprintf(&data, "%s%f", data, warn);
+		mopl_utils_xasprintf(&data, "%s%f", data, warn);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (critp) {
-		xasprintf(&data, "%s%f", data, crit);
+		mopl_utils_xasprintf(&data, "%s%f", data, crit);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (minp) {
-		xasprintf(&data, "%s%f", data, minv);
+		mopl_utils_xasprintf(&data, "%s%f", data, minv);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%f", data, maxv);
+		mopl_utils_xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s%f", data, maxv);
 	}
 
 	return data;
@@ -522,33 +522,33 @@ char *sperfdata(const char *label, double val, const char *uom, char *warn, char
 				double minv, bool maxp, double maxv) {
 	char *data = NULL;
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
+		mopl_utils_xasprintf(&data, "'%s'=", label);
 	} else {
-		xasprintf(&data, "%s=", label);
+		mopl_utils_xasprintf(&data, "%s=", label);
 	}
 
-	xasprintf(&data, "%s%f", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
+	mopl_utils_xasprintf(&data, "%s%f", data, val);
+	mopl_utils_xasprintf(&data, "%s%s;", data, uom);
 
 	if (warn != NULL) {
-		xasprintf(&data, "%s%s", data, warn);
+		mopl_utils_xasprintf(&data, "%s%s", data, warn);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (crit != NULL) {
-		xasprintf(&data, "%s%s", data, crit);
+		mopl_utils_xasprintf(&data, "%s%s", data, crit);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (minp) {
-		xasprintf(&data, "%s%f", data, minv);
+		mopl_utils_xasprintf(&data, "%s%f", data, minv);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%f", data, maxv);
+		mopl_utils_xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s%f", data, maxv);
 	}
 
 	return data;
@@ -558,33 +558,33 @@ char *sperfdata_int(const char *label, int val, const char *uom, char *warn, cha
 					int minv, bool maxp, int maxv) {
 	char *data = NULL;
 	if (strpbrk(label, "'= ")) {
-		xasprintf(&data, "'%s'=", label);
+		mopl_utils_xasprintf(&data, "'%s'=", label);
 	} else {
-		xasprintf(&data, "%s=", label);
+		mopl_utils_xasprintf(&data, "%s=", label);
 	}
 
-	xasprintf(&data, "%s%d", data, val);
-	xasprintf(&data, "%s%s;", data, uom);
+	mopl_utils_xasprintf(&data, "%s%d", data, val);
+	mopl_utils_xasprintf(&data, "%s%s;", data, uom);
 
 	if (warn != NULL) {
-		xasprintf(&data, "%s%s", data, warn);
+		mopl_utils_xasprintf(&data, "%s%s", data, warn);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (crit != NULL) {
-		xasprintf(&data, "%s%s", data, crit);
+		mopl_utils_xasprintf(&data, "%s%s", data, crit);
 	}
 
-	xasprintf(&data, "%s;", data);
+	mopl_utils_xasprintf(&data, "%s;", data);
 
 	if (minp) {
-		xasprintf(&data, "%s%d", data, minv);
+		mopl_utils_xasprintf(&data, "%s%d", data, minv);
 	}
 
 	if (maxp) {
-		xasprintf(&data, "%s;", data);
-		xasprintf(&data, "%s%d", data, maxv);
+		mopl_utils_xasprintf(&data, "%s;", data);
+		mopl_utils_xasprintf(&data, "%s%d", data, maxv);
 	}
 
 	return data;

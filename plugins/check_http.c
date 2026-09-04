@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
-	xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", NP_VERSION,
+	mopl_utils_xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", NP_VERSION,
 			  VERSION);
 
 	/* Parse extra opts if any */
@@ -324,7 +324,7 @@ bool process_arguments(int argc, char **argv) {
 			warning_thresholds = optarg;
 			break;
 		case 'A': /* User Agent String */
-			xasprintf(&user_agent, "User-Agent: %s", optarg);
+			mopl_utils_xasprintf(&user_agent, "User-Agent: %s", optarg);
 			break;
 		case 'k': /* Additional headers */
 			if (http_opt_headers_count == 0) {
@@ -532,7 +532,7 @@ bool process_arguments(int argc, char **argv) {
 			server_expect_yn = 1;
 			break;
 		case 'T': /* Content-type */
-			xasprintf(&http_content_type, "%s", optarg);
+			mopl_utils_xasprintf(&http_content_type, "%s", optarg);
 			break;
 		case 'l': /* linespan */
 			cflags &= ~REG_NEWLINE;
@@ -848,33 +848,33 @@ static int check_document_dates(const char *headers, char **msg) {
 
 	/* Done parsing the body.  Now check the dates we (hopefully) parsed.  */
 	if (!server_date || !*server_date) {
-		xasprintf(msg, _("%sServer date unknown, "), *msg);
+		mopl_utils_xasprintf(msg, _("%sServer date unknown, "), *msg);
 		date_result = max_state_alt(STATE_UNKNOWN, date_result);
 	} else if (!document_date || !*document_date) {
-		xasprintf(msg, _("%sDocument modification date unknown, "), *msg);
+		mopl_utils_xasprintf(msg, _("%sDocument modification date unknown, "), *msg);
 		date_result = max_state_alt(STATE_CRITICAL, date_result);
 	} else {
 		time_t srv_data = parse_time_string(server_date);
 		time_t doc_data = parse_time_string(document_date);
 
 		if (srv_data <= 0) {
-			xasprintf(msg, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
+			mopl_utils_xasprintf(msg, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data <= 0) {
-			xasprintf(msg, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
+			mopl_utils_xasprintf(msg, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data > srv_data + 30) {
-			xasprintf(msg, _("%sDocument is %d seconds in the future, "), *msg,
+			mopl_utils_xasprintf(msg, _("%sDocument is %d seconds in the future, "), *msg,
 					  (int)doc_data - (int)srv_data);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data < srv_data - maximum_age) {
 			int n = (srv_data - doc_data);
 			if (n > (60 * 60 * 24 * 2)) {
-				xasprintf(msg, _("%sLast modified %.1f days ago, "), *msg,
+				mopl_utils_xasprintf(msg, _("%sLast modified %.1f days ago, "), *msg,
 						  ((float)n) / (60 * 60 * 24));
 				date_result = max_state_alt(STATE_CRITICAL, date_result);
 			} else {
-				xasprintf(msg, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60),
+				mopl_utils_xasprintf(msg, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60),
 						  (n / 60) % 60, n % 60);
 				date_result = max_state_alt(STATE_CRITICAL, date_result);
 			}
@@ -1011,13 +1011,13 @@ int check_http(void) {
 				 user_agent);
 		if (strlen(proxy_auth)) {
 			base64_encode_alloc(proxy_auth, strlen(proxy_auth), &auth);
-			xasprintf(&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
+			mopl_utils_xasprintf(&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
 		}
 		/* optionally send any other header tag */
 		if (http_opt_headers_count) {
 			for (i = 0; i < http_opt_headers_count; i++) {
 				if (force_host_header != http_opt_headers[i]) {
-					xasprintf(&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+					mopl_utils_xasprintf(&buf, "%s%s\r\n", buf, http_opt_headers[i]);
 				}
 			}
 			/* This cannot be free'd here because a redirection will then try to access this and
@@ -1081,7 +1081,7 @@ int check_http(void) {
 	}
 
 	/* tell HTTP/1.1 servers not to keep the connection alive */
-	xasprintf(&buf, "%sConnection: close\r\n", buf);
+	mopl_utils_xasprintf(&buf, "%sConnection: close\r\n", buf);
 
 	/* check if Host header is explicitly set in options */
 	if (http_opt_headers_count) {
@@ -1095,7 +1095,7 @@ int check_http(void) {
 	/* optionally send the host header info */
 	if (host_name) {
 		if (force_host_header) {
-			xasprintf(&buf, "%s%s\r\n", buf, force_host_header);
+			mopl_utils_xasprintf(&buf, "%s%s\r\n", buf, force_host_header);
 		} else {
 			/*
 			 * Specify the port only if we're using a non-default port (see RFC 2616,
@@ -1106,9 +1106,9 @@ int check_http(void) {
 				(use_ssl && virtual_port == HTTPS_PORT) ||
 				(server_address != NULL && strcmp(http_method, "CONNECT") == 0 &&
 				 host_name != NULL && use_ssl)) {
-				xasprintf(&buf, "%sHost: %s\r\n", buf, host_name);
+				mopl_utils_xasprintf(&buf, "%sHost: %s\r\n", buf, host_name);
 			} else {
-				xasprintf(&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
+				mopl_utils_xasprintf(&buf, "%sHost: %s:%d\r\n", buf, host_name, virtual_port);
 			}
 		}
 	}
@@ -1117,7 +1117,7 @@ int check_http(void) {
 	if (http_opt_headers_count) {
 		for (i = 0; i < http_opt_headers_count; i++) {
 			if (force_host_header != http_opt_headers[i]) {
-				xasprintf(&buf, "%s%s\r\n", buf, http_opt_headers[i]);
+				mopl_utils_xasprintf(&buf, "%s%s\r\n", buf, http_opt_headers[i]);
 			}
 		}
 		/* This cannot be free'd here because a redirection will then try to access this and
@@ -1129,28 +1129,28 @@ int check_http(void) {
 	/* optionally send the authentication info */
 	if (strlen(user_auth)) {
 		base64_encode_alloc(user_auth, strlen(user_auth), &auth);
-		xasprintf(&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
+		mopl_utils_xasprintf(&buf, "%sAuthorization: Basic %s\r\n", buf, auth);
 	}
 
 	/* optionally send the proxy authentication info */
 	if (strlen(proxy_auth)) {
 		base64_encode_alloc(proxy_auth, strlen(proxy_auth), &auth);
-		xasprintf(&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
+		mopl_utils_xasprintf(&buf, "%sProxy-Authorization: Basic %s\r\n", buf, auth);
 	}
 
 	/* either send http POST data (any data, not only POST)*/
 	if (http_post_data) {
 		if (http_content_type) {
-			xasprintf(&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
+			mopl_utils_xasprintf(&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
 		} else {
-			xasprintf(&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+			mopl_utils_xasprintf(&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
 		}
 
-		xasprintf(&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen(http_post_data));
-		xasprintf(&buf, "%s%s", buf, http_post_data);
+		mopl_utils_xasprintf(&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen(http_post_data));
+		mopl_utils_xasprintf(&buf, "%s%s", buf, http_post_data);
 	} else {
 		/* or just a newline so the server knows we're done with the request */
-		xasprintf(&buf, "%s%s", buf, CRLF);
+		mopl_utils_xasprintf(&buf, "%s%s", buf, CRLF);
 	}
 
 	if (verbose) {
@@ -1255,13 +1255,13 @@ int check_http(void) {
 	/* make sure the status line matches the response we are looking for */
 	if (!expected_statuscode(status_line, server_expect)) {
 		if (server_port == HTTP_PORT) {
-			xasprintf(&msg, _("Invalid HTTP response received from host: %s\n"), status_line);
+			mopl_utils_xasprintf(&msg, _("Invalid HTTP response received from host: %s\n"), status_line);
 		} else {
-			xasprintf(&msg, _("Invalid HTTP response received from host on port %d: %s\n"),
+			mopl_utils_xasprintf(&msg, _("Invalid HTTP response received from host on port %d: %s\n"),
 					  server_port, status_line);
 		}
 		if (show_body) {
-			xasprintf(&msg, _("%s\n%s"), msg, page);
+			mopl_utils_xasprintf(&msg, _("%s\n%s"), msg, page);
 		}
 		die(STATE_CRITICAL, "HTTP CRITICAL - %s", msg);
 	}
@@ -1269,7 +1269,7 @@ int check_http(void) {
 	/* Bypass normal status line check if server_expect was set by user and not default */
 	/* NOTE: After this if/else block msg *MUST* be an asprintf-allocated string */
 	if (server_expect_yn) {
-		xasprintf(&msg, _("Status line output matched \"%s\" - "), server_expect);
+		mopl_utils_xasprintf(&msg, _("Status line output matched \"%s\" - "), server_expect);
 		if (verbose) {
 			printf("%s\n", msg);
 		}
@@ -1292,12 +1292,12 @@ int check_http(void) {
 		}
 		/* server errors result in a critical state */
 		else if (http_status >= 500) {
-			xasprintf(&msg, _("%s - "), status_line);
+			mopl_utils_xasprintf(&msg, _("%s - "), status_line);
 			result = STATE_CRITICAL;
 		}
 		/* client errors result in a warning state */
 		else if (http_status >= 400) {
-			xasprintf(&msg, _("%s - "), status_line);
+			mopl_utils_xasprintf(&msg, _("%s - "), status_line);
 			result = max_state_alt(STATE_WARNING, result);
 		}
 		/* check redirected page if specified */
@@ -1308,11 +1308,11 @@ int check_http(void) {
 			} else {
 				result = max_state_alt(onredirect, result);
 			}
-			xasprintf(&msg, _("%s - "), status_line);
+			mopl_utils_xasprintf(&msg, _("%s - "), status_line);
 		} /* end if (http_status >= 300) */
 		else {
 			/* Print OK status anyway */
-			xasprintf(&msg, _("%s - "), status_line);
+			mopl_utils_xasprintf(&msg, _("%s - "), status_line);
 		}
 
 	} /* end else (server_expect_yn)  */
@@ -1336,7 +1336,7 @@ int check_http(void) {
 				bcopy("...", &output_header_search[sizeof(output_header_search) - 4], 4);
 			}
 
-			xasprintf(&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg,
+			mopl_utils_xasprintf(&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg,
 					  output_header_search, use_ssl ? "https" : "http",
 					  host_name ? host_name : server_address, server_port, server_url);
 
@@ -1378,7 +1378,7 @@ int check_http(void) {
 			if (output_string_search[sizeof(output_string_search) - 1] != '\0') {
 				bcopy("...", &output_string_search[sizeof(output_string_search) - 4], 4);
 			}
-			xasprintf(&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg,
+			mopl_utils_xasprintf(&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg,
 					  output_string_search, use_ssl ? "https" : "http",
 					  host_name ? host_name : server_address, server_port, server_url);
 			result = STATE_CRITICAL;
@@ -1393,15 +1393,15 @@ int check_http(void) {
 		} else if ((errcode == REG_NOMATCH && invert_regex == 0) ||
 				   (errcode == 0 && invert_regex == 1)) {
 			if (invert_regex == 0) {
-				xasprintf(&msg, _("%spattern not found, "), msg);
+				mopl_utils_xasprintf(&msg, _("%spattern not found, "), msg);
 			} else {
-				xasprintf(&msg, _("%spattern found, "), msg);
+				mopl_utils_xasprintf(&msg, _("%spattern found, "), msg);
 			}
 			result = state_regex;
 		} else {
 			/* FIXME: Shouldn't that be UNKNOWN? */
 			regerror(errcode, &preg, errbuf, MAX_INPUT_BUFFER);
-			xasprintf(&msg, _("%sExecute Error: %s, "), msg, errbuf);
+			mopl_utils_xasprintf(&msg, _("%sExecute Error: %s, "), msg, errbuf);
 			result = STATE_CRITICAL;
 		}
 	}
@@ -1417,10 +1417,10 @@ int check_http(void) {
 	 */
 	page_len = pagesize;
 	if ((max_page_len > 0) && (page_len > max_page_len)) {
-		xasprintf(&msg, _("%spage size %d too large, "), msg, page_len);
+		mopl_utils_xasprintf(&msg, _("%spage size %d too large, "), msg, page_len);
 		result = max_state_alt(STATE_WARNING, result);
 	} else if ((min_page_len > 0) && (page_len < min_page_len)) {
-		xasprintf(&msg, _("%spage size %d too small, "), msg, page_len);
+		mopl_utils_xasprintf(&msg, _("%spage size %d too small, "), msg, page_len);
 		result = max_state_alt(STATE_WARNING, result);
 	}
 
@@ -1433,7 +1433,7 @@ int check_http(void) {
 
 	/* check elapsed time */
 	if (show_extended_perfdata) {
-		xasprintf(
+		mopl_utils_xasprintf(
 			&msg, _("%s - %d bytes in %.3f second response time %s|%s %s %s %s %s %s %s"), msg,
 			page_len, elapsed_time, (display_html ? "</A>" : ""), perfd_time(elapsed_time),
 			perfd_size(page_len), perfd_time_connect(elapsed_time_connect),
@@ -1441,13 +1441,13 @@ int check_http(void) {
 			perfd_time_headers(elapsed_time_headers), perfd_time_firstbyte(elapsed_time_firstbyte),
 			perfd_time_transfer(elapsed_time_transfer));
 	} else {
-		xasprintf(&msg, _("%s - %d bytes in %.3f second response time %s|%s %s"), msg, page_len,
+		mopl_utils_xasprintf(&msg, _("%s - %d bytes in %.3f second response time %s|%s %s"), msg, page_len,
 				  elapsed_time, (display_html ? "</A>" : ""), perfd_time(elapsed_time),
 				  perfd_size(page_len));
 	}
 
 	if (show_body) {
-		xasprintf(&msg, _("%s\n%s"), msg, page);
+		mopl_utils_xasprintf(&msg, _("%s\n%s"), msg, page);
 	}
 
 	result = max_state_alt(get_status(elapsed_time, thlds), result);
@@ -1643,7 +1643,7 @@ void redir(char *pos, char *status_line) {
 			} else {
 				strcpy(type, server_type);
 			}
-			xasprintf(&url, "/%s", url);
+			mopl_utils_xasprintf(&url, "/%s", url);
 			use_ssl = server_type_check(type);
 			i = server_port_check(use_ssl);
 		}
@@ -1655,7 +1655,7 @@ void redir(char *pos, char *status_line) {
 				if ((x = strrchr(server_url, '/'))) {
 					*x = '\0';
 				}
-				xasprintf(&url, "%s/%s", server_url, url);
+				mopl_utils_xasprintf(&url, "%s/%s", server_url, url);
 			}
 			i = server_port;
 			strcpy(type, server_type);

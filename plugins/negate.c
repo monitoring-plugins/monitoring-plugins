@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 				*sub = '\0';
 				sub += strlen(state_text(result));
 				/* then put everything back together */
-				xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i],
+				mopl_utils_xasprintf(&chld_out.line[i], "%s%s%s", chld_out.line[i],
 						  state_text(config.state[result]), sub);
 			}
 		}

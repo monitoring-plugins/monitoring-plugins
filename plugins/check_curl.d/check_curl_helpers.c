@@ -874,10 +874,10 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 
 	mp_subcheck sc_document_dates = mp_subcheck_init();
 	if (!server_date || !*server_date) {
-		xasprintf(&sc_document_dates.output, _("Server date unknown"));
+		mopl_utils_xasprintf(&sc_document_dates.output, _("Server date unknown"));
 		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_UNKNOWN);
 	} else if (!document_date || !*document_date) {
-		xasprintf(&sc_document_dates.output, _("Document modification date unknown, "));
+		mopl_utils_xasprintf(&sc_document_dates.output, _("Document modification date unknown, "));
 		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 	} else {
 		time_t srv_data = curl_getdate(server_date, NULL);
@@ -889,28 +889,28 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 		}
 
 		if (srv_data <= 0) {
-			xasprintf(&sc_document_dates.output, _("Server date \"%100s\" unparsable"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Server date \"%100s\" unparsable"),
 					  server_date);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data <= 0) {
 
-			xasprintf(&sc_document_dates.output, _("Document date \"%100s\" unparsable"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Document date \"%100s\" unparsable"),
 					  document_date);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data > srv_data + 30) {
 
-			xasprintf(&sc_document_dates.output, _("Document is %d seconds in the future"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Document is %d seconds in the future"),
 					  (int)doc_data - (int)srv_data);
 
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data < srv_data - maximum_age) {
 			time_t last_modified = (srv_data - doc_data);
 			if (last_modified > (60 * 60 * 24 * 2)) { // two days hardcoded?
-				xasprintf(&sc_document_dates.output, _("Last modified %.1f days ago"),
+				mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %.1f days ago"),
 						  ((float)last_modified) / (60 * 60 * 24));
 				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 			} else {
-				xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
+				mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
 						  (long long)last_modified / (60 * 60), (int)(last_modified / 60) % 60,
 						  (int)last_modified % 60);
 				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
@@ -918,7 +918,7 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 		} else {
 			// TODO is this the OK case?
 			time_t last_modified = (srv_data - doc_data);
-			xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
 					  (long long)last_modified / (60 * 60), (int)(last_modified / 60) % 60,
 					  (int)last_modified % 60);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_OK);
@@ -1356,7 +1356,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 			if (!raw_cert) {
 
-				xasprintf(&sc_cert_result.output,
+				mopl_utils_xasprintf(&sc_cert_result.output,
 						  _("Cannot retrieve certificates from CERTINFO information - "
 							"certificate data was empty"));
 				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
@@ -1368,7 +1368,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 			cert = PEM_read_bio_X509(cert_BIO, NULL, NULL, NULL);
 			if (!cert) {
-				xasprintf(&sc_cert_result.output,
+				mopl_utils_xasprintf(&sc_cert_result.output,
 						  _("Cannot read certificate from CERTINFO information - BIO error"));
 				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
 				return sc_cert_result;
@@ -1384,7 +1384,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 												   days_till_exp_crit);
 #	endif /* MOPL_USE_OPENSSL */
 		} else {
-			xasprintf(&sc_cert_result.output,
+			mopl_utils_xasprintf(&sc_cert_result.output,
 					  _("Cannot retrieve certificates - cURL returned %d - %s"), res,
 					  curl_easy_strerror(res));
 			mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);

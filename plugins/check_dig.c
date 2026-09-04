@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
 	char *command_line;
 	/* get the command to run */
-	xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG,
+	mopl_utils_xasprintf(&command_line, "%s %s %s -p %d @%s %s %s +retry=%d +time=%d", PATH_TO_DIG,
 			  config.dig_args, config.query_transport, config.server_port, config.dns_server,
 			  config.query_address, config.record_type, config.number_tries, timeout_interval_dig);
 
@@ -210,11 +210,11 @@ int main(int argc, char **argv) {
 				if (!flag_list_contains(&dig_flags, config.require_flags.items[r])) {
 					result = STATE_CRITICAL;
 					if (!msg) {
-						xasprintf(&msg, _("Missing required DNS flag: %s"),
+						mopl_utils_xasprintf(&msg, _("Missing required DNS flag: %s"),
 								  config.require_flags.items[r]);
 					} else {
 						char *newmsg = NULL;
-						xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
+						mopl_utils_xasprintf(&newmsg, _("%s; missing required DNS flag: %s"), msg,
 								  config.require_flags.items[r]);
 						msg = newmsg;
 					}
@@ -225,11 +225,11 @@ int main(int argc, char **argv) {
 				if (flag_list_contains(&dig_flags, config.forbid_flags.items[r])) {
 					result = STATE_CRITICAL;
 					if (!msg) {
-						xasprintf(&msg, _("Forbidden DNS flag present: %s"),
+						mopl_utils_xasprintf(&msg, _("Forbidden DNS flag present: %s"),
 								  config.forbid_flags.items[r]);
 					} else {
 						char *newmsg = NULL;
-						xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
+						mopl_utils_xasprintf(&newmsg, _("%s; forbidden DNS flag present: %s"), msg,
 								  config.forbid_flags.items[r]);
 						msg = newmsg;
 					}
@@ -386,7 +386,7 @@ check_dig_config_wrapper validate_arguments(check_dig_config_wrapper config_wrap
 void print_help(void) {
 	char *myport;
 
-	xasprintf(&myport, "%d", DEFAULT_PORT);
+	mopl_utils_xasprintf(&myport, "%d", DEFAULT_PORT);
 
 	mopl_utils_print_revision(progname, NP_VERSION);
 

@@ -715,12 +715,12 @@ int main(int argc, char *argv[]) {
 	if (offset_result.offset_result == STATE_UNKNOWN) {
 		sc_offset =
 			mp_set_subcheck_state(sc_offset, (!config.quiet) ? STATE_UNKNOWN : STATE_CRITICAL);
-		xasprintf(&sc_offset.output, "Offset unknown");
+		mopl_utils_xasprintf(&sc_offset.output, "Offset unknown");
 		mp_add_subcheck_to_check(&overall, sc_offset);
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_offset.output, "Offset: %.6fs", offset_result.offset);
+	mopl_utils_xasprintf(&sc_offset.output, "Offset: %.6fs", offset_result.offset);
 
 	mp_perfdata pd_offset = perfdata_init();
 	pd_offset = mp_set_pd_value(pd_offset, fabs(offset_result.offset));

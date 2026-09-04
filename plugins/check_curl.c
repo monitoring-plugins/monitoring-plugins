@@ -232,7 +232,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	mp_subcheck sc_result = mp_subcheck_init();
 
 	char *url = fmt_url(workingState);
-	xasprintf(&sc_result.output, "Testing %s", url);
+	mopl_utils_xasprintf(&sc_result.output, "Testing %s", url);
 	// TODO add some output here URL or something
 	free(url);
 
@@ -277,11 +277,11 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	if (res != CURLE_OK) {
 		/* Custom handling for timeouts, state might be set to non CRITICAL */
 		if (res == CURLE_OPERATION_TIMEDOUT) {
-			xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
+			mopl_utils_xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
 					  errbuf[0] ? errbuf : curl_easy_strerror(res));
 			sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
 		} else {
-			xasprintf(&sc_curl.output,
+			mopl_utils_xasprintf(&sc_curl.output,
 					  _("Error while performing connection: cURL returned %d - %s"), res,
 					  errbuf[0] ? errbuf : curl_easy_strerror(res));
 			sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
@@ -295,7 +295,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		sc_result = mp_set_subcheck_state(sc_result, STATE_CRITICAL);
 		/* we cannot know the major/minor version here for sure as we cannot parse the first
 		 * line */
-		xasprintf(&sc_result.output, "HTTP/x.x unknown - Unparsable status line");
+		mopl_utils_xasprintf(&sc_result.output, "HTTP/x.x unknown - Unparsable status line");
 		return sc_result;
 	}
 
@@ -308,7 +308,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		curl_easy_getinfo(curl_state.curl, CURLINFO_TOTAL_TIME, &total_time),
 		"CURLINFO_TOTAL_TIME");
 
-	xasprintf(
+	mopl_utils_xasprintf(
 		&sc_curl.output, "%s %d %s - %ld bytes in %.3f second response time",
 		string_statuscode(curl_state.status_line->http_major, curl_state.status_line->http_minor),
 		curl_state.status_line->http_code, curl_state.status_line->msg, page_len, total_time);
@@ -333,7 +333,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	mp_subcheck sc_total_time = mp_subcheck_init();
 	sc_total_time = mp_set_subcheck_state(sc_total_time, mp_get_pd_status(pd_total_time));
-	xasprintf(&sc_total_time.output, "Total connection time: %fs", total_time);
+	mopl_utils_xasprintf(&sc_total_time.output, "Total connection time: %fs", total_time);
 	mp_add_perfdata_to_subcheck(&sc_total_time, pd_total_time);
 
 	mp_add_subcheck_to_subcheck(&sc_result, sc_total_time);
@@ -413,7 +413,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (strlen(curl_state.header_buf->buf) == 0 && strlen(curl_state.body_buf->buf) == 0) {
 		sc_result = mp_set_subcheck_state(sc_result, STATE_CRITICAL);
-		xasprintf(&sc_result.output, "No header received from host");
+		mopl_utils_xasprintf(&sc_result.output, "No header received from host");
 		return sc_result;
 	}
 
@@ -437,16 +437,16 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	sc_expect = mp_set_subcheck_default_state(sc_expect, STATE_OK);
 	if (!expected_statuscode(curl_state.status_line->first_line, config.server_expect.string)) {
 		if (workingState.serverPort == HTTP_PORT) {
-			xasprintf(&sc_expect.output, _("Invalid HTTP response received from host: %s\n"),
+			mopl_utils_xasprintf(&sc_expect.output, _("Invalid HTTP response received from host: %s\n"),
 					  curl_state.status_line->first_line);
 		} else {
-			xasprintf(&sc_expect.output,
+			mopl_utils_xasprintf(&sc_expect.output,
 					  _("Invalid HTTP response received from host on port %d: %s\n"),
 					  workingState.serverPort, curl_state.status_line->first_line);
 		}
 		sc_expect = mp_set_subcheck_default_state(sc_expect, STATE_CRITICAL);
 	} else {
-		xasprintf(&sc_expect.output, _("Status line output matched \"%s\""),
+		mopl_utils_xasprintf(&sc_expect.output, _("Status line output matched \"%s\""),
 				  config.server_expect.string);
 	}
 	mp_add_subcheck_to_subcheck(&sc_result, sc_expect);
@@ -455,12 +455,12 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		/* illegal return codes result in a critical state */
 		mp_subcheck sc_return_code = mp_subcheck_init();
 		sc_return_code = mp_set_subcheck_default_state(sc_return_code, STATE_OK);
-		xasprintf(&sc_return_code.output, "HTTP return code: %d",
+		mopl_utils_xasprintf(&sc_return_code.output, "HTTP return code: %d",
 				  curl_state.status_line->http_code);
 
 		if (httpReturnCode >= 600 || httpReturnCode < 100) {
 			sc_return_code = mp_set_subcheck_state(sc_return_code, STATE_CRITICAL);
-			xasprintf(&sc_return_code.output, _("Invalid Status (%d, %.40s)"),
+			mopl_utils_xasprintf(&sc_return_code.output, _("Invalid Status (%d, %.40s)"),
 					  curl_state.status_line->http_code, curl_state.status_line->msg);
 			mp_add_subcheck_to_subcheck(&sc_result, sc_return_code);
 			return sc_result;
@@ -487,14 +487,14 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 					mp_subcheck sc_redir_depth = mp_subcheck_init();
 					if (redir_depth > config.max_depth) {
-						xasprintf(&sc_redir_depth.output,
+						mopl_utils_xasprintf(&sc_redir_depth.output,
 								  "maximum redirection depth %ld exceeded in libcurl",
 								  config.max_depth);
 						sc_redir_depth = mp_set_subcheck_state(sc_redir_depth, STATE_CRITICAL);
 						mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 						return sc_result;
 					}
-					xasprintf(&sc_redir_depth.output, "redirection depth %ld (of a maximum %ld)",
+					mopl_utils_xasprintf(&sc_redir_depth.output, "redirection depth %ld (of a maximum %ld)",
 							  redir_depth, config.max_depth);
 					mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 
@@ -531,7 +531,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		mp_subcheck sc_http_return_code_sanity = mp_subcheck_init();
 		sc_http_return_code_sanity =
 			mp_set_subcheck_state(sc_http_return_code_sanity, STATE_CRITICAL);
-		xasprintf(&sc_http_return_code_sanity.output,
+		mopl_utils_xasprintf(&sc_http_return_code_sanity.output,
 				  _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
 				  string_statuscode(curl_state.status_line->http_major,
 									curl_state.status_line->http_minor),
@@ -550,7 +550,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	if (strlen(config.header_expect)) {
 		mp_subcheck sc_header_expect = mp_subcheck_init();
 		sc_header_expect = mp_set_subcheck_default_state(sc_header_expect, STATE_OK);
-		xasprintf(&sc_header_expect.output, "Expect %s in header", config.header_expect);
+		mopl_utils_xasprintf(&sc_header_expect.output, "Expect %s in header", config.header_expect);
 
 		if (!strstr(curl_state.header_buf->buf, config.header_expect)) {
 			char output_header_search[30] = "";
@@ -560,7 +560,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 				bcopy("...", &output_header_search[sizeof(output_header_search) - 4], 4);
 			}
 
-			xasprintf(&sc_header_expect.output, _("header '%s' not found on '%s://%s:%d%s', "),
+			mopl_utils_xasprintf(&sc_header_expect.output, _("header '%s' not found on '%s://%s:%d%s', "),
 					  output_header_search, workingState.use_ssl ? "https" : "http",
 					  workingState.host_name ? workingState.host_name : workingState.server_address,
 					  workingState.serverPort, workingState.server_url);
@@ -574,7 +574,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	if (strlen(config.string_expect)) {
 		mp_subcheck sc_string_expect = mp_subcheck_init();
 		sc_string_expect = mp_set_subcheck_default_state(sc_string_expect, STATE_OK);
-		xasprintf(&sc_string_expect.output, "Expect string \"%s\" in body", config.string_expect);
+		mopl_utils_xasprintf(&sc_string_expect.output, "Expect string \"%s\" in body", config.string_expect);
 
 		if (!strstr(curl_state.body_buf->buf, config.string_expect)) {
 			char output_string_search[30] = "";
@@ -584,7 +584,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 				bcopy("...", &output_string_search[sizeof(output_string_search) - 4], 4);
 			}
 
-			xasprintf(&sc_string_expect.output, _("string '%s' not found on '%s://%s:%d%s', "),
+			mopl_utils_xasprintf(&sc_string_expect.output, _("string '%s' not found on '%s://%s:%d%s', "),
 					  output_string_search, workingState.use_ssl ? "https" : "http",
 					  workingState.host_name ? workingState.host_name : workingState.server_address,
 					  workingState.serverPort, workingState.server_url);
@@ -597,7 +597,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 
 	if (strlen(config.regexp)) {
 		mp_subcheck sc_body_regex = mp_subcheck_init();
-		xasprintf(&sc_body_regex.output, "Regex \"%s\" in body matched", config.regexp);
+		mopl_utils_xasprintf(&sc_body_regex.output, "Regex \"%s\" in body matched", config.regexp);
 		regmatch_t pmatch[REGS];
 
 		int errcode = regexec(&config.compiled_regex, curl_state.body_buf->buf, REGS, pmatch, 0);
@@ -611,7 +611,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 			}
 		} else if (errcode == REG_NOMATCH) {
 			// got no match
-			xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
+			mopl_utils_xasprintf(&sc_body_regex.output, "%s not", sc_body_regex.output);
 
 			if (config.invert_regex) {
 				sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_OK);
@@ -622,7 +622,7 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 			// error in regexec
 			char error_buffer[DEFAULT_BUFFER_SIZE];
 			regerror(errcode, &config.compiled_regex, &error_buffer[0], DEFAULT_BUFFER_SIZE);
-			xasprintf(&sc_body_regex.output, "regexec error: %s", error_buffer);
+			mopl_utils_xasprintf(&sc_body_regex.output, "regexec error: %s", error_buffer);
 			sc_body_regex = mp_set_subcheck_state(sc_body_regex, STATE_UNKNOWN);
 		}
 
@@ -657,10 +657,10 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		switch (tmp_state) {
 		case STATE_CRITICAL:
 		case STATE_WARNING:
-			xasprintf(&sc_page_length.output, _("page size %zu violates threshold"), page_len);
+			mopl_utils_xasprintf(&sc_page_length.output, _("page size %zu violates threshold"), page_len);
 			break;
 		case STATE_OK:
-			xasprintf(&sc_page_length.output, _("page size %zu is OK"), page_len);
+			mopl_utils_xasprintf(&sc_page_length.output, _("page size %zu is OK"), page_len);
 			break;
 		default:
 			assert(false);

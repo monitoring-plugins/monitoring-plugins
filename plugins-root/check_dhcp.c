@@ -1061,21 +1061,21 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 	/* we didn't receive any DHCPOFFERs */
 	if (dhcp_offer_list == NULL) {
 		sc_dhcp_results = mp_set_subcheck_state(sc_dhcp_results, STATE_CRITICAL);
-		xasprintf(&sc_dhcp_results.output, "%s", "No DHCPOFFERs were received");
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s", "No DHCPOFFERs were received");
 		return sc_dhcp_results;
 	}
 
 	if (valid_responses == 0) {
 		// No valid responses at all, so early exit here
 		sc_dhcp_results = mp_set_subcheck_state(sc_dhcp_results, STATE_CRITICAL);
-		xasprintf(&sc_dhcp_results.output, "No valid responses received");
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "No valid responses received");
 		return sc_dhcp_results;
 	}
 
 	if (valid_responses == 1) {
-		xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFER", valid_responses);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFER", valid_responses);
 	} else {
-		xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFERs", valid_responses);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFERs", valid_responses);
 	}
 
 	bool received_requested_address = false;
@@ -1132,7 +1132,7 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 		}
 
 		mp_subcheck sc_rqust_srvs = mp_subcheck_init();
-		xasprintf(&sc_rqust_srvs.output, "%d of %d requested servers responded",
+		mopl_utils_xasprintf(&sc_rqust_srvs.output, "%d of %d requested servers responded",
 				  requested_responses, requested_servers);
 
 		if (requested_responses == requested_servers) {
@@ -1167,9 +1167,9 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 	}
 
 	if (max_lease_time == DHCP_INFINITE_TIME) {
-		xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity", sc_dhcp_results.output);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity", sc_dhcp_results.output);
 	} else {
-		xasprintf(&sc_dhcp_results.output, "%s, max lease time = %" PRIu32 " seconds",
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = %" PRIu32 " seconds",
 				  sc_dhcp_results.output, max_lease_time);
 	}
 
@@ -1201,11 +1201,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 				die(STATE_UNKNOWN, "inet_ntop failed");
 			}
 
-			xasprintf(&sc_rogue_server.output, "Rogue DHCP Server detected! Server %s offered %s",
+			mopl_utils_xasprintf(&sc_rogue_server.output, "Rogue DHCP Server detected! Server %s offered %s",
 					  server_address, offered_address);
 		} else {
 			sc_rogue_server = mp_set_subcheck_state(sc_rogue_server, STATE_OK);
-			xasprintf(&sc_rogue_server.output, "No Rogue DHCP Server detected");
+			mopl_utils_xasprintf(&sc_rogue_server.output, "No Rogue DHCP Server detected");
 		}
 		mp_add_subcheck_to_subcheck(&sc_dhcp_results, sc_rogue_server);
 	}
@@ -1215,11 +1215,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 
 		if (received_requested_address) {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_OK);
-			xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was offered",
+			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was offered",
 					  inet_ntoa(requested_address));
 		} else {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_WARNING);
-			xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was NOT offered",
+			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was NOT offered",
 					  inet_ntoa(requested_address));
 		}
 

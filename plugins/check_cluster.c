@@ -124,14 +124,14 @@ int main(int argc, char **argv) {
 			sc_real_test,
 			get_status(total_services_warning + total_services_unknown + total_services_critical,
 					   config.thresholds));
-		xasprintf(&sc_real_test.output, "%s: %d ok, %d warning, %d unknown, %d critical",
+		mopl_utils_xasprintf(&sc_real_test.output, "%s: %d ok, %d warning, %d unknown, %d critical",
 				  (config.label == NULL) ? "Service cluster" : config.label, total_services_ok,
 				  total_services_warning, total_services_unknown, total_services_critical);
 	} else {
 		sc_real_test = mp_set_subcheck_state(
 			sc_real_test,
 			get_status(total_hosts_down + total_hosts_unreachable, config.thresholds));
-		xasprintf(&sc_real_test.output, "%s: %d up, %d down, %d unreachable\n",
+		mopl_utils_xasprintf(&sc_real_test.output, "%s: %d up, %d down, %d unreachable\n",
 				  (config.label == NULL) ? "Host cluster" : config.label, total_hosts_up,
 				  total_hosts_down, total_hosts_unreachable);
 	}

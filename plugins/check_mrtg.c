@@ -78,12 +78,12 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 	FILE *mtrg_log_file = fopen(config.log_file, "r");
 	if (mtrg_log_file == NULL) {
-		xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 	}
@@ -141,11 +141,11 @@ int main(int argc, char **argv) {
 	/* if we couldn't read enough data, return an unknown error */
 	mp_subcheck sc_process_mrtg_log_file = mp_subcheck_init();
 	if (line <= 2) {
-		xasprintf(&sc_process_mrtg_log_file.output, "unable to process MRTG log file");
+		mopl_utils_xasprintf(&sc_process_mrtg_log_file.output, "unable to process MRTG log file");
 		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_UNKNOWN);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_process_mrtg_log_file.output, "processed MRTG log file");
+		mopl_utils_xasprintf(&sc_process_mrtg_log_file.output, "processed MRTG log file");
 		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_process_mrtg_log_file);
 	}
@@ -155,13 +155,13 @@ int main(int argc, char **argv) {
 	time(&current_time);
 	mp_subcheck sc_data_expired = mp_subcheck_init();
 	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
+		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
 				  (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
+		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
 				  (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
 	pd_value = mp_pd_set_thresholds(pd_value, config.values_threshold);
 
 	sc_values = mp_set_subcheck_state(sc_values, mp_get_pd_status(pd_value));
-	xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
+	mopl_utils_xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
 			  config.label, rate, config.units);
 
 	mp_add_subcheck_to_check(&overall, sc_values);

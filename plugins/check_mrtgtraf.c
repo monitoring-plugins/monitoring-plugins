@@ -79,12 +79,12 @@ int main(int argc, char **argv) {
 	FILE *mrtg_log_file_ptr = fopen(config.log_file, "r");
 	if (mrtg_log_file_ptr == NULL) {
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_UNKNOWN);
-		xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 		mp_exit(overall);
 	} else {
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_OK);
-		xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 	}
 
@@ -143,14 +143,14 @@ int main(int argc, char **argv) {
 	time(&current_time);
 	mp_subcheck sc_expired = mp_subcheck_init();
 	if ((config.expire_minutes > 0) && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		xasprintf(&sc_expired.output, "MRTG data has expired (%d minutes old)",
+		mopl_utils_xasprintf(&sc_expired.output, "MRTG data has expired (%d minutes old)",
 				  (int)((current_time - timestamp) / 60));
 		sc_expired = mp_set_subcheck_state(sc_expired, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_expired);
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_expired.output, "MRTG data should be valid (%d minutes old)",
+	mopl_utils_xasprintf(&sc_expired.output, "MRTG data should be valid (%d minutes old)",
 			  (int)((current_time - timestamp) / 60));
 	sc_expired = mp_set_subcheck_state(sc_expired, STATE_WARNING);
 	mp_add_subcheck_to_check(&overall, sc_expired);
@@ -217,18 +217,18 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_rate_in = mp_subcheck_init();
 	sc_rate_in = mp_set_subcheck_state(sc_rate_in, mp_get_pd_status(pd_rate_in));
 	mp_add_perfdata_to_subcheck(&sc_rate_in, pd_rate_in);
-	xasprintf(&sc_rate_in.output, "%s. In = %0.1f %s/s", (config.use_average) ? _("Avg") : _("Max"),
+	mopl_utils_xasprintf(&sc_rate_in.output, "%s. In = %0.1f %s/s", (config.use_average) ? _("Avg") : _("Max"),
 			  adjusted_incoming_rate, incoming_speed_rating);
 
 	mp_subcheck sc_rate_out = mp_subcheck_init();
 	sc_rate_out = mp_set_subcheck_state(sc_rate_out, mp_get_pd_status(pd_rate_out));
 	mp_add_perfdata_to_subcheck(&sc_rate_out, pd_rate_out);
-	xasprintf(&sc_rate_out.output, "%s. Out = %0.1f %s/s",
+	mopl_utils_xasprintf(&sc_rate_out.output, "%s. Out = %0.1f %s/s",
 			  (config.use_average) ? _("Avg") : _("Max"), adjusted_outgoing_rate,
 			  outgoing_speed_rating);
 
 	mp_subcheck sc_rate = mp_subcheck_init();
-	xasprintf(&sc_rate.output, "Traffic");
+	mopl_utils_xasprintf(&sc_rate.output, "Traffic");
 	mp_add_subcheck_to_subcheck(&sc_rate, sc_rate_in);
 	mp_add_subcheck_to_subcheck(&sc_rate, sc_rate_out);
 

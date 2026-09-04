@@ -343,7 +343,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				} while (!(req.op & OP_READVAR && ntohs(req.seq) == 2));
 
 				if (!(req.op & REM_ERROR)) {
-					xasprintf(&data, "%s%s", data, req.data);
+					mopl_utils_xasprintf(&data, "%s%s", data, req.data);
 				}
 			} while (req.op & REM_MORE);
 
@@ -677,12 +677,12 @@ int main(int argc, char *argv[]) {
 	mp_set_ok_summary(&overall, "NTP Server seems to be OK");
 
 	mp_subcheck sc_offset = mp_subcheck_init();
-	xasprintf(&sc_offset.output, "offset");
+	mopl_utils_xasprintf(&sc_offset.output, "offset");
 	if (ntp_res.offset_result == STATE_UNKNOWN) {
 		/* if there's no sync peer (this overrides ntp_request output): */
 		sc_offset =
 			mp_set_subcheck_state(sc_offset, (config.quiet ? STATE_UNKNOWN : STATE_CRITICAL));
-		xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
+		mopl_utils_xasprintf(&sc_offset.output, "%s unknown", sc_offset.output);
 	} else {
 		/* Be quiet if there's no candidates either */
 		mp_state_enum tmp = STATE_OK;
@@ -690,7 +690,7 @@ int main(int argc, char *argv[]) {
 			tmp = STATE_UNKNOWN;
 		}
 
-		xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
+		mopl_utils_xasprintf(&sc_offset.output, "%s: %.6fs", sc_offset.output, ntp_res.offset);
 
 		mp_perfdata pd_offset = perfdata_init();
 		pd_offset.value = mp_create_pd_value(fabs(ntp_res.offset));
@@ -708,7 +708,7 @@ int main(int argc, char *argv[]) {
 	// truechimers
 	if (config.do_truechimers) {
 		mp_subcheck sc_truechimers = mp_subcheck_init();
-		xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
+		mopl_utils_xasprintf(&sc_truechimers.output, "truechimers: %i", ntp_res.num_truechimers);
 
 		mp_perfdata pd_truechimers = perfdata_init();
 		pd_truechimers.value = mp_create_pd_value(ntp_res.num_truechimers);
@@ -724,7 +724,7 @@ int main(int argc, char *argv[]) {
 
 	if (config.do_stratum) {
 		mp_subcheck sc_stratum = mp_subcheck_init();
-		xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
+		mopl_utils_xasprintf(&sc_stratum.output, "stratum: %li", ntp_res.stratum);
 
 		mp_perfdata pd_stratum = perfdata_init();
 		pd_stratum.value = mp_create_pd_value(ntp_res.stratum);
@@ -740,7 +740,7 @@ int main(int argc, char *argv[]) {
 
 	if (config.do_jitter) {
 		mp_subcheck sc_jitter = mp_subcheck_init();
-		xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
+		mopl_utils_xasprintf(&sc_jitter.output, "jitter: %f", ntp_res.jitter);
 
 		mp_perfdata pd_jitter = perfdata_init();
 		pd_jitter.value = mp_create_pd_value(ntp_res.jitter);
@@ -756,17 +756,17 @@ int main(int argc, char *argv[]) {
 	mp_subcheck sc_other_info = mp_subcheck_init();
 	sc_other_info = mp_set_subcheck_default_state(sc_other_info, STATE_OK);
 	if (!ntp_res.syncsource_found) {
-		xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
+		mopl_utils_xasprintf(&sc_other_info.output, "%s", _("Server not synchronized"));
 		mp_add_subcheck_to_check(&overall, sc_other_info);
 	} else if (ntp_res.li_alarm) {
-		xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
+		mopl_utils_xasprintf(&sc_other_info.output, "%s", _("Server has the LI_ALARM bit set"));
 		mp_add_subcheck_to_check(&overall, sc_other_info);
 	}
 
 	{
 		mp_subcheck sc_offset = mp_subcheck_init();
 		sc_offset = mp_set_subcheck_default_state(sc_offset, STATE_OK);
-		xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
+		mopl_utils_xasprintf(&sc_offset.output, "offset: %.10gs", ntp_res.offset);
 
 		mp_perfdata pd_offset = perfdata_init();
 		pd_offset.value = mp_create_pd_value(ntp_res.offset);
