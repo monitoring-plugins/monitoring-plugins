@@ -83,6 +83,8 @@ get_num_of_users_wrapper get_num_of_users_systemd() {
 
 #	ifdef HAVE_UTMPX_H
 #		include <utmpx.h>
+#		include <errno.h>
+#		include <signal.h>
 
 get_num_of_users_wrapper get_num_of_users_utmp() {
 	int users = 0;
@@ -92,9 +94,13 @@ get_num_of_users_wrapper get_num_of_users_utmp() {
 
 	struct utmpx *putmpx;
 	while ((putmpx = getutxent()) != NULL) {
-		if (putmpx->ut_type == USER_PROCESS) {
-			users++;
+		if (putmpx->ut_type != USER_PROCESS) {
+			continue;
 		}
+		if ((putmpx->ut_pid <= 0) || ((kill(putmpx->ut_pid, 0) != 0) && (errno == ESRCH))) {
+			continue;
+		}
+		users++;
 	}
 
 	endutxent();
