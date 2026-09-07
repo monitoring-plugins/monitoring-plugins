@@ -41,7 +41,6 @@ const char *email = "devel@monitoring-plugins.org";
 
 #include "output.h"
 #include "perfdata.h"
-#include <openssl/x509.h>
 #include "thresholds.h"
 #include "common.h"
 #include "netutils.h"
