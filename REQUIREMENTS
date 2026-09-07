@@ -70,6 +70,8 @@ check_radius:
 	  http://radcli.github.io/radcli/
 	- As an alternative, the FreeRADIUS Client library may be used:
 	  http://freeradius.org/freeradius-client/
+	  The minimal version is 1.1.8, since it broke compatibility in that
+	  release. Later versions may be used if that does not happen again
 	- As another alternative, the radiusclient-ng library may be used:
 	  http://sourceforge.net/projects/radiusclient-ng.berlios/
 	- This plugin also works with the original radiusclient library from

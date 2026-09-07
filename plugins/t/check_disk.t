@@ -146,8 +146,8 @@ my $total_absth_data= $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}[0
 # print("crit: " .$crit_absth_data . "\n");
 # print("total: " .$total_absth_data . "\n");
 
-is ($warn_absth_data <=>  (20 * (2 ** 20)), 0, "Wrong warning in perf data using absolute thresholds");
-is ($crit_absth_data <=>  (10 * (2 ** 20)), 0, "Wrong critical in perf data using absolute thresholds");
+is ($warn_absth_data/1000 <=>  ($total_absth_data - (20 * (2 ** 20)))/1000, 0, "Wrong warning in perf data using absolute thresholds");
+is ($crit_absth_data/1000 <=>  ($total_absth_data - (10 * (2 ** 20)))/1000, 0, "Wrong critical in perf data using absolute thresholds");
 
 # Then check percent thresholds.
 $result = NPTest->testCmd(
@@ -163,8 +163,8 @@ my $total_percth_data = $result->{'mp_test_result'}->{'checks'}->[0]->{'checks'}
 # print("warn_percth_data: " . $warn_percth_data . "\n");
 # print("crit_percth_data: " . $crit_percth_data . "\n");
 
-is (int($warn_percth_data), int((20/100)*$total_percth_data), "Wrong warning in perf data using percent thresholds. Got " . $warn_percth_data . " with total " . $total_percth_data);
-is (int($crit_percth_data), int((10/100)*$total_percth_data), "Wrong critical in perf data using percent thresholds. Got " . $crit_percth_data . " with total " . $total_percth_data);
+is (int($warn_percth_data/1000), int(($total_absth_data - ((20/100)*$total_percth_data))/1000), "Wrong warning in perf data using percent thresholds. Got " . $warn_percth_data . " with total " . $total_percth_data);
+is (int($crit_percth_data/1000), int(($total_absth_data - ((10/100)*$total_percth_data))/1000), "Wrong critical in perf data using percent thresholds. Got " . $crit_percth_data . " with total " . $total_percth_data);
 
 
 # Check when order of mount points are reversed, that perf data remains same

@@ -107,6 +107,7 @@ check_snmp_config check_snmp_config_init() {
 		.evaluation_params =
 			{
 				.nulloid_result = STATE_UNKNOWN, // state to return if no result for query
+				.missing_oid_result = STATE_CRITICAL,
 
 				.invert_search = true,
 				.regex_cmp_value = {},
@@ -127,7 +128,7 @@ check_snmp_config check_snmp_config_init() {
 	snmp_sess_init(&tmp.snmp_params.snmp_session);
 
 	tmp.snmp_params.snmp_session.retries = DEFAULT_RETRIES;
-	tmp.snmp_params.snmp_session.version = DEFAULT_SNMP_VERSION;
+	tmp.snmp_params.snmp_session.version = SNMP_VERSION_3;
 	tmp.snmp_params.snmp_session.securityLevel = SNMP_SEC_LEVEL_NOAUTH;
 	tmp.snmp_params.snmp_session.community = (unsigned char *)"public";
 	tmp.snmp_params.snmp_session.community_len = strlen("public");
@@ -204,6 +205,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 	snmp_responces result = {
 		.errorcode = OK,
 		.response_values = calloc(parameters.num_of_test_units, sizeof(response_value)),
+		.number_of_results = 0,
 	};
 
 	if (result.response_values == NULL) {
@@ -212,19 +214,19 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 	}
 
 	// We got the the query results, now process them
-	size_t loop_index = 0;
-	for (netsnmp_variable_list *vars = response->variables; vars;
-		 vars = vars->next_variable, loop_index++) {
-
+	for (netsnmp_variable_list *vars = response->variables;
+		 (vars && result.number_of_results <= parameters.num_of_test_units);
+		 vars = vars->next_variable, result.number_of_results++) {
 		for (size_t jdx = 0; jdx < vars->name_length; jdx++) {
-			result.response_values[loop_index].oid[jdx] = vars->name[jdx];
+			result.response_values[result.number_of_results].oid[jdx] = vars->name[jdx];
 		}
-		result.response_values[loop_index].oid_length = vars->name_length;
+		result.response_values[result.number_of_results].oid_length = vars->name_length;
 
 		switch (vars->type) {
 		case ASN_OCTET_STR: {
-			result.response_values[loop_index].string_response = strdup((char *)vars->val.string);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].string_response =
+				strdup((char *)vars->val.string);
+			result.response_values[result.number_of_results].type = vars->type;
 			if (verbose) {
 				printf("Debug: Got a string as response: %s\n", vars->val.string);
 			}
@@ -242,8 +244,8 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			}
 			struct counter64 tmp = *(vars->val.counter64);
 			uint64_t counter = (tmp.high << 32) + tmp.low;
-			result.response_values[loop_index].value.uIntVal = counter;
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.uIntVal = counter;
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_GAUGE: // same as ASN_UNSIGNED
 		case ASN_TIMETICKS:
@@ -252,35 +254,36 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a Integer like\n");
 			}
-			result.response_values[loop_index].value.uIntVal = (unsigned long)*(vars->val.integer);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.uIntVal =
+				(unsigned long)*(vars->val.integer);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_INTEGER: {
 			if (verbose) {
 				printf("Debug: Got a Integer\n");
 			}
-			result.response_values[loop_index].value.intVal = *(vars->val.integer);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.intVal = *(vars->val.integer);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_FLOAT: {
 			if (verbose) {
 				printf("Debug: Got a float\n");
 			}
-			result.response_values[loop_index].value.doubleVal = *(vars->val.floatVal);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.floatVal);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_DOUBLE: {
 			if (verbose) {
 				printf("Debug: Got a double\n");
 			}
-			result.response_values[loop_index].value.doubleVal = *(vars->val.doubleVal);
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.doubleVal);
+			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_IPADDRESS:
 			if (verbose) {
 				printf("Debug: Got an IP address\n");
 			}
-			result.response_values[loop_index].type = vars->type;
+			result.response_values[result.number_of_results].type = vars->type;
 
 			// TODO: print address here, state always ok? or regex match?
 			break;
@@ -288,7 +291,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a unmatched result type: %hhu\n", vars->type);
 			}
-			// TODO: Error here?
+			result.response_values[result.number_of_results].type = vars->type;
 			break;
 		}
 	}
@@ -304,7 +307,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	mp_subcheck sc_oid_test = mp_subcheck_init();
 
 	if ((test_unit.label != NULL) && (strcmp(test_unit.label, "") != 0)) {
-		xasprintf(&sc_oid_test.output, "%s - ", test_unit.label);
+		mopl_utils_xasprintf(&sc_oid_test.output, "%s - ", test_unit.label);
 	} else {
 		sc_oid_test.output = strdup("");
 	}
@@ -318,7 +321,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		die(STATE_UNKNOWN, "snprint_objid failed\n");
 	}
 
-	xasprintf(&sc_oid_test.output, "%sOID: %s", sc_oid_test.output, oid_string);
+	mopl_utils_xasprintf(&sc_oid_test.output, "%sOID: %s", sc_oid_test.output, oid_string);
 	sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, STATE_OK);
 
 	if (verbose > 2) {
@@ -342,7 +345,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		if (query_timestamp == prev_state.timestamp) {
 			// somehow we have the same timestamp again, that can't be good
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_UNKNOWN);
-			xasprintf(&sc_oid_test.output, "Time duration between plugin calls is invalid");
+			mopl_utils_xasprintf(&sc_oid_test.output, "Time duration between plugin calls is invalid");
 
 			check_snmp_evaluation result = {
 				.sc = sc_oid_test,
@@ -372,14 +375,14 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			if (strchr(tmp, '\'') != NULL) {
 				// got single quote in the string too
 				// dont quote that at all to avoid even more confusion
-				xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
 			} else {
 				// quote with single quotes
-				xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
 			}
 		} else {
 			// quote with double quotes
-			xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
 		}
 
 		if (strlen(tmp) == 0) {
@@ -538,6 +541,19 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	case ASN_IPADDRESS:
 		// TODO
 		break;
+	default: {
+		// no known type
+		mopl_utils_xasprintf(&sc_oid_test.output, "%s: no valid response", oid_string);
+		sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, eval_params.missing_oid_result);
+		check_snmp_evaluation result = {
+			.sc = sc_oid_test,
+			.state = result_state,
+		};
+
+		return result;
+
+		break;
+	}
 	}
 
 	if (got_a_numerical_value) {
@@ -559,11 +575,11 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 
 			pd_num_val.value = pd_result_val;
 
-			xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
 					  pd_value_to_string(pd_result_val));
 
 			if (test_unit.unit_value != NULL && strcmp(test_unit.unit_value, "") != 0) {
-				xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output, test_unit.unit_value);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output, test_unit.unit_value);
 			}
 
 			if (test_unit.threshold.warning_is_set || test_unit.threshold.critical_is_set) {
@@ -572,11 +588,11 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 
 				if (tmp_state == STATE_WARNING) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_WARNING);
-					xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
+					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
 							  sc_oid_test.output);
 				} else if (tmp_state == STATE_CRITICAL) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_CRITICAL);
-					xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
+					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
 							  sc_oid_test.output);
 				}
 			}
@@ -586,7 +602,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			// should calculate rate, but there is no previous state, so first run
 			// exit with ok now
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_OK);
-			xasprintf(&sc_oid_test.output, "%s - No previous data to calculate rate - assume okay",
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s - No previous data to calculate rate - assume okay",
 					  sc_oid_test.output);
 		}
 	}
@@ -896,10 +912,7 @@ state_key np_enable_state(char *keyname, int expected_data_version, const char *
 char *_np_state_generate_key(int argc, char **argv) {
 	unsigned char result[256];
 
-#if HAVE_SSL
-	(void)argc;
-	(void)argv;
-#	ifdef USE_OPENSSL
+#ifdef MOPL_USE_OPENSSL
 	/*
 	 * This code path is chosen if openssl is available (which should be the most common
 	 * scenario). Alternatively, the gnulib implementation/
@@ -923,8 +936,7 @@ char *_np_state_generate_key(int argc, char **argv) {
 	}
 
 	sha256_finish_ctx(&ctx, result);
-#	endif // USE_OPENSSL
-#endif     // HAVE_SSL
+#endif // MOPL_USE_OPENSSL
 
 	char keyname[41];
 	for (int i = 0; i < 20; ++i) {

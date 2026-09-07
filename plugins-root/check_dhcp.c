@@ -126,6 +126,39 @@ static long mac_addr_dlpi(const char *, int, u_char *);
 #define MAX_DHCP_FILE_LENGTH    128
 #define MAX_DHCP_OPTIONS_LENGTH 312
 
+// RFC 2131
+// 0                   1                   2                   3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+// +---------------+---------------+---------------+---------------+
+// |                            xid (4)                            |
+// +-------------------------------+-------------------------------+
+// |           secs (2)            |           flags (2)           |
+// +-------------------------------+-------------------------------+
+// |                          ciaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          yiaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          siaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                          giaddr  (4)                          |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          chaddr  (16)                         |
+// |                                                               |
+// |                                                               |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          sname   (64)                         |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          file    (128)                        |
+// +---------------------------------------------------------------+
+// |                                                               |
+// |                          options (variable)                   |
+// +---------------------------------------------------------------+
+
 typedef struct dhcp_packet_struct {
 	uint8_t op;            /* packet type */
 	uint8_t htype;         /* type of hardware address for this machine (Ethernet, etc) */
@@ -141,7 +174,7 @@ typedef struct dhcp_packet_struct {
 	unsigned char chaddr[MAX_DHCP_CHADDR_LENGTH]; /* hardware address of this machine */
 	char sname[MAX_DHCP_SNAME_LENGTH];            /* name of DHCP server */
 	char file[MAX_DHCP_FILE_LENGTH];              /* boot file name (used for diskless booting?) */
-	char options[MAX_DHCP_OPTIONS_LENGTH];        /* options */
+	uint8_t options[MAX_DHCP_OPTIONS_LENGTH];     /* options */
 } dhcp_packet;
 
 typedef struct dhcp_offer_struct {
@@ -154,26 +187,33 @@ typedef struct dhcp_offer_struct {
 	struct dhcp_offer_struct *next;
 } dhcp_offer;
 
-#define BOOTREQUEST 1
-#define BOOTREPLY   2
+typedef enum {
+	BOOTREQUEST = 1,
+	BOOTREPLY = 2,
+} dhcp_packet_op;
 
-#define DHCPDISCOVER 1
-#define DHCPOFFER    2
-#define DHCPREQUEST  3
-#define DHCPDECLINE  4
-#define DHCPACK      5
-#define DHCPNACK     6
-#define DHCPRELEASE  7
+typedef enum {
+	DHCPDISCOVER = 1,
+	DHCPOFFER = 2,
+	DHCPREQUEST = 3,
+	DHCPDECLINE = 4,
+	DHCPACK = 5,
+	DHCPNACK = 6,
+	DHCPRELEASE = 7,
+} dhcp_message_type;
 
-#define DHCP_OPTION_MESSAGE_TYPE      53
-#define DHCP_OPTION_HOST_NAME         12
-#define DHCP_OPTION_BROADCAST_ADDRESS 28
-#define DHCP_OPTION_REQUESTED_ADDRESS 50
-#define DHCP_OPTION_LEASE_TIME        51
-#define DHCP_OPTION_SERVER_IDENTIFIER 54
-#define DHCP_OPTION_RENEWAL_TIME      58
-#define DHCP_OPTION_REBINDING_TIME    59
-#define DHCP_OPTION_END               255
+typedef enum {
+	DHCP_OPTION_PADDING = 0,
+	DHCP_OPTION_MESSAGE_TYPE = 53,
+	DHCP_OPTION_HOST_NAME = 12,
+	DHCP_OPTION_BROADCAST_ADDRESS = 28,
+	DHCP_OPTION_REQUESTED_ADDRESS = 50,
+	DHCP_OPTION_LEASE_TIME = 51,
+	DHCP_OPTION_SERVER_IDENTIFIER = 54,
+	DHCP_OPTION_RENEWAL_TIME = 58,
+	DHCP_OPTION_REBINDING_TIME = 59,
+	DHCP_OPTION_END = 255,
+} dhcp_options_type;
 
 #define DHCP_INFINITE_TIME 0xFFFFFFFF
 
@@ -258,7 +298,7 @@ int main(int argc, char **argv) {
 	process_arguments_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.error != OK) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_dhcp_config config = tmp.config;
@@ -874,17 +914,23 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 	dhcp_offer *new_offer;
 	struct in_addr serv_ident = {0};
 	/* process all DHCP options present in the packet */
-	for (int dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+	for (size_t dchp_opt_idx = 4; dchp_opt_idx < MAX_DHCP_OPTIONS_LENGTH - 1;) {
+		/* get option type */
+		dhcp_options_type option_type = offer_packet->options[dchp_opt_idx++];
 
-		if ((int)offer_packet->options[dchp_opt_idx] == -1) {
+		// End parsing when we find the end option
+		if (option_type == DHCP_OPTION_END) {
 			break;
 		}
 
-		/* get option type */
-		unsigned option_type = offer_packet->options[dchp_opt_idx++];
+		// Padding octet
+		if (option_type == DHCP_OPTION_PADDING) {
+			dchp_opt_idx++;
+			continue;
+		}
 
-		/* get option length */
-		unsigned option_length = offer_packet->options[dchp_opt_idx++];
+		/* neither padding nor end, get option length */
+		uint8_t option_length = offer_packet->options[dchp_opt_idx++];
 
 		if (verbose) {
 			printf("Option: %d (0x%02X)\n", option_type, option_length);
@@ -910,31 +956,30 @@ add_dhcp_offer_wrapper add_dhcp_offer(struct in_addr source, dhcp_packet *offer_
 			memcpy(&serv_ident.s_addr, &offer_packet->options[dchp_opt_idx],
 				   sizeof(serv_ident.s_addr));
 			break;
+		default: {
+			// not handled
+		}
 		}
 
 		/* skip option data we're ignoring */
-		if (option_type == 0) { /* "pad" option, see RFC 2132 (3.1) */
-			dchp_opt_idx += 1;
-		} else {
-			dchp_opt_idx += option_length;
-		}
+		dchp_opt_idx += option_length;
 	}
 
 	if (verbose) {
 		if (dhcp_lease_time == DHCP_INFINITE_TIME) {
 			printf(_("Lease Time: Infinite\n"));
 		} else {
-			printf(_("Lease Time: %lu seconds\n"), (unsigned long)dhcp_lease_time);
+			printf(_("Lease Time: %" PRIu32 " seconds\n"), dhcp_lease_time);
 		}
 		if (dhcp_renewal_time == DHCP_INFINITE_TIME) {
 			printf(_("Renewal Time: Infinite\n"));
 		} else {
-			printf(_("Renewal Time: %lu seconds\n"), (unsigned long)dhcp_renewal_time);
+			printf(_("Renewal Time: %" PRIu32 " seconds\n"), dhcp_renewal_time);
 		}
 		if (dhcp_rebinding_time == DHCP_INFINITE_TIME) {
 			printf(_("Rebinding Time: Infinite\n"));
 		}
-		printf(_("Rebinding Time: %lu seconds\n"), (unsigned long)dhcp_rebinding_time);
+		printf(_("Rebinding Time: %" PRIu32 " seconds\n"), dhcp_rebinding_time);
 	}
 
 	new_offer = (dhcp_offer *)malloc(sizeof(dhcp_offer));
@@ -1016,21 +1061,21 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 	/* we didn't receive any DHCPOFFERs */
 	if (dhcp_offer_list == NULL) {
 		sc_dhcp_results = mp_set_subcheck_state(sc_dhcp_results, STATE_CRITICAL);
-		xasprintf(&sc_dhcp_results.output, "%s", "No DHCPOFFERs were received");
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s", "No DHCPOFFERs were received");
 		return sc_dhcp_results;
 	}
 
 	if (valid_responses == 0) {
 		// No valid responses at all, so early exit here
 		sc_dhcp_results = mp_set_subcheck_state(sc_dhcp_results, STATE_CRITICAL);
-		xasprintf(&sc_dhcp_results.output, "No valid responses received");
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "No valid responses received");
 		return sc_dhcp_results;
 	}
 
 	if (valid_responses == 1) {
-		xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFER", valid_responses);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFER", valid_responses);
 	} else {
-		xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFERs", valid_responses);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "Received %d DHCPOFFERs", valid_responses);
 	}
 
 	bool received_requested_address = false;
@@ -1087,7 +1132,7 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 		}
 
 		mp_subcheck sc_rqust_srvs = mp_subcheck_init();
-		xasprintf(&sc_rqust_srvs.output, "%d of %d requested servers responded",
+		mopl_utils_xasprintf(&sc_rqust_srvs.output, "%d of %d requested servers responded",
 				  requested_responses, requested_servers);
 
 		if (requested_responses == requested_servers) {
@@ -1122,9 +1167,9 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 	}
 
 	if (max_lease_time == DHCP_INFINITE_TIME) {
-		xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity", sc_dhcp_results.output);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity", sc_dhcp_results.output);
 	} else {
-		xasprintf(&sc_dhcp_results.output, "%s, max lease time = %" PRIu32 " seconds",
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = %" PRIu32 " seconds",
 				  sc_dhcp_results.output, max_lease_time);
 	}
 
@@ -1156,11 +1201,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 				die(STATE_UNKNOWN, "inet_ntop failed");
 			}
 
-			xasprintf(&sc_rogue_server.output, "Rogue DHCP Server detected! Server %s offered %s",
+			mopl_utils_xasprintf(&sc_rogue_server.output, "Rogue DHCP Server detected! Server %s offered %s",
 					  server_address, offered_address);
 		} else {
 			sc_rogue_server = mp_set_subcheck_state(sc_rogue_server, STATE_OK);
-			xasprintf(&sc_rogue_server.output, "No Rogue DHCP Server detected");
+			mopl_utils_xasprintf(&sc_rogue_server.output, "No Rogue DHCP Server detected");
 		}
 		mp_add_subcheck_to_subcheck(&sc_dhcp_results, sc_rogue_server);
 	}
@@ -1170,11 +1215,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 
 		if (received_requested_address) {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_OK);
-			xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was offered",
+			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was offered",
 					  inet_ntoa(requested_address));
 		} else {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_WARNING);
-			xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was NOT offered",
+			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was NOT offered",
 					  inet_ntoa(requested_address));
 		}
 
@@ -1241,7 +1286,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		case 'm': /* MAC address */
 			if ((config.user_specified_mac = mac_aton(optarg)) == NULL) {
-				usage("Cannot parse MAC address.\n");
+				mopl_utils_usage("Cannot parse MAC address.\n");
 			}
 			if (verbose) {
 				print_hardware_address(config.user_specified_mac);
@@ -1263,7 +1308,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 
 		case 'h': /* help */
@@ -1286,7 +1331,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 			break;
 
 		default:
@@ -1295,7 +1340,7 @@ process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (argc - optind > 0) {
-		usage(_("Got unexpected non-option argument"));
+		mopl_utils_usage(_("Got unexpected non-option argument"));
 	}
 
 	process_arguments_wrapper result = {
@@ -1451,7 +1496,7 @@ void resolve_host(const char *name, struct in_addr *out) {
 	struct addrinfo *addr_info;
 
 	if (getaddrinfo(name, NULL, &hints, &addr_info) != 0) {
-		usage_va(_("Invalid hostname/address - %s"), optarg);
+		mopl_utils_usage_va(_("Invalid hostname/address - %s"), optarg);
 	}
 
 	memcpy(out, &((struct sockaddr_in *)addr_info->ai_addr)->sin_addr, sizeof(*out));
@@ -1492,7 +1537,7 @@ void print_hardware_address(const unsigned char *address) {
 /* print usage help */
 void print_help(void) {
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 2001-2004 Ethan Galstad (nagios@nagios.org)\n");
 	printf(COPYRIGHT, copyright, email);

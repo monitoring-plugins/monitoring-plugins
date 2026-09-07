@@ -46,7 +46,7 @@ const char *email = "devel@monitoring-plugins.org";
 ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
 	if (use_tls) {
-		return np_net_ssl_read(buf, (int)len);
+		return mopl_net_ssl_read(buf, (int)len);
 	}
 #endif
 	return read(socket_descriptor, buf, len);
@@ -55,7 +55,7 @@ ssize_t my_recv(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 ssize_t my_send(int socket_descriptor, char *buf, size_t len, bool use_tls) {
 #ifdef HAVE_SSL
 	if (use_tls) {
-		return np_net_ssl_write(buf, (int)len);
+		return mopl_net_ssl_write(buf, (int)len);
 	}
 #endif
 	return write(socket_descriptor, buf, len);
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 	}
 	/* fallthrough check, so it's supposed to use reverse matching */
 	else if (strcmp(config.service, "TCP")) {
-		usage(_("CRITICAL - Generic check_tcp called with unknown service\n"));
+		mopl_utils_usage(_("CRITICAL - Generic check_tcp called with unknown service\n"));
 	}
 
 	/* Parse extra opts if any */
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
 
 	check_tcp_config_wrapper paw = process_arguments(argc, argv, config);
 	if (paw.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 #ifdef __OpenBSD__
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (config.protocol == IPPROTO_UDP && !(config.server_expect_count && config.send)) {
-		usage(_("With UDP checks, a send/expect string must be specified."));
+		mopl_utils_usage(_("With UDP checks, a send/expect string must be specified."));
 	}
 
 	// Initialize check stuff before setting timers
@@ -249,8 +249,10 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
+	mp_set_ok_summary(&overall, "Connection succeeded");
+
 	/* set up the timer */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 	alarm(socket_timeout);
 
 	/* try to connect to the host at the given port number */
@@ -261,18 +263,18 @@ int main(int argc, char **argv) {
 	mp_subcheck inital_connect_result = mp_subcheck_init();
 
 	// Try initial connection
-	if (np_net_connect(config.server_address, config.server_port, &socket_descriptor,
+	if (mopl_net_connect(config.server_address, config.server_port, &socket_descriptor,
 					   config.protocol) == STATE_CRITICAL) {
 		// Early exit here, we got connection refused
 		inital_connect_result =
 			mp_set_subcheck_state(inital_connect_result, config.econn_refuse_state);
-		xasprintf(&inital_connect_result.output, "Connection to %s on port %i was REFUSED",
+		mopl_utils_xasprintf(&inital_connect_result.output, "Connection to %s on port %i was REFUSED",
 				  config.server_address, config.server_port);
 		mp_add_subcheck_to_check(&overall, inital_connect_result);
 		mp_exit(overall);
 	} else {
 		inital_connect_result = mp_set_subcheck_state(inital_connect_result, STATE_OK);
-		xasprintf(&inital_connect_result.output, "Connection to %s on port %i was a SUCCESS",
+		mopl_utils_xasprintf(&inital_connect_result.output, "Connection to %s on port %i was a SUCCESS",
 				  config.server_address, config.server_port);
 		mp_add_subcheck_to_check(&overall, inital_connect_result);
 	}
@@ -280,34 +282,34 @@ int main(int argc, char **argv) {
 #ifdef HAVE_SSL
 	if (config.use_tls) {
 		mp_subcheck tls_connection_result = mp_subcheck_init();
-		mp_state_enum result = np_net_ssl_init_with_hostname(
+		mp_state_enum result = mopl_net_tls_init_with_hostname(
 			socket_descriptor, (config.sni_specified ? config.sni : NULL));
 		tls_connection_result = mp_set_subcheck_default_state(tls_connection_result, result);
 
 		if (result == STATE_OK) {
-			xasprintf(&tls_connection_result.output, "TLS connection succeeded");
+			mopl_utils_xasprintf(&tls_connection_result.output, "TLS connection succeeded");
 
 			if (config.check_cert) {
 				result =
-					np_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
+					mopl_net_ssl_check_cert(config.days_till_exp_warn, config.days_till_exp_crit);
 
 				mp_subcheck tls_certificate_lifetime_result = mp_subcheck_init();
 				tls_certificate_lifetime_result =
 					mp_set_subcheck_state(tls_certificate_lifetime_result, result);
 
 				if (result == STATE_OK) {
-					xasprintf(&tls_certificate_lifetime_result.output,
+					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
 							  "Certificate lifetime is within thresholds");
 				} else if (result == STATE_WARNING) {
-					xasprintf(&tls_certificate_lifetime_result.output,
+					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
 							  "Certificate lifetime is violating warning threshold (%i)",
 							  config.days_till_exp_warn);
 				} else if (result == STATE_CRITICAL) {
-					xasprintf(&tls_certificate_lifetime_result.output,
+					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
 							  "Certificate lifetime is violating critical threshold (%i)",
 							  config.days_till_exp_crit);
 				} else {
-					xasprintf(&tls_certificate_lifetime_result.output,
+					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
 							  "Certificate lifetime is somehow unknown");
 				}
 
@@ -317,13 +319,13 @@ int main(int argc, char **argv) {
 
 			mp_add_subcheck_to_check(&overall, tls_connection_result);
 		} else {
-			xasprintf(&tls_connection_result.output, "TLS connection failed");
+			mopl_utils_xasprintf(&tls_connection_result.output, "TLS connection failed");
 			mp_add_subcheck_to_check(&overall, tls_connection_result);
 
 			if (socket_descriptor) {
 				close(socket_descriptor);
 			}
-			np_net_ssl_cleanup();
+			mopl_net_tls_cleanup();
 
 			mp_exit(overall);
 		}
@@ -406,7 +408,7 @@ int main(int argc, char **argv) {
 
 		/* no data when expected, so return critical */
 		if (len == 0) {
-			xasprintf(&expected_data_result.output, "Received no data when some was expected");
+			mopl_utils_xasprintf(&expected_data_result.output, "Received no data when some was expected");
 			expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_CRITICAL);
 			mp_add_subcheck_to_check(&overall, expected_data_result);
 			mp_exit(overall);
@@ -431,10 +433,10 @@ int main(int argc, char **argv) {
 		close(socket_descriptor);
 	}
 #ifdef HAVE_SSL
-	np_net_ssl_cleanup();
+	mopl_net_tls_cleanup();
 #endif
 
-	long microsec = deltime(start_time);
+	long microsec = mopl_utils_deltime(start_time);
 	double elapsed_time = (double)microsec / 1.0e6;
 
 	mp_subcheck elapsed_time_result = mp_subcheck_init();
@@ -445,7 +447,7 @@ int main(int argc, char **argv) {
 	time_pd.uom = "s";
 
 	if (config.critical_time_set && elapsed_time > config.critical_time) {
-		xasprintf(&elapsed_time_result.output,
+		mopl_utils_xasprintf(&elapsed_time_result.output,
 				  "Connection time %fs exceeded critical threshold (%f)", elapsed_time,
 				  config.critical_time);
 
@@ -458,7 +460,7 @@ int main(int argc, char **argv) {
 
 		time_pd.crit = crit_val;
 	} else if (config.warning_time_set && elapsed_time > config.warning_time) {
-		xasprintf(&elapsed_time_result.output,
+		mopl_utils_xasprintf(&elapsed_time_result.output,
 				  "Connection time %fs exceeded warning threshold (%f)", elapsed_time,
 				  config.critical_time);
 
@@ -471,7 +473,7 @@ int main(int argc, char **argv) {
 		time_pd.warn = warn_val;
 	} else {
 		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_OK);
-		xasprintf(&elapsed_time_result.output, "Connection time %fs is within thresholds",
+		mopl_utils_xasprintf(&elapsed_time_result.output, "Connection time %fs is within thresholds",
 				  elapsed_time);
 	}
 
@@ -482,11 +484,11 @@ int main(int argc, char **argv) {
 	if (match == NP_MATCH_FAILURE) {
 		expected_data_result =
 			mp_set_subcheck_state(expected_data_result, config.expect_mismatch_state);
-		xasprintf(&expected_data_result.output, "Answer failed to match expectation");
+		mopl_utils_xasprintf(&expected_data_result.output, "Answer failed to match expectation");
 		mp_add_subcheck_to_check(&overall, expected_data_result);
 	} else if (match == NP_MATCH_SUCCESS) {
 		expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_OK);
-		xasprintf(&expected_data_result.output, "The answer of the server matched the expectation");
+		mopl_utils_xasprintf(&expected_data_result.output, "The answer of the server matched the expectation");
 		mp_add_subcheck_to_check(&overall, expected_data_result);
 	}
 
@@ -534,7 +536,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage4(_("No arguments found"));
+		mopl_utils_usage4(_("No arguments found"));
 	}
 
 	/* backwards compatibility */
@@ -548,7 +550,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 		}
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		config.server_address = argv[1];
 		argv[1] = argv[0];
 		argv = &argv[1];
@@ -568,12 +570,12 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 
 		switch (option_index) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help(config.service);
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose mode */
 			verbosity++;
@@ -601,15 +603,15 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			config.warning_time_set = true;
 			break;
 		case 't': /* timeout */
-			if (!is_intpos(optarg)) {
-				usage4(_("Timeout interval must be a positive integer"));
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			} else {
 				socket_timeout = atoi(optarg);
 			}
 			break;
 		case 'p': /* port */
-			if (!is_intpos(optarg)) {
-				usage4(_("Port must be a positive integer"));
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			} else {
 				config.server_port = atoi(optarg);
 			}
@@ -621,7 +623,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			if (escape) {
 				config.send = np_escaped_string(optarg);
 			} else {
-				xasprintf(&config.send, "%s", optarg);
+				mopl_utils_xasprintf(&config.send, "%s", optarg);
 			}
 			break;
 		case 'e': /* expect string (may be repeated) */
@@ -639,8 +641,8 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			config.server_expect[config.server_expect_count - 1] = optarg;
 			break;
 		case 'm':
-			if (!is_intpos(optarg)) {
-				usage4(_("Maxbytes must be a positive integer"));
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage4(_("Maxbytes must be a positive integer"));
 			} else {
 				config.maxbytes = strtol(optarg, NULL, 0);
 			}
@@ -649,7 +651,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			if (escape) {
 				config.quit = np_escaped_string(optarg);
 			} else {
-				xasprintf(&config.quit, "%s\r\n", optarg);
+				mopl_utils_xasprintf(&config.quit, "%s\r\n", optarg);
 			}
 			break;
 		case 'r':
@@ -660,7 +662,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			} else if (!strncmp(optarg, "crit", 4)) {
 				config.econn_refuse_state = STATE_CRITICAL;
 			} else {
-				usage4(_("Refuse must be one of ok, warn, crit"));
+				mopl_utils_usage4(_("Refuse must be one of ok, warn, crit"));
 			}
 			break;
 		case 'M':
@@ -671,14 +673,14 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			} else if (!strncmp(optarg, "crit", 4)) {
 				config.expect_mismatch_state = STATE_CRITICAL;
 			} else {
-				usage4(_("Mismatch must be one of ok, warn, crit"));
+				mopl_utils_usage4(_("Mismatch must be one of ok, warn, crit"));
 			}
 			break;
 		case 'd':
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				config.delay = atoi(optarg);
 			} else {
-				usage4(_("Delay must be a positive integer"));
+				mopl_utils_usage4(_("Delay must be a positive integer"));
 			}
 			break;
 		case 'D': /* Check SSL cert validity - days 'til certificate expiration */
@@ -688,20 +690,20 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 			char *temp;
 			if ((temp = strchr(optarg, ',')) != NULL) {
 				*temp = '\0';
-				if (!is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+				if (!mopl_utils_is_intnonneg(optarg)) {
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);
 				*temp = ',';
 				temp++;
-				if (!is_intnonneg(temp)) {
-					usage2(_("Invalid certificate expiration period"), temp);
+				if (!mopl_utils_is_intnonneg(temp)) {
+					mopl_utils_usage2(_("Invalid certificate expiration period"), temp);
 				}
 				config.days_till_exp_crit = atoi(temp);
 			} else {
 				config.days_till_exp_crit = 0;
-				if (!is_intnonneg(optarg)) {
-					usage2(_("Invalid certificate expiration period"), optarg);
+				if (!mopl_utils_is_intnonneg(optarg)) {
+					mopl_utils_usage2(_("Invalid certificate expiration period"), optarg);
 				}
 				config.days_till_exp_warn = atoi(optarg);
 			}
@@ -751,8 +753,8 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 	}
 
 	if (config.server_address == NULL) {
-		usage4(_("You must provide a server address"));
-	} else if (config.server_address[0] != '/' && !is_host(config.server_address)) {
+		mopl_utils_usage4(_("You must provide a server address"));
+	} else if (config.server_address[0] != '/' && !mopl_net_is_host(config.server_address)) {
 		die(STATE_CRITICAL, "%s %s - %s: %s\n", config.service, state_text(STATE_CRITICAL),
 			_("Invalid hostname, address or socket"), config.server_address);
 	}
@@ -765,7 +767,7 @@ static check_tcp_config_wrapper process_arguments(int argc, char **argv, check_t
 }
 
 void print_help(const char *service) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

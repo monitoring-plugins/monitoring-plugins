@@ -1,3 +1,4 @@
+#pragma once
 /****************************************************************************
  *
  * License: GPL
@@ -21,22 +22,15 @@
  *
  *****************************************************************************/
 
-#ifndef NAGIOSPLUG_RUNCMD_H
-#define NAGIOSPLUG_RUNCMD_H
-
-#include "common.h"
 #include "utils_cmd.h" /* for the "output" type */
 
 /** prototypes **/
-int np_runcmd(const char *, output *, output *, int);
+int mopl_utils_runcmd(const char *cmd, output *out, output *err, int flags);
 void runcmd_timeout_alarm_handler(int) __attribute__((__noreturn__));
 
 /* only multi-threaded plugins need to bother with this */
-void np_runcmd_init(void);
-#define NP_RUNCMD_INIT np_runcmd_init()
+void mopl_utils_runcmd_init(void);
 
 /* possible flags for np_runcmd()'s fourth argument */
-#define RUNCMD_NO_ARRAYS 0x01 /* don't populate arrays at all */
-#define RUNCMD_NO_ASSOC  0x02 /* output.line won't point to buf */
-
-#endif /* NAGIOSPLUG_RUNCMD_H */
+#define MOPL_RUNCMD_NO_ARRAYS 0x01 /* don't populate arrays at all */
+#define MOPL_RUNCMD_NO_ASSOC  0x02 /* output.line won't point to buf */

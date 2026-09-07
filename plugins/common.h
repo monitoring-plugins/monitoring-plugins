@@ -115,8 +115,8 @@
 
 #include <locale.h>
 
-#ifdef HAVE_SYS_POLL_H
-#	include "sys/poll.h"
+#ifdef HAVE_POLL_H
+#	include <poll.h>
 #endif
 
 /*
@@ -207,9 +207,9 @@ enum {
 
 /* for checking the result of getopt_long */
 #if EOF == -1
-#define CHECK_EOF(c) ((c) == EOF)
+#	define CHECK_EOF(c) ((c) == EOF)
 #else
-#define CHECK_EOF(c) ((c) == -1 || (c) == EOF)
+#	define CHECK_EOF(c) ((c) == -1 || (c) == EOF)
 #endif
 
 #endif /* _COMMON_H_ */

@@ -236,7 +236,7 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* host_name, only required for ssl, because we use the host_name later on to make SNI happy */
 	char dnscache[DEFAULT_BUFFER_SIZE];
 	char addrstr[DEFAULT_BUFFER_SIZE / 2];
-	if (working_state.use_ssl && working_state.host_name != NULL && !have_local_resolution) {
+	if (working_state.use_ssl && working_state.host_name != NULL && have_local_resolution) {
 		char *tmp_mod_address;
 
 		/* lookup_host() requires an IPv6 address without the brackets. */
@@ -757,6 +757,7 @@ check_curl_config check_curl_config_init(void) {
 		.header_expect = "",
 		.on_redirect_result_state = STATE_OK,
 		.on_redirect_dependent = false,
+		.on_timeout_result_state = STATE_CRITICAL,
 
 		.show_extended_perfdata = false,
 		.show_body = false,
@@ -875,10 +876,10 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 
 	mp_subcheck sc_document_dates = mp_subcheck_init();
 	if (!server_date || !*server_date) {
-		xasprintf(&sc_document_dates.output, _("Server date unknown"));
+		mopl_utils_xasprintf(&sc_document_dates.output, _("Server date unknown"));
 		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_UNKNOWN);
 	} else if (!document_date || !*document_date) {
-		xasprintf(&sc_document_dates.output, _("Document modification date unknown, "));
+		mopl_utils_xasprintf(&sc_document_dates.output, _("Document modification date unknown, "));
 		sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 	} else {
 		time_t srv_data = curl_getdate(server_date, NULL);
@@ -890,28 +891,28 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 		}
 
 		if (srv_data <= 0) {
-			xasprintf(&sc_document_dates.output, _("Server date \"%100s\" unparsable"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Server date \"%100s\" unparsable"),
 					  server_date);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data <= 0) {
 
-			xasprintf(&sc_document_dates.output, _("Document date \"%100s\" unparsable"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Document date \"%100s\" unparsable"),
 					  document_date);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data > srv_data + 30) {
 
-			xasprintf(&sc_document_dates.output, _("Document is %d seconds in the future"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Document is %d seconds in the future"),
 					  (int)doc_data - (int)srv_data);
 
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 		} else if (doc_data < srv_data - maximum_age) {
 			time_t last_modified = (srv_data - doc_data);
 			if (last_modified > (60 * 60 * 24 * 2)) { // two days hardcoded?
-				xasprintf(&sc_document_dates.output, _("Last modified %.1f days ago"),
+				mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %.1f days ago"),
 						  ((float)last_modified) / (60 * 60 * 24));
 				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
 			} else {
-				xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
+				mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
 						  (long long)last_modified / (60 * 60), (int)(last_modified / 60) % 60,
 						  (int)last_modified % 60);
 				sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_CRITICAL);
@@ -919,7 +920,7 @@ mp_subcheck check_document_dates(const curlhelp_write_curlbuf *header_buf, const
 		} else {
 			// TODO is this the OK case?
 			time_t last_modified = (srv_data - doc_data);
-			xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
+			mopl_utils_xasprintf(&sc_document_dates.output, _("Last modified %lld:%02d:%02d ago"),
 					  (long long)last_modified / (60 * 60), (int)(last_modified / 60) % 60,
 					  (int)last_modified % 60);
 			sc_document_dates = mp_set_subcheck_state(sc_document_dates, STATE_OK);
@@ -1301,7 +1302,7 @@ void test_file(char *path) {
 	if (access(path, R_OK) == 0) {
 		return;
 	}
-	usage2(_("file does not exist or is not readable"), path);
+	mopl_utils_usage2(_("file does not exist or is not readable"), path);
 }
 
 #if HAVE_SSL
@@ -1323,7 +1324,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 		 */
 		return mp_net_ssl_check_certificate(cert, warn_days_till_exp, crit_days_till_exp);
 #	else  /* MOPL_USE_OPENSSL */
-		xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
+		mopl_utils_xasprintf(&result.output, "HTTP CRITICAL - Cannot retrieve certificates - OpenSSL "
 								  "callback used and not linked against OpenSSL\n");
 		mp_set_subcheck_state(result, STATE_CRITICAL);
 #	endif /* MOPL_USE_OPENSSL */
@@ -1360,7 +1361,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 			if (!raw_cert) {
 
-				xasprintf(&sc_cert_result.output,
+				mopl_utils_xasprintf(&sc_cert_result.output,
 						  _("Cannot retrieve certificates from CERTINFO information - "
 							"certificate data was empty"));
 				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
@@ -1372,7 +1373,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 
 			cert = PEM_read_bio_X509(cert_BIO, NULL, NULL, NULL);
 			if (!cert) {
-				xasprintf(&sc_cert_result.output,
+				mopl_utils_xasprintf(&sc_cert_result.output,
 						  _("Cannot read certificate from CERTINFO information - BIO error"));
 				sc_cert_result = mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
 				return sc_cert_result;
@@ -1388,7 +1389,7 @@ mp_subcheck check_curl_certificate_checks(CURL *curl, X509 *cert, int warn_days_
 												   days_till_exp_crit);
 #	endif /* MOPL_USE_OPENSSL */
 		} else {
-			xasprintf(&sc_cert_result.output,
+			mopl_utils_xasprintf(&sc_cert_result.output,
 					  _("Cannot retrieve certificates - cURL returned %d - %s"), res,
 					  curl_easy_strerror(res));
 			mp_set_subcheck_state(sc_cert_result, STATE_CRITICAL);
@@ -1423,17 +1424,18 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 		host_name_display = working_state.host_name;
 	}
 
-	/* IPv4 or IPv6 version of the address */
+	/* IPv4 or IPv6 version of the address, this variable saves both */
 	char *server_address_clean = strdup(working_state.server_address);
 	/* server address might be a full length ipv6 address encapsulated in square brackets */
 	if ((strnlen(working_state.server_address, MAX_IPV4_HOSTLENGTH) > 2) &&
 		(working_state.server_address[0] == '[') &&
 		(working_state.server_address[strlen(working_state.server_address) - 1] == ']')) {
+		free(server_address_clean);
 		server_address_clean =
 			strndup(working_state.server_address + 1, strlen(working_state.server_address) - 2);
 	}
 
-	/* check curlopt_noproxy option first */
+	/* check curlopt_noproxy option before trying to understand this function */
 	/* https://curl.se/libcurl/c/CURLOPT_NOPROXY.html */
 
 	/* curlopt_noproxy is specified as a comma separated list of
@@ -1453,9 +1455,10 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 			 * effectively disables the proxy. */
 			if (strlen(noproxy_item) == 1 && noproxy_item[0] == '*') {
 				if (verbose >= 1) {
-					printf("* noproxy includes '*' which disables proxy for all host name incl. : "
-						   "%s / server address incl. : %s\n",
-						   host_name_display, server_address_clean);
+					printf(
+						"* noproxy includes '*' which disables proxy for all host name including : "
+						"%s / server address including : %s\n",
+						host_name_display, server_address_clean);
 				}
 				free(curlopt_noproxy_copy);
 				free(server_address_clean);
@@ -1512,17 +1515,19 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 
 				if (ip_addr_inside_cidr_ret.error == NO_ERROR) {
 					if (ip_addr_inside_cidr_ret.inside) {
+						free(curlopt_noproxy_copy);
+						free(server_address_clean);
 						return true;
 					} else {
 						if (verbose >= 1) {
-							printf("server address: %s is not inside IP cidr: %s\n",
+							printf("server address: %s is not inside IP CIDR: %s\n",
 								   server_address_clean, noproxy_item);
 						}
 					}
 				} else {
 					if (verbose >= 1) {
 						printf("could not fully determine if server address: %s is inside the IP "
-							   "cidr: %s\n",
+							   "CIDR: %s\n",
 							   server_address_clean, noproxy_item);
 					}
 				}
@@ -1607,17 +1612,23 @@ bool hostname_gets_resolved_locally(const check_curl_working_state working_state
 		// string identifies. We do not set this value Without a scheme, it is treated as an http
 		// proxy
 
+		if (verbose >= 1) {
+			printf("* proxy scheme is unspecified, and therefore taken as http, proxy: %s resolves "
+				   "host: %s or server_address: %s\n",
+				   working_state.curlopt_proxy, host_name_display, server_address_clean);
+		}
+
 		return false;
 	}
 
 	if (verbose >= 1) {
-		printf("* proxy scheme is unknown/unavailable, no proxy is assumed for host: %s or "
+		printf("* proxy is unknown/unavailable, no proxy is assumed for host: %s or "
 			   "server_address: %s\n",
 			   host_name_display, server_address_clean);
 	}
 
 	free(server_address_clean);
-	return 0;
+	return true;
 }
 
 ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const char *target_ip) {
@@ -1664,7 +1675,7 @@ ip_addr_inside ip_addr_inside_cidr(const char *cidr_region_or_ip_addr, const cha
 		prefix_length = (int)tmp;
 	} else {
 		if (verbose >= 1) {
-			printf("cidr_region_or_ip: %s , has %d number of '/' characters, is not a valid "
+			printf("cidr_region_or_ip: %s , has %u number of '/' characters, is not a valid "
 				   "cidr_region or IP\n",
 				   cidr_region_or_ip_addr, slash_count);
 		}

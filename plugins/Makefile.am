@@ -36,8 +36,7 @@ libexec_PROGRAMS = check_apt check_cluster check_disk check_dummy check_http che
 	check_mrtg check_mrtgtraf check_ntp_peer check_ping \
 	check_real check_smtp check_ssh check_tcp check_time check_ntp_time \
 	check_ups check_users negate \
-	urlize @EXTRAS@ \
-	check_snmp
+	urlize @EXTRAS@
 
 check_tcp_programs = check_ftp check_imap check_nntp check_pop \
 	check_udp check_clamd @check_tcp_ssl@
@@ -46,16 +45,19 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 	check_swap check_fping check_ldap check_game check_dig \
 	check_nagios check_by_ssh check_dns check_ide_smart	\
 	check_procs check_mysql_query check_apt check_dbi check_curl \
+	check_snmp \
 	\
 	tests/test_check_swap \
 	tests/test_check_snmp \
-	tests/test_check_disk
+	tests/test_check_disk \
+	tests/test_sslutils
 
 SUBDIRS = picohttpparser
 
 np_test_scripts = tests/test_check_swap.t \
 				  tests/test_check_snmp.t \
-				  tests/test_check_disk.t
+				  tests/test_check_disk.t \
+				  tests/test_sslutils.t
 
 EXTRA_DIST = t \
 			 tests \
@@ -100,16 +102,16 @@ EXTRA_DIST = t \
 
 PLUGINHDRS = common.h
 
-noinst_LIBRARIES = libnpcommon.a
+noinst_LIBRARIES = libmoplcommon.a
 noinst_PROGRAMS = @EXTRA_PLUGIN_TESTS@
 # These two lines support "make check", but we use "make test"
 check_PROGRAMS = @EXTRA_PLUGIN_TESTS@
 
-libnpcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
+libmoplcommon_a_SOURCES = utils.c netutils.c sslutils.c runcmd.c	\
 	popen.c utils.h netutils.h popen.h common.h runcmd.c runcmd.h
 
 
-BASEOBJS = libnpcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
+BASEOBJS = libmoplcommon.a ../lib/libmonitoringplug.a ../gl/libgnu.a $(LIB_CRYPTO)
 NETOBJS = $(BASEOBJS) $(EXTRA_NETOBLS)
 NETLIBS = $(NETOBJS) $(SOCKETLIBS)
 SSLOBJS = $(BASEOBJS) $(NETLIBS) $(SSLLIBS) $(LIB_CRYPTO)
@@ -165,8 +167,8 @@ check_radius_LDADD = $(NETLIBS) $(RADIUSLIBS)
 check_real_LDADD = $(NETLIBS)
 check_snmp_SOURCES = check_snmp.c check_snmp.d/check_snmp_helpers.c
 check_snmp_LDADD = $(BASEOBJS)
-check_snmp_LDFLAGS = $(AM_LDFLAGS) -lm `net-snmp-config --libs`
-check_snmp_CFLAGS = $(AM_CFLAGS) `net-snmp-config --cflags | sed 's/-Werror=declaration-after-statement//'`
+check_snmp_LDFLAGS = $(AM_LDFLAGS) -lm `$(PATH_TO_NETSNMPCONFIG) --libs`
+check_snmp_CFLAGS = $(AM_CFLAGS) `$(PATH_TO_NETSNMPCONFIG) --cflags | sed 's/-Werror=declaration-after-statement//'`
 check_smtp_LDADD = $(SSLOBJS)
 check_ssh_LDADD = $(NETLIBS)
 check_swap_SOURCES = check_swap.c check_swap.d/swap.c
@@ -192,6 +194,8 @@ tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
+tests_test_sslutils_LDADD = $(SSLOBJS) $(tap_ldflags) -ltap
+tests_test_sslutils_SOURCES = tests/test_sslutils.c
 
 ##############################################################################
 # secondary dependencies

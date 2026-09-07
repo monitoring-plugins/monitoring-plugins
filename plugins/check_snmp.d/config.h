@@ -51,6 +51,9 @@ typedef struct {
 	// State if an empty value is encountered
 	mp_state_enum nulloid_result;
 
+	// State if an OID is not available
+	mp_state_enum missing_oid_result;
+
 	// String evaluation stuff
 	bool invert_search;
 	regex_t regex_cmp_value; // regex to match query results against

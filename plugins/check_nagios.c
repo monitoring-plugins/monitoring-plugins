@@ -63,14 +63,14 @@ int main(int argc, char **argv) {
 	check_nagios_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage_va(_("Could not parse arguments"));
+		mopl_utils_usage_va(_("Could not parse arguments"));
 	}
 
 	const check_nagios_config config = tmp_config.config;
 
 	/* Set signal handling and alarm timeout */
 	if (signal(SIGALRM, timeout_alarm_handler) == SIG_ERR) {
-		usage_va(_("Cannot catch SIGALRM"));
+		mopl_utils_usage_va(_("Cannot catch SIGALRM"));
 	}
 
 	/* handle timeouts gracefully... */
@@ -79,7 +79,8 @@ int main(int argc, char **argv) {
 	/* open the status log */
 	FILE *log_file = fopen(config.status_log, "r");
 	if (log_file == NULL) {
-		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Cannot open status log for reading!"));
+		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"),
+			_("Cannot open status log for reading!"));
 	}
 
 	unsigned long latest_entry_time = 0L;
@@ -110,7 +111,7 @@ int main(int argc, char **argv) {
 	mp_state_enum result = STATE_UNKNOWN;
 	output chld_out;
 	output chld_err;
-	if ((result = np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
+	if ((result = mopl_utils_runcmd(PS_COMMAND, &chld_out, &chld_err, 0)) != 0) {
 		result = STATE_WARNING;
 	}
 
@@ -142,8 +143,8 @@ int main(int argc, char **argv) {
 			chld_out.line[i][pos + 1] = 0x0;
 		}
 		if (cols >= expected_cols) {
-			xasprintf(&procargs, "%s", chld_out.line[i] + pos);
-			strip(procargs);
+			mopl_utils_xasprintf(&procargs, "%s", chld_out.line[i] + pos);
+			mopl_utils_strip(procargs);
 
 			/* Some ps return full pathname for command. This removes path */
 			char *temp_string = strtok((char *)procprog, "/");
@@ -153,7 +154,8 @@ int main(int argc, char **argv) {
 			}
 
 			/* May get empty procargs */
-			if (!strstr(procargs, argv[0]) && strstr(procargs, config.process_string) && strcmp(procargs, "")) {
+			if (!strstr(procargs, argv[0]) && strstr(procargs, config.process_string) &&
+				strcmp(procargs, "")) {
 				proc_entries++;
 				if (verbose >= 2) {
 					printf(_("Found process: %s %s\n"), procprog, procargs);
@@ -171,11 +173,13 @@ int main(int argc, char **argv) {
 	alarm(0);
 
 	if (proc_entries == 0) {
-		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Could not locate a running Nagios process!"));
+		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"),
+			_("Could not locate a running Nagios process!"));
 	}
 
 	if (latest_entry_time == 0L) {
-		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"), _("Cannot parse Nagios log file for valid time"));
+		die(STATE_CRITICAL, "NAGIOS %s: %s\n", _("CRITICAL"),
+			_("Cannot parse Nagios log file for valid time"));
 	}
 
 	time_t current_time;
@@ -189,7 +193,8 @@ int main(int argc, char **argv) {
 	printf("NAGIOS %s: ", (result == STATE_OK) ? _("OK") : _("WARNING"));
 	printf(ngettext("%d process", "%d processes", proc_entries), proc_entries);
 	printf(", ");
-	printf(ngettext("status log updated %d second ago", "status log updated %d seconds ago", (int)(current_time - latest_entry_time)),
+	printf(ngettext("status log updated %d second ago", "status log updated %d seconds ago",
+					(int)(current_time - latest_entry_time)),
 		   (int)(current_time - latest_entry_time));
 	printf("\n");
 
@@ -198,10 +203,11 @@ int main(int argc, char **argv) {
 
 /* process command-line arguments */
 check_nagios_config_wrapper process_arguments(int argc, char **argv) {
-	static struct option longopts[] = {{"filename", required_argument, 0, 'F'}, {"expires", required_argument, 0, 'e'},
-									   {"command", required_argument, 0, 'C'},  {"timeout", optional_argument, 0, 't'},
-									   {"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},
-									   {"verbose", no_argument, 0, 'v'},        {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"filename", required_argument, 0, 'F'}, {"expires", required_argument, 0, 'e'},
+		{"command", required_argument, 0, 'C'},  {"timeout", optional_argument, 0, 't'},
+		{"version", no_argument, 0, 'V'},        {"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},        {0, 0, 0, 0}};
 
 	check_nagios_config_wrapper result = {
 		.errorcode = OK,
@@ -212,9 +218,9 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 		return result;
 	}
 
-	if (!is_option(argv[1])) {
+	if (!mopl_utils_is_option(argv[1])) {
 		result.config.status_log = argv[1];
-		if (is_intnonneg(argv[2])) {
+		if (mopl_utils_is_intnonneg(argv[2])) {
 			result.config.expire_minutes = atoi(argv[2]);
 		} else {
 			die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
@@ -236,7 +242,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'F': /* status log */
 			result.config.status_log = optarg;
@@ -245,14 +251,14 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.process_string = optarg;
 			break;
 		case 'e': /* expiry time */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.expire_minutes = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Expiration time must be an integer (seconds)\n"));
 			}
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				timeout_interval = atoi(optarg);
 			} else {
 				die(STATE_UNKNOWN, _("Timeout must be an integer (seconds)\n"));
@@ -262,7 +268,7 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 			verbose++;
 			break;
 		default: /* print short usage_va statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -278,14 +284,15 @@ check_nagios_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 
 	printf("%s\n", _("This plugin checks the status of the Nagios process on the local machine"));
 	printf("%s\n", _("The plugin will check to make sure the Nagios status log is no older than"));
 	printf("%s\n", _("the number of minutes specified by the expires option."));
-	printf("%s\n", _("It also checks the process table for a process matching the command argument."));
+	printf("%s\n",
+		   _("It also checks the process table for a process matching the command argument."));
 
 	printf("\n\n");
 
@@ -306,12 +313,14 @@ void print_help(void) {
 
 	printf("\n");
 	printf("%s\n", _("Examples:"));
-	printf(" %s\n", "check_nagios -t 20 -e 5 -F /usr/local/nagios/var/status.log -C /usr/local/nagios/bin/nagios");
+	printf(" %s\n", "check_nagios -t 20 -e 5 -F /usr/local/nagios/var/status.log -C "
+					"/usr/local/nagios/bin/nagios");
 
 	printf(UT_SUPPORT);
 }
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf("%s -F <status log file> -t <timeout_seconds> -e <expire_minutes> -C <process_string>\n", progname);
+	printf("%s -F <status log file> -t <timeout_seconds> -e <expire_minutes> -C <process_string>\n",
+		   progname);
 }

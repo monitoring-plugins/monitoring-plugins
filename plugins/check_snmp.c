@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
 	process_arguments_wrapper paw_tmp = process_arguments(argc, argv);
 	if (paw_tmp.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_snmp_config config = paw_tmp.config;
@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	time_t current_time;
@@ -295,15 +295,25 @@ int main(int argc, char **argv) {
 
 	mp_check overall = mp_check_init();
 
+	mp_set_ok_summary(&overall, "SNMP query is OK");
+
 	if (response.errorcode == OK) {
 		mp_subcheck sc_successfull_query = mp_subcheck_init();
-		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
+		mopl_utils_xasprintf(&sc_successfull_query.output, "SNMP query was successful");
 		sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_successfull_query);
+	} else if (response.number_of_results != config.snmp_params.num_of_test_units) {
+		mp_subcheck sc_strange_query_result = mp_subcheck_init();
+		mopl_utils_xasprintf(&sc_strange_query_result.output,
+				  "SNMP query returned %zu results, but %zu were requested",
+				  response.number_of_results, config.snmp_params.num_of_test_units);
+		sc_strange_query_result = mp_set_subcheck_state(sc_strange_query_result, STATE_UNKNOWN);
+		mp_add_subcheck_to_check(&overall, sc_strange_query_result);
+		mp_exit(overall);
 	} else {
 		// Error treatment here, either partial or whole
 		mp_subcheck sc_failed_query = mp_subcheck_init();
-		xasprintf(&sc_failed_query.output, "SNMP query failed");
+		mopl_utils_xasprintf(&sc_failed_query.output, "SNMP query failed");
 		sc_failed_query = mp_set_subcheck_state(sc_failed_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_failed_query);
 		mp_exit(overall);
@@ -389,7 +399,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		connection_prefix_index,
 		output_format_index,
 		calculate_rate,
-		rate_multiplier
+		rate_multiplier,
+		missing_oid,
 	};
 
 	static struct option longopts[] = {
@@ -399,6 +410,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"object", required_argument, 0, 'o'},
 		{"delimiter", required_argument, 0, 'd'},
 		{"nulloid", required_argument, 0, 'z'},
+		{"missing-oid", required_argument, 0, missing_oid},
 		{"output-delimiter", required_argument, 0, 'D'},
 		{"string", required_argument, 0, 's'},
 		{"timeout", required_argument, 0, 't'},
@@ -465,13 +477,13 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 			// fallthrough
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 
 		default:
@@ -504,8 +516,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	size_t eval_counter = 0;
 	size_t unitv_counter = 0;
 	size_t labels_counter = 0;
-	unsigned char *authpasswd = NULL;
-	unsigned char *privpasswd = NULL;
+	char *authpasswd = NULL;
+	char *privpasswd = NULL;
 	int cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
 	char *port = NULL;
 	char *miblist = NULL;
@@ -523,12 +535,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose */
 			verbose++;
@@ -618,62 +630,64 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		case 'x': /* priv protocol */
 			if (strcasecmp("DES", optarg) == 0) {
 #ifdef HAVE_USM_DES_PRIV_PROTOCOL
-				config.snmp_params.snmp_session.securityAuthProto = usmDESPrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmDESPrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmDESPrivProtocol);
 #else
 				die(STATE_UNKNOWN, "DES Privacy Protocol not available on this platform");
 #endif
 			} else if (strcasecmp("AES", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAESPrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAESPrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAESPrivProtocol);
-				// } else if (strcasecmp("AES128", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
-				// / OID_LENGTH(oid);
+// } else if (strcasecmp("AES128", optarg)) {
+// 	config.snmp_session.securityAuthProto = usmAES128PrivProtocol;
+// 	config.snmp_session.securityAuthProtoLen = OID_LENGTH(usmAES128PrivProtocol)
+// / OID_LENGTH(oid);
+#ifdef HAVE_USM_AES_PRIV_PROTOCOL
 			} else if (strcasecmp("AES192", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAES192PrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAES192PrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAES192PrivProtocol);
 			} else if (strcasecmp("AES256", optarg) == 0) {
-				config.snmp_params.snmp_session.securityAuthProto = usmAES256PrivProtocol;
-				config.snmp_params.snmp_session.securityAuthProtoLen =
+				config.snmp_params.snmp_session.securityPrivProto = usmAES256PrivProtocol;
+				config.snmp_params.snmp_session.securityPrivProtoLen =
 					OID_LENGTH(usmAES256PrivProtocol);
-				// } else if (strcasecmp("AES192Cisco", optarg)) {
-				// 	config.snmp_session.securityAuthProto = usmAES192CiscoPrivProtocol;
-				// 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityAuthProto =
-				// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
-				// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityAuthProto
-				// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityAuthProtoLen =
-				// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+// } else if (strcasecmp("AES192Cisco", optarg)) {
+// 	config.snmp_session.securityPrivProto = usmAES192CiscoPrivProtocol;
+// 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES192CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco", optarg)) { config.snmp_session.securityPrivProto =
+// usmAES256CiscoPrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES256CiscoPrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES192Cisco2", optarg)) { config.snmp_session.securityPrivProto
+// = usmAES192Cisco2PrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES192Cisco2PrivProtocol) / sizeof(oid); } else if
+// (strcasecmp("AES256Cisco2", optarg)) { config.snmp_session.securityPrivProto
+// = usmAES256Cisco2PrivProtocol; 	config.snmp_session.securityPrivProtoLen =
+// sizeof(usmAES256Cisco2PrivProtocol) / sizeof(oid);
+#endif
 			} else {
 				die(STATE_UNKNOWN, "Unknown privacy protocol");
 			}
 			break;
 		case 'A': /* auth passwd */
-			authpasswd = (unsigned char *)optarg;
+			authpasswd = optarg;
 			break;
 		case 'X': /* priv passwd */
-			privpasswd = (unsigned char *)optarg;
+			privpasswd = optarg;
 			break;
 		case 'e':
 		case 'E':
-			if (!is_integer(optarg)) {
-				usage2(_("Retries interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Retries interval must be a positive integer"), optarg);
 			} else {
 				config.snmp_params.snmp_session.retries = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = (unsigned int)atoi(optarg);
 			}
@@ -702,10 +716,19 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'z': /* Null OID Return Check */
-			if (!is_integer(optarg)) {
-				usage2(_("Exit status must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
+				// TODO: do real parsing here
 				config.evaluation_params.nulloid_result = atoi(optarg);
+			}
+			break;
+		case missing_oid: // What to do when an OID is missing in response
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
+			} else {
+				// TODO: do real parsing here
+				config.evaluation_params.missing_oid_result = atoi(optarg);
 			}
 			break;
 		case 's': /* string or substring */
@@ -829,9 +852,9 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			config.evaluation_params.calculate_rate = true;
 			break;
 		case rate_multiplier:
-			if (!is_integer(optarg) ||
+			if (!mopl_utils_is_integer(optarg) ||
 				((config.evaluation_params.rate_multiplier = (unsigned int)atoi(optarg)) <= 0)) {
-				usage2(_("Rate multiplier must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Rate multiplier must be a positive integer"), optarg);
 			}
 			break;
 		default:
@@ -850,7 +873,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			// The default, do nothing
 		} else if (strcasecmp(connection_prefix, "tcp") == 0) {
 			// use tcp/ipv4
-			xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcasecmp(connection_prefix, "tcp6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpv6") == 0 ||
@@ -860,22 +883,22 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				   strcasecmp(connection_prefix, "udpv6") == 0) {
 			// Man page (or net-snmp) code says IPv6 addresses should be wrapped in [], but it
 			// works anyway therefore do nothing here
-			xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "tls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "dtls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "unix") == 0) {
 			// TODO: Check whether this is a valid path?
-			xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "ipx") == 0) {
-			xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else {
 			// Don't know that prefix, die here
@@ -889,7 +912,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (port != NULL) {
-		xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
+		mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
 				  config.snmp_params.snmp_session.peername, port);
 	}
 
@@ -928,34 +951,42 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (config.snmp_params.snmp_session.securityLevel) {
 		case SNMP_SEC_LEVEL_AUTHPRIV: {
-			if (authpasswd == NULL) {
-				die(STATE_UNKNOWN,
-					"No authentication passphrase was given, but authorization was requested");
+			// privacy
+			if (privpasswd == NULL) {
+				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
 			}
-			// auth and priv
-			int priv_key_generated = generate_Ku(
-				config.snmp_params.snmp_session.securityPrivProto,
-				(unsigned int)config.snmp_params.snmp_session.securityPrivProtoLen, authpasswd,
-				strlen((const char *)authpasswd), config.snmp_params.snmp_session.securityPrivKey,
-				&config.snmp_params.snmp_session.securityPrivKeyLen);
+
+			config.snmp_params.snmp_session.securityPrivKeyLen = USM_PRIV_KU_LEN;
+			size_t tmp_strlen = strlen(privpasswd);
+
+			int priv_key_generated =
+				generate_Ku(config.snmp_params.snmp_session.securityAuthProto,
+							(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen,
+							(const unsigned char *)privpasswd, tmp_strlen,
+							config.snmp_params.snmp_session.securityPrivKey,
+							&config.snmp_params.snmp_session.securityPrivKeyLen);
 
 			if (priv_key_generated != SNMPERR_SUCCESS) {
-				die(STATE_UNKNOWN, "Failed to generate privacy key");
+				die(STATE_UNKNOWN, "Failed to generate privacy key\n");
 			}
 		}
 		// fall through
 		case SNMP_SEC_LEVEL_AUTHNOPRIV: {
-			if (privpasswd == NULL) {
-				die(STATE_UNKNOWN, "No privacy passphrase was given, but privacy was requested");
+			// authentication
+			if (authpasswd == NULL) {
+				die(STATE_UNKNOWN,
+					"No authentication passphrase was given, but authentication was requested");
 			}
-			int auth_key_generated = generate_Ku(
-				config.snmp_params.snmp_session.securityAuthProto,
-				(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen, privpasswd,
-				strlen((const char *)privpasswd), config.snmp_params.snmp_session.securityAuthKey,
-				&config.snmp_params.snmp_session.securityAuthKeyLen);
+			config.snmp_params.snmp_session.securityAuthKeyLen = USM_AUTH_KU_LEN;
+			int auth_key_generated =
+				generate_Ku(config.snmp_params.snmp_session.securityAuthProto,
+							(unsigned int)config.snmp_params.snmp_session.securityAuthProtoLen,
+							(const unsigned char *)authpasswd, strlen(authpasswd),
+							config.snmp_params.snmp_session.securityAuthKey,
+							&config.snmp_params.snmp_session.securityAuthKeyLen);
 
 			if (auth_key_generated != SNMPERR_SUCCESS) {
-				die(STATE_UNKNOWN, "Failed to generate privacy key");
+				die(STATE_UNKNOWN, "Failed to generate authentication key\n");
 			}
 		} break;
 		case SNMP_SEC_LEVEL_NOAUTH:
@@ -1011,7 +1042,7 @@ char *get_next_argument(char *str) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 
@@ -1072,6 +1103,14 @@ void print_help(void) {
 	printf("    %s\n", _("If the check returns a 0 length string or NULL value"));
 	printf("    %s\n", _("This option allows you to choose what status you want it to exit"));
 	printf("    %s\n", _("Excluding this option renders the default exit of 3(STATE_UNKNOWN)"));
+	printf("    %s\n", _("0 = OK"));
+	printf("    %s\n", _("1 = WARNING"));
+	printf("    %s\n", _("2 = CRITICAL"));
+	printf("    %s\n", _("3 = UNKNOWN"));
+	printf(" %s\n", "--missing-oid=#");
+	printf("    %s\n", _("If a query for an OID returns nothing (OID missing on the target)"));
+	printf("    %s\n", _("this option allows you to choose what status you want for this specific OID"));
+	printf("    %s\n", _("Excluding this option renders the default exit of 2 (CRITICAL)"));
 	printf("    %s\n", _("0 = OK"));
 	printf("    %s\n", _("1 = WARNING"));
 	printf("    %s\n", _("2 = CRITICAL"));

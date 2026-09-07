@@ -35,8 +35,6 @@ use FindBin;
 use lib "$FindBin::Bin";
 use utils qw(%ERRORS &print_revision &support &usage );
 
-my ($sudo);
-
 sub print_help ();
 sub print_usage ();
 sub process_arguments ();
@@ -60,14 +58,8 @@ if ($status){
 }
 
 if ($opt_s) {
-    if (defined $utils::PATH_TO_SUDO && -x $utils::PATH_TO_SUDO) {
-        $sudo = $utils::PATH_TO_SUDO;
-    } else {
-        print "ERROR: Cannot execute sudo\n";
-        exit $ERRORS{'UNKNOWN'};
-    }
-} else {
-    $sudo = "";
+    print STDERR "DEPRECATION WARNING: The -s/--sudo option has been removed and is ignored.\n";
+    print STDERR "Grant queue access to the monitoring user via your MTA instead (see --help).\n";
 }
 
 if ($opt_d) {
@@ -94,8 +86,8 @@ if ($mailq eq "sendmail") {
     }
 
     ## open mailq
-    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
-        print "ERROR: could not open $sudo $utils::PATH_TO_MAILQ \n";
+    if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+        print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
 #  single queue empty
@@ -228,6 +220,7 @@ if ($mailq eq "sendmail") {
 
     if ( $? ) {
         print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+        mta_permission_hint($mailq);
         exit $ERRORS{CRITICAL};
     }
 
@@ -342,7 +335,7 @@ elsif ( $mailq eq "postfix" ) {
     }
 
     ## open mailq
-    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ$mailq_args | " ) ) {
+    if (! open (MAILQ, "$utils::PATH_TO_MAILQ$mailq_args | " ) ) {
         print "ERROR: could not open $utils::PATH_TO_MAILQ$mailq_args \n";
         exit $ERRORS{'UNKNOWN'};
     }
@@ -354,6 +347,7 @@ elsif ( $mailq eq "postfix" ) {
 
     if ( $? ) {
     print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ$mailq_args",$/;
+    mta_permission_hint($mailq);
     exit $ERRORS{CRITICAL};
     }
 
@@ -422,7 +416,7 @@ elsif ( $mailq eq "qmail" ) {
     }
 
     # open qmail-qstat
-    if (! open (MAILQ, "$sudo $utils::PATH_TO_QMAIL_QSTAT | " ) ) {
+    if (! open (MAILQ, "$utils::PATH_TO_QMAIL_QSTAT | " ) ) {
         print "ERROR: could not open $utils::PATH_TO_QMAIL_QSTAT \n";
         exit $ERRORS{'UNKNOWN'};
     }
@@ -434,6 +428,7 @@ elsif ( $mailq eq "qmail" ) {
 
     if ( $? ) {
         print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+        mta_permission_hint($mailq);
         exit $ERRORS{CRITICAL};
     }
 
@@ -504,7 +499,7 @@ elsif ( $mailq eq "exim" ) {
     }
 
     ## open mailq
-    if (! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+    if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
         print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
@@ -521,6 +516,7 @@ elsif ( $mailq eq "exim" ) {
 
     if ( $? ) {
         print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+        mta_permission_hint($mailq);
         exit $ERRORS{CRITICAL};
     }
     if ($msg_q < $opt_w) {
@@ -547,7 +543,7 @@ elsif ( $mailq eq "nullmailer" ) {
     }
 
     ## open mailq
-    if ( ! open (MAILQ, "$sudo $utils::PATH_TO_MAILQ | " ) ) {
+    if ( ! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
         print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
         exit $ERRORS{'UNKNOWN'};
     }
@@ -560,6 +556,12 @@ elsif ( $mailq eq "nullmailer" ) {
         }
     }
     close(MAILQ) ;
+
+    if ( $? ) {
+        print "CRITICAL: Error code ".($?>>8)." returned from $utils::PATH_TO_MAILQ",$/;
+        mta_permission_hint($mailq);
+        exit $ERRORS{CRITICAL};
+    }
     if ($msg_q < $opt_w) {
         $msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
         $state = $ERRORS{'OK'};
@@ -572,6 +574,38 @@ elsif ( $mailq eq "nullmailer" ) {
     }
 } # end of ($mailq eq "nullmailer")
 
+elsif ( $mailq eq "opensmtp" ) {
+       ## open mailq
+       if ( defined $utils::PATH_TO_MAILQ && -x $utils::PATH_TO_MAILQ ) {
+               if (! open (MAILQ, "$utils::PATH_TO_MAILQ | " ) ) {
+                       print "ERROR: could not open $utils::PATH_TO_MAILQ \n";
+                       exit $ERRORS{'UNKNOWN'};
+               }
+       }elsif( defined $utils::PATH_TO_MAILQ){
+               unless (-x $utils::PATH_TO_MAILQ) {
+                       print "ERROR: $utils::PATH_TO_MAILQ is not executable by (uid $>:gid($)))\n";
+                       exit $ERRORS{'UNKNOWN'};
+               }
+       } else {
+               print "ERROR: \$utils::PATH_TO_MAILQ is not defined\n";
+               exit $ERRORS{'UNKNOWN'};
+       }
+
+       $msg_q++ while (<MAILQ>);
+
+       close(MAILQ) ;
+       if ($msg_q < $opt_w) {
+               $msg = "OK: $mailq mailq ($msg_q) is below threshold ($opt_w/$opt_c)";
+               $state = $ERRORS{'OK'};
+       }elsif ($msg_q >= $opt_w  && $msg_q < $opt_c) {
+               $msg = "WARNING: $mailq mailq is $msg_q (threshold w = $opt_w)";
+               $state = $ERRORS{'WARNING'};
+       }else {
+               $msg = "CRITICAL: $mailq mailq is $msg_q (threshold c = $opt_c)";
+               $state = $ERRORS{'CRITICAL'};
+       }
+} # end of ($mailq eq "opensmtp")
+
 # Perfdata support
 print "$msg|unsent=$msg_q;$opt_w;$opt_c;0\n";
 exit $state;
@@ -580,6 +614,23 @@ exit $state;
 #####################################
 #### subs
 
+
+sub mta_permission_hint {
+    my ($mta) = @_;
+    my %hint = (
+        'sendmail'   => "remove 'restrictmailq' from the PrivacyOptions in sendmail.cf,\n" .
+                        "or add the monitoring user to the group owning the queue directory",
+        'postfix'    => "add the monitoring user to 'authorized_mailq_users' in main.cf,\n" .
+                        "e.g.: authorized_mailq_users = root, nagios (see postconf(5))",
+        'qmail'      => "add the monitoring user to the 'qmail' group so it may run qmail-qstat",
+        'exim'       => "set 'queue_list_requires_admin = false' in the Exim configuration,\n" .
+                        "or add the monitoring user to a group listed in 'admin_groups'",
+        'nullmailer' => "make the nullmailer queue directory readable for the monitoring user,\n" .
+                        "e.g. by adding it to the group owning /var/spool/nullmailer",
+    );
+    print STDERR "HINT: If this error was caused by insufficient permissions,\n" .
+                 $hint{$mta} . ".\n" if defined $hint{$mta};
+}
 
 sub process_arguments(){
     GetOptions
@@ -635,7 +686,7 @@ sub process_arguments(){
     }
 
     if (defined $opt_M) {
-        if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer)$/) {
+        if ($opt_M =~ /^(sendmail|qmail|postfix|exim|nullmailer|opensmtp)$/) {
             $mailq = $opt_M ;
         }elsif( $opt_M eq ''){
             $mailq = 'sendmail';
@@ -674,7 +725,7 @@ sub process_arguments(){
 }
 
 sub print_usage () {
-    print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-s] [-d <CONFIGDIR>] [-v]\n";
+    print "Usage: $PROGNAME -w <warn> -c <crit> [-W <warn>] [-C <crit>] [-M <MTA>] [-t <timeout>] [-d <CONFIGDIR>] [-v]\n";
 }
 
 sub print_help () {
@@ -690,8 +741,12 @@ sub print_help () {
     print "-W (--warning-domain)  = Min. number of messages for same domain in queue to generate warning\n";
     print "-C (--critical-domain) = Min. number of messages for same domain in queue to generate critical alert ( W < C )\n";
     print "-t (--timeout)   = Plugin timeout in seconds (default = $utils::TIMEOUT)\n";
-    print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer ] (default = autodetect)\n";
-    print "-s (--sudo)      = Use sudo to call the mailq command\n";
+    print "-M (--mailserver) = [ sendmail | qmail | postfix | exim | nullmailer | opensmtp ] (default = autodetect)\n";
+    print "-s (--sudo)      = DEPRECATED, ignored. Grant queue access via your MTA instead:\n";
+    print "                   Postfix: authorized_mailq_users in main.cf (see postconf(5))\n";
+    print "                   Exim: queue_list_requires_admin = false\n";
+    print "                   qmail: add the monitoring user to the 'qmail' group\n";
+    print "                   Sendmail: no 'restrictmailq' in PrivacyOptions\n";
     print "-d (--configdir) = Config file or directory\n";
     print "-h (--help)\n";
     print "-V (--version)\n";

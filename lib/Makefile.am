@@ -27,4 +27,4 @@ libmonitoringplug_a_SOURCES += parse_ini.c extra_opts.c
 endif USE_PARSE_INI
 
 test test-debug:
-	cd tests && make $@
+	cd tests && $(MAKE) $@

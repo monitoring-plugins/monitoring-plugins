@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
 	check_real_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_real_config config = tmp_config.config;
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* initialize alarm signal handling */
-	signal(SIGALRM, socket_timeout_alarm_handler);
+	signal(SIGALRM, mopl_net_socket_timeout_alarm_handler);
 
 	/* set socket timeout */
 	alarm(socket_timeout);
@@ -83,19 +83,22 @@ int main(int argc, char **argv) {
 	time(&start_time);
 
 	mp_check overall = mp_check_init();
+
+	mp_set_ok_summary(&overall, "REAL check is OK");
+
 	mp_subcheck sc_connect = mp_subcheck_init();
 
 	/* try to connect to the host at the given port number */
 	int socket;
-	if (my_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
-		xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
+	if (mopl_net_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
+		mopl_utils_xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
 				  config.server_address, config.server_port);
 		sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_connect);
 		mp_exit(overall);
 	}
 
-	xasprintf(&sc_connect.output, _("connected to %s on port %d"), config.server_address,
+	mopl_utils_xasprintf(&sc_connect.output, _("connected to %s on port %d"), config.server_address,
 			  config.server_port);
 	sc_connect = mp_set_subcheck_state(sc_connect, STATE_OK);
 	mp_add_subcheck_to_check(&overall, sc_connect);
@@ -104,42 +107,44 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_send = mp_subcheck_init();
 
 	/* send the OPTIONS request */
-	char buffer[MAX_INPUT_BUFFER];
-	sprintf(buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", config.host_name, config.server_port);
-	ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	char send_buffer[MAX_INPUT_BUFFER];
+	sprintf(send_buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", config.host_name, config.server_port);
+	ssize_t sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
-		xasprintf(&sc_send.output, _("Sending options to %s failed"), config.host_name);
+		mopl_utils_xasprintf(&sc_send.output, _("Sending options to %s failed"), config.host_name);
 		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_send);
 		mp_exit(overall);
 	}
 
 	/* send the header sync */
-	sprintf(buffer, "CSeq: 1\r\n");
-	sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	sprintf(send_buffer, "CSeq: 1\r\n");
+	sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
-		xasprintf(&sc_send.output, _("Sending header sync to %s failed"), config.host_name);
+		mopl_utils_xasprintf(&sc_send.output, _("Sending header sync to %s failed"), config.host_name);
 		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_send);
 		mp_exit(overall);
 	}
 
 	/* send a newline so the server knows we're done with the request */
-	sprintf(buffer, "\r\n");
-	sent_bytes = send(socket, buffer, strlen(buffer), 0);
+	sprintf(send_buffer, "\r\n");
+	sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
-		xasprintf(&sc_send.output, _("Sending newline to %s failed"), config.host_name);
+		mopl_utils_xasprintf(&sc_send.output, _("Sending newline to %s failed"), config.host_name);
 		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_send);
 		mp_exit(overall);
 	}
 
 	/* watch for the REAL connection string */
-	ssize_t received_bytes = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
+	char recv_buffer[MAX_INPUT_BUFFER] = {};
+	recv_buffer[MAX_INPUT_BUFFER - 1] = '\0';
+	ssize_t received_bytes = recv(socket, recv_buffer, MAX_INPUT_BUFFER - 1, 0);
 
 	/* return a CRITICAL status if we couldn't read any data */
 	if (received_bytes == -1) {
-		xasprintf(&sc_send.output, _("No data received from %s"), config.host_name);
+		mopl_utils_xasprintf(&sc_send.output, _("No data received from %s"), config.host_name);
 		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_send);
 		mp_exit(overall);
@@ -148,51 +153,55 @@ int main(int argc, char **argv) {
 	time_t end_time;
 	{
 		mp_subcheck sc_options_request = mp_subcheck_init();
-		mp_state_enum options_result = STATE_OK;
+
 		/* make sure we find the response we are looking for */
-		if (!strstr(buffer, config.server_expect)) {
+		if (!strstr(recv_buffer, config.server_expect)) {
 			if (config.server_port == PORT) {
-				xasprintf(&sc_options_request.output, "invalid REAL response received from host");
+				mopl_utils_xasprintf(&sc_options_request.output, "invalid REAL response received from host");
 			} else {
-				xasprintf(&sc_options_request.output,
+				mopl_utils_xasprintf(&sc_options_request.output,
 						  "invalid REAL response received from host on port %d",
 						  config.server_port);
 			}
-		} else {
-			/* else we got the REAL string, so check the return code */
-			time(&end_time);
+			sc_options_request = mp_set_subcheck_state(sc_options_request, STATE_CRITICAL);
+			mp_add_subcheck_to_check(&overall, sc_options_request);
+			// Exit early here, not much sense in continuing
+			mp_exit(overall);
+		}
 
+		/* we got the REAL string, so check the return code */
+		time(&end_time);
+
+		mp_state_enum options_result = STATE_OK;
+
+		char *status_line = strtok(recv_buffer, "\n");
+		mopl_utils_xasprintf(&sc_options_request.output, "status line: %s", status_line);
+
+		if (strstr(status_line, "200")) {
 			options_result = STATE_OK;
-
-			char *status_line = strtok(buffer, "\n");
-			xasprintf(&sc_options_request.output, "status line: %s", status_line);
-
-			if (strstr(status_line, "200")) {
-				options_result = STATE_OK;
-			}
-			/* client errors options_result in a warning state */
-			else if (strstr(status_line, "400")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "401")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "402")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "403")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "404")) {
-				options_result = STATE_WARNING;
-			} else if (strstr(status_line, "500")) {
-				/* server errors options_result in a critical state */
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "501")) {
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "502")) {
-				options_result = STATE_CRITICAL;
-			} else if (strstr(status_line, "503")) {
-				options_result = STATE_CRITICAL;
-			} else {
-				options_result = STATE_UNKNOWN;
-			}
+		}
+		/* client errors options_result in a warning state */
+		else if (strstr(status_line, "400")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "401")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "402")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "403")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "404")) {
+			options_result = STATE_WARNING;
+		} else if (strstr(status_line, "500")) {
+			/* server errors options_result in a critical state */
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "501")) {
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "502")) {
+			options_result = STATE_CRITICAL;
+		} else if (strstr(status_line, "503")) {
+			options_result = STATE_CRITICAL;
+		} else {
+			options_result = STATE_UNKNOWN;
 		}
 
 		sc_options_request = mp_set_subcheck_state(sc_options_request, options_result);
@@ -210,56 +219,58 @@ int main(int argc, char **argv) {
 		mp_subcheck sc_describe = mp_subcheck_init();
 
 		/* send the DESCRIBE request */
-		sprintf(buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name,
+		sprintf(send_buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name,
 				config.server_port, config.server_url);
 
-		ssize_t sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		ssize_t sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
-			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
 					  config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
 
 		/* send the header sync */
-		sprintf(buffer, "CSeq: 2\r\n");
-		sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		sprintf(send_buffer, "CSeq: 2\r\n");
+		sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
-			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
 					  config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		sprintf(buffer, "\r\n");
-		sent_bytes = send(socket, buffer, strlen(buffer), 0);
+		sprintf(send_buffer, "\r\n");
+		sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
-			xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
+			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
 					  config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
 
+		// clear receive buffer
+		memset(recv_buffer, '\0', MAX_INPUT_BUFFER);
 		/* watch for the REAL connection string */
-		ssize_t recv_bytes = recv(socket, buffer, MAX_INPUT_BUFFER - 1, 0);
+		ssize_t recv_bytes = recv(socket, recv_buffer, MAX_INPUT_BUFFER - 1, 0);
 		if (recv_bytes == -1) {
 			/* return a CRITICAL status if we couldn't read any data */
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
-			xasprintf(&sc_describe.output, "No data received from host on DESCRIBE request");
+			mopl_utils_xasprintf(&sc_describe.output, "No data received from host on DESCRIBE request");
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		} else {
-			buffer[recv_bytes] = '\0'; /* null terminate received buffer */
+			recv_buffer[recv_bytes] = '\0'; /* null terminate received buffer */
 			/* make sure we find the response we are looking for */
-			if (!strstr(buffer, config.server_expect)) {
+			if (!strstr(recv_buffer, config.server_expect)) {
 				if (config.server_port == PORT) {
-					xasprintf(&sc_describe.output, "invalid REAL response received from host");
+					mopl_utils_xasprintf(&sc_describe.output, "invalid REAL response received from host");
 				} else {
-					xasprintf(&sc_describe.output,
+					mopl_utils_xasprintf(&sc_describe.output,
 							  "invalid REAL response received from host on port %d",
 							  config.server_port);
 				}
@@ -272,8 +283,8 @@ int main(int argc, char **argv) {
 
 				time(&end_time);
 
-				char *status_line = strtok(buffer, "\n");
-				xasprintf(&sc_describe.output, "status line: %s", status_line);
+				char *status_line = strtok(recv_buffer, "\n");
+				mopl_utils_xasprintf(&sc_describe.output, "status line: %s", status_line);
 
 				mp_state_enum describe_result;
 				if (strstr(status_line, "200")) {
@@ -312,7 +323,7 @@ int main(int argc, char **argv) {
 
 	/* Return results */
 	mp_subcheck sc_timing = mp_subcheck_init();
-	xasprintf(&sc_timing.output, "response time: %lds", end_time - start_time);
+	mopl_utils_xasprintf(&sc_timing.output, "response time: %lds", end_time - start_time);
 	sc_timing = mp_set_subcheck_default_state(sc_timing, STATE_OK);
 
 	mp_perfdata pd_response_time = perfdata_init();
@@ -387,10 +398,10 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 		case 'H': /* hostname */
 			if (result.config.server_address) {
 				break;
-			} else if (is_host(optarg)) {
+			} else if (mopl_net_is_host(optarg)) {
 				result.config.server_address = optarg;
 			} else {
-				usage2(_("Invalid hostname/address"), optarg);
+				mopl_utils_usage2(_("Invalid hostname/address"), optarg);
 			}
 			break;
 		case 'e': /* string to expect in response header */
@@ -400,10 +411,10 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.server_url = optarg;
 			break;
 		case 'p': /* port */
-			if (is_intpos(optarg)) {
+			if (mopl_utils_is_intpos(optarg)) {
 				result.config.server_port = atoi(optarg);
 			} else {
-				usage4(_("Port must be a positive integer"));
+				mopl_utils_usage4(_("Port must be a positive integer"));
 			}
 			break;
 		case 'w': /* warning time threshold */
@@ -428,14 +439,14 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			verbose = true;
 			break;
 		case 't': /* timeout */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				socket_timeout = atoi(optarg);
 			} else {
-				usage4(_("Timeout interval must be a positive integer"));
+				mopl_utils_usage4(_("Timeout interval must be a positive integer"));
 			}
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -453,21 +464,21 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
 	int option_char = optind;
 	if (result.config.server_address == NULL && argc > option_char) {
-		if (is_host(argv[option_char])) {
+		if (mopl_net_is_host(argv[option_char])) {
 			result.config.server_address = argv[option_char++];
 		} else {
-			usage2(_("Invalid hostname/address"), argv[option_char]);
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[option_char]);
 		}
 	}
 
 	if (result.config.server_address == NULL) {
-		usage4(_("You must provide a server to check"));
+		mopl_utils_usage4(_("You must provide a server to check"));
 	}
 
 	if (result.config.host_name == NULL) {
@@ -479,9 +490,9 @@ check_real_config_wrapper process_arguments(int argc, char **argv) {
 
 void print_help(void) {
 	char *myport;
-	xasprintf(&myport, "%d", PORT);
+	mopl_utils_xasprintf(&myport, "%d", PORT);
 
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Pedro Leite <leite@cic.ua.pt>\n");
 	printf(COPYRIGHT, copyright, email);

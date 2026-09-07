@@ -125,6 +125,7 @@ NP-VERSION-FILE
 /lib/tests/test_cmd
 /lib/tests/test_tcp
 /lib/tests/test_utils
+/lib/tests/test_generic_output
 /lib/tests/utils_base.Po
 /lib/tests/utils_cmd.Po
 /lib/tests/utils_disk.Po
@@ -213,7 +214,7 @@ plugins/check_disk.d/.dirstamp
 /plugins/.libs
 /plugins/Makefile
 /plugins/Makefile.in
-/plugins/libnpcommon.a
+/plugins/libmoplcommon.a
 /plugins/negate
 /plugins/stamp-h*
 /plugins/urlize
@@ -230,6 +231,7 @@ plugins/check_disk.d/.dirstamp
 # /plugins/tests/
 /plugins/tests/Makefile
 /plugins/tests/Makefile.in
+/plugins/tests/test_sslutils
 /plugins/tests/test_utils
 /plugins/tests/test_check_disk
 /plugins/tests/test_check_swap
