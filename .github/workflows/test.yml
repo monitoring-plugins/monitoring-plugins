@@ -89,3 +89,40 @@ jobs:
                 ls -la'
           docker container prune -f
           docker volume prune -f
+
+  build-test-variant-no-TLS:
+    name: Testing compilation without any TLS library
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - 'debian:stable'
+        include:
+          - distro: 'debian:stable'
+            prepare: .github/prepare_debian.sh
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v7
+      - name: Setup tmate session, see https://github.com/marketplace/actions/debugging-with-tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+      - name: Run the tests on ${{ matrix.distro }}
+        run: |
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
+          docker run \
+              -e NPTEST_ACCEPTDEFAULT=1 \
+              -e NPTEST_CACHE="/src/.github/NPTest.cache" \
+              -w /src -v ${PWD}:/src \
+              --tmpfs /media/ramdisk1 \
+              -v /var/run/utmp:/var/run/utmp \
+              --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
+              ${{ matrix.distro }} \
+              /bin/sh -c '${{ matrix.prepare }} && \
+                apt remove -y openssl && \
+                tools/setup && \
+                ./configure --enable-libtap && \
+                make && \
+                make test'
+          docker container prune -f
+          docker volume prune -f
