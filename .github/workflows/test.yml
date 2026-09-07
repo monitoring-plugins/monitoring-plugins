@@ -118,8 +118,10 @@ jobs:
               -v /var/run/utmp:/var/run/utmp \
               --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
               ${{ matrix.distro }} \
-              /bin/sh -c '${{ matrix.prepare }} && \
-                apt remove -y openssl && \
+              /bin/sh -c 'apt update && \
+                apt dist-upgrade -y && \
+                apt install -y gcc autoconf automake make && \
+                apt install -y procps && \
                 tools/setup && \
                 ./configure --enable-libtap && \
                 make && \
