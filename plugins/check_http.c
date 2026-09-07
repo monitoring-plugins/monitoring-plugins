@@ -411,7 +411,7 @@ bool process_arguments(int argc, char **argv) {
 			}
 #else
 			/* -C -J and -K fall through to here without SSL */
-			usage4(_("Invalid option - SSL is not available"));
+			mopl_utils_usage4(_("Invalid option - SSL is not available"));
 #endif
 			break;
 		case SNI_OPTION:

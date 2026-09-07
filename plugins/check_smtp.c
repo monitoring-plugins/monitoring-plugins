@@ -798,7 +798,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			result.config.ignore_send_quit_failure = true;
 #else
-			usage(_("SSL support not available - install OpenSSL and recompile"));
+			mopl_utils_usage(_("SSL support not available - install OpenSSL and recompile"));
 #endif
 			break;
 		case 's':
@@ -820,7 +820,7 @@ check_smtp_config_wrapper process_arguments(int argc, char **argv) {
 #ifdef HAVE_SSL
 			result.config.use_sni = true;
 #else
-			usage(_("SSL support not available - install OpenSSL and recompile"));
+			mopl_utils_usage(_("SSL support not available - install OpenSSL and recompile"));
 #endif
 			break;
 		case 'r':
