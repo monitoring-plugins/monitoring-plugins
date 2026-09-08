@@ -50,8 +50,6 @@ const char *email = "devel@monitoring-plugins.org";
 
 static int verbose = 0;
 
-#define REPLICA_RESULTSIZE 96
-
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
 	"Open_files",        "Open_tables",    "Qcache_free_memory", "Qcache_queries_in_cache",
