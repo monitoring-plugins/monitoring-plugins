@@ -345,6 +345,8 @@ int main(int argc, char **argv) {
 			int replica_io_field = -1;
 			int replica_sql_field = -1;
 			int seconds_behind_field = -1;
+			int until_condition_field = -1;
+			int last_errno_field = -1;
 			unsigned int num_fields = mysql_num_fields(res);
 			MYSQL_FIELD *fields = mysql_fetch_fields(res);
 			for (int i = 0; i < (int)num_fields; i++) {
@@ -363,10 +365,19 @@ int main(int argc, char **argv) {
 					seconds_behind_field = i;
 					continue;
 				}
+				if (strcasecmp(fields[i].name, "Until_Condition") == 0) {
+					until_condition_field = i;
+					continue;
+				}
+				if (strcasecmp(fields[i].name, "Last_Errno") == 0) {
+					last_errno_field = i;
+					continue;
+				}
 			}
 
 			/* Check if replica status is available */
-			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0)) {
+			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0) ||
+				(last_errno_field != -1)) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
 
@@ -377,15 +388,17 @@ int main(int argc, char **argv) {
 			}
 
 			/* Save replica status in replica_result */
-			mopl_utils_xasprintf(&sc_replica.output,
-					  "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s",
-					  row[replica_io_field], row[replica_sql_field],
-					  seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
+			mopl_utils_xasprintf(
+				&sc_replica.output, "Replica IO: %s Replica SQL: %s Seconds Behind Master: %s",
+				row[replica_io_field], row[replica_sql_field],
+				seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
 
 			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no
-			 * mysqldump threads running */
-			if (strcmp(row[replica_io_field], "Yes") != 0 ||
-				strcmp(row[replica_sql_field], "Yes") != 0) {
+			 * mysqldump threads running AND there is no until condition set AND last_errno is not set */
+			if (((strcmp(row[until_condition_field], "None") == 0) &&
+				 ((strcmp(row[replica_io_field], "Yes") != 0) ||
+				  (strcmp(row[replica_sql_field], "Yes") != 0))) ||
+				(strcmp(row[last_errno_field], "0") != 0)) {
 				MYSQL_RES *res_mysqldump;
 				MYSQL_ROW row_mysqldump;
 				unsigned int mysqldump_threads = 0;
