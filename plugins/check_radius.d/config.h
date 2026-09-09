@@ -7,10 +7,8 @@
 #	include <radcli/radcli.h>
 #elif defined(HAVE_LIBFREERADIUS_CLIENT)
 #	include <freeradius-client.h>
-#elif defined(HAVE_LIBRADIUSCLIENT_NG)
-#	include <radiusclient-ng.h>
 #else
-#	include <radiusclient.h>
+#	error "no radius library available"
 #endif
 
 typedef struct {

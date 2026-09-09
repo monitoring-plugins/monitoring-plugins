@@ -291,22 +291,8 @@ AS_IF([test "x$with_radius" != "xno"], [
       RADIUSLIBS="-lfreeradius-client"
       AC_SUBST(RADIUSLIBS)
     else
-      AC_CHECK_LIB(radiusclient-ng,rc_read_config)
-      if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
-        EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-        RADIUSLIBS="-lradiusclient-ng"
-        AC_SUBST(RADIUSLIBS)
-      else
-        AC_CHECK_LIB(radiusclient,rc_read_config)
-        if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
-          EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-          RADIUSLIBS="-lradiusclient"
-          AC_SUBST(RADIUSLIBS)
-        else
-          AC_MSG_WARN([Skipping radius plugin])
-          AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
-        fi
-      fi
+      AC_MSG_WARN([Skipping radius plugin])
+      AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
     fi
   fi
   LIBS="$_SAVEDLIBS"

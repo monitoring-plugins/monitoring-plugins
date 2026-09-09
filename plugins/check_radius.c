@@ -43,10 +43,8 @@ const char *email = "devel@monitoring-plugins.org";
 #	include <radcli/radcli.h>
 #elif defined(HAVE_LIBFREERADIUS_CLIENT)
 #	include <freeradius-client.h>
-#elif defined(HAVE_LIBRADIUSCLIENT_NG)
-#	include <radiusclient-ng.h>
 #else
-#	include <radiusclient.h>
+#	error "no radius library available"
 #endif
 
 typedef struct {
@@ -57,8 +55,7 @@ static check_radius_config_wrapper process_arguments(int /*argc*/, char ** /*arg
 static void print_help(void);
 void print_usage(void);
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
-	defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 #	define my_rc_conf_str(a) rc_conf_str(rch, a)
 #	if defined(HAVE_LIBRADCLI)
 #		define my_rc_send_server(a, b) rc_send_server(rch, a, b, AUTH)
@@ -165,8 +162,7 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
-	defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 	rc_handle *rch = NULL;
 #endif
 
@@ -197,7 +193,8 @@ int main(int argc, char **argv) {
 	if (!(my_rc_avpair_add(&data.send_pairs, PW_SERVICE_TYPE, &service, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_NAME, config.username, 0) &&
 		  my_rc_avpair_add(&data.send_pairs, PW_USER_PASSWORD, config.password, 0))) {
-		mopl_utils_xasprintf(&sc_configuring.output, "Failed to the radius options: Out of Memory?");
+		mopl_utils_xasprintf(&sc_configuring.output,
+							 "Failed to the radius options: Out of Memory?");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
 		mp_exit(overall);
@@ -206,7 +203,7 @@ int main(int argc, char **argv) {
 	if (config.nas_id != NULL) {
 		if (!(my_rc_avpair_add(&data.send_pairs, PW_NAS_IDENTIFIER, config.nas_id, 0))) {
 			mopl_utils_xasprintf(&sc_configuring.output,
-					  "Failed to the radius options: invalid NAS identifier?");
+								 "Failed to the radius options: invalid NAS identifier?");
 			sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 			mp_add_subcheck_to_check(&overall, sc_configuring);
 			mp_exit(overall);
@@ -234,7 +231,8 @@ int main(int argc, char **argv) {
 
 	uint32_t client_id = ntohl(((struct sockaddr_in *)&radius_server_socket)->sin_addr.s_addr);
 	if (my_rc_avpair_add(&(data.send_pairs), PW_NAS_IP_ADDRESS, &client_id, 0) == NULL) {
-		mopl_utils_xasprintf(&sc_configuring.output, "invalid NAS IP address. Setting option failed");
+		mopl_utils_xasprintf(&sc_configuring.output,
+							 "invalid NAS IP address. Setting option failed");
 		sc_configuring = mp_set_subcheck_state(sc_configuring, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_configuring);
 		mp_exit(overall);
@@ -498,8 +496,7 @@ void print_usage(void) {
 }
 
 int my_rc_read_config(char *config_file_name, rc_handle **rch) {
-#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADIUSCLIENT_NG) ||                      \
-	defined(HAVE_LIBRADCLI)
+#if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 	*rch = rc_read_config(config_file_name);
 	return (rch == NULL) ? 1 : 0;
 #else
