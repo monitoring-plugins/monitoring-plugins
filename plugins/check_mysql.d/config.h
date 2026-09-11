@@ -23,6 +23,8 @@ typedef struct {
 	char *opt_group;
 
 	bool check_replica;
+        char *replica_name;
+
 	bool ignore_auth;
 
 	mp_thresholds replica_thresholds;
@@ -49,6 +51,8 @@ check_mysql_config check_mysql_config_init() {
 		.opt_group = NULL,
 
 		.check_replica = false,
+                .replica_name = NULL,
+
 		.ignore_auth = false,
 
 		.replica_thresholds = mp_thresholds_init(),

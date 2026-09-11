@@ -50,6 +50,10 @@ const char *email = "devel@monitoring-plugins.org";
 
 static int verbose = 0;
 
+static char *replica_query = NULL;
+static char *replica_status_query = NULL;
+static int num_slaves = 0;
+
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
 	"Open_files",        "Open_tables",    "Qcache_free_memory", "Qcache_queries_in_cache",
@@ -208,6 +212,9 @@ int main(int argc, char **argv) {
 			mp_add_subcheck_to_check(&overall, sc_query);
 			mp_exit(overall);
 		}
+		if (config.replica_name == NULL) {
+			replica_status_query = strdup("status");
+		}
 
 		while ((row = mysql_fetch_row(res)) != NULL) {
 			for (int i = 0; i < LENGTH_METRIC_UNIT; i++) {
@@ -270,6 +277,9 @@ int main(int argc, char **argv) {
 					use_deprecated_slave_status = true;
 				}
 			}
+			if (config.replica_name != NULL) {
+				mopl_utils_xasprintf(&replica_status_query, "'%s' status", config.replica_name);
+			}
 		} else {
 			// Looks like MySQL or at least not like MariaDB
 			if (major_version < 8) {
@@ -277,18 +287,22 @@ int main(int argc, char **argv) {
 			} else if (major_version == 10 && minor_version < 4) {
 				use_deprecated_slave_status = true;
 			}
-		}
-
-		char *replica_query = NULL;
-		if (use_deprecated_slave_status) {
-			replica_query = "show slave status";
-		} else {
-			replica_query = "show replica status";
+			if (config.replica_name != NULL) {
+				mopl_utils_xasprintf(&replica_status_query, "status for channel '%s'", config.replica_name);
+			}
 		}
 
 		mp_subcheck sc_replica = mp_subcheck_init();
 
 		/* check the replica status */
+		mopl_utils_xasprintf(&replica_query, "show %s %s",
+			use_deprecated_slave_status ? "slave" : "replica",
+			replica_status_query);
+
+		if (verbose) {
+			printf("Replica query: %s\n", replica_query);
+		}
+
 		if (mysql_query(&mysql, replica_query) != 0) {
 			mopl_utils_xasprintf(&sc_replica.output, "replica query error: %s", mysql_error(&mysql));
 			mysql_close(&mysql);
@@ -309,10 +323,16 @@ int main(int argc, char **argv) {
 		}
 
 		/* Check there is some data */
-		if (mysql_num_rows(res) == 0) {
+		num_slaves = mysql_num_rows(res);
+		if (num_slaves != 1) {
 			mysql_close(&mysql);
 
-			mopl_utils_xasprintf(&sc_replica.output, "no replicas defined");
+			mopl_utils_xasprintf(&sc_replica.output,
+				num_slaves == 0
+					?  _("no replicas defined. Please provide replica name as an argument if you have a named replica")
+					:  _("too many replicas defined. Please provide replica name as an argument")
+			);
+
 			sc_replica = mp_set_subcheck_state(sc_replica, STATE_WARNING);
 			mp_add_subcheck_to_check(&overall, sc_replica);
 			mp_exit(overall);
@@ -489,6 +509,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 									   {"warning", required_argument, 0, 'w'},
 									   {"check-slave", no_argument, 0, 'S'},
 									   {"check-replica", no_argument, 0, CHECK_REPLICA_OPT},
+									   {"replica-name", required_argument, 0, 'N'},
 									   {"ignore-auth", no_argument, 0, 'n'},
 									   {"verbose", no_argument, 0, 'v'},
 									   {"version", no_argument, 0, 'V'},
@@ -515,7 +536,7 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 	int option = 0;
 	while (true) {
 		int option_index =
-			getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:", longopts, &option);
+			getopt_long(argc, argv, "hlvVnSP:p:u:d:H:s:c:w:a:k:C:D:L:f:g:N:", longopts, &option);
 
 		if (CHECK_EOF(option_index)) {
 			break;
@@ -579,6 +600,9 @@ check_mysql_config_wrapper process_arguments(int argc, char **argv) {
 		case 'S':
 		case CHECK_REPLICA_OPT:
 			result.config.check_replica = true; /* check-slave */
+			break;
+		case 'N': /* replica-name */
+			result.config.replica_name = optarg;
 			break;
 		case 'n':
 			result.config.ignore_auth = true; /* ignore-auth */
@@ -706,6 +730,8 @@ void print_help(void) {
 						 "in favour of check-replica, which does the same"));
 	printf(" %s\n", "--check-replica");
 	printf("    %s\n", _("Check if the replica thread is running properly."));
+	printf (" %s\n", "-N, --replica-name");
+	printf ("    %s\n", _("Use a named replica"));
 	printf(" %s\n", "-w, --warning");
 	printf("    %s\n",
 		   _("Exit with WARNING status if replica server is more than INTEGER seconds"));
@@ -746,6 +772,6 @@ void print_help(void) {
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
 	printf(" %s [-d database] [-H host] [-P port] [-s socket]\n", progname);
-	printf("       [-u user] [-p password] [-S] [-l] [-a cert] [-k key]\n");
+	printf("       [-u user] [-p password] [-S] [-N replica] [-l] [-a cert] [-k key]\n");
 	printf("       [-C ca-cert] [-D ca-dir] [-L ciphers] [-f optfile] [-g group]\n");
 }
