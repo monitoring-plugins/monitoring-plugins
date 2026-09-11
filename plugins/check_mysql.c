@@ -396,8 +396,7 @@ int main(int argc, char **argv) {
 			}
 
 			/* Check if replica status is available */
-			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0) ||
-				(last_errno_field != -1)) {
+			if ((replica_io_field < 0) || (replica_sql_field < 0) || (num_fields == 0)) {
 				mysql_free_result(res);
 				mysql_close(&mysql);
 
