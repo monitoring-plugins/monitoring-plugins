@@ -2,6 +2,7 @@
 #include "../popen.h"
 #include "../utils.h"
 #include "common.h"
+#include <strings.h>
 
 extern int verbose;
 
@@ -210,7 +211,23 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 	 */
 	if (config.on_aix && !config.allswaps) {
 		fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process); /* Ignore first line */
-		sscanf(input_buffer, swap_format, &total_swap_mb, &used_swap_mb);
+		int sscanf_result = sscanf(input_buffer, swap_format, &total_swap_mb, &used_swap_mb);
+		switch (sscanf_result) {
+		case 3: {
+			// everything matched, we are good
+			break;
+		}
+		case EOF: {
+			DBG_PRINT_1("sscanf input error");
+			result.errorcode = 1;
+			return result;
+		}
+		default: {
+			DBG_PRINT_1("sscanf failed to match everything");
+			result.errorcode = 1;
+			return result;
+		}
+		}
 		free_swap_mb = total_swap_mb * (100 - used_swap_mb) / 100;
 		used_swap_mb = total_swap_mb - free_swap_mb;
 
@@ -220,7 +237,31 @@ swap_result getSwapFromSwapCommand(swap_config config, const char swap_command[]
 		}
 	} else {
 		while (fgets(input_buffer, MAX_INPUT_BUFFER - 1, child_process)) {
-			sscanf(input_buffer, swap_format, &dsktotal_mb, &dskfree_mb);
+			char label[256] = {}; // 256 is just a random guess
+			int sscanf_result =
+				sscanf(input_buffer, swap_format, &label, &dsktotal_mb, &dskfree_mb);
+
+			switch (sscanf_result) {
+			case 3: {
+				// everything matched, we are good
+				break;
+			}
+			case EOF: {
+				DBG_PRINT_1("sscanf input error");
+				result.errorcode = 1;
+				return result;
+			}
+			default: {
+				DBG_PRINT_1("sscanf failed to match everything");
+				result.errorcode = 1;
+				return result;
+			}
+			}
+
+			if (strcasecmp(label, "Total") == 0) {
+				// Total line, ignore this
+				continue;
+			}
 
 			dsktotal_mb = dsktotal_mb / config.conversion_factor;
 			/* AIX lists percent used, so this converts to dskfree in MBs */
