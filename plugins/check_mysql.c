@@ -50,10 +50,6 @@ const char *email = "devel@monitoring-plugins.org";
 
 static int verbose = 0;
 
-static char *replica_query = NULL;
-static char *replica_status_query = NULL;
-static int num_slaves = 0;
-
 #define LENGTH_METRIC_UNIT 6
 static const char *metric_unit[LENGTH_METRIC_UNIT] = {
 	"Open_files",        "Open_tables",    "Qcache_free_memory", "Qcache_queries_in_cache",
@@ -97,6 +93,9 @@ int main(int argc, char **argv) {
 	}
 
 	const check_mysql_config config = tmp_config.config;
+	char *replica_query = NULL;
+	char *replica_status_query = NULL;
+	int num_slaves = 0;
 
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
