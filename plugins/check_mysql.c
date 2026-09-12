@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 	const check_mysql_config config = tmp_config.config;
 	char *replica_query = NULL;
 	char *replica_status_query = NULL;
-	int num_slaves = 0;
+	int num_replicas = 0;
 
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
@@ -322,12 +322,12 @@ int main(int argc, char **argv) {
 		}
 
 		/* Check there is some data */
-		num_slaves = mysql_num_rows(res);
-		if (num_slaves != 1) {
+		num_replicas = mysql_num_rows(res);
+		if (num_replicas != 1) {
 			mysql_close(&mysql);
 
 			mopl_utils_xasprintf(&sc_replica.output,
-				num_slaves == 0
+				num_replicas == 0
 					?  _("no replicas defined. Please provide replica name as an argument if you have a named replica")
 					:  _("too many replicas defined. Please provide replica name as an argument")
 			);
