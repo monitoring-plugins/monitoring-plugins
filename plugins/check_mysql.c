@@ -96,6 +96,7 @@ int main(int argc, char **argv) {
 	char *replica_query = NULL;
 	char *replica_status_query = NULL;
 	int num_replicas = 0;
+	char *no_such_named_replica = NULL;
 
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
@@ -213,6 +214,8 @@ int main(int argc, char **argv) {
 		}
 		if (config.replica_name == NULL) {
 			replica_status_query = strdup("status");
+		} else {
+			mopl_utils_xasprintf(&no_such_named_replica, _("no such replica named '%s'"), config.replica_name);
 		}
 
 		while ((row = mysql_fetch_row(res)) != NULL) {
@@ -328,8 +331,10 @@ int main(int argc, char **argv) {
 
 			mopl_utils_xasprintf(&sc_replica.output,
 				num_replicas == 0
-					?  _("no replicas defined. Please provide replica name as an argument if you have a named replica")
-					:  _("too many replicas defined. Please provide replica name as an argument")
+					? (config.replica_name != NULL)
+						? no_such_named_replica
+						:  _("no replicas defined")
+					:  _("too many replicas defined, please provide a replica name as an argument")
 			);
 
 			sc_replica = mp_set_subcheck_state(sc_replica, STATE_WARNING);
