@@ -185,9 +185,6 @@ int main(int argc, char **argv) {
 			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(pinged.state),
 				   warn_text, pinged.packet_loss, pinged.round_trip_average);
 		}
-		if (config.display_html) {
-			printf("</A>");
-		}
 
 		/* Print performance data */
 		if (pinged.packet_loss != 100) {
@@ -304,10 +301,8 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'n': /* no HTML */
-			result.config.display_html = false;
-			break;
 		case 'L': /* show HTML */
-			result.config.display_html = true;
+			/* HTML link related options are deprecated */
 			break;
 		case 'c':
 			get_threshold(optarg, &result.config.crta, &result.config.cpl);
@@ -670,8 +665,6 @@ void print_help(void) {
 	printf(" %s\n", "-p, --packets=INTEGER");
 	printf("    %s ", _("number of ICMP ECHO packets to send"));
 	printf(_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
-	printf(" %s\n", "-L, --link");
-	printf("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -684,7 +677,7 @@ void print_help(void) {
 	printf("%s\n",
 		   _("This plugin uses the ping command to probe the specified host for packet loss"));
 	printf("%s\n",
-		   _("(percentage) and round trip average (milliseconds). It can produce HTML output."));
+		   _("(percentage) and round trip average (milliseconds)."));
 
 	printf(UT_SUPPORT);
 }
