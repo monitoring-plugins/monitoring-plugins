@@ -102,6 +102,12 @@ int main(int argc, char **argv) {
 		mp_set_format(config.output_format);
 	}
 
+	if (config.replica_name == NULL) {
+		replica_status_query = strdup("status");
+	} else {
+		mopl_utils_xasprintf(&no_such_named_replica, _("no such replica named '%s'"), config.replica_name);
+	}
+
 	MYSQL mysql;
 	/* initialize mysql  */
 	mysql_init(&mysql);
@@ -211,11 +217,6 @@ int main(int argc, char **argv) {
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 			mp_add_subcheck_to_check(&overall, sc_query);
 			mp_exit(overall);
-		}
-		if (config.replica_name == NULL) {
-			replica_status_query = strdup("status");
-		} else {
-			mopl_utils_xasprintf(&no_such_named_replica, _("no such replica named '%s'"), config.replica_name);
 		}
 
 		while ((row = mysql_fetch_row(res)) != NULL) {
