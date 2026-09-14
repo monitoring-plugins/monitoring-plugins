@@ -48,6 +48,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "../lib/states.h"
 #include "check_ntp_peer.d/config.h"
+#include "check_ntp_peer.d/check_ntp_peer_helper.h"
 
 static int verbose = 0;
 

@@ -172,6 +172,7 @@ check_mysql_query_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
 check_mysql_query_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS)
+check_ntp_peer_SOURCES = check_ntp_peer.c check_ntp_peer.d/check_ntp_peer_helper.c
 check_ntp_peer_LDADD = $(NETLIBS) $(MATHLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
 check_ping_LDADD = $(NETLIBS)
