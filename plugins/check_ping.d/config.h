@@ -14,7 +14,6 @@ enum {
 #define MAX_ADDR_START 1
 
 typedef struct {
-	bool display_html;
 	int max_packets;
 
 	char **addresses;
@@ -28,7 +27,6 @@ typedef struct {
 
 check_ping_config check_ping_config_init() {
 	check_ping_config tmp = {
-		.display_html = false,
 		.max_packets = -1,
 
 		.addresses = NULL,
