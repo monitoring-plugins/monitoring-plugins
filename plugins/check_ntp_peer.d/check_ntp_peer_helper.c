@@ -11,7 +11,7 @@
  * This function can be used to parse NTP control packet data and performance
  * data strings.
  */
-char *np_extract_value(const char *varlist, const char *name, char sep) {
+char *check_ntp_peer_extract_value(const char *varlist, const char *name, char sep) {
 	char *tmp = NULL;
 	char *value = NULL;
 
@@ -75,6 +75,6 @@ char *np_extract_value(const char *varlist, const char *name, char sep) {
 	return value;
 }
 
-char *np_extract_ntpvar(const char *varlist, const char *name) {
-	return np_extract_value(varlist, name, ',');
+char *check_ntp_peer_extract_ntpvar(const char *varlist, const char *name) {
+	return check_ntp_peer_extract_value(varlist, name, ',');
 }
