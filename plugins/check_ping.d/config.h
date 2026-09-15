@@ -11,13 +11,10 @@ enum {
 
 #define UNKNOWN_TRIP_TIME -1.0 /* -1 seconds */
 
-#define MAX_ADDR_START 1
-
 typedef struct {
 	int max_packets;
 
-	char **addresses;
-	size_t n_addresses;
+	char *address;
 
 	int wpl;
 	int cpl;
@@ -29,8 +26,7 @@ check_ping_config check_ping_config_init() {
 	check_ping_config tmp = {
 		.max_packets = -1,
 
-		.addresses = NULL,
-		.n_addresses = 0,
+		.address = NULL,
 
 		.wpl = UNKNOWN_PACKET_LOSS,
 		.cpl = UNKNOWN_PACKET_LOSS,
@@ -38,7 +34,6 @@ check_ping_config check_ping_config_init() {
 		.crta = UNKNOWN_TRIP_TIME,
 	};
 
-	tmp.addresses = calloc(MAX_ADDR_START, sizeof(char *));
-	tmp.addresses[0] = NULL;
+	tmp.address = NULL;
 	return tmp;
 }
