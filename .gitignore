@@ -236,6 +236,7 @@ plugins/check_disk.d/.dirstamp
 /plugins/tests/test_sslutils
 /plugins/tests/test_utils
 /plugins/tests/test_check_disk
+/plugins/tests/test_check_ntp_peer
 /plugins/tests/test_check_swap
 /plugins/tests/.deps
 /plugins/tests/.dirstamp
