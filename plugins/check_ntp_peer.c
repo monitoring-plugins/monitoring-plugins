@@ -48,6 +48,7 @@ const char *email = "devel@monitoring-plugins.org";
 #include "utils.h"
 #include "../lib/states.h"
 #include "check_ntp_peer.d/config.h"
+#include "check_ntp_peer.d/check_ntp_peer_helper.h"
 
 static int verbose = 0;
 
@@ -374,7 +375,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 
 			DBG_PRINT_1("parsing offset from peer %.2x: ", ntohs(peers[i].assoc));
 
-			value = np_extract_ntpvar(data, "offset");
+			value = check_ntp_peer_extract_ntpvar(data, "offset");
 			nptr = NULL;
 			/* Convert the value if we have one */
 			if (value != NULL) {
@@ -400,8 +401,8 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				DBG_PRINT_1("parsing %s from peer %.2x: ",
 							strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter",
 							ntohs(peers[i].assoc));
-				value = np_extract_ntpvar(data, strstr(getvar, "dispersion") != NULL ? "dispersion"
-																					 : "jitter");
+				value = check_ntp_peer_extract_ntpvar(
+					data, strstr(getvar, "dispersion") != NULL ? "dispersion" : "jitter");
 				nptr = NULL;
 				/* Convert the value if we have one */
 				if (value != NULL) {
@@ -419,7 +420,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (config.do_stratum) {
 				/* get the stratum */
 				DBG_PRINT_1("parsing stratum from peer %.2x: ", ntohs(peers[i].assoc));
-				value = np_extract_ntpvar(data, "stratum");
+				value = check_ntp_peer_extract_ntpvar(data, "stratum");
 				nptr = NULL;
 				/* Convert the value if we have one */
 				if (value != NULL) {
@@ -624,24 +625,25 @@ check_ntp_peer_config_wrapper process_arguments(int argc, char **argv) {
 
 char *perfd_offset(double offset, thresholds *offset_thresholds) {
 	return mopl_utils_fperfdata("offset", offset, "s", true, offset_thresholds->warning->end, true,
-					 offset_thresholds->critical->end, false, 0, false, 0);
+								offset_thresholds->critical->end, false, 0, false, 0);
 }
 
 char *perfd_jitter(double jitter, bool do_jitter, thresholds *jitter_thresholds) {
-	return mopl_utils_fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end, do_jitter,
-					 jitter_thresholds->critical->end, true, 0, false, 0);
+	return mopl_utils_fperfdata("jitter", jitter, "", do_jitter, jitter_thresholds->warning->end,
+								do_jitter, jitter_thresholds->critical->end, true, 0, false, 0);
 }
 
 char *perfd_stratum(int stratum, bool do_stratum, thresholds *stratum_thresholds) {
-	return mopl_utils_perfdata("stratum", stratum, "", do_stratum, (int)stratum_thresholds->warning->end,
-					do_stratum, (int)stratum_thresholds->critical->end, true, 0, true, 16);
+	return mopl_utils_perfdata("stratum", stratum, "", do_stratum,
+							   (int)stratum_thresholds->warning->end, do_stratum,
+							   (int)stratum_thresholds->critical->end, true, 0, true, 16);
 }
 
 char *perfd_truechimers(int num_truechimers, const bool do_truechimers,
 						thresholds *truechimer_thresholds) {
 	return mopl_utils_perfdata("truechimers", num_truechimers, "", do_truechimers,
-					(int)truechimer_thresholds->warning->end, do_truechimers,
-					(int)truechimer_thresholds->critical->end, true, 0, false, 0);
+							   (int)truechimer_thresholds->warning->end, do_truechimers,
+							   (int)truechimer_thresholds->critical->end, true, 0, false, 0);
 }
 
 int main(int argc, char *argv[]) {

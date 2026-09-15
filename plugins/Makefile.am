@@ -50,6 +50,7 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 	tests/test_check_swap \
 	tests/test_check_snmp \
 	tests/test_check_disk \
+	tests/test_check_ntp_peer \
 	tests/test_sslutils
 
 SUBDIRS = picohttpparser
@@ -57,6 +58,7 @@ SUBDIRS = picohttpparser
 np_test_scripts = tests/test_check_swap.t \
 				  tests/test_check_snmp.t \
 				  tests/test_check_disk.t \
+				  tests/test_check_ntp_peer.t \
 				  tests/test_sslutils.t
 
 EXTRA_DIST = t \
@@ -159,6 +161,7 @@ check_mysql_query_CFLAGS = $(AM_CFLAGS) $(MYSQLCFLAGS)
 check_mysql_query_CPPFLAGS = $(AM_CPPFLAGS) $(MYSQLINCLUDE)
 check_mysql_query_LDADD = $(NETLIBS) $(MYSQLLIBS)
 check_nagios_LDADD = $(BASEOBJS)
+check_ntp_peer_SOURCES = check_ntp_peer.c check_ntp_peer.d/check_ntp_peer_helper.c
 check_ntp_peer_LDADD = $(NETLIBS) $(MATHLIBS)
 check_pgsql_LDADD = $(NETLIBS) $(PGLIBS)
 check_ping_LDADD = $(NETLIBS)
@@ -196,6 +199,8 @@ tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
 tests_test_sslutils_LDADD = $(SSLOBJS) $(tap_ldflags) -ltap
 tests_test_sslutils_SOURCES = tests/test_sslutils.c
+tests_test_check_ntp_peer_LDADD = $(BASEOBJS) $(tap_ldflags) check_ntp_peer.d/check_ntp_peer_helper.c -ltap
+tests_test_check_ntp_peer_SOURCES = tests/test_check_ntp_peer.c
 
 ##############################################################################
 # secondary dependencies
