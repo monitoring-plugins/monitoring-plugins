@@ -16,7 +16,7 @@
  *
  *****************************************************************************/
 
-#include "tap.h"
+#include "../../tap/tap.h"
 #include "../../config.h"
 
 #include <unistd.h>
@@ -28,6 +28,10 @@
 
 char *_np_state_generate_key(int argc, char **argv);
 char *_np_state_calculate_location_prefix(void);
+
+int verbose = 0;
+const char *progname = "test_check_snmp";
+void print_usage(void) {};
 
 int main(int argc, char **argv) {
 	char *temp_string = (char *)_np_state_generate_key(argc, argv);
