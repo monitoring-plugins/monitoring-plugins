@@ -107,6 +107,7 @@ check_snmp_config check_snmp_config_init(void) {
 		.evaluation_params =
 			{
 				.nulloid_result = STATE_UNKNOWN, // state to return if no result for query
+				.missing_oid_result = STATE_CRITICAL,
 
 				.invert_search = true,
 				.regex_cmp_value = {},
@@ -290,7 +291,7 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a unmatched result type: %hhu\n", vars->type);
 			}
-			// TODO: Error here?
+			result.response_values[result.number_of_results].type = vars->type;
 			break;
 		}
 	}
@@ -306,7 +307,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	mp_subcheck sc_oid_test = mp_subcheck_init();
 
 	if ((test_unit.label != NULL) && (strcmp(test_unit.label, "") != 0)) {
-		xasprintf(&sc_oid_test.output, "%s - ", test_unit.label);
+		mopl_utils_xasprintf(&sc_oid_test.output, "%s - ", test_unit.label);
 	} else {
 		sc_oid_test.output = strdup("");
 	}
@@ -320,7 +321,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		die(STATE_UNKNOWN, "snprint_objid failed\n");
 	}
 
-	xasprintf(&sc_oid_test.output, "%sOID: %s", sc_oid_test.output, oid_string);
+	mopl_utils_xasprintf(&sc_oid_test.output, "%sOID: %s", sc_oid_test.output, oid_string);
 	sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, STATE_OK);
 
 	if (verbose > 2) {
@@ -344,7 +345,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		if (query_timestamp == prev_state.timestamp) {
 			// somehow we have the same timestamp again, that can't be good
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_UNKNOWN);
-			xasprintf(&sc_oid_test.output, "Time duration between plugin calls is invalid");
+			mopl_utils_xasprintf(&sc_oid_test.output, "Time duration between plugin calls is invalid");
 
 			check_snmp_evaluation result = {
 				.sc = sc_oid_test,
@@ -374,14 +375,14 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			if (strchr(tmp, '\'') != NULL) {
 				// got single quote in the string too
 				// dont quote that at all to avoid even more confusion
-				xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
 			} else {
 				// quote with single quotes
-				xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
 			}
 		} else {
 			// quote with double quotes
-			xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
 		}
 
 		if (strlen(tmp) == 0) {
@@ -540,6 +541,19 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 	case ASN_IPADDRESS:
 		// TODO
 		break;
+	default: {
+		// no known type
+		mopl_utils_xasprintf(&sc_oid_test.output, "%s: no valid response", oid_string);
+		sc_oid_test = mp_set_subcheck_default_state(sc_oid_test, eval_params.missing_oid_result);
+		check_snmp_evaluation result = {
+			.sc = sc_oid_test,
+			.state = result_state,
+		};
+
+		return result;
+
+		break;
+	}
 	}
 
 	if (got_a_numerical_value) {
@@ -561,11 +575,11 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 
 			pd_num_val.value = pd_result_val;
 
-			xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
 					  pd_value_to_string(pd_result_val));
 
 			if (test_unit.unit_value != NULL && strcmp(test_unit.unit_value, "") != 0) {
-				xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output, test_unit.unit_value);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output, test_unit.unit_value);
 			}
 
 			if (test_unit.threshold.warning_is_set || test_unit.threshold.critical_is_set) {
@@ -574,11 +588,11 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 
 				if (tmp_state == STATE_WARNING) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_WARNING);
-					xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
+					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
 							  sc_oid_test.output);
 				} else if (tmp_state == STATE_CRITICAL) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_CRITICAL);
-					xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
+					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
 							  sc_oid_test.output);
 				}
 			}
@@ -588,7 +602,7 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			// should calculate rate, but there is no previous state, so first run
 			// exit with ok now
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_OK);
-			xasprintf(&sc_oid_test.output, "%s - No previous data to calculate rate - assume okay",
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s - No previous data to calculate rate - assume okay",
 					  sc_oid_test.output);
 		}
 	}

@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 
 	check_mrtg_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments\n"));
+		mopl_utils_usage4(_("Could not parse arguments\n"));
 	}
 
 	const check_mrtg_config config = tmp_config.config;
@@ -78,12 +78,12 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_open_mrtg_log_file = mp_subcheck_init();
 	FILE *mtrg_log_file = fopen(config.log_file, "r");
 	if (mtrg_log_file == NULL) {
-		xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "unable to open MRTG log file");
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
+		mopl_utils_xasprintf(&sc_open_mrtg_log_file.output, "opened MRTG log file");
 		sc_open_mrtg_log_file = mp_set_subcheck_state(sc_open_mrtg_log_file, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_open_mrtg_log_file);
 	}
@@ -141,11 +141,11 @@ int main(int argc, char **argv) {
 	/* if we couldn't read enough data, return an unknown error */
 	mp_subcheck sc_process_mrtg_log_file = mp_subcheck_init();
 	if (line <= 2) {
-		xasprintf(&sc_process_mrtg_log_file.output, "unable to process MRTG log file");
+		mopl_utils_xasprintf(&sc_process_mrtg_log_file.output, "unable to process MRTG log file");
 		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_UNKNOWN);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_process_mrtg_log_file.output, "processed MRTG log file");
+		mopl_utils_xasprintf(&sc_process_mrtg_log_file.output, "processed MRTG log file");
 		sc_process_mrtg_log_file = mp_set_subcheck_state(sc_process_mrtg_log_file, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_process_mrtg_log_file);
 	}
@@ -155,13 +155,13 @@ int main(int argc, char **argv) {
 	time(&current_time);
 	mp_subcheck sc_data_expired = mp_subcheck_init();
 	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
-		xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
+		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
 				  (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
 		mp_exit(overall);
 	} else {
-		xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
+		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
 				  (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
 	pd_value = mp_pd_set_thresholds(pd_value, config.values_threshold);
 
 	sc_values = mp_set_subcheck_state(sc_values, mp_get_pd_status(pd_value));
-	xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
+	mopl_utils_xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
 			  config.label, rate, config.units);
 
 	mp_add_subcheck_to_check(&overall, sc_values);
@@ -252,7 +252,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		case 'v':
 			result.config.variable_number = atoi(optarg);
 			if (result.config.variable_number < 1 || result.config.variable_number > 2) {
-				usage4(_("Invalid variable number"));
+				mopl_utils_usage4(_("Invalid variable number"));
 			}
 			break;
 		case 'w': /* critical time threshold */ {
@@ -278,13 +278,13 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.units = optarg;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		case output_format_index: {
 			parsed_output_format parser = mp_parse_output_format(optarg);
 			if (!parser.parsing_success) {
@@ -305,7 +305,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.expire_minutes <= 0 && argc > option_char) {
-		if (is_intpos(argv[option_char])) {
+		if (mopl_utils_is_intpos(argv[option_char])) {
 			result.config.expire_minutes = atoi(argv[option_char++]);
 		} else {
 			die(STATE_UNKNOWN,
@@ -326,7 +326,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 		result.config.variable_number = atoi(argv[option_char++]);
 		if (result.config.variable_number < 1 || result.config.variable_number > 2) {
 			printf("%s :", argv[option_char]);
-			usage(_("Invalid variable number\n"));
+			mopl_utils_usage(_("Invalid variable number\n"));
 		}
 	}
 
@@ -361,7 +361,7 @@ check_mrtg_config_wrapper process_arguments(int argc, char **argv) {
 
 check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper config_wrapper) {
 	if (config_wrapper.config.variable_number == -1) {
-		usage4(_("You must supply the variable number"));
+		mopl_utils_usage4(_("You must supply the variable number"));
 	}
 
 	if (config_wrapper.config.label == NULL) {
@@ -376,7 +376,7 @@ check_mrtg_config_wrapper validate_arguments(check_mrtg_config_wrapper config_wr
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);

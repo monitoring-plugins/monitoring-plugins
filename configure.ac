@@ -175,7 +175,7 @@ if test "$enable_libtap" = "yes" ; then
 	EXTRA_TEST="test_utils test_tcp test_cmd test_base64 test_generic_output"
 	AC_SUBST(EXTRA_TEST)
 
-	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk tests/test_check_snmp"
+	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk tests/test_sslutils tests/test_check_ntp_peer"
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
@@ -291,22 +291,8 @@ AS_IF([test "x$with_radius" != "xno"], [
       RADIUSLIBS="-lfreeradius-client"
       AC_SUBST(RADIUSLIBS)
     else
-      AC_CHECK_LIB(radiusclient-ng,rc_read_config)
-      if test "$ac_cv_lib_radiusclient_ng_rc_read_config" = "yes"; then
-        EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-        RADIUSLIBS="-lradiusclient-ng"
-        AC_SUBST(RADIUSLIBS)
-      else
-        AC_CHECK_LIB(radiusclient,rc_read_config)
-        if test "$ac_cv_lib_radiusclient_rc_read_config" = "yes"; then
-          EXTRAS="$EXTRAS check_radius\$(EXEEXT)"
-          RADIUSLIBS="-lradiusclient"
-          AC_SUBST(RADIUSLIBS)
-        else
-          AC_MSG_WARN([Skipping radius plugin])
-          AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
-        fi
-      fi
+      AC_MSG_WARN([Skipping radius plugin])
+      AC_MSG_WARN([install radius libs to compile this plugin (see REQUIREMENTS).])
     fi
   fi
   LIBS="$_SAVEDLIBS"
@@ -1445,6 +1431,13 @@ if test -n "$PATH_TO_NETSNMPCONFIG"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_NETSNMPCONFIG,"$PATH_TO_NETSNMPCONFIG",[path to net-snmp-config binary])
 	EXTRAS="$EXTRAS check_snmp"
+
+	dnl add the extra tests
+	if test "$enable_libtap" = "yes" ; then
+		EXTRA_PLUGIN_TESTS="$EXTRA_PLUGIN_TESTS tests/test_check_snmp"
+		AC_SUBST(EXTRA_PLUGIN_TESTS)
+	fi
+
 else
 	AC_MSG_WARN([Install net-snmp-config to build check_snmp])
 fi
@@ -1647,7 +1640,7 @@ then
 
 	if [$PATH_TO_SWAPINFO -k 2>/dev/null | grep -E -i "^Device +1K-blocks +Used +Avail" >/dev/null]
 	then
-		ac_cv_swap_format=["%*s %lf %*d %lf"]
+		ac_cv_swap_format=["%s %lf %*d %lf"]
 		ac_cv_swap_conv=1024
 		AC_MSG_RESULT([using FreeBSD format swapinfo])
 	fi
@@ -1656,7 +1649,7 @@ elif [$PATH_TO_SWAPINFO -dfM 2>/dev/null | grep -E -i "^TYPE +AVAIL +USED +FREE"
 then
 	ac_cv_have_swap=yes
 	ac_cv_swap_command="$PATH_TO_SWAPINFO -dfM"
-	ac_cv_swap_format=["%*s %lu %*d %lu"]
+	ac_cv_swap_format=["%s %lu %*d %lu"]
 	ac_cv_swap_conv=1024
 	AC_MSG_RESULT([using HP-UX format swapinfo])
 fi

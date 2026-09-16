@@ -3,7 +3,9 @@ use strict;
 use warnings;
 
 use Test::More;
-if (! -e "./tests/test_check_swap") {
-    plan skip_all => "./test_check_swap not compiled - please enable libtap library to test";
+
+my $test_file_path = "./tests/test_check_swap";
+if (! -e  $test_file_path) {
+    plan skip_all => $test_file_path." not compiled - please enable libtap library to test";
 }
-system("./tests/test_check_swap");
+exec $test_file_path;

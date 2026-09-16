@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 	check_users_config_wrapper tmp_config = process_arguments(argc, argv);
 
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_users_config config = tmp_config.config;
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 	}
 
 	char *ok_summary = NULL;
-	xasprintf(&ok_summary, "Users on the system: %d", user_wrapper.users);
+	mopl_utils_xasprintf(&ok_summary, "Users on the system: %d", user_wrapper.users);
 	mp_set_ok_summary(&overall, ok_summary);
 	free(ok_summary);
 
@@ -131,17 +131,17 @@ int main(int argc, char **argv) {
 
 	switch (tmp_status) {
 	case STATE_WARNING:
-		xasprintf(&sc_users.output,
+		mopl_utils_xasprintf(&sc_users.output,
 				  "%d users currently logged in. This violates the warning threshold",
 				  user_wrapper.users);
 		break;
 	case STATE_CRITICAL:
-		xasprintf(&sc_users.output,
+		mopl_utils_xasprintf(&sc_users.output,
 				  "%d users currently logged in. This violates the critical threshold",
 				  user_wrapper.users);
 		break;
 	default:
-		xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
+		mopl_utils_xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);
 	}
 
 	mp_add_subcheck_to_check(&overall, sc_users);
@@ -160,7 +160,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 									   {0, 0, 0, 0}};
 
 	if (argc < 2) {
-		usage(progname);
+		mopl_utils_usage(progname);
 	}
 
 	char *warning_range = NULL;
@@ -179,12 +179,12 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (counter) {
 		case '?': /* print short usage statement if args not parsable */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'c': /* critical */
 			critical_range = optarg;
@@ -255,7 +255,7 @@ check_users_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad\n");
 	printf(COPYRIGHT, copyright, email);

@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
 	process_arguments_wrapper paw_tmp = process_arguments(argc, argv);
 	if (paw_tmp.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	check_snmp_config config = paw_tmp.config;
@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 
 	/* Set signal handling and alarm */
 	if (signal(SIGALRM, runcmd_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	time_t current_time;
@@ -299,12 +299,12 @@ int main(int argc, char **argv) {
 
 	if (response.errorcode == OK) {
 		mp_subcheck sc_successfull_query = mp_subcheck_init();
-		xasprintf(&sc_successfull_query.output, "SNMP query was successful");
+		mopl_utils_xasprintf(&sc_successfull_query.output, "SNMP query was successful");
 		sc_successfull_query = mp_set_subcheck_state(sc_successfull_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_successfull_query);
 	} else if (response.number_of_results != config.snmp_params.num_of_test_units) {
 		mp_subcheck sc_strange_query_result = mp_subcheck_init();
-		xasprintf(&sc_strange_query_result.output,
+		mopl_utils_xasprintf(&sc_strange_query_result.output,
 				  "SNMP query returned %zu results, but %zu were requested",
 				  response.number_of_results, config.snmp_params.num_of_test_units);
 		sc_strange_query_result = mp_set_subcheck_state(sc_strange_query_result, STATE_UNKNOWN);
@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
 	} else {
 		// Error treatment here, either partial or whole
 		mp_subcheck sc_failed_query = mp_subcheck_init();
-		xasprintf(&sc_failed_query.output, "SNMP query failed");
+		mopl_utils_xasprintf(&sc_failed_query.output, "SNMP query failed");
 		sc_failed_query = mp_set_subcheck_state(sc_failed_query, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_failed_query);
 		mp_exit(overall);
@@ -400,7 +400,8 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		connection_prefix_index,
 		output_format_index,
 		calculate_rate,
-		rate_multiplier
+		rate_multiplier,
+		missing_oid,
 	};
 
 	static struct option longopts[] = {
@@ -410,6 +411,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		{"object", required_argument, 0, 'o'},
 		{"delimiter", required_argument, 0, 'd'},
 		{"nulloid", required_argument, 0, 'z'},
+		{"missing-oid", required_argument, 0, missing_oid},
 		{"output-delimiter", required_argument, 0, 'D'},
 		{"string", required_argument, 0, 's'},
 		{"timeout", required_argument, 0, 't'},
@@ -476,13 +478,13 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 			// fallthrough
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 
 		default:
@@ -534,12 +536,12 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_char) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'v': /* verbose */
 			verbose++;
@@ -678,15 +680,15 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'e':
 		case 'E':
-			if (!is_integer(optarg)) {
-				usage2(_("Retries interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Retries interval must be a positive integer"), optarg);
 			} else {
 				config.snmp_params.snmp_session.retries = atoi(optarg);
 			}
 			break;
 		case 't': /* timeout period */
-			if (!is_integer(optarg)) {
-				usage2(_("Timeout interval must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Timeout interval must be a positive integer"), optarg);
 			} else {
 				timeout_interval = (unsigned int)atoi(optarg);
 			}
@@ -715,10 +717,19 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			}
 			break;
 		case 'z': /* Null OID Return Check */
-			if (!is_integer(optarg)) {
-				usage2(_("Exit status must be a positive integer"), optarg);
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
 			} else {
+				// TODO: do real parsing here
 				config.evaluation_params.nulloid_result = atoi(optarg);
+			}
+			break;
+		case missing_oid: // What to do when an OID is missing in response
+			if (!mopl_utils_is_integer(optarg)) {
+				mopl_utils_usage2(_("Exit status must be a positive integer"), optarg);
+			} else {
+				// TODO: do real parsing here
+				config.evaluation_params.missing_oid_result = atoi(optarg);
 			}
 			break;
 		case 's': /* string or substring */
@@ -842,9 +853,9 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			config.evaluation_params.calculate_rate = true;
 			break;
 		case rate_multiplier:
-			if (!is_integer(optarg) ||
+			if (!mopl_utils_is_integer(optarg) ||
 				((config.evaluation_params.rate_multiplier = (unsigned int)atoi(optarg)) <= 0)) {
-				usage2(_("Rate multiplier must be a positive integer"), optarg);
+				mopl_utils_usage2(_("Rate multiplier must be a positive integer"), optarg);
 			}
 			break;
 		default:
@@ -863,7 +874,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 			// The default, do nothing
 		} else if (strcasecmp(connection_prefix, "tcp") == 0) {
 			// use tcp/ipv4
-			xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcasecmp(connection_prefix, "tcp6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpv6") == 0 ||
@@ -873,22 +884,22 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				   strcasecmp(connection_prefix, "udpv6") == 0) {
 			// Man page (or net-snmp) code says IPv6 addresses should be wrapped in [], but it
 			// works anyway therefore do nothing here
-			xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "tls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "dtls") == 0) {
 			// TODO: Anything else to do here?
-			xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "unix") == 0) {
 			// TODO: Check whether this is a valid path?
-			xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "ipx") == 0) {
-			xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
 					  config.snmp_params.snmp_session.peername);
 		} else {
 			// Don't know that prefix, die here
@@ -902,7 +913,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (port != NULL) {
-		xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
+		mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
 				  config.snmp_params.snmp_session.peername, port);
 	}
 
@@ -1032,7 +1043,7 @@ char *get_next_argument(char *str) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(COPYRIGHT, copyright, email);
 
@@ -1093,6 +1104,14 @@ void print_help(void) {
 	printf("    %s\n", _("If the check returns a 0 length string or NULL value"));
 	printf("    %s\n", _("This option allows you to choose what status you want it to exit"));
 	printf("    %s\n", _("Excluding this option renders the default exit of 3(STATE_UNKNOWN)"));
+	printf("    %s\n", _("0 = OK"));
+	printf("    %s\n", _("1 = WARNING"));
+	printf("    %s\n", _("2 = CRITICAL"));
+	printf("    %s\n", _("3 = UNKNOWN"));
+	printf(" %s\n", "--missing-oid=#");
+	printf("    %s\n", _("If a query for an OID returns nothing (OID missing on the target)"));
+	printf("    %s\n", _("this option allows you to choose what status you want for this specific OID"));
+	printf("    %s\n", _("Excluding this option renders the default exit of 2 (CRITICAL)"));
 	printf("    %s\n", _("0 = OK"));
 	printf("    %s\n", _("1 = WARNING"));
 	printf("    %s\n", _("2 = CRITICAL"));

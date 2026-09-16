@@ -68,6 +68,35 @@ static int verbose = 0;
 static char *warn_text;
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* Restrict program execution to the ping{,6} binaries. Continue allow
+	 * reading all files since arguments were not parsed at this point. */
+	char *ping_command, *ping_binary;
+	ping_command = malloc(strnlen(PING6_COMMAND, BUFSIZ));
+
+	(void)strlcpy(ping_command, PING_COMMAND, strnlen(PING_COMMAND, BUFSIZ));
+	if (!(ping_binary = strtok(ping_command, " "))) {
+		die(STATE_UNKNOWN, "Cannot extract binary from %s", PING_COMMAND);
+	}
+	unveil(ping_binary, "rx");
+
+	(void)strlcpy(ping_command, PING6_COMMAND, strnlen(PING6_COMMAND, BUFSIZ));
+	if (!(ping_binary = strtok(ping_command, " "))) {
+		die(STATE_UNKNOWN, "Cannot extract binary from %s", PING6_COMMAND);
+	}
+	unveil(ping_binary, "rx");
+
+	free(ping_command);
+
+	unveil("/", "r");
+	unveil(NULL, NULL);
+
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - dns for hostname resolution via mopl_net_is_{host,inet6_addr} (given up later)
+	 * - proc and exec are used to fork and exec (given up later) */
+	pledge("stdio rpath dns proc exec", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -78,14 +107,14 @@ int main(int argc, char **argv) {
 
 	check_ping_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_ping_config config = tmp_config.config;
 
 	/* Set signal handling and alarm */
-	if (signal(SIGALRM, popen_timeout_alarm_handler) == SIG_ERR) {
-		usage4(_("Cannot catch SIGALRM"));
+	if (signal(SIGALRM, mopl_popen_popen_timeout_alarm_handler) == SIG_ERR) {
+		mopl_utils_usage4(_("Cannot catch SIGALRM"));
 	}
 
 	/* If ./configure finds ping has timeout values, set plugin alarm slightly
@@ -96,92 +125,81 @@ int main(int argc, char **argv) {
 	alarm(timeout_interval);
 #endif
 
-	int result = STATE_UNKNOWN;
 	char *rawcmd = NULL;
-	for (size_t i = 0; i < config.n_addresses; i++) {
 #ifdef PING6_COMMAND
-		if (address_family != AF_INET && is_inet6_addr(config.addresses[i])) {
-			rawcmd = strdup(PING6_COMMAND);
-		} else {
-			rawcmd = strdup(PING_COMMAND);
-		}
-#else
+	if (address_family != AF_INET && mopl_net_is_inet6_addr(config.address)) {
+		rawcmd = strdup(PING6_COMMAND);
+	} else {
 		rawcmd = strdup(PING_COMMAND);
+	}
+#else
+	rawcmd = strdup(PING_COMMAND);
 #endif
 
-		char *cmd = NULL;
+	char *cmd = NULL;
 
-		/* does the host address of number of packets argument come first? */
+	/* does the host address of number of packets argument come first? */
 #ifdef PING_PACKETS_FIRST
 #	ifdef PING_HAS_TIMEOUT
-		xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.addresses[i]);
+	mopl_utils_xasprintf(&cmd, rawcmd, timeout_interval, config.max_packets, config.address);
 #	else
-		xasprintf(&cmd, rawcmd, config.max_packets, config.addresses[i]);
+	mopl_utils_xasprintf(&cmd, rawcmd, config.max_packets, config.address);
 #	endif
 #else
-		xasprintf(&cmd, rawcmd, config.addresses[i], config.max_packets);
+	mopl_utils_xasprintf(&cmd, rawcmd, config.address, config.max_packets);
 #endif
 
-		if (verbose >= 2) {
-			printf("CMD: %s\n", cmd);
-		}
-
-		/* run the command */
-
-		ping_result pinged = run_ping(cmd, config.addresses[i], config.crta);
-
-		if (pinged.packet_loss == UNKNOWN_PACKET_LOSS || pinged.round_trip_average < 0.0) {
-			printf("%s\n", cmd);
-			die(STATE_UNKNOWN, _("CRITICAL - Could not interpret output from ping command\n"));
-		}
-
-		if (pinged.packet_loss >= config.cpl || pinged.round_trip_average >= config.crta ||
-			pinged.round_trip_average < 0) {
-			pinged.state = STATE_CRITICAL;
-		} else if (pinged.packet_loss >= config.wpl || pinged.round_trip_average >= config.wrta) {
-			pinged.state = STATE_WARNING;
-		} else if (pinged.packet_loss >= 0 && pinged.round_trip_average >= 0) {
-			pinged.state = max_state(STATE_OK, pinged.state);
-		}
-
-		if (config.n_addresses > 1 && pinged.state != STATE_UNKNOWN) {
-			die(STATE_OK, "%s is alive\n", config.addresses[i]);
-		}
-
-		if (pinged.packet_loss == 100) {
-			printf(_("PING %s - %sPacket loss = %d%%"), state_text(pinged.state), warn_text,
-				   pinged.packet_loss);
-		} else {
-			printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(pinged.state),
-				   warn_text, pinged.packet_loss, pinged.round_trip_average);
-		}
-		if (config.display_html) {
-			printf("</A>");
-		}
-
-		/* Print performance data */
-		if (pinged.packet_loss != 100) {
-			printf("|%s",
-				   fperfdata("rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
-							 config.wrta, (bool)(config.crta > 0), config.crta, true, 0, false, 0));
-		} else {
-			printf("| rta=U;%f;%f;;", config.wrta, config.crta);
-		}
-
-		printf(" %s\n",
-			   perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0), config.wpl,
-						(bool)(config.cpl > 0), config.cpl, true, 0, false, 0));
-
-		if (verbose >= 2) {
-			printf("%f:%d%% %f:%d%%\n", config.wrta, config.wpl, config.crta, config.cpl);
-		}
-
-		result = max_state(result, pinged.state);
-		free(rawcmd);
-		free(cmd);
+	if (verbose >= 2) {
+		printf("CMD: %s\n", cmd);
 	}
 
-	return result;
+	/* run the command */
+	ping_result pinged = run_ping(cmd, config.address, config.crta);
+
+#ifdef __OpenBSD__
+	pledge("stdio", NULL);
+#endif // __OpenBSD__
+
+	if (pinged.packet_loss == UNKNOWN_PACKET_LOSS || pinged.round_trip_average < 0.0) {
+		printf("%s\n", cmd);
+		die(STATE_UNKNOWN, _("CRITICAL - Could not interpret output from ping command\n"));
+	}
+
+	if (pinged.packet_loss >= config.cpl || pinged.round_trip_average >= config.crta ||
+		pinged.round_trip_average < 0) {
+		pinged.state = STATE_CRITICAL;
+	} else if (pinged.packet_loss >= config.wpl || pinged.round_trip_average >= config.wrta) {
+		pinged.state = STATE_WARNING;
+	} else if (pinged.packet_loss >= 0 && pinged.round_trip_average >= 0) {
+		pinged.state = max_state(STATE_OK, pinged.state);
+	}
+
+	if (pinged.packet_loss == 100) {
+		printf(_("PING %s - %sPacket loss = %d%%"), state_text(pinged.state), warn_text,
+			   pinged.packet_loss);
+	} else {
+		printf(_("PING %s - %sPacket loss = %d%%, RTA = %2.2f ms"), state_text(pinged.state),
+			   warn_text, pinged.packet_loss, pinged.round_trip_average);
+	}
+
+	/* Print performance data */
+	if (pinged.packet_loss != 100) {
+		printf("|%s", mopl_utils_fperfdata(
+						  "rta", pinged.round_trip_average, "ms", (bool)(config.wrta > 0),
+						  config.wrta, (bool)(config.crta > 0), config.crta, true, 0, false, 0));
+	} else {
+		printf("| rta=U;%f;%f;;", config.wrta, config.crta);
+	}
+
+	printf(" %s\n",
+		   mopl_utils_perfdata("pl", (long)pinged.packet_loss, "%", (bool)(config.wpl > 0),
+							   config.wpl, (bool)(config.cpl > 0), config.cpl, true, 0, false, 0));
+
+	if (verbose >= 2) {
+		printf("%f:%d%% %f:%d%%\n", config.wrta, config.wpl, config.crta, config.cpl);
+	}
+
+	return pinged.state;
 }
 
 /* process command-line arguments */
@@ -214,7 +232,6 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	int option = 0;
-	size_t max_addr = MAX_ADDR_START;
 	while (true) {
 		int option_index = getopt_long(argc, argv, "VvhnL46t:c:w:H:p:", longopts, &option);
 
@@ -224,13 +241,13 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 
 		switch (option_index) {
 		case '?': /* usage */
-			usage5();
+			mopl_utils_usage5();
 		case 'h': /* help */
 			print_help();
 			exit(STATE_UNKNOWN);
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 			break;
 		case 't': /* timeout period */
@@ -245,39 +262,19 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 		case '6': /* IPv6 only */
 			address_family = AF_INET6;
 			break;
-		case 'H': /* hostname */ {
-			char *ptr = optarg;
-			while (true) {
-				result.config.n_addresses++;
-				if (result.config.n_addresses > max_addr) {
-					max_addr *= 2;
-					result.config.addresses =
-						realloc(result.config.addresses, sizeof(char *) * max_addr);
-					if (result.config.addresses == NULL) {
-						die(STATE_UNKNOWN, _("Could not realloc() addresses\n"));
-					}
-				}
-				result.config.addresses[result.config.n_addresses - 1] = ptr;
-				if ((ptr = index(ptr, ','))) {
-					strcpy(ptr, "");
-					ptr += sizeof(char);
-				} else {
-					break;
-				}
-			}
-		} break;
+		case 'H': /* hostname */
+			result.config.address = optarg;
+			break;
 		case 'p': /* number of packets to send */
-			if (is_intnonneg(optarg)) {
+			if (mopl_utils_is_intnonneg(optarg)) {
 				result.config.max_packets = atoi(optarg);
 			} else {
-				usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
+				mopl_utils_usage2(_("<max_packets> (%s) must be a non-negative number\n"), optarg);
 			}
 			break;
 		case 'n': /* no HTML */
-			result.config.display_html = false;
-			break;
 		case 'L': /* show HTML */
-			result.config.display_html = true;
+			/* HTML link related options are deprecated */
 			break;
 		case 'c':
 			get_threshold(optarg, &result.config.crta, &result.config.cpl);
@@ -293,12 +290,12 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 		return validate_arguments(result);
 	}
 
-	if (result.config.addresses[0] == NULL) {
-		if (!is_host(argv[arg_counter])) {
-			usage2(_("Invalid hostname/address"), argv[arg_counter]);
+	/* Undocumented compatibility behavior: ordered arguments after parsing options. */
+	if (result.config.address == NULL) {
+		if (!mopl_net_is_host(argv[arg_counter])) {
+			mopl_utils_usage2(_("Invalid hostname/address"), argv[arg_counter]);
 		} else {
-			result.config.addresses[0] = argv[arg_counter++];
-			result.config.n_addresses++;
+			result.config.address = argv[arg_counter++];
 			if (arg_counter == argc) {
 				return validate_arguments(result);
 			}
@@ -306,7 +303,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<wpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -318,7 +315,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.cpl == UNKNOWN_PACKET_LOSS) {
-		if (!is_intpercent(argv[arg_counter])) {
+		if (!mopl_utils_is_intpercent(argv[arg_counter])) {
 			printf(_("<cpl> (%s) must be an integer percentage\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -330,7 +327,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.wrta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<wrta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -342,7 +339,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.crta < 0.0) {
-		if (is_negative(argv[arg_counter])) {
+		if (mopl_utils_is_negative(argv[arg_counter])) {
 			printf(_("<crta> (%s) must be a non-negative number\n"), argv[arg_counter]);
 			result.errorcode = ERROR;
 			return result;
@@ -354,7 +351,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.max_packets == -1) {
-		if (is_intnonneg(argv[arg_counter])) {
+		if (mopl_utils_is_intnonneg(argv[arg_counter])) {
 			result.config.max_packets = atoi(argv[arg_counter++]);
 		} else {
 			printf(_("<max_packets> (%s) must be a non-negative number\n"), argv[arg_counter]);
@@ -367,7 +364,7 @@ check_ping_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 int get_threshold(char *arg, double *trta, int *tpl) {
-	if (is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
+	if (mopl_utils_is_intnonneg(arg) && sscanf(arg, "%lf", trta) == 1) {
 		return OK;
 	}
 
@@ -379,7 +376,7 @@ int get_threshold(char *arg, double *trta, int *tpl) {
 		return OK;
 	}
 
-	usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
+	mopl_utils_usage2(_("%s: Warning threshold must be integer or percentage!\n\n"), arg);
 	return STATE_UNKNOWN;
 }
 
@@ -432,21 +429,18 @@ check_ping_config_wrapper validate_arguments(check_ping_config_wrapper config_wr
 		timeout_interval = (unsigned int)max_seconds;
 	}
 
-	for (size_t i = 0; i < config_wrapper.config.n_addresses; i++) {
-		if (!is_host(config_wrapper.config.addresses[i])) {
-			usage2(_("Invalid hostname/address"), config_wrapper.config.addresses[i]);
-		}
+	if (config_wrapper.config.address == NULL) {
+		mopl_utils_usage(_("You must specify a server address or host name"));
 	}
-
-	if (config_wrapper.config.n_addresses == 0) {
-		usage(_("You must specify a server address or host name"));
+	if (!mopl_net_is_host(config_wrapper.config.address)) {
+		mopl_utils_usage2(_("Invalid hostname/address"), config_wrapper.config.address);
 	}
 
 	return config_wrapper;
 }
 
 ping_result run_ping(const char *cmd, const char *addr, double crta) {
-	if ((child_process = spopen(cmd)) == NULL) {
+	if ((child_process = mopl_popen_spopen(cmd)) == NULL) {
 		die(STATE_UNKNOWN, _("Could not open pipe: %s\n"), cmd);
 	}
 
@@ -559,8 +553,8 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 				if (warn_text == NULL) {
 					warn_text = strdup(_("System call sent warnings to stderr "));
 				} else {
-					xasprintf(&warn_text, "%s %s", warn_text,
-							  _("System call sent warnings to stderr "));
+					mopl_utils_xasprintf(&warn_text, "%s %s", warn_text,
+										 _("System call sent warnings to stderr "));
 				}
 			}
 		}
@@ -568,7 +562,7 @@ ping_result run_ping(const char *cmd, const char *addr, double crta) {
 
 	(void)fclose(child_stderr);
 
-	spclose(child_process);
+	mopl_popen_spclose(child_process);
 
 	if (warn_text == NULL) {
 		warn_text = strdup("");
@@ -605,7 +599,7 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 		if (warn_text == NULL) {
 			warn_text = strdup(_(WARN_DUPLICATES));
 		} else if (!strstr(warn_text, _(WARN_DUPLICATES)) &&
-				   xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
+				   mopl_utils_xasprintf(&warn_text, "%s %s", warn_text, _(WARN_DUPLICATES)) == -1) {
 			die(STATE_UNKNOWN, _("Unable to realloc warn_text\n"));
 		}
 		return STATE_WARNING;
@@ -615,7 +609,7 @@ mp_state_enum error_scan(char buf[MAX_INPUT_BUFFER], const char *addr) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Ethan Galstad <nagios@nagios.org>\n");
 	printf(COPYRIGHT, copyright, email);
@@ -640,8 +634,6 @@ void print_help(void) {
 	printf(" %s\n", "-p, --packets=INTEGER");
 	printf("    %s ", _("number of ICMP ECHO packets to send"));
 	printf(_("(Default: %d)\n"), DEFAULT_MAX_PACKETS);
-	printf(" %s\n", "-L, --link");
-	printf("    %s\n", _("show HTML in the plugin output (obsoleted by urlize)"));
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
 
@@ -653,8 +645,7 @@ void print_help(void) {
 	printf("\n");
 	printf("%s\n",
 		   _("This plugin uses the ping command to probe the specified host for packet loss"));
-	printf("%s\n",
-		   _("(percentage) and round trip average (milliseconds). It can produce HTML output."));
+	printf("%s\n", _("(percentage) and round trip average (milliseconds)."));
 
 	printf(UT_SUPPORT);
 }

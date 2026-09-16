@@ -103,7 +103,7 @@ static parsed_thresholds get_threshold(char *arg) {
 
 	/* empty argument or non-floatish, so warn about it and die */
 	if (!index && !valid) {
-		usage(_("Warning threshold must be float or float triplet!\n"));
+		mopl_utils_usage(_("Warning threshold must be float or float triplet!\n"));
 	}
 
 	if (index != 2) {
@@ -117,6 +117,27 @@ static parsed_thresholds get_threshold(char *arg) {
 }
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* Restrict program execution to the ps binary. Continue allow reading all
+	 * files since arguments were not parsed at this point. */
+	char *ps_command, *ps_binary;
+	ps_command = malloc(strnlen(PS_COMMAND, BUFSIZ));
+
+	(void)strlcpy(ps_command, PS_COMMAND, strnlen(PS_COMMAND, BUFSIZ));
+	if (!(ps_binary = strtok(ps_command, " "))) {
+		die(STATE_UNKNOWN, "Cannot extract binary from %s", PS_COMMAND);
+	}
+	unveil(ps_binary, "rx");
+	free(ps_command);
+
+	unveil("/", "r");
+	unveil(NULL, NULL);
+
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - proc and exec are used to fork and exec (given up later) */
+	pledge("stdio rpath proc exec", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -127,10 +148,16 @@ int main(int argc, char **argv) {
 
 	check_load_config_wrapper tmp_config = process_arguments(argc, argv);
 	if (tmp_config.errorcode == ERROR) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
 
 	const check_load_config config = tmp_config.config;
+
+#ifdef __OpenBSD__
+	if (config.n_procs_to_show == 0) {
+		pledge("stdio", NULL);
+	}
+#endif // __OpenBSD__
 
 	double load_values[3] = {0, 0, 0};
 
@@ -146,7 +173,7 @@ int main(int argc, char **argv) {
 	}
 
 	char *ok_summary = NULL;
-	xasprintf(&ok_summary, "Load: 1m: %f - 5m: %f - 15m: %f", load_values[0], load_values[1],
+	mopl_utils_xasprintf(&ok_summary, "Load: 1m: %f - 5m: %f - 15m: %f", load_values[0], load_values[1],
 			  load_values[2]);
 	mp_set_ok_summary(&overall, ok_summary);
 	free(ok_summary);
@@ -162,7 +189,7 @@ int main(int argc, char **argv) {
 			load_values[2] / numcpus,
 		};
 
-		xasprintf(&ok_summary, "Scaled Load (%ld CPUs): 1m: %f - 5m: %f - 15m: %f", numcpus,
+		mopl_utils_xasprintf(&ok_summary, "Scaled Load (%ld CPUs): 1m: %f - 5m: %f - 15m: %f", numcpus,
 				  load_values[0], load_values[1], load_values[2]);
 		mp_set_ok_summary(&overall, ok_summary);
 		free(ok_summary);
@@ -179,7 +206,7 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc1 = mp_subcheck_init();
 		scaled_load_sc1 = mp_set_subcheck_state(scaled_load_sc1, mp_get_pd_status(pd_scaled_load1));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc1, pd_scaled_load1);
-		xasprintf(&scaled_load_sc1.output, "1 Minute: %s",
+		mopl_utils_xasprintf(&scaled_load_sc1.output, "1 Minute: %s",
 				  pd_value_to_string(pd_scaled_load1.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc1);
 
@@ -191,7 +218,7 @@ int main(int argc, char **argv) {
 		mp_subcheck scaled_load_sc5 = mp_subcheck_init();
 		scaled_load_sc5 = mp_set_subcheck_state(scaled_load_sc5, mp_get_pd_status(pd_scaled_load5));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc5, pd_scaled_load5);
-		xasprintf(&scaled_load_sc5.output, "5 Minutes: %s",
+		mopl_utils_xasprintf(&scaled_load_sc5.output, "5 Minutes: %s",
 				  pd_value_to_string(pd_scaled_load5.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc5);
 
@@ -204,7 +231,7 @@ int main(int argc, char **argv) {
 		scaled_load_sc15 =
 			mp_set_subcheck_state(scaled_load_sc15, mp_get_pd_status(pd_scaled_load15));
 		mp_add_perfdata_to_subcheck(&scaled_load_sc15, pd_scaled_load15);
-		xasprintf(&scaled_load_sc15.output, "15 Minutes: %s",
+		mopl_utils_xasprintf(&scaled_load_sc15.output, "15 Minutes: %s",
 				  pd_value_to_string(pd_scaled_load15.value));
 		mp_add_subcheck_to_subcheck(&scaled_load_sc, scaled_load_sc15);
 
@@ -225,7 +252,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc1 = mp_subcheck_init();
 	load_sc1 = mp_set_subcheck_state(load_sc1, mp_get_pd_status(pd_load1));
 	mp_add_perfdata_to_subcheck(&load_sc1, pd_load1);
-	xasprintf(&load_sc1.output, "1 Minute: %s", pd_value_to_string(pd_load1.value));
+	mopl_utils_xasprintf(&load_sc1.output, "1 Minute: %s", pd_value_to_string(pd_load1.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc1);
 
 	mp_perfdata pd_load5 = perfdata_init();
@@ -238,7 +265,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc5 = mp_subcheck_init();
 	load_sc5 = mp_set_subcheck_state(load_sc5, mp_get_pd_status(pd_load5));
 	mp_add_perfdata_to_subcheck(&load_sc5, pd_load5);
-	xasprintf(&load_sc5.output, "5 Minutes: %s", pd_value_to_string(pd_load5.value));
+	mopl_utils_xasprintf(&load_sc5.output, "5 Minutes: %s", pd_value_to_string(pd_load5.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc5);
 
 	mp_perfdata pd_load15 = perfdata_init();
@@ -251,7 +278,7 @@ int main(int argc, char **argv) {
 	mp_subcheck load_sc15 = mp_subcheck_init();
 	load_sc15 = mp_set_subcheck_state(load_sc15, mp_get_pd_status(pd_load15));
 	mp_add_perfdata_to_subcheck(&load_sc15, pd_load15);
-	xasprintf(&load_sc15.output, "15 Minutes: %s", pd_value_to_string(pd_load15.value));
+	mopl_utils_xasprintf(&load_sc15.output, "15 Minutes: %s", pd_value_to_string(pd_load15.value));
 	mp_add_subcheck_to_subcheck(&load_sc, load_sc15);
 
 	mp_add_subcheck_to_check(&overall, load_sc);
@@ -260,18 +287,22 @@ int main(int argc, char **argv) {
 		mp_subcheck top_proc_sc = mp_subcheck_init();
 		top_proc_sc = mp_set_subcheck_state(top_proc_sc, STATE_OK);
 		top_processes_result top_proc = get_top_consuming_processes(config.n_procs_to_show);
-		xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
+		mopl_utils_xasprintf(&top_proc_sc.output, "Top %lu CPU time consuming processes",
 				  config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
 			// +1 here since the string list contains the header line
 			for (unsigned long i = 0; i < config.n_procs_to_show + 1; i++) {
-				xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
+				mopl_utils_xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 						  top_proc.top_processes[i]);
 			}
 		}
 
 		mp_add_subcheck_to_check(&overall, top_proc_sc);
+
+#ifdef __OpenBSD__
+		pledge("stdio", NULL);
+#endif // __OpenBSD__
 	}
 
 	mp_exit(overall);
@@ -344,7 +375,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.take_into_account_cpus = true;
 			break;
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help();
@@ -353,7 +384,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.n_procs_to_show = (unsigned long)atol(optarg);
 			break;
 		case '?': /* help */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -399,7 +430,7 @@ static check_load_config_wrapper process_arguments(int argc, char **argv) {
 }
 
 void print_help(void) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf("Copyright (c) 1999 Felipe Gustavo de Almeida <galmeida@linux.ime.usp.br>\n");
 	printf(COPYRIGHT, copyright, email);
@@ -461,7 +492,7 @@ static top_processes_result get_top_consuming_processes(unsigned long n_procs_to
 	};
 	output chld_out;
 	output chld_err;
-	if (np_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
+	if (mopl_utils_runcmd(PS_COMMAND, &chld_out, &chld_err, 0) != 0) {
 		fprintf(stderr, _("'%s' exited with non-zero status.\n"), PS_COMMAND);
 		result.errorcode = ERROR;
 		return result;
@@ -487,7 +518,7 @@ static top_processes_result get_top_consuming_processes(unsigned long n_procs_to
 	}
 
 	for (unsigned long i = 0; i < lines_to_show; i += 1) {
-		xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
+		mopl_utils_xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
 	}
 
 	return result;

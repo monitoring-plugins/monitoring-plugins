@@ -59,7 +59,7 @@ typedef struct {
 	check_icmp_threshold crit;
 	check_icmp_threshold warn;
 
-	unsigned long ttl;
+	int ttl;
 	unsigned short icmp_data_size;
 	time_t target_interval;
 	unsigned short number_of_packets;

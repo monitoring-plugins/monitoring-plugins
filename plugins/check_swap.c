@@ -68,6 +68,12 @@ const char *copyright = "2000-2024";
 const char *email = "devel@monitoring-plugins.org";
 
 int main(int argc, char **argv) {
+#ifdef __OpenBSD__
+	/* - rpath is required to read --extra-opts (given up later)
+	 * - vminfo is required for swapctl(2) (given up later) */
+	pledge("stdio rpath vminfo", NULL);
+#endif // __OpenBSD__
+
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
@@ -78,8 +84,12 @@ int main(int argc, char **argv) {
 	swap_config_wrapper tmp = process_arguments(argc, argv);
 
 	if (tmp.errorcode != OK) {
-		usage4(_("Could not parse arguments"));
+		mopl_utils_usage4(_("Could not parse arguments"));
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio vminfo", NULL);
+#endif // __OpenBSD__
 
 	swap_config config = tmp.config;
 
@@ -89,6 +99,10 @@ int main(int argc, char **argv) {
 		puts("SWAP UNKNOWN - Failed to retrieve Swap usage");
 		exit(STATE_UNKNOWN);
 	}
+
+#ifdef __OpenBSD__
+	pledge("stdio", NULL);
+#endif // __OpenBSD__
 
 	if (verbose) {
 		printf("Swap retrieval result:\n"
@@ -192,7 +206,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
+	mopl_utils_xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
 			  data.metrics.free >> 20, data.metrics.total >> 20);
 
 	overall.summary = "Swap";
@@ -275,18 +289,18 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				/* It's percentage */
 				conf_wrapper.config.warn.is_percentage = true;
 				optarg[length - 1] = '\0';
-				if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
+				if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.warn.value)) {
 					if (conf_wrapper.config.warn.value > HUNDRED_PERCENT) {
-						usage4(_("Warning threshold percentage must be <= 100!"));
+						mopl_utils_usage4(_("Warning threshold percentage must be <= 100!"));
 					}
 				}
 				break;
 			} /* It's Bytes */
 			conf_wrapper.config.warn.is_percentage = false;
-			if (is_uint64(optarg, &conf_wrapper.config.warn.value)) {
+			if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.warn.value)) {
 				break;
 			}
-			usage4(_("Warning threshold be positive integer or "
+			mopl_utils_usage4(_("Warning threshold be positive integer or "
 					 "percentage!"));
 		}
 		case 'c': /* critical size threshold */
@@ -305,18 +319,18 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				/* It's percentage */
 				conf_wrapper.config.crit.is_percentage = true;
 				optarg[length - 1] = '\0';
-				if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
+				if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.crit.value)) {
 					if (conf_wrapper.config.crit.value > HUNDRED_PERCENT) {
-						usage4(_("Critical threshold percentage must be <= 100!"));
+						mopl_utils_usage4(_("Critical threshold percentage must be <= 100!"));
 					}
 				}
 				break;
 			} /* It's Bytes */
 			conf_wrapper.config.crit.is_percentage = false;
-			if (is_uint64(optarg, &conf_wrapper.config.crit.value)) {
+			if (mopl_utils_is_uint64(optarg, &conf_wrapper.config.crit.value)) {
 				break;
 			}
-			usage4(_("Critical threshold be positive integer or "
+			mopl_utils_usage4(_("Critical threshold be positive integer or "
 					 "percentage!"));
 		}
 		case 'a': /* all swap */
@@ -324,7 +338,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'n':
 			if ((conf_wrapper.config.no_swap_state = mp_translate_state(optarg)) == ERROR) {
-				usage4(_("no-swap result must be a valid state name (OK, "
+				mopl_utils_usage4(_("no-swap result must be a valid state name (OK, "
 						 "WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			break;
@@ -344,13 +358,13 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		}
 		case 'V': /* version */
-			print_revision(progname, NP_VERSION);
+			mopl_utils_print_revision(progname, NP_VERSION);
 			exit(STATE_UNKNOWN);
 		case 'h': /* help */
 			print_help(conf_wrapper.config);
 			exit(STATE_UNKNOWN);
 		case '?': /* error */
-			usage5();
+			mopl_utils_usage5();
 		}
 	}
 
@@ -360,14 +374,14 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 		 * is percentage and crit is absolute. We cannot determine the condition
 		 * at this point since we dont know the value of total swap yet
 		 */
-		usage4(_("Warning should be more than critical"));
+		mopl_utils_usage4(_("Warning should be more than critical"));
 	}
 
 	return conf_wrapper;
 }
 
 void print_help(swap_config config) {
-	print_revision(progname, NP_VERSION);
+	mopl_utils_print_revision(progname, NP_VERSION);
 
 	printf(_(COPYRIGHT), copyright, email);
 
