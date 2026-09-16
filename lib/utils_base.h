@@ -71,7 +71,7 @@ int mp_translate_state(char *);
 
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
-// void np_cleanup(void);
+void np_cleanup(void);
 const char *state_text(mp_state_enum);
 
 #endif /* _UTILS_BASE_ */
