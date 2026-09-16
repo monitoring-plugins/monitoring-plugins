@@ -126,13 +126,13 @@ swap_result getSwapFromProcMeminfo(char proc_meminfo[]) {
 
 			/* I think this part is always in Kb, so convert to bytes */
 			if (strcmp("Total", str) == 0) {
-				swap_total = tmp_KB * 1000;
+				swap_total = tmp_KB * 1024;
 				found_total = true;
 			} else if (strcmp("Free", str) == 0) {
-				swap_free += tmp_KB * 1000;
+				swap_free += tmp_KB * 1024;
 				found_free = true;
 			} else if (strcmp("Cached", str) == 0) {
-				swap_free += tmp_KB * 1000;
+				swap_free += tmp_KB * 1024;
 			}
 
 			result.errorcode = STATE_OK;

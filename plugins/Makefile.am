@@ -54,14 +54,27 @@ EXTRA_PROGRAMS = check_mysql check_radius check_pgsql check_hpjd \
 
 SUBDIRS = picohttpparser
 
-np_test_scripts = tests/test_check_swap.t \
-				  tests/test_check_snmp.t \
+mopl_test_scripts = tests/check_curl.t \
+				  tests/check_http.t \
+				  tests/check_procs.t \
+				  tests/check_snmp.t \
 				  tests/test_check_disk.t \
+				  tests/test_check_snmp.t \
+				  tests/test_check_swap.t \
 				  tests/test_sslutils.t
 
+mopl_test_sources = tests/check_snmp_agent.pl \
+	tests/test_check_disk.c \
+	tests/test_check_snmp.c \
+	tests/test_check_swap.c \
+	tests/test_sslutils.c
+
 EXTRA_DIST = t \
-			 tests \
-			 $(np_test_scripts) \
+			 tests/certs \
+			 tests/conf \
+			 tests/conf \
+			 $(mopl_test_sources) \
+			 $(mopl_test_scripts) \
 			 negate.d \
 			 check_swap.d \
 			 check_ldap.d \
@@ -192,6 +205,8 @@ tests_test_check_swap_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_swap_SOURCES = tests/test_check_swap.c check_swap.d/swap.c
 tests_test_check_snmp_LDADD = $(BASEOBJS) $(tap_ldflags) -ltap
 tests_test_check_snmp_SOURCES = tests/test_check_snmp.c check_snmp.d/check_snmp_helpers.c
+tests_test_check_snmp_LDFLAGS = $(AM_LDFLAGS) -lm `$(PATH_TO_NETSNMPCONFIG) --libs`
+tests_test_check_snmp_CFLAGS = $(AM_CFLAGS) `$(PATH_TO_NETSNMPCONFIG) --cflags | sed 's/-Werror=declaration-after-statement//'`
 tests_test_check_disk_LDADD = $(BASEOBJS) $(tap_ldflags) check_disk.d/utils_disk.c -ltap
 tests_test_check_disk_SOURCES = tests/test_check_disk.c
 tests_test_sslutils_LDADD = $(SSLOBJS) $(tap_ldflags) -ltap

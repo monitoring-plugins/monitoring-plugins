@@ -176,6 +176,7 @@ if test "$enable_libtap" = "yes" ; then
 	AC_SUBST(EXTRA_TEST)
 
 	EXTRA_PLUGIN_TESTS="tests/test_check_swap tests/test_check_disk tests/test_sslutils"
+
 	AC_SUBST(EXTRA_PLUGIN_TESTS)
 fi
 
@@ -1431,6 +1432,13 @@ if test -n "$PATH_TO_NETSNMPCONFIG"
 then
 	AC_DEFINE_UNQUOTED(PATH_TO_NETSNMPCONFIG,"$PATH_TO_NETSNMPCONFIG",[path to net-snmp-config binary])
 	EXTRAS="$EXTRAS check_snmp"
+
+	dnl add the extra tests
+	if test "$enable_libtap" = "yes" ; then
+		EXTRA_PLUGIN_TESTS="$EXTRA_PLUGIN_TESTS tests/test_check_snmp"
+		AC_SUBST(EXTRA_PLUGIN_TESTS)
+	fi
+
 else
 	AC_MSG_WARN([Install net-snmp-config to build check_snmp])
 fi
