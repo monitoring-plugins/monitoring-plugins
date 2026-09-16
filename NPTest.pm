@@ -546,7 +546,7 @@ sub TestsFrom
       if ( $excludeIfAppMissing )
       {
         $application = basename( $filename, ".t" );
-        if ( ! -e $application and ! -e $application.'.pm' )
+        if ( ! -e $application and ! -e $application.'.pm' and ! -e $directory."/".$application )
         {
           print STDERR "No application (${application}) found for test harness (${filename})\n";
           next;
