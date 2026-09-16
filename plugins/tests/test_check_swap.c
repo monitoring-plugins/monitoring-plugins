@@ -10,7 +10,7 @@ void print_help(swap_config config) { (void)config; }
 const char *progname = "test_check_swap";
 
 int main(void) {
-	swap_result test_data = getSwapFromProcMeminfo("./var/proc_meminfo");
+	swap_result test_data = getSwapFromProcMeminfo("./tests/var/proc_meminfo");
 
 	plan_tests(4);
 
