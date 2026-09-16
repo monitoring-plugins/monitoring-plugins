@@ -34,6 +34,8 @@ const char *progname = "test_check_snmp";
 void print_usage(void) {};
 
 int main(int argc, char **argv) {
+	plan_tests(16);
+
 	char *temp_string = (char *)_np_state_generate_key(argc, argv);
 	ok(!strcmp(temp_string, "8dd4ba3c1dcea40bd80fe2e2c73872b669e211ba"),
 	   "Got hash with exe and no parameters") ||
