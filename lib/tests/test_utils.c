@@ -28,7 +28,7 @@
 #include "utils_base.c"
 
 int main(int argc, char **argv) {
-	plan_tests(155);
+	plan_tests(132);
 
 	ok(this_monitoring_plugin == NULL, "monitoring_plugin not initialised");
 
@@ -217,84 +217,6 @@ int main(int argc, char **argv) {
 	test = np_escaped_string("everything");
 	ok(strcmp(test, "everything") == 0, "everything okay");
 
-	/* np_extract_ntpvar tests (23) */
-	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foo");
-	ok(test && !strcmp(test, "bar"), "1st test as expected");
-	free(test);
-
-	test = np_extract_ntpvar("foo=bar,bar=foo,foobar=barfoo\n", "bar");
-	ok(test && !strcmp(test, "foo"), "2nd test as expected");
-	free(test);
-
-	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfoo\n", "foobar");
-	ok(test && !strcmp(test, "barfoo"), "3rd test as expected");
-	free(test);
-
-	test = np_extract_ntpvar("foo=bar\n", "foo");
-	ok(test && !strcmp(test, "bar"), "Single test as expected");
-	free(test);
-
-	test = np_extract_ntpvar("foo=bar, bar=foo, foobar=barfooi\n", "abcd");
-	ok(!test, "Key not found 1");
-
-	test = np_extract_ntpvar("foo=bar\n", "abcd");
-	ok(!test, "Key not found 2");
-
-	test = np_extract_ntpvar("foo=bar=foobar", "foo");
-	ok(test && !strcmp(test, "bar=foobar"), "Strange string 1");
-	free(test);
-
-	test = np_extract_ntpvar("foo", "foo");
-	ok(!test, "Malformed string 1");
-
-	test = np_extract_ntpvar("foo,", "foo");
-	ok(!test, "Malformed string 2");
-
-	test = np_extract_ntpvar("foo=", "foo");
-	ok(!test, "Malformed string 3");
-
-	test = np_extract_ntpvar("foo=,bar=foo", "foo");
-	ok(!test, "Malformed string 4");
-
-	test = np_extract_ntpvar(",foo", "foo");
-	ok(!test, "Malformed string 5");
-
-	test = np_extract_ntpvar("=foo", "foo");
-	ok(!test, "Malformed string 6");
-
-	test = np_extract_ntpvar("=foo,", "foo");
-	ok(!test, "Malformed string 7");
-
-	test = np_extract_ntpvar(",,,", "foo");
-	ok(!test, "Malformed string 8");
-
-	test = np_extract_ntpvar("===", "foo");
-	ok(!test, "Malformed string 9");
-
-	test = np_extract_ntpvar(",=,=,", "foo");
-	ok(!test, "Malformed string 10");
-
-	test = np_extract_ntpvar("=,=,=", "foo");
-	ok(!test, "Malformed string 11");
-
-	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foo");
-	ok(test && !strcmp(test, "bar"), "Random spaces and newlines 1");
-	free(test);
-
-	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "bar");
-	ok(test && !strcmp(test, "foo"), "Random spaces and newlines 2");
-	free(test);
-
-	test = np_extract_ntpvar("  foo=bar  ,\n bar=foo\n , foobar=barfoo  \n  ", "foobar");
-	ok(test && !strcmp(test, "barfoo"), "Random spaces and newlines 3");
-	free(test);
-
-	test = np_extract_ntpvar("  foo=bar  ,\n bar\n \n= \n foo\n , foobar=barfoo  \n  ", "bar");
-	ok(test && !strcmp(test, "foo"), "Random spaces and newlines 4");
-	free(test);
-
-	test = np_extract_ntpvar("", "foo");
-	ok(!test, "Empty string return NULL");
 
 	ok(mp_suid() == false, "Test aren't suid");
 

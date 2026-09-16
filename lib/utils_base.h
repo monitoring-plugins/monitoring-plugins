@@ -64,20 +64,6 @@ int np_check_if_root(void);
 #define mp_suid() (getuid() != geteuid())
 
 /*
- * Extract the value from key/value pairs, or return NULL. The value returned
- * can be free()ed.
- * This function can be used to parse NTP control packet data and performance
- * data strings.
- */
-char *np_extract_value(const char *, const char *, char);
-
-/*
- * Same as np_extract_value with separator suitable for NTP control packet
- * payloads (comma)
- */
-#define np_extract_ntpvar(l, n) np_extract_value(l, n, ',')
-
-/*
  * Read a string representing a state (ok, warning... or numeric: 0, 1) and
  * return the corresponding NP_STATE or ERROR)
  */
@@ -85,7 +71,7 @@ int mp_translate_state(char *);
 
 void np_init(char *, int argc, char **argv);
 void np_set_args(int argc, char **argv);
-void np_cleanup(void);
+// void np_cleanup(void);
 const char *state_text(mp_state_enum);
 
 #endif /* _UTILS_BASE_ */
