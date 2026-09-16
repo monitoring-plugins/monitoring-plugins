@@ -1,6 +1,12 @@
 #!/usr/bin/perl
+
+use strict;
+use warnings;
 use Test::More;
-if (! -e "./test_check_ntp_peer") {
-	plan skip_all => "./test_check_ntp_peer not compiled - please enable libtap library to test";
+
+my $test_file_path = "tests/test_check_ntp_peer";
+
+if (! -e $test_file_path) {
+	plan skip_all => $test_file_path." not compiled - please enable libtap library to test";
 }
-exec "./test_check_ntp_peer";
+exec $test_file_path;

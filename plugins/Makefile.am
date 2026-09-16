@@ -69,6 +69,7 @@ mopl_test_sources = tests/check_snmp_agent.pl \
 	tests/test_check_disk.c \
 	tests/test_check_snmp.c \
 	tests/test_check_swap.c \
+	tests/test_check_ntp_peer.c \
 	tests/test_sslutils.c
 
 EXTRA_DIST = t \
