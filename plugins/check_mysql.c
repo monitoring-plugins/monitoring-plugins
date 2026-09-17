@@ -331,7 +331,7 @@ int main(int argc, char **argv) {
 			mysql_close(&mysql);
 
 			mopl_utils_xasprintf(&sc_replica.output,
-				num_replicas == 0
+				"%s", num_replicas == 0
 					? (config.replica_name != NULL)
 						? no_such_named_replica
 						:  _("no replicas defined")
