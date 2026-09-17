@@ -93,15 +93,13 @@ int main(int argc, char **argv) {
 	}
 
 	const check_mysql_config config = tmp_config.config;
-	char *replica_query = NULL;
-	char *replica_status_query = NULL;
-	int num_replicas = 0;
-	char *no_such_named_replica = NULL;
 
 	if (config.output_format_is_set) {
 		mp_set_format(config.output_format);
 	}
 
+	char *replica_status_query = NULL;
+	char *no_such_named_replica = NULL;
 	if (config.replica_name == NULL) {
 		replica_status_query = strdup("status");
 	} else {
@@ -302,6 +300,7 @@ int main(int argc, char **argv) {
 		mp_subcheck sc_replica = mp_subcheck_init();
 
 		/* check the replica status */
+		char *replica_query = NULL;
 		mopl_utils_xasprintf(&replica_query, "show %s %s",
 							 use_deprecated_slave_status ? "slave" : "replica",
 							 replica_status_query);
@@ -332,7 +331,7 @@ int main(int argc, char **argv) {
 		}
 
 		/* Check there is some data */
-		num_replicas = mysql_num_rows(res);
+		int num_replicas = mysql_num_rows(res);
 		if (num_replicas != 1) {
 			mysql_close(&mysql);
 
