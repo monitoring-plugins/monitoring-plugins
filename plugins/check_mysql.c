@@ -105,7 +105,8 @@ int main(int argc, char **argv) {
 	if (config.replica_name == NULL) {
 		replica_status_query = strdup("status");
 	} else {
-		mopl_utils_xasprintf(&no_such_named_replica, _("no such replica named '%s'"), config.replica_name);
+		mopl_utils_xasprintf(&no_such_named_replica, _("no such replica named '%s'"),
+							 config.replica_name);
 	}
 
 	MYSQL mysql;
@@ -141,7 +142,7 @@ int main(int argc, char **argv) {
 		if (config.ignore_auth && (mysql_errno(&mysql) == ER_ACCESS_DENIED_ERROR ||
 								   mysql_errno(&mysql) == ER_ACCESS_DENIED_NO_PASSWORD_ERROR)) {
 			mopl_utils_xasprintf(&sc_connection.output, "Version: %s (protocol %d)",
-					  mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
+								 mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
 			sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
 
 			mysql_close(&mysql);
@@ -172,8 +173,8 @@ int main(int argc, char **argv) {
 	} else {
 		// successful connection
 		sc_connection = mp_set_subcheck_state(sc_connection, STATE_OK);
-		mopl_utils_xasprintf(&sc_connection.output, "Version: %s (protocol %d)", mysql_get_server_info(&mysql),
-				  mysql_get_proto_info(&mysql));
+		mopl_utils_xasprintf(&sc_connection.output, "Version: %s (protocol %d)",
+							 mysql_get_server_info(&mysql), mysql_get_proto_info(&mysql));
 		mp_add_subcheck_to_check(&overall, sc_connection);
 	}
 
@@ -188,12 +189,13 @@ int main(int argc, char **argv) {
 		if ((mysql_errno(&mysql) == CR_SERVER_GONE_ERROR) ||
 			(mysql_errno(&mysql) == CR_SERVER_LOST) || (mysql_errno(&mysql) == CR_UNKNOWN_ERROR)) {
 			sc_stats = mp_set_subcheck_state(sc_stats, STATE_CRITICAL);
-			mopl_utils_xasprintf(&sc_stats.output, "Retrieving stats failed: %s", mysql_error(&mysql));
+			mopl_utils_xasprintf(&sc_stats.output, "Retrieving stats failed: %s",
+								 mysql_error(&mysql));
 		} else {
 			// not sure which error modes occur here, but mysql_error indicates an error
 			sc_stats = mp_set_subcheck_state(sc_stats, STATE_WARNING);
 			mopl_utils_xasprintf(&sc_stats.output, "retrieving stats caused an error: %s",
-					  mysql_error(&mysql));
+								 mysql_error(&mysql));
 		}
 
 		mp_add_subcheck_to_check(&overall, sc_stats);
@@ -210,8 +212,9 @@ int main(int argc, char **argv) {
 	/* try to fetch some perf data */
 	if (mysql_query(&mysql, "show global status") == 0) {
 		if ((res = mysql_store_result(&mysql)) == NULL) {
-			mopl_utils_xasprintf(&sc_connection.output, "query failed - status store_result error: %s",
-					  mysql_error(&mysql));
+			mopl_utils_xasprintf(&sc_connection.output,
+								 "query failed - status store_result error: %s",
+								 mysql_error(&mysql));
 			mysql_close(&mysql);
 
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
@@ -291,7 +294,8 @@ int main(int argc, char **argv) {
 				use_deprecated_slave_status = true;
 			}
 			if (config.replica_name != NULL) {
-				mopl_utils_xasprintf(&replica_status_query, "status for channel '%s'", config.replica_name);
+				mopl_utils_xasprintf(&replica_status_query, "status for channel '%s'",
+									 config.replica_name);
 			}
 		}
 
@@ -299,15 +303,16 @@ int main(int argc, char **argv) {
 
 		/* check the replica status */
 		mopl_utils_xasprintf(&replica_query, "show %s %s",
-			use_deprecated_slave_status ? "slave" : "replica",
-			replica_status_query);
+							 use_deprecated_slave_status ? "slave" : "replica",
+							 replica_status_query);
 
 		if (verbose) {
 			printf("Replica query: %s\n", replica_query);
 		}
 
 		if (mysql_query(&mysql, replica_query) != 0) {
-			mopl_utils_xasprintf(&sc_replica.output, "replica query error: %s", mysql_error(&mysql));
+			mopl_utils_xasprintf(&sc_replica.output, "replica query error: %s",
+								 mysql_error(&mysql));
 			mysql_close(&mysql);
 
 			sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
@@ -317,7 +322,8 @@ int main(int argc, char **argv) {
 
 		/* store the result */
 		if ((res = mysql_store_result(&mysql)) == NULL) {
-			mopl_utils_xasprintf(&sc_replica.output, "replica store_result error: %s", mysql_error(&mysql));
+			mopl_utils_xasprintf(&sc_replica.output, "replica store_result error: %s",
+								 mysql_error(&mysql));
 			mysql_close(&mysql);
 
 			sc_replica = mp_set_subcheck_state(sc_replica, STATE_CRITICAL);
@@ -330,13 +336,12 @@ int main(int argc, char **argv) {
 		if (num_replicas != 1) {
 			mysql_close(&mysql);
 
-			mopl_utils_xasprintf(&sc_replica.output,
-				"%s", num_replicas == 0
-					? (config.replica_name != NULL)
-						? no_such_named_replica
-						:  _("no replicas defined")
-					:  _("too many replicas defined, please provide a replica name as an argument")
-			);
+			mopl_utils_xasprintf(
+				&sc_replica.output, "%s",
+				num_replicas == 0
+					? (config.replica_name != NULL) ? no_such_named_replica
+													: _("no replicas defined")
+					: _("too many replicas defined, please provide a replica name as an argument"));
 
 			sc_replica = mp_set_subcheck_state(sc_replica, STATE_WARNING);
 			mp_add_subcheck_to_check(&overall, sc_replica);
@@ -345,7 +350,8 @@ int main(int argc, char **argv) {
 
 		/* fetch the first row */
 		if ((row = mysql_fetch_row(res)) == NULL) {
-			mopl_utils_xasprintf(&sc_replica.output, "replica fetch row error: %s", mysql_error(&mysql));
+			mopl_utils_xasprintf(&sc_replica.output, "replica fetch row error: %s",
+								 mysql_error(&mysql));
 			mysql_free_result(res);
 			mysql_close(&mysql);
 
@@ -418,7 +424,8 @@ int main(int argc, char **argv) {
 				seconds_behind_field != -1 ? row[seconds_behind_field] : "Unknown");
 
 			/* Raise critical error if SQL THREAD or IO THREAD are stopped, but only if there are no
-			 * mysqldump threads running AND there is no until condition set AND last_errno is not set */
+			 * mysqldump threads running AND there is no until condition set AND last_errno is not
+			 * set */
 			if (((strcmp(row[until_condition_field], "None") == 0) &&
 				 ((strcmp(row[replica_io_field], "Yes") != 0) ||
 				  (strcmp(row[replica_sql_field], "Yes") != 0))) ||
@@ -447,7 +454,7 @@ int main(int argc, char **argv) {
 					mp_exit(overall);
 				} else {
 					mopl_utils_xasprintf(&sc_replica.output, "%s %s", sc_replica.output,
-							  " Mysqldump: in progress");
+										 " Mysqldump: in progress");
 				}
 			}
 
@@ -476,7 +483,8 @@ int main(int argc, char **argv) {
 				sc_replica = mp_set_subcheck_state(sc_replica, status);
 
 				if (status != STATE_OK) {
-					mopl_utils_xasprintf(&sc_replica.output, "slow replica - %s", sc_replica.output);
+					mopl_utils_xasprintf(&sc_replica.output, "slow replica - %s",
+										 sc_replica.output);
 					mp_add_subcheck_to_check(&overall, sc_replica);
 					mp_exit(overall);
 				}
@@ -734,8 +742,8 @@ void print_help(void) {
 						 "in favour of check-replica, which does the same"));
 	printf(" %s\n", "--check-replica");
 	printf("    %s\n", _("Check if the replica thread is running properly."));
-	printf (" %s\n", "-N, --replica-name");
-	printf ("    %s\n", _("Use a named replica"));
+	printf(" %s\n", "-N, --replica-name");
+	printf("    %s\n", _("Use a named replica"));
 	printf(" %s\n", "-w, --warning");
 	printf("    %s\n",
 		   _("Exit with WARNING status if replica server is more than INTEGER seconds"));
