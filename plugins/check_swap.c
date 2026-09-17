@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
 	}
 
 	mopl_utils_xasprintf(&sc1.output, _("%g%% free (%lluMiB out of %lluMiB)"), (100 - percent_used),
-			  data.metrics.free >> 20, data.metrics.total >> 20);
+						 data.metrics.free >> 20, data.metrics.total >> 20);
 
 	overall.summary = "Swap";
 	mp_add_subcheck_to_check(&overall, sc1);
@@ -301,7 +301,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			}
 			mopl_utils_usage4(_("Warning threshold be positive integer or "
-					 "percentage!"));
+								"percentage!"));
 		}
 		case 'c': /* critical size threshold */
 		{
@@ -331,7 +331,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 				break;
 			}
 			mopl_utils_usage4(_("Critical threshold be positive integer or "
-					 "percentage!"));
+								"percentage!"));
 		}
 		case 'a': /* all swap */
 			conf_wrapper.config.allswaps = true;
@@ -339,7 +339,7 @@ swap_config_wrapper process_arguments(int argc, char **argv) {
 		case 'n':
 			if ((conf_wrapper.config.no_swap_state = mp_translate_state(optarg)) == ERROR) {
 				mopl_utils_usage4(_("no-swap result must be a valid state name (OK, "
-						 "WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
+									"WARNING, CRITICAL, UNKNOWN) or integer (0-3)."));
 			}
 			break;
 		case 'v': /* verbose */

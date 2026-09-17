@@ -355,13 +355,13 @@ int main(int argc, char **argv) {
 				if (temporary_result == STATE_WARNING) {
 					warn++;
 					mopl_utils_xasprintf(&config.fails, "%s%s%s", config.fails,
-							  (strcmp(config.fails, "") ? ", " : ""), procprog);
+										 (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
 				if (temporary_result == STATE_CRITICAL) {
 					crit++;
 					mopl_utils_xasprintf(&config.fails, "%s%s%s", config.fails,
-							  (strcmp(config.fails, "") ? ", " : ""), procprog);
+										 (strcmp(config.fails, "") ? ", " : ""), procprog);
 					result = max_state(result, temporary_result);
 				}
 			}
@@ -491,8 +491,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.ppid, tmp) == 1) {
 				mopl_utils_xasprintf(&result.config.fmt, "%s%sPPID = %d",
-						  (result.config.fmt ? result.config.fmt : ""),
-						  (result.config.options ? ", " : ""), result.config.ppid);
+									 (result.config.fmt ? result.config.fmt : ""),
+									 (result.config.options ? ", " : ""), result.config.ppid);
 				result.config.options |= PPID;
 				break;
 			}
@@ -505,8 +505,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.statopts = optarg;
 			}
 			mopl_utils_xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), result.config.statopts);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), result.config.statopts);
 			result.config.options |= STAT;
 			break;
 		case 'u': /* user or user id */ {
@@ -530,8 +530,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 
 			char *user = pw->pw_name;
 			mopl_utils_xasprintf(&result.config.fmt, "%s%sUID = %d (%s)",
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), result.config.uid, user);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), result.config.uid, user);
 			result.config.options |= USER;
 		} break;
 		case 'C': /* command */
@@ -542,8 +542,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.prog = optarg;
 			}
 			mopl_utils_xasprintf(&result.config.fmt, _("%s%scommand name '%s'"),
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), result.config.prog);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), result.config.prog);
 			result.config.options |= PROG;
 			break;
 		case 'X':
@@ -553,8 +553,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.exclude_progs = optarg;
 			}
 			mopl_utils_xasprintf(&result.config.fmt, _("%s%sexclude progs '%s'"),
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), result.config.exclude_progs);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), result.config.exclude_progs);
 			char *tmp_pointer = strtok(result.config.exclude_progs, ",");
 
 			while (tmp_pointer) {
@@ -576,8 +576,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.args = optarg;
 			}
 			mopl_utils_xasprintf(&result.config.fmt, "%s%sargs '%s'",
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), result.config.args);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), result.config.args);
 			result.config.options |= ARGS;
 			break;
 		case CHAR_MAX + 1: {
@@ -599,16 +599,16 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 				index++;
 			}
 			mopl_utils_xasprintf(&result.config.fmt, "%s%sregex args '%s'",
-					  (result.config.fmt ? result.config.fmt : ""),
-					  (result.config.options ? ", " : ""), temp_string);
+								 (result.config.fmt ? result.config.fmt : ""),
+								 (result.config.options ? ", " : ""), temp_string);
 			result.config.options |= EREG_ARGS;
 		} break;
 		case 'r': { /* RSS */
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.rss, tmp) == 1) {
 				mopl_utils_xasprintf(&result.config.fmt, "%s%sRSS >= %d",
-						  (result.config.fmt ? result.config.fmt : ""),
-						  (result.config.options ? ", " : ""), result.config.rss);
+									 (result.config.fmt ? result.config.fmt : ""),
+									 (result.config.options ? ", " : ""), result.config.rss);
 				result.config.options |= RSS;
 				break;
 			}
@@ -618,8 +618,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%d%[^0-9]", &result.config.vsz, tmp) == 1) {
 				mopl_utils_xasprintf(&result.config.fmt, "%s%sVSZ >= %d",
-						  (result.config.fmt ? result.config.fmt : ""),
-						  (result.config.options ? ", " : ""), result.config.vsz);
+									 (result.config.fmt ? result.config.fmt : ""),
+									 (result.config.options ? ", " : ""), result.config.vsz);
 				result.config.options |= VSZ;
 				break;
 			}
@@ -630,8 +630,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 			static char tmp[MAX_INPUT_BUFFER];
 			if (sscanf(optarg, "%f%[^0-9.]", &result.config.pcpu, tmp) == 1) {
 				mopl_utils_xasprintf(&result.config.fmt, "%s%sPCPU >= %.2f",
-						  (result.config.fmt ? result.config.fmt : ""),
-						  (result.config.options ? ", " : ""), result.config.pcpu);
+									 (result.config.fmt ? result.config.fmt : ""),
+									 (result.config.options ? ", " : ""), result.config.pcpu);
 				result.config.options |= PCPU;
 				break;
 			}
@@ -686,8 +686,8 @@ check_procs_config_wrapper process_arguments(int argc, char **argv) {
 	if (result.config.statopts == NULL && argv[index]) {
 		mopl_utils_xasprintf(&result.config.statopts, "%s", argv[index++]);
 		mopl_utils_xasprintf(&result.config.fmt, _("%s%sSTATE = %s"),
-				  (result.config.fmt ? result.config.fmt : ""), (result.config.options ? ", " : ""),
-				  result.config.statopts);
+							 (result.config.fmt ? result.config.fmt : ""),
+							 (result.config.options ? ", " : ""), result.config.statopts);
 		result.config.options |= STAT;
 	}
 
