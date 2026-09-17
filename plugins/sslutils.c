@@ -40,7 +40,8 @@ static SSL *SSL_context = NULL;
 int mopl_net_tls_init(int socket) { return mopl_net_tls_init_with_hostname(socket, NULL); }
 
 int mopl_net_tls_init_with_hostname(int socket, char *host_name) {
-	return mopl_net_tls_init_with_hostname_and_version(socket, host_name, MOPL_NET_TLS_DEFAULT_VERSION);
+	return mopl_net_tls_init_with_hostname_and_version(socket, host_name,
+													   MOPL_NET_TLS_DEFAULT_VERSION);
 }
 
 int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name,
@@ -159,7 +160,7 @@ int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name
 		break;
 #	endif
 	case MOPL_NET_TLS_DEFAULT_VERSION: {
-			// do nothing special here
+		// do nothing special here
 	}
 	}
 
@@ -443,8 +444,8 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 
 	int time_remaining;
 	if (days_left > 0 && days_left <= days_till_exp_warn) {
-		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %d day(s) (%s)"), commonName,
-				  days_left, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %d day(s) (%s)"),
+							 commonName, days_left, timestamp);
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 		} else {
@@ -457,8 +458,9 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 			time_remaining = (int)time_left / 60;
 		}
 
-		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %u %s (%s)"), commonName,
-				  time_remaining, time_left >= 3600 ? "hours" : "minutes", timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expires in %u %s (%s)"),
+							 commonName, time_remaining, time_left >= 3600 ? "hours" : "minutes",
+							 timestamp);
 
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
@@ -466,17 +468,20 @@ mp_subcheck mp_net_ssl_check_certificate(X509 *certificate, int days_till_exp_wa
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		}
 	} else if (time_left < 0) {
-		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' expired on %s"), commonName,
+							 timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 	} else if (days_left == 0) {
-		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' just expired (%s)"), commonName,
+							 timestamp);
 		if (days_left > days_till_exp_crit) {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_WARNING);
 		} else {
 			sc_cert = mp_set_subcheck_state(sc_cert, STATE_CRITICAL);
 		}
 	} else {
-		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName, timestamp);
+		mopl_utils_xasprintf(&sc_cert.output, _("Certificate '%s' will expire on %s"), commonName,
+							 timestamp);
 		sc_cert = mp_set_subcheck_state(sc_cert, STATE_OK);
 	}
 	X509_free(certificate);

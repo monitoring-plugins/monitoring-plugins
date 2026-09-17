@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 	/* create the command line to execute */
 	char *command_line = NULL;
 	mopl_utils_xasprintf(&command_line, "%s -raw %s -%s %s", PATH_TO_QSTAT, QSTAT_DATA_DELIMITER,
-			  config.game_type, config.server_ip);
+						 config.game_type, config.server_ip);
 
 	if (config.port) {
 		mopl_utils_xasprintf(&command_line, "%s:%-d", command_line, config.port);
@@ -134,10 +134,11 @@ int main(int argc, char **argv) {
 		printf("OK: %s/%s %s (%s), Ping: %s ms|%s %s\n", ret[config.qstat_game_players],
 			   ret[config.qstat_game_players_max], ret[config.qstat_game_field],
 			   ret[config.qstat_map_field], ret[config.qstat_ping_field],
-			   mopl_utils_perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0, false, 0,
-						true, 0, true, atol(ret[config.qstat_game_players_max])),
-			   mopl_utils_fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false, 0, false, 0,
-						 true, 0, false, 0));
+			   mopl_utils_perfdata("players", atol(ret[config.qstat_game_players]), "", false, 0,
+								   false, 0, true, 0, true,
+								   atol(ret[config.qstat_game_players_max])),
+			   mopl_utils_fperfdata("ping", strtod(ret[config.qstat_ping_field], NULL), "", false,
+									0, false, 0, true, 0, false, 0));
 	}
 
 	exit(result);

@@ -264,18 +264,20 @@ int main(int argc, char **argv) {
 
 	// Try initial connection
 	if (mopl_net_connect(config.server_address, config.server_port, &socket_descriptor,
-					   config.protocol) == STATE_CRITICAL) {
+						 config.protocol) == STATE_CRITICAL) {
 		// Early exit here, we got connection refused
 		inital_connect_result =
 			mp_set_subcheck_state(inital_connect_result, config.econn_refuse_state);
-		mopl_utils_xasprintf(&inital_connect_result.output, "Connection to %s on port %i was REFUSED",
-				  config.server_address, config.server_port);
+		mopl_utils_xasprintf(&inital_connect_result.output,
+							 "Connection to %s on port %i was REFUSED", config.server_address,
+							 config.server_port);
 		mp_add_subcheck_to_check(&overall, inital_connect_result);
 		mp_exit(overall);
 	} else {
 		inital_connect_result = mp_set_subcheck_state(inital_connect_result, STATE_OK);
-		mopl_utils_xasprintf(&inital_connect_result.output, "Connection to %s on port %i was a SUCCESS",
-				  config.server_address, config.server_port);
+		mopl_utils_xasprintf(&inital_connect_result.output,
+							 "Connection to %s on port %i was a SUCCESS", config.server_address,
+							 config.server_port);
 		mp_add_subcheck_to_check(&overall, inital_connect_result);
 	}
 
@@ -299,18 +301,19 @@ int main(int argc, char **argv) {
 
 				if (result == STATE_OK) {
 					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
-							  "Certificate lifetime is within thresholds");
+										 "Certificate lifetime is within thresholds");
 				} else if (result == STATE_WARNING) {
 					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
-							  "Certificate lifetime is violating warning threshold (%i)",
-							  config.days_till_exp_warn);
+										 "Certificate lifetime is violating warning threshold (%i)",
+										 config.days_till_exp_warn);
 				} else if (result == STATE_CRITICAL) {
-					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
-							  "Certificate lifetime is violating critical threshold (%i)",
-							  config.days_till_exp_crit);
+					mopl_utils_xasprintf(
+						&tls_certificate_lifetime_result.output,
+						"Certificate lifetime is violating critical threshold (%i)",
+						config.days_till_exp_crit);
 				} else {
 					mopl_utils_xasprintf(&tls_certificate_lifetime_result.output,
-							  "Certificate lifetime is somehow unknown");
+										 "Certificate lifetime is somehow unknown");
 				}
 
 				mp_add_subcheck_to_subcheck(&tls_connection_result,
@@ -408,7 +411,8 @@ int main(int argc, char **argv) {
 
 		/* no data when expected, so return critical */
 		if (len == 0) {
-			mopl_utils_xasprintf(&expected_data_result.output, "Received no data when some was expected");
+			mopl_utils_xasprintf(&expected_data_result.output,
+								 "Received no data when some was expected");
 			expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_CRITICAL);
 			mp_add_subcheck_to_check(&overall, expected_data_result);
 			mp_exit(overall);
@@ -448,8 +452,8 @@ int main(int argc, char **argv) {
 
 	if (config.critical_time_set && elapsed_time > config.critical_time) {
 		mopl_utils_xasprintf(&elapsed_time_result.output,
-				  "Connection time %fs exceeded critical threshold (%f)", elapsed_time,
-				  config.critical_time);
+							 "Connection time %fs exceeded critical threshold (%f)", elapsed_time,
+							 config.critical_time);
 
 		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_CRITICAL);
 		time_pd.crit_present = true;
@@ -461,8 +465,8 @@ int main(int argc, char **argv) {
 		time_pd.crit = crit_val;
 	} else if (config.warning_time_set && elapsed_time > config.warning_time) {
 		mopl_utils_xasprintf(&elapsed_time_result.output,
-				  "Connection time %fs exceeded warning threshold (%f)", elapsed_time,
-				  config.critical_time);
+							 "Connection time %fs exceeded warning threshold (%f)", elapsed_time,
+							 config.critical_time);
 
 		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_WARNING);
 		time_pd.warn_present = true;
@@ -473,8 +477,8 @@ int main(int argc, char **argv) {
 		time_pd.warn = warn_val;
 	} else {
 		elapsed_time_result = mp_set_subcheck_state(elapsed_time_result, STATE_OK);
-		mopl_utils_xasprintf(&elapsed_time_result.output, "Connection time %fs is within thresholds",
-				  elapsed_time);
+		mopl_utils_xasprintf(&elapsed_time_result.output,
+							 "Connection time %fs is within thresholds", elapsed_time);
 	}
 
 	mp_add_perfdata_to_subcheck(&elapsed_time_result, time_pd);
@@ -488,7 +492,8 @@ int main(int argc, char **argv) {
 		mp_add_subcheck_to_check(&overall, expected_data_result);
 	} else if (match == NP_MATCH_SUCCESS) {
 		expected_data_result = mp_set_subcheck_state(expected_data_result, STATE_OK);
-		mopl_utils_xasprintf(&expected_data_result.output, "The answer of the server matched the expectation");
+		mopl_utils_xasprintf(&expected_data_result.output,
+							 "The answer of the server matched the expectation");
 		mp_add_subcheck_to_check(&overall, expected_data_result);
 	}
 

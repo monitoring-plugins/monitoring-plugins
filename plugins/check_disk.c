@@ -172,7 +172,8 @@ int main(int argc, char **argv) {
 
 	if (config.path_select_list.length == 0) {
 		mp_subcheck none_sc = mp_subcheck_init();
-		mopl_utils_xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
+		mopl_utils_xasprintf(&none_sc.output,
+							 "No filesystems were found for the provided parameters");
 		if (config.ignore_missing) {
 			none_sc = mp_set_subcheck_state(none_sc, STATE_OK);
 		} else {
@@ -348,7 +349,8 @@ int main(int argc, char **argv) {
 	} else {
 		// Apparently no machting fs found
 		mp_subcheck none_sc = mp_subcheck_init();
-		mopl_utils_xasprintf(&none_sc.output, "No filesystems were found for the provided parameters");
+		mopl_utils_xasprintf(&none_sc.output,
+							 "No filesystems were found for the provided parameters");
 
 		if (config.ignore_missing) {
 			none_sc = mp_set_subcheck_state(none_sc, STATE_OK);
@@ -1192,7 +1194,8 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 	mopl_utils_xasprintf(&result.output, "%s", measurement_unit.name);
 
 	if (!measurement_unit.is_group && measurement_unit.filesystem_type) {
-		mopl_utils_xasprintf(&result.output, "%s (%s)", result.output, measurement_unit.filesystem_type);
+		mopl_utils_xasprintf(&result.output, "%s (%s)", result.output,
+							 measurement_unit.filesystem_type);
 	}
 
 	/* Threshold comparisons */
@@ -1204,12 +1207,14 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 	if (unit != Humanized) {
 		mopl_utils_xasprintf(&freespace_bytes_sc.output, "Free space absolute: %ju%s (of %ju%s)",
-				  (uintmax_t)(measurement_unit.free_bytes / unit), get_unit_string(unit),
-				  (uintmax_t)(measurement_unit.total_bytes / unit), get_unit_string(unit));
+							 (uintmax_t)(measurement_unit.free_bytes / unit), get_unit_string(unit),
+							 (uintmax_t)(measurement_unit.total_bytes / unit),
+							 get_unit_string(unit));
 	} else {
-		mopl_utils_xasprintf(&freespace_bytes_sc.output, "Free space absolute: %s (of %s)",
-				  humanize_byte_value(measurement_unit.free_bytes, false),
-				  humanize_byte_value((unsigned long long)measurement_unit.total_bytes, false));
+		mopl_utils_xasprintf(
+			&freespace_bytes_sc.output, "Free space absolute: %s (of %s)",
+			humanize_byte_value(measurement_unit.free_bytes, false),
+			humanize_byte_value((unsigned long long)measurement_unit.total_bytes, false));
 	}
 
 	// Free space just internally for computation
@@ -1293,7 +1298,8 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 
 	double free_percentage =
 		calculate_percent(measurement_unit.free_bytes, measurement_unit.total_bytes);
-	mopl_utils_xasprintf(&freespace_percent_sc.output, "Free space percentage: %g%%", free_percentage);
+	mopl_utils_xasprintf(&freespace_percent_sc.output, "Free space percentage: %g%%",
+						 free_percentage);
 
 	// Using perfdata here just to get to the test result
 	mp_perfdata free_space_percent_pd = perfdata_init();
@@ -1327,8 +1333,8 @@ mp_subcheck evaluate_filesystem(measurement_unit measurement_unit, bool display_
 		}
 
 		mopl_utils_xasprintf(&freeindodes_percent_sc.output, "Inodes free: %g%% (%ju of %ju)",
-				  free_inode_percentage, measurement_unit.inodes_free,
-				  measurement_unit.inodes_total);
+							 free_inode_percentage, measurement_unit.inodes_free,
+							 measurement_unit.inodes_total);
 
 		mp_perfdata inodes_pd = perfdata_init();
 		mopl_utils_xasprintf(&inodes_pd.label, "%s (inodes)", measurement_unit.name);

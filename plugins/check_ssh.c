@@ -253,7 +253,8 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	if (result != STATE_OK) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
 		mopl_utils_xasprintf(&connection_sc.output,
-				  "Failed to establish TCP connection to Host %s and Port %d", haddr, hport);
+							 "Failed to establish TCP connection to Host %s and Port %d", haddr,
+							 hport);
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return result;
 	}
@@ -312,7 +313,8 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 
 	if (version_control_string == NULL) {
 		connection_sc = mp_set_subcheck_state(connection_sc, STATE_CRITICAL);
-		mopl_utils_xasprintf(&connection_sc.output, "%s", "SSH CRITICAL - No version control string received");
+		mopl_utils_xasprintf(&connection_sc.output, "%s",
+							 "SSH CRITICAL - No version control string received");
 		mp_add_subcheck_to_check(overall, connection_sc);
 		return OK;
 	}
@@ -364,15 +366,15 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	mp_subcheck protocol_validity_sc = mp_subcheck_init();
 	if (strlen(ssh_proto) == 0 || strlen(ssh_server) == 0) {
 		protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_CRITICAL);
-		mopl_utils_xasprintf(&protocol_validity_sc.output, "Invalid protocol version control string %s",
-				  version_control_string);
+		mopl_utils_xasprintf(&protocol_validity_sc.output,
+							 "Invalid protocol version control string %s", version_control_string);
 		mp_add_subcheck_to_check(overall, protocol_validity_sc);
 		return OK;
 	}
 
 	protocol_validity_sc = mp_set_subcheck_state(protocol_validity_sc, STATE_OK);
 	mopl_utils_xasprintf(&protocol_validity_sc.output, "Valid protocol version control string %s",
-			  version_control_string);
+						 version_control_string);
 	mp_add_subcheck_to_check(overall, protocol_validity_sc);
 
 	ssh_proto[strspn(ssh_proto, "0123456789. ")] = 0;
@@ -387,8 +389,9 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	if (desired_remote_version && strcmp(desired_remote_version, ssh_server)) {
 		mp_subcheck remote_version_sc = mp_subcheck_init();
 		remote_version_sc = mp_set_subcheck_state(remote_version_sc, STATE_CRITICAL);
-		mopl_utils_xasprintf(&remote_version_sc.output, _("%s (protocol %s) version mismatch, expected '%s'"),
-				  ssh_server, ssh_proto, desired_remote_version);
+		mopl_utils_xasprintf(&remote_version_sc.output,
+							 _("%s (protocol %s) version mismatch, expected '%s'"), ssh_server,
+							 ssh_proto, desired_remote_version);
 		close(socket);
 		mp_add_subcheck_to_check(overall, remote_version_sc);
 		return OK;
@@ -407,12 +410,13 @@ int ssh_connect(mp_check *overall, char *haddr, int hport, char *desired_remote_
 	if (desired_remote_protocol && strcmp(desired_remote_protocol, ssh_proto)) {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_CRITICAL);
 		mopl_utils_xasprintf(&protocol_version_sc.output,
-				  _("%s (protocol %s) protocol version mismatch, expected '%s'"), ssh_server,
-				  ssh_proto, desired_remote_protocol);
+							 _("%s (protocol %s) protocol version mismatch, expected '%s'"),
+							 ssh_server, ssh_proto, desired_remote_protocol);
 	} else {
 		protocol_version_sc = mp_set_subcheck_state(protocol_version_sc, STATE_OK);
-		mopl_utils_xasprintf(&protocol_version_sc.output, "SSH server version: %s (protocol version: %s)",
-				  ssh_server, ssh_proto);
+		mopl_utils_xasprintf(&protocol_version_sc.output,
+							 "SSH server version: %s (protocol version: %s)", ssh_server,
+							 ssh_proto);
 	}
 
 	mp_add_subcheck_to_check(overall, protocol_version_sc);

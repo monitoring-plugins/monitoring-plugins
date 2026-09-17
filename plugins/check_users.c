@@ -132,13 +132,13 @@ int main(int argc, char **argv) {
 	switch (tmp_status) {
 	case STATE_WARNING:
 		mopl_utils_xasprintf(&sc_users.output,
-				  "%d users currently logged in. This violates the warning threshold",
-				  user_wrapper.users);
+							 "%d users currently logged in. This violates the warning threshold",
+							 user_wrapper.users);
 		break;
 	case STATE_CRITICAL:
 		mopl_utils_xasprintf(&sc_users.output,
-				  "%d users currently logged in. This violates the critical threshold",
-				  user_wrapper.users);
+							 "%d users currently logged in. This violates the critical threshold",
+							 user_wrapper.users);
 		break;
 	default:
 		mopl_utils_xasprintf(&sc_users.output, "%d users currently logged in", user_wrapper.users);

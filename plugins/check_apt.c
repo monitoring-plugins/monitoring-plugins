@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
 
 	mp_subcheck sc_security_updates = mp_subcheck_init();
 	mopl_utils_xasprintf(&sc_security_updates.output, "Security updates available: %zu",
-			  number_of_security_updates);
+						 number_of_security_updates);
 	mp_add_perfdata_to_subcheck(&sc_security_updates, pd_security_updates);
 
 	if (number_of_security_updates > 0) {
@@ -190,14 +190,14 @@ int main(int argc, char **argv) {
 			  cmpstringp);
 
 		for (size_t i = 0; i < number_of_security_updates; i++) {
-			mopl_utils_xasprintf(&sc_security_updates.output, "%s\n%s (security)", sc_security_updates.output,
-					  secpackages_list[i]);
+			mopl_utils_xasprintf(&sc_security_updates.output, "%s\n%s (security)",
+								 sc_security_updates.output, secpackages_list[i]);
 		}
 
 		if (!config.only_critical) {
 			for (size_t i = 0; i < packages_available - number_of_security_updates; i++) {
 				mopl_utils_xasprintf(&sc_other_updates.output, "%s\n%s", sc_other_updates.output,
-						  packages_list[i]);
+									 packages_list[i]);
 			}
 		}
 	}

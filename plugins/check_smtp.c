@@ -197,7 +197,8 @@ int main(int argc, char **argv) {
 	if (tcp_result != STATE_OK) {
 		// Connect failed
 		sc_tcp_connect = mp_set_subcheck_state(sc_tcp_connect, STATE_CRITICAL);
-		mopl_utils_xasprintf(&sc_tcp_connect.output, "TCP connect to '%s' failed", config.server_address);
+		mopl_utils_xasprintf(&sc_tcp_connect.output, "TCP connect to '%s' failed",
+							 config.server_address);
 		mp_add_subcheck_to_check(&overall, sc_tcp_connect);
 		mp_exit(overall);
 	}
@@ -365,13 +366,15 @@ int main(int argc, char **argv) {
 
 			if (cert_check_result.result_state != STATE_OK &&
 				config.ignore_certificate_expiration) {
-				mopl_utils_xasprintf(&sc_cert_check.output,
-						  "Remaining certificate lifetime: %d days. Expiration will be ignored",
-						  (int)(cert_check_result.remaining_seconds / 86400));
+				mopl_utils_xasprintf(
+					&sc_cert_check.output,
+					"Remaining certificate lifetime: %d days. Expiration will be ignored",
+					(int)(cert_check_result.remaining_seconds / 86400));
 				sc_cert_check = mp_set_subcheck_state(sc_cert_check, STATE_OK);
 			} else {
-				mopl_utils_xasprintf(&sc_cert_check.output, "Remaining certificate lifetime: %d days",
-						  (int)(cert_check_result.remaining_seconds / 86400));
+				mopl_utils_xasprintf(&sc_cert_check.output,
+									 "Remaining certificate lifetime: %d days",
+									 (int)(cert_check_result.remaining_seconds / 86400));
 				sc_cert_check =
 					mp_set_subcheck_state(sc_cert_check, cert_check_result.result_state);
 			}
@@ -411,17 +414,19 @@ int main(int argc, char **argv) {
 	if (!strstr(server_response, config.server_expect)) {
 		sc_expect_response = mp_set_subcheck_state(sc_expect_response, STATE_WARNING);
 		if (config.server_port == SMTP_PORT) {
-			mopl_utils_xasprintf(&sc_expect_response.output, _("invalid SMTP response received from host: %s"),
-					  server_response);
+			mopl_utils_xasprintf(&sc_expect_response.output,
+								 _("invalid SMTP response received from host: %s"),
+								 server_response);
 		} else {
 			mopl_utils_xasprintf(&sc_expect_response.output,
-					  _("invalid SMTP response received from host on port %d: %s"),
-					  config.server_port, server_response);
+								 _("invalid SMTP response received from host on port %d: %s"),
+								 config.server_port, server_response);
 		}
 		exit(STATE_WARNING);
 	} else {
-		mopl_utils_xasprintf(&sc_expect_response.output, "received valid SMTP response '%s' from host: '%s'",
-				  config.server_expect, server_response);
+		mopl_utils_xasprintf(&sc_expect_response.output,
+							 "received valid SMTP response '%s' from host: '%s'",
+							 config.server_expect, server_response);
 		sc_expect_response = mp_set_subcheck_state(sc_expect_response, STATE_OK);
 	}
 
@@ -462,16 +467,19 @@ int main(int argc, char **argv) {
 			int excode = regexec(&preg, buffer, 10, pmatch, eflags);
 			mp_subcheck sc_expected_responses = mp_subcheck_init();
 			if (excode == 0) {
-				mopl_utils_xasprintf(&sc_expected_responses.output, "valid response '%s' to command '%s'",
-						  buffer, config.commands[counter]);
+				mopl_utils_xasprintf(&sc_expected_responses.output,
+									 "valid response '%s' to command '%s'", buffer,
+									 config.commands[counter]);
 				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_OK);
 			} else if (excode == REG_NOMATCH) {
 				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_WARNING);
-				mopl_utils_xasprintf(&sc_expected_responses.output, "invalid response '%s' to command '%s'",
-						  buffer, config.commands[counter]);
+				mopl_utils_xasprintf(&sc_expected_responses.output,
+									 "invalid response '%s' to command '%s'", buffer,
+									 config.commands[counter]);
 			} else {
 				regerror(excode, &preg, errbuf, MAX_INPUT_BUFFER);
-				mopl_utils_xasprintf(&sc_expected_responses.output, "regexec execute error: %s", errbuf);
+				mopl_utils_xasprintf(&sc_expected_responses.output, "regexec execute error: %s",
+									 errbuf);
 				sc_expected_responses = mp_set_subcheck_state(sc_expected_responses, STATE_UNKNOWN);
 			}
 
@@ -510,7 +518,8 @@ int main(int argc, char **argv) {
 				}
 
 				if (strncmp(buffer, "334", 3) != 0) {
-					mopl_utils_xasprintf(&sc_auth.output, "invalid response received after AUTH LOGIN");
+					mopl_utils_xasprintf(&sc_auth.output,
+										 "invalid response received after AUTH LOGIN");
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
 					break;
 				}
@@ -535,7 +544,8 @@ int main(int argc, char **argv) {
 				}
 
 				if (strncmp(buffer, "334", 3) != 0) {
-					mopl_utils_xasprintf(&sc_auth.output, "invalid response received after authuser");
+					mopl_utils_xasprintf(&sc_auth.output,
+										 "invalid response received after authuser");
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
 					break;
 				}
@@ -561,7 +571,8 @@ int main(int argc, char **argv) {
 				}
 
 				if (strncmp(buffer, "235", 3) != 0) {
-					mopl_utils_xasprintf(&sc_auth.output, "invalid response received after authpass");
+					mopl_utils_xasprintf(&sc_auth.output,
+										 "invalid response received after authpass");
 					sc_auth = mp_set_subcheck_state(sc_auth, STATE_CRITICAL);
 					break;
 				}

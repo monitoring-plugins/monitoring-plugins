@@ -217,7 +217,6 @@ int main(int argc, char **argv) {
 	test = np_escaped_string("everything");
 	ok(strcmp(test, "everything") == 0, "everything okay");
 
-
 	ok(mp_suid() == false, "Test aren't suid");
 
 	/* base states with random case */
