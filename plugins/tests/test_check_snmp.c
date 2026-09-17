@@ -205,6 +205,8 @@ void test_read_state(state_key test_state, const char test_string[], const char 
 }
 
 int main(int argc, char **argv) {
+	plan_tests(22);
+
 	// Generate test directory
 	char *base_path = dirname(argv[0]);
 	const char test_dir_name[] = "/test";
