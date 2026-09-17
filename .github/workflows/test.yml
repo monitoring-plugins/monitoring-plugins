@@ -43,10 +43,10 @@ jobs:
               -v /var/run/utmp:/var/run/utmp \
               --mount source=tmp-vol,destination=/src,target=/media/ramdisk2 \
               ${{ matrix.distro }} \
-              /bin/sh -c '${{ matrix.prepare }} && \
-                tools/setup && \
-                ./configure --enable-libtap && \
-                make && \
+              /bin/sh -c '${{ matrix.prepare }} > /dev/null && \
+                tools/setup > /dev/null && \
+                ./configure --enable-libtap > /dev/null && \
+                make > /dev/null && \
                 make test && \
                 make dist && \
                 tar zxf monitoring-plugins-*.tar.gz && \
