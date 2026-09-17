@@ -143,8 +143,8 @@ int main(int argc, char **argv) {
 	if (result != STATE_OK) {
 		die(result, _("TIME %s - %d second response time|%s\n"), state_text(result), (int)conntime,
 			mopl_utils_perfdata("time", (long)conntime, "s", config.check_warning_time,
-					 (long)config.warning_time, config.check_critical_time,
-					 (long)config.critical_time, true, 0, false, 0));
+								(long)config.warning_time, config.check_critical_time,
+								(long)config.critical_time, true, 0, false, 0));
 	}
 
 	unsigned long server_time;
@@ -164,10 +164,11 @@ int main(int argc, char **argv) {
 
 	printf(_("TIME %s - %lu second time difference|%s %s\n"), state_text(result), diff_time,
 		   mopl_utils_perfdata("time", (long)conntime, "s", config.check_warning_time,
-					(long)config.warning_time, config.check_critical_time,
-					(long)config.critical_time, true, 0, false, 0),
-		   mopl_utils_perfdata("offset", diff_time, "s", config.check_warning_diff, config.warning_diff,
-					config.check_critical_diff, config.critical_diff, true, 0, false, 0));
+							   (long)config.warning_time, config.check_critical_time,
+							   (long)config.critical_time, true, 0, false, 0),
+		   mopl_utils_perfdata("offset", diff_time, "s", config.check_warning_diff,
+							   config.warning_diff, config.check_critical_diff,
+							   config.critical_diff, true, 0, false, 0));
 	return result;
 }
 

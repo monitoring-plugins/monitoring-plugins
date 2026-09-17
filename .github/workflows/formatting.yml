@@ -26,9 +26,10 @@ jobs:
               --privileged=true \
               -w /src -v ${PWD}:/src \
               debian:stable \
-              /bin/sh -c 'apt install -y clang-format --update && \
-              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.h'  -exec clang-format -Werror --dry-run {} \+ || \
-              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.h'  -exec clang-format -Werror --dry-run {} \+
-              '
+              /bin/sh -c 'apt install -y clang-format --update > /dev/null && \
+              echo Checking .c files format && \
+              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.c'  -exec clang-format -Werror --dry-run {} \+ && \
+              echo Checking .h files format && \
+              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.h'  -exec clang-format -Werror --dry-run {} \+'
           docker container prune -f
           docker volume prune -f
