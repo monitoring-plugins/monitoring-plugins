@@ -36,8 +36,8 @@ const char *progname = "check_dig";
 const char *copyright = "2002-2025";
 const char *email = "devel@monitoring-plugins.org";
 
-#include <ctype.h>
 #include "common.h"
+#include <ctype.h>
 #include "netutils.h"
 #include "utils.h"
 #include "runcmd.h"
