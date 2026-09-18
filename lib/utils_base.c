@@ -228,7 +228,7 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	} else if (my_range.start_infinity && !my_range.end_infinity) {
 		// range:  -inside--------|....................
 		// value
-		is_inside = (cmp_perfdata_value(value, my_range.end) == -1);
+		is_inside = (cmp_perfdata_value(value, my_range.end) <= 0);
 	} else {
 		// range from -inf to inf, so always inside
 		is_inside = true;
