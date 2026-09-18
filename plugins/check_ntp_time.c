@@ -320,6 +320,7 @@ static int best_offset_server(const ntp_server_results *slist, int nservers) {
 typedef struct {
 	mp_state_enum offset_result;
 	double offset;
+	int stratum;
 } offset_request_wrapper;
 static offset_request_wrapper offset_request(const char *host, const char *port, int time_offset,
 											 const struct timespec poll_delay) {
@@ -505,6 +506,7 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 	offset_request_wrapper result = {
 		.offset = 0,
 		.offset_result = STATE_UNKNOWN,
+		.stratum = -1,
 	};
 
 	/* now, pick the best server from the list */
@@ -514,6 +516,8 @@ static offset_request_wrapper offset_request(const char *host, const char *port,
 		result.offset_result = STATE_UNKNOWN;
 	} else {
 		result.offset_result = STATE_OK;
+		result.stratum = servers[best_index].stratum;
+
 		/* finally, calculate the average offset */
 		for (int i = 0; i < servers[best_index].num_responses; i++) {
 			avg_offset += servers[best_index].offset[i];
@@ -553,6 +557,8 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 									   {"time-offset", required_argument, 0, 'o'},
 									   {"warning", required_argument, 0, 'w'},
 									   {"critical", required_argument, 0, 'c'},
+									   {"swarn", required_argument, 0, 'W'},
+									   {"scrit", required_argument, 0, 'C'},
 									   {"timeout", required_argument, 0, 't'},
 									   {"hostname", required_argument, 0, 'H'},
 									   {"port", required_argument, 0, 'p'},
@@ -571,7 +577,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_char = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
+		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:t:H:p:o:", longopts, &option);
 		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
 		}
@@ -619,6 +625,24 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 
 			result.config.offset_thresholds =
 				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
+		} break;
+		case 'W': {
+			result.config.do_stratum = true;
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCESS) {
+				die(STATE_UNKNOWN, "failed to parse warning stratum threshold");
+			}
+			result.config.stratum_thresholds =
+				mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
+		} break;
+		case 'C': {
+			result.config.do_stratum = true;
+			mp_range_parsed tmp = mp_parse_range_string(optarg);
+			if (tmp.error != MP_PARSING_SUCCESS) {
+				die(STATE_UNKNOWN, "failed to parse critical stratum threshold");
+			}
+			result.config.stratum_thresholds =
+				mp_thresholds_set_crit(result.config.stratum_thresholds, tmp.range);
 		} break;
 		case 'H':
 			if (!mopl_net_is_host(optarg) && (optarg[0] != '/')) {
@@ -733,6 +757,18 @@ int main(int argc, char *argv[]) {
 	mp_add_perfdata_to_subcheck(&sc_offset, pd_offset);
 	mp_add_subcheck_to_check(&overall, sc_offset);
 
+	if (config.do_stratum) {
+		mp_subcheck sc_stratum = mp_subcheck_init();
+		mopl_utils_xasprintf(&sc_stratum.output, "Stratum: %d", offset_result.stratum);
+		mp_perfdata pd_stratum = perfdata_init();
+		pd_stratum = mp_set_pd_value(pd_stratum, offset_result.stratum);
+		pd_stratum = mp_pd_set_thresholds(pd_stratum, config.stratum_thresholds);
+		pd_stratum.label = "stratum";
+		mp_add_perfdata_to_subcheck(&sc_stratum, pd_stratum);
+		sc_stratum = mp_set_subcheck_state(sc_stratum, mp_get_pd_status(pd_stratum));
+		mp_add_subcheck_to_check(&overall, sc_stratum);
+	}
+
 	if (config.server_address != NULL) {
 		free(config.server_address);
 	}
@@ -760,6 +796,10 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
+	printf(" %s\n", "-W, --swarn=THRESHOLD");
+	printf("    %s\n", _("Warning threshold for NTP server stratum"));
+	printf(" %s\n", "-C, --scrit=THRESHOLD");
+	printf("    %s\n", _("Critical threshold for NTP server stratum"));
 	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
 	printf(" %s\n", " --poll-delay=DELAY");
@@ -775,7 +815,7 @@ void print_help(void) {
 
 	printf("\n");
 	printf("%s\n", _("Notes:"));
-	printf(" %s\n", _("If you'd rather want to monitor an NTP server, please use"));
+	printf(" %s\n", _("For ntpd-specific peer monitoring, please use"));
 	printf(" %s\n", _("check_ntp_peer."));
 	printf(" %s\n", _("--time-offset is useful for compensating for servers with known"));
 	printf(" %s\n", _("and expected clock skew."));
@@ -791,6 +831,6 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-v verbose] [-o <time offset>]\n",
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-W <swarn>] [-C <scrit>] [-v verbose] [-o <time offset>]\n",
 		   progname);
 }
