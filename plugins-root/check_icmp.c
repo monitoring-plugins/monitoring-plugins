@@ -572,7 +572,30 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	argv = &argv[optind];
 	while (*argv) {
-		add_target(*argv, result.config.mode, enforced_ai_family);
+		add_host_wrapper host_add_result =
+			add_host(*argv, result.config.mode, enforced_ai_family);
+
+		if (host_add_result.error_code == OK) {
+			result.config.hosts[host_counter] = host_add_result.host;
+			host_counter++;
+
+			if (result.config.targets != NULL) {
+				result.config.number_of_targets += ping_target_list_append(
+					result.config.targets, host_add_result.host.target_list);
+			} else {
+				result.config.targets = host_add_result.host.target_list;
+				result.config.number_of_targets += host_add_result.host.number_of_targets;
+			}
+
+			if (host_add_result.has_v4) {
+				result.config.need_v4 = true;
+			}
+			if (host_add_result.has_v6) {
+				result.config.need_v6 = true;
+			}
+		} else {
+			crash("Failed to add host, unable to parse it correctly");
+		}
 		argv++;
 	}
 
