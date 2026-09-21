@@ -22,6 +22,12 @@ readonly upstream_commit
 # Preserve the test merge and tags, without writing to the mounted checkout or
 # relying on its Git configuration/credentials during makepkg's source fetch.
 git -c safe.directory=/src clone --bare --no-local /src /build/upstream.git
+# Forks may not carry the release tags required by the AUR recipe's
+# _upstream_version(). Fetch them into the disposable repository only; the
+# source below remains pinned to the checkout's commit.
+git -C /build/upstream.git fetch --no-tags \
+  https://github.com/monitoring-plugins/monitoring-plugins.git \
+  'refs/tags/v*:refs/tags/v*'
 
 git clone --single-branch --no-tags --branch monitoring-plugins-git \
   https://github.com/archlinux/aur.git /build/packaging
