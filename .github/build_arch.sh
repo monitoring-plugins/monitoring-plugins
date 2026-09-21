@@ -5,6 +5,16 @@
 set -euo pipefail
 export LC_ALL=C
 
+# Pin the AUR packaging revision to a Git commit hash.
+# Use the GitHub mirror for updates, matching the source cloned below.
+# To find the latest mirrored revision:
+#   git ls-remote https://github.com/archlinux/aur.git \
+#     refs/heads/monitoring-plugins-git
+# Review the packaging changes since the current pin:
+#   https://github.com/archlinux/aur/commits/monitoring-plugins-git/
+# Set packaging_commit below to the full hash from the first output column,
+# then run the Arch Linux CI job to verify the updated recipe still works
+# with our source override, builds, passes tests, and installs successfully.
 readonly packaging_commit=b12482ed7115ced608fc23d878b9fe6d148df9c0
 
 # The container image has trusted public keys but may not have a local key for
