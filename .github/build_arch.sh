@@ -15,7 +15,18 @@ useradd --create-home builder
 printf 'builder ALL=(root) NOPASSWD: /usr/bin/pacman\n' > /etc/sudoers.d/builder
 chmod 440 /etc/sudoers.d/builder
 install -d -o builder -g builder /build /artifacts
-trap 'pacman -Q > /artifacts/build-packages.log' EXIT
+collect_build_logs() {
+  local log phase
+  # prepare() and pkgver() logs still use the recipe's initial version.
+  # Export stable phase names, including when makepkg fails partway through.
+  for log in /artifacts/monitoring-plugins-git-*.log; do
+    [[ -f "$log" ]] || continue
+    phase=${log##*-}
+    mv -- "$log" "/artifacts/makepkg-$phase"
+  done
+  pacman -Q > /artifacts/build-packages.log
+}
+trap collect_build_logs EXIT
 
 upstream_commit=$(git -c safe.directory=/src -C /src rev-parse HEAD)
 readonly upstream_commit
