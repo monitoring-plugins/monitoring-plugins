@@ -52,6 +52,13 @@ git -C /build/upstream.git fetch --no-tags \
 
 git clone --single-branch --no-tags --branch monitoring-plugins-git \
   https://github.com/archlinux/aur.git /build/packaging
+# Capture the mirrored branch HEAD before checking out the reviewed pin.
+latest_packaging_commit=$(git -C /build/packaging rev-parse HEAD)
+readonly latest_packaging_commit
+if [[ "$packaging_commit" != "$latest_packaging_commit" ]]; then
+  printf '::warning file=.github/build_arch.sh,title=AUR packaging pin is outdated::This build uses AUR packaging commit %s, which differs from the latest mirrored HEAD %s. Manually review https://github.com/archlinux/aur/compare/%s...%s and update packaging_commit after reviewing.\n' \
+    "$packaging_commit" "$latest_packaging_commit" "$packaging_commit" "$latest_packaging_commit"
+fi
 git -C /build/packaging checkout --detach "$packaging_commit"
 test "$(git -C /build/packaging rev-parse HEAD)" = "$packaging_commit"
 
@@ -65,6 +72,7 @@ chown -R builder:builder /build
 
 {
   printf 'Upstream commit: %s\nPackaging commit: %s\n' "$upstream_commit" "$packaging_commit"
+  printf 'Latest mirrored packaging commit: %s\n' "$latest_packaging_commit"
   cat /etc/os-release /etc/makepkg.conf
   if [[ -d /etc/makepkg.conf.d ]]; then
     find /etc/makepkg.conf.d -type f -name '*.conf' -print -exec cat {} \;
