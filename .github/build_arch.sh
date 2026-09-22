@@ -15,7 +15,7 @@ export LC_ALL=C
 # Set packaging_commit below to the full hash from the first output column,
 # then run the Arch Linux CI job to verify the updated recipe still works
 # with our source override, builds, passes tests, and installs successfully.
-readonly packaging_commit=b12482ed7115ced608fc23d878b9fe6d148df9c0
+readonly packaging_commit=f383e1268b2c71c85f5336619f258ca7188a918d
 
 # The container image has trusted public keys but may not have a local key for
 # the keyring package's update hook.
