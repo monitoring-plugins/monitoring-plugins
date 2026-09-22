@@ -87,6 +87,8 @@ BuildRequires: postgresql-devel
 
 # check_radius
 BuildRequires: radcli-devel
+# radcli 2.x ships the legacy rc_* API in the compatibility package.
+BuildRequires: radcli-compat-devel
 
 # check_snmp
 BuildRequires: net-snmp-devel
