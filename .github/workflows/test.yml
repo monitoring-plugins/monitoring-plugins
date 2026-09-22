@@ -16,7 +16,7 @@ on:
 
 jobs:
   full-test:
-    name: Running unit and integrationt tests
+    name: Running unit and integration tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
