@@ -19,6 +19,9 @@ typedef struct {
 
 	mp_thresholds offset_thresholds;
 
+	bool do_stratum;
+	mp_thresholds stratum_thresholds;
+
 	bool output_format_is_set;
 	struct timespec poll_delay;
 	mp_output_format output_format;
@@ -33,6 +36,9 @@ check_ntp_time_config check_ntp_time_config_init() {
 		.time_offset = 0,
 
 		.offset_thresholds = mp_thresholds_init(),
+
+		.do_stratum = false,
+		.stratum_thresholds = mp_thresholds_init(),
 
 		.output_format_is_set = false,
 		.poll_delay = default_polling_delay,
