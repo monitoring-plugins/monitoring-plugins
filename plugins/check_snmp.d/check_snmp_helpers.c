@@ -945,11 +945,11 @@ char *check_snmp_state_generate_key(int argc, const char **argv) {
 	}
 
 	EVP_DigestFinal(ctx, result, NULL);
-#else
+#	else
 
 	struct sha256_ctx ctx;
 
-	for (int i = 0; i < this_monitoring_plugin->argc; i++) {
+	for (int i = 0; i < argc; i++) {
 		sha256_process_bytes(argv[i], strlen(argv[i]), &ctx);
 	}
 
