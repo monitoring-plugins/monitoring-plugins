@@ -496,7 +496,7 @@ static inline char *fmt_subcheck_output(mp_output_format output_format, mp_subch
 			if (have_residual_chars) {
 				char *tmp = check.output;
 				asprintf(&check.output, "%s%s%s", intermediate_string,
-						  generate_indentation_string(indentation + 1), tmp);
+						 generate_indentation_string(indentation + 1), tmp);
 			} else {
 				check.output = intermediate_string;
 			}

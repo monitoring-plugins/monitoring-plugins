@@ -269,14 +269,16 @@ snmp_responces do_snmp_query(check_snmp_config_snmp_parameters parameters) {
 			if (verbose) {
 				printf("Debug: Got a float\n");
 			}
-			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.floatVal);
+			result.response_values[result.number_of_results].value.doubleVal =
+				*(vars->val.floatVal);
 			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_DOUBLE: {
 			if (verbose) {
 				printf("Debug: Got a double\n");
 			}
-			result.response_values[result.number_of_results].value.doubleVal = *(vars->val.doubleVal);
+			result.response_values[result.number_of_results].value.doubleVal =
+				*(vars->val.doubleVal);
 			result.response_values[result.number_of_results].type = vars->type;
 		} break;
 		case ASN_IPADDRESS:
@@ -345,7 +347,8 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 		if (query_timestamp == prev_state.timestamp) {
 			// somehow we have the same timestamp again, that can't be good
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_UNKNOWN);
-			mopl_utils_xasprintf(&sc_oid_test.output, "Time duration between plugin calls is invalid");
+			mopl_utils_xasprintf(&sc_oid_test.output,
+								 "Time duration between plugin calls is invalid");
 
 			check_snmp_evaluation result = {
 				.sc = sc_oid_test,
@@ -375,14 +378,17 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			if (strchr(tmp, '\'') != NULL) {
 				// got single quote in the string too
 				// dont quote that at all to avoid even more confusion
-				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: %s", sc_oid_test.output,
+									 tmp);
 			} else {
 				// quote with single quotes
-				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output, tmp);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: '%s'", sc_oid_test.output,
+									 tmp);
 			}
 		} else {
 			// quote with double quotes
-			mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output, tmp);
+			mopl_utils_xasprintf(&sc_oid_test.output, "%s - Value: \"%s\"", sc_oid_test.output,
+								 tmp);
 		}
 
 		if (strlen(tmp) == 0) {
@@ -576,10 +582,11 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			pd_num_val.value = pd_result_val;
 
 			mopl_utils_xasprintf(&sc_oid_test.output, "%s Value: %s", sc_oid_test.output,
-					  pd_value_to_string(pd_result_val));
+								 pd_value_to_string(pd_result_val));
 
 			if (test_unit.unit_value != NULL && strcmp(test_unit.unit_value, "") != 0) {
-				mopl_utils_xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output, test_unit.unit_value);
+				mopl_utils_xasprintf(&sc_oid_test.output, "%s%s", sc_oid_test.output,
+									 test_unit.unit_value);
 			}
 
 			if (test_unit.threshold.warning_is_set || test_unit.threshold.critical_is_set) {
@@ -588,12 +595,14 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 
 				if (tmp_state == STATE_WARNING) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_WARNING);
-					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates warning threshold",
-							  sc_oid_test.output);
+					mopl_utils_xasprintf(&sc_oid_test.output,
+										 "%s - number violates warning threshold",
+										 sc_oid_test.output);
 				} else if (tmp_state == STATE_CRITICAL) {
 					sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_CRITICAL);
-					mopl_utils_xasprintf(&sc_oid_test.output, "%s - number violates critical threshold",
-							  sc_oid_test.output);
+					mopl_utils_xasprintf(&sc_oid_test.output,
+										 "%s - number violates critical threshold",
+										 sc_oid_test.output);
 				}
 			}
 
@@ -602,8 +611,9 @@ check_snmp_evaluation evaluate_single_unit(response_value response,
 			// should calculate rate, but there is no previous state, so first run
 			// exit with ok now
 			sc_oid_test = mp_set_subcheck_state(sc_oid_test, STATE_OK);
-			mopl_utils_xasprintf(&sc_oid_test.output, "%s - No previous data to calculate rate - assume okay",
-					  sc_oid_test.output);
+			mopl_utils_xasprintf(&sc_oid_test.output,
+								 "%s - No previous data to calculate rate - assume okay",
+								 sc_oid_test.output);
 		}
 	}
 
@@ -730,7 +740,8 @@ typedef struct {
 	int errorcode;
 	state_data data;
 } check_snmp_state_read_file_wrapper;
-check_snmp_state_read_file_wrapper check_snmp_state_read_file(FILE *state_file, state_key input_state) {
+check_snmp_state_read_file_wrapper check_snmp_state_read_file(FILE *state_file,
+															  state_key input_state) {
 	time_t current_time;
 	time(&current_time);
 
@@ -912,8 +923,9 @@ state_key check_snmp_enable_state(char *keyname, int expected_data_version, cons
 
 	/* Calculate filename */
 	char *temp_filename = NULL;
-	int error = asprintf(&temp_filename, "%s/%lu/%s/%s", check_snmp_state_calculate_location_prefix(),
-						 (unsigned long)geteuid(), plugin_name, this_state->name);
+	int error =
+		asprintf(&temp_filename, "%s/%lu/%s/%s", check_snmp_state_calculate_location_prefix(),
+				 (unsigned long)geteuid(), plugin_name, this_state->name);
 	if (error < 0) {
 		die(STATE_UNKNOWN, _("Cannot allocate memory: %s"), strerror(errno));
 	}

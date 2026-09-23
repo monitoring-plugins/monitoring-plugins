@@ -271,11 +271,12 @@ void test_deep_check_hierarchy2(void) {
 
 	ok(output != NULL, "Output should not be NULL");
 
-	char expected[] = "[WARNING] - foobar\n"
-					  "\t\\_[WARNING] - foobar\n"
-					  "\t\t\\_[OK] - baz\n"
-					  "\t\t\t\\_[OK] - level3\n"
-					  "\t\t\t\t\\_[OK] - level4|'foo'=23s;;; 'baz'=1024B;;; 'floatMe'=1024.102400;;; ";
+	char expected[] =
+		"[WARNING] - foobar\n"
+		"\t\\_[WARNING] - foobar\n"
+		"\t\t\\_[OK] - baz\n"
+		"\t\t\t\\_[OK] - level3\n"
+		"\t\t\t\t\\_[OK] - level4|'foo'=23s;;; 'baz'=1024B;;; 'floatMe'=1024.102400;;; ";
 
 	// diag("Expected output of length: %i", strlen(expected));
 	// diag(expected);

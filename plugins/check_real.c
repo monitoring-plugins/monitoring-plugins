@@ -92,14 +92,14 @@ int main(int argc, char **argv) {
 	int socket;
 	if (mopl_net_tcp_connect(config.server_address, config.server_port, &socket) != STATE_OK) {
 		mopl_utils_xasprintf(&sc_connect.output, _("unable to connect to %s on port %d"),
-				  config.server_address, config.server_port);
+							 config.server_address, config.server_port);
 		sc_connect = mp_set_subcheck_state(sc_connect, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_connect);
 		mp_exit(overall);
 	}
 
 	mopl_utils_xasprintf(&sc_connect.output, _("connected to %s on port %d"), config.server_address,
-			  config.server_port);
+						 config.server_port);
 	sc_connect = mp_set_subcheck_state(sc_connect, STATE_OK);
 	mp_add_subcheck_to_check(&overall, sc_connect);
 
@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
 	sprintf(send_buffer, "CSeq: 1\r\n");
 	sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
-		mopl_utils_xasprintf(&sc_send.output, _("Sending header sync to %s failed"), config.host_name);
+		mopl_utils_xasprintf(&sc_send.output, _("Sending header sync to %s failed"),
+							 config.host_name);
 		sc_send = mp_set_subcheck_state(sc_send, STATE_CRITICAL);
 		mp_add_subcheck_to_check(&overall, sc_send);
 		mp_exit(overall);
@@ -157,11 +158,12 @@ int main(int argc, char **argv) {
 		/* make sure we find the response we are looking for */
 		if (!strstr(recv_buffer, config.server_expect)) {
 			if (config.server_port == PORT) {
-				mopl_utils_xasprintf(&sc_options_request.output, "invalid REAL response received from host");
+				mopl_utils_xasprintf(&sc_options_request.output,
+									 "invalid REAL response received from host");
 			} else {
 				mopl_utils_xasprintf(&sc_options_request.output,
-						  "invalid REAL response received from host on port %d",
-						  config.server_port);
+									 "invalid REAL response received from host on port %d",
+									 config.server_port);
 			}
 			sc_options_request = mp_set_subcheck_state(sc_options_request, STATE_CRITICAL);
 			mp_add_subcheck_to_check(&overall, sc_options_request);
@@ -226,7 +228,7 @@ int main(int argc, char **argv) {
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
 			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
-					  config.host_name);
+								 config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
@@ -237,7 +239,7 @@ int main(int argc, char **argv) {
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
 			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
-					  config.host_name);
+								 config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
@@ -248,7 +250,7 @@ int main(int argc, char **argv) {
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
 			mopl_utils_xasprintf(&sc_describe.output, "sending DESCRIBE request to %s failed",
-					  config.host_name);
+								 config.host_name);
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		}
@@ -260,7 +262,8 @@ int main(int argc, char **argv) {
 		if (recv_bytes == -1) {
 			/* return a CRITICAL status if we couldn't read any data */
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
-			mopl_utils_xasprintf(&sc_describe.output, "No data received from host on DESCRIBE request");
+			mopl_utils_xasprintf(&sc_describe.output,
+								 "No data received from host on DESCRIBE request");
 			mp_add_subcheck_to_check(&overall, sc_describe);
 			mp_exit(overall);
 		} else {
@@ -268,11 +271,12 @@ int main(int argc, char **argv) {
 			/* make sure we find the response we are looking for */
 			if (!strstr(recv_buffer, config.server_expect)) {
 				if (config.server_port == PORT) {
-					mopl_utils_xasprintf(&sc_describe.output, "invalid REAL response received from host");
+					mopl_utils_xasprintf(&sc_describe.output,
+										 "invalid REAL response received from host");
 				} else {
 					mopl_utils_xasprintf(&sc_describe.output,
-							  "invalid REAL response received from host on port %d",
-							  config.server_port);
+										 "invalid REAL response received from host on port %d",
+										 config.server_port);
 				}
 
 				sc_describe = mp_set_subcheck_state(sc_describe, STATE_UNKNOWN);
