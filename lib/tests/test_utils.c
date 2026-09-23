@@ -28,7 +28,7 @@
 #include "utils_base.c"
 
 int main(int argc, char **argv) {
-	plan_tests(132);
+	plan_tests(135);
 
 	ok(this_monitoring_plugin == NULL, "monitoring_plugin not initialised");
 
@@ -108,6 +108,15 @@ int main(int argc, char **argv) {
 	ok(check_range(-10, range) == false, "-10 - no alert");
 	ok(check_range(0, range) == false, "0 - no alert");
 	free(range);
+
+	mp_range mp_range_test = mp_range_init();
+	mp_range_test = mp_range_set_end(mp_range_test, mp_create_pd_value(2));
+	ok(mp_check_range(mp_create_pd_value(1), mp_range_test) == false,
+		"mp range ~:2: 1 - no alert");
+	ok(mp_check_range(mp_create_pd_value(2), mp_range_test) == false,
+		"mp range ~:2: 2 - no alert");
+	ok(mp_check_range(mp_create_pd_value(3), mp_range_test) == true,
+		"mp range ~:2: 3 - alert");
 
 	range = parse_range_string("@0:657.8210567");
 	ok(range != 0, "@0:657.8210567' is a valid range");
