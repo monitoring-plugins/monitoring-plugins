@@ -322,8 +322,6 @@ char *np_escaped_string(const char *string) {
 
 int np_check_if_root(void) { return (geteuid() == 0); }
 
-
-
 const char *state_text(mp_state_enum result) {
 	switch (result) {
 	case STATE_OK:

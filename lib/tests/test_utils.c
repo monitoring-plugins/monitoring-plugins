@@ -111,12 +111,9 @@ int main(int argc, char **argv) {
 
 	mp_range mp_range_test = mp_range_init();
 	mp_range_test = mp_range_set_end(mp_range_test, mp_create_pd_value(2));
-	ok(mp_check_range(mp_create_pd_value(1), mp_range_test) == false,
-		"mp range ~:2: 1 - no alert");
-	ok(mp_check_range(mp_create_pd_value(2), mp_range_test) == false,
-		"mp range ~:2: 2 - no alert");
-	ok(mp_check_range(mp_create_pd_value(3), mp_range_test) == true,
-		"mp range ~:2: 3 - alert");
+	ok(mp_check_range(mp_create_pd_value(1), mp_range_test) == false, "mp range ~:2: 1 - no alert");
+	ok(mp_check_range(mp_create_pd_value(2), mp_range_test) == false, "mp range ~:2: 2 - no alert");
+	ok(mp_check_range(mp_create_pd_value(3), mp_range_test) == true, "mp range ~:2: 3 - alert");
 
 	range = parse_range_string("@0:657.8210567");
 	ok(range != 0, "@0:657.8210567' is a valid range");
@@ -225,7 +222,6 @@ int main(int argc, char **argv) {
 
 	test = np_escaped_string("everything");
 	ok(strcmp(test, "everything") == 0, "everything okay");
-
 
 	ok(mp_suid() == false, "Test aren't suid");
 

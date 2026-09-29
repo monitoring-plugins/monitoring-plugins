@@ -73,16 +73,17 @@ void mopl_utils_usage2(const char *, const char *) __attribute__((noreturn));
 void mopl_utils_usage3(const char *, int) __attribute__((noreturn));
 void mopl_utils_usage4(const char *) __attribute__((noreturn));
 void mopl_utils_usage5(void) __attribute__((noreturn));
-void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn)) __attribute__((format(printf, 1, 2)));
+void mopl_utils_usage_va(const char *fmt, ...) __attribute__((noreturn))
+__attribute__((format(printf, 1, 2)));
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-char *mopl_utils_perfdata(const char *, long int, const char *, bool, long int, bool, long int, bool, long int,
-			   bool, long int);
+char *mopl_utils_perfdata(const char *, long int, const char *, bool, long int, bool, long int,
+						  bool, long int, bool, long int);
 
-char *mopl_utils_fperfdata(const char *, double, const char *, bool, double, bool, double, bool, double, bool,
-				double);
+char *mopl_utils_fperfdata(const char *, double, const char *, bool, double, bool, double, bool,
+						   double, bool, double);
 
 /* The idea here is that, although not every plugin will use all of these,
    most will or should.  Therefore, for consistency, these very common

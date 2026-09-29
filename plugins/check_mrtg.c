@@ -156,13 +156,13 @@ int main(int argc, char **argv) {
 	mp_subcheck sc_data_expired = mp_subcheck_init();
 	if (config.expire_minutes > 0 && (current_time - timestamp) > (config.expire_minutes * 60)) {
 		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data has expired (%d minutes old)",
-				  (int)((current_time - timestamp) / 60));
+							 (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_WARNING);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
 		mp_exit(overall);
 	} else {
 		mopl_utils_xasprintf(&sc_data_expired.output, "MRTG data should be valid (%d minutes old)",
-				  (int)((current_time - timestamp) / 60));
+							 (int)((current_time - timestamp) / 60));
 		sc_data_expired = mp_set_subcheck_state(sc_data_expired, STATE_OK);
 		mp_add_subcheck_to_check(&overall, sc_data_expired);
 	}
@@ -182,8 +182,9 @@ int main(int argc, char **argv) {
 	pd_value = mp_pd_set_thresholds(pd_value, config.values_threshold);
 
 	sc_values = mp_set_subcheck_state(sc_values, mp_get_pd_status(pd_value));
-	mopl_utils_xasprintf(&sc_values.output, "%s. %s = %lu %s", (config.use_average) ? _("Avg") : _("Max"),
-			  config.label, rate, config.units);
+	mopl_utils_xasprintf(&sc_values.output, "%s. %s = %lu %s",
+						 (config.use_average) ? _("Avg") : _("Max"), config.label, rate,
+						 config.units);
 
 	mp_add_subcheck_to_check(&overall, sc_values);
 

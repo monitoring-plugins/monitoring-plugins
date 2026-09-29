@@ -1,0 +1,35 @@
+---
+name: Formatting
+
+on:
+  workflow_dispatch: {}
+  # Run for pushes on any branch
+  push:
+    branches:
+      - '*'
+  # Run for any PRs
+  pull_request:
+
+jobs:
+  clang-format:
+    name: clang-format
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Run clang-format
+        run: |
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=100m,uid=1000 tmp-vol
+          docker run \
+              --privileged=true \
+              -w /src -v ${PWD}:/src \
+              debian:stable \
+              /bin/sh -c 'apt install -y clang-format --update > /dev/null && \
+              echo Checking .c files format && \
+              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.c'  -exec clang-format -Werror --dry-run {} \+ && \
+              echo Checking .h files format && \
+              find . -path ./gl -prune , -path ./lib/vendor -prune , -path ./build-aux -prune , -iname '*.h'  -exec clang-format -Werror --dry-run {} \+'
+          docker container prune -f
+          docker volume prune -f

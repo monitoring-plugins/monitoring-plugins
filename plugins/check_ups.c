@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
 	determine_status_result query_result = determine_status(config);
 	if (query_result.errorcode != OK) {
 		sc_retrieve_status = mp_set_subcheck_state(sc_retrieve_status, STATE_CRITICAL);
-		mopl_utils_xasprintf(&sc_retrieve_status.output, "%s", "Failed to retrieve status from UPS tools");
+		mopl_utils_xasprintf(&sc_retrieve_status.output, "%s",
+							 "Failed to retrieve status from UPS tools");
 		mp_add_subcheck_to_check(&overall, sc_retrieve_status);
 		mp_exit(overall);
 	}
@@ -127,52 +128,64 @@ int main(int argc, char **argv) {
 			ups_state_result = STATE_CRITICAL;
 		} else {
 			if (ups_status_flags & UPSSTATUS_OL) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _("Online"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _("Online"));
 			}
 			if (ups_status_flags & UPSSTATUS_OB) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _("On Battery"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _("On Battery"));
 				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_LB) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Low Battery"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Low Battery"));
 				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_CAL) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Calibrating"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Calibrating"));
 			}
 			if (ups_status_flags & UPSSTATUS_RB) {
 				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
-						  _(", Replace Battery"));
+									 _(", Replace Battery"));
 				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_BYPASS) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", On Bypass"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", On Bypass"));
 				// Bypassing the battery is likely a bad thing
 				ups_state_result = STATE_CRITICAL;
 			}
 			if (ups_status_flags & UPSSTATUS_OVER) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Overload"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Overload"));
 				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_TRIM) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Trimming"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Trimming"));
 			}
 			if (ups_status_flags & UPSSTATUS_BOOST) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Boosting"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Boosting"));
 			}
 			if (ups_status_flags & UPSSTATUS_CHRG) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Charging"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Charging"));
 			}
 			if (ups_status_flags & UPSSTATUS_DISCHRG) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Discharging"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Discharging"));
 				ups_state_result = max_state(ups_state_result, STATE_WARNING);
 			}
 			if (ups_status_flags & UPSSTATUS_ALARM) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", ALARM"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", ALARM"));
 				ups_state_result = STATE_CRITICAL;
 			}
 			if (ups_status_flags & UPSSTATUS_UNKNOWN) {
-				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output, _(", Unknown"));
+				mopl_utils_xasprintf(&sc_ups_status.output, "%s%s", sc_ups_status.output,
+									 _(", Unknown"));
 			}
 		}
 		mopl_utils_xasprintf(&sc_ups_status.output, "Status: %s", sc_ups_status.output);
@@ -240,7 +253,8 @@ int main(int argc, char **argv) {
 		supported_options |= UPS_BATTPCT;
 
 		double ups_battery_percent = atof(temp_buffer);
-		mopl_utils_xasprintf(&sc_battery_charge.output, "Battery charge: %3.1f%%", ups_battery_percent);
+		mopl_utils_xasprintf(&sc_battery_charge.output, "Battery charge: %3.1f%%",
+							 ups_battery_percent);
 
 		mp_perfdata pd_battery_charge = perfdata_init();
 		pd_battery_charge = mp_set_pd_value(pd_battery_charge, ups_battery_percent);
@@ -362,7 +376,8 @@ int main(int argc, char **argv) {
 	if (supported_options == UPS_NONE) {
 		mp_subcheck sc_any_option = mp_subcheck_init();
 		sc_any_option = mp_set_subcheck_state(sc_any_option, STATE_CRITICAL);
-		mopl_utils_xasprintf(&sc_any_option.output, _("UPS does not support any available options\n"));
+		mopl_utils_xasprintf(&sc_any_option.output,
+							 _("UPS does not support any available options\n"));
 		mp_add_subcheck_to_check(&overall, sc_any_option);
 	}
 
@@ -449,8 +464,8 @@ int get_ups_variable(const char *varname, char *buf, const check_ups_config conf
 	char temp_buffer[MAX_INPUT_BUFFER];
 
 	/* send the command to the daemon and get a response back */
-	if (mopl_net_process_tcp_request(config.server_address, config.server_port, send_buffer, temp_buffer,
-							sizeof(temp_buffer)) != STATE_OK) {
+	if (mopl_net_process_tcp_request(config.server_address, config.server_port, send_buffer,
+									 temp_buffer, sizeof(temp_buffer)) != STATE_OK) {
 		printf("%s\n", _("Invalid response received from host"));
 		return ERROR;
 	}
@@ -576,7 +591,8 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
-					mopl_utils_usage2(_("Critical voltage must be a valid range expression"), optarg);
+					mopl_utils_usage2(_("Critical voltage must be a valid range expression"),
+									  optarg);
 				} else {
 					tmp_thr = mp_thresholds_set_crit(tmp_thr, tmp.range);
 				}
@@ -588,7 +604,8 @@ check_ups_config_wrapper process_arguments(int argc, char **argv) {
 			if (mopl_utils_is_intnonneg(optarg)) {
 				mp_range_parsed tmp = mp_parse_range_string(optarg);
 				if (tmp.error != MP_PARSING_SUCCESS) {
-					mopl_utils_usage2(_("Warning voltage must be a valid range expression"), optarg);
+					mopl_utils_usage2(_("Warning voltage must be a valid range expression"),
+									  optarg);
 				} else {
 					tmp_thr = mp_thresholds_set_warn(tmp_thr, tmp.range);
 				}

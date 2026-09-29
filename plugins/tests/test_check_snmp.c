@@ -181,7 +181,7 @@ void test_read_state(state_key test_state, const char test_string[], const char 
 	current_time = 1234567890;
 	check_snmp_state_write_string(test_state, current_time, test_string);
 	(void)!asprintf(&cmp_execution_string, "cmp %s %s", generated_dir_test_file_path,
-				   example_statefile_file_path);
+					example_statefile_file_path);
 	ok(system(cmp_execution_string) == 0, "Have created directory");
 
 	test_state._filename = generated_dir_test_file_path;
@@ -190,7 +190,7 @@ void test_read_state(state_key test_state, const char test_string[], const char 
 	ok(recovered_state_1.errorcode == 0, "recovered state successfully");
 	/* Check time is set to current_time */
 	(void)!asprintf(&cmp_execution_string, "cmp %s %s > /dev/null", generated_dir_test_file_path,
-				   example_statefile_file_path);
+					example_statefile_file_path);
 	ok(system(cmp_execution_string) != 0, "Generated file should be different this time");
 
 	time(&current_time);
