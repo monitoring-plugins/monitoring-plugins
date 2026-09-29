@@ -546,25 +546,28 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 	enum {
 		output_format_index = CHAR_MAX + 1,
 		polling_delay_index,
+		stratum_warning_index,
+		stratum_critical_index,
 	};
 
-	static struct option longopts[] = {{"version", no_argument, 0, 'V'},
-									   {"help", no_argument, 0, 'h'},
-									   {"verbose", no_argument, 0, 'v'},
-									   {"use-ipv4", no_argument, 0, '4'},
-									   {"use-ipv6", no_argument, 0, '6'},
-									   {"quiet", no_argument, 0, 'q'},
-									   {"time-offset", required_argument, 0, 'o'},
-									   {"warning", required_argument, 0, 'w'},
-									   {"critical", required_argument, 0, 'c'},
-									   {"swarn", required_argument, 0, 'W'},
-									   {"scrit", required_argument, 0, 'C'},
-									   {"timeout", required_argument, 0, 't'},
-									   {"hostname", required_argument, 0, 'H'},
-									   {"port", required_argument, 0, 'p'},
-									   {"poll-delay", required_argument, 0, polling_delay_index},
-									   {"output-format", required_argument, 0, output_format_index},
-									   {0, 0, 0, 0}};
+	static struct option longopts[] = {
+		{"version", no_argument, 0, 'V'},
+		{"help", no_argument, 0, 'h'},
+		{"verbose", no_argument, 0, 'v'},
+		{"use-ipv4", no_argument, 0, '4'},
+		{"use-ipv6", no_argument, 0, '6'},
+		{"quiet", no_argument, 0, 'q'},
+		{"time-offset", required_argument, 0, 'o'},
+		{"warning", required_argument, 0, 'w'},
+		{"critical", required_argument, 0, 'c'},
+		{"stratum-warning", required_argument, 0, stratum_warning_index},
+		{"stratum-critical", required_argument, 0, stratum_critical_index},
+		{"timeout", required_argument, 0, 't'},
+		{"hostname", required_argument, 0, 'H'},
+		{"port", required_argument, 0, 'p'},
+		{"poll-delay", required_argument, 0, polling_delay_index},
+		{"output-format", required_argument, 0, output_format_index},
+		{0, 0, 0, 0}};
 
 	if (argc < 2) {
 		mopl_utils_usage("\n");
@@ -577,7 +580,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 
 	while (true) {
 		int option = 0;
-		int option_char = getopt_long(argc, argv, "Vhv46qw:c:W:C:t:H:p:o:", longopts, &option);
+		int option_char = getopt_long(argc, argv, "Vhv46qw:c:t:H:p:o:", longopts, &option);
 		if (option_char == -1 || option_char == EOF || option_char == 1) {
 			break;
 		}
@@ -626,7 +629,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.offset_thresholds =
 				mp_thresholds_set_crit(result.config.offset_thresholds, tmp.range);
 		} break;
-		case 'W': {
+		case stratum_warning_index: {
 			result.config.do_stratum = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
 			if (tmp.error != MP_PARSING_SUCCESS) {
@@ -635,7 +638,7 @@ static check_ntp_time_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.stratum_thresholds =
 				mp_thresholds_set_warn(result.config.stratum_thresholds, tmp.range);
 		} break;
-		case 'C': {
+		case stratum_critical_index: {
 			result.config.do_stratum = true;
 			mp_range_parsed tmp = mp_parse_range_string(optarg);
 			if (tmp.error != MP_PARSING_SUCCESS) {
@@ -796,9 +799,9 @@ void print_help(void) {
 	printf("    %s\n", _("Offset to result in warning status (seconds)"));
 	printf(" %s\n", "-c, --critical=THRESHOLD");
 	printf("    %s\n", _("Offset to result in critical status (seconds)"));
-	printf(" %s\n", "-W, --swarn=THRESHOLD");
+	printf(" %s\n", "--stratum-warning=THRESHOLD");
 	printf("    %s\n", _("Warning threshold for NTP server stratum"));
-	printf(" %s\n", "-C, --scrit=THRESHOLD");
+	printf(" %s\n", "--stratum-critical=THRESHOLD");
 	printf("    %s\n", _("Critical threshold for NTP server stratum"));
 	printf(" %s\n", "-o, --time-offset=INTEGER");
 	printf("    %s\n", _("Expected offset of the ntp server relative to local server (seconds)"));
@@ -832,7 +835,8 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-W <swarn>] [-C <scrit>] [-v verbose] "
-	"[-o <time offset>]\n",
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [--stratum-warning <swarn>] "
+		   "[--stratum-critical <scrit>] [-v verbose] "
+		   "[-o <time offset>]\n",
 		   progname);
 }
