@@ -832,6 +832,7 @@ void print_help(void) {
 
 void print_usage(void) {
 	printf("%s\n", _("Usage:"));
-	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-W <swarn>] [-C <scrit>] [-v verbose] [-o <time offset>]\n",
+	printf(" %s -H <host> [-4|-6] [-w <warn>] [-c <crit>] [-W <swarn>] [-C <scrit>] [-v verbose] "
+	"[-o <time offset>]\n",
 		   progname);
 }
