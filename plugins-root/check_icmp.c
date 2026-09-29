@@ -572,8 +572,7 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 
 	argv = &argv[optind];
 	while (*argv) {
-		add_host_wrapper host_add_result =
-			add_host(*argv, result.config.mode, enforced_ai_family);
+		add_host_wrapper host_add_result = add_host(*argv, result.config.mode, enforced_ai_family);
 
 		if (host_add_result.error_code == OK) {
 			result.config.hosts[host_counter] = host_add_result.host;
