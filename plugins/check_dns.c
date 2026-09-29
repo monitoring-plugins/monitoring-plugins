@@ -87,7 +87,8 @@ int main(int argc, char **argv) {
 
 	char *command_line = NULL;
 	/* get the command to run */
-	mopl_utils_xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address, config.dns_server);
+	mopl_utils_xasprintf(&command_line, "%s %s %s", NSLOOKUP_COMMAND, config.query_address,
+						 config.dns_server);
 
 	struct timeval tv;
 	alarm(timeout_interval);
@@ -290,8 +291,8 @@ int main(int argc, char **argv) {
 	if (config.expect_nxdomain) {
 		if (!is_nxdomain) {
 			result = STATE_CRITICAL;
-			mopl_utils_xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"), config.query_address,
-					  address);
+			mopl_utils_xasprintf(&msg, _("Domain '%s' was found by the server: '%s'\n"),
+								 config.query_address, address);
 		} else {
 			if (address != NULL) {
 				free(address);
@@ -304,7 +305,7 @@ int main(int argc, char **argv) {
 	if (result == STATE_OK && config.expect_authority && non_authoritative) {
 		result = STATE_CRITICAL;
 		mopl_utils_xasprintf(&msg, _("server %s is not authoritative for %s"), config.dns_server,
-				  config.query_address);
+							 config.query_address);
 	}
 
 	long microsec = mopl_utils_deltime(tv);
@@ -325,20 +326,22 @@ int main(int argc, char **argv) {
 		if ((config.time_thresholds->warning != NULL) &&
 			(config.time_thresholds->critical != NULL)) {
 			printf("|%s\n",
-				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
-							 true, config.time_thresholds->critical->end, true, 0, false, 0));
+				   mopl_utils_fperfdata("time", elapsed_time, "s", true,
+										config.time_thresholds->warning->end, true,
+										config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning == NULL) &&
 				   (config.time_thresholds->critical != NULL)) {
-			printf("|%s\n", mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, true,
-									  config.time_thresholds->critical->end, true, 0, false, 0));
+			printf("|%s\n",
+				   mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, true,
+										config.time_thresholds->critical->end, true, 0, false, 0));
 		} else if ((config.time_thresholds->warning != NULL) &&
 				   (config.time_thresholds->critical == NULL)) {
-			printf("|%s\n",
-				   mopl_utils_fperfdata("time", elapsed_time, "s", true, config.time_thresholds->warning->end,
-							 false, 0, true, 0, false, 0));
+			printf("|%s\n", mopl_utils_fperfdata("time", elapsed_time, "s", true,
+												 config.time_thresholds->warning->end, false, 0,
+												 true, 0, false, 0));
 		} else {
-			printf("|%s\n",
-				   mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, false, 0, true, 0, false, 0));
+			printf("|%s\n", mopl_utils_fperfdata("time", elapsed_time, "s", false, 0, false, 0,
+												 true, 0, false, 0));
 		}
 	} else if (result == STATE_WARNING) {
 		printf(_("DNS WARNING - %s\n"),

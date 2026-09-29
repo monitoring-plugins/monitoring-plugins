@@ -134,11 +134,11 @@ int main(int argc, char **argv) {
 
 	if (config.icmp_timestamp) {
 		// no packet size settable for ICMP timestamp
-		mopl_utils_xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string, config.packet_count,
-				  server);
+		mopl_utils_xasprintf(&command_line, "%s %s -c %d %s", fping_prog, option_string,
+							 config.packet_count, server);
 	} else {
 		mopl_utils_xasprintf(&command_line, "%s %s-b %d -c %d %s", fping_prog, option_string,
-				  config.packet_size, config.packet_count, server);
+							 config.packet_size, config.packet_count, server);
 	}
 
 	if (verbose) {
@@ -219,8 +219,8 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		die(STATE_OK, _("FPING %s - %s (rta=%f ms)|%s\n"), state_text(STATE_OK), server_name, rta,
 			/* No loss since we only waited for the first reply
 			perfdata ("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, true, 0, true, 100), */
-			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
-					  false, 0));
+			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p,
+								 crta / 1.0e3, true, 0, false, 0));
 	}
 
 	mp_state_enum status = STATE_UNKNOWN;
@@ -263,9 +263,10 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		}
 		die(status, _("FPING %s - %s (loss=%.0f%%, rta=%f ms)|%s %s\n"), state_text(status),
 			server_name, loss, rta,
-			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0),
-			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p, crta / 1.0e3, true, 0,
-					  false, 0));
+			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0,
+								false, 0),
+			mopl_utils_fperfdata("rta", rta / 1.0e3, "s", wrta_p, wrta / 1.0e3, crta_p,
+								 crta / 1.0e3, true, 0, false, 0));
 
 	} else if (strstr(buf, "xmt/rcv/%loss")) {
 		/* no min/max/avg if host was unreachable in fping v2.2.b1 */
@@ -290,7 +291,8 @@ mp_state_enum textscan(char *buf, const char *server_name, bool crta_p, double c
 		}
 		/* loss=%.0f%%;%d;%d;0;100 */
 		die(status, _("FPING %s - %s (loss=%.0f%% )|%s\n"), state_text(status), server_name, loss,
-			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0, false, 0));
+			mopl_utils_perfdata("loss", (long int)loss, "%", wpl_p, wpl, cpl_p, cpl, false, 0,
+								false, 0));
 
 	} else {
 		status = max_state(status, STATE_WARNING);

@@ -52,9 +52,11 @@ void mopl_net_socket_timeout_alarm_handler(int sig) {
 	timeout_sc = mp_set_subcheck_state(timeout_sc, socket_timeout_state);
 
 	if (sig == SIGALRM) {
-		mopl_utils_xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds"), socket_timeout);
+		mopl_utils_xasprintf(&timeout_sc.output, _("Socket timeout after %d seconds"),
+							 socket_timeout);
 	} else {
-		mopl_utils_xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds"), socket_timeout);
+		mopl_utils_xasprintf(&timeout_sc.output, _("Abnormal timeout after %d seconds"),
+							 socket_timeout);
 	}
 
 	mp_check overall = mp_check_init();
