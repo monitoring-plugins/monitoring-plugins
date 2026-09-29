@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
 	if (PQstatus(conn) == CONNECTION_BAD) {
 		sc_connection = mp_set_subcheck_state(sc_connection, STATE_CRITICAL);
 		mopl_utils_xasprintf(&sc_connection.output, "no connection to '%s' (%s)", config.dbName,
-				  PQerrorMessage(conn));
+							 PQerrorMessage(conn));
 		PQfinish(conn);
 		mp_add_subcheck_to_check(&overall, sc_connection);
 		mp_exit(overall);
@@ -288,35 +288,40 @@ int main(int argc, char **argv) {
 			mp_add_perfdata_to_subcheck(&sc_query_compare, pd_query);
 
 			if (query_compare_state == STATE_OK) {
-				mopl_utils_xasprintf(&sc_query_compare.output, "query result '%f' is within thresholds",
-						  query_result.numerical_result);
+				mopl_utils_xasprintf(&sc_query_compare.output,
+									 "query result '%f' is within thresholds",
+									 query_result.numerical_result);
 			} else {
-				mopl_utils_xasprintf(&sc_query_compare.output, "query result '%f' is violating thresholds",
-						  query_result.numerical_result);
+				mopl_utils_xasprintf(&sc_query_compare.output,
+									 "query result '%f' is violating thresholds",
+									 query_result.numerical_result);
 			}
 			mp_add_subcheck_to_check(&overall, sc_query_compare);
 
 		} break;
 		case ERROR_WITH_QUERY:
 			mopl_utils_xasprintf(&sc_query.output, "%s - Error with query: %s", sc_query.output,
-					  PQerrorMessage(conn));
+								 PQerrorMessage(conn));
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 			break;
 		case NO_ROWS_RETURNED:
-			mopl_utils_xasprintf(&sc_query.output, "%s - no rows were returned by the query", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - no rows were returned by the query",
+								 sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case NO_COLUMNS_RETURNED:
 			mopl_utils_xasprintf(&sc_query.output, "%s - no columns were returned by the query",
-					  sc_query.output);
+								 sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case NO_DATA_RETURNED:
-			mopl_utils_xasprintf(&sc_query.output, "%s - no data was returned by the query", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - no data was returned by the query",
+								 sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_WARNING);
 			break;
 		case RESULT_IS_NOT_NUMERIC:
-			mopl_utils_xasprintf(&sc_query.output, "%s - result of the query is not numeric", sc_query.output);
+			mopl_utils_xasprintf(&sc_query.output, "%s - result of the query is not numeric",
+								 sc_query.output);
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 			break;
 		};

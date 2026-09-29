@@ -1133,7 +1133,7 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 
 		mp_subcheck sc_rqust_srvs = mp_subcheck_init();
 		mopl_utils_xasprintf(&sc_rqust_srvs.output, "%d of %d requested servers responded",
-				  requested_responses, requested_servers);
+							 requested_responses, requested_servers);
 
 		if (requested_responses == requested_servers) {
 			sc_rqust_srvs = mp_set_subcheck_state(sc_rqust_srvs, STATE_OK);
@@ -1167,10 +1167,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 	}
 
 	if (max_lease_time == DHCP_INFINITE_TIME) {
-		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity", sc_dhcp_results.output);
+		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = Infinity",
+							 sc_dhcp_results.output);
 	} else {
 		mopl_utils_xasprintf(&sc_dhcp_results.output, "%s, max lease time = %" PRIu32 " seconds",
-				  sc_dhcp_results.output, max_lease_time);
+							 sc_dhcp_results.output, max_lease_time);
 	}
 
 	if (exclusive) {
@@ -1201,8 +1202,9 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 				die(STATE_UNKNOWN, "inet_ntop failed");
 			}
 
-			mopl_utils_xasprintf(&sc_rogue_server.output, "Rogue DHCP Server detected! Server %s offered %s",
-					  server_address, offered_address);
+			mopl_utils_xasprintf(&sc_rogue_server.output,
+								 "Rogue DHCP Server detected! Server %s offered %s", server_address,
+								 offered_address);
 		} else {
 			sc_rogue_server = mp_set_subcheck_state(sc_rogue_server, STATE_OK);
 			mopl_utils_xasprintf(&sc_rogue_server.output, "No Rogue DHCP Server detected");
@@ -1216,11 +1218,11 @@ mp_subcheck get_results(bool exclusive, const int requested_servers,
 		if (received_requested_address) {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_OK);
 			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was offered",
-					  inet_ntoa(requested_address));
+								 inet_ntoa(requested_address));
 		} else {
 			sc_rqustd_addr = mp_set_subcheck_state(sc_rqustd_addr, STATE_WARNING);
 			mopl_utils_xasprintf(&sc_rqustd_addr.output, "Requested address (%s) was NOT offered",
-					  inet_ntoa(requested_address));
+								 inet_ntoa(requested_address));
 		}
 
 		mp_add_subcheck_to_subcheck(&sc_dhcp_results, sc_rqustd_addr);

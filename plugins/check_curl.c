@@ -278,12 +278,12 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		/* Custom handling for timeouts, state might be set to non CRITICAL */
 		if (res == CURLE_OPERATION_TIMEDOUT) {
 			mopl_utils_xasprintf(&sc_curl.output, _("cURL returned %d - %s"), res,
-					  errbuf[0] ? errbuf : curl_easy_strerror(res));
+								 errbuf[0] ? errbuf : curl_easy_strerror(res));
 			sc_curl = mp_set_subcheck_state(sc_curl, config.on_timeout_result_state);
 		} else {
 			mopl_utils_xasprintf(&sc_curl.output,
-					  _("Error while performing connection: cURL returned %d - %s"), res,
-					  errbuf[0] ? errbuf : curl_easy_strerror(res));
+								 _("Error while performing connection: cURL returned %d - %s"), res,
+								 errbuf[0] ? errbuf : curl_easy_strerror(res));
 			sc_curl = mp_set_subcheck_state(sc_curl, STATE_CRITICAL);
 		}
 		mp_add_subcheck_to_subcheck(&sc_result, sc_curl);
@@ -437,17 +437,18 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	sc_expect = mp_set_subcheck_default_state(sc_expect, STATE_OK);
 	if (!expected_statuscode(curl_state.status_line->first_line, config.server_expect.string)) {
 		if (workingState.serverPort == HTTP_PORT) {
-			mopl_utils_xasprintf(&sc_expect.output, _("Invalid HTTP response received from host: %s\n"),
-					  curl_state.status_line->first_line);
+			mopl_utils_xasprintf(&sc_expect.output,
+								 _("Invalid HTTP response received from host: %s\n"),
+								 curl_state.status_line->first_line);
 		} else {
 			mopl_utils_xasprintf(&sc_expect.output,
-					  _("Invalid HTTP response received from host on port %d: %s\n"),
-					  workingState.serverPort, curl_state.status_line->first_line);
+								 _("Invalid HTTP response received from host on port %d: %s\n"),
+								 workingState.serverPort, curl_state.status_line->first_line);
 		}
 		sc_expect = mp_set_subcheck_default_state(sc_expect, STATE_CRITICAL);
 	} else {
 		mopl_utils_xasprintf(&sc_expect.output, _("Status line output matched \"%s\""),
-				  config.server_expect.string);
+							 config.server_expect.string);
 	}
 	mp_add_subcheck_to_subcheck(&sc_result, sc_expect);
 
@@ -456,12 +457,12 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		mp_subcheck sc_return_code = mp_subcheck_init();
 		sc_return_code = mp_set_subcheck_default_state(sc_return_code, STATE_OK);
 		mopl_utils_xasprintf(&sc_return_code.output, "HTTP return code: %d",
-				  curl_state.status_line->http_code);
+							 curl_state.status_line->http_code);
 
 		if (httpReturnCode >= 600 || httpReturnCode < 100) {
 			sc_return_code = mp_set_subcheck_state(sc_return_code, STATE_CRITICAL);
 			mopl_utils_xasprintf(&sc_return_code.output, _("Invalid Status (%d, %.40s)"),
-					  curl_state.status_line->http_code, curl_state.status_line->msg);
+								 curl_state.status_line->http_code, curl_state.status_line->msg);
 			mp_add_subcheck_to_subcheck(&sc_result, sc_return_code);
 			return sc_result;
 		}
@@ -488,14 +489,15 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 					mp_subcheck sc_redir_depth = mp_subcheck_init();
 					if (redir_depth > config.max_depth) {
 						mopl_utils_xasprintf(&sc_redir_depth.output,
-								  "maximum redirection depth %ld exceeded in libcurl",
-								  config.max_depth);
+											 "maximum redirection depth %ld exceeded in libcurl",
+											 config.max_depth);
 						sc_redir_depth = mp_set_subcheck_state(sc_redir_depth, STATE_CRITICAL);
 						mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 						return sc_result;
 					}
-					mopl_utils_xasprintf(&sc_redir_depth.output, "redirection depth %ld (of a maximum %ld)",
-							  redir_depth, config.max_depth);
+					mopl_utils_xasprintf(&sc_redir_depth.output,
+										 "redirection depth %ld (of a maximum %ld)", redir_depth,
+										 config.max_depth);
 					mp_add_subcheck_to_subcheck(&sc_result, sc_redir_depth);
 
 				} else {
@@ -532,10 +534,11 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		sc_http_return_code_sanity =
 			mp_set_subcheck_state(sc_http_return_code_sanity, STATE_CRITICAL);
 		mopl_utils_xasprintf(&sc_http_return_code_sanity.output,
-				  _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
-				  string_statuscode(curl_state.status_line->http_major,
-									curl_state.status_line->http_minor),
-				  curl_state.status_line->http_code, curl_state.status_line->msg, httpReturnCode);
+							 _("HTTP CRITICAL %s %d %s - different HTTP codes (cUrl has %ld)\n"),
+							 string_statuscode(curl_state.status_line->http_major,
+											   curl_state.status_line->http_minor),
+							 curl_state.status_line->http_code, curl_state.status_line->msg,
+							 httpReturnCode);
 
 		mp_add_subcheck_to_subcheck(&sc_result, sc_http_return_code_sanity);
 		return sc_result;
@@ -560,10 +563,11 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 				bcopy("...", &output_header_search[sizeof(output_header_search) - 4], 4);
 			}
 
-			mopl_utils_xasprintf(&sc_header_expect.output, _("header '%s' not found on '%s://%s:%d%s', "),
-					  output_header_search, workingState.use_ssl ? "https" : "http",
-					  workingState.host_name ? workingState.host_name : workingState.server_address,
-					  workingState.serverPort, workingState.server_url);
+			mopl_utils_xasprintf(
+				&sc_header_expect.output, _("header '%s' not found on '%s://%s:%d%s', "),
+				output_header_search, workingState.use_ssl ? "https" : "http",
+				workingState.host_name ? workingState.host_name : workingState.server_address,
+				workingState.serverPort, workingState.server_url);
 
 			sc_header_expect = mp_set_subcheck_state(sc_header_expect, STATE_CRITICAL);
 		}
@@ -574,7 +578,8 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 	if (strlen(config.string_expect)) {
 		mp_subcheck sc_string_expect = mp_subcheck_init();
 		sc_string_expect = mp_set_subcheck_default_state(sc_string_expect, STATE_OK);
-		mopl_utils_xasprintf(&sc_string_expect.output, "Expect string \"%s\" in body", config.string_expect);
+		mopl_utils_xasprintf(&sc_string_expect.output, "Expect string \"%s\" in body",
+							 config.string_expect);
 
 		if (!strstr(curl_state.body_buf->buf, config.string_expect)) {
 			char output_string_search[30] = "";
@@ -584,10 +589,11 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 				bcopy("...", &output_string_search[sizeof(output_string_search) - 4], 4);
 			}
 
-			mopl_utils_xasprintf(&sc_string_expect.output, _("string '%s' not found on '%s://%s:%d%s', "),
-					  output_string_search, workingState.use_ssl ? "https" : "http",
-					  workingState.host_name ? workingState.host_name : workingState.server_address,
-					  workingState.serverPort, workingState.server_url);
+			mopl_utils_xasprintf(
+				&sc_string_expect.output, _("string '%s' not found on '%s://%s:%d%s', "),
+				output_string_search, workingState.use_ssl ? "https" : "http",
+				workingState.host_name ? workingState.host_name : workingState.server_address,
+				workingState.serverPort, workingState.server_url);
 
 			sc_string_expect = mp_set_subcheck_state(sc_string_expect, STATE_CRITICAL);
 		}
@@ -657,7 +663,8 @@ mp_subcheck check_http(const check_curl_config config, check_curl_working_state 
 		switch (tmp_state) {
 		case STATE_CRITICAL:
 		case STATE_WARNING:
-			mopl_utils_xasprintf(&sc_page_length.output, _("page size %zu violates threshold"), page_len);
+			mopl_utils_xasprintf(&sc_page_length.output, _("page size %zu violates threshold"),
+								 page_len);
 			break;
 		case STATE_OK:
 			mopl_utils_xasprintf(&sc_page_length.output, _("page size %zu is OK"), page_len);
@@ -1068,9 +1075,10 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
 				result.config.on_timeout_result_state = STATE_UNKNOWN;
 			} else {
-				mopl_utils_usage2(_("Invalid timeout-result state option, give either a return code or state "
-						 "name in lowercase"),
-					   optarg);
+				mopl_utils_usage2(
+					_("Invalid timeout-result state option, give either a return code or state "
+					  "name in lowercase"),
+					optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -1122,10 +1130,12 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			break;
 		case 'p': /* Server port */
 			if (!mopl_utils_is_intnonneg(optarg)) {
-				mopl_utils_usage2(_("Invalid port number, expecting a non-negative number"), optarg);
+				mopl_utils_usage2(_("Invalid port number, expecting a non-negative number"),
+								  optarg);
 			} else {
 				if (strtol(optarg, NULL, 10) > MAX_PORT) {
-					mopl_utils_usage2(_("Invalid port number, supplied port number is too big"), optarg);
+					mopl_utils_usage2(_("Invalid port number, supplied port number is too big"),
+									  optarg);
 				}
 				result.config.initial_config.serverPort = (unsigned short)strtol(optarg, NULL, 10);
 				specify_port = true;
@@ -1500,8 +1510,9 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 				result.config.ssl_version = CURL_SSLVERSION_DEFAULT;
 #endif /* LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 52, 0) */
 			} else {
-				mopl_utils_usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
-						 "(with optional '+' suffix)"));
+				mopl_utils_usage4(
+					_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2, 1.3 "
+					  "(with optional '+' suffix)"));
 			}
 		}
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 54, 0)
@@ -1565,7 +1576,8 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 	}
 
 	if (result.config.curl_config.client_cert && !result.config.curl_config.client_privkey) {
-		mopl_utils_usage4(_("If you use a client certificate you must also specify a private key file"));
+		mopl_utils_usage4(
+			_("If you use a client certificate you must also specify a private key file"));
 	}
 
 	if (result.config.initial_config.virtualPort == 0) {

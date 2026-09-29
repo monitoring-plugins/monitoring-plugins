@@ -161,8 +161,8 @@ int main(int argc, char **argv) {
 	/* Set default URL. Must be malloced for subsequent realloc if --onredirect=follow */
 	server_url = strdup(HTTP_URL);
 	server_url_length = strlen(server_url);
-	mopl_utils_xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)", NP_VERSION,
-			  VERSION);
+	mopl_utils_xasprintf(&user_agent, "User-Agent: check_http/v%s (monitoring-plugins %s)",
+						 NP_VERSION, VERSION);
 
 	/* Parse extra opts if any */
 	argv = np_extra_opts(&argc, argv, progname);
@@ -312,9 +312,10 @@ bool process_arguments(int argc, char **argv) {
 			} else if (!strcmp(optarg, "3") || !strcasecmp(optarg, "unknown")) {
 				socket_timeout_state = STATE_UNKNOWN;
 			} else {
-				mopl_utils_usage2(_("Invalid timeout-result state option, give either a return code or state "
-						 "name in lowercase"),
-					   optarg);
+				mopl_utils_usage2(
+					_("Invalid timeout-result state option, give either a return code or state "
+					  "name in lowercase"),
+					optarg);
 			}
 			break;
 		case 'c': /* critical time threshold */
@@ -402,8 +403,9 @@ bool process_arguments(int argc, char **argv) {
 				} else if (optarg[0] == '2') {
 					ssl_version = got_plus ? MOPL_NET_SSLv2_OR_NEWER : MOPL_NET_SSLv2;
 				} else {
-					mopl_utils_usage4(_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
-							 "optional '+' suffix)"));
+					mopl_utils_usage4(
+						_("Invalid option - Valid SSL/TLS versions: 2, 3, 1, 1.1, 1.2 (with "
+						  "optional '+' suffix)"));
 				}
 			}
 			if (!specify_port) {
@@ -426,13 +428,13 @@ bool process_arguments(int argc, char **argv) {
 			break;
 		case 'f': /* onredirect */
 			if (!strcmp(optarg, "stickyport")) {
-				 followsticky = STICKY_HOST | STICKY_PORT;
+				followsticky = STICKY_HOST | STICKY_PORT;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "sticky")) {
-				 followsticky = STICKY_HOST;
+				followsticky = STICKY_HOST;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "follow")) {
-				 followsticky = STICKY_NONE;
+				followsticky = STICKY_NONE;
 				onredirect_dependent = true;
 			} else if (!strcmp(optarg, "unknown")) {
 				onredirect = STATE_UNKNOWN;
@@ -656,7 +658,8 @@ bool process_arguments(int argc, char **argv) {
 	}
 
 	if (client_cert && !client_privkey) {
-		mopl_utils_usage4(_("If you use a client certificate you must also specify a private key file"));
+		mopl_utils_usage4(
+			_("If you use a client certificate you must also specify a private key file"));
 	}
 
 	if (virtual_port == 0) {
@@ -860,21 +863,22 @@ static int check_document_dates(const char *headers, char **msg) {
 			mopl_utils_xasprintf(msg, _("%sServer date \"%100s\" unparsable, "), *msg, server_date);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data <= 0) {
-			mopl_utils_xasprintf(msg, _("%sDocument date \"%100s\" unparsable, "), *msg, document_date);
+			mopl_utils_xasprintf(msg, _("%sDocument date \"%100s\" unparsable, "), *msg,
+								 document_date);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data > srv_data + 30) {
 			mopl_utils_xasprintf(msg, _("%sDocument is %d seconds in the future, "), *msg,
-					  (int)doc_data - (int)srv_data);
+								 (int)doc_data - (int)srv_data);
 			date_result = max_state_alt(STATE_CRITICAL, date_result);
 		} else if (doc_data < srv_data - maximum_age) {
 			int n = (srv_data - doc_data);
 			if (n > (60 * 60 * 24 * 2)) {
 				mopl_utils_xasprintf(msg, _("%sLast modified %.1f days ago, "), *msg,
-						  ((float)n) / (60 * 60 * 24));
+									 ((float)n) / (60 * 60 * 24));
 				date_result = max_state_alt(STATE_CRITICAL, date_result);
 			} else {
-				mopl_utils_xasprintf(msg, _("%sLast modified %d:%02d:%02d ago, "), *msg, n / (60 * 60),
-						  (n / 60) % 60, n % 60);
+				mopl_utils_xasprintf(msg, _("%sLast modified %d:%02d:%02d ago, "), *msg,
+									 n / (60 * 60), (n / 60) % 60, n % 60);
 				date_result = max_state_alt(STATE_CRITICAL, date_result);
 			}
 		}
@@ -1142,10 +1146,12 @@ int check_http(void) {
 		if (http_content_type) {
 			mopl_utils_xasprintf(&buf, "%sContent-Type: %s\r\n", buf, http_content_type);
 		} else {
-			mopl_utils_xasprintf(&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n", buf);
+			mopl_utils_xasprintf(&buf, "%sContent-Type: application/x-www-form-urlencoded\r\n",
+								 buf);
 		}
 
-		mopl_utils_xasprintf(&buf, "%sContent-Length: %i\r\n\r\n", buf, (int)strlen(http_post_data));
+		mopl_utils_xasprintf(&buf, "%sContent-Length: %i\r\n\r\n", buf,
+							 (int)strlen(http_post_data));
 		mopl_utils_xasprintf(&buf, "%s%s", buf, http_post_data);
 	} else {
 		/* or just a newline so the server knows we're done with the request */
@@ -1254,10 +1260,12 @@ int check_http(void) {
 	/* make sure the status line matches the response we are looking for */
 	if (!expected_statuscode(status_line, server_expect)) {
 		if (server_port == HTTP_PORT) {
-			mopl_utils_xasprintf(&msg, _("Invalid HTTP response received from host: %s\n"), status_line);
+			mopl_utils_xasprintf(&msg, _("Invalid HTTP response received from host: %s\n"),
+								 status_line);
 		} else {
-			mopl_utils_xasprintf(&msg, _("Invalid HTTP response received from host on port %d: %s\n"),
-					  server_port, status_line);
+			mopl_utils_xasprintf(&msg,
+								 _("Invalid HTTP response received from host on port %d: %s\n"),
+								 server_port, status_line);
 		}
 		if (show_body) {
 			mopl_utils_xasprintf(&msg, _("%s\n%s"), msg, page);
@@ -1336,8 +1344,8 @@ int check_http(void) {
 			}
 
 			mopl_utils_xasprintf(&msg, _("%sheader '%s' not found on '%s://%s:%d%s', "), msg,
-					  output_header_search, use_ssl ? "https" : "http",
-					  host_name ? host_name : server_address, server_port, server_url);
+								 output_header_search, use_ssl ? "https" : "http",
+								 host_name ? host_name : server_address, server_port, server_url);
 
 			result = STATE_CRITICAL;
 		}
@@ -1378,8 +1386,8 @@ int check_http(void) {
 				bcopy("...", &output_string_search[sizeof(output_string_search) - 4], 4);
 			}
 			mopl_utils_xasprintf(&msg, _("%sstring '%s' not found on '%s://%s:%d%s', "), msg,
-					  output_string_search, use_ssl ? "https" : "http",
-					  host_name ? host_name : server_address, server_port, server_url);
+								 output_string_search, use_ssl ? "https" : "http",
+								 host_name ? host_name : server_address, server_port, server_url);
 			result = STATE_CRITICAL;
 		}
 	}
@@ -1440,9 +1448,9 @@ int check_http(void) {
 			perfd_time_headers(elapsed_time_headers), perfd_time_firstbyte(elapsed_time_firstbyte),
 			perfd_time_transfer(elapsed_time_transfer));
 	} else {
-		mopl_utils_xasprintf(&msg, _("%s - %d bytes in %.3f second response time %s|%s %s"), msg, page_len,
-				  elapsed_time, (display_html ? "</A>" : ""), perfd_time(elapsed_time),
-				  perfd_size(page_len));
+		mopl_utils_xasprintf(&msg, _("%s - %d bytes in %.3f second response time %s|%s %s"), msg,
+							 page_len, elapsed_time, (display_html ? "</A>" : ""),
+							 perfd_time(elapsed_time), perfd_size(page_len));
 	}
 
 	if (show_body) {
@@ -1727,39 +1735,39 @@ int server_port_check(int ssl_flag) {
 }
 
 char *perfd_time(double elapsed_time) {
-	return mopl_utils_fperfdata("time", elapsed_time, "s", thlds->warning,
-					 thlds->warning ? thlds->warning->end : 0, thlds->critical,
-					 thlds->critical ? thlds->critical->end : 0, true, 0, true, socket_timeout);
+	return mopl_utils_fperfdata(
+		"time", elapsed_time, "s", thlds->warning, thlds->warning ? thlds->warning->end : 0,
+		thlds->critical, thlds->critical ? thlds->critical->end : 0, true, 0, true, socket_timeout);
 }
 
 char *perfd_time_connect(double elapsed_time_connect) {
-	return mopl_utils_fperfdata("time_connect", elapsed_time_connect, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
+	return mopl_utils_fperfdata("time_connect", elapsed_time_connect, "s", false, 0, false, 0,
+								false, 0, true, socket_timeout);
 }
 
 char *perfd_time_ssl(double elapsed_time_ssl) {
-	return mopl_utils_fperfdata("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
+	return mopl_utils_fperfdata("time_ssl", elapsed_time_ssl, "s", false, 0, false, 0, false, 0,
+								true, socket_timeout);
 }
 
 char *perfd_time_headers(double elapsed_time_headers) {
-	return mopl_utils_fperfdata("time_headers", elapsed_time_headers, "s", false, 0, false, 0, false, 0, true,
-					 socket_timeout);
+	return mopl_utils_fperfdata("time_headers", elapsed_time_headers, "s", false, 0, false, 0,
+								false, 0, true, socket_timeout);
 }
 
 char *perfd_time_firstbyte(double elapsed_time_firstbyte) {
-	return mopl_utils_fperfdata("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0, false, 0,
-					 true, socket_timeout);
+	return mopl_utils_fperfdata("time_firstbyte", elapsed_time_firstbyte, "s", false, 0, false, 0,
+								false, 0, true, socket_timeout);
 }
 
 char *perfd_time_transfer(double elapsed_time_transfer) {
-	return mopl_utils_fperfdata("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0, false, 0,
-					 true, socket_timeout);
+	return mopl_utils_fperfdata("time_transfer", elapsed_time_transfer, "s", false, 0, false, 0,
+								false, 0, true, socket_timeout);
 }
 
 char *perfd_size(int page_len) {
-	return mopl_utils_perfdata("size", page_len, "B", (min_page_len > 0), min_page_len, (min_page_len > 0), 0,
-					true, 0, false, 0);
+	return mopl_utils_perfdata("size", page_len, "B", (min_page_len > 0), min_page_len,
+							   (min_page_len > 0), 0, true, 0, false, 0);
 }
 
 void print_help(void) {

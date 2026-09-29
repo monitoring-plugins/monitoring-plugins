@@ -56,6 +56,7 @@ apt-get -y install perl \
 	libcurl4-openssl-dev \
 	liburiparser-dev \
 	squid \
+	openssh-client \
 	openssh-server \
 	mariadb-server \
 	mariadb-client \

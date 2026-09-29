@@ -412,8 +412,8 @@ check_icmp_config_wrapper process_arguments(int argc, char **argv) {
 					result.config.icmp_data_size = (unsigned short)size;
 				} else {
 					mopl_utils_usage_va("ICMP data length must be between: %lu and %lu",
-							 sizeof(struct icmp) + sizeof(struct icmp_ping_data),
-							 MAX_PING_DATA - 1);
+										sizeof(struct icmp) + sizeof(struct icmp_ping_data),
+										MAX_PING_DATA - 1);
 				}
 			} break;
 			case 'i': {
@@ -911,7 +911,8 @@ int main(int argc, char **argv) {
 		}
 #endif // SO_TIMESTAMP
 
-		if (setsockopt(sockset.socket6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &config.ttl, sizeof(config.ttl))) {
+		if (setsockopt(sockset.socket6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &config.ttl,
+					   sizeof(config.ttl))) {
 			crash("setsockopt IPV6_UNICAST_HOPS");
 		} else if (debug) {
 			printf("hop limit set to %d\n", config.ttl);
@@ -1548,20 +1549,22 @@ static void finish(int sig, check_icmp_mode_switches modes, int min_hosts_alive,
 
 		if (targets_ok >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_OK);
-			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u", targets_ok,
-					  min_hosts_alive);
+			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK of a minimum of %u",
+								 targets_ok, min_hosts_alive);
 
 			// Overwrite main state here
 			overall->evaluation_function = &mp_eval_ok;
 		} else if ((targets_ok + targets_warn) >= min_hosts_alive) {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_WARNING);
-			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
-					  targets_ok + targets_warn, min_hosts_alive);
+			mopl_utils_xasprintf(&sc_min_targets_alive.output,
+								 "%u targets OK or Warning of a minimum of %u",
+								 targets_ok + targets_warn, min_hosts_alive);
 			overall->evaluation_function = &mp_eval_warning;
 		} else {
 			sc_min_targets_alive = mp_set_subcheck_state(sc_min_targets_alive, STATE_CRITICAL);
-			mopl_utils_xasprintf(&sc_min_targets_alive.output, "%u targets OK or Warning of a minimum of %u",
-					  targets_ok + targets_warn, min_hosts_alive);
+			mopl_utils_xasprintf(&sc_min_targets_alive.output,
+								 "%u targets OK or Warning of a minimum of %u",
+								 targets_ok + targets_warn, min_hosts_alive);
 			overall->evaluation_function = &mp_eval_critical;
 		}
 
@@ -2224,7 +2227,7 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (target.flags & FLAG_LOST_CAUSE) {
 			mopl_utils_xasprintf(&result.output, "%s: %s @ %s", result.output,
-					  get_icmp_error_msg(target.icmp_type, target.icmp_code), address);
+								 get_icmp_error_msg(target.icmp_type, target.icmp_code), address);
 		} else { /* not marked as lost cause, so we have no flags for it */
 			mopl_utils_xasprintf(&result.output, "%s", result.output);
 		}
@@ -2296,10 +2299,12 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		if (rta >= crit.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_CRITICAL);
-			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)crit.rta / 1000);
+			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output,
+								 (double)crit.rta / 1000);
 		} else if (rta >= warn.rta) {
 			sc_rta = mp_set_subcheck_state(sc_rta, STATE_WARNING);
-			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output, (double)warn.rta / 1000);
+			mopl_utils_xasprintf(&sc_rta.output, "%s >= %0.3fms", sc_rta.output,
+								 (double)warn.rta / 1000);
 		}
 
 		if (packet_loss < 100) {
@@ -2446,7 +2451,8 @@ mp_subcheck evaluate_target(ping_target target, check_icmp_mode_switches modes,
 
 		} else {
 			// score mode disabled due to not enough received packages
-			mopl_utils_xasprintf(&sc_score.output, "Score mode disabled, not enough packets received");
+			mopl_utils_xasprintf(&sc_score.output,
+								 "Score mode disabled, not enough packets received");
 		}
 
 		mp_add_subcheck_to_subcheck(&result, sc_score);

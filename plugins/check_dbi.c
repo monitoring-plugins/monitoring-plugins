@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 		sc_connection_time = mp_set_subcheck_state(sc_connection_time, status);
 		if (status != STATE_OK) {
 			mopl_utils_xasprintf(&sc_connection_time.output, "%s violates thresholds",
-					  sc_connection_time.output);
+								 sc_connection_time.output);
 		}
 	}
 
@@ -250,7 +250,8 @@ int main(int argc, char **argv) {
 
 	mp_subcheck sc_server_version = mp_subcheck_init();
 	sc_server_version = mp_set_subcheck_default_state(sc_server_version, STATE_OK);
-	mopl_utils_xasprintf(&sc_server_version.output, "Connected to server version %u", server_version);
+	mopl_utils_xasprintf(&sc_server_version.output, "Connected to server version %u",
+						 server_version);
 
 	if (config.metric == METRIC_SERVER_VERSION) {
 		mp_perfdata pd_server_version = perfdata_init();
@@ -263,7 +264,7 @@ int main(int argc, char **argv) {
 
 		if (status != STATE_OK) {
 			mopl_utils_xasprintf(&sc_server_version.output, "%s violates thresholds",
-					  sc_server_version.output);
+								 sc_server_version.output);
 		}
 	};
 	mp_add_subcheck_to_check(&overall, sc_server_version);
@@ -298,7 +299,8 @@ int main(int argc, char **argv) {
 			sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 		} else if (query_res.query_processing_status != STATE_OK) {
 			if (query_res.error_string) {
-				mopl_utils_xasprintf(&sc_query.output, "Failed to process query: %s", query_res.error_string);
+				mopl_utils_xasprintf(&sc_query.output, "Failed to process query: %s",
+									 query_res.error_string);
 			} else {
 				mopl_utils_xasprintf(&sc_query.output, "Failed to process query");
 			}
@@ -325,11 +327,12 @@ int main(int argc, char **argv) {
 					if ((!query_res.result_string) ||
 						strcmp(query_res.result_string, config.expect)) {
 						mopl_utils_xasprintf(&sc_query.output, "Found string '%s' in query result",
-								  config.expect);
+											 config.expect);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 					} else {
-						mopl_utils_xasprintf(&sc_query.output, "Did not find string '%s' in query result",
-								  config.expect);
+						mopl_utils_xasprintf(&sc_query.output,
+											 "Did not find string '%s' in query result",
+											 config.expect);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
 					}
 				} else if (config.expect_re_str) {
@@ -347,18 +350,20 @@ int main(int argc, char **argv) {
 						regexec(&expect_re, query_res.result_string, 0, NULL, /* flags = */ 0);
 					if (!err) {
 						sc_query = mp_set_subcheck_state(sc_query, STATE_OK);
-						mopl_utils_xasprintf(&sc_query.output, "Found regular expression '%s' in query result",
-								  config.expect_re_str);
+						mopl_utils_xasprintf(&sc_query.output,
+											 "Found regular expression '%s' in query result",
+											 config.expect_re_str);
 					} else if (err == REG_NOMATCH) {
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 						mopl_utils_xasprintf(&sc_query.output,
-								  "Did not find regular expression '%s' in query result",
-								  config.expect_re_str);
+											 "Did not find regular expression '%s' in query result",
+											 config.expect_re_str);
 					} else {
 						char errmsg[1024];
 						regerror(err, &expect_re, errmsg, sizeof(errmsg));
 						mopl_utils_xasprintf(&sc_query.output,
-								  "ERROR - failed to execute regular expression: %s\n", errmsg);
+											 "ERROR - failed to execute regular expression: %s\n",
+											 errmsg);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 					}
 				} else {
@@ -368,7 +373,7 @@ int main(int argc, char **argv) {
 						// so we expected a number
 						// this is a CRITICAL
 						mopl_utils_xasprintf(&sc_query.output, "Query '%s' result is not numeric",
-								  config.query);
+											 config.query);
 						sc_query = mp_set_subcheck_state(sc_query, STATE_CRITICAL);
 
 					} else {
@@ -390,12 +395,12 @@ int main(int argc, char **argv) {
 
 						if (query_numerical_result == STATE_OK) {
 							mopl_utils_xasprintf(&sc_query.output,
-									  "Query result '%f' is within given thresholds",
-									  query_res.result_number);
+												 "Query result '%f' is within given thresholds",
+												 query_res.result_number);
 						} else {
 							mopl_utils_xasprintf(&sc_query.output,
-									  "Query result '%f' violates the given thresholds",
-									  query_res.result_number);
+												 "Query result '%f' violates the given thresholds",
+												 query_res.result_number);
 						}
 					}
 				}
@@ -404,11 +409,13 @@ int main(int argc, char **argv) {
 				mp_set_subcheck_state(sc_query, query_time_status);
 
 				if (query_time_status == STATE_OK) {
-					mopl_utils_xasprintf(&sc_query.output, "Query duration '%f' is within given thresholds",
-							  query_res.query_duration);
+					mopl_utils_xasprintf(&sc_query.output,
+										 "Query duration '%f' is within given thresholds",
+										 query_res.query_duration);
 				} else {
-					mopl_utils_xasprintf(&sc_query.output, "Query duration '%f' violates the given thresholds",
-							  query_res.query_duration);
+					mopl_utils_xasprintf(&sc_query.output,
+										 "Query duration '%f' violates the given thresholds",
+										 query_res.query_duration);
 				}
 			} else {
 				/* In case of METRIC_QUERY_RESULT, isnan(query_val) indicates an error

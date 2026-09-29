@@ -95,9 +95,11 @@ typedef enum {
 
 int mopl_net_tls_init(int socket);
 int mopl_net_tls_init_with_hostname(int socket, char *host_name);
-int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name, mopl_tls_version version);
-int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name, mopl_tls_version version,
-													 char *cert, char *privkey);
+int mopl_net_tls_init_with_hostname_and_version(int socket, char *host_name,
+												mopl_tls_version version);
+int mopl_net_tls_init_with_hostname_version_and_cert(int socket, char *host_name,
+													 mopl_tls_version version, char *cert,
+													 char *privkey);
 void mopl_net_tls_cleanup(void);
 int mopl_net_ssl_write(const void *buf, int num);
 int mopl_net_ssl_read(void *buf, int num);

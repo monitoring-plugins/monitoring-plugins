@@ -228,7 +228,7 @@ bool mp_check_range(const mp_perfdata_value value, const mp_range my_range) {
 	} else if (my_range.start_infinity && !my_range.end_infinity) {
 		// range:  -inside--------|....................
 		// value
-		is_inside = (cmp_perfdata_value(value, my_range.end) == -1);
+		is_inside = (cmp_perfdata_value(value, my_range.end) <= 0);
 	} else {
 		// range from -inf to inf, so always inside
 		is_inside = true;
@@ -321,8 +321,6 @@ char *np_escaped_string(const char *string) {
 }
 
 int np_check_if_root(void) { return (geteuid() == 0); }
-
-
 
 const char *state_text(mp_state_enum result) {
 	switch (result) {

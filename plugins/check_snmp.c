@@ -305,8 +305,8 @@ int main(int argc, char **argv) {
 	} else if (response.number_of_results != config.snmp_params.num_of_test_units) {
 		mp_subcheck sc_strange_query_result = mp_subcheck_init();
 		mopl_utils_xasprintf(&sc_strange_query_result.output,
-				  "SNMP query returned %zu results, but %zu were requested",
-				  response.number_of_results, config.snmp_params.num_of_test_units);
+							 "SNMP query returned %zu results, but %zu were requested",
+							 response.number_of_results, config.snmp_params.num_of_test_units);
 		sc_strange_query_result = mp_set_subcheck_state(sc_strange_query_result, STATE_UNKNOWN);
 		mp_add_subcheck_to_check(&overall, sc_strange_query_result);
 		mp_exit(overall);
@@ -382,7 +382,8 @@ int main(int argc, char **argv) {
 			gen_state_string(new_state, config.snmp_params.num_of_test_units);
 
 		if (current_state_wrapper.errorcode == OK) {
-			check_snmp_state_write_string(stateKey, current_time, current_state_wrapper.state_string);
+			check_snmp_state_write_string(stateKey, current_time,
+										  current_state_wrapper.state_string);
 		} else {
 			die(STATE_UNKNOWN, "failed to create state string");
 		}
@@ -875,7 +876,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 		} else if (strcasecmp(connection_prefix, "tcp") == 0) {
 			// use tcp/ipv4
 			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tcp:%s",
-					  config.snmp_params.snmp_session.peername);
+								 config.snmp_params.snmp_session.peername);
 		} else if (strcasecmp(connection_prefix, "tcp6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpv6") == 0 ||
 				   strcasecmp(connection_prefix, "tcpipv6") == 0 ||
@@ -884,23 +885,23 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 				   strcasecmp(connection_prefix, "udpv6") == 0) {
 			// Man page (or net-snmp) code says IPv6 addresses should be wrapped in [], but it
 			// works anyway therefore do nothing here
-			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s", connection_prefix,
-					  config.snmp_params.snmp_session.peername);
+			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
+								 connection_prefix, config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "tls") == 0) {
 			// TODO: Anything else to do here?
 			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "tls:%s",
-					  config.snmp_params.snmp_session.peername);
+								 config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "dtls") == 0) {
 			// TODO: Anything else to do here?
 			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "dtls:%s",
-					  config.snmp_params.snmp_session.peername);
+								 config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "unix") == 0) {
 			// TODO: Check whether this is a valid path?
 			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "unix:%s",
-					  config.snmp_params.snmp_session.peername);
+								 config.snmp_params.snmp_session.peername);
 		} else if (strcmp(connection_prefix, "ipx") == 0) {
 			mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "ipx:%s",
-					  config.snmp_params.snmp_session.peername);
+								 config.snmp_params.snmp_session.peername);
 		} else {
 			// Don't know that prefix, die here
 			die(STATE_UNKNOWN, "Unknown connection prefix");
@@ -914,7 +915,7 @@ static process_arguments_wrapper process_arguments(int argc, char **argv) {
 
 	if (port != NULL) {
 		mopl_utils_xasprintf(&config.snmp_params.snmp_session.peername, "%s:%s",
-				  config.snmp_params.snmp_session.peername, port);
+							 config.snmp_params.snmp_session.peername, port);
 	}
 
 	/* check whether to load locally installed MIBS (CPU/disk intensive) */
@@ -1110,7 +1111,8 @@ void print_help(void) {
 	printf("    %s\n", _("3 = UNKNOWN"));
 	printf(" %s\n", "--missing-oid=#");
 	printf("    %s\n", _("If a query for an OID returns nothing (OID missing on the target)"));
-	printf("    %s\n", _("this option allows you to choose what status you want for this specific OID"));
+	printf("    %s\n",
+		   _("this option allows you to choose what status you want for this specific OID"));
 	printf("    %s\n", _("Excluding this option renders the default exit of 2 (CRITICAL)"));
 	printf("    %s\n", _("0 = OK"));
 	printf("    %s\n", _("1 = WARNING"));
