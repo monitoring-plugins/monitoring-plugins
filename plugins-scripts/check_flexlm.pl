@@ -89,6 +89,7 @@ unless (-x $lmstat ) {
 ($opt_F) || ($opt_F = shift) || usage("License file not specified\n");
 my $licfile = $1 if ($opt_F =~ /^(.*)$/);
 ($licfile) || usage("Invalid filename: $opt_F\n");
+(-e $licfile) || usage("Invalid filename: $opt_F: $!\n");
 
 print "$licfile\n" if $verbose;
 
