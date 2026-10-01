@@ -153,7 +153,6 @@ make THANKS
 Summary: Monitoring Plugins - All Check Plugins
 Requires: %{name}
 Requires: %{name}-apt
-Requires: %{name}-breeze
 Requires: %{name}-by_ssh
 Requires: %{name}-cluster
 Requires: %{name}-curl
@@ -232,20 +231,6 @@ Provides check_apt of the Monitoring Plugins.
 
 %files apt
 %{plugindir}/check_apt
-
-
-
-# check_breeze
-%package breeze
-Summary: Monitoring Plugins - check_breeze
-Requires: %{name} = %{version}-%{release}
-
-%description breeze
-Provides check_breeze of the Monitoring Plugins.
-
-%files breeze
-%{plugindir}/check_breeze
-
 
 
 # check_by_ssh
