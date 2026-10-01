@@ -168,7 +168,6 @@ Requires: %{name}-disk_smb
 Requires: %{name}-dns
 Requires: %{name}-dummy
 Requires: %{name}-file_age
-Requires: %{name}-flexlm
 Requires: %{name}-fping
 %if 0%{?rhel} != 8
 Requires: %{name}-game
@@ -380,19 +379,6 @@ Provides check_file_age of the Monitoring Plugins.
 
 %files file_age
 %{plugindir}/check_file_age
-
-
-
-# check_flexlm
-%package flexlm
-Summary:  Monitoring Plugins - check_flexlm
-Requires: %{name} = %{version}-%{release}
-
-%description flexlm
-Provides check_flexlm of the Monitoring Plugins.
-
-%files flexlm
-%{plugindir}/check_flexlm
 
 
 
