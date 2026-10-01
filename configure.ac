@@ -1402,14 +1402,6 @@ AC_ARG_WITH(rpcinfo_command,
                             [sets path to rpcinfo]), PATH_TO_RPCINFO=$withval)
 AC_DEFINE_UNQUOTED(PATH_TO_RPCINFO,"$PATH_TO_RPCINFO",[path to rpcinfo binary])
 
-AC_PATH_PROG(PATH_TO_LMSTAT,lmstat)
-if test -x "$PATH_TO_LMSTAT"
-then
-	AC_DEFINE_UNQUOTED(PATH_TO_LMSTAT,"$PATH_TO_LMSTAT",[path to lmstat])
-else
-	AC_MSG_WARN([Get lmstat from Globetrotter Software to monitor flexlm licenses])
-fi
-
 AC_PATH_PROG(PATH_TO_SMBCLIENT,smbclient)
 AC_ARG_WITH(smbclient_command,
             ACX_HELP_STRING([--with-smbclient-command=PATH],
