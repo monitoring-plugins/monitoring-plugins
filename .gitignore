@@ -271,7 +271,6 @@ plugins/check_disk.d/.dirstamp
 /plugins-scripts/subst
 /plugins-scripts/utils.pm
 /plugins-scripts/utils.sh
-/plugins-scripts/check_breeze
 /plugins-scripts/check_disk_smb
 /plugins-scripts/check_flexlm
 /plugins-scripts/check_ifoperstatus
