@@ -63,6 +63,7 @@ if ($opt_s) {
 }
 
 if ($opt_d) {
+    (-e $opt_d) || usage("Invalid configuration file: $opt_d: $!\n");
     $mailq_args = $mailq_args . ' -C ' . $opt_d;
 }
 
