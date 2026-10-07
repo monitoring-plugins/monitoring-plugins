@@ -42,6 +42,11 @@
 
 require 5.14.0;
 
+if ($^O eq 'openbsd') {
+	require OpenBSD::Pledge;
+	OpenBSD::Pledge::pledge( qw( rpath inet dns ) ) || die "pledge: $!";
+}
+
 # -------------------------------------------------------------------[ Uses ]--
 
 use strict;
