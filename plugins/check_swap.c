@@ -71,7 +71,9 @@ int main(int argc, char **argv) {
 #ifdef __OpenBSD__
 	/* - rpath is required to read --extra-opts (given up later)
 	 * - vminfo is required for swapctl(2) (given up later) */
-	pledge("stdio rpath vminfo", NULL);
+	if (pledge("stdio rpath vminfo", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -88,7 +90,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio vminfo", NULL);
+	if (pledge("stdio vminfo", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	swap_config config = tmp.config;
@@ -101,7 +105,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio", NULL);
+	if (pledge("stdio", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	if (verbose) {

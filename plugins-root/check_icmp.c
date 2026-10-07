@@ -842,7 +842,9 @@ int main(int argc, char **argv) {
 	 * - dns is required for name lookups (given up later)
 	 * - id is required for temporary privilege drops in configparsing and for
 	 *   permanent privilege dropping after opening the socket (given up later) */
-	pledge("stdio rpath inet dns id", NULL);
+	if (pledge("stdio rpath inet dns id", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -870,7 +872,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio inet dns id", NULL);
+	if (pledge("stdio inet dns id", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	const check_icmp_config config = tmp_config.config;
@@ -948,7 +952,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio inet", NULL);
+	if (pledge("stdio inet", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	/* make sure we don't wait any longer than necessary */
