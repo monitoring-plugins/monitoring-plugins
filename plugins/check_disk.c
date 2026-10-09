@@ -117,7 +117,9 @@ const byte_unit ExaBytes_factor = 1000000000000000000;
 int main(int argc, char **argv) {
 #ifdef __OpenBSD__
 	/* - rpath is required to read --extra-opts and the partitions */
-	pledge("stdio rpath", NULL);
+	if (pledge("stdio rpath", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");

@@ -72,29 +72,41 @@ int main(int argc, char **argv) {
 	/* Restrict program execution to the ping{,6} binaries. Continue allow
 	 * reading all files since arguments were not parsed at this point. */
 	char *ping_command, *ping_binary;
-	ping_command = malloc(strnlen(PING6_COMMAND, BUFSIZ));
+	if (!(ping_command = malloc(strnlen(PING6_COMMAND, BUFSIZ) + 1))) {
+		die(STATE_UNKNOWN, "malloc: %s", strerror(errno));
+	}
 
-	(void)strlcpy(ping_command, PING_COMMAND, strnlen(PING_COMMAND, BUFSIZ));
+	(void)strlcpy(ping_command, PING_COMMAND, strnlen(PING6_COMMAND, BUFSIZ) + 1);
 	if (!(ping_binary = strtok(ping_command, " "))) {
 		die(STATE_UNKNOWN, "Cannot extract binary from %s", PING_COMMAND);
 	}
-	unveil(ping_binary, "rx");
+	if (unveil(ping_binary, "rx")) {
+		die(STATE_UNKNOWN, "unveil: %s", strerror(errno));
+	}
 
-	(void)strlcpy(ping_command, PING6_COMMAND, strnlen(PING6_COMMAND, BUFSIZ));
+	(void)strlcpy(ping_command, PING6_COMMAND, strnlen(PING6_COMMAND, BUFSIZ) + 1);
 	if (!(ping_binary = strtok(ping_command, " "))) {
 		die(STATE_UNKNOWN, "Cannot extract binary from %s", PING6_COMMAND);
 	}
-	unveil(ping_binary, "rx");
+	if (unveil(ping_binary, "rx")) {
+		die(STATE_UNKNOWN, "unveil: %s", strerror(errno));
+	}
 
 	free(ping_command);
 
-	unveil("/", "r");
-	unveil(NULL, NULL);
+	if (unveil("/", "r")) {
+		die(STATE_UNKNOWN, "unveil: %s", strerror(errno));
+	}
+	if (unveil(NULL, NULL)) {
+		die(STATE_UNKNOWN, "locking unveil: %s", strerror(errno));
+	}
 
 	/* - rpath is required to read --extra-opts (given up later)
 	 * - dns for hostname resolution via mopl_net_is_{host,inet6_addr} (given up later)
 	 * - proc and exec are used to fork and exec (given up later) */
-	pledge("stdio rpath dns proc exec", NULL);
+	if (pledge("stdio rpath dns proc exec", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -157,7 +169,9 @@ int main(int argc, char **argv) {
 	ping_result pinged = run_ping(cmd, config.address, config.crta);
 
 #ifdef __OpenBSD__
-	pledge("stdio", NULL);
+	if (pledge("stdio", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	if (pinged.packet_loss == UNKNOWN_PACKET_LOSS || pinged.round_trip_average < 0.0) {
