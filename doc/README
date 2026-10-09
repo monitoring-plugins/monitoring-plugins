@@ -1,3 +1,12 @@
 The developer documentation here is generated from the DocBook format.
 
+On Debian/Ubuntu, install these packages to build the guidelines:
+
+  make
+  xsltproc
+  docbook-xsl
+  docbook-xml
+
+The makefile auto-detects the DocBook XSL stylesheet path used by
+different distributions.
 
