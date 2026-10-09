@@ -89,3 +89,38 @@ jobs:
                 ls -la'
           docker container prune -f
           docker volume prune -f
+
+  archlinux-build-test:
+    name: Running pacman build test on archlinux:latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Git clone repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build and test the Arch Linux package
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/archlinux-artifacts"
+          docker run --rm --pull=always \
+            -v "$GITHUB_WORKSPACE:/src:ro" \
+            -v "$RUNNER_TEMP/archlinux-artifacts:/artifacts" \
+            archlinux:latest bash /src/.github/build_arch.sh \
+            2>&1 | tee "$RUNNER_TEMP/archlinux-artifacts/container.log"
+      - name: Upload Arch Linux build logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: archlinux-build-logs
+          path: ${{ runner.temp }}/archlinux-artifacts/*.log
+      - name: Upload Arch Linux packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: archlinux-packages
+          path: ${{ runner.temp }}/archlinux-artifacts/*.pkg.tar.zst
+          if-no-files-found: error
+          compression-level: 0
