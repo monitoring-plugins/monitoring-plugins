@@ -85,16 +85,19 @@ int main(int argc, char **argv) {
 	char query_string[512];
 	/* removed ' 2>1' at end of command 10/27/1999 - EG */
 	/* create the query string */
-	sprintf(query_string, "%s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0",
-			HPJD_LINE_STATUS, HPJD_PAPER_STATUS, HPJD_INTERVENTION_REQUIRED,
-			HPJD_GD_PERIPHERAL_ERROR, HPJD_GD_PAPER_JAM, HPJD_GD_PAPER_OUT, HPJD_GD_TONER_LOW,
-			HPJD_GD_PAGE_PUNT, HPJD_GD_MEMORY_OUT, HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT,
-			HPJD_GD_STATUS_DISPLAY);
+	snprintf(query_string, sizeof(query_string),
+			 "%s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0 %s.0", HPJD_LINE_STATUS,
+			 HPJD_PAPER_STATUS, HPJD_INTERVENTION_REQUIRED, HPJD_GD_PERIPHERAL_ERROR,
+			 HPJD_GD_PAPER_JAM, HPJD_GD_PAPER_OUT, HPJD_GD_TONER_LOW, HPJD_GD_PAGE_PUNT,
+			 HPJD_GD_MEMORY_OUT, HPJD_GD_DOOR_OPEN, HPJD_GD_PAPER_OUTPUT, HPJD_GD_STATUS_DISPLAY);
 
 	/* get the command to run */
 	char command_line[1024];
-	sprintf(command_line, "%s -OQa -m : -v 1 -c %s %s:%u %s", PATH_TO_SNMPGET, config.community,
-			config.address, config.port, query_string);
+	int l = snprintf(command_line, sizeof(command_line), "%s -OQa -m : -v 1 -c %s %s:%u %s",
+					 PATH_TO_SNMPGET, config.community, config.address, config.port, query_string);
+	if (l >= sizeof(command_line)) {
+		mopl_utils_usage4(_("Command arguments too long"));
+	}
 
 	/* run the command */
 	child_process = mopl_popen_spopen(command_line);
@@ -140,7 +143,7 @@ int main(int argc, char **argv) {
 
 		if (temp_buffer == NULL && line < 13) {
 			result = STATE_UNKNOWN;
-			strcpy(errmsg, input_buffer);
+			strncpy(errmsg, input_buffer, MAX_INPUT_BUFFER);
 		} else {
 			switch (line) {
 			case 1: /* 1st line should contain the line status */
@@ -198,7 +201,7 @@ int main(int argc, char **argv) {
 		if (input_buffer[strlen(input_buffer) - 1] == '\n') {
 			input_buffer[strlen(input_buffer) - 1] = 0;
 		}
-		sprintf(errmsg, "%s", input_buffer);
+		snprintf(errmsg, MAX_INPUT_BUFFER, "%s", input_buffer);
 	}
 
 	/* close stderr */
