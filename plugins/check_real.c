@@ -108,7 +108,11 @@ int main(int argc, char **argv) {
 
 	/* send the OPTIONS request */
 	char send_buffer[MAX_INPUT_BUFFER];
-	sprintf(send_buffer, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n", config.host_name, config.server_port);
+	int l = snprintf(send_buffer, MAX_INPUT_BUFFER, "OPTIONS rtsp://%s:%d RTSP/1.0\r\n",
+					 config.host_name, config.server_port);
+	if (l >= MAX_INPUT_BUFFER) {
+		mopl_utils_usage4(_("Command arguments too long"));
+	}
 	ssize_t sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
 		mopl_utils_xasprintf(&sc_send.output, _("Sending options to %s failed"), config.host_name);
@@ -118,7 +122,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* send the header sync */
-	sprintf(send_buffer, "CSeq: 1\r\n");
+	snprintf(send_buffer, MAX_INPUT_BUFFER, "CSeq: 1\r\n");
 	sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
 		mopl_utils_xasprintf(&sc_send.output, _("Sending header sync to %s failed"),
@@ -129,7 +133,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* send a newline so the server knows we're done with the request */
-	sprintf(send_buffer, "\r\n");
+	snprintf(send_buffer, MAX_INPUT_BUFFER, "\r\n");
 	sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 	if (sent_bytes == -1) {
 		mopl_utils_xasprintf(&sc_send.output, _("Sending newline to %s failed"), config.host_name);
@@ -221,8 +225,11 @@ int main(int argc, char **argv) {
 		mp_subcheck sc_describe = mp_subcheck_init();
 
 		/* send the DESCRIBE request */
-		sprintf(send_buffer, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n", config.host_name,
-				config.server_port, config.server_url);
+		int l = snprintf(send_buffer, MAX_INPUT_BUFFER, "DESCRIBE rtsp://%s:%d%s RTSP/1.0\r\n",
+						 config.host_name, config.server_port, config.server_url);
+		if (l >= MAX_INPUT_BUFFER) {
+			mopl_utils_usage4(_("Command arguments too long"));
+		}
 
 		ssize_t sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
@@ -234,7 +241,7 @@ int main(int argc, char **argv) {
 		}
 
 		/* send the header sync */
-		sprintf(send_buffer, "CSeq: 2\r\n");
+		snprintf(send_buffer, MAX_INPUT_BUFFER, "CSeq: 2\r\n");
 		sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
@@ -245,7 +252,7 @@ int main(int argc, char **argv) {
 		}
 
 		/* send a newline so the server knows we're done with the request */
-		sprintf(send_buffer, "\r\n");
+		snprintf(send_buffer, MAX_INPUT_BUFFER, "\r\n");
 		sent_bytes = send(socket, send_buffer, strlen(send_buffer), 0);
 		if (sent_bytes == -1) {
 			sc_describe = mp_set_subcheck_state(sc_describe, STATE_CRITICAL);
