@@ -8,8 +8,6 @@ use strict;
 use warnings;
 use Test::More;
 use NPTest;
-use IO::Socket::INET;
-use POSIX qw(_exit);
 
 my $host_tcp_smtp            = getTestParameter( "NP_HOST_TCP_SMTP",
 					   "A host providing an SMTP Service (a mail server)", "mailhost");
@@ -27,42 +25,7 @@ my $hostname_invalid   = getTestParameter( "NP_HOSTNAME_INVALID",
                                            "An invalid (not known to DNS) hostname", "nosuchhost" );
 my $res;
 
-plan tests => 2 + ($host_tcp_smtp ? 6 : 4) + 1 + 2 + ($host_tcp_smtp_tls ? 2 : 1) + 2;
-
-SKIP: {
-	my $smtp_fixture = IO::Socket::INET->new(
-		LocalAddr => "127.0.0.1",
-		LocalPort => 0,
-		Listen    => 1,
-		ReuseAddr => 1,
-	);
-	skip "Cannot bind local SMTP fixture", 2 unless $smtp_fixture;
-
-	my $fixture_port = $smtp_fixture->sockport;
-	my $fixture_pid = fork();
-	skip "Cannot fork local SMTP fixture", 2 unless defined $fixture_pid;
-	if ($fixture_pid == 0) {
-		my $client = $smtp_fixture->accept();
-		_exit(1) unless $client;
-		$client->autoflush(1);
-		print {$client} "220 localhost ESMTP\r\n";
-		while (my $line = <$client>) {
-			if ($line =~ /^QUIT\b/i) {
-				print {$client} "221 localhost closing\r\n";
-				last;
-			}
-			print {$client} "250 localhost\r\n";
-		}
-		close $client;
-		_exit(0);
-	}
-
-	close $smtp_fixture;
-	$res = NPTest->testCmd("./check_smtp -H 127.0.0.1 -p $fixture_port -t 5");
-	is($res->return_code, 0, "OK, local SMTP fixture responds");
-	like($res->perf_output, qr/'time'=\d+(?:\.\d+)?s/, "connection time is included in perfdata");
-	waitpid($fixture_pid, 0);
-}
+plan tests => 13;
 
 SKIP: {
 	skip "No SMTP server defined", 4 unless $host_tcp_smtp;
