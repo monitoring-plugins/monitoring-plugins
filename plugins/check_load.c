@@ -63,6 +63,7 @@ void print_help(void);
 void print_usage(void);
 typedef struct {
 	int errorcode;
+	size_t lines;
 	char **top_processes;
 } top_processes_result;
 static top_processes_result get_top_consuming_processes(unsigned long n_procs_to_show);
@@ -291,8 +292,8 @@ int main(int argc, char **argv) {
 							 config.n_procs_to_show);
 
 		if (top_proc.errorcode == OK) {
-			// +1 here since the string list contains the header line
-			for (unsigned long i = 0; i < config.n_procs_to_show + 1; i++) {
+			// Include the header and only the process lines returned.
+			for (size_t i = 0; i < top_proc.lines; i++) {
 				mopl_utils_xasprintf(&top_proc_sc.output, "%s\n%s", top_proc_sc.output,
 									 top_proc.top_processes[i]);
 			}
@@ -516,6 +517,7 @@ static top_processes_result get_top_consuming_processes(unsigned long n_procs_to
 		result.errorcode = ERROR;
 		return result;
 	}
+	result.lines = lines_to_show;
 
 	for (unsigned long i = 0; i < lines_to_show; i += 1) {
 		mopl_utils_xasprintf(&result.top_processes[i], "%s", chld_out.line[i]);
