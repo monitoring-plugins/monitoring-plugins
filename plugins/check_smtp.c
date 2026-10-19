@@ -613,6 +613,7 @@ int main(int argc, char **argv) {
 	mopl_utils_xasprintf(&sc_connection_time.output, "connection time: %.3gs", elapsed_time);
 	sc_connection_time =
 		mp_set_subcheck_state(sc_connection_time, mp_get_pd_status(pd_elapsed_time));
+	mp_add_perfdata_to_subcheck(&sc_connection_time, pd_elapsed_time);
 	mp_add_subcheck_to_check(&overall, sc_connection_time);
 
 	mp_exit(overall);
