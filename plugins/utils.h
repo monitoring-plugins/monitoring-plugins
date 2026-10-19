@@ -198,13 +198,17 @@ For more information about these matters, see the file named COPYING.\n")
 		}                                                                                          \
 	} while (0);
 
-#define DBG_PRINT(x, ...)                                                                          \
+#define DBG_PRINTF(verbosity, format, ...)                                                         \
 	do {                                                                                           \
-		if (verbose > x) {                                                                         \
-			printf(0 __VA_OPT__(, ) __VA_ARGS__);                                                  \
+		if (verbose > verbosity) {                                                                 \
+			printf(format, __VA_ARGS__);                                                           \
 		}                                                                                          \
 	} while (0);
 
-#define DBG_PRINT_1(...) DBG_PRINT(1, 0 __VA_OPT__(, ) __VA_ARGS__);
-#define DBG_PRINT_2(...) DBG_PRINT(2, 0 __VA_OPT__(, ) __VA_ARGS__);
-#define DBG_PRINT_3(...) DBG_PRINT(3, 0 __VA_OPT__(, ) __VA_ARGS__);
+#define DBG_PRINTF_1(format, ...) DBG_PRINTF(1, format, __VA_ARGS__);
+#define DBG_PRINTF_2(format, ...) DBG_PRINTF(2, format, __VA_ARGS__);
+#define DBG_PRINTF_3(format, ...) DBG_PRINTF(3, format, __VA_ARGS__);
+
+#define DBG_PRINT_1(...) DBG_PRINTF(1, "%s", __VA_ARGS__);
+#define DBG_PRINT_2(...) DBG_PRINTF(2, "%s", __VA_ARGS__);
+#define DBG_PRINT_3(...) DBG_PRINTF(3, "%s", __VA_ARGS__);
