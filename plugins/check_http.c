@@ -1490,10 +1490,18 @@ char *unchunk_content(const char *content) {
 			}
 			return NULL;
 		}
+
 		if (endptr == pointer) {
 			// Apparently this was not a number
 			if (verbose) {
 				printf("Chunked content did not start with a number at all (Line: %u)\n", __LINE__);
+			}
+			return NULL;
+		}
+
+		if (size_of_chunk < 0) {
+			if (verbose) {
+				printf("Chunked content size was a negative number (Line: %u)\n", __LINE__);
 			}
 			return NULL;
 		}
