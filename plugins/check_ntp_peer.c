@@ -297,7 +297,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 		}
 	}
 
-	DBG_PRINT_1("%d candidate peers available\n", num_candidates);
+	DBG_PRINTF_1("%d candidate peers available\n", num_candidates);
 	if (result.syncsource_found) {
 		DBG_PRINT_1("synchronization source found\n");
 	}
@@ -366,7 +366,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 				}
 			}
 
-			DBG_PRINT_1("Server responded: >>>%s<<<\n", data);
+			DBG_PRINTF_1("Server responded: >>>%s<<<\n", data);
 
 			double tmp_offset = 0;
 			char *value;
@@ -385,7 +385,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 			if (value == NULL || value == nptr) {
 				DBG_PRINT_1("error: unable to read server offset response.\n");
 			} else {
-				DBG_PRINT_1("%.10g\n", tmp_offset);
+				DBG_PRINTF_1("%.10g\n", tmp_offset);
 				if (result.offset_result == STATE_UNKNOWN ||
 					fabs(tmp_offset) < fabs(result.offset)) {
 					result.offset = tmp_offset;
@@ -413,7 +413,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 					DBG_PRINT_1("error: unable to read server jitter/dispersion response.\n");
 					result.jitter = -1;
 				} else {
-					DBG_PRINT_1("%.10g\n", result.jitter);
+					DBG_PRINTF_1("%.10g\n", result.jitter);
 				}
 			}
 
@@ -430,7 +430,7 @@ ntp_request_result ntp_request(const check_ntp_peer_config config) {
 					DBG_PRINT_1("error: unable to read server stratum response.\n");
 					result.stratum = -1;
 				} else {
-					DBG_PRINT_1("%li\n", result.stratum);
+					DBG_PRINTF_1("%li\n", result.stratum);
 				}
 			}
 		} /* if (PEER_SEL(peers[i].status) >= min_peer_sel) */
