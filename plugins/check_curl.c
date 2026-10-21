@@ -125,7 +125,9 @@ int main(int argc, char **argv) {
 	 * - wpath is required to write --cookie-jar (possibly given up later)
 	 * - inet is required for sockets
 	 * - dns is required for name lookups */
-	pledge("stdio rpath wpath inet dns", NULL);
+	if (pledge("stdio rpath wpath inet dns", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -148,7 +150,9 @@ int main(int argc, char **argv) {
 		if (verbose >= 2) {
 			printf(_("* No \"--cookie-jar\" is used, giving up \"wpath\" pledge(2)\n"));
 		}
-		pledge("stdio rpath inet dns", NULL);
+		if (pledge("stdio rpath inet dns", NULL)) {
+			die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+		}
 	}
 #endif // __OpenBSD__
 

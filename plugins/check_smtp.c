@@ -105,7 +105,9 @@ int main(int argc, char **argv) {
 	 * - inet is required for sockets
 	 * - unix is required for Unix domain sockets
 	 * - dns is required for name lookups */
-	pledge("stdio rpath inet unix dns", NULL);
+	if (pledge("stdio rpath inet unix dns", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -122,7 +124,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio inet unix dns", NULL);
+	if (pledge("stdio inet unix dns", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	const check_smtp_config config = tmp_config.config;
@@ -609,6 +613,7 @@ int main(int argc, char **argv) {
 	mopl_utils_xasprintf(&sc_connection_time.output, "connection time: %.3gs", elapsed_time);
 	sc_connection_time =
 		mp_set_subcheck_state(sc_connection_time, mp_get_pd_status(pd_elapsed_time));
+	mp_add_perfdata_to_subcheck(&sc_connection_time, pd_elapsed_time);
 	mp_add_subcheck_to_check(&overall, sc_connection_time);
 
 	mp_exit(overall);

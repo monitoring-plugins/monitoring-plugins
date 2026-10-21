@@ -100,21 +100,31 @@ int main(int argc, char **argv) {
 	/* Restrict program execution to the ps binary. Continue allow reading all
 	 * files since arguments were not parsed at this point. */
 	char *ps_command, *ps_binary;
-	ps_command = malloc(strnlen(PS_COMMAND, BUFSIZ));
+	if (!(ps_command = malloc(strnlen(PS_COMMAND, BUFSIZ) + 1))) {
+		die(STATE_UNKNOWN, "malloc: %s", strerror(errno));
+	}
 
-	(void)strlcpy(ps_command, PS_COMMAND, strnlen(PS_COMMAND, BUFSIZ));
+	(void)strlcpy(ps_command, PS_COMMAND, strnlen(PS_COMMAND, BUFSIZ) + 1);
 	if (!(ps_binary = strtok(ps_command, " "))) {
 		die(STATE_UNKNOWN, "Cannot extract binary from %s", PS_COMMAND);
 	}
-	unveil(ps_binary, "rx");
+	if (unveil(ps_binary, "rx")) {
+		die(STATE_UNKNOWN, "unveil: %s", strerror(errno));
+	}
 	free(ps_command);
 
-	unveil("/", "r");
-	unveil(NULL, NULL);
+	if (unveil("/", "r")) {
+		die(STATE_UNKNOWN, "unveil: %s", strerror(errno));
+	}
+	if (unveil(NULL, NULL)) {
+		die(STATE_UNKNOWN, "locking unveil: %s", strerror(errno));
+	}
 
 	/* - rpath is required to read --input-path, --extra-opts (given up later)
 	 * - proc and exec are used to fork and exec (given up later) */
-	pledge("stdio rpath proc exec", NULL);
+	if (pledge("stdio rpath proc exec", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -171,7 +181,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio", NULL);
+	if (pledge("stdio", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	int pos; /* number of spaces before 'args' in `ps` output */

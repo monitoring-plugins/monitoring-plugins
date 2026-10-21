@@ -165,6 +165,8 @@ static int handle_random_icmp(unsigned char *packet, struct sockaddr_storage *ad
 							  time_t *target_interval, uint16_t sender_id, ping_target **table,
 							  unsigned short packets, unsigned short number_of_targets,
 							  check_icmp_state *program_state);
+static bool reply_address_matches_target(const struct sockaddr_storage *resp_addr,
+										 const ping_target *target);
 
 /* Sending data */
 static int send_icmp_ping(check_icmp_socket_set sockset, ping_target *host,
@@ -842,7 +844,9 @@ int main(int argc, char **argv) {
 	 * - dns is required for name lookups (given up later)
 	 * - id is required for temporary privilege drops in configparsing and for
 	 *   permanent privilege dropping after opening the socket (given up later) */
-	pledge("stdio rpath inet dns id", NULL);
+	if (pledge("stdio rpath inet dns id", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	setlocale(LC_ALL, "");
@@ -870,7 +874,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio inet dns id", NULL);
+	if (pledge("stdio inet dns id", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	const check_icmp_config config = tmp_config.config;
@@ -948,7 +954,9 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __OpenBSD__
-	pledge("stdio inet", NULL);
+	if (pledge("stdio inet", NULL)) {
+		die(STATE_UNKNOWN, "pledge: %s", strerror(errno));
+	}
 #endif // __OpenBSD__
 
 	/* make sure we don't wait any longer than necessary */
@@ -1231,6 +1239,21 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 			target = table[ntohs(packet.icp6->icmp6_seq) / packets];
 		}
 
+		/* The reply matches our icmp_id, but that id is only the low 16 bits
+		 * of our PID. With pid_max > 65536 a concurrently running pinger
+		 * (another check_icmp or some other ping tool) may use the same id,
+		 * and every raw ICMP socket on the machine receives a copy of all
+		 * echo replies. So drop the reply unless it actually comes from the
+		 * target we pinged, otherwise it would be counted for the wrong target. */
+		if (!reply_address_matches_target(&resp_addr, target)) {
+			if (debug) {
+				char address[INET6_ADDRSTRLEN];
+				parse_address(&resp_addr, address, sizeof(address));
+				printf("dropping reply with our icmp_id from unexpected address %s\n", address);
+			}
+			continue;
+		}
+
 		time_t tdiff = get_timevaldiff(data.stime, packet_received_timestamp);
 
 		if (target->last_tdiff > 0) {
@@ -1300,6 +1323,22 @@ static int wait_for_reply(check_icmp_socket_set sockset, const time_t time_inter
 
 	free(packet.buf);
 	return 0;
+}
+
+static bool reply_address_matches_target(const struct sockaddr_storage *resp_addr,
+										 const ping_target *target) {
+	if (resp_addr->ss_family != target->address.ss_family) {
+		return false;
+	}
+
+	if (resp_addr->ss_family == AF_INET) {
+		return ((const struct sockaddr_in *)resp_addr)->sin_addr.s_addr ==
+			   ((const struct sockaddr_in *)&target->address)->sin_addr.s_addr;
+	}
+
+	return memcmp(&((const struct sockaddr_in6 *)resp_addr)->sin6_addr,
+				  &((const struct sockaddr_in6 *)&target->address)->sin6_addr,
+				  sizeof(struct in6_addr)) == 0;
 }
 
 /* the ping functions */
