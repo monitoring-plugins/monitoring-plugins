@@ -199,9 +199,9 @@ int main(int argc, char **argv) {
 	float procpcpu = 0;
 	char procstat[8];
 	char procetime[MAX_INPUT_BUFFER] = {'\0'};
-	int resultsum = 0; /* bitmask of the filter criteria met by a process */
-	bool parsing_succesful = false;     /* counter for number of lines returned in `ps` output */
-	int procs = 0;     /* counter for number of processes meeting filter criteria */
+	int resultsum = 0;              /* bitmask of the filter criteria met by a process */
+	bool parsing_succesful = false; /* counter for number of lines returned in `ps` output */
+	int procs = 0;                  /* counter for number of processes meeting filter criteria */
 	char *input_buffer = malloc(MAX_INPUT_BUFFER);
 	char *procprog = malloc(MAX_INPUT_BUFFER);
 	const int expected_cols = PS_COLS - 1;
@@ -221,7 +221,6 @@ int main(int argc, char **argv) {
 		/* number of columns in ps output */
 		int cols = sscanf(input_line, PS_FORMAT, PS_VARLIST);
 		parsing_succesful = true;
-
 
 		/* Zombie processes do not give a procprog command */
 		const char *zombie = "Z";
