@@ -813,7 +813,7 @@ void print_help(const char *service) {
 	printf(" %s\n", "-j, --jail");
 	printf("    %s\n", _("Hide output from TCP socket"));
 	printf(" %s\n", "-m, --maxbytes=INTEGER");
-	printf("    %s\n", _("Close connection once more than this number of bytes are received"));
+	printf("    %s (default: %zi bytes)\n", _("Close connection once more than this number of bytes are received"), default_max_bytes);
 	printf(" %s\n", "-d, --delay=INTEGER");
 	printf("    %s\n", _("Seconds to wait between sending string and polling for response"));
 
