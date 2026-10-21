@@ -200,7 +200,7 @@ For more information about these matters, see the file named COPYING.\n")
 
 #define DBG_PRINTF(verbosity, format, ...)                                                         \
 	do {                                                                                           \
-		if (verbose > verbosity) {                                                                 \
+		if (verbose >= verbosity) {                                                                 \
 			printf(format, __VA_ARGS__);                                                           \
 		}                                                                                          \
 	} while (0);
