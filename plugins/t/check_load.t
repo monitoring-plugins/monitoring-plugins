@@ -16,7 +16,7 @@ my $successScaledOutput = "/^LOAD OK - scaled load average: $loadValue, $loadVal
 my $failureOutput = "/^LOAD CRITICAL - total load average: $loadValue, $loadValue, $loadValue/";
 my $failurScaledOutput = "/^LOAD CRITICAL - scaled load average: $loadValue, $loadValue, $loadValue - total load average: $loadValue, $loadValue, $loadValue/";
 
-plan tests => 8;
+plan tests => 10;
 
 $res = NPTest->testCmd( "./check_load -w 100,100,100 -c 100,100,100" );
 cmp_ok( $res->return_code, 'eq', 0, "load not over 100");
@@ -41,3 +41,7 @@ like( $res->perf_output, "/'load15'=$loadValue;~:100.0+;~:110.0+/", "Test handli
 $res = NPTest->testCmd( "./check_load -w 100,100,100 -c 100,100,100 -r" );
 cmp_ok( $res->return_code, 'eq', 0, "load not over 100");
 # like( $res->output, $successScaledOutput, "Output OK");
+
+$res = NPTest->testCmd( "./check_load -n 100000 -w 1000000 -c 1000000" );
+cmp_ok( $res->return_code, 'eq', 0, "check_load handles fewer processes than requested");
+like( $res->output, qr/Top 100000 CPU time consuming processes/, "Top process heading is included");
