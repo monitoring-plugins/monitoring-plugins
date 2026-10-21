@@ -193,14 +193,14 @@ For more information about these matters, see the file named COPYING.\n")
 /* finally, a little helper or two for debugging: */
 #define DBG(x)                                                                                     \
 	do {                                                                                           \
-		if (verbose >= 1) {                                                                         \
+		if (verbose >= 1) {                                                                        \
 			x;                                                                                     \
 		}                                                                                          \
 	} while (0);
 
 #define DBG_PRINTF(verbosity, format, ...)                                                         \
 	do {                                                                                           \
-		if (verbose >= verbosity) {                                                                 \
+		if (verbose >= verbosity) {                                                                \
 			printf(format, __VA_ARGS__);                                                           \
 		}                                                                                          \
 	} while (0);
