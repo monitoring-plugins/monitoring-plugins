@@ -56,7 +56,7 @@ enum {
 	MAX_PORT = 65535,
 	DEFAULT_MAX_REDIRS = 15,
 	MAX_HEADER_SIZE = 256 * 1024,                      // 256K should be enough for headers
-	DEFAULT_MAX_ANSWER_BUFFER_SIZE = 64 * 1024 * 1024, // 64M should be enought for most use cases
+	DEFAULT_MAX_ANSWER_BUFFER_SIZE = 64 * 1024 * 1024, // 64M should be enough for most use cases
 };
 
 #ifdef HAVE_SSL
