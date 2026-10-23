@@ -954,6 +954,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		OUTPUT_FORMAT,
 		NO_PROXY,
 		TIMEOUT_RESULT,
+		MAX_FILE_SIZE,
 	};
 
 	static struct option longopts[] = {
@@ -1004,6 +1005,7 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 		{"haproxy-protocol", no_argument, 0, HAPROXY_PROTOCOL},
 		{"output-format", required_argument, 0, OUTPUT_FORMAT},
 		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
+		{"max-file-size", required_argument, 0, MAX_FILE_SIZE},
 		{0, 0, 0, 0}};
 
 	check_curl_config_wrapper result = {
@@ -1468,6 +1470,14 @@ check_curl_config_wrapper process_arguments(int argc, char **argv) {
 			result.config.output_format = parser.output_format;
 			break;
 		}
+		case MAX_FILE_SIZE: {
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage4(_("max-file-size must be a positive integer"));
+			} else {
+				result.config.curl_config.max_file_size = strtol(optarg, NULL, 0);
+			}
+			break;
+		}
 		}
 	}
 
@@ -1780,6 +1790,8 @@ void print_help(void) {
 		   _("the cookies to disk. Only enabling the engine without saving to disk requires"));
 	printf("    %s\n",
 		   _("handling multiple requests internally to curl, so use it with --onredirect=curl"));
+	printf(" %s\n", "--max-file-size");
+	printf("    %s (default: %i)\n", _("Sets the maximum size of the answer from a target in bytes (CURLOPT_MAXFILESIZE)"), DEFAULT_MAX_FILE_SIZE);
 	printf("\n");
 
 	printf(UT_WARN_CRIT);
