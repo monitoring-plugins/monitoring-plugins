@@ -1791,7 +1791,9 @@ void print_help(void) {
 	printf("    %s\n",
 		   _("handling multiple requests internally to curl, so use it with --onredirect=curl"));
 	printf(" %s\n", "--max-file-size");
-	printf("    %s (default: %i)\n", _("Sets the maximum size of the answer from a target in bytes (CURLOPT_MAXFILESIZE)"), DEFAULT_MAX_FILE_SIZE);
+	printf("    %s (default: %i)\n",
+		   _("Sets the maximum size of the answer from a target in bytes (CURLOPT_MAXFILESIZE)"),
+		   DEFAULT_MAX_FILE_SIZE);
 	printf("\n");
 
 	printf(UT_WARN_CRIT);
