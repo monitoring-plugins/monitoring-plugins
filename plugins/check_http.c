@@ -1947,6 +1947,9 @@ void print_help(void) {
 	printf(" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
 	printf("    %s\n",
 		   _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+	printf(" %s\n", "--max-answer-buffer-size=INTEGER");
+	printf("    %s (default: %i)\n", _("Maximum number of bytes allowed to receive from a server"),
+		   DEFAULT_MAX_ANSWER_BUFFER_SIZE);
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
