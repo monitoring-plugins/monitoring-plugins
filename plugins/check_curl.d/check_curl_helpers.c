@@ -1,4 +1,6 @@
 #include "./check_curl_helpers.h"
+#include <curl/curl.h>
+#include <curl/easy.h>
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -67,6 +69,10 @@ check_curl_configure_curl(const check_curl_static_curl_config config,
 	/* print everything on stdout like check_http would do */
 	handle_curl_option_return_code(curl_easy_setopt(result.curl_state.curl, CURLOPT_STDERR, stdout),
 								   "CURLOPT_STDERR");
+
+	handle_curl_option_return_code(
+		curl_easy_setopt(result.curl_state.curl, CURLOPT_MAXFILESIZE, config.max_file_size),
+		"CURLOPT_MAXFILESIZE");
 
 	if (config.automatic_decompression) {
 #if LIBCURL_VERSION_NUM >= MAKE_LIBCURL_VERSION(7, 21, 6)
@@ -729,6 +735,8 @@ check_curl_config check_curl_config_init(void) {
 				.user_auth = "",
 				.http_content_type = NULL,
 				.cookie_jar_file = NULL,
+
+				.max_file_size = DEFAULT_MAX_FILE_SIZE,
 			},
 		.max_depth = DEFAULT_MAX_REDIRS,
 		.followmethod = FOLLOW_HTTP_CURL,
