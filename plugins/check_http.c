@@ -55,7 +55,7 @@ enum {
 	HTTPS_PORT = 443,
 	MAX_PORT = 65535,
 	DEFAULT_MAX_REDIRS = 15,
-	MAX_HEADER_SIZE = 256 * 1024,                      // 256K should be enough for headers
+	MAX_HEADER_SIZE = 256 * 1024,         // 256K should be enough for headers
 	DEFAULT_MAX_BYTES = 64 * 1024 * 1024, // 64M should be enough for most use cases
 };
 
@@ -1568,6 +1568,13 @@ char *unchunk_content(const char *content) {
 		}
 
 		overall_size += length_of_chunk;
+
+		if (overall_size > max_bytes) {
+			if (verbose) {
+				printf("Answer from server exceeds size limit with chunked content (--maxbytes)\n");
+			}
+			return NULL;
+		}
 
 		if (result == NULL) {
 			// Size of the chunk plus the ending NULL byte
