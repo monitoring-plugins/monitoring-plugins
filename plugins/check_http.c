@@ -56,7 +56,7 @@ enum {
 	MAX_PORT = 65535,
 	DEFAULT_MAX_REDIRS = 15,
 	MAX_HEADER_SIZE = 256 * 1024,                      // 256K should be enough for headers
-	DEFAULT_MAX_ANSWER_BUFFER_SIZE = 64 * 1024 * 1024, // 64M should be enough for most use cases
+	DEFAULT_MAX_BYTES = 64 * 1024 * 1024, // 64M should be enough for most use cases
 };
 
 #ifdef HAVE_SSL
@@ -135,7 +135,7 @@ static char *http_content_type;
 static char buffer[MAX_INPUT_BUFFER];
 static char *client_cert = NULL;
 static char *client_privkey = NULL;
-static ssize_t max_answer_buffer_size = DEFAULT_MAX_ANSWER_BUFFER_SIZE;
+static ssize_t max_bytes = DEFAULT_MAX_BYTES;
 
 // Forward function declarations
 static bool process_arguments(int /*argc*/, char ** /*argv*/);
@@ -212,7 +212,7 @@ bool process_arguments(int argc, char **argv) {
 		CONTINUE_AFTER_CHECK_CERT,
 		STATE_REGEX,
 		TIMEOUT_RESULT,
-		MAX_ANSWER_BUFFER_SIZE,
+		MAX_BYTES,
 	};
 
 	int option = 0;
@@ -255,7 +255,7 @@ bool process_arguments(int argc, char **argv) {
 		{"show-body", no_argument, 0, 'B'},
 		{"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
 		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
-		{"max-answer-buffer-size", required_argument, 0, MAX_ANSWER_BUFFER_SIZE},
+		{"maxbytes", required_argument, 0, MAX_BYTES},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -627,11 +627,11 @@ bool process_arguments(int argc, char **argv) {
 		case 'B': /* print body content after status line */
 			show_body = true;
 			break;
-		case MAX_ANSWER_BUFFER_SIZE: {
+		case MAX_BYTES: {
 			if (!mopl_utils_is_intpos(optarg)) {
-				mopl_utils_usage4(_("max-answer-buffer-size must be a positive integer"));
+				mopl_utils_usage4(_("--maxbytes must be a positive integer"));
 			} else {
-				max_answer_buffer_size = strtol(optarg, NULL, 0);
+				max_bytes = strtol(optarg, NULL, 0);
 			}
 			break;
 		}
@@ -1199,9 +1199,9 @@ int check_http(void) {
 		}
 
 		// safety: abort here if the server tries to send too much stuff
-		if ((pagesize + i) > max_answer_buffer_size) {
+		if ((pagesize + i) > max_bytes) {
 			die(STATE_UNKNOWN, "%s (%zi bytes)\n",
-				_("HTTP UNKNOWN - Answer from server exceeds size limit"), max_answer_buffer_size);
+				_("HTTP UNKNOWN - Answer from server exceeds size limit (--maxbytes)"), max_bytes);
 		}
 
 		while ((pos = memchr(buffer, '\0', i))) {
@@ -1961,7 +1961,7 @@ void print_help(void) {
 		   _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
 	printf(" %s\n", "--max-answer-buffer-size=INTEGER");
 	printf("    %s (default: %i)\n", _("Maximum number of bytes allowed to receive from a server"),
-		   DEFAULT_MAX_ANSWER_BUFFER_SIZE);
+		   DEFAULT_MAX_BYTES);
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);
