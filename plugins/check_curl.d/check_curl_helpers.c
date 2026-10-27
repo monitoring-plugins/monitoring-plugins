@@ -735,7 +735,6 @@ check_curl_config check_curl_config_init(void) {
 				.user_auth = "",
 				.http_content_type = NULL,
 				.cookie_jar_file = NULL,
-
 				.max_file_size = DEFAULT_MAX_FILE_SIZE,
 			},
 		.max_depth = DEFAULT_MAX_REDIRS,
