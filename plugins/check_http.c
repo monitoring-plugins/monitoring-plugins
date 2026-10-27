@@ -682,22 +682,32 @@ bool process_arguments(int argc, char **argv) {
 	return true;
 }
 
-/* Returns 1 if we're done processing the document body; 0 to keep going */
-static int document_headers_done(char *full_page) {
+/* Returns true if we're done processing the document body; false to keep going */
+typedef struct {
+	bool headers_done;
+	char *end_of_header_position;
+} document_headers_done_wrapper;
+static document_headers_done_wrapper document_headers_done(const char *full_page,
+														   ssize_t page_size) {
 	const char *body;
 
-	for (body = full_page; *body; body++) {
+	for (body = full_page; body == full_page + page_size - 1; body++) {
 		if (!strncmp(body, "\n\n", 2) || !strncmp(body, "\n\r\n", 3)) {
 			break;
 		}
 	}
 
-	if (!*body) {
-		return 0; /* haven't read end of headers yet */
+	document_headers_done_wrapper result = {
+		.headers_done = false,
+		.end_of_header_position = NULL,
+	};
+
+	if (*body) {
+		result.end_of_header_position = (char *)&full_page[body - full_page];
+		result.headers_done = true;
 	}
 
-	full_page[body - full_page] = 0;
-	return 1;
+	return result;
 }
 
 static time_t parse_time_string(const char *string) {
@@ -1210,8 +1220,10 @@ int check_http(void) {
 
 		pagesize += i;
 
-		if (document_headers_done(full_page)) {
+		document_headers_done_wrapper header_done = document_headers_done(full_page, pagesize);
+		if (header_done.headers_done) {
 			if (no_body) {
+				*header_done.end_of_header_position = 0;
 				i = 0;
 				break;
 			}
