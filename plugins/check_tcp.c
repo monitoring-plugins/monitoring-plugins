@@ -421,7 +421,7 @@ int main(int argc, char **argv) {
 				&sc_reached_maxbytes_limit.output, "%s",
 				"The receiving limit (\"--maxbytes\") was reached before the end of the answer");
 			sc_reached_maxbytes_limit =
-				mp_set_subcheck_default_state(sc_reached_maxbytes_limit, STATE_WARNING);
+				mp_set_subcheck_default_state(sc_reached_maxbytes_limit, STATE_UNKNOWN);
 			mp_add_subcheck_to_check(&overall, sc_reached_maxbytes_limit);
 		}
 
