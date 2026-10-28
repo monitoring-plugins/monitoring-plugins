@@ -36,8 +36,7 @@ check_fping:
 
 check_game:
 	- Requires the qstat utility available from
-	  http://sourceforge.net/projects/qstat/
-	  Last tested on qstat 2.3d BETA
+	  https://github.com/rocketsciencegg/qstat
 
 check_hpjd:
 	- Requires the NET-SNMP package available from
