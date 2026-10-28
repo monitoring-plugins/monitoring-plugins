@@ -1497,7 +1497,7 @@ then
 	ac_cv_path_to_qstat="$PATH_TO_QSTAT"
 	EXTRAS="$EXTRAS check_game\$(EXEEXT)"
 else
-	AC_MSG_WARN([Get qstat from http://www.activesw.com/people/steve/qstat.html in order to make check_game plugin])
+	AC_MSG_WARN([Get qstat in order to make check_game plugin])
 fi
 
 if test $ac_cv_path_to_qstat

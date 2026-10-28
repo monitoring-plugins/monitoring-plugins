@@ -312,9 +312,6 @@ void print_help(void) {
 	printf("%s\n", _("Notes:"));
 	printf(" %s\n",
 		   _("This plugin uses the 'qstat' command, the popular game server status query tool."));
-	printf(" %s\n",
-		   _("If you don't have the package installed, you will need to download it from"));
-	printf(" %s\n", _("https://github.com/multiplay/qstat before you can use this plugin."));
 
 	printf(UT_SUPPORT);
 }
