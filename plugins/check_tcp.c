@@ -365,6 +365,7 @@ int main(int argc, char **argv) {
 	ssize_t len = 0;
 	char *received_buffer = NULL;
 	enum np_match_result match = NP_MATCH_NONE;
+	bool reached_maxbytes_limit = false;
 	mp_subcheck expected_data_result = mp_subcheck_init();
 
 	if (config.server_expect_count) {
@@ -386,6 +387,7 @@ int main(int argc, char **argv) {
 
 			/* stop reading if user-forced */
 			if (config.maxbytes && len >= config.maxbytes) {
+				reached_maxbytes_limit = true;
 				break;
 			}
 
@@ -411,6 +413,16 @@ int main(int argc, char **argv) {
 
 		if (match == NP_MATCH_RETRY) {
 			match = NP_MATCH_FAILURE;
+		}
+
+		if (reached_maxbytes_limit) {
+			mp_subcheck sc_reached_maxbytes_limit = mp_subcheck_init();
+			mopl_utils_xasprintf(
+				&sc_reached_maxbytes_limit.output, "%s",
+				"The receiving limit (\"--maxbytes\") was reached before the end of the answer");
+			sc_reached_maxbytes_limit =
+				mp_set_subcheck_default_state(sc_reached_maxbytes_limit, STATE_UNKNOWN);
+			mp_add_subcheck_to_check(&overall, sc_reached_maxbytes_limit);
 		}
 
 		/* no data when expected, so return critical */
@@ -813,7 +825,9 @@ void print_help(const char *service) {
 	printf(" %s\n", "-j, --jail");
 	printf("    %s\n", _("Hide output from TCP socket"));
 	printf(" %s\n", "-m, --maxbytes=INTEGER");
-	printf("    %s\n", _("Close connection once more than this number of bytes are received"));
+	printf("    %s (default: %zi bytes)\n",
+		   _("Close connection once more than this number of bytes are received"),
+		   default_max_bytes);
 	printf(" %s\n", "-d, --delay=INTEGER");
 	printf("    %s\n", _("Seconds to wait between sending string and polling for response"));
 

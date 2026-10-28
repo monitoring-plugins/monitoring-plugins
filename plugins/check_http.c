@@ -54,7 +54,9 @@ enum {
 	HTTP_PORT = 80,
 	HTTPS_PORT = 443,
 	MAX_PORT = 65535,
-	DEFAULT_MAX_REDIRS = 15
+	DEFAULT_MAX_REDIRS = 15,
+	MAX_HEADER_SIZE = 256 * 1024,         // 256K should be enough for headers
+	DEFAULT_MAX_BYTES = 64 * 1024 * 1024, // 64M should be enough for most use cases
 };
 
 #ifdef HAVE_SSL
@@ -133,6 +135,7 @@ static char *http_content_type;
 static char buffer[MAX_INPUT_BUFFER];
 static char *client_cert = NULL;
 static char *client_privkey = NULL;
+static ssize_t max_bytes = DEFAULT_MAX_BYTES;
 
 // Forward function declarations
 static bool process_arguments(int /*argc*/, char ** /*argv*/);
@@ -208,7 +211,8 @@ bool process_arguments(int argc, char **argv) {
 		MAX_REDIRS_OPTION,
 		CONTINUE_AFTER_CHECK_CERT,
 		STATE_REGEX,
-		TIMEOUT_RESULT
+		TIMEOUT_RESULT,
+		MAX_BYTES,
 	};
 
 	int option = 0;
@@ -251,6 +255,7 @@ bool process_arguments(int argc, char **argv) {
 		{"show-body", no_argument, 0, 'B'},
 		{"max-redirs", required_argument, 0, MAX_REDIRS_OPTION},
 		{"timeout-result", required_argument, 0, TIMEOUT_RESULT},
+		{"maxbytes", required_argument, 0, MAX_BYTES},
 		{0, 0, 0, 0}};
 
 	if (argc < 2) {
@@ -622,6 +627,14 @@ bool process_arguments(int argc, char **argv) {
 		case 'B': /* print body content after status line */
 			show_body = true;
 			break;
+		case MAX_BYTES: {
+			if (!mopl_utils_is_intpos(optarg)) {
+				mopl_utils_usage4(_("--maxbytes must be a positive integer"));
+			} else {
+				max_bytes = strtol(optarg, NULL, 0);
+			}
+			break;
+		}
 		}
 	}
 
@@ -669,22 +682,32 @@ bool process_arguments(int argc, char **argv) {
 	return true;
 }
 
-/* Returns 1 if we're done processing the document body; 0 to keep going */
-static int document_headers_done(char *full_page) {
+/* Returns true if we're done processing the document body; false to keep going */
+typedef struct {
+	bool headers_done;
+	char *end_of_header_position;
+} document_headers_done_wrapper;
+static document_headers_done_wrapper document_headers_done(const char *full_page,
+														   ssize_t page_size) {
 	const char *body;
 
-	for (body = full_page; *body; body++) {
+	for (body = full_page; body == full_page + page_size - 1; body++) {
 		if (!strncmp(body, "\n\n", 2) || !strncmp(body, "\n\r\n", 3)) {
 			break;
 		}
 	}
 
-	if (!*body) {
-		return 0; /* haven't read end of headers yet */
+	document_headers_done_wrapper result = {
+		.headers_done = false,
+		.end_of_header_position = NULL,
+	};
+
+	if (*body) {
+		result.end_of_header_position = (char *)&full_page[body - full_page];
+		result.headers_done = true;
 	}
 
-	full_page[body - full_page] = 0;
-	return 1;
+	return result;
 }
 
 static time_t parse_time_string(const char *string) {
@@ -1174,6 +1197,13 @@ int check_http(void) {
 			microsec_firstbyte = mopl_utils_deltime(tv_temp);
 			elapsed_time_firstbyte = (double)microsec_firstbyte / 1.0e6;
 		}
+
+		// safety: abort here if the server tries to send too much stuff
+		if ((pagesize + i) > max_bytes) {
+			die(STATE_UNKNOWN, "%s (%zi bytes)\n",
+				_("HTTP UNKNOWN - Answer from server exceeds size limit (--maxbytes)"), max_bytes);
+		}
+
 		while ((pos = memchr(buffer, '\0', i))) {
 			/* replace nul character with a blank */
 			*pos = ' ';
@@ -1190,9 +1220,22 @@ int check_http(void) {
 
 		pagesize += i;
 
-		if (no_body && document_headers_done(full_page)) {
-			i = 0;
-			break;
+		document_headers_done_wrapper header_done = document_headers_done(full_page, pagesize);
+		if (header_done.headers_done) {
+			if (no_body) {
+				*header_done.end_of_header_position = 0;
+				i = 0;
+				break;
+			}
+		} else {
+			// safety: do size check, abort here if headers are too large
+			// technically at this point the headers might need more space
+			// than MAX_HEADER_SIZE but only MAX_INPUT_BUFFER more which is probably
+			// okayish
+			if (pagesize > MAX_HEADER_SIZE + i) {
+				die(STATE_UNKNOWN, "%s (%i bytes)",
+					_("HTTP UNKNOWN - Received Headers larger than limit"), MAX_HEADER_SIZE);
+			}
 		}
 	}
 	microsec_transfer = mopl_utils_deltime(tv_temp);
@@ -1525,6 +1568,13 @@ char *unchunk_content(const char *content) {
 		}
 
 		overall_size += length_of_chunk;
+
+		if (overall_size > max_bytes) {
+			if (verbose) {
+				printf("Answer from server exceeds size limit with chunked content (--maxbytes)\n");
+			}
+			return NULL;
+		}
 
 		if (result == NULL) {
 			// Size of the chunk plus the ending NULL byte
@@ -1916,6 +1966,9 @@ void print_help(void) {
 	printf(" %s\n", "-m, --pagesize=INTEGER<:INTEGER>");
 	printf("    %s\n",
 		   _("Minimum page size required (bytes) : Maximum page size required (bytes)"));
+	printf(" %s\n", "--max-answer-buffer-size=INTEGER");
+	printf("    %s (default: %i)\n", _("Maximum number of bytes allowed to receive from a server"),
+		   DEFAULT_MAX_BYTES);
 	printf(UT_WARN_CRIT);
 
 	printf(UT_CONN_TIMEOUT, DEFAULT_SOCKET_TIMEOUT);

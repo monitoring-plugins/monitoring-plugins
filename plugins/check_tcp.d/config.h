@@ -5,6 +5,9 @@
 #include "states.h"
 #include <netinet/in.h>
 
+// 64MiB as a sane, limiting default to avoid filling up memory
+const ssize_t default_max_bytes = 64 * 1024 * 1024;
+
 typedef struct {
 	char *server_address;
 	bool host_specified;
@@ -74,7 +77,7 @@ check_tcp_config check_tcp_config_init() {
 
 		.econn_refuse_state = STATE_CRITICAL,
 
-		.maxbytes = 0,
+		.maxbytes = default_max_bytes,
 
 		.hide_output = false,
 
