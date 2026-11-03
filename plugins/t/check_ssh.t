@@ -7,6 +7,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Time::HiRes qw(sleep);
 use NPTest;
 use JSON;
 
