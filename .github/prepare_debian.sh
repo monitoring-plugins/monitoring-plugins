@@ -103,6 +103,9 @@ service squid start
 # mariadb
 service mariadb start || service mysql start
 mysql -e "create database IF NOT EXISTS test;" -uroot
+# Socket paths differ between Debian/MariaDB versions.
+mysql_socket=$(mysql -uroot -Nse 'SELECT @@socket')
+sed -i "s|^  'NP_MYSQL_SOCKET' => .*|  'NP_MYSQL_SOCKET' => '$mysql_socket',|" .github/NPTest.cache
 
 # ldap
 sed -e 's/cn=admin,dc=nodomain/'$(/usr/sbin/slapcat|grep ^dn:|awk '{print $2}')'/' -i .github/NPTest.cache
