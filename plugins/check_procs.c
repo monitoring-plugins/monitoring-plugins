@@ -199,9 +199,9 @@ int main(int argc, char **argv) {
 	float procpcpu = 0;
 	char procstat[8];
 	char procetime[MAX_INPUT_BUFFER] = {'\0'};
-	int resultsum = 0; /* bitmask of the filter criteria met by a process */
-	int found = 0;     /* counter for number of lines returned in `ps` output */
-	int procs = 0;     /* counter for number of processes meeting filter criteria */
+	int resultsum = 0;              /* bitmask of the filter criteria met by a process */
+	bool parsing_succesful = false; /* counter for number of lines returned in `ps` output */
+	int procs = 0;                  /* counter for number of processes meeting filter criteria */
 	char *input_buffer = malloc(MAX_INPUT_BUFFER);
 	char *procprog = malloc(MAX_INPUT_BUFFER);
 	const int expected_cols = PS_COLS - 1;
@@ -220,6 +220,7 @@ int main(int argc, char **argv) {
 
 		/* number of columns in ps output */
 		int cols = sscanf(input_line, PS_FORMAT, PS_VARLIST);
+		parsing_succesful = true;
 
 		/* Zombie processes do not give a procprog command */
 		const char *zombie = "Z";
@@ -335,8 +336,6 @@ int main(int argc, char **argv) {
 				resultsum |= PCPU;
 			}
 
-			found++;
-
 			/* Next line if filters not matched */
 			if (!(config.options == resultsum || config.options == ALL)) {
 				continue;
@@ -384,9 +383,14 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (found == 0) { /* no process lines parsed so return STATE_UNKNOWN */
+	if (!parsing_succesful) { /* no process lines parsed so return STATE_UNKNOWN */
 		printf(_("Unable to read output\n"));
 		return STATE_UNKNOWN;
+	}
+
+	if (procs == 0) {
+		printf(_("Unable find other processes\n"));
+		exit(STATE_UNKNOWN);
 	}
 
 	if (result == STATE_UNKNOWN) {
