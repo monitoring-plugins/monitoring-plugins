@@ -30,6 +30,9 @@ enum {
 	STICKY_PORT = 2
 };
 
+// 64MiB of answer should be enough for most
+#define DEFAULT_MAX_FILE_SIZE 64 * 1024 * 1024
+
 #define HTTP_EXPECT         "HTTP/"
 #define DEFAULT_BUFFER_SIZE 2048
 #define DEFAULT_SERVER_URL  "/"
@@ -77,6 +80,7 @@ typedef struct {
 	char user_auth[MAX_INPUT_BUFFER];
 	char *http_content_type;
 	char *cookie_jar_file;
+	long max_file_size;
 } check_curl_static_curl_config;
 
 typedef struct {
