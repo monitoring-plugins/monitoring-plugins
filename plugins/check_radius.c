@@ -498,7 +498,7 @@ void print_usage(void) {
 int my_rc_read_config(char *config_file_name, rc_handle **rch) {
 #if defined(HAVE_LIBFREERADIUS_CLIENT) || defined(HAVE_LIBRADCLI)
 	*rch = rc_read_config(config_file_name);
-	return (rch == NULL) ? 1 : 0;
+	return (*rch == NULL) ? 1 : 0;
 #else
 	return rc_read_config(config_file_name);
 #endif
