@@ -120,6 +120,10 @@ ssh-keyscan localhost >> ~/.ssh/known_hosts
 touch ~/.ssh/config
 
 # start one login session, required for check_users
+# Keep session accounting inside the container; the host may not provide utmp.
+touch /run/utmp
+chown root:utmp /run/utmp
+chmod 664 /run/utmp
 ssh -tt localhost </dev/null >/dev/null 2>/dev/null &
 disown %1
 
